@@ -57,7 +57,7 @@ def planos():
 @app.route('/sobre')
 @app.route('/sobre.html')
 def sobre():
-    return "<h1>Página Sobre - Em construção</h1>"
+    return send_from_directory('../frontend', 'sobre.html')
 
 @app.route('/conta')
 @app.route('/conta.html')

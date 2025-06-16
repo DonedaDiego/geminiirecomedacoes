@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sobre - Geminii Tech</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            dark: '#000000',
+            light: '#ffffff',
+            subtle: 'rgba(255,255,255,0.1)',
+            geminii: '#ba39af'
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    body {
+      overflow-x: hidden;
+    }
+
+    /* Neon Logo Effect */
+    .neon-logo {
+      transition: all 0.3s ease;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    
+    .neon-logo:hover {
+      filter: 
+        drop-shadow(0 0 5px #ba39af)
+        drop-shadow(0 0 10px #ba39af)
+        drop-shadow(0 0 15px #ba39af)
+        drop-shadow(0 0 20px #ba39af)
+        brightness(1.2);
+      transform: scale(1.1);
+    }
+
+    /* Navbar Effects */
+    nav:hover {
+      background: rgba(186, 57, 175, 0.05);
+      border-color: rgba(186, 57, 175, 0.3);
+      box-shadow: 
+        0 25px 50px -12px rgba(0, 0, 0, 0.25),
+        0 0 20px rgba(186, 57, 175, 0.2),
+        0 0 40px rgba(186, 57, 175, 0.1);
+      transition: all 0.3s ease;
+    }
+
+    nav a:hover {
+      color: #ba39af;
+      text-shadow: 
+        0 0 5px #ba39af,
+        0 0 10px #ba39af,
+        0 0 15px #ba39af;
+      transition: all 0.3s ease;
+    }
+
+    /* Content Cards */
+    .content-card {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 20px;
+      padding: 2rem;
+      transition: all 0.3s ease;
+    }
+
+    .content-card:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(186, 57, 175, 0.3);
+      transform: translateY(-5px);
+      box-shadow: 0 20px 40px rgba(186, 57, 175, 0.1);
+    }
+
+    /* Section Headers */
+    .section-header {
+      background: linear-gradient(135deg, #ba39af, #d946ef);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      font-weight: 800;
+    }
+
+    /* Process Steps */
+    .process-step {
+      position: relative;
+      padding-left: 3rem;
+    }
+
+    .process-step::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0.5rem;
+      width: 2rem;
+      height: 2rem;
+      background: linear-gradient(135deg, #ba39af, #d946ef);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .process-step:nth-child(1)::before { content: '1'; color: white; font-weight: bold; font-size: 0.875rem; }
+    .process-step:nth-child(2)::before { content: '2'; color: white; font-weight: bold; font-size: 0.875rem; }
+    .process-step:nth-child(3)::before { content: '3'; color: white; font-weight: bold; font-size: 0.875rem; }
+    .process-step:nth-child(4)::before { content: '4'; color: white; font-weight: bold; font-size: 0.875rem; }
+
+    /* Feature Icons */
+    .feature-icon {
+      width: 4rem;
+      height: 4rem;
+      background: linear-gradient(135deg, #ba39af, #d946ef);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 1.5rem;
+      margin-bottom: 1rem;
+    }
+
+    /* Geminii Text */
+    .geminii-text {
+      color: #ba39af;
+      font-weight: 700;
+    }
+
+    /* User Menu (copiado do index) */
+    .user-menu {
+      position: relative;
+      display: inline-block;
+    }
+
+    .user-menu-dropdown {
+      display: none;
+      position: absolute;
+      right: 0;
+      top: 100%;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 12px;
+      min-width: 200px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+      z-index: 1000;
+      margin-top: 8px;
+      padding: 8px;
+    }
+
+    .user-menu.active .user-menu-dropdown {
+      display: block;
+    }
+
+    .user-menu-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      color: #333;
+      text-decoration: none;
+      border-radius: 8px;
+      transition: all 0.2s ease;
+      font-size: 14px;
+    }
+
+    .user-menu-item:hover {
+      background: rgba(186, 57, 175, 0.1);
+      color: #ba39af;
+    }
+
+    .user-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #ba39af, #d946ef);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 600;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .user-avatar:hover {
+      transform: scale(1.1);
+      box-shadow: 0 0 20px rgba(186, 57, 175, 0.5);
+    }
+
+    .plan-badge {
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: white;
+      padding: 2px 6px;
+      border-radius: 6px;
+      font-size: 9px;
+      font-weight: 600;
+      text-transform: uppercase;
+      margin-left: 4px;
+    }
+
+    .plan-badge.premium {
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+    }
+
+    .plan-badge.strategic {
+      background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .content-card {
+        padding: 1.5rem;
+      }
+      
+      .process-step {
+        padding-left: 2.5rem;
+      }
+      
+      .feature-icon {
+        width: 3rem;
+        height: 3rem;
+        font-size: 1.25rem;
+      }
+    }
+  </style>
+</head>
+<body class="bg-black text-white font-sans">
+  <div class="relative min-h-screen">
+    <!-- Background Pattern -->
+    <div class="fixed inset-0 z-0">
+      <div class="absolute inset-0 bg-gradient-to-br from-purple-900/20 via-black to-pink-900/20"></div>
+      <div class="absolute top-0 left-0 w-full h-full opacity-10">
+        <div class="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-500 rounded-full blur-3xl"></div>
+        <div class="absolute bottom-1/4 right-1/4 w-96 h-96 bg-pink-500 rounded-full blur-3xl"></div>
+      </div>
+    </div>
+    
+    <!-- Navbar -->
+    <nav class="fixed top-6 left-1/2 transform -translate-x-1/2 z-50 bg-opacity-5 border-opacity-10 bg-white border-white border rounded-full pt-4 pr-4 pb-4 pl-4 shadow-xl backdrop-blur-md">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center">
+          <img src="assets/logo.png" alt="Geminii Logo" class="w-6 h-6 neon-logo" onclick="navigateHome()" onerror="this.src='/assets/logo.png'; this.onerror=null;">
+        </div>
+        
+        <div class="hidden md:flex items-center space-x-6 text-xs text-gray-300 ml-8">
+          <a href="/" class="hover:text-white transition-colors">Home</a>
+          <a href="/planos" class="hover:text-white transition-colors">Planos</a>
+          <a href="/sobre" class="hover:text-white transition-colors text-geminii">Sobre</a>
+        </div>
+        
+        <!-- Auth Section -->
+        <div class="flex items-center space-x-3 ml-8">
+          <div id="apiStatus" class="w-8 h-8 bg-green-500 bg-opacity-10 border border-green-500 border-opacity-30 rounded-full flex items-center justify-center relative">
+            <i class="fas fa-shield-alt text-green-500 text-xs"></i>
+            <div class="absolute -top-1 -right-1 w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+          </div>
+          
+          <!-- Guest View -->
+          <div id="guestView" class="flex items-center space-x-2">
+            <button onclick="showLoginModal()" class="hover:bg-gray-200 transition-colors text-xs font-medium text-black bg-white rounded-full pt-1.5 pr-3 pb-1.5 pl-3">Login</button>
+          </div>
+          
+          <!-- User View -->
+          <div id="userView" class="user-menu hidden">
+            <div class="user-avatar" onclick="toggleUserMenu()">
+              <span id="userInitials">GU</span>
+            </div>
+            <div class="user-menu-dropdown" id="userMenuDropdown">
+              <div class="px-3 py-2 border-b border-gray-200">
+                <p class="text-sm font-medium text-gray-900" id="userName">Usuário</p>
+                <p class="text-xs text-gray-500" id="userEmail">email@example.com</p>
+                <p class="text-xs text-gray-500">
+                  Plano: <span id="userPlan" class="font-medium">Básico</span>
+                  <span id="planBadge" class="plan-badge">Free</span>
+                </p>
+              </div>
+              <a href="/dashboard.html" class="user-menu-item">
+                <i class="fas fa-tachometer-alt"></i>
+                Dashboard
+              </a>
+              <a href="/planos.html" class="user-menu-item">
+                <i class="fas fa-crown"></i>
+                Planos & Assinatura
+              </a>
+              <div class="border-t border-gray-200 mt-1 pt-1">
+                <a href="#" onclick="logout()" class="user-menu-item">
+                  <i class="fas fa-sign-out-alt"></i>
+                  Sair
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </nav>
+    
+    <!-- Main Content -->
+    <div class="relative z-10 pt-32 pb-20">
+      <div class="max-w-6xl mx-auto px-6">
+        
+        <!-- Header Section -->
+        <div class="text-center mb-16">
+          <h1 class="text-4xl md:text-6xl font-bold mb-6">
+            Sobre a <span class="geminii-text">Geminii Tech</span>
+          </h1>
+          <p class="text-xl text-gray-300 max-w-3xl mx-auto leading-relaxed">
+            Tecnologia de ponta para revolucionar suas decisões de investimento através de inteligência artificial e análise quantitativa.
+          </p>
+        </div>
+
+        <!-- Company Hierarchy -->
+        <div class="content-card mb-16">
+          <div class="text-center mb-8">
+            <h2 class="text-3xl font-bold section-header mb-4">Grupo Geminii Research</h2>
+            <p class="text-gray-300 text-lg">
+              A <strong class="geminii-text">Geminii Tech</strong> é uma empresa do grupo <strong class="geminii-text">Geminii Research</strong> (holding), 
+              especializada em desenvolver ferramentas tecnológicas avançadas para o mercado financeiro.
+            </p>
+          </div>
+          
+          <div class="grid md:grid-cols-2 gap-8">
+            <div class="text-center">
+              <div class="feature-icon mx-auto">
+                <i class="fas fa-building"></i>
+              </div>
+              <h3 class="text-xl font-bold mb-2 geminii-text">Geminii Research</h3>
+              <p class="text-gray-300">
+                Holding responsável pelas estratégias de investimento, pesquisa financeira e desenvolvimento de carteiras recomendadas.
+              </p>
+            </div>
+            
+            <div class="text-center">
+              <div class="feature-icon mx-auto">
+                <i class="fas fa-code"></i>
+              </div>
+              <h3 class="text-xl font-bold mb-2 geminii-text">Geminii Tech</h3>
+              <p class="text-gray-300">
+                Braço tecnológico que desenvolve rastreadores, ferramentas de análise e plataformas para democratizar o acesso às estratégias.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Main Story -->
+        <div class="content-card mb-16">
+          <h2 class="text-3xl font-bold section-header mb-8 text-center">
+            Como a Geminii Research Revoluciona Recomendações Financeiras
+          </h2>
+          
+          <p class="text-lg text-gray-300 mb-8 leading-relaxed">
+            Imagine transformar milhões de dados do mercado financeiro em recomendações precisas e lucrativas. 
+            É exatamente isso que fazemos na <span class="geminii-text">Geminii</span> através da nossa tecnologia de IA.
+          </p>
+
+          <div class="space-y-8">
+            <div class="process-step">
+              <h3 class="text-xl font-bold mb-3 text-white">Coleta Massiva de Dados</h3>
+              <p class="text-gray-300 leading-relaxed">
+                Nossa jornada se inicia com uma coleta massiva de dados em tempo real, capturando cada movimento do mercado 
+                através de APIs especializadas. Cada fonte é uma peça essencial que alimenta nossa inteligência artificial.
+              </p>
+            </div>
+
+            <div class="process-step">
+              <h3 class="text-xl font-bold mb-3 text-white">Laboratório Digital</h3>
+              <p class="text-gray-300 leading-relaxed">
+                Estes dados são então transformados em nosso laboratório digital, onde criamos features únicas e targets precisos. 
+                É aqui que a mágica acontece - padrões invisíveis aos olhos humanos são descobertos e transformados em insights acionáveis.
+              </p>
+            </div>
+
+            <div class="process-step">
+              <h3 class="text-xl font-bold mb-3 text-white">Inteligência Artificial Avançada</h3>
+              <p class="text-gray-300 leading-relaxed">
+                Nossa IA então entra em ação, processando e analisando esses dados com modelos de Machine Learning avançados. 
+                Cada modelo é treinado para identificar oportunidades específicas e padrões complexos no mercado.
+              </p>
+            </div>
+
+            <div class="process-step">
+              <h3 class="text-xl font-bold mb-3 text-white">Democratização Tecnológica</h3>
+              <p class="text-gray-300 leading-relaxed">
+                Através da <span class="geminii-text">Geminii Tech</span>, democratizamos essas estratégias avançadas, 
+                oferecendo rastreadores completos que capturam todas as imperfeições do mercado e disponibilizamos 
+                nossas carteiras recomendadas para investidores de todos os níveis.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Features Section -->
+        <div class="content-card mb-16">
+          <h2 class="text-3xl font-bold section-header mb-8 text-center">
+            O Que Você Encontra na Geminii Tech
+          </h2>
+          
+          <div class="grid md:grid-cols-3 gap-8">
+            <div class="text-center">
+              <div class="feature-icon mx-auto">
+                <i class="fas fa-radar-dish"></i>
+              </div>
+              <h3 class="text-xl font-bold mb-3 geminii-text">Rastreadores Completos</h3>
+              <p class="text-gray-300">
+                Os mais avançados rastreadores para identificar todas as imperfeições e oportunidades do mercado em tempo real.
+              </p>
+            </div>
+            
+            <div class="text-center">
+              <div class="feature-icon mx-auto">
+                <i class="fas fa-briefcase"></i>
+              </div>
+              <h3 class="text-xl font-bold mb-3 geminii-text">Carteiras Recomendadas</h3>
+              <p class="text-gray-300">
+                Acesso exclusivo às carteiras desenvolvidas pela Geminii Research, baseadas em anos de pesquisa e IA.
+              </p>
+            </div>
+            
+            <div class="text-center">
+              <div class="feature-icon mx-auto">
+                <i class="fas fa-robot"></i>
+              </div>
+              <h3 class="text-xl font-bold mb-3 geminii-text">Automação Inteligente</h3>
+              <p class="text-gray-300">
+                Ferramentas que automatizam análises complexas, permitindo decisões de investimento mais rápidas e precisas.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Mission Section -->
+        <div class="content-card">
+          <div class="text-center">
+            <h2 class="text-3xl font-bold section-header mb-6">Nossa Missão</h2>
+            <p class="text-xl text-gray-300 leading-relaxed max-w-4xl mx-auto">
+              Democratizar o acesso a estratégias de investimento de nível institucional, 
+              utilizando tecnologia de ponta para que qualquer investidor possa se beneficiar 
+              da mesma inteligência artificial que move os grandes fundos.
+            </p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentUser = null;
+    let userToken = null;
+
+    // Navigation
+    function navigateHome() {
+      window.location.href = '/';
+    }
+
+    // Auth functions (básicas para a página)
+    async function checkAuthStatus() {
+      const token = localStorage.getItem('geminii_token');
+      const userData = localStorage.getItem('geminii_user');
+
+      if (!token || !userData) {
+        showGuestView();
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/auth/verify', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          userToken = token;
+          currentUser = result.data.user;
+          showUserView(currentUser);
+        } else {
+          localStorage.removeItem('geminii_token');
+          localStorage.removeItem('geminii_user');
+          showGuestView();
+        }
+
+      } catch (error) {
+        localStorage.removeItem('geminii_token');
+        localStorage.removeItem('geminii_user');
+        showGuestView();
+      }
+    }
+
+    function showGuestView() {
+      document.getElementById('guestView').classList.remove('hidden');
+      document.getElementById('userView').classList.add('hidden');
+      currentUser = null;
+      userToken = null;
+    }
+
+    function showUserView(user) {
+      document.getElementById('guestView').classList.add('hidden');
+      document.getElementById('userView').classList.remove('hidden');
+
+      const initials = user.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+      document.getElementById('userInitials').textContent = initials;
+      document.getElementById('userName').textContent = user.name;
+      document.getElementById('userEmail').textContent = user.email;
+      document.getElementById('userPlan').textContent = user.plan_name || 'Básico';
+
+      const planBadge = document.getElementById('planBadge');
+      const planId = user.plan_id || 1;
+      
+      if (planId === 1) {
+        planBadge.textContent = 'Free';
+        planBadge.className = 'plan-badge';
+      } else if (planId === 2) {
+        planBadge.textContent = 'Premium';
+        planBadge.className = 'plan-badge premium';
+      } else if (planId >= 3) {
+        planBadge.textContent = 'Strategic';
+        planBadge.className = 'plan-badge strategic';
+      }
+    }
+
+    function toggleUserMenu() {
+      const userMenu = document.querySelector('.user-menu');
+      userMenu.classList.toggle('active');
+    }
+
+    async function logout() {
+      try {
+        if (userToken) {
+          await fetch('/api/auth/logout', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${userToken}`
+            }
+          });
+        }
+      } catch (error) {
+        console.error('Logout error:', error);
+      } finally {
+        localStorage.removeItem('geminii_token');
+        localStorage.removeItem('geminii_user');
+        showGuestView();
+        document.querySelector('.user-menu').classList.remove('active');
+      }
+    }
+
+    function showLoginModal() {
+      // Redirecionar para página principal com modal
+      window.location.href = '/?login=true';
+    }
+
+    // API Status check
+    async function checkApiStatus() {
+      try {
+        const response = await fetch('/api/status');
+        const data = await response.json();
+        
+        if (data.status === 'online') {
+          document.getElementById('apiStatus').innerHTML = `
+            <i class="fas fa-shield-alt text-green-500 text-xs"></i>
+            <div class="absolute -top-1 -right-1 w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+          `;
+        }
+      } catch (error) {
+        document.getElementById('apiStatus').innerHTML = `
+          <i class="fas fa-shield-alt text-red-500 text-xs"></i>
+          <div class="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+        `;
+      }
+    }
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', function() {
+      checkApiStatus();
+      setInterval(checkApiStatus, 30000);
+      checkAuthStatus();
+      
+      console.log('🎯 Geminii Tech - Página Sobre carregada!');
+    });
+
+    // Global functions
+    window.navigateHome = navigateHome;
+    window.toggleUserMenu = toggleUserMenu;
+    window.logout = logout;
+    window.showLoginModal = showLoginModal;
+  </script>
+</body>
+</html>
