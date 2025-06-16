@@ -444,6 +444,22 @@ def verify_token():
 
 if __name__ == '__main__':
     import os
-    port = int(os.environ.get("PORT", 5000))
-    debug_mode = os.environ.get("FLASK_ENV") == "development"
-    app.run(host="0.0.0.0", port=port, debug=debug_mode)
+    port = int(os.environ.get('PORT', 10000))  # Render usa 10000 por padrão
+    print("🚀 Iniciando Geminii API...")
+    print("📊 APIs disponíveis:")
+    print("  - /api/status")
+    print("  - /api/test-db")
+    print("  - /api/auth/login (POST)")
+    print("  - /api/auth/register (POST)")
+    print("  - /api/auth/verify (GET)")
+    print("  - /api/auth/forgot-password (POST)")
+    print("  - /api/auth/reset-password (POST)")
+    print("  - /api/stock/<symbol>")
+    print("  - /api/stocks")
+    print("  - /api/stock/<symbol>/history")
+    print("  - /api/stocks/search")
+    print("🔐 Sistema de autenticação ativado!")
+    
+    # Debug False em produção
+    debug_mode = os.environ.get("FLASK_ENV") != "production"
+    app.run(host='0.0.0.0', port=port, debug=debug_mode)
