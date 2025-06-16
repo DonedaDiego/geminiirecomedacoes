@@ -10,14 +10,13 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = 'geminii-secret-2024'
 
 def get_db_connection():
-    """Conectar com PostgreSQL local"""
     try:
         conn = psycopg2.connect(
-            host="localhost",
-            database="postgres", 
-            user="postgres",
-            password="#geminii",
-            port="5432"
+            host=os.environ.get("DB_HOST", "localhost"),
+            database=os.environ.get("DB_NAME", "postgres"),
+            user=os.environ.get("DB_USER", "postgres"),
+            password=os.environ.get("DB_PASSWORD", "#geminii"),
+            port=os.environ.get("DB_PORT", "5432")
         )
         return conn
     except Exception as e:
@@ -444,19 +443,7 @@ def verify_token():
 # ===== EXECUTAR SERVIDOR =====
 
 if __name__ == '__main__':
-    print("🚀 Iniciando Geminii Flask Backend...")
-    print("📊 APIs disponíveis:")
-    print("  - /api/status")
-    print("  - /api/test-db")
-    print("  - /api/auth/register (POST)")
-    print("  - /api/auth/login (POST)")
-    print("  - /api/auth/verify (GET)")
-    print("  - /api/auth/forgot-password (POST)")
-    print("  - /api/auth/validate-reset-token (POST)")
-    print("  - /api/auth/reset-password (POST)")
-    print("  📈 APIs de Ações:")
-    print("  - /api/stock/<symbol>")
-    print("  - /api/stocks?symbols=PETR4,VALE3")
-    print("  - /api/stock/<symbol>/history?period=1mo")
-    print("  - /api/stocks/search?q=PETR")
-    app.run(debug=True)
+    import os
+    port = int(os.environ.get("PORT", 5000))
+    debug_mode = os.environ.get("FLASK_ENV") == "development"
+    app.run(host="0.0.0.0", port=port, debug=debug_mode)
