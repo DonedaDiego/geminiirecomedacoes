@@ -3,12 +3,16 @@ import hashlib
 import jwt
 from datetime import datetime, timedelta, timezone
 import psycopg2
+import os
 from password_reset import generate_reset_token, validate_reset_token, reset_password
 from yfinance_service import YFinanceService
-import os
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'geminii-secret-2024'
+
+def hash_password(password):
+    """Criptografar senha"""
+    return hashlib.sha256(password.encode()).hexdigest()
 
 def get_db_connection():
     """Conectar com PostgreSQL (local ou Render)"""
