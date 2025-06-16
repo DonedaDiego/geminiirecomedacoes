@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Planos - Geminii Tech</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            dark: '#000000',
+            light: '#ffffff',
+            subtle: 'rgba(255,255,255,0.1)',
+            geminii: '#ba39af'
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    body { 
+      font-family: 'Inter', sans-serif; 
+      overflow-x: hidden;
+    }
+    
+    .plan-card {
+      background: rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 16px;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+      position: relative;
+      cursor: pointer;
+    }
+    
+    .plan-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 20px 40px rgba(186, 57, 175, 0.15);
+    }
+    
+    .plan-card.featured {
+      border: 2px solid #ba39af;
+      box-shadow: 0 0 20px rgba(186, 57, 175, 0.2);
+    }
+    
+    .plan-card.selected {
+      border: 2px solid #ba39af !important;
+      box-shadow: 0 0 25px rgba(186, 57, 175, 0.3) !important;
+      background: rgba(186, 57, 175, 0.05);
+    }
+    
+    .plan-card.featured::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, #ba39af, #d946ef);
+    }
+    
+    .feature-icon {
+      width: 18px;
+      height: 18px;
+      background: linear-gradient(135deg, #ba39af, #d946ef);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: 10px;
+      flex-shrink: 0;
+    }
+    
+    .price-gradient {
+      background: linear-gradient(135deg, #ba39af, #d946ef);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .btn-primary {
+      background: linear-gradient(135deg, #ba39af, #d946ef);
+      transition: transform 0.2s ease;
+    }
+    
+    .btn-primary:hover {
+      transform: translateY(-1px);
+    }
+    
+    .btn-secondary {
+      border: 2px solid rgba(186, 57, 175, 0.5);
+      background: rgba(186, 57, 175, 0.1);
+      transition: all 0.2s ease;
+    }
+    
+    .btn-secondary:hover {
+      background: rgba(186, 57, 175, 0.2);
+      border-color: rgba(186, 57, 175, 0.8);
+    }
+    
+    .comparison-table {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(10px);
+      border-radius: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .check-icon {
+      color: #10b981;
+    }
+    
+    .cross-icon {
+      color: #ef4444;
+    }
+    
+    .faq-item {
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      transition: background-color 0.2s ease;
+    }
+    
+    .faq-item:hover {
+      background: rgba(186, 57, 175, 0.05);
+    }
+    
+    .faq-content {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease;
+    }
+    
+    .faq-item.active .faq-content {
+      max-height: 200px;
+    }
+    
+    .faq-item.active .faq-icon {
+      transform: rotate(180deg);
+    }
+    
+    .faq-icon {
+      transition: transform 0.2s ease;
+    }
+    
+    /* Otimizações para scroll suave */
+    * {
+      scroll-behavior: smooth;
+    }
+    
+    /* Remover animações pesadas em dispositivos lentos */
+    @media (prefers-reduced-motion: reduce) {
+      * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+
+  </style>
+</head>
+<body class="bg-black text-white">
+  <div class="relative min-h-screen">
+    <!-- Background simples -->
+    <div class="fixed inset-0 z-0 bg-gradient-to-br from-black via-gray-900 to-black"></div>
+    
+    <!-- Glass floating navbar -->
+    <nav class="fixed top-6 left-1/2 transform -translate-x-1/2 z-50 bg-opacity-5 border-opacity-10 bg-white border-white border rounded-full pt-4 pr-4 pb-4 pl-4 shadow-xl backdrop-blur-md">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center">
+          <img src="https://app.geminii.com.br/wp-content/uploads/2025/06/logo.png" alt="Geminii Logo" class="w-6 h-6 cursor-pointer" onclick="window.location.href='/home.html'">
+        </div>
+        <div class="hidden md:flex items-center space-x-6 text-xs text-gray-300 ml-8">
+          <a href="/home.html" class="hover:text-white transition-colors">Home</a>
+          <a href="/monitor-basico.html" class="hover:text-white transition-colors">Scanner</a>
+          <a href="/radar-setores.html" class="hover:text-white transition-colors">Radar de Setores</a>
+          <span class="text-white font-medium">Planos</span>
+          <a href="/sobre.html" class="hover:text-white transition-colors">Sobre</a>
+          <a href="/conta.html" class="hover:text-white transition-colors">Conta</a>
+        </div>
+        <div class="flex items-center space-x-3 ml-8">
+          <div id="apiStatus" class="w-8 h-8 bg-green-500 bg-opacity-10 border border-green-500 border-opacity-30 rounded-full flex items-center justify-center relative">
+            <i class="fas fa-shield-alt text-green-500 text-xs"></i>
+            <div class="absolute -top-1 -right-1 w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+          </div>
+          <a href="#" class="hover:bg-gray-200 transition-colors text-xs font-medium text-black bg-white rounded-full pt-1.5 pr-3 pb-1.5 pl-3">Começar</a>
+        </div>
+      </div>
+    </nav>
+    
+    <!-- Content -->
+    <div class="relative z-10 pt-32 pb-16">
+      <div class="max-w-6xl mx-auto px-6">
+        
+        <!-- Header -->
+        <div class="text-center mb-16">
+          <h1 class="text-4xl md:text-5xl font-bold mb-6">
+            <span class="text-white font-light">Escolha seu</span>
+            <span style="color: #ba39af; font-weight: 900;">Plano</span>
+          </h1>
+          <p class="text-neutral-300 text-lg max-w-2xl mx-auto leading-relaxed">
+            Análises profissionais, dados em tempo real e estratégias exclusivas para maximizar seus investimentos na B3.
+          </p>
+          
+          <!-- Toggle Anual/Mensal -->
+          <div class="flex items-center justify-center mt-8 gap-4">
+            <span class="text-gray-400">Mensal</span>
+            <div class="relative">
+              <input type="checkbox" id="annual-toggle" class="sr-only" checked>
+              <label for="annual-toggle" class="flex items-center cursor-pointer">
+                <div class="w-12 h-6 bg-gray-600 rounded-full p-1 duration-200 ease-in-out">
+                  <div class="bg-gradient-to-r from-pink-500 to-purple-600 w-4 h-4 rounded-full shadow-md transform duration-200 ease-in-out translate-x-6"></div>
+                </div>
+              </label>
+            </div>
+            <span class="text-white">Anual</span>
+            <span class="px-3 py-1 bg-green-600 bg-opacity-20 text-green-400 text-xs rounded-full border border-green-500 border-opacity-30">
+              1 mês grátis
+            </span>
+          </div>
+        </div>
+
+        <!-- Plans Grid -->
+        <div class="grid md:grid-cols-3 gap-6 mb-16">
+          
+          <!-- Plano Essencial -->
+          <div class="plan-card p-6" id="plan-essencial" onclick="selectPlan('essencial')">
+            <div class="text-center mb-6">
+              <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-shield-alt text-white text-lg"></i>
+              </div>
+              <h3 class="text-xl font-bold text-white mb-2">Essencial</h3>
+              <p class="text-gray-400 text-sm">Para quem está começando ou quer o básico com segurança</p>
+            </div>
+            
+            <div class="text-center mb-6">
+              <div class="text-3xl font-bold price-gradient mb-1">
+                <span id="price-essencial">R$ 39</span>
+              </div>
+              <div class="text-gray-400 text-sm">
+                <span id="period-essencial">por mês</span>
+              </div>
+            </div>
+            
+            <div class="space-y-3 mb-6">
+              <div class="flex items-center">
+                <div class="feature-icon">
+                  <i class="fas fa-check text-white text-xs"></i>
+                </div>
+                <span class="text-gray-300 text-sm">Monitor básico de ações</span>
+              </div>
+              <div class="flex items-center">
+                <div class="feature-icon">
+                  <i class="fas fa-check text-white text-xs"></i>
+                </div>
+                <span class="text-gray-300 text-sm">Alertas de preço via email</span>
+              </div>
+              <div class="flex items-center">
+                <div class="feature-icon">
+                  <i class="fas fa-check text-white text-xs"></i>
+                </div>
+                <span class="text-gray-300 text-sm">Dados históricos (6 meses)</span>
+              </div>
+              <div class="flex items-center">
+                <div class="feature-icon">
+                  <i class="fas fa-check text-white text-xs"></i>
+                </div>
+                <span class="text-gray-300 text-sm">Radar de setores básico</span>
+              </div>
+              <div class="flex items-center">
+                <div class="feature-icon">
+                  <i class="fas fa-check text-white text-xs"></i>
+                </div>
+                <span class="text-gray-300 text-sm">Suporte por email</span>
+              </div>
+            </div>
+            
+            <button class="w-full py-3 btn-primary text-white font-medium rounded-lg text-sm" onclick="selectPlan('essencial')">
+              Escolher Essencial
+            </button>
+          </div>
+
+          <!-- Plano Tático (Featured) -->
+          <div class="plan-card featured p-6" id="plan-tatico" onclick="selectPlan('tatico')">
+            
+            <!-- Badge Popular -->
+            <div class="absolute -top-3 left-1/2 transform -translate-x-1/2">
+              <span class="bg-gradient-to-r from-pink-500 to-purple-600 text-white text-xs font-bold px-3 py-1 rounded-full">
+                MAIS POPULAR
+              </span>
+            </div>
+            
+            <div class="text-center mb-6 mt-3">
+              <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-crosshairs text-white text-lg"></i>
+              </div>
+              <h3 class="text-xl font-bold text-white mb-2">Tático</h3>
+              <p class="text-gray-400 text-sm">Para quem já investe e quer se posicionar melhor</p>
+            </div>
+            
+            <div class="text-center mb-6">
+              <div class="text-3xl font-bold price-gradient mb-1">
+                <span id="price-tatico">R$ 79</span>
+              </div>
+              <div class="text-gray-400 text-sm">
+                <span id="period-tatico">por mês</span>
+              </div>
+            </div>
+            
+            <div class="space-y-3 mb-6">
+              <div class="flex items-center">
+                <div class="feature-icon">
+                  <i class="fas fa-check text-white text-xs"></i>
+                </div>
+                <span class="text-gray-300 text-sm"><strong>Tudo do Essencial +</strong></span>
+              </div>
+              <div class="flex items-center">
+                <div class="feature-icon">
+                  <i class="fas fa-check text-white text-xs"></i>
+                </div>
+                <span class="text-gray-300 text-sm">RSL e análise técnica avançada</span>
+              </div>
+              <div class="flex items-center">
+                <div class="feature-icon">
+                  <i class="fas fa-check text-white text-xs"></i>
+                </div>
+                <span class="text-gray-300 text-sm">Backtests automáticos</span>
+              </div>
+              <div class="flex items-center">
+                <div class="feature-icon">
+                  <i class="fas fa-check text-white text-xs"></i>
+                </div>
+                <span class="text-gray-300 text-sm">Alertas via WhatsApp</span>
+              </div>
+              <div class="flex items-center">
+                <div class="feature-icon">
+                  <i class="fas fa-check text-white text-xs"></i>
+                </div>
+                <span class="text-gray-300 text-sm">Dados históricos ilimitados</span>
+              </div>
+              <div class="flex items-center">
+                <div class="feature-icon">
+                  <i class="fas fa-check text-white text-xs"></i>
+                </div>
+                <span class="text-gray-300 text-sm">API para desenvolvedores</span>
+              </div>
+            </div>
+            
+            <button class="w-full py-3 btn-primary text-white font-medium rounded-lg text-sm" onclick="selectPlan('tatico')">
+              Escolher Tático
+            </button>
+          </div>
+
+          <!-- Plano Estratégico -->
+          <div class="plan-card p-6" id="plan-estrategico" onclick="selectPlan('estrategico')">
+            <div class="text-center mb-6">
+              <div class="w-12 h-12 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-crown text-white text-lg"></i>
+              </div>
+              <h3 class="text-xl font-bold text-white mb-2">Estratégico</h3>
+              <p class="text-gray-400 text-sm">Para investidores experientes que querem diferenciais</p>
+            </div>
+            
+            <div class="text-center mb-6">
+              <div class="text-3xl font-bold price-gradient mb-1">
+                <span id="price-estrategico">R$ 149</span>
+              </div>
+              <div class="text-gray-400 text-sm">
+                <span id="period-estrategico">por mês</span>
+              </div>
+            </div>
+            
+            <div class="space-y-3 mb-6">
+              <div class="flex items-center">
+                <div class="feature-icon">
+                  <i class="fas fa-check text-white text-xs"></i>
+                </div>
+                <span class="text-gray-300 text-sm"><strong>Tudo do Tático +</strong></span>
+              </div>
+              <div class="flex items-center">
+                <div class="feature-icon">
+                  <i class="fas fa-check text-white text-xs"></i>
+                </div>
+                <span class="text-gray-300 text-sm">Long & Short strategies</span>
+              </div>
+              <div class="flex items-center">
+                <div class="feature-icon">
+                  <i class="fas fa-check text-white text-xs"></i>
+                </div>
+                <span class="text-gray-300 text-sm">IA para recomendações</span>
+              </div>
+              <div class="flex items-center">
+                <div class="feature-icon">
+                  <i class="fas fa-check text-white text-xs"></i>
+                </div>
+                <span class="text-gray-300 text-sm">Consultoria personalizada</span>
+              </div>
+              <div class="flex items-center">
+                <div class="feature-icon">
+                  <i class="fas fa-check text-white text-xs"></i>
+                </div>
+                <span class="text-gray-300 text-sm">Acesso prioritário</span>
+              </div>
+              <div class="flex items-center">
+                <div class="feature-icon">
+                  <i class="fas fa-check text-white text-xs"></i>
+                </div>
+                <span class="text-gray-300 text-sm">Relatórios exclusivos</span>
+              </div>
+            </div>
+            
+            <button class="w-full py-3 btn-primary text-white font-medium rounded-lg text-sm" onclick="selectPlan('estrategico')">
+              Escolher Estratégico
+            </button>
+          </div>
+        </div>
+
+        <!-- Comparison Table -->
+        <div class="comparison-table p-6 mb-16">
+          <h3 class="text-xl font-bold text-white text-center mb-6">Compare todos os recursos</h3>
+          
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="border-b border-white border-opacity-10">
+                  <th class="text-left py-3 text-gray-400 font-medium">Recursos</th>
+                  <th class="text-center py-3 text-white font-medium">Essencial</th>
+                  <th class="text-center py-3 text-white font-medium">Tático</th>
+                  <th class="text-center py-3 text-white font-medium">Estratégico</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="border-b border-white border-opacity-5">
+                  <td class="py-3 text-gray-300">Monitor de ações</td>
+                  <td class="text-center py-3"><i class="fas fa-check check-icon"></i></td>
+                  <td class="text-center py-3"><i class="fas fa-check check-icon"></i></td>
+                  <td class="text-center py-3"><i class="fas fa-check check-icon"></i></td>
+                </tr>
+                <tr class="border-b border-white border-opacity-5">
+                  <td class="py-3 text-gray-300">Radar de setores</td>
+                  <td class="text-center py-3"><i class="fas fa-check check-icon"></i></td>
+                  <td class="text-center py-3"><i class="fas fa-check check-icon"></i></td>
+                  <td class="text-center py-3"><i class="fas fa-check check-icon"></i></td>
+                </tr>
+                <tr class="border-b border-white border-opacity-5">
+                  <td class="py-3 text-gray-300">RSL e análise técnica</td>
+                  <td class="text-center py-3"><i class="fas fa-times cross-icon"></i></td>
+                  <td class="text-center py-3"><i class="fas fa-check check-icon"></i></td>
+                  <td class="text-center py-3"><i class="fas fa-check check-icon"></i></td>
+                </tr>
+                <tr class="border-b border-white border-opacity-5">
+                  <td class="py-3 text-gray-300">Backtests automáticos</td>
+                  <td class="text-center py-3"><i class="fas fa-times cross-icon"></i></td>
+                  <td class="text-center py-3"><i class="fas fa-check check-icon"></i></td>
+                  <td class="text-center py-3"><i class="fas fa-check check-icon"></i></td>
+                </tr>
+                <tr class="border-b border-white border-opacity-5">
+                  <td class="py-3 text-gray-300">Long & Short strategies</td>
+                  <td class="text-center py-3"><i class="fas fa-times cross-icon"></i></td>
+                  <td class="text-center py-3"><i class="fas fa-times cross-icon"></i></td>
+                  <td class="text-center py-3"><i class="fas fa-check check-icon"></i></td>
+                </tr>
+                <tr class="border-b border-white border-opacity-5">
+                  <td class="py-3 text-gray-300">IA para recomendações</td>
+                  <td class="text-center py-3"><i class="fas fa-times cross-icon"></i></td>
+                  <td class="text-center py-3"><i class="fas fa-times cross-icon"></i></td>
+                  <td class="text-center py-3"><i class="fas fa-check check-icon"></i></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- FAQ Section -->
+        <div class="plan-card p-6 mb-16">
+          <h3 class="text-xl font-bold text-white text-center mb-6">Perguntas Frequentes</h3>
+          
+          <div class="space-y-3">
+            <div class="faq-item p-3 rounded-lg cursor-pointer" onclick="toggleFAQ(0)">
+              <div class="flex items-center justify-between">
+                <h4 class="text-white font-medium text-sm">Posso cancelar a qualquer momento?</h4>
+                <i class="fas fa-chevron-down text-gray-400 faq-icon text-sm"></i>
+              </div>
+              <div class="faq-content">
+                <p class="text-gray-400 mt-3 text-sm">Sim! Você pode cancelar sua assinatura a qualquer momento sem multas ou taxas. O acesso permanece ativo até o final do período pago.</p>
+              </div>
+            </div>
+
+            <div class="faq-item p-3 rounded-lg cursor-pointer" onclick="toggleFAQ(1)">
+              <div class="flex items-center justify-between">
+                <h4 class="text-white font-medium text-sm">Como funciona o período de teste?</h4>
+                <i class="fas fa-chevron-down text-gray-400 faq-icon text-sm"></i>
+              </div>
+              <div class="faq-content">
+                <p class="text-gray-400 mt-3 text-sm">Oferecemos 7 dias grátis para todos os planos. Você pode testar todas as funcionalidades sem compromisso.</p>
+              </div>
+            </div>
+
+            <div class="faq-item p-3 rounded-lg cursor-pointer" onclick="toggleFAQ(2)">
+              <div class="flex items-center justify-between">
+                <h4 class="text-white font-medium text-sm">Posso trocar de plano depois?</h4>
+                <i class="fas fa-chevron-down text-gray-400 faq-icon text-sm"></i>
+              </div>
+              <div class="faq-content">
+                <p class="text-gray-400 mt-3 text-sm">Claro! Você pode fazer upgrade ou downgrade do seu plano a qualquer momento. As mudanças são aplicadas no próximo ciclo de cobrança.</p>
+              </div>
+            </div>
+
+            <div class="faq-item p-3 rounded-lg cursor-pointer" onclick="toggleFAQ(3)">
+              <div class="flex items-center justify-between">
+                <h4 class="text-white font-medium text-sm">Os dados são em tempo real?</h4>
+                <i class="fas fa-chevron-down text-gray-400 faq-icon text-sm"></i>
+              </div>
+              <div class="faq-content">
+                <p class="text-gray-400 mt-3 text-sm">Sim! Nossos dados são atualizados em tempo real durante o horário de funcionamento da B3, garantindo informações sempre precisas.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- CTA Final -->
+        <div class="text-center plan-card p-8">
+          <h3 class="text-2xl font-bold text-white mb-4">Pronto para começar?</h3>
+          <p class="text-gray-400 mb-6 max-w-xl mx-auto text-sm">
+            Junte-se a milhares de investidores que já usam o Geminii para tomar decisões mais inteligentes no mercado.
+          </p>
+          
+          <div class="flex flex-col sm:flex-row gap-4 justify-center">
+            <button class="px-6 py-3 btn-primary text-white font-medium rounded-lg text-sm">
+              Começar teste grátis
+            </button>
+            <button class="px-6 py-3 btn-secondary text-white font-medium rounded-lg text-sm">
+              Falar com consultor
+            </button>
+          </div>
+          
+          <p class="text-xs text-gray-500 mt-4">
+            Sem compromisso • Cancele quando quiser • Suporte 24/7
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Configurações
+    const API_BASE = window.location.origin + '/api';
+    let selectedPlan = 'tatico'; // Plano selecionado por padrão
+    let plansData = []; // Dados dos planos do banco
+    let isAnnual = true; // Começar com anual selecionado
+
+    // Elementos DOM
+    const toggle = document.getElementById('annual-toggle');
+
+    // ✅ BUSCAR PLANOS REAIS DO BANCO
+    async function loadPlansFromDatabase() {
+      try {
+        console.log('🔄 Carregando planos do banco...');
+        
+        const response = await fetch(`${API_BASE}/plans`);
+        const data = await response.json();
+        
+        if (data.success && data.data) {
+          plansData = data.data;
+          console.log('✅ Planos carregados:', plansData);
+          
+          // Atualizar interface com dados reais
+          updatePlansInterface();
+          
+          // Selecionar plano Tático por padrão
+          selectPlan('tatico');
+          
+        } else {
+          console.error('❌ Erro ao carregar planos:', data.error);
+          // Usar dados fallback se API falhar
+          useFallbackPlans();
+        }
+        
+      } catch (error) {
+        console.error('❌ Erro de conexão:', error);
+        useFallbackPlans();
+      }
+    }
+
+    function useFallbackPlans() {
+      // Dados de fallback caso API falhe
+      plansData = [
+        {
+          id: 1,
+          name: 'essencial',
+          display_name: 'Essencial',
+          price_monthly: 39,
+          price_annual: 35,
+          description: 'Para quem está começando ou quer o básico com segurança',
+          features: ['Monitor básico de ações', 'Alertas de preço via email', 'Dados históricos (6 meses)', 'Radar de setores básico', 'Suporte por email']
+        },
+        {
+          id: 2,
+          name: 'tatico',
+          display_name: 'Tático',
+          price_monthly: 79,
+          price_annual: 72,
+          description: 'Para quem já investe e quer se posicionar melhor',
+          features: ['Tudo do Essencial +', 'RSL e análise técnica avançada', 'Backtests automáticos', 'Alertas via WhatsApp', 'Dados históricos ilimitados', 'API para desenvolvedores']
+        },
+        {
+          id: 3,
+          name: 'estrategico',
+          display_name: 'Estratégico',
+          price_monthly: 149,
+          price_annual: 137,
+          description: 'Para investidores experientes que querem diferenciais',
+          features: ['Tudo do Tático +', 'Long & Short strategies', 'IA para recomendações', 'Consultoria personalizada', 'Acesso prioritário', 'Relatórios exclusivos']
+        }
+      ];
+      
+      updatePlansInterface();
+      selectPlan('tatico');
+    }
+
+    function updatePlansInterface() {
+      // Atualizar preços na interface
+      plansData.forEach(plan => {
+        const priceElement = document.getElementById(`price-${plan.name}`);
+        const periodElement = document.getElementById(`period-${plan.name}`);
+        
+        if (priceElement && periodElement) {
+          const currentPrice = isAnnual ? plan.price_annual : plan.price_monthly;
+          priceElement.textContent = `R$ ${currentPrice}`;
+          periodElement.textContent = isAnnual ? 'por mês (anual)' : 'por mês';
+        }
+      });
+    }
+
+    function updatePrices() {
+      isAnnual = toggle.checked;
+      updatePlansInterface();
+    }
+
+    async function selectPlan(planName) {
+      try {
+        // Remover seleção anterior
+        document.querySelectorAll('.plan-card').forEach(card => {
+          card.classList.remove('selected');
+        });
+        
+        // Selecionar novo plano
+        const planCard = document.getElementById(`plan-${planName}`);
+        if (planCard) {
+          planCard.classList.add('selected');
+        }
+        
+        selectedPlan = planName;
+        
+        console.log(`✅ Plano selecionado: ${planName}`);
+        
+        // Encontrar dados do plano
+        const planData = plansData.find(p => p.name === planName);
+        
+        if (planData) {
+          // Preparar dados para enviar para API
+          const selectionData = {
+            plan_id: planData.id,
+            billing_cycle: isAnnual ? 'annual' : 'monthly'
+          };
+          
+          // Opcional: Enviar seleção para o backend
+          // await sendPlanSelection(selectionData);
+          
+          console.log('📊 Dados do plano selecionado:', {
+            nome: planData.display_name,
+            preco: isAnnual ? planData.price_annual : planData.price_monthly,
+            ciclo: isAnnual ? 'anual' : 'mensal'
+          });
+        }
+        
+      } catch (error) {
+        console.error('❌ Erro ao selecionar plano:', error);
+      }
+    }
+
+    async function sendPlanSelection(selectionData) {
+      try {
+        const response = await fetch(`${API_BASE}/plans/select`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(selectionData)
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+          console.log('✅ Seleção enviada:', result.data.message);
+        }
+        
+      } catch (error) {
+        console.error('❌ Erro ao enviar seleção:', error);
+      }
+    }
+
+    // Inicializar página
+    function initializePlans() {
+      // Carregar planos do banco
+      loadPlansFromDatabase();
+      
+      // Configurar toggle
+      toggle.addEventListener('change', updatePrices);
+      
+      // Inicializar com preços anuais
+      updatePrices();
+    }
+
+    // FAQ Toggle otimizado
+    function toggleFAQ(index) {
+      const faqItems = document.querySelectorAll('.faq-item');
+      const currentItem = faqItems[index];
+      const isActive = currentItem.classList.contains('active');
+      
+      // Fechar todos
+      faqItems.forEach(item => item.classList.remove('active'));
+      
+      // Abrir o clicado se não estava ativo
+      if (!isActive) {
+        currentItem.classList.add('active');
+      }
+    }
+
+    // Event listeners
+    document.addEventListener('DOMContentLoaded', initializePlans);
+
+    // Tornar função global
+    window.selectPlan = selectPlan;
+
+    console.log('🎯 Página de planos com dados reais carregada!');
+  </script>
+</body>
+</html>

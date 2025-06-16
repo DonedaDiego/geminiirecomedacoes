@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Geminii Tecnologia</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            dark: '#000000',
+            light: '#ffffff',
+            subtle: 'rgba(255,255,255,0.1)',
+            geminii: '#ba39af'
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    body {
+      overflow-x: hidden;
+    }
+
+    /* Neon Logo Effect on Hover */
+    .neon-logo {
+      transition: all 0.3s ease;
+      border-radius: 4px;
+    }
+    
+    .neon-logo:hover {
+      filter: 
+        drop-shadow(0 0 5px #ba39af)
+        drop-shadow(0 0 10px #ba39af)
+        drop-shadow(0 0 15px #ba39af)
+        drop-shadow(0 0 20px #ba39af)
+        brightness(1.2);
+      transform: scale(1.1);
+    }
+
+    /* Navbar Neon Effect on Hover */
+    nav:hover {
+      background: rgba(186, 57, 175, 0.05);
+      border-color: rgba(186, 57, 175, 0.3);
+      box-shadow: 
+        0 25px 50px -12px rgba(0, 0, 0, 0.25),
+        0 0 20px rgba(186, 57, 175, 0.2),
+        0 0 40px rgba(186, 57, 175, 0.1);
+      transition: all 0.3s ease;
+    }
+
+    /* Menu Links Neon Effect on Hover */
+    nav a:hover {
+      color: #ba39af;
+      text-shadow: 
+        0 0 5px #ba39af,
+        0 0 10px #ba39af,
+        0 0 15px #ba39af;
+      transition: all 0.3s ease;
+    }
+
+    /* User Menu Styles */
+    .user-menu {
+      position: relative;
+      display: inline-block;
+    }
+
+    .user-menu-dropdown {
+      display: none;
+      position: absolute;
+      right: 0;
+      top: 100%;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 12px;
+      min-width: 200px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+      z-index: 1000;
+      margin-top: 8px;
+      padding: 8px;
+    }
+
+    .user-menu.active .user-menu-dropdown {
+      display: block;
+    }
+
+    .user-menu-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      color: #333;
+      text-decoration: none;
+      border-radius: 8px;
+      transition: all 0.2s ease;
+      font-size: 14px;
+    }
+
+    .user-menu-item:hover {
+      background: rgba(186, 57, 175, 0.1);
+      color: #ba39af;
+    }
+
+    .user-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #ba39af, #d946ef);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 600;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .user-avatar:hover {
+      transform: scale(1.1);
+      box-shadow: 0 0 20px rgba(186, 57, 175, 0.5);
+    }
+
+    .plan-badge {
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: white;
+      padding: 2px 6px;
+      border-radius: 6px;
+      font-size: 9px;
+      font-weight: 600;
+      text-transform: uppercase;
+      margin-left: 4px;
+    }
+
+    .plan-badge.premium {
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+    }
+
+    .plan-badge.strategic {
+      background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+    }
+
+    /* DROPDOWN STYLES */
+    .dropdown {
+      position: relative;
+      display: inline-block;
+    }
+
+    .dropdown-toggle {
+      cursor: pointer;
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .dropdown-toggle::after {
+      content: '▼';
+      font-size: 8px;
+      transition: transform 0.3s ease;
+    }
+
+    .dropdown.active .dropdown-toggle::after {
+      transform: rotate(180deg);
+    }
+
+    .dropdown-content {
+      display: none;
+      position: absolute;
+      background: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(20px) brightness(0.9);
+      -webkit-backdrop-filter: blur(20px) brightness(0.9);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 16px;
+      min-width: 600px;
+      top: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 1000;
+      padding: 24px;
+      margin-top: 8px;
+      box-shadow: 
+        0 25px 50px -12px rgba(0, 0, 0, 0.25),
+        0 0 30px rgba(186, 57, 175, 0.1);
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s ease;
+    }
+
+    .dropdown.active .dropdown-content {
+      display: block;
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .dropdown-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+
+    .dropdown-item {
+      padding: 16px;
+      border-radius: 12px;
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+
+    .dropdown-item:hover {
+      background: rgba(186, 57, 175, 0.1);
+      transform: translateY(-2px);
+    }
+    
+    .dropdown-item h4 {
+      color: #ba39af;
+      font-size: 15px;
+      font-weight: 750;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .dropdown-item p {
+      color: rgba(3, 3, 3, 0.7);
+      font-size: 12px;
+      line-height: 1.4;
+    }
+
+    .dropdown-badge {
+      background: #10b981;
+      color: white;
+      padding: 2px 8px;
+      border-radius: 8px;
+      font-size: 10px;
+      font-weight: 600;
+    }
+
+    .dropdown-item.requires-auth {
+      opacity: 0.7;
+      position: relative;
+    }
+
+    .dropdown-item.requires-auth::after {
+      content: '🔒';
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body class="bg-black text-white font-sans">
+  <div class="relative min-h-screen overflow-hidden">
+    <!-- Spline 3D background -->
+    <div class="fixed inset-0 z-0">
+      <iframe src="https://my.spline.design/thresholddarkambientui-v0gkZCfi6zXm69kE0wccy70f/" frameborder="0" width="100%" height="100%" class="w-full h-full"></iframe>
+    </div>
+    
+    <!-- Glass floating navbar -->
+    <nav class="fixed top-6 left-1/2 transform -translate-x-1/2 z-50 bg-opacity-5 border-opacity-10 bg-white border-white border rounded-full pt-4 pr-4 pb-4 pl-4 shadow-xl backdrop-blur-md">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center">
+          <img src="https://app.geminii.com.br/wp-content/uploads/2025/06/logo.png" alt="Geminii Logo" class="w-6 h-6 neon-logo">
+        </div>
+        <div class="hidden md:flex items-center space-x-6 text-xs text-gray-300 ml-8">
+          
+
+
+          <a href="/planos" class="hover:text-white transition-colors">Planos</a>
+          <a href="/sobre" class="hover:text-white transition-colors">Sobre</a>
+          <a href="/conta" class="hover:text-white transition-colors">Conta</a>
+        </div>
+        
+        <!-- Auth Section -->
+        <div class="flex items-center space-x-3 ml-8">
+          <div id="apiStatus" class="w-8 h-8 bg-green-500 bg-opacity-10 border border-green-500 border-opacity-30 rounded-full flex items-center justify-center relative">
+            <i class="fas fa-shield-alt text-green-500 text-xs"></i>
+            <div class="absolute -top-1 -right-1 w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+          </div>
+          
+          <!-- Guest View -->
+          <div id="guestView" class="flex items-center space-x-2">
+            <button onclick="showLoginModal()" class="hover:bg-gray-200 transition-colors text-xs font-medium text-black bg-white rounded-full pt-1.5 pr-3 pb-1.5 pl-3">Login</button>
+          </div>
+          
+          <!-- User View -->
+          <div id="userView" class="user-menu hidden">
+            <div class="user-avatar" onclick="toggleUserMenu()">
+              <span id="userInitials">GU</span>
+            </div>
+            <div class="user-menu-dropdown" id="userMenuDropdown">
+              <div class="px-3 py-2 border-b border-gray-200">
+                <p class="text-sm font-medium text-gray-900" id="userName">Usuário</p>
+                <p class="text-xs text-gray-500" id="userEmail">email@example.com</p>
+                <p class="text-xs text-gray-500">
+                  Plano: <span id="userPlan" class="font-medium">Básico</span>
+                  <span id="planBadge" class="plan-badge">Free</span>
+                </p>
+              </div>
+              <a href="/dashboard.html" class="user-menu-item">
+                <i class="fas fa-tachometer-alt"></i>
+                Dashboard
+              </a>
+              <a href="/conta.html" class="user-menu-item">
+                <i class="fas fa-user-cog"></i>
+                Minha Conta
+              </a>
+              <a href="/planos.html" class="user-menu-item">
+                <i class="fas fa-crown"></i>
+                Planos & Assinatura
+              </a>
+              <div class="border-t border-gray-200 mt-1 pt-1">
+                <a href="#" onclick="logout()" class="user-menu-item">
+                  <i class="fas fa-sign-out-alt"></i>
+                  Sair
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </nav>
+    
+    <!-- Content Area (para quando logado) -->
+    <div class="relative z-10 pt-24 px-6">
+      <div class="max-w-6xl mx-auto">
+        <h1 class="text-3xl font-bold text-white mb-6">Dashboard</h1>
+        <p class="text-gray-300">Área logada - Conteúdo do sistema aqui</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Login Modal -->
+  <div id="loginModal" class="fixed inset-0 z-50 hidden">
+    <div class="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm"></div>
+    <div class="fixed inset-0 flex items-center justify-center p-4">
+      <div class="bg-white bg-opacity-10 backdrop-filter backdrop-blur-lg border border-white border-opacity-20 rounded-2xl p-8 max-w-md w-full">
+        <div class="flex justify-between items-center mb-6">
+          <h2 class="text-2xl font-bold text-white">Login</h2>
+          <button onclick="closeLoginModal()" class="text-gray-400 hover:text-white">
+            <i class="fas fa-times text-xl"></i>
+          </button>
+        </div>
+        
+        <form id="loginForm">
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-300 mb-2">E-mail:</label>
+            <input type="email" id="loginEmail" required class="w-full px-4 py-3 bg-white bg-opacity-10 border border-white border-opacity-20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-purple-500">
+          </div>
+          
+          <div class="mb-6">
+            <label class="block text-sm font-medium text-gray-300 mb-2">Senha:</label>
+            <input type="password" id="loginPassword" required class="w-full px-4 py-3 bg-white bg-opacity-10 border border-white border-opacity-20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-purple-500">
+          </div>
+          
+          <button type="submit" class="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-3 rounded-lg font-medium hover:from-purple-700 hover:to-pink-700 transition-all">
+            Entrar
+          </button>
+        </form>
+        
+        <div class="mt-4 text-center">
+          <button onclick="showForgotPasswordModal()" class="text-sm text-gray-400 hover:text-purple-300 transition-colors">
+            Esqueci minha senha
+          </button>
+        </div>
+        
+        <div id="loginMessage" class="mt-4 text-center"></div>
+        
+        <div class="mt-6 text-center">
+          <p class="text-gray-400">Não tem conta? 
+            <button onclick="showRegisterModal()" class="text-purple-400 hover:text-purple-300">Registre-se</button>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Register Modal -->
+  <div id="registerModal" class="fixed inset-0 z-50 hidden">
+    <div class="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm"></div>
+    <div class="fixed inset-0 flex items-center justify-center p-4">
+      <div class="bg-white bg-opacity-10 backdrop-filter backdrop-blur-lg border border-white border-opacity-20 rounded-2xl p-8 max-w-md w-full">
+        <div class="flex justify-between items-center mb-6">
+          <h2 class="text-2xl font-bold text-white">Criar Conta</h2>
+          <button onclick="closeRegisterModal()" class="text-gray-400 hover:text-white">
+            <i class="fas fa-times text-xl"></i>
+          </button>
+        </div>
+        
+        <form id="registerForm">
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-300 mb-2">Nome:</label>
+            <input type="text" id="registerName" required class="w-full px-4 py-3 bg-white bg-opacity-10 border border-white border-opacity-20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-purple-500">
+          </div>
+          
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-300 mb-2">E-mail:</label>
+            <input type="email" id="registerEmail" required class="w-full px-4 py-3 bg-white bg-opacity-10 border border-white border-opacity-20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-purple-500">
+          </div>
+          
+          <div class="mb-6">
+            <label class="block text-sm font-medium text-gray-300 mb-2">Senha:</label>
+            <input type="password" id="registerPassword" required class="w-full px-4 py-3 bg-white bg-opacity-10 border border-white border-opacity-20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-purple-500">
+          </div>
+          
+          <button type="submit" class="w-full bg-gradient-to-r from-green-600 to-blue-600 text-white py-3 rounded-lg font-medium hover:from-green-700 hover:to-blue-700 transition-all">
+            Criar Conta
+          </button>
+        </form>
+        
+        <div id="registerMessage" class="mt-4 text-center"></div>
+        
+        <div class="mt-6 text-center">
+          <p class="text-gray-400">Já tem conta? 
+            <button onclick="showLoginModal()" class="text-purple-400 hover:text-purple-300">Faça login</button>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Forgot Password Modal -->
+  <div id="forgotPasswordModal" class="fixed inset-0 z-50 hidden">
+    <div class="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm"></div>
+    <div class="fixed inset-0 flex items-center justify-center p-4">
+      <div class="bg-white bg-opacity-10 backdrop-filter backdrop-blur-lg border border-white border-opacity-20 rounded-2xl p-8 max-w-md w-full">
+        <div class="flex justify-between items-center mb-6">
+          <h2 class="text-2xl font-bold text-white">Esqueci minha senha</h2>
+          <button onclick="closeForgotPasswordModal()" class="text-gray-400 hover:text-white">
+            <i class="fas fa-times text-xl"></i>
+          </button>
+        </div>
+        
+        <p class="text-gray-300 text-sm mb-6">Digite seu e-mail para receber um token de recuperação de senha.</p>
+        
+        <form id="forgotPasswordForm">
+          <div class="mb-6">
+            <label class="block text-sm font-medium text-gray-300 mb-2">E-mail:</label>
+            <input type="email" id="forgotEmail" required class="w-full px-4 py-3 bg-white bg-opacity-10 border border-white border-opacity-20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-purple-500">
+          </div>
+          
+          <button type="submit" class="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-lg font-medium hover:from-blue-700 hover:to-purple-700 transition-all">
+            Enviar Token
+          </button>
+        </form>
+        
+        <div id="forgotMessage" class="mt-4 text-center"></div>
+        
+        <div class="mt-6 text-center">
+          <button onclick="showLoginModal()" class="text-purple-400 hover:text-purple-300 text-sm">
+            ← Voltar ao Login
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reset Password Modal -->
+  <div id="resetPasswordModal" class="fixed inset-0 z-50 hidden">
+    <div class="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm"></div>
+    <div class="fixed inset-0 flex items-center justify-center p-4">
+      <div class="bg-white bg-opacity-10 backdrop-filter backdrop-blur-lg border border-white border-opacity-20 rounded-2xl p-8 max-w-md w-full">
+        <div class="flex justify-between items-center mb-6">
+          <h2 class="text-2xl font-bold text-white">Nova Senha</h2>
+          <button onclick="closeResetPasswordModal()" class="text-gray-400 hover:text-white">
+            <i class="fas fa-times text-xl"></i>
+          </button>
+        </div>
+        
+        <p class="text-gray-300 text-sm mb-6">Digite o token recebido e sua nova senha.</p>
+        
+        <form id="resetPasswordForm">
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-300 mb-2">Token de Recuperação:</label>
+            <input type="text" id="resetToken" required class="w-full px-4 py-3 bg-white bg-opacity-10 border border-white border-opacity-20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-purple-500">
+          </div>
+          
+          <div class="mb-6">
+            <label class="block text-sm font-medium text-gray-300 mb-2">Nova Senha:</label>
+            <input type="password" id="newPassword" required class="w-full px-4 py-3 bg-white bg-opacity-10 border border-white border-opacity-20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-purple-500">
+          </div>
+          
+          <button type="submit" class="w-full bg-gradient-to-r from-green-600 to-blue-600 text-white py-3 rounded-lg font-medium hover:from-green-700 hover:to-blue-700 transition-all">
+            Redefinir Senha
+          </button>
+        </form>
+        
+        <div id="resetMessage" class="mt-4 text-center"></div>
+        
+        <div class="mt-6 text-center">
+          <button onclick="showForgotPasswordModal()" class="text-purple-400 hover:text-purple-300 text-sm">
+            ← Voltar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentUser = null;
+    let userToken = null;
+
+    // Show/Hide Modals
+    function showLoginModal() {
+      document.getElementById('loginModal').classList.remove('hidden');
+      document.getElementById('registerModal').classList.add('hidden');
+    }
+
+    function showRegisterModal() {
+      document.getElementById('registerModal').classList.remove('hidden');
+      document.getElementById('loginModal').classList.add('hidden');
+    }
+
+    function closeLoginModal() {
+      document.getElementById('loginModal').classList.add('hidden');
+    }
+
+    function closeRegisterModal() {
+      document.getElementById('registerModal').classList.add('hidden');
+    }
+
+    function showForgotPasswordModal() {
+      document.getElementById('forgotPasswordModal').classList.remove('hidden');
+      document.getElementById('loginModal').classList.add('hidden');
+      document.getElementById('registerModal').classList.add('hidden');
+    }
+
+    function closeForgotPasswordModal() {
+      document.getElementById('forgotPasswordModal').classList.add('hidden');
+    }
+
+    function showResetPasswordModal() {
+      document.getElementById('resetPasswordModal').classList.remove('hidden');
+      document.getElementById('forgotPasswordModal').classList.add('hidden');
+    }
+
+    function closeResetPasswordModal() {
+      document.getElementById('resetPasswordModal').classList.add('hidden');
+    }
+
+    // Handle Login
+    document.addEventListener('DOMContentLoaded', function() {
+      document.getElementById('loginForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const email = document.getElementById('loginEmail').value;
+        const password = document.getElementById('loginPassword').value;
+        const messageDiv = document.getElementById('loginMessage');
+        
+        try {
+          const response = await fetch('/api/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password })
+          });
+          
+          const data = await response.json();
+          
+          if (data.success) {
+            localStorage.setItem('geminii_token', data.data.token);
+            localStorage.setItem('geminii_user', JSON.stringify(data.data.user));
+            
+            messageDiv.innerHTML = '<p class="text-green-400">✅ Login realizado!</p>';
+            
+            setTimeout(() => {
+              closeLoginModal();
+              showUserView(data.data.user);
+            }, 1000);
+          } else {
+            messageDiv.innerHTML = `<p class="text-red-400">❌ ${data.error}</p>`;
+          }
+        } catch (error) {
+          messageDiv.innerHTML = '<p class="text-red-400">❌ Erro de conexão</p>';
+        }
+      });
+
+      // Handle Register
+      document.getElementById('registerForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const name = document.getElementById('registerName').value;
+        const email = document.getElementById('registerEmail').value;
+        const password = document.getElementById('registerPassword').value;
+        const messageDiv = document.getElementById('registerMessage');
+        
+        try {
+          const response = await fetch('/api/auth/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, email, password })
+          });
+          
+          const data = await response.json();
+          
+          if (data.success) {
+            messageDiv.innerHTML = '<p class="text-green-400">✅ Conta criada! Fazendo login...</p>';
+            
+            // Auto login after register
+            setTimeout(() => {
+              document.getElementById('loginEmail').value = email;
+              document.getElementById('loginPassword').value = password;
+              showLoginModal();
+              document.getElementById('loginForm').dispatchEvent(new Event('submit'));
+            }, 1500);
+          } else {
+            messageDiv.innerHTML = `<p class="text-red-400">❌ ${data.error}</p>`;
+          }
+        } catch (error) {
+          messageDiv.innerHTML = '<p class="text-red-400">❌ Erro de conexão</p>';
+        }
+      });
+      
+      // Handle Forgot Password
+      document.getElementById('forgotPasswordForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const email = document.getElementById('forgotEmail').value;
+        const messageDiv = document.getElementById('forgotMessage');
+        
+        try {
+          const response = await fetch('/api/auth/forgot-password', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email })
+          });
+          
+          const data = await response.json();
+          
+          if (data.success) {
+            messageDiv.innerHTML = `
+              <div class="text-green-400 text-sm">
+                ✅ ${data.message}<br>
+                👤 Usuário: ${data.data.user_name}<br>
+                🔑 Token: <strong>${data.data.token}</strong><br>
+                ⏰ Válido por: ${data.data.expires_in}
+              </div>`;
+            
+            // Auto preencher token no próximo modal
+            setTimeout(() => {
+              document.getElementById('resetToken').value = data.data.token;
+              showResetPasswordModal();
+            }, 3000);
+          } else {
+            messageDiv.innerHTML = `<p class="text-red-400 text-sm">❌ ${data.error}</p>`;
+          }
+        } catch (error) {
+          messageDiv.innerHTML = '<p class="text-red-400 text-sm">❌ Erro de conexão</p>';
+        }
+      });
+
+      // Handle Reset Password
+      document.getElementById('resetPasswordForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const token = document.getElementById('resetToken').value;
+        const newPassword = document.getElementById('newPassword').value;
+        const messageDiv = document.getElementById('resetMessage');
+        
+        try {
+          const response = await fetch('/api/auth/reset-password', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token, new_password: newPassword })
+          });
+          
+          const data = await response.json();
+          
+          if (data.success) {
+            messageDiv.innerHTML = `
+              <div class="text-green-400 text-sm">
+                ✅ ${data.message}<br>
+                👤 ${data.data.user_name}
+              </div>`;
+            
+            setTimeout(() => {
+              closeResetPasswordModal();
+              showLoginModal();
+              document.getElementById('loginMessage').innerHTML = '<p class="text-green-400">Senha redefinida! Faça login com a nova senha.</p>';
+            }, 2000);
+          } else {
+            messageDiv.innerHTML = `<p class="text-red-400 text-sm">❌ ${data.error}</p>`;
+          }
+        } catch (error) {
+          messageDiv.innerHTML = '<p class="text-red-400 text-sm">❌ Erro de conexão</p>';
+        }
+      });
+      
+      // Check auth on page load
+      checkAuthStatus();
+    });
+    function toggleUserMenu() {
+      const userMenu = document.querySelector('.user-menu');
+      userMenu.classList.toggle('active');
+    }
+
+    // Check Authentication Status
+    async function checkAuthStatus() {
+      const token = localStorage.getItem('geminii_token');
+      const userData = localStorage.getItem('geminii_user');
+
+      if (!token || !userData) {
+        showGuestView();
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/auth/verify', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          const user = JSON.parse(userData);
+          showUserView(user);
+          console.log('✅ Usuário autenticado:', user.name);
+        } else {
+          localStorage.removeItem('geminii_token');
+          localStorage.removeItem('geminii_user');
+          showGuestView();
+        }
+
+      } catch (error) {
+        console.error('Auth check failed:', error);
+        localStorage.removeItem('geminii_token');
+        localStorage.removeItem('geminii_user');
+        showGuestView();
+      }
+    }
+
+    // Show Guest View
+    function showGuestView() {
+      document.getElementById('guestView').classList.remove('hidden');
+      document.getElementById('userView').classList.add('hidden');
+      currentUser = null;
+      userToken = null;
+    }
+
+    // Show User View
+    function showUserView(user) {
+      document.getElementById('guestView').classList.add('hidden');
+      document.getElementById('userView').classList.remove('hidden');
+
+      // Update user info
+      const initials = user.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+      document.getElementById('userInitials').textContent = initials;
+      document.getElementById('userName').textContent = user.name;
+      document.getElementById('userEmail').textContent = user.email;
+      document.getElementById('userPlan').textContent = user.plan_name || 'Básico';
+
+      // Update plan badge
+      const planBadge = document.getElementById('planBadge');
+      const planId = user.plan_id || 1;
+      
+      if (planId === 1) {
+        planBadge.textContent = 'Free';
+        planBadge.className = 'plan-badge';
+      } else if (planId === 2) {
+        planBadge.textContent = 'Premium';
+        planBadge.className = 'plan-badge premium';
+      } else if (planId >= 3) {
+        planBadge.textContent = 'Strategic';
+        planBadge.className = 'plan-badge strategic';
+      }
+    }
+
+    // Logout Function
+    function logout() {
+      localStorage.removeItem('geminii_token');
+      localStorage.removeItem('geminii_user');
+      showGuestView();
+      document.querySelector('.user-menu').classList.remove('active');
+      alert('Logout realizado!');
+    }
+
+    // Navigation
+    function navigateToPage(url, requiresAuth = false) {
+      if (requiresAuth && !currentUser) {
+        alert('🔒 Login necessário para acessar este recurso!');
+        return;
+      }
+      console.log('Navegando para:', url);
+      // window.location.href = url;
+    }
+
+    // Demo functions
+    function showBacktestDialog() {
+      alert('📊 Backtests - Funcionalidade em desenvolvimento');
+    }
+
+    function showSupportResistanceDialog() {
+      alert('📈 Suportes e Resistências - Em desenvolvimento');
+    }
+
+    function showHistoricalReturnDialog() {
+      alert('📊 Retorno Histórico - Em desenvolvimento');
+    }
+
+    function showQuantPortfolioDialog() {
+      alert('🤖 Carteiras Quantitativas - Em desenvolvimento');
+    }
+
+    // DROPDOWN FUNCTIONALITY
+    document.addEventListener('DOMContentLoaded', function() {
+      // Check auth status on page load
+      checkAuthStatus();
+      
+      const dropdowns = document.querySelectorAll('.dropdown');
+      
+      dropdowns.forEach(dropdown => {
+        const toggle = dropdown.querySelector('.dropdown-toggle');
+        
+        toggle.addEventListener('click', function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          
+          const isActive = dropdown.classList.contains('active');
+          
+          // Fechar todos
+          dropdowns.forEach(d => d.classList.remove('active'));
+          
+          // Abrir o clicado se não estava ativo
+          if (!isActive) {
+            dropdown.classList.add('active');
+          }
+        });
+      });
+      
+      // Fechar ao clicar fora
+      document.addEventListener('click', function(e) {
+        if (!e.target.closest('.dropdown')) {
+          dropdowns.forEach(dropdown => {
+            dropdown.classList.remove('active');
+          });
+        }
+      });
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,8 @@
+flask
+uvicorn
+python-jose
+passlib
+psycopg2-binary
+python-dotenv
+PyJWT
+yfinance
