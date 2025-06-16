@@ -1,8 +1,7 @@
 flask
-uvicorn
-python-jose
-passlib
 psycopg2-binary
-python-dotenv
 PyJWT
 yfinance
+python-dotenv
+passlib
+python-jose
