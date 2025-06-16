@@ -5,27 +5,33 @@ from datetime import datetime, timedelta, timezone
 import psycopg2
 from password_reset import generate_reset_token, validate_reset_token, reset_password
 from yfinance_service import YFinanceService
+import os
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'geminii-secret-2024'
 
 def get_db_connection():
+    """Conectar com PostgreSQL (local ou Render)"""
     try:
-        conn = psycopg2.connect(
-            host=os.environ.get("DB_HOST", "localhost"),
-            database=os.environ.get("DB_NAME", "postgres"),
-            user=os.environ.get("DB_USER", "postgres"),
-            password=os.environ.get("DB_PASSWORD", "#geminii"),
-            port=os.environ.get("DB_PORT", "5432")
-        )
+        # Se estiver no Render, usar DATABASE_URL
+        database_url = os.environ.get("DATABASE_URL")
+        
+        if database_url:
+            # Produção (Render) - usa a URL completa
+            conn = psycopg2.connect(database_url, sslmode='require')
+        else:
+            # Desenvolvimento local
+            conn = psycopg2.connect(
+                host=os.environ.get("DB_HOST", "localhost"),
+                database=os.environ.get("DB_NAME", "postgres"),
+                user=os.environ.get("DB_USER", "postgres"),
+                password=os.environ.get("DB_PASSWORD", "#geminii"),
+                port=os.environ.get("DB_PORT", "5432")
+            )
         return conn
     except Exception as e:
         print(f"❌ Erro ao conectar no banco: {e}")
         return None
-
-def hash_password(password):
-    """Criptografar senha"""
-    return hashlib.sha256(password.encode()).hexdigest()
 
 # ===== ROTAS HTML =====
 
