@@ -88,6 +88,16 @@ def login_page():
     """Redirecionar login para página inicial"""
     return send_from_directory('../frontend', 'index.html')
 
+
+@app.route('/logo.png')
+def serve_logo():
+    """Servir logo da pasta frontend"""
+    return send_from_directory('../frontend', 'logo.png')
+
+@app.route('/assets/logo.png')  # ← ADICIONE ESTA!
+def serve_logo_assets():
+    """Servir logo da pasta assets (compatibilidade)"""
+    return send_from_directory('../frontend', 'logo.png')
 # ===== ROTAS API BÁSICAS =====
 
 @app.route('/api/status')
