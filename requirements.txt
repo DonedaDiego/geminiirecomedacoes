@@ -1,12 +1,10 @@
-flask
+Flask
+Flask-CORS
 psycopg2-binary
-PyJWT
 yfinance
 python-dotenv
 passlib
 python-jose
-flask-mail
-request
+gunicorn
 Werkzeug
-pandas
-numpy
+requests
