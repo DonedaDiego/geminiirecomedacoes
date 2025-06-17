@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Criar Conta - Geminii Tech</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            dark: '#000000',
+            light: '#ffffff',
+            geminii: '#ba39af'
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #000000 0%, #1a1a1a 100%);
+    }
+
+    .auth-container {
+      background: rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 24px;
+      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+    }
+
+    .input-field {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      transition: all 0.3s ease;
+    }
+
+    .input-field:focus {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: #ba39af;
+      box-shadow: 0 0 20px rgba(186, 57, 175, 0.3);
+      outline: none;
+    }
+
+    .input-field.valid {
+      border-color: #10b981;
+      box-shadow: 0 0 10px rgba(16, 185, 129, 0.2);
+    }
+
+    .input-field.invalid {
+      border-color: #ef4444;
+      box-shadow: 0 0 10px rgba(239, 68, 68, 0.2);
+    }
+
+    .register-btn {
+      background: linear-gradient(135deg, #10b981, #059669);
+      transition: all 0.3s ease;
+    }
+
+    .register-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 20px 40px rgba(16, 185, 129, 0.4);
+    }
+
+    .register-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .logo-glow:hover {
+      filter: drop-shadow(0 0 20px #ba39af);
+      transform: scale(1.1);
+    }
+
+    .back-link {
+      color: rgba(255, 255, 255, 0.6);
+      transition: all 0.3s ease;
+    }
+
+    .back-link:hover {
+      color: #ba39af;
+      text-shadow: 0 0 10px rgba(186, 57, 175, 0.5);
+    }
+
+    .password-strength {
+      height: 4px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 2px;
+      overflow: hidden;
+      margin-top: 8px;
+    }
+
+    .password-strength-fill {
+      height: 100%;
+      transition: all 0.3s ease;
+      border-radius: 2px;
+    }
+
+    .strength-weak { background: #ef4444; width: 33%; }
+    .strength-medium { background: #f59e0b; width: 66%; }
+    .strength-strong { background: #10b981; width: 100%; }
+
+    .floating-shapes {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    .shape {
+      position: absolute;
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(5, 150, 105, 0.05));
+      border-radius: 50%;
+      animation: float 15s ease-in-out infinite;
+    }
+
+    .shape:nth-child(1) {
+      width: 300px;
+      height: 300px;
+      top: 10%;
+      left: -10%;
+      animation-delay: 0s;
+    }
+
+    .shape:nth-child(2) {
+      width: 200px;
+      height: 200px;
+      top: 60%;
+      right: -5%;
+      animation-delay: 7s;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0px) rotate(0deg); opacity: 0.3; }
+      50% { transform: translateY(-30px) rotate(180deg); opacity: 0.6; }
+    }
+  </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+  
+  <!-- Floating Background Shapes -->
+  <div class="floating-shapes">
+    <div class="shape"></div>
+    <div class="shape"></div>
+  </div>
+
+  <div class="w-full max-w-md">
+    <!-- Header -->
+    <div class="text-center mb-8">
+      <div class="mb-6">
+        <img src="assets/logo.png" alt="Geminii Logo" class="w-16 h-16 mx-auto logo-glow transition-all duration-300 cursor-pointer" onclick="window.location.href='/'" onerror="this.src='/assets/logo.png';">
+      </div>
+      <h1 class="text-3xl font-bold text-white mb-2">Crie sua conta</h1>
+      <p class="text-gray-400">Comece grátis na Geminii Tech</p>
+    </div>
+
+    <!-- Register Form -->
+    <div class="auth-container p-8">
+      <form id="registerForm" class="space-y-6">
+        <div>
+          <label for="registerName" class="block text-sm font-medium text-gray-300 mb-2">
+            <i class="fas fa-user mr-2 text-green-500"></i>Nome Completo
+          </label>
+          <input 
+            type="text" 
+            id="registerName" 
+            required 
+            class="input-field w-full px-4 py-3 rounded-lg text-white placeholder-gray-500"
+            placeholder="Seu nome completo"
+            autocomplete="name"
+          >
+        </div>
+
+        <div>
+          <label for="registerEmail" class="block text-sm font-medium text-gray-300 mb-2">
+            <i class="fas fa-envelope mr-2 text-green-500"></i>E-mail
+          </label>
+          <input 
+            type="email" 
+            id="registerEmail" 
+            required 
+            class="input-field w-full px-4 py-3 rounded-lg text-white placeholder-gray-500"
+            placeholder="seu@email.com"
+            autocomplete="email"
+          >
+        </div>
+        
+        <div>
+          <label for="registerPassword" class="block text-sm font-medium text-gray-300 mb-2">
+            <i class="fas fa-lock mr-2 text-green-500"></i>Senha
+          </label>
+          <input 
+            type="password" 
+            id="registerPassword" 
+            required 
+            class="input-field w-full px-4 py-3 rounded-lg text-white placeholder-gray-500"
+            placeholder="Mínimo 6 caracteres"
+            autocomplete="new-password"
+          >
+          <div class="password-strength">
+            <div id="passwordStrengthFill" class="password-strength-fill"></div>
+          </div>
+          <p id="passwordHint" class="text-xs text-gray-500 mt-2">Digite pelo menos 6 caracteres</p>
+        </div>
+
+        <!-- Terms -->
+        <div class="flex items-start space-x-3">
+          <input type="checkbox" id="termsCheck" required class="mt-1">
+          <label for="termsCheck" class="text-sm text-gray-400">
+            Aceito os <a href="#" class="text-geminii hover:text-purple-300">Termos de Uso</a> 
+            e <a href="#" class="text-geminii hover:text-purple-300">Política de Privacidade</a>
+          </label>
+        </div>
+        
+        <button 
+          type="submit" 
+          id="registerBtn"
+          class="register-btn w-full py-3 text-white font-semibold rounded-lg"
+        >
+          <i class="fas fa-user-plus mr-2"></i>
+          <span id="registerBtnText">Criar Conta Gratuita</span>
+        </button>
+      </form>
+      
+      <!-- Messages -->
+      <div id="registerMessage" class="mt-4 text-center"></div>
+      
+      <!-- Links -->
+      <div class="mt-6 space-y-3 text-center">
+        <p class="text-gray-400">
+          Já tem conta? 
+          <a href="/login.html" class="text-geminii hover:text-purple-300 font-medium transition-colors">
+            Fazer login
+          </a>
+        </p>
+        
+        <a href="/" class="back-link block text-sm">
+          <i class="fas fa-arrow-left mr-1"></i>
+          Voltar ao início
+        </a>
+      </div>
+    </div>
+
+    <!-- Features -->
+    <div class="mt-8 grid grid-cols-3 gap-4 text-center">
+      <div class="text-gray-400">
+        <i class="fas fa-shield-alt text-green-500 text-lg mb-2 block"></i>
+        <p class="text-xs">Seguro</p>
+      </div>
+      <div class="text-gray-400">
+        <i class="fas fa-bolt text-yellow-500 text-lg mb-2 block"></i>
+        <p class="text-xs">Rápido</p>
+      </div>
+      <div class="text-gray-400">
+        <i class="fas fa-gift text-purple-500 text-lg mb-2 block"></i>
+        <p class="text-xs">Gratuito</p>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="text-center mt-8">
+      <p class="text-gray-500 text-sm">
+        © 2025 <span class="text-geminii font-medium">Geminii Tech</span> - Trading Automatizado
+      </p>
+    </div>
+  </div>
+
+  <script>
+    // Password strength checker
+    function checkPasswordStrength(password) {
+      const strengthFill = document.getElementById('passwordStrengthFill');
+      const hint = document.getElementById('passwordHint');
+      
+      if (password.length < 6) {
+        strengthFill.className = 'password-strength-fill';
+        hint.textContent = 'Digite pelo menos 6 caracteres';
+        hint.className = 'text-xs text-gray-500 mt-2';
+        return false;
+      } else if (password.length < 8) {
+        strengthFill.className = 'password-strength-fill strength-weak';
+        hint.textContent = 'Senha fraca - adicione mais caracteres';
+        hint.className = 'text-xs text-red-400 mt-2';
+        return true;
+      } else if (password.length < 12 || !/[A-Z]/.test(password) || !/[0-9]/.test(password)) {
+        strengthFill.className = 'password-strength-fill strength-medium';
+        hint.textContent = 'Senha média - adicione números e maiúsculas';
+        hint.className = 'text-xs text-yellow-400 mt-2';
+        return true;
+      } else {
+        strengthFill.className = 'password-strength-fill strength-strong';
+        hint.textContent = 'Senha forte!';
+        hint.className = 'text-xs text-green-400 mt-2';
+        return true;
+      }
+    }
+
+    // Email validation
+    function validateEmail(email) {
+      const emailField = document.getElementById('registerEmail');
+      const isValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+      
+      if (email.length > 0) {
+        emailField.className = isValid ? 
+          'input-field w-full px-4 py-3 rounded-lg text-white placeholder-gray-500 valid' :
+          'input-field w-full px-4 py-3 rounded-lg text-white placeholder-gray-500 invalid';
+      } else {
+        emailField.className = 'input-field w-full px-4 py-3 rounded-lg text-white placeholder-gray-500';
+      }
+      
+      return isValid;
+    }
+
+    // Name validation
+    function validateName(name) {
+      const nameField = document.getElementById('registerName');
+      const isValid = name.trim().length >= 2;
+      
+      if (name.length > 0) {
+        nameField.className = isValid ? 
+          'input-field w-full px-4 py-3 rounded-lg text-white placeholder-gray-500 valid' :
+          'input-field w-full px-4 py-3 rounded-lg text-white placeholder-gray-500 invalid';
+      } else {
+        nameField.className = 'input-field w-full px-4 py-3 rounded-lg text-white placeholder-gray-500';
+      }
+      
+      return isValid;
+    }
+
+    // Check if already logged in
+    async function checkAuthStatus() {
+      const token = localStorage.getItem('geminii_token');
+      if (!token) return;
+
+      try {
+        const response = await fetch('/api/auth/verify', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        const result = await response.json();
+        if (result.success) {
+          window.location.href = '/dashboard.html';
+        } else {
+          localStorage.removeItem('geminii_token');
+          localStorage.removeItem('geminii_user');
+        }
+      } catch (error) {
+        localStorage.removeItem('geminii_token');
+        localStorage.removeItem('geminii_user');
+      }
+    }
+
+    // Register form handler
+    document.getElementById('registerForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      
+      const name = document.getElementById('registerName').value.trim();
+      const email = document.getElementById('registerEmail').value.trim();
+      const password = document.getElementById('registerPassword').value;
+      const termsChecked = document.getElementById('termsCheck').checked;
+      const messageDiv = document.getElementById('registerMessage');
+      const registerBtn = document.getElementById('registerBtn');
+      const registerBtnText = document.getElementById('registerBtnText');
+      
+      // Validation
+      if (!name || !email || !password) {
+        messageDiv.innerHTML = '<p class="text-red-400"><i class="fas fa-exclamation-triangle mr-1"></i>Preencha todos os campos</p>';
+        return;
+      }
+
+      if (!validateName(name)) {
+        messageDiv.innerHTML = '<p class="text-red-400"><i class="fas fa-exclamation-triangle mr-1"></i>Nome deve ter pelo menos 2 caracteres</p>';
+        return;
+      }
+
+      if (!validateEmail(email)) {
+        messageDiv.innerHTML = '<p class="text-red-400"><i class="fas fa-exclamation-triangle mr-1"></i>E-mail inválido</p>';
+        return;
+      }
+
+      if (password.length < 6) {
+        messageDiv.innerHTML = '<p class="text-red-400"><i class="fas fa-exclamation-triangle mr-1"></i>Senha deve ter pelo menos 6 caracteres</p>';
+        return;
+      }
+
+      if (!termsChecked) {
+        messageDiv.innerHTML = '<p class="text-red-400"><i class="fas fa-exclamation-triangle mr-1"></i>Aceite os termos para continuar</p>';
+        return;
+      }
+
+      // Loading state
+      registerBtn.disabled = true;
+      registerBtnText.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Criando conta...';
+      messageDiv.innerHTML = '';
+      
+      try {
+        const response = await fetch('/api/auth/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, email, password })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          messageDiv.innerHTML = '<p class="text-green-400"><i class="fas fa-check-circle mr-1"></i>Conta criada! Fazendo login automático...</p>';
+          
+          // Auto login after register
+          setTimeout(async () => {
+            try {
+              const loginResponse = await fetch('/api/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+              });
+              
+              const loginData = await loginResponse.json();
+              
+              if (loginData.success) {
+                localStorage.setItem('geminii_token', loginData.data.token);
+                localStorage.setItem('geminii_user', JSON.stringify(loginData.data.user));
+                
+                window.location.href = '/dashboard.html';
+              } else {
+                messageDiv.innerHTML = '<p class="text-yellow-400"><i class="fas fa-info-circle mr-1"></i>Conta criada! <a href="/login.html" class="text-geminii underline">Clique aqui para fazer login</a></p>';
+              }
+            } catch (loginError) {
+              console.error('❌ Erro no login automático:', loginError);
+              messageDiv.innerHTML = '<p class="text-yellow-400"><i class="fas fa-info-circle mr-1"></i>Conta criada! <a href="/login.html" class="text-geminii underline">Clique aqui para fazer login</a></p>';
+            }
+          }, 1500);
+          
+        } else {
+          messageDiv.innerHTML = `<p class="text-red-400"><i class="fas fa-times-circle mr-1"></i>${data.error}</p>`;
+        }
+      } catch (error) {
+        console.error('❌ Erro no registro:', error);
+        messageDiv.innerHTML = '<p class="text-red-400"><i class="fas fa-exclamation-triangle mr-1"></i>Erro de conexão. Tente novamente.</p>';
+      } finally {
+        registerBtn.disabled = false;
+        registerBtnText.innerHTML = 'Criar Conta Gratuita';
+      }
+    });
+
+    // Real-time validation
+    document.getElementById('registerName').addEventListener('input', function(e) {
+      validateName(e.target.value);
+    });
+
+    document.getElementById('registerEmail').addEventListener('input', function(e) {
+      validateEmail(e.target.value);
+    });
+
+    document.getElementById('registerPassword').addEventListener('input', function(e) {
+      checkPasswordStrength(e.target.value);
+    });
+
+    // Auto-focus name field
+    document.addEventListener('DOMContentLoaded', function() {
+      checkAuthStatus();
+      document.getElementById('registerName').focus();
+      
+      console.log('📝 Página de Registro carregada');
+    });
+
+    // Enter key handling
+    document.addEventListener('keypress', function(e) {
+      if (e.key === 'Enter' && !document.getElementById('registerBtn').disabled) {
+        document.getElementById('registerForm').dispatchEvent(new Event('submit'));
+      }
+    });
+  </script>
+</body>
+</html>

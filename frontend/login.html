@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login - Geminii Tech</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            dark: '#000000',
+            light: '#ffffff',
+            geminii: '#ba39af'
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #000000 0%, #1a1a1a 100%);
+    }
+
+    .auth-container {
+      background: rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 24px;
+      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+    }
+
+    .input-field {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      transition: all 0.3s ease;
+    }
+
+    .input-field:focus {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: #ba39af;
+      box-shadow: 0 0 20px rgba(186, 57, 175, 0.3);
+      outline: none;
+    }
+
+    .login-btn {
+      background: linear-gradient(135deg, #ba39af, #d946ef);
+      transition: all 0.3s ease;
+    }
+
+    .login-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 20px 40px rgba(186, 57, 175, 0.4);
+    }
+
+    .login-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .logo-glow:hover {
+      filter: drop-shadow(0 0 20px #ba39af);
+      transform: scale(1.1);
+    }
+
+    .back-link {
+      color: rgba(255, 255, 255, 0.6);
+      transition: all 0.3s ease;
+    }
+
+    .back-link:hover {
+      color: #ba39af;
+      text-shadow: 0 0 10px rgba(186, 57, 175, 0.5);
+    }
+
+    .floating-shapes {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    .shape {
+      position: absolute;
+      background: linear-gradient(135deg, rgba(186, 57, 175, 0.1), rgba(217, 70, 239, 0.05));
+      border-radius: 50%;
+      animation: float 15s ease-in-out infinite;
+    }
+
+    .shape:nth-child(1) {
+      width: 300px;
+      height: 300px;
+      top: 10%;
+      left: -10%;
+      animation-delay: 0s;
+    }
+
+    .shape:nth-child(2) {
+      width: 200px;
+      height: 200px;
+      top: 60%;
+      right: -5%;
+      animation-delay: 7s;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0px) rotate(0deg); opacity: 0.3; }
+      50% { transform: translateY(-30px) rotate(180deg); opacity: 0.6; }
+    }
+  </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+  
+  <!-- Floating Background Shapes -->
+  <div class="floating-shapes">
+    <div class="shape"></div>
+    <div class="shape"></div>
+  </div>
+
+  <div class="w-full max-w-md">
+    <!-- Header -->
+    <div class="text-center mb-8">
+      <div class="mb-6">
+        <img src="assets/logo.png" alt="Geminii Logo" class="w-16 h-16 mx-auto logo-glow transition-all duration-300 cursor-pointer" onclick="window.location.href='/'" onerror="this.src='/assets/logo.png';">
+      </div>
+      <h1 class="text-3xl font-bold text-white mb-2">Bem-vindo de volta!</h1>
+      <p class="text-gray-400">Entre na sua conta Geminii Tech</p>
+    </div>
+
+    <!-- Login Form -->
+    <div class="auth-container p-8">
+      <form id="loginForm" class="space-y-6">
+        <div>
+          <label for="loginEmail" class="block text-sm font-medium text-gray-300 mb-2">
+            <i class="fas fa-envelope mr-2 text-geminii"></i>E-mail
+          </label>
+          <input 
+            type="email" 
+            id="loginEmail" 
+            required 
+            class="input-field w-full px-4 py-3 rounded-lg text-white placeholder-gray-500"
+            placeholder="seu@email.com"
+            autocomplete="email"
+          >
+        </div>
+        
+        <div>
+          <label for="loginPassword" class="block text-sm font-medium text-gray-300 mb-2">
+            <i class="fas fa-lock mr-2 text-geminii"></i>Senha
+          </label>
+          <input 
+            type="password" 
+            id="loginPassword" 
+            required 
+            class="input-field w-full px-4 py-3 rounded-lg text-white placeholder-gray-500"
+            placeholder="••••••••"
+            autocomplete="current-password"
+          >
+        </div>
+        
+        <button 
+          type="submit" 
+          id="loginBtn"
+          class="login-btn w-full py-3 text-white font-semibold rounded-lg"
+        >
+          <i class="fas fa-sign-in-alt mr-2"></i>
+          <span id="loginBtnText">Entrar</span>
+        </button>
+      </form>
+      
+      <!-- Messages -->
+      <div id="loginMessage" class="mt-4 text-center"></div>
+      
+      <!-- Links -->
+      <div class="mt-6 space-y-3 text-center">
+        <p class="text-gray-400">
+          <a href="/forgot-password.html" class="text-orange-400 hover:text-orange-300 text-sm transition-colors">
+            <i class="fas fa-key mr-1"></i>
+            Esqueceu a senha?
+          </a>
+        </p>
+        
+        <p class="text-gray-400">
+          Não tem conta? 
+          <a href="/register.html" class="text-geminii hover:text-purple-300 font-medium transition-colors">
+            Criar conta gratuita
+          </a>
+        </p>
+        
+        <a href="/" class="back-link block text-sm">
+          <i class="fas fa-arrow-left mr-1"></i>
+          Voltar ao início
+        </a>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="text-center mt-8">
+      <p class="text-gray-500 text-sm">
+        © 2025 <span class="text-geminii font-medium">Geminii Tech</span> - Trading Automatizado
+      </p>
+    </div>
+  </div>
+
+  <script>
+    // Check if already logged in
+    async function checkAuthStatus() {
+      const token = localStorage.getItem('geminii_token');
+      if (!token) return;
+
+      try {
+        const response = await fetch('/api/auth/verify', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        const result = await response.json();
+        if (result.success) {
+          window.location.href = '/dashboard.html';
+        } else {
+          localStorage.removeItem('geminii_token');
+          localStorage.removeItem('geminii_user');
+        }
+      } catch (error) {
+        localStorage.removeItem('geminii_token');
+        localStorage.removeItem('geminii_user');
+      }
+    }
+
+    // Login form handler
+    document.getElementById('loginForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      
+      const email = document.getElementById('loginEmail').value.trim();
+      const password = document.getElementById('loginPassword').value;
+      const messageDiv = document.getElementById('loginMessage');
+      const loginBtn = document.getElementById('loginBtn');
+      const loginBtnText = document.getElementById('loginBtnText');
+      
+      // Validation
+      if (!email || !password) {
+        messageDiv.innerHTML = '<p class="text-red-400"><i class="fas fa-exclamation-triangle mr-1"></i>Preencha todos os campos</p>';
+        return;
+      }
+
+      // Loading state
+      loginBtn.disabled = true;
+      loginBtnText.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Entrando...';
+      messageDiv.innerHTML = '';
+      
+      try {
+        const response = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          // Store auth data
+          localStorage.setItem('geminii_token', data.data.token);
+          localStorage.setItem('geminii_user', JSON.stringify(data.data.user));
+          
+          messageDiv.innerHTML = '<p class="text-green-400"><i class="fas fa-check-circle mr-1"></i>Login realizado! Redirecionando...</p>';
+          
+          setTimeout(() => {
+            window.location.href = '/dashboard.html';
+          }, 1500);
+          
+        } else {
+          messageDiv.innerHTML = `<p class="text-red-400"><i class="fas fa-times-circle mr-1"></i>${data.error}</p>`;
+        }
+      } catch (error) {
+        console.error('❌ Erro no login:', error);
+        messageDiv.innerHTML = '<p class="text-red-400"><i class="fas fa-exclamation-triangle mr-1"></i>Erro de conexão. Tente novamente.</p>';
+      } finally {
+        loginBtn.disabled = false;
+        loginBtnText.innerHTML = 'Entrar';
+      }
+    });
+
+    // Auto-focus email field
+    document.addEventListener('DOMContentLoaded', function() {
+      checkAuthStatus();
+      document.getElementById('loginEmail').focus();
+      
+      console.log('🔐 Página de Login carregada');
+    });
+
+    // Enter key handling
+    document.addEventListener('keypress', function(e) {
+      if (e.key === 'Enter' && !document.getElementById('loginBtn').disabled) {
+        document.getElementById('loginForm').dispatchEvent(new Event('submit'));
+      }
+    });
+  </script>
+</body>
+</html>
