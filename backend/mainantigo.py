@@ -11,7 +11,7 @@ from database import get_db_connection
 
 # ===== CONFIGURAÇÃO DO FLASK =====
 app = Flask(__name__)
-app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'geminii-secret-2024')
+app.config['SECRET_KEY'] = 'geminii-secret-2024'
 
 # Configuração de Email
 app.config['MAIL_SERVER'] = 'smtp.titan.email'
@@ -659,6 +659,7 @@ def forgot_password():
                     'success': True,
                     'message': 'E-mail de recuperação enviado!',
                     'data': {
+                        'token': result['token'],  # Para debug - remover em produção
                         'user_name': result['user_name'],
                         'expires_in': result['expires_in']
                     }
@@ -792,22 +793,45 @@ def search_stocks():
     result = YFinanceService.search_stocks(query, limit)
     return jsonify(result)
 
-# ===== INICIALIZAÇÃO =====
-
-def create_app():
-    """Factory para criar app"""
-    # Inicializar banco de dados apenas uma vez
-    initialize_database()
-    return app
-
-# ===== EXECUTAR EM PRODUÇÃO =====
+# ===== EXECUTAR SERVIDOR =====
 
 if __name__ == '__main__':
-    # Só roda em desenvolvimento
-    port = int(os.environ.get('PORT', 5000))
-    debug_mode = os.environ.get("FLASK_ENV") == "development"
+    import os
+    port = int(os.environ.get('PORT', 10000))  # Render usa 10000 por padrão
+    print("🚀 Iniciando Geminii API...")
+    print("📊 APIs disponíveis:")
+    print("  - /api/status")
+    print("  - /api/test-db")
+    print("  - /api/dashboard")
+    print("  - /api/auth/login (POST)")
+    print("  - /api/auth/register (POST)")
+    print("  - /api/auth/verify (GET)")
+    print("  - /api/auth/logout (POST)")
+    print("  - /api/auth/forgot-password (POST)")
+    print("  - /api/auth/validate-reset-token (POST)")
+    print("  - /api/auth/reset-password (POST)")
+    print("  - /api/stock/<symbol>")
+    print("  - /api/stocks")
+    print("  - /api/stock/<symbol>/history")
+    print("  - /api/stocks/search")
+    print("🔐 Sistema de autenticação ativado!")
+    print("🔑 Sistema de reset de senha ativado!")
+    print("🎯 Rotas HTML:")
+    print("  - / (index.html)")
+    print("  - /login.html")
+    print("  - /register.html")
+    print("  - /forgot-password.html")
+    print("  - /reset-password.html")
+    print("  - /dashboard.html")
+    print("  - /planos.html")
+    print("  - /monitor-basico.html")
+    print("  - /radar-setores.html")
+    print("  - /relatorios.html")
+    print("📧 Sistema de email configurado!")
     
-    print("🚀 Iniciando Geminii API (DESENVOLVIMENTO)...")
-    print("⚠️  Para produção, use Gunicorn!")
+    # Inicializar banco de dados
+    initialize_database() 
     
+    # Debug False em produção
+    debug_mode = os.environ.get("FLASK_ENV") != "production"
     app.run(host='0.0.0.0', port=port, debug=debug_mode)

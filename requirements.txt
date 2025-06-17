@@ -6,3 +6,7 @@ python-dotenv
 passlib
 python-jose
 flask-mail
+request
+Werkzeug
+pandas
+numpy
