@@ -869,12 +869,12 @@ def create_app():
 
 # app.run(host='0.0.0.0', port=port, debug=True)
 
-# if __name__ == '__main__':
-#     # Só roda em desenvolvimento
-#     port = int(os.environ.get('PORT', 5000))
-#     debug_mode = os.environ.get("FLASK_ENV") == "development"
+if __name__ == '__main__':
+    # Só roda em desenvolvimento
+    port = int(os.environ.get('PORT', 5000))
+    debug_mode = os.environ.get("FLASK_ENV") == "development"
     
-#     print("🚀 Iniciando Geminii API (DESENVOLVIMENTO)...")
-#     print("⚠️  Para produção, use Gunicorn!")
+    print("🚀 Iniciando Geminii API (DESENVOLVIMENTO)...")git a
+    print("⚠️  Para produção, use Gunicorn!")
     
-#     app.run(host='0.0.0.0', port=port, debug=debug_mode)
+    app.run(host='0.0.0.0', port=port, debug=debug_mode)
