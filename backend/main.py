@@ -4,38 +4,237 @@ import jwt
 from datetime import datetime, timedelta, timezone
 import psycopg2
 import os
-from password_reset import generate_reset_token, validate_reset_token, reset_password
+import secrets
+from flask_mail import Mail, Message
 from yfinance_service import YFinanceService
+from database import get_db_connection
 
+# ===== CONFIGURAÇÃO DO FLASK =====
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'geminii-secret-2024'
+
+# Configuração de Email
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+app.config['MAIL_PORT'] = 587
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USERNAME'] = os.environ.get('EMAIL_USERNAME')
+app.config['MAIL_PASSWORD'] = os.environ.get('EMAIL_PASSWORD') 
+app.config['MAIL_DEFAULT_SENDER'] = os.environ.get('EMAIL_USERNAME')
+
+mail = Mail(app)
+
+# ===== FUNÇÕES AUXILIARES =====
 
 def hash_password(password):
     """Criptografar senha"""
     return hashlib.sha256(password.encode()).hexdigest()
 
-def get_db_connection():
-    """Conectar com PostgreSQL (local ou Render)"""
+def generate_reset_token():
+    """Gerar token seguro para reset"""
+    return secrets.token_urlsafe(32)
+
+def send_reset_email(user_email, user_name, reset_token):
+    """Enviar email de reset de senha"""
     try:
-        # Se estiver no Render, usar DATABASE_URL
-        database_url = os.environ.get("DATABASE_URL")
+        reset_url = f"{request.host_url}reset-password?token={reset_token}"
         
-        if database_url:
-            # Produção (Render) - usa a URL completa
-            conn = psycopg2.connect(database_url, sslmode='require')
-        else:
-            # Desenvolvimento local
-            conn = psycopg2.connect(
-                host=os.environ.get("DB_HOST", "localhost"),
-                database=os.environ.get("DB_NAME", "postgres"),
-                user=os.environ.get("DB_USER", "postgres"),
-                password=os.environ.get("DB_PASSWORD", "#geminii"),
-                port=os.environ.get("DB_PORT", "5432")
-            )
-        return conn
+        msg = Message(
+            subject="Redefinir Senha - Geminii Tech",
+            recipients=[user_email],
+            html=f"""
+            <div style="font-family: Inter, sans-serif; max-width: 600px; margin: 0 auto;">
+                <div style="background: linear-gradient(135deg, #ba39af, #d946ef); padding: 30px; text-align: center;">
+                    <h1 style="color: white; margin: 0;">Geminii Tech</h1>
+                    <p style="color: white; margin: 10px 0 0 0;">Trading Automatizado</p>
+                </div>
+                
+                <div style="padding: 30px; background: #f8f9fa;">
+                    <h2 style="color: #333;">Olá, {user_name}!</h2>
+                    <p style="color: #666; line-height: 1.6;">
+                        Recebemos uma solicitação para redefinir a senha da sua conta Geminii Tech.
+                    </p>
+                    
+                    <div style="text-align: center; margin: 30px 0;">
+                        <a href="{reset_url}" 
+                           style="background: linear-gradient(135deg, #ba39af, #d946ef); 
+                                  color: white; padding: 15px 30px; text-decoration: none; 
+                                  border-radius: 8px; display: inline-block; font-weight: bold;">
+                            Redefinir Senha
+                        </a>
+                    </div>
+                    
+                    <p style="color: #666; font-size: 14px;">
+                        <strong>Este link expira em 1 hora.</strong><br>
+                        Se você não solicitou isso, ignore este email.
+                    </p>
+                    
+                    <p style="color: #999; font-size: 12px; margin-top: 30px;">
+                        Link direto: {reset_url}
+                    </p>
+                </div>
+                
+                <div style="padding: 20px; text-align: center; background: #333; color: white;">
+                    <p style="margin: 0;">© 2025 Geminii Research - Trading Automatizado</p>
+                </div>
+            </div>
+            """
+        )
+        
+        mail.send(msg)
+        return True
+        
     except Exception as e:
-        print(f"❌ Erro ao conectar no banco: {e}")
-        return None
+        print(f"❌ Erro ao enviar email: {e}")
+        return False
+
+# ===== FUNÇÕES DE RESET DE SENHA =====
+
+def generate_reset_token_db(email):
+    """Gerar token de reset e salvar no banco"""
+    try:
+        conn = get_db_connection()
+        if not conn:
+            return {'success': False, 'error': 'Erro de conexão com banco'}
+        
+        cursor = conn.cursor()
+        
+        # Verificar se usuário existe
+        cursor.execute("SELECT id, name FROM users WHERE email = %s", (email,))
+        user = cursor.fetchone()
+        
+        if not user:
+            cursor.close()
+            conn.close()
+            return {'success': False, 'error': 'E-mail não encontrado'}
+        
+        user_id, user_name = user
+        
+        # Gerar token único
+        token = generate_reset_token()
+        expires_at = datetime.now(timezone.utc) + timedelta(hours=1)  # Expira em 1 hora
+        
+        # Invalidar tokens anteriores deste usuário
+        cursor.execute("""
+            UPDATE password_reset_tokens 
+            SET used = TRUE 
+            WHERE user_id = %s AND used = FALSE
+        """, (user_id,))
+        
+        # Inserir novo token
+        cursor.execute("""
+            INSERT INTO password_reset_tokens (user_id, token, expires_at) 
+            VALUES (%s, %s, %s)
+        """, (user_id, token, expires_at))
+        
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        return {
+            'success': True,
+            'token': token,
+            'user_name': user_name,
+            'user_email': email,
+            'expires_in': '1 hora'
+        }
+        
+    except Exception as e:
+        return {'success': False, 'error': f'Erro interno: {str(e)}'}
+
+def validate_reset_token_db(token):
+    """Validar token de reset"""
+    try:
+        conn = get_db_connection()
+        if not conn:
+            return {'success': False, 'error': 'Erro de conexão com banco'}
+        
+        cursor = conn.cursor()
+        
+        # Buscar token válido
+        cursor.execute("""
+            SELECT rt.user_id, rt.expires_at, u.name, u.email 
+            FROM password_reset_tokens rt
+            JOIN users u ON rt.user_id = u.id
+            WHERE rt.token = %s AND rt.used = FALSE
+        """, (token,))
+        
+        result = cursor.fetchone()
+        cursor.close()
+        conn.close()
+        
+        if not result:
+            return {'success': False, 'error': 'Token inválido ou já utilizado'}
+        
+        user_id, expires_at, user_name, user_email = result
+        
+        # Verificar se token expirou
+        if datetime.now(timezone.utc) > expires_at.replace(tzinfo=timezone.utc):
+            return {'success': False, 'error': 'Token expirado'}
+        
+        return {
+            'success': True,
+            'user_id': user_id,
+            'user_name': user_name,
+            'email': user_email,
+            'expires_at': expires_at.isoformat()
+        }
+        
+    except Exception as e:
+        return {'success': False, 'error': f'Erro interno: {str(e)}'}
+
+def reset_password_db(token, new_password):
+    """Redefinir senha com token"""
+    try:
+        # Primeiro validar o token
+        validation = validate_reset_token_db(token)
+        if not validation['success']:
+            return validation
+        
+        user_id = validation['user_id']
+        user_name = validation['user_name']
+        
+        conn = get_db_connection()
+        if not conn:
+            return {'success': False, 'error': 'Erro de conexão com banco'}
+        
+        cursor = conn.cursor()
+        
+        # Atualizar senha do usuário
+        hashed_password = hash_password(new_password)
+        cursor.execute("""
+            UPDATE users 
+            SET password = %s, updated_at = CURRENT_TIMESTAMP 
+            WHERE id = %s
+        """, (hashed_password, user_id))
+        
+        # Marcar token como usado
+        cursor.execute("""
+            UPDATE password_reset_tokens 
+            SET used = TRUE 
+            WHERE token = %s
+        """, (token,))
+        
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        return {
+            'success': True,
+            'message': 'Senha redefinida com sucesso!',
+            'user_name': user_name
+        }
+        
+    except Exception as e:
+        return {'success': False, 'error': f'Erro interno: {str(e)}'}
+
+def initialize_database():
+    """Inicializar banco se necessário"""
+    try:
+        from database import setup_database
+        setup_database()
+        print("✅ Banco verificado/criado com sucesso!")
+    except Exception as e:
+        print(f"⚠️ Erro ao verificar banco: {e}")
 
 # ===== ROTAS HTML =====
 
@@ -46,8 +245,32 @@ def home():
 @app.route('/dashboard')
 @app.route('/dashboard.html')
 def dashboard():
-    """🎯 NOVA ROTA - Dashboard"""
+    """Dashboard principal"""
     return send_from_directory('../frontend', 'dashboard.html')
+
+@app.route('/login')
+@app.route('/login.html')
+def login_page():
+    """Página de login"""
+    return send_from_directory('../frontend', 'login.html')
+
+@app.route('/register')
+@app.route('/register.html')
+def register_page():
+    """Página de registro"""
+    return send_from_directory('../frontend', 'register.html')
+
+@app.route('/forgot-password')
+@app.route('/forgot-password.html')
+def forgot_password_page():
+    """Página de esqueceu a senha"""
+    return send_from_directory('../frontend', 'forgot-password.html')
+
+@app.route('/reset-password')
+@app.route('/reset-password.html')
+def reset_password_page():
+    """Página de redefinir senha"""
+    return send_from_directory('../frontend', 'reset-password.html')
 
 @app.route('/planos')
 @app.route('/planos.html')
@@ -67,37 +290,32 @@ def conta():
 @app.route('/monitor-basico')
 @app.route('/monitor-basico.html')
 def monitor_basico():
-    """🎯 NOVA ROTA - Monitor Básico"""
+    """Monitor Básico"""
     return send_from_directory('../frontend', 'monitor-basico.html') if os.path.exists('../frontend/monitor-basico.html') else "<h1>Monitor Básico - Em construção</h1>"
 
 @app.route('/radar-setores')
 @app.route('/radar-setores.html')
 def radar_setores():
-    """🎯 NOVA ROTA - Radar de Setores"""
+    """Radar de Setores"""
     return send_from_directory('../frontend', 'radar-setores.html') if os.path.exists('../frontend/radar-setores.html') else "<h1>Radar de Setores - Em construção</h1>"
 
 @app.route('/relatorios')
 @app.route('/relatorios.html')
 def relatorios():
-    """🎯 NOVA ROTA - Relatórios"""
+    """Relatórios"""
     return send_from_directory('../frontend', 'relatorios.html') if os.path.exists('../frontend/relatorios.html') else "<h1>Relatórios - Em construção</h1>"
 
-@app.route('/login')
-@app.route('/login.html')
-def login_page():
-    """Redirecionar login para página inicial"""
-    return send_from_directory('../frontend', 'index.html')
-
-
+# Servir assets
 @app.route('/logo.png')
 def serve_logo():
     """Servir logo da pasta frontend"""
     return send_from_directory('../frontend', 'logo.png')
 
-@app.route('/assets/logo.png')  # ← ADICIONE ESTA!
+@app.route('/assets/logo.png')
 def serve_logo_assets():
     """Servir logo da pasta assets (compatibilidade)"""
     return send_from_directory('../frontend', 'logo.png')
+
 # ===== ROTAS API BÁSICAS =====
 
 @app.route('/api/status')
@@ -141,7 +359,6 @@ def test_db():
             'error': str(e)
         }), 500
 
-# 🎯 NOVA ROTA - Dashboard API
 @app.route('/api/dashboard')
 def dashboard_api():
     """API para dados do dashboard"""
@@ -396,7 +613,7 @@ def verify_token():
 
 @app.route('/api/auth/logout', methods=['POST'])
 def logout():
-    """🎯 NOVA ROTA - Logout"""
+    """Logout do usuário"""
     try:
         # Em um sistema mais complexo, você invalidaria o token aqui
         # Por enquanto, só retornamos sucesso
@@ -428,18 +645,31 @@ def forgot_password():
             return jsonify({'success': False, 'error': 'E-mail inválido'}), 400
         
         # Gerar token de recuperação
-        result = generate_reset_token(email)
+        result = generate_reset_token_db(email)
         
         if result['success']:
-            return jsonify({
-                'success': True,
-                'message': 'Token de recuperação gerado!',
-                'data': {
-                    'token': result['token'],  # Em produção, enviar por email
-                    'user_name': result['user_name'],
-                    'expires_in': result['expires_in']
-                }
-            }), 200
+            # Enviar email
+            email_sent = send_reset_email(
+                result['user_email'], 
+                result['user_name'], 
+                result['token']
+            )
+            
+            if email_sent:
+                return jsonify({
+                    'success': True,
+                    'message': 'E-mail de recuperação enviado!',
+                    'data': {
+                        'token': result['token'],  # Para debug - remover em produção
+                        'user_name': result['user_name'],
+                        'expires_in': result['expires_in']
+                    }
+                }), 200
+            else:
+                return jsonify({
+                    'success': False,
+                    'error': 'Erro ao enviar e-mail. Tente novamente.'
+                }), 500
         else:
             return jsonify(result), 400
         
@@ -461,14 +691,14 @@ def validate_reset():
             return jsonify({'success': False, 'error': 'Token é obrigatório'}), 400
         
         # Validar token
-        result = validate_reset_token(token)
+        result = validate_reset_token_db(token)
         
         if result['success']:
             return jsonify({
                 'success': True,
                 'message': 'Token válido!',
                 'data': {
-                    'user_name': result['name'],
+                    'user_name': result['user_name'],
                     'email': result['email'],
                     'expires_at': result['expires_at']
                 }
@@ -498,7 +728,7 @@ def reset_password_api():
             return jsonify({'success': False, 'error': 'Nova senha deve ter pelo menos 6 caracteres'}), 400
         
         # Redefinir senha
-        result = reset_password(token, new_password)
+        result = reset_password_db(token, new_password)
         
         if result['success']:
             return jsonify({
@@ -579,19 +809,29 @@ if __name__ == '__main__':
     print("  - /api/auth/verify (GET)")
     print("  - /api/auth/logout (POST)")
     print("  - /api/auth/forgot-password (POST)")
+    print("  - /api/auth/validate-reset-token (POST)")
     print("  - /api/auth/reset-password (POST)")
     print("  - /api/stock/<symbol>")
     print("  - /api/stocks")
     print("  - /api/stock/<symbol>/history")
     print("  - /api/stocks/search")
     print("🔐 Sistema de autenticação ativado!")
+    print("🔑 Sistema de reset de senha ativado!")
     print("🎯 Rotas HTML:")
     print("  - / (index.html)")
+    print("  - /login.html")
+    print("  - /register.html")
+    print("  - /forgot-password.html")
+    print("  - /reset-password.html")
     print("  - /dashboard.html")
     print("  - /planos.html")
     print("  - /monitor-basico.html")
     print("  - /radar-setores.html")
     print("  - /relatorios.html")
+    print("📧 Sistema de email configurado!")
+    
+    # Inicializar banco de dados
+    initialize_database() 
     
     # Debug False em produção
     debug_mode = os.environ.get("FLASK_ENV") != "production"
