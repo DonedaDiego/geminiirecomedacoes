@@ -26,17 +26,6 @@ app.config['MAIL_PASSWORD'] = os.environ.get('EMAIL_PASSWORD', '#Giminii#')
 
 mail = Mail(app)
 
-print("🔍 DIAGNÓSTICO DE CONEXÃO:")
-print(f"DATABASE_URL existe: {'✅' if os.environ.get('DATABASE_URL') else '❌'}")
-print(f"Modo: {'RENDER' if os.environ.get('DATABASE_URL') else 'LOCAL'}")
-
-if not os.environ.get('DATABASE_URL'):
-    print("🏠 Configurações locais:")
-    print(f"  Host: {os.environ.get('DB_HOST', 'localhost')}")
-    print(f"  Database: {os.environ.get('DB_NAME', 'postgres')}")
-    print(f"  User: {os.environ.get('DB_USER', 'postgres')}")
-    print(f"  Password: {'***' if os.environ.get('DB_PASSWORD', '#geminii') else 'NÃO DEFINIDA'}")
-    print(f"  Port: {os.environ.get('DB_PORT', '5432')}")
 # ===== FUNÇÕES AUXILIARES =====
 
 def hash_password(password):
@@ -652,11 +641,8 @@ def forgot_password():
         
         email = data.get('email', '').strip()
         
-        if not email:
+        if not email or '@' not in email:
             return jsonify({'success': False, 'error': 'E-mail é obrigatório'}), 400
-        
-        if '@' not in email:
-            return jsonify({'success': False, 'error': 'E-mail inválido'}), 400
         
         # Gerar token de recuperação
         result = generate_reset_token_db(email)
@@ -672,11 +658,7 @@ def forgot_password():
             if email_sent:
                 return jsonify({
                     'success': True,
-                    'message': 'E-mail de recuperação enviado!',
-                    'data': {
-                        'user_name': result['user_name'],
-                        'expires_in': result['expires_in']
-                    }
+                    'message': 'E-mail de recuperação enviado!'
                 }), 200
             else:
                 return jsonify({
