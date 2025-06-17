@@ -9,6 +9,10 @@ from flask_mail import Mail, Message
 from yfinance_service import YFinanceService
 from database import get_db_connection
 
+
+#from dotenv import load_dotenv
+# Carregar .env rodar local
+#load_dotenv()
 # ===== CONFIGURAÇÃO DO FLASK =====
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'geminii-secret-2024')
@@ -22,6 +26,17 @@ app.config['MAIL_PASSWORD'] = os.environ.get('EMAIL_PASSWORD', '#Giminii#')
 
 mail = Mail(app)
 
+print("🔍 DIAGNÓSTICO DE CONEXÃO:")
+print(f"DATABASE_URL existe: {'✅' if os.environ.get('DATABASE_URL') else '❌'}")
+print(f"Modo: {'RENDER' if os.environ.get('DATABASE_URL') else 'LOCAL'}")
+
+if not os.environ.get('DATABASE_URL'):
+    print("🏠 Configurações locais:")
+    print(f"  Host: {os.environ.get('DB_HOST', 'localhost')}")
+    print(f"  Database: {os.environ.get('DB_NAME', 'postgres')}")
+    print(f"  User: {os.environ.get('DB_USER', 'postgres')}")
+    print(f"  Password: {'***' if os.environ.get('DB_PASSWORD', '#geminii') else 'NÃO DEFINIDA'}")
+    print(f"  Port: {os.environ.get('DB_PORT', '5432')}")
 # ===== FUNÇÕES AUXILIARES =====
 
 def hash_password(password):
@@ -802,12 +817,53 @@ def create_app():
 
 # ===== EXECUTAR EM PRODUÇÃO =====
 
-if __name__ == '__main__':
-    # Só roda em desenvolvimento
-    port = int(os.environ.get('PORT', 5000))
-    debug_mode = os.environ.get("FLASK_ENV") == "development"
+## rodar Local 
+# if __name__ == '__main__':
+#     # ===== FORÇAR MODO LOCAL =====
+#     print("🏠 FORÇANDO MODO DESENVOLVIMENTO LOCAL...")
     
-    print("🚀 Iniciando Geminii API (DESENVOLVIMENTO)...")
-    print("⚠️  Para produção, use Gunicorn!")
+#     # Remover DATABASE_URL para forçar banco local
+#     if 'DATABASE_URL' in os.environ:
+#         del os.environ['DATABASE_URL']
+#         print("✅ DATABASE_URL removida - usando banco local")
     
-    app.run(host='0.0.0.0', port=port, debug=debug_mode)
+#     # Configurar ambiente local
+#     os.environ['FLASK_ENV'] = 'development'
+#     os.environ['DB_HOST'] = 'localhost'
+#     os.environ['DB_NAME'] = 'postgres'
+#     os.environ['DB_USER'] = 'postgres'
+#     os.environ['DB_PASSWORD'] = '#geminii'
+#     os.environ['DB_PORT'] = '5432'
+    
+#     port = int(os.environ.get('PORT', 5000))
+    
+#     # Só mostrar diagnóstico uma vez
+#     if not os.environ.get('WERKZEUG_RUN_MAIN'):
+#         print("🔍 DIAGNÓSTICO DE CONEXÃO:")
+#         print(f"DATABASE_URL existe: {'✅' if os.environ.get('DATABASE_URL') else '❌'}")
+#         print(f"Modo: {'RENDER' if os.environ.get('DATABASE_URL') else 'LOCAL'}")
+#         print("🏠 Configurações locais:")
+#         print(f"  Host: {os.environ.get('DB_HOST')}")
+#         print(f"  Database: {os.environ.get('DB_NAME')}")
+#         print(f"  User: {os.environ.get('DB_USER')}")
+#         print(f"  Password: ***")
+#         print(f"  Port: {os.environ.get('DB_PORT')}")
+        
+#         print("🚀 Iniciando Geminii API (DESENVOLVIMENTO)...")
+#         print("📊 APIs disponíveis em http://localhost:5000")
+    
+#     # Inicializar banco apenas uma vez
+#     if not os.environ.get('WERKZEUG_RUN_MAIN'):
+#         initialize_database()
+
+# app.run(host='0.0.0.0', port=port, debug=True)
+
+# if __name__ == '__main__':
+#     # Só roda em desenvolvimento
+#     port = int(os.environ.get('PORT', 5000))
+#     debug_mode = os.environ.get("FLASK_ENV") == "development"
+    
+#     print("🚀 Iniciando Geminii API (DESENVOLVIMENTO)...")
+#     print("⚠️  Para produção, use Gunicorn!")
+    
+#     app.run(host='0.0.0.0', port=port, debug=debug_mode)
