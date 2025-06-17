@@ -4,8 +4,7 @@ psycopg2-binary
 yfinance
 python-dotenv
 passlib
-python-jose
+PyJWT
 gunicorn
 Werkzeug
 requests
-jwt
