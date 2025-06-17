@@ -8,3 +8,4 @@ python-jose
 gunicorn
 Werkzeug
 requests
+jwt
