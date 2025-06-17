@@ -1,11 +1,14 @@
+
 from flask import Flask, jsonify, send_from_directory, request
 import hashlib
 import jwt
 from datetime import datetime, timedelta, timezone
 import psycopg2
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 import os
 import secrets
-from flask_mail import Mail, Message
 from yfinance_service import YFinanceService
 from database import get_db_connection
 
@@ -24,7 +27,7 @@ app.config['MAIL_USE_SSL'] = True
 app.config['MAIL_USERNAME'] = os.environ.get('EMAIL_USER', 'contato@geminii.com.br')
 app.config['MAIL_PASSWORD'] = os.environ.get('EMAIL_PASSWORD', '#Giminii#')
 
-mail = Mail(app)
+
 
 # ===== FUNÇÕES AUXILIARES =====
 
@@ -37,53 +40,79 @@ def generate_reset_token():
     return secrets.token_urlsafe(32)
 
 def send_reset_email(user_email, user_name, reset_token):
-    """Enviar email de reset de senha"""
+    """Enviar email de reset de senha - SMTP nativo"""
     try:
-        reset_url = f"{request.host_url}reset-password?token={reset_token}"
+        import smtplib
+        from email.mime.text import MIMEText
+        from email.mime.multipart import MIMEMultipart
         
-        msg = Message(
-            subject="Redefinir Senha - Geminii Tech",
-            recipients=[user_email],
-            html=f"""
-            <div style="font-family: Inter, sans-serif; max-width: 600px; margin: 0 auto;">
-                <div style="background: linear-gradient(135deg, #ba39af, #d946ef); padding: 30px; text-align: center;">
-                    <h1 style="color: white; margin: 0;">Geminii Tech</h1>
-                    <p style="color: white; margin: 10px 0 0 0;">Trading Automatizado</p>
-                </div>
-                
-                <div style="padding: 30px; background: #f8f9fa;">
-                    <h2 style="color: #333;">Olá, {user_name}!</h2>
-                    <p style="color: #666; line-height: 1.6;">
-                        Recebemos uma solicitação para redefinir a senha da sua conta Geminii Tech.
-                    </p>
-                    
-                    <div style="text-align: center; margin: 30px 0;">
-                        <a href="{reset_url}" 
-                           style="background: linear-gradient(135deg, #ba39af, #d946ef); 
-                                  color: white; padding: 15px 30px; text-decoration: none; 
-                                  border-radius: 8px; display: inline-block; font-weight: bold;">
-                            Redefinir Senha
-                        </a>
-                    </div>
-                    
-                    <p style="color: #666; font-size: 14px;">
-                        <strong>Este link expira em 1 hora.</strong><br>
-                        Se você não solicitou isso, ignore este email.
-                    </p>
-                    
-                    <p style="color: #999; font-size: 12px; margin-top: 30px;">
-                        Link direto: {reset_url}
-                    </p>
-                </div>
-                
-                <div style="padding: 20px; text-align: center; background: #333; color: white;">
-                    <p style="margin: 0;">© 2025 Geminii Research - Trading Automatizado</p>
-                </div>
+        # Configuração SMTP
+        smtp_server = "smtp.titan.email"
+        smtp_port = 465
+        smtp_user = os.environ.get('EMAIL_USER')
+        smtp_password = os.environ.get('EMAIL_PASSWORD')
+        
+        if not smtp_user or not smtp_password:
+            print("Variáveis de email não configuradas")
+            return False
+        
+        # URL de reset
+        reset_url = f"https://geminii-tech.onrender.com/reset-password?token={reset_token}"
+        
+        # Criar mensagem
+        msg = MIMEMultipart('alternative')
+        msg['Subject'] = "Redefinir Senha - Geminii Tech"
+        msg['From'] = smtp_user
+        msg['To'] = user_email
+        
+        # Corpo HTML
+        html_body = f"""
+        <div style="font-family: Inter, sans-serif; max-width: 600px; margin: 0 auto;">
+            <div style="background: linear-gradient(135deg, #ba39af, #d946ef); padding: 30px; text-align: center;">
+                <h1 style="color: white; margin: 0;">Geminii Tech</h1>
+                <p style="color: white; margin: 10px 0 0 0;">Trading Automatizado</p>
             </div>
-            """
-        )
+            
+            <div style="padding: 30px; background: #f8f9fa;">
+                <h2 style="color: #333;">Olá, {user_name}!</h2>
+                <p style="color: #666; line-height: 1.6;">
+                    Recebemos uma solicitação para redefinir a senha da sua conta Geminii Tech.
+                </p>
+                
+                <div style="text-align: center; margin: 30px 0;">
+                    <a href="{reset_url}" 
+                       style="background: linear-gradient(135deg, #ba39af, #d946ef); 
+                              color: white; padding: 15px 30px; text-decoration: none; 
+                              border-radius: 8px; display: inline-block; font-weight: bold;">
+                        Redefinir Senha
+                    </a>
+                </div>
+                
+                <p style="color: #666; font-size: 14px;">
+                    <strong>Este link expira em 1 hora.</strong><br>
+                    Se você não solicitou isso, ignore este email.
+                </p>
+                
+                <p style="color: #999; font-size: 12px; margin-top: 30px;">
+                    Link direto: {reset_url}
+                </p>
+            </div>
+            
+            <div style="padding: 20px; text-align: center; background: #333; color: white;">
+                <p style="margin: 0;">© 2025 Geminii Research - Trading Automatizado</p>
+            </div>
+        </div>
+        """
         
-        mail.send(msg)
+        # Anexar corpo HTML
+        msg.attach(MIMEText(html_body, 'html'))
+        
+        # Enviar email
+        with smtplib.SMTP_SSL(smtp_server, smtp_port) as server:
+            server.login(smtp_user, smtp_password)
+            server.send_message(msg)
+        
+        print(f"Email enviado para: {user_email}")
         return True
         
     except Exception as e:
