@@ -331,20 +331,19 @@ def planos():
 def sobre():
     return send_from_directory('../frontend', 'sobre.html')
 
-@app.route('/conta')
-@app.route('/conta.html')
-def conta():
-    return send_from_directory('../frontend', 'conta.html') if os.path.exists('../frontend/conta.html') else "<h1>Página Conta - Em construção</h1>"
 
 @app.route('/monitor-basico')
 @app.route('/monitor-basico.html')
 def monitor_basico():
-    return send_from_directory('../frontend', 'monitor-basico.html') if os.path.exists('../frontend/monitor-basico.html') else "<h1>Monitor Básico - Em construção</h1>"
+    try:
+        return send_from_directory('../frontend', 'monitor-basico.html')
+    except:
+        return "<h1>Monitor Básico - Em construção</h1>"
 
 @app.route('/Long-Short')
 @app.route('/long-short.html')
 def long_short():
-    return send_from_directory('../frontend', 'long-short.html') if os.path.exists('../frontend/long-short.html') else "<h1>long-short - Em construção</h1>"
+    return send_from_directory('../frontend', 'long-short.html')
 
 @app.route('/relatorios')
 @app.route('/relatorios.html')
@@ -986,46 +985,46 @@ def search_stocks():
 
 # ===== EXECUTAR EM PRODUÇÃO =====
 
-# if __name__ == '__main__':
-#     # FORÇAR MODO LOCAL
-#     print("🏠 FORÇANDO MODO DESENVOLVIMENTO LOCAL...")
+if __name__ == '__main__':
+    # FORÇAR MODO LOCAL
+    print("🏠 FORÇANDO MODO DESENVOLVIMENTO LOCAL...")
     
-#     # Remover DATABASE_URL para forçar banco local
-#     if 'DATABASE_URL' in os.environ:
-#         del os.environ['DATABASE_URL']
-#         print("✅ DATABASE_URL removida - usando banco local")
+    # Remover DATABASE_URL para forçar banco local
+    if 'DATABASE_URL' in os.environ:
+        del os.environ['DATABASE_URL']
+        print("✅ DATABASE_URL removida - usando banco local")
     
-#     # Configurar ambiente local
-#     os.environ['FLASK_ENV'] = 'development'
-#     os.environ['DB_HOST'] = 'localhost'
-#     os.environ['DB_NAME'] = 'postgres'
-#     os.environ['DB_USER'] = 'postgres'
-#     os.environ['DB_PASSWORD'] = '#geminii'
-#     os.environ['DB_PORT'] = '5432'
+    # Configurar ambiente local
+    os.environ['FLASK_ENV'] = 'development'
+    os.environ['DB_HOST'] = 'localhost'
+    os.environ['DB_NAME'] = 'postgres'
+    os.environ['DB_USER'] = 'postgres'
+    os.environ['DB_PASSWORD'] = '#geminii'
+    os.environ['DB_PORT'] = '5432'
     
-#     port = int(os.environ.get('PORT', 5000))
+    port = int(os.environ.get('PORT', 5000))
     
-#     # Só mostrar diagnóstico uma vez
-#     if not os.environ.get('WERKZEUG_RUN_MAIN'):
-#         print("🔍 DIAGNÓSTICO DE CONEXÃO:")
-#         print(f"DATABASE_URL existe: {'✅' if os.environ.get('DATABASE_URL') else '❌'}")
-#         print(f"Modo: {'RENDER' if os.environ.get('DATABASE_URL') else 'LOCAL'}")
-#         print("🏠 Configurações locais:")
-#         print(f"  Host: {os.environ.get('DB_HOST')}")
-#         print(f"  Database: {os.environ.get('DB_NAME')}")
-#         print(f"  User: {os.environ.get('DB_USER')}")
-#         print(f"  Password: ***")
-#         print(f"  Port: {os.environ.get('DB_PORT')}")
+    # Só mostrar diagnóstico uma vez
+    if not os.environ.get('WERKZEUG_RUN_MAIN'):
+        print("🔍 DIAGNÓSTICO DE CONEXÃO:")
+        print(f"DATABASE_URL existe: {'✅' if os.environ.get('DATABASE_URL') else '❌'}")
+        print(f"Modo: {'RENDER' if os.environ.get('DATABASE_URL') else 'LOCAL'}")
+        print("🏠 Configurações locais:")
+        print(f"  Host: {os.environ.get('DB_HOST')}")
+        print(f"  Database: {os.environ.get('DB_NAME')}")
+        print(f"  User: {os.environ.get('DB_USER')}")
+        print(f"  Password: ***")
+        print(f"  Port: {os.environ.get('DB_PORT')}")
         
-#         print("🚀 Iniciando Geminii API (DESENVOLVIMENTO)...")
-#         print("📊 APIs disponíveis em http://localhost:5000")
-#         print(f"🛒 Mercado Pago: {'✅ ATIVO' if MP_AVAILABLE else '❌ INATIVO'}")
+        print("🚀 Iniciando Geminii API (DESENVOLVIMENTO)...")
+        print("📊 APIs disponíveis em http://localhost:5000")
+        print(f"🛒 Mercado Pago: {'✅ ATIVO' if MP_AVAILABLE else '❌ INATIVO'}")
     
-#     # Inicializar banco apenas uma vez
-#     if not os.environ.get('WERKZEUG_RUN_MAIN'):
-#         initialize_database()
+    # Inicializar banco apenas uma vez
+    if not os.environ.get('WERKZEUG_RUN_MAIN'):
+        initialize_database()
 
-#     app.run(host='0.0.0.0', port=port, debug=True)
+    app.run(host='0.0.0.0', port=port, debug=True)
 
 # if __name__ == '__main__':
 #     # Só roda em desenvolvimento
@@ -1038,12 +1037,12 @@ def search_stocks():
 #     app.run(host='0.0.0.0', port=port, debug=debug_mode)
 
 
-def create_app():
-    """Factory para criar app - Railway"""
-    if os.environ.get('RAILWAY_ENVIRONMENT'):
-        print("🚄 Executando no Railway...")
-        app.config['ENV'] = 'production'
-        app.config['DEBUG'] = False
+# def create_app():
+#     """Factory para criar app - Railway"""
+#     if os.environ.get('RAILWAY_ENVIRONMENT'):
+#         print("🚄 Executando no Railway...")
+#         app.config['ENV'] = 'production'
+#         app.config['DEBUG'] = False
     
-    initialize_database()
-    return app
+#     initialize_database()
+#     return app

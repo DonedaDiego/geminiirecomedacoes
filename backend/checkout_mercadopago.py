@@ -89,22 +89,17 @@ def test_mercadopago_connection():
                 "error": "Token MP_ACCESS_TOKEN não configurado"
             }
         
-        # Testar criando uma preferência simples
+        # ✅ ESTRUTURA CORRETA BASEADA NO SEU TESTE QUE FUNCIONOU
         test_preference = {
             "items": [
                 {
                     "id": "test",
                     "title": "Teste de Conexão",
-                    "description": "Teste de conectividade com MP",
                     "quantity": 1,
                     "currency_id": "BRL",
                     "unit_price": 1.0
                 }
-            ],
-            "payer": {
-                "email": "test@geminii.com.br"
-            },
-            "external_reference": f"test_{int(time.time())}"
+            ]
         }
         
         print("🧪 Testando conexão com MP...")
@@ -154,7 +149,7 @@ def create_checkout_function():
         
         plan = data.get('plan', 'pro')
         cycle = data.get('cycle', 'monthly')
-        customer_email = data.get('customer_email')
+        customer_email = data.get('customer_email', 'cliente@geminii.com.br')  # Email padrão se não fornecido
         
         print(f"🛒 CRIANDO CHECKOUT:")
         print(f"  📋 Plano: {plan}")
@@ -188,13 +183,12 @@ def create_checkout_function():
         else:
             base_url = "http://localhost:5000"
         
-        # ✅ CONFIGURAÇÃO QUE FUNCIONA - BASEADA NO TESTE 4
+        # ✅ ESTRUTURA CORRETA BASEADA NO SEU TESTE QUE FUNCIONOU
         preference_data = {
             "items": [
                 {
                     "id": plan_id,
                     "title": f"Geminii {plan_name} - {cycle_display}",
-                    "description": f"Assinatura {cycle_display} do plano {plan_name}",
                     "quantity": 1,
                     "currency_id": "BRL",
                     "unit_price": float(price)
@@ -202,12 +196,17 @@ def create_checkout_function():
             ],
             "back_urls": {
                 "success": f"{base_url}/payment/success",
-                "pending": f"{base_url}/payment/pending",
+                "pending": f"{base_url}/payment/pending", 
                 "failure": f"{base_url}/payment/failure"
             },
             "external_reference": f"geminii_{plan_id}_{cycle}_{int(time.time())}"
-            # ❌ REMOVIDO: auto_return (causa erro no seu ambiente)
         }
+        
+        # Adicionar informações do pagador se email fornecido
+        if customer_email and customer_email != 'cliente@geminii.com.br':
+            preference_data["payer"] = {
+                "email": customer_email
+            }
         
         print(f"🔗 URLs de retorno configuradas:")
         print(f"  ✅ Success: {base_url}/payment/success")
@@ -215,6 +214,7 @@ def create_checkout_function():
         print(f"  ❌ Failure: {base_url}/payment/failure")
         
         print("🚀 Criando preferência no Mercado Pago...")
+        print(f"📊 Dados da preferência: {preference_data}")
         
         # ✅ USAR EXATAMENTE O MÉTODO QUE FUNCIONOU NO TESTE
         preference_response = preference_client.create(preference_data)
@@ -320,11 +320,8 @@ def webhook():
             
             if payment_id:
                 print(f"💳 Processando pagamento: {payment_id}")
-                
-                # Aqui você pode buscar detalhes do pagamento
-                # payment_info = mp_sdk.payment().get(payment_id)
-                # E processar baseado no status
-        
+                # Aqui você pode adicionar lógica para processar o pagamento
+            
         return jsonify({"success": True}), 200
         
     except Exception as e:
