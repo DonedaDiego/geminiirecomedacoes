@@ -12,10 +12,14 @@ import secrets
 from yfinance_service import YFinanceService
 from database import get_db_connection
 
+from beta_routes import beta_bp
+from long_short_routes import long_short_bp
+from dashboard_routes import dashboard_bp
 
-#from dotenv import load_dotenv
+
+from dotenv import load_dotenv
 # Carregar .env rodar local
-#load_dotenv()
+load_dotenv()
 # ===== CONFIGURAÇÃO DO FLASK =====
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'geminii-secret-2024')
@@ -27,7 +31,11 @@ app.config['MAIL_USE_SSL'] = True
 app.config['MAIL_USERNAME'] = os.environ.get('EMAIL_USER', 'contato@geminii.com.br')
 app.config['MAIL_PASSWORD'] = os.environ.get('EMAIL_PASSWORD', '#Giminii#')
 
+app.register_blueprint(beta_bp)
 
+app.register_blueprint(long_short_bp)
+
+app.register_blueprint(dashboard_bp)
 
 # ===== FUNÇÕES AUXILIARES =====
 
@@ -56,8 +64,16 @@ def send_reset_email(user_email, user_name, reset_token):
             print("Variáveis de email não configuradas")
             return False
         
-        # URL de reset
+        # URL de reset trocar na versão deplooy 
         reset_url = f"https://geminii-tech.onrender.com/reset-password?token={reset_token}"
+        
+        # ##Local
+        # if os.environ.get('DATABASE_URL'):
+        #     base_url = "https://geminii-tech.onrender.com"
+        # else:
+        #     base_url = "http://localhost:10000"
+        # reset_url = f"{base_url}/reset-password?token={reset_token}"
+        
         
         # Criar mensagem
         msg = MIMEMultipart('alternative')
@@ -325,11 +341,11 @@ def monitor_basico():
     """Monitor Básico"""
     return send_from_directory('../frontend', 'monitor-basico.html') if os.path.exists('../frontend/monitor-basico.html') else "<h1>Monitor Básico - Em construção</h1>"
 
-@app.route('/radar-setores')
-@app.route('/radar-setores.html')
-def radar_setores():
-    """Radar de Setores"""
-    return send_from_directory('../frontend', 'radar-setores.html') if os.path.exists('../frontend/radar-setores.html') else "<h1>Radar de Setores - Em construção</h1>"
+@app.route('/Long-Short')
+@app.route('/long-short.html')
+def long_short():
+    """Monitor Básico"""
+    return send_from_directory('../frontend', 'long-short.html') if os.path.exists('../frontend/long-short.html') else "<h1>long-short - Em construção</h1>"
 
 @app.route('/relatorios')
 @app.route('/relatorios.html')
@@ -828,53 +844,53 @@ def create_app():
 
 # ===== EXECUTAR EM PRODUÇÃO =====
 
-## rodar Local 
-# if __name__ == '__main__':
-#     # ===== FORÇAR MODO LOCAL =====
-#     print("🏠 FORÇANDO MODO DESENVOLVIMENTO LOCAL...")
-    
-#     # Remover DATABASE_URL para forçar banco local
-#     if 'DATABASE_URL' in os.environ:
-#         del os.environ['DATABASE_URL']
-#         print("✅ DATABASE_URL removida - usando banco local")
-    
-#     # Configurar ambiente local
-#     os.environ['FLASK_ENV'] = 'development'
-#     os.environ['DB_HOST'] = 'localhost'
-#     os.environ['DB_NAME'] = 'postgres'
-#     os.environ['DB_USER'] = 'postgres'
-#     os.environ['DB_PASSWORD'] = '#geminii'
-#     os.environ['DB_PORT'] = '5432'
-    
-#     port = int(os.environ.get('PORT', 5000))
-    
-#     # Só mostrar diagnóstico uma vez
-#     if not os.environ.get('WERKZEUG_RUN_MAIN'):
-#         print("🔍 DIAGNÓSTICO DE CONEXÃO:")
-#         print(f"DATABASE_URL existe: {'✅' if os.environ.get('DATABASE_URL') else '❌'}")
-#         print(f"Modo: {'RENDER' if os.environ.get('DATABASE_URL') else 'LOCAL'}")
-#         print("🏠 Configurações locais:")
-#         print(f"  Host: {os.environ.get('DB_HOST')}")
-#         print(f"  Database: {os.environ.get('DB_NAME')}")
-#         print(f"  User: {os.environ.get('DB_USER')}")
-#         print(f"  Password: ***")
-#         print(f"  Port: {os.environ.get('DB_PORT')}")
-        
-#         print("🚀 Iniciando Geminii API (DESENVOLVIMENTO)...")
-#         print("📊 APIs disponíveis em http://localhost:5000")
-    
-#     # Inicializar banco apenas uma vez
-#     if not os.environ.get('WERKZEUG_RUN_MAIN'):
-#         initialize_database()
-
-# app.run(host='0.0.0.0', port=port, debug=True)
-
+# rodar Local 
 if __name__ == '__main__':
-    # Só roda em desenvolvimento
+    # ===== FORÇAR MODO LOCAL =====
+    print("🏠 FORÇANDO MODO DESENVOLVIMENTO LOCAL...")
+    
+    # Remover DATABASE_URL para forçar banco local
+    if 'DATABASE_URL' in os.environ:
+        del os.environ['DATABASE_URL']
+        print("✅ DATABASE_URL removida - usando banco local")
+    
+    # Configurar ambiente local
+    os.environ['FLASK_ENV'] = 'development'
+    os.environ['DB_HOST'] = 'localhost'
+    os.environ['DB_NAME'] = 'postgres'
+    os.environ['DB_USER'] = 'postgres'
+    os.environ['DB_PASSWORD'] = '#geminii'
+    os.environ['DB_PORT'] = '5432'
+    
     port = int(os.environ.get('PORT', 5000))
-    debug_mode = os.environ.get("FLASK_ENV") == "development"
     
-    print("🚀 Iniciando Geminii API (DESENVOLVIMENTO)...")
-    print("⚠️  Para produção, use Gunicorn!")
+    # Só mostrar diagnóstico uma vez
+    if not os.environ.get('WERKZEUG_RUN_MAIN'):
+        print("🔍 DIAGNÓSTICO DE CONEXÃO:")
+        print(f"DATABASE_URL existe: {'✅' if os.environ.get('DATABASE_URL') else '❌'}")
+        print(f"Modo: {'RENDER' if os.environ.get('DATABASE_URL') else 'LOCAL'}")
+        print("🏠 Configurações locais:")
+        print(f"  Host: {os.environ.get('DB_HOST')}")
+        print(f"  Database: {os.environ.get('DB_NAME')}")
+        print(f"  User: {os.environ.get('DB_USER')}")
+        print(f"  Password: ***")
+        print(f"  Port: {os.environ.get('DB_PORT')}")
+        
+        print("🚀 Iniciando Geminii API (DESENVOLVIMENTO)...")
+        print("📊 APIs disponíveis em http://localhost:5000")
     
-    app.run(host='0.0.0.0', port=port, debug=debug_mode)
+    # Inicializar banco apenas uma vez
+    if not os.environ.get('WERKZEUG_RUN_MAIN'):
+        initialize_database()
+
+app.run(host='0.0.0.0', port=port, debug=True)
+
+# if __name__ == '__main__':
+#     # Só roda em desenvolvimento
+#     port = int(os.environ.get('PORT', 5000))
+#     debug_mode = os.environ.get("FLASK_ENV") == "development"
+    
+#     print("🚀 Iniciando Geminii API (DESENVOLVIMENTO)...")
+#     print("⚠️  Para produção, use Gunicorn!")
+    
+#     app.run(host='0.0.0.0', port=port, debug=debug_mode)
