@@ -147,6 +147,20 @@
       transition: transform 0.2s ease;
     }
     
+    /* Toggle Animation */
+    #annual-toggle:checked + label .toggle-slider {
+      transform: translateX(100%);
+    }
+
+    #annual-toggle:not(:checked) + label .toggle-slider {
+      transform: translateX(0%);
+    }
+
+    .toggle-slider {
+      transition: transform 0.3s ease;
+    }
+
+
     /* Otimizações para scroll suave */
     * {
       scroll-behavior: smooth;
@@ -172,15 +186,12 @@
     <nav class="fixed top-6 left-1/2 transform -translate-x-1/2 z-50 bg-opacity-5 border-opacity-10 bg-white border-white border rounded-full pt-4 pr-4 pb-4 pl-4 shadow-xl backdrop-blur-md">
       <div class="flex items-center justify-between">
         <div class="flex items-center">
-          <img src="https://app.geminii.com.br/wp-content/uploads/2025/06/logo.png" alt="Geminii Logo" class="w-6 h-6 cursor-pointer" onclick="window.location.href='/home.html'">
+          <img src="assets/logo.png" alt="Geminii Logo" class="w-6 h-6 neon-logo" onclick="navigateHome()" onerror="this.src='/assets/logo.png'; this.onerror=null;">
         </div>
         <div class="hidden md:flex items-center space-x-6 text-xs text-gray-300 ml-8">
-          <a href="/home.html" class="hover:text-white transition-colors">Home</a>
-          <a href="/monitor-basico.html" class="hover:text-white transition-colors">Scanner</a>
-          <a href="/radar-setores.html" class="hover:text-white transition-colors">Radar de Setores</a>
-          <span class="text-white font-medium">Planos</span>
-          <a href="/sobre.html" class="hover:text-white transition-colors">Sobre</a>
-          <a href="/conta.html" class="hover:text-white transition-colors">Conta</a>
+          <a href="/index.html" class="hover:text-white transition-colors">Home</a>
+          <a href="/planos" class="hover:text-white transition-colors">Planos</a>
+          <a href="/sobre" class="hover:text-white transition-colors text-geminii">Sobre</a>
         </div>
         <div class="flex items-center space-x-3 ml-8">
           <div id="apiStatus" class="w-8 h-8 bg-green-500 bg-opacity-10 border border-green-500 border-opacity-30 rounded-full flex items-center justify-center relative">
@@ -213,7 +224,7 @@
               <input type="checkbox" id="annual-toggle" class="sr-only" checked>
               <label for="annual-toggle" class="flex items-center cursor-pointer">
                 <div class="w-12 h-6 bg-gray-600 rounded-full p-1 duration-200 ease-in-out">
-                  <div class="bg-gradient-to-r from-pink-500 to-purple-600 w-4 h-4 rounded-full shadow-md transform duration-200 ease-in-out translate-x-6"></div>
+                  <div class="bg-gradient-to-r from-pink-500 to-purple-600 w-4 h-4 rounded-full shadow-md toggle-slider"></div>
                 </div>
               </label>
             </div>
