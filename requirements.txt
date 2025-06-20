@@ -11,3 +11,4 @@ requests
 statsmodels
 pandas
 numpy
+mercadopago

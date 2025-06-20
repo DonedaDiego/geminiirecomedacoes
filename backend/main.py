@@ -1,4 +1,3 @@
-
 from flask import Flask, jsonify, send_from_directory, request
 import hashlib
 import jwt
@@ -15,11 +14,10 @@ from database import get_db_connection
 from beta_routes import beta_bp
 from long_short_routes import long_short_bp
 from dashboard_routes import dashboard_bp
-
-
 from dotenv import load_dotenv
-# Carregar .env rodar local
+
 load_dotenv()
+
 # ===== CONFIGURAÇÃO DO FLASK =====
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'geminii-secret-2024')
@@ -31,11 +29,59 @@ app.config['MAIL_USE_SSL'] = True
 app.config['MAIL_USERNAME'] = os.environ.get('EMAIL_USER', 'contato@geminii.com.br')
 app.config['MAIL_PASSWORD'] = os.environ.get('EMAIL_PASSWORD', '#Giminii#')
 
+# ===== CONFIGURAÇÃO MERCADO PAGO =====
+MP_AVAILABLE = False
+mercadopago_bp = None
+
+try:
+    from checkout_mercadopago import get_mercadopago_blueprint, test_mercadopago_connection, PLANS
+    mercadopago_bp = get_mercadopago_blueprint()
+    MP_AVAILABLE = True
+    print("✅ Módulo Mercado Pago carregado com sucesso!")
+except ImportError as e:
+    print(f"⚠️ Mercado Pago não disponível: {e}")
+    PLANS = {
+        "pro": {
+            "id": "pro",
+            "name": "Pro",
+            "description": "Para quem já investe e quer se posicionar melhor",
+            "monthly_price": 79,
+            "annual_price": 72,
+            "features": [
+                "Monitor avançado de ações",
+                "RSL e análise técnica avançada", 
+                "Backtests automáticos",
+                "Alertas via WhatsApp",
+                "Dados históricos ilimitados",
+                "API para desenvolvedores"
+            ]
+        },
+        "premium": {
+            "id": "premium", 
+            "name": "Premium",
+            "description": "Para investidores experientes que querem diferenciais",
+            "monthly_price": 149,
+            "annual_price": 137,
+            "features": [
+                "Tudo do Pro +",
+                "Long & Short strategies",
+                "IA para recomendações", 
+                "Consultoria personalizada",
+                "Acesso prioritário",
+                "Relatórios exclusivos"
+            ]
+        }
+    }
+
+# REGISTRAR BLUEPRINTS
 app.register_blueprint(beta_bp)
-
 app.register_blueprint(long_short_bp)
-
 app.register_blueprint(dashboard_bp)
+
+# Registrar blueprint do Mercado Pago apenas se disponível
+if MP_AVAILABLE and mercadopago_bp:
+    app.register_blueprint(mercadopago_bp)
+    print("✅ Blueprint Mercado Pago registrado!")
 
 # ===== FUNÇÕES AUXILIARES =====
 
@@ -50,11 +96,6 @@ def generate_reset_token():
 def send_reset_email(user_email, user_name, reset_token):
     """Enviar email de reset de senha - SMTP nativo"""
     try:
-        import smtplib
-        from email.mime.text import MIMEText
-        from email.mime.multipart import MIMEMultipart
-        
-        # Configuração SMTP
         smtp_server = "smtp.titan.email"
         smtp_port = 465
         smtp_user = os.environ.get('EMAIL_USER')
@@ -64,37 +105,24 @@ def send_reset_email(user_email, user_name, reset_token):
             print("Variáveis de email não configuradas")
             return False
         
-        # URL de reset trocar na versão deplooy 
         reset_url = f"https://geminii-tech.onrender.com/reset-password?token={reset_token}"
         
-        # ##Local
-        # if os.environ.get('DATABASE_URL'):
-        #     base_url = "https://geminii-tech.onrender.com"
-        # else:
-        #     base_url = "http://localhost:10000"
-        # reset_url = f"{base_url}/reset-password?token={reset_token}"
-        
-        
-        # Criar mensagem
         msg = MIMEMultipart('alternative')
         msg['Subject'] = "Redefinir Senha - Geminii Tech"
         msg['From'] = smtp_user
         msg['To'] = user_email
         
-        # Corpo HTML
         html_body = f"""
         <div style="font-family: Inter, sans-serif; max-width: 600px; margin: 0 auto;">
             <div style="background: linear-gradient(135deg, #ba39af, #d946ef); padding: 30px; text-align: center;">
                 <h1 style="color: white; margin: 0;">Geminii Tech</h1>
                 <p style="color: white; margin: 10px 0 0 0;">Trading Automatizado</p>
             </div>
-            
             <div style="padding: 30px; background: #f8f9fa;">
                 <h2 style="color: #333;">Olá, {user_name}!</h2>
                 <p style="color: #666; line-height: 1.6;">
                     Recebemos uma solicitação para redefinir a senha da sua conta Geminii Tech.
                 </p>
-                
                 <div style="text-align: center; margin: 30px 0;">
                     <a href="{reset_url}" 
                        style="background: linear-gradient(135deg, #ba39af, #d946ef); 
@@ -103,27 +131,19 @@ def send_reset_email(user_email, user_name, reset_token):
                         Redefinir Senha
                     </a>
                 </div>
-                
                 <p style="color: #666; font-size: 14px;">
                     <strong>Este link expira em 1 hora.</strong><br>
                     Se você não solicitou isso, ignore este email.
                 </p>
-                
-                <p style="color: #999; font-size: 12px; margin-top: 30px;">
-                    Link direto: {reset_url}
-                </p>
             </div>
-            
             <div style="padding: 20px; text-align: center; background: #333; color: white;">
                 <p style="margin: 0;">© 2025 Geminii Research - Trading Automatizado</p>
             </div>
         </div>
         """
         
-        # Anexar corpo HTML
         msg.attach(MIMEText(html_body, 'html'))
         
-        # Enviar email
         with smtplib.SMTP_SSL(smtp_server, smtp_port) as server:
             server.login(smtp_user, smtp_password)
             server.send_message(msg)
@@ -135,8 +155,6 @@ def send_reset_email(user_email, user_name, reset_token):
         print(f"❌ Erro ao enviar email: {e}")
         return False
 
-# ===== FUNÇÕES DE RESET DE SENHA =====
-
 def generate_reset_token_db(email):
     """Gerar token de reset e salvar no banco"""
     try:
@@ -145,8 +163,6 @@ def generate_reset_token_db(email):
             return {'success': False, 'error': 'Erro de conexão com banco'}
         
         cursor = conn.cursor()
-        
-        # Verificar se usuário existe
         cursor.execute("SELECT id, name FROM users WHERE email = %s", (email,))
         user = cursor.fetchone()
         
@@ -156,19 +172,15 @@ def generate_reset_token_db(email):
             return {'success': False, 'error': 'E-mail não encontrado'}
         
         user_id, user_name = user
-        
-        # Gerar token único
         token = generate_reset_token()
-        expires_at = datetime.now(timezone.utc) + timedelta(hours=1)  # Expira em 1 hora
+        expires_at = datetime.now(timezone.utc) + timedelta(hours=1)
         
-        # Invalidar tokens anteriores deste usuário
         cursor.execute("""
             UPDATE password_reset_tokens 
             SET used = TRUE 
             WHERE user_id = %s AND used = FALSE
         """, (user_id,))
         
-        # Inserir novo token
         cursor.execute("""
             INSERT INTO password_reset_tokens (user_id, token, expires_at) 
             VALUES (%s, %s, %s)
@@ -197,8 +209,6 @@ def validate_reset_token_db(token):
             return {'success': False, 'error': 'Erro de conexão com banco'}
         
         cursor = conn.cursor()
-        
-        # Buscar token válido
         cursor.execute("""
             SELECT rt.user_id, rt.expires_at, u.name, u.email 
             FROM password_reset_tokens rt
@@ -215,7 +225,6 @@ def validate_reset_token_db(token):
         
         user_id, expires_at, user_name, user_email = result
         
-        # Verificar se token expirou
         if datetime.now(timezone.utc) > expires_at.replace(tzinfo=timezone.utc):
             return {'success': False, 'error': 'Token expirado'}
         
@@ -233,7 +242,6 @@ def validate_reset_token_db(token):
 def reset_password_db(token, new_password):
     """Redefinir senha com token"""
     try:
-        # Primeiro validar o token
         validation = validate_reset_token_db(token)
         if not validation['success']:
             return validation
@@ -247,7 +255,6 @@ def reset_password_db(token, new_password):
         
         cursor = conn.cursor()
         
-        # Atualizar senha do usuário
         hashed_password = hash_password(new_password)
         cursor.execute("""
             UPDATE users 
@@ -255,7 +262,6 @@ def reset_password_db(token, new_password):
             WHERE id = %s
         """, (hashed_password, user_id))
         
-        # Marcar token como usado
         cursor.execute("""
             UPDATE password_reset_tokens 
             SET used = TRUE 
@@ -293,31 +299,26 @@ def home():
 @app.route('/dashboard')
 @app.route('/dashboard.html')
 def dashboard():
-    """Dashboard principal"""
     return send_from_directory('../frontend', 'dashboard.html')
 
 @app.route('/login')
 @app.route('/login.html')
 def login_page():
-    """Página de login"""
     return send_from_directory('../frontend', 'login.html')
 
 @app.route('/register')
 @app.route('/register.html')
 def register_page():
-    """Página de registro"""
     return send_from_directory('../frontend', 'register.html')
 
 @app.route('/forgot-password')
 @app.route('/forgot-password.html')
 def forgot_password_page():
-    """Página de esqueceu a senha"""
     return send_from_directory('../frontend', 'forgot-password.html')
 
 @app.route('/reset-password')
 @app.route('/reset-password.html')
 def reset_password_page():
-    """Página de redefinir senha"""
     return send_from_directory('../frontend', 'reset-password.html')
 
 @app.route('/planos')
@@ -338,40 +339,42 @@ def conta():
 @app.route('/monitor-basico')
 @app.route('/monitor-basico.html')
 def monitor_basico():
-    """Monitor Básico"""
     return send_from_directory('../frontend', 'monitor-basico.html') if os.path.exists('../frontend/monitor-basico.html') else "<h1>Monitor Básico - Em construção</h1>"
 
 @app.route('/Long-Short')
 @app.route('/long-short.html')
 def long_short():
-    """Monitor Básico"""
     return send_from_directory('../frontend', 'long-short.html') if os.path.exists('../frontend/long-short.html') else "<h1>long-short - Em construção</h1>"
 
 @app.route('/relatorios')
 @app.route('/relatorios.html')
 def relatorios():
-    """Relatórios"""
     return send_from_directory('../frontend', 'relatorios.html') if os.path.exists('../frontend/relatorios.html') else "<h1>Relatórios - Em construção</h1>"
 
 # Servir assets
 @app.route('/logo.png')
 def serve_logo():
-    """Servir logo da pasta frontend"""
     return send_from_directory('../frontend', 'logo.png')
 
 @app.route('/assets/logo.png')
 def serve_logo_assets():
-    """Servir logo da pasta assets (compatibilidade)"""
     return send_from_directory('../frontend', 'logo.png')
 
 # ===== ROTAS API BÁSICAS =====
 
 @app.route('/api/status')
 def status():
+    """Status da API com info do Mercado Pago"""
+    if MP_AVAILABLE:
+        mp_status = test_mercadopago_connection()
+    else:
+        mp_status = {"success": False, "error": "Módulo MP não carregado"}
+    
     return jsonify({
         'message': 'API Flask Online!',
         'status': 'online',
-        'database': 'Connected'
+        'database': 'Connected',
+        'mercadopago': mp_status
     })
 
 @app.route('/api/test-db')
@@ -397,15 +400,183 @@ def test_db():
                 }
             })
         else:
-            return jsonify({
-                'success': False,
-                'error': 'Falha na conexão'
-            }), 500
+            return jsonify({'success': False, 'error': 'Falha na conexão'}), 500
     except Exception as e:
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+# ===== ROTAS DE COMPATIBILIDADE MERCADO PAGO =====
+
+@app.route('/api/plans')
+def get_plans_compat():
+    """Rota de compatibilidade para planos"""
+    try:
+        plans_list = []
+        for plan_id, plan_data in PLANS.items():
+            plans_list.append({
+                "id": plan_data["id"],
+                "name": plan_id,
+                "display_name": plan_data["name"],
+                "description": plan_data["description"],
+                "price_monthly": plan_data["monthly_price"],
+                "price_annual": plan_data["annual_price"],
+                "features": plan_data["features"]
+            })
+        
+        return jsonify({"success": True, "data": plans_list})
+        
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@app.route('/api/checkout/create', methods=['POST'])
+def create_checkout_compat():
+    """Rota de compatibilidade para checkout"""
+    if not MP_AVAILABLE:
+        return jsonify({"success": False, "error": "Módulo Mercado Pago não disponível"}), 500
+    
+    try:
+        # Importar função dinamicamente
+        from checkout_mercadopago import create_checkout_function
+        return create_checkout_function()
+    except Exception as e:
+        print(f"❌ Erro no checkout: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({"success": False, "error": str(e)}), 500
+
+# ===== WEBHOOK DO MERCADO PAGO =====
+
+@app.route('/webhooks/mercadopago', methods=['POST'])
+def mercadopago_webhook():
+    """Webhook para receber notificações do Mercado Pago"""
+    if not MP_AVAILABLE:
+        return jsonify({"success": False, "error": "Mercado Pago não disponível"}), 500
+    
+    try:
+        data = request.get_json()
+        print(f"🔔 Webhook Mercado Pago recebido: {data}")
+        
+        # Processar webhook
+        webhook_type = data.get("type")
+        
+        if webhook_type == "payment":
+            payment_id = data.get("data", {}).get("id")
+            print(f"💳 Processando pagamento: {payment_id}")
+            
+            # Aqui você pode processar o pagamento
+            # Ex: Ativar assinatura, enviar email, etc.
+            
+        return jsonify({"success": True}), 200
+        
+    except Exception as e:
+        print(f"❌ Erro no webhook: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+# ===== PÁGINAS DE RETORNO DO PAGAMENTO =====
+
+@app.route('/payment/success')
+def payment_success():
+    """Página de sucesso do pagamento"""
+    payment_id = request.args.get('payment_id')
+    status_param = request.args.get('status')
+    external_reference = request.args.get('external_reference')
+    
+    print(f"✅ Pagamento aprovado!")
+    print(f"Payment ID: {payment_id}")
+    print(f"Status: {status_param}")
+    print(f"Reference: {external_reference}")
+    
+    return """
+    <!DOCTYPE html>
+    <html lang="pt-BR">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Pagamento Aprovado - Geminii</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <style>body { font-family: 'Inter', sans-serif; }</style>
+    </head>
+    <body class="bg-gray-900 text-white min-h-screen">
+        <div class="min-h-screen flex items-center justify-center p-4">
+            <div class="text-center p-8 bg-gray-800 rounded-lg max-w-md w-full border border-gray-700">
+                <div class="text-6xl mb-6">✅</div>
+                <h1 class="text-3xl font-bold mb-4 text-green-400">Pagamento Aprovado!</h1>
+                <p class="text-gray-300 mb-6 leading-relaxed">
+                    Parabéns! Sua assinatura do Geminii foi ativada com sucesso.
+                </p>
+                <p class="text-sm text-gray-400 mb-8">
+                    Você receberá um email com os detalhes de acesso em breve.
+                </p>
+                <div class="space-y-3">
+                    <button onclick="window.location.href='/dashboard'" 
+                            class="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 px-6 py-3 rounded-lg font-medium transition-colors">
+                        Ir para Dashboard
+                    </button>
+                    <button onclick="window.location.href='/'" 
+                            class="w-full bg-gray-600 hover:bg-gray-700 px-6 py-3 rounded-lg font-medium transition-colors">
+                        Voltar ao Início
+                    </button>
+                </div>
+            </div>
+        </div>
+    </body>
+    </html>
+    """
+
+@app.route('/payment/pending') 
+def payment_pending():
+    """Página de pagamento pendente"""
+    return """
+    <!DOCTYPE html>
+    <html lang="pt-BR">
+    <head>
+        <meta charset="UTF-8">
+        <title>Pagamento Pendente - Geminii</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+    </head>
+    <body class="bg-gray-900 text-white min-h-screen">
+        <div class="min-h-screen flex items-center justify-center p-4">
+            <div class="text-center p-8 bg-gray-800 rounded-lg max-w-md w-full border border-gray-700">
+                <div class="text-6xl mb-6">⏳</div>
+                <h1 class="text-3xl font-bold mb-4 text-yellow-400">Pagamento Pendente</h1>
+                <p class="text-gray-300 mb-6">Seu pagamento está sendo processado.</p>
+                <button onclick="window.location.href='/'" 
+                        class="w-full bg-gray-600 hover:bg-gray-700 px-6 py-3 rounded-lg">
+                    Voltar ao Início
+                </button>
+            </div>
+        </div>
+    </body>
+    </html>
+    """
+
+@app.route('/payment/failure')
+def payment_failure():
+    """Página de falha no pagamento"""
+    return """
+    <!DOCTYPE html>
+    <html lang="pt-BR">
+    <head>
+        <meta charset="UTF-8">
+        <title>Pagamento Falhou - Geminii</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+    </head>
+    <body class="bg-gray-900 text-white min-h-screen">
+        <div class="min-h-screen flex items-center justify-center p-4">
+            <div class="text-center p-8 bg-gray-800 rounded-lg max-w-md w-full border border-gray-700">
+                <div class="text-6xl mb-6">❌</div>
+                <h1 class="text-3xl font-bold mb-4 text-red-400">Pagamento Falhou</h1>
+                <p class="text-gray-300 mb-6">Houve um problema. Tente novamente.</p>
+                <button onclick="window.location.href='/planos'" 
+                        class="w-full bg-gradient-to-r from-purple-600 to-pink-600 px-6 py-3 rounded-lg">
+                    Tentar Novamente
+                </button>
+            </div>
+        </div>
+    </body>
+    </html>
+    """
+
+# ===== ROTAS DE AUTENTICAÇÃO =====
 
 @app.route('/api/dashboard')
 def dashboard_api():
@@ -422,7 +593,6 @@ def dashboard_api():
             payload = jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
             user_id = payload['user_id']
             
-            # Buscar dados do usuário
             conn = get_db_connection()
             if not conn:
                 return jsonify({'success': False, 'error': 'Erro de conexão com banco'}), 500
@@ -469,8 +639,6 @@ def dashboard_api():
     except Exception as e:
         return jsonify({'success': False, 'error': f'Erro interno: {str(e)}'}), 500
 
-# ===== ROTAS DE AUTENTICAÇÃO =====
-
 @app.route('/api/auth/register', methods=['POST'])
 def register():
     """Registrar novo usuário"""
@@ -484,7 +652,6 @@ def register():
         email = data.get('email', '').strip()
         password = data.get('password', '')
         
-        # Validações
         if not name or not email or not password:
             return jsonify({'success': False, 'error': 'Nome, e-mail e senha são obrigatórios'}), 400
         
@@ -494,21 +661,18 @@ def register():
         if '@' not in email:
             return jsonify({'success': False, 'error': 'E-mail inválido'}), 400
         
-        # Conectar no banco
         conn = get_db_connection()
         if not conn:
             return jsonify({'success': False, 'error': 'Erro de conexão com banco'}), 500
         
         cursor = conn.cursor()
         
-        # Verificar se email já existe
         cursor.execute("SELECT id FROM users WHERE email = %s", (email,))
         if cursor.fetchone():
             cursor.close()
             conn.close()
             return jsonify({'success': False, 'error': 'E-mail já cadastrado'}), 400
         
-        # Criar usuário
         hashed_password = hash_password(password)
         cursor.execute("""
             INSERT INTO users (name, email, password, plan_id, plan_name, created_at) 
@@ -549,14 +713,12 @@ def login():
         if not email or not password:
             return jsonify({'success': False, 'error': 'E-mail e senha são obrigatórios'}), 400
         
-        # Conectar no banco
         conn = get_db_connection()
         if not conn:
             return jsonify({'success': False, 'error': 'Erro de conexão com banco'}), 500
         
         cursor = conn.cursor()
         
-        # Buscar usuário
         cursor.execute("""
             SELECT id, name, email, password, plan_id, plan_name 
             FROM users WHERE email = %s
@@ -569,13 +731,11 @@ def login():
         if not user:
             return jsonify({'success': False, 'error': 'E-mail não encontrado'}), 401
         
-        # Verificar senha
         user_id, name, email, stored_password, plan_id, plan_name = user
         
         if hash_password(password) != stored_password:
             return jsonify({'success': False, 'error': 'Senha incorreta'}), 401
         
-        # Gerar token JWT
         token_payload = {
             'user_id': user_id,
             'email': email,
@@ -613,12 +773,10 @@ def verify_token():
         
         token = auth_header.replace('Bearer ', '')
         
-        # Verificar token JWT
         try:
             payload = jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
             user_id = payload['user_id']
             
-            # Buscar dados atualizados do usuário
             conn = get_db_connection()
             if not conn:
                 return jsonify({'success': False, 'error': 'Erro de conexão com banco'}), 500
@@ -663,8 +821,6 @@ def verify_token():
 def logout():
     """Logout do usuário"""
     try:
-        # Em um sistema mais complexo, você invalidaria o token aqui
-        # Por enquanto, só retornamos sucesso
         return jsonify({
             'success': True,
             'message': 'Logout realizado com sucesso!'
@@ -689,11 +845,9 @@ def forgot_password():
         if not email or '@' not in email:
             return jsonify({'success': False, 'error': 'E-mail é obrigatório'}), 400
         
-        # Gerar token de recuperação
         result = generate_reset_token_db(email)
         
         if result['success']:
-            # Enviar email
             email_sent = send_reset_email(
                 result['user_email'], 
                 result['user_name'], 
@@ -730,7 +884,6 @@ def validate_reset():
         if not token:
             return jsonify({'success': False, 'error': 'Token é obrigatório'}), 400
         
-        # Validar token
         result = validate_reset_token_db(token)
         
         if result['success']:
@@ -767,7 +920,6 @@ def reset_password_api():
         if len(new_password) < 6:
             return jsonify({'success': False, 'error': 'Nova senha deve ter pelo menos 6 caracteres'}), 400
         
-        # Redefinir senha
         result = reset_password_db(token, new_password)
         
         if result['success']:
@@ -784,8 +936,6 @@ def reset_password_api():
     except Exception as e:
         return jsonify({'success': False, 'error': f'Erro interno: {str(e)}'}), 500
 
-
-
 # ===== ROTAS DE AÇÕES (YFINANCE) =====
 
 @app.route('/api/stock/<symbol>')
@@ -801,7 +951,6 @@ def get_stock_data(symbol):
 @app.route('/api/stocks')
 def get_multiple_stocks():
     """Buscar dados de múltiplas ações"""
-    # Pegar símbolos da query string (ex: ?symbols=PETR4,VALE3,ITUB4)
     symbols_param = request.args.get('symbols', 'PETR4,VALE3,ITUB4,BBDC4')
     symbols = [s.strip().upper() for s in symbols_param.split(',')]
     
@@ -811,7 +960,6 @@ def get_multiple_stocks():
 @app.route('/api/stock/<symbol>/history')
 def get_stock_history(symbol):
     """Buscar histórico de uma ação"""
-    # Pegar período da query string (ex: ?period=1mo)
     period = request.args.get('period', '1mo')
     
     result = YFinanceService.get_stock_history(symbol, period)
@@ -836,19 +984,10 @@ def search_stocks():
     result = YFinanceService.search_stocks(query, limit)
     return jsonify(result)
 
-# ===== INICIALIZAÇÃO =====
-
-def create_app():
-    """Factory para criar app"""
-    # Inicializar banco de dados apenas uma vez
-    initialize_database()
-    return app
-
 # ===== EXECUTAR EM PRODUÇÃO =====
 
-# rodar Local 
 # if __name__ == '__main__':
-#     # ===== FORÇAR MODO LOCAL =====
+#     # FORÇAR MODO LOCAL
 #     print("🏠 FORÇANDO MODO DESENVOLVIMENTO LOCAL...")
     
 #     # Remover DATABASE_URL para forçar banco local
@@ -880,12 +1019,13 @@ def create_app():
         
 #         print("🚀 Iniciando Geminii API (DESENVOLVIMENTO)...")
 #         print("📊 APIs disponíveis em http://localhost:5000")
+#         print(f"🛒 Mercado Pago: {'✅ ATIVO' if MP_AVAILABLE else '❌ INATIVO'}")
     
 #     # Inicializar banco apenas uma vez
 #     if not os.environ.get('WERKZEUG_RUN_MAIN'):
 #         initialize_database()
 
-# app.run(host='0.0.0.0', port=port, debug=True)
+#     app.run(host='0.0.0.0', port=port, debug=True)
 
 # if __name__ == '__main__':
 #     # Só roda em desenvolvimento
