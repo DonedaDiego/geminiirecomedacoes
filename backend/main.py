@@ -784,6 +784,8 @@ def reset_password_api():
     except Exception as e:
         return jsonify({'success': False, 'error': f'Erro interno: {str(e)}'}), 500
 
+
+
 # ===== ROTAS DE AÇÕES (YFINANCE) =====
 
 @app.route('/api/stock/<symbol>')
