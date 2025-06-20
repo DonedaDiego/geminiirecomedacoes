@@ -9,3 +9,5 @@ gunicorn
 Werkzeug
 requests
 statsmodels
+pandas
+numpy

@@ -1,21 +1,23 @@
-#!/usr/bin/env python3
-"""
-WSGI config para Geminii Tech
-Para uso com Gunicorn em produção
-"""
+
 
 import os
 import sys
 
-# Adicionar diretório backend ao Python path
-backend_dir = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, backend_dir)
+# Configurar path corretamente
+current_dir = os.path.dirname(os.path.abspath(__file__))
+parent_dir = os.path.dirname(current_dir)
+sys.path.insert(0, current_dir)
+sys.path.insert(0, parent_dir)
 
-# Importar aplicação Flask
-from main import app
+# Configurar ambiente para Railway
+os.environ.setdefault('FLASK_ENV', 'production')
 
-# Alias para WSGI
-application = app
+# Importar app
+from main import create_app
+
+# Criar aplicação
+application = create_app()
 
 if __name__ == "__main__":
-    application.run()
+    port = int(os.environ.get("PORT", 8000))
+    application.run(host="0.0.0.0", port=port)
