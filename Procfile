@@ -1,1 +1,1 @@
-web: gunicorn --config backend/gunicorn.conf.py backend.wsgi:application
+web: cd backend && gunicorn --bind 0.0.0.0:$PORT main:create_app()
