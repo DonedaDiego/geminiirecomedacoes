@@ -404,7 +404,7 @@ class YFinanceRSLService:
         'PRPT3': 'Outros',
         'OPSE3': 'Outros',
         'OPTS3': 'Outros',
-        'YBRA3': 'Outros',
+        'YBRA3': 'Outros'
 
     }
     
