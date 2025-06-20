@@ -1,0 +1,1 @@
+web: gunicorn --config backend/gunicorn.conf.py backend.wsgi:application
