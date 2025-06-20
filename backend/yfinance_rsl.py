@@ -1,0 +1,708 @@
+import yfinance as yf
+import pandas as pd
+import numpy as np
+from datetime import datetime
+import logging
+from functools import lru_cache
+from typing import Dict, List, Optional
+
+class YFinanceRSLService:
+    """Serviço completo para cálculo de RSL usando YFinance + banco de dados"""
+    
+    # ✅ DICIONÁRIO DE TICKERS E SETORES (BASE DE DADOS)
+    TICKERS_SETORES = {
+        'BRAV3': 'Petróleo, Gás e Bio',
+        'CSAN3': 'Petróleo, Gás e Bio',
+        'RPMG3': 'Petróleo, Gás e Bio',
+        'PETR4': 'Petróleo, Gás e Bio',
+        'RECV3': 'Petróleo, Gás e Bio',
+        'PRIO3': 'Petróleo, Gás e Bio',
+        'RAIZ4': 'Petróleo, Gás e Bio',
+        'UGPA3': 'Petróleo, Gás e Bio',
+        'VBBR3': 'Petróleo, Gás e Bio',
+        'LUPA3': 'Petróleo, Gás e Bio',
+        'OPCT3': 'Petróleo, Gás e Bio',
+        'OSXB3': 'Petróleo, Gás e Bio',
+        'AURA33': 'Mineração',
+        'BRAP4': 'Mineração',
+        'CBAV3': 'Mineração',
+        'CMIN3': 'Mineração',
+        'LTEL3': 'Mineração',
+        'LTLA3': 'Mineração',
+        'VALE3': 'Mineração',
+        'FESA4': 'Siderurgia e Metalurgia',
+        'GGBR4': 'Siderurgia e Metalurgia',
+        'GOAU4': 'Siderurgia e Metalurgia',
+        'CSNA3': 'Siderurgia e Metalurgia',
+        'USIM5': 'Siderurgia e Metalurgia',
+        'MGEL4': 'Siderurgia e Metalurgia',
+        'PATI4': 'Siderurgia e Metalurgia',
+        'TKNO4': 'Siderurgia e Metalurgia',
+        'PMAM3': 'Siderurgia e Metalurgia',
+        'BRKM5': 'Químicos',
+        'DEXP3': 'Químicos',
+        'FHER3': 'Químicos',
+        'NUTR3': 'Químicos',
+        'VITT3': 'Químicos',
+        'CRPG5': 'Químicos',
+        'UNIP6': 'Químicos',
+        'DXCO3': 'Madeira e Papel',
+        'EUCA4': 'Madeira e Papel',
+        'KLBN11': 'Madeira e Papel',
+        'MSPA3': 'Madeira e Papel',
+        'NEMO3': 'Madeira e Papel',
+        'SUZB3': 'Madeira e Papel',
+        'RANI3': 'Embalagens',
+        'SNSY5': 'Materiais Diversos',
+        'ETER3': 'Construção e Engenharia',
+        'HAGA4': 'Construção e Engenharia',
+        'PTBL3': 'Construção e Engenharia',
+        'AZEV4': 'Construção e Engenharia',
+        'SOND5': 'Construção e Engenharia',
+        'EMBR3': 'Transporte',
+        'FRAS3': 'Transporte',
+        'POMO4': 'Transporte',
+        'RAPT4': 'Transporte',
+        'RCSL4': 'Transporte',
+        'RSUL4': 'Transporte',
+        'TUPY3': 'Transporte',
+        'MWET4': 'Transporte',
+        'SHUL4': 'Máquinas',
+        'WEGE3': 'Máquinas',
+        'EALT4': 'Máquinas',
+        'AERI3': 'Máquinas',
+        'ARML3': 'Máquinas',
+        'BDLL4': 'Máquinas',
+        'INEP4': 'Máquinas',
+        'KEPL3': 'Máquinas',
+        'FRIO3': 'Máquinas',
+        'MILS3': 'Máquinas',
+        'NORD3': 'Máquinas',
+        'PTCA11': 'Máquinas',
+        'ROMI3': 'Máquinas',
+        'MTSA4': 'Máquinas',
+        'TASA4': 'Máquinas',
+        'AZUL4': 'Transporte',
+        'GOLL4': 'Transporte',
+        'FRRN3': 'Transporte',
+        'VSPT3': 'Transporte',
+        'MRSA3B': 'Transporte',
+        'RAIL3': 'Transporte',
+        'HBSA3': 'Transporte',
+        'LOGN3': 'Transporte',
+        'LUXM4': 'Transporte',
+        'JSLG3': 'Transporte',
+        'TGMA3': 'Transporte',
+        'CCRO3': 'Transporte',
+        'CRTE3': 'Transporte',
+        'ECOR3': 'Transporte',
+        'RDVT3': 'Transporte',
+        'TPIS3': 'Transporte',
+        'AGRU3': 'Transporte',
+        'HMOB3': 'Transporte',
+        'IVPR3': 'Transporte',
+        'PSVM11': 'Transporte',
+        'STBP3': 'Transporte',
+        'PORT3': 'Transporte',
+        'ATMP3': 'Serviços Diversos',
+        'BBML3': 'Serviços Diversos',
+        'DTCY3': 'Serviços Diversos',
+        'ALPK3': 'Serviços Diversos',
+        'GGPS3': 'Serviços Diversos',
+        'PRNR3': 'Serviços Diversos',
+        'SEQL3': 'Serviços Diversos',
+        'VLID3': 'Serviços Diversos',
+        'EPAR3': 'Comércio',
+        'MMAQ3': 'Comércio',
+        'RBNS3': 'Comércio',
+        'WLMM4': 'Comércio',
+        'TTEN3': 'Agropecuária',
+        'GRAO3': 'Agropecuária',
+        'AGXY3': 'Agropecuária',
+        'APTI3': 'Agropecuária',
+        'SOJA3': 'Agropecuária',
+        'AGRO3': 'Agropecuária',
+        'CTCA3': 'Agropecuária',
+        'EGGY3': 'Agropecuária',
+        'SLCE3': 'Agropecuária',
+        'LAND3': 'Agropecuária',
+        'JALL3': 'Alimentos',
+        'SMTO3': 'Alimentos',
+        'BRFS3': 'Alimentos',
+        'BAUH4': 'Alimentos',
+        'JBSS3': 'Alimentos',
+        'MRFG3': 'Alimentos',
+        'BEEF3': 'Alimentos',
+        'MNPR3': 'Alimentos',
+        'CAML3': 'Alimentos',
+        'JOPA3': 'Alimentos',
+        'MDIA3': 'Alimentos',
+        'ODER4': 'Alimentos',
+        'ABEV3': 'Bebidas',
+        'NTCO3': 'Produtos',
+        'BOBR4': 'Produtos',
+        'ASAI3': 'Produtos',
+        'CRFB3': 'Comércio e Distribuição',
+        'EXCO3': 'Comércio e Distribuição',
+        'GMAT3': 'Comércio e Distribuição',
+        'PCAR3': 'Comércio e Distribuição',
+        'AVLL3': 'Construção Civil',
+        'CALI3': 'Construção Civil',
+        'CURY3': 'Construção Civil',
+        'CYRE3': 'Construção Civil',
+        'DIRR3': 'Construção Civil',
+        'EVEN3': 'Construção Civil',
+        'EZTC3': 'Construção Civil',
+        'FIEI3': 'Construção Civil',
+        'GFSA3': 'Construção Civil',
+        'HBOR3': 'Construção Civil',
+        'INNC3': 'Construção Civil',
+        'JHSF3': 'Construção Civil',
+        'JFEN3': 'Construção Civil',
+        'KLAS3': 'Construção Civil',
+        'LAVV3': 'Construção Civil',
+        'MELK3': 'Construção Civil',
+        'MTRE3': 'Construção Civil',
+        'MDNE3': 'Construção Civil',
+        'MRVE3': 'Construção Civil',
+        'PDGR3': 'Construção Civil',
+        'PLPL3': 'Construção Civil',
+        'RDNI3': 'Construção Civil',
+        'RSID3': 'Construção Civil',
+        'TCSA3': 'Construção Civil',
+        'TEGA3': 'Construção Civil',
+        'TEND3': 'Construção Civil',
+        'TRIS3': 'Construção Civil',
+        'VIVR3': 'Construção Civil',
+        'CEDO4': 'Tecidos, Ves, Cal',
+        'CTNM4': 'Tecidos, Ves, Cal',
+        'DOHL4': 'Tecidos, Ves, Cal',
+        'CATA3': 'Tecidos, Ves, Cal',
+        'CTKA4': 'Tecidos, Ves, Cal',
+        'PTNT4': 'Tecidos, Ves, Cal',
+        'CTSA4': 'Tecidos, Ves, Cal',
+        'SGPS3': 'Tecidos, Ves, Cal',
+        'TEKA4': 'Tecidos, Ves, Cal',
+        'TXRX4': 'Tecidos, Ves, Cal',
+        'TFCO4': 'Tecidos, Ves, Cal',
+        'ALPA4': 'Tecidos, Ves, Cal',
+        'CAMB3': 'Tecidos, Ves, Cal',
+        'GRND3': 'Tecidos, Ves, Cal',
+        'VULC3': 'Tecidos, Ves, Cal',
+        'MNDL3': 'Tecidos, Ves, Cal',
+        'TECN3': 'Tecidos, Ves, Cal',
+        'VIVA3': 'Tecidos, Ves, Cal',
+        'WHRL4': 'Utilidades Domésticas',
+        'MBLY3': 'Utilidades Domésticas',
+        'UCAS3': 'Utilidades Domésticas',
+        'WEST3': 'Utilidades Domésticas',
+        'HETA4': 'Utilidades Domésticas',
+        'MYPK3': 'Automóveis',
+        'LEVE3': 'Automóveis',
+        'PLAS3': 'Automóveis',
+        'HOOT4': 'Hoteis',
+        'MEAL3': 'Hoteis',
+        'ZAMP3': 'Hoteis',
+        'BMKS3': 'Viagens e Lazer',
+        'ESTR3': 'Viagens e Lazer',
+        'AHEB3': 'Viagens e Lazer',
+        'SHOW3': 'Viagens e Lazer',
+        'CVCB3': 'Viagens e Lazer',
+        'SMFT3': 'Viagens e Lazer',
+        'ANIM3': 'Diversos',
+        'BAHI3': 'Diversos',
+        'COGN3': 'Diversos',
+        'CSED3': 'Diversos',
+        'SEER3': 'Diversos',
+        'VTRU3': 'Diversos',
+        'YDUQ3': 'Diversos',
+        'RENT3': 'Diversos',
+        'MOVI3': 'Diversos',
+        'VAMO3': 'Diversos',
+        'DOTZ3': 'Diversos',
+        'AZZA3': 'Varejista',
+        'CEAB3': 'Varejista',
+        'CGRA4': 'Varejista',
+        'GUAR3': 'Varejista',
+        'AMAR3': 'Varejista',
+        'LREN3': 'Varejista',
+        'VSTE3': 'Varejista',
+        'ALLD3': 'Varejista',
+        'BHIA3': 'Varejista',
+        'MGLU3': 'Varejista',
+        'AMER3': 'Varejista',
+        'ESPA3': 'Varejista',
+        'SBFG3': 'Varejista',
+        'LLBI3': 'Varejista',
+        'PETZ3': 'Varejista',
+        'LJQQ3': 'Varejista',
+        'BIOM3': 'Medicamentos',
+        'NRTQ3': 'Medicamentos',
+        'OFSA3': 'Medicamentos',
+        'AALR3': 'Serviços Médico',
+        'DASA3': 'Serviços Médico',
+        'FLRY3': 'Serviços Médico',
+        'HAPV3': 'Serviços Médico',
+        'KRSA3': 'Serviços Médico',
+        'MATD3': 'Serviços Médico',
+        'ODPV3': 'Serviços Médico',
+        'ONCO3': 'Serviços Médico',
+        'QUAL3': 'Serviços Médico',
+        'RDOR3': 'Serviços Médico',
+        'BALM4': 'Equipamentos',
+        'LMED3': 'Equipamentos',
+        'BLAU3': 'Comércio',
+        'DMVF3': 'Comércio',
+        'PNVL3': 'Comércio',
+        'EUFA3': 'Comércio',
+        'HYPE3': 'Comércio',
+        'PGMN3': 'Comércio',
+        'PFRM3': 'Comércio',
+        'RADL3': 'Comércio',
+        'VVEO3': 'Comércio',
+        'INTB3': 'Computadores ',
+        'MLAS3': 'Computadores ',
+        'POSI3': 'Computadores ',
+        'BMOB3': 'Serviços',
+        'BRQB3': 'Serviços',
+        'ENJU3': 'Serviços',
+        'NINJ3': 'Serviços',
+        'IFCM3': 'Serviços',
+        'LWSA3': 'Serviços',
+        'CASH3': 'Serviços',
+        'NGRD3': 'Serviços',
+        'PDTC3': 'Serviços',
+        'QUSW3': 'Serviços',
+        'TRAD3': 'Serviços',
+        'TOTS3': 'Serviços',
+        'LVTC3': 'Serviços',
+        'BRIT3': 'Telecomunicações',
+        'DESK3': 'Telecomunicações',
+        'OIBR3': 'Telecomunicações',
+        'TELB3': 'Telecomunicações',
+        'VIVT3': 'Telecomunicações',
+        'TIMS3': 'Telecomunicações',
+        'FIQE3': 'Telecomunicações',
+        'ELMD3': 'Mídia',
+        'AESO3': 'Energia',
+        'AFLT3': 'Energia',
+        'ALUP11': 'Energia',
+        'CBEE3': 'Energia',
+        'AURE3': 'Energia',
+        'CEBR3': 'Energia',
+        'CEED3': 'Energia',
+        'CLSC3': 'Energia',
+        'GPAR3': 'Energia',
+        'CMIG4': 'Energia',
+        'CEEB3': 'Energia',
+        'COCE5': 'Energia',
+        'COMR3': 'Energia',
+        'CPLE6': 'Energia',
+        'CPFE3': 'Energia',
+        'EKTR3': 'Energia',
+        'ELET6': 'Energia',
+        'ELET3': 'Energia',
+        'LIPR3': 'Energia',
+        'EMAE4': 'Energia',
+        'ENGI4': 'Energia',
+        'ENMT3': 'Energia',
+        'ENEV3': 'Energia',
+        'EGIE3': 'Energia',
+        'EQPA3': 'Energia',
+        'EQMA3': 'Energia',
+        'EQTL3': 'Energia',
+        'GEPA3': 'Energia',
+        'LIGH3': 'Energia',
+        'LIGT3': 'Energia',
+        'NEOE3': 'Energia',
+        'SRNA3': 'Energia',
+        'PRMN3': 'Energia',
+        'REDE3': 'Energia',
+        'RNEW11': 'Energia',
+        'SAEN3': 'Energia',
+        'TAEE11': 'Energia',
+        'TRPL4': 'Energia',
+        'UPKP3': 'Energia',
+        'AMBP3': 'Saneamento',
+        'CASN3': 'Saneamento',
+        'CSMG3': 'Saneamento',
+        'IGSN3': 'Saneamento',
+        'ORVR3': 'Saneamento',
+        'SBSP3': 'Saneamento',
+        'SAPR4': 'Saneamento',
+        'CEGR3': 'Gás',
+        'CGAS5': 'Gás',
+        'PASS3': 'Gás',
+        'ABCB4': 'Inter Financeiros',
+        'RPAD3': 'Inter Financeiros',
+        'BAZA3': 'Inter Financeiros',
+        'BMGB4': 'Inter Financeiros',
+        'BPAN4': 'Inter Financeiros',
+        'BGIP4': 'Inter Financeiros',
+        'BEES3': 'Inter Financeiros',
+        'BPAR3': 'Inter Financeiros',
+        'BRSR6': 'Inter Financeiros',
+        'BRBI11': 'Inter Financeiros',
+        'BBDC4': 'Inter Financeiros',
+        'BBAS3': 'Inter Financeiros',
+        'BSLI3': 'Inter Financeiros',
+        'BPAC11': 'Inter Financeiros',
+        'INBR31': 'Inter Financeiros',
+        'ITUB4': 'Inter Financeiros',
+        'BMEB4': 'Inter Financeiros',
+        'BMIN3': 'Inter Financeiros',
+        'BNBR3': 'Inter Financeiros',
+        'PINE4': 'Inter Financeiros',
+        'SANB11': 'Inter Financeiros',
+        'DMFN3': 'Inter Financeiros',
+        'MERC3': 'Inter Financeiros',
+        'BSCS3': 'Securitizadora',
+        'RBRA3': 'Securitizadora',
+        'PLSC3': 'Securitizadora',
+        'G2DI33': 'Ser Financeiros',
+        'GPIV33': 'Ser Financeiros',
+        'PPLA11': 'Ser Financeiros',
+        'B3SA3': 'Ser Financeiros',
+        'CLSA3': 'Ser Financeiros',
+        'CSUD3': 'Ser Financeiros',
+        'EFXB3': 'Ser Financeiros',
+        'EVTC3': 'Ser Financeiros',
+        'STOC3': 'Ser Financeiros',
+        'XPBR31': 'Ser Financeiros',
+        'BBSE3': 'Previdência e Seguros',
+        'CXSE3': 'Previdência e Seguros',
+        'PSSA3': 'Previdência e Seguros',
+        'IRBR3': 'Previdência e Seguros',
+        'WIZC3': 'Previdência e Seguros',
+        'ALOS3': 'Exploração de Imóveis',
+        'GSHP3': 'Exploração de Imóveis',
+        'HBTS5': 'Exploração de Imóveis',
+        'HBRE3': 'Exploração de Imóveis',
+        'IGTI3': 'Exploração de Imóveis',
+        'LOGG3': 'Exploração de Imóveis',
+        'MNZC3': 'Exploração de Imóveis',
+        'MULT3': 'Exploração de Imóveis',
+        'PEAB3': 'Exploração de Imóveis',
+        'SCAR3': 'Exploração de Imóveis',
+        'SYNE3': 'Exploração de Imóveis',
+        'LPSB3': 'Exploração de Imóveis',
+        'NEXP3': 'Exploração de Imóveis',
+        'ITSA4': 'Holdings Diversificadas',
+        'MOAR3': 'Holdings Diversificadas',
+        'SIMH3': 'Holdings Diversificadas',
+        'CTBA3': 'Outros Títulos',
+        'MCRJ3': 'Outros Títulos',
+        'PMSP3': 'Outros Títulos',
+        'QVQP3': 'Outros',
+        'ATOM3': 'Outros',
+        'BETP3': 'Outros',
+        'MAPT3': 'Outros',
+        'CMSA4': 'Outros',
+        'OPGM3': 'Outros',
+        'FIGE3': 'Outros',
+        'PPAR3': 'Outros',
+        'PRPT3': 'Outros',
+        'OPSE3': 'Outros',
+        'OPTS3': 'Outros',
+        'YBRA3': 'Outros',
+
+    }
+    
+    @classmethod
+    def get_all_setores(cls) -> List[str]:
+        """Retorna lista única de todos os setores"""
+        return list(set(cls.TICKERS_SETORES.values()))
+    
+    @classmethod 
+    def get_tickers_by_setor(cls, setor_nome: str) -> List[str]:
+        """Retorna todos os tickers de um setor específico"""
+        return [ticker for ticker, setor in cls.TICKERS_SETORES.items() if setor == setor_nome]
+    
+    @classmethod
+    def get_setor_info(cls) -> Dict:
+        """Retorna estatísticas dos setores"""
+        setores_stats = {}
+        
+        for setor in cls.get_all_setores():
+            tickers = cls.get_tickers_by_setor(setor)
+            setores_stats[setor] = {
+                'total_empresas': len(tickers),
+                'tickers': tickers
+            }
+        
+        return setores_stats
+    
+    @staticmethod
+    def get_historical_data(symbol: str, period: str = '1y') -> Optional[pd.Series]:
+        """Busca dados históricos para cálculo do RSL"""
+        try:
+            # Normalizar ticker
+            if not symbol.endswith('.SA'):
+                symbol += '.SA'
+            
+            print(f"📈 Buscando histórico de {symbol} para RSL...")
+            
+            stock = yf.Ticker(symbol)
+            data = stock.history(period=period)
+            
+            if data.empty:
+                print(f"⚠️ Nenhum dado histórico para {symbol}")
+                return None
+            
+            return data['Close']
+            
+        except Exception as e:
+            print(f"❌ Erro ao buscar histórico de {symbol}: {e}")
+            return None
+    
+    @staticmethod
+    def calculate_rsl(price_series: pd.Series, periodo_mm: int = 30) -> Optional[float]:
+        """
+        Calcula RSL exatamente como no MetaTrader:
+        RSL = ((Close / MM) - 1) * 100
+        """
+        try:
+            if price_series is None or len(price_series) < periodo_mm:
+                return None
+            
+            # ✅ FÓRMULA IDÊNTICA AO METATRADER
+            # Calcular Média Móvel
+            mm = price_series.rolling(window=periodo_mm).mean()
+            
+            # Calcular RSL = ((Close / MM) - 1) * 100
+            rsl_series = ((price_series / mm) - 1) * 100
+            
+            # Retornar o último valor válido
+            rsl_atual = rsl_series.dropna().tail(1)
+            
+            if len(rsl_atual) == 0:
+                return None
+                
+            return float(rsl_atual.values[0])
+            
+        except Exception as e:
+            print(f"❌ Erro ao calcular RSL: {e}")
+            return None
+    
+    @staticmethod
+    def calculate_volatilidade(price_series: pd.Series) -> Optional[float]:
+        """
+        Calcula volatilidade anualizada como no MetaTrader:
+        Vol = pct_change().std() * sqrt(252) * 100
+        """
+        try:
+            if price_series is None or len(price_series) < 30:
+                return None
+            
+            # ✅ FÓRMULA IDÊNTICA AO METATRADER
+            # Calcular retornos percentuais
+            returns = price_series.pct_change()
+            
+            # Volatilidade anualizada
+            vol = returns.std() * np.sqrt(252) * 100
+            
+            return float(vol) if np.isfinite(vol) else None
+            
+        except Exception as e:
+            print(f"❌ Erro ao calcular volatilidade: {e}")
+            return None
+    
+    @staticmethod
+    @lru_cache(maxsize=200)
+    def get_rsl_data_cached(symbol: str, period: str = '1y') -> Optional[Dict]:
+        """Versão com cache do get_rsl_data para otimização"""
+        return YFinanceRSLService.get_rsl_data(symbol, period)
+    
+    @staticmethod
+    def get_rsl_data(symbol: str, period: str = '1y', periodo_mm: int = 30) -> Optional[Dict]:
+        """Calcula RSL e Volatilidade para um ticker específico"""
+        try:
+            # Buscar dados históricos
+            price_data = YFinanceRSLService.get_historical_data(symbol, period)
+            
+            if price_data is None:
+                return None
+            
+            # Calcular RSL
+            rsl = YFinanceRSLService.calculate_rsl(price_data, periodo_mm)
+            
+            # Calcular Volatilidade
+            volatilidade = YFinanceRSLService.calculate_volatilidade(price_data)
+            
+            if rsl is None or volatilidade is None:
+                return None
+            
+            # Calcular MM atual
+            mm_atual = price_data.rolling(window=periodo_mm).mean().iloc[-1]
+            
+            # Verificar se o ticker está na nossa base
+            setor = YFinanceRSLService.TICKERS_SETORES.get(symbol, 'Setor Não Classificado')
+            
+            return {
+                'symbol': symbol.replace('.SA', ''),
+                'rsl': round(float(rsl), 2),
+                'volatilidade': round(float(volatilidade), 2),
+                'close_atual': round(float(price_data.iloc[-1]), 2),
+                'mm_30': round(float(mm_atual), 2),
+                'setor': setor,
+                'data_calculo': datetime.now().strftime('%d/%m/%Y %H:%M'),
+                'periodo_usado': period,
+                'periodo_mm': periodo_mm,
+                'pontos_dados': len(price_data),
+                'has_real_data': True
+            }
+            
+        except Exception as e:
+            print(f"❌ Erro ao calcular RSL para {symbol}: {e}")
+            return None
+    
+    @classmethod
+    def get_sector_rsl_data(cls, setor_nome: str, period: str = '1y') -> Optional[Dict]:
+        """
+        Calcula RSL médio de um setor usando nosso dicionário de tickers
+        """
+        try:
+            print(f"📊 Calculando RSL do setor: {setor_nome}")
+            
+            # ✅ BUSCAR TICKERS DO SETOR NO NOSSO DICIONÁRIO
+            tickers_do_setor = cls.get_tickers_by_setor(setor_nome)
+            
+            if not tickers_do_setor:
+                print(f"⚠️ Setor '{setor_nome}' não encontrado na base de dados")
+                return None
+            
+            print(f"📋 Tickers encontrados: {tickers_do_setor}")
+            
+            resultados_individuais = []
+            
+            # ✅ CALCULAR RSL PARA CADA TICKER DO SETOR
+            for ticker in tickers_do_setor:
+                print(f"  ⚡ Processando {ticker}...")
+                
+                # Usar versão com cache para otimizar
+                rsl_data = cls.get_rsl_data_cached(ticker, period)
+                
+                if rsl_data:
+                    resultados_individuais.append(rsl_data)
+                    print(f"    ✅ {ticker}: RSL={rsl_data['rsl']}%, Vol={rsl_data['volatilidade']}%")
+                else:
+                    print(f"    ❌ {ticker}: Sem dados RSL")
+            
+            if not resultados_individuais:
+                print(f"  ⚠️ Nenhum ticker válido para RSL em {setor_nome}")
+                return None
+            
+            # ✅ CALCULAR MÉDIAS COMO NO METATRADER
+            rsl_values = [r['rsl'] for r in resultados_individuais]
+            vol_values = [r['volatilidade'] for r in resultados_individuais]
+            
+            rsl_medio = np.mean(rsl_values)
+            vol_media = np.mean(vol_values)
+            
+            return {
+                'setor': setor_nome,
+                'rsl': round(float(rsl_medio), 2),
+                'volatilidade': round(float(vol_media), 2),
+                'empresas_com_dados': len(resultados_individuais),
+                'total_empresas': len(tickers_do_setor),
+                'taxa_sucesso': round((len(resultados_individuais) / len(tickers_do_setor)) * 100, 1),
+                'detalhes_empresas': resultados_individuais,
+                'has_real_data': True,
+                'data_calculo': datetime.now().strftime('%d/%m/%Y %H:%M'),
+                'tickers_processados': [r['symbol'] for r in resultados_individuais],
+                'tickers_faltantes': list(set(tickers_do_setor) - set([r['symbol'] for r in resultados_individuais]))
+            }
+            
+        except Exception as e:
+            print(f"❌ Erro ao calcular RSL do setor {setor_nome}: {e}")
+            return None
+    
+    @classmethod
+    def get_all_sectors_rsl(cls, period: str = '1y') -> Dict[str, Dict]:
+        """Calcula RSL para todos os setores da nossa base"""
+        print("🚀 Calculando RSL para todos os setores...")
+        
+        setores = cls.get_all_setores()
+        resultados = {}
+        
+        for i, setor in enumerate(setores, 1):
+            print(f"📊 Processando setor {i}/{len(setores)}: {setor}")
+            
+            rsl_data = cls.get_sector_rsl_data(setor, period)
+            
+            if rsl_data:
+                resultados[setor] = rsl_data
+                print(f"✅ {setor}: RSL={rsl_data['rsl']}%, Vol={rsl_data['volatilidade']}%")
+            else:
+                print(f"❌ {setor}: Falha no cálculo")
+        
+        print(f"🎯 Concluído! {len(resultados)}/{len(setores)} setores processados")
+        return resultados
+    
+    @classmethod
+    def get_ticker_rsl(cls, ticker: str, period: str = '1y') -> Optional[Dict]:
+        """Busca RSL de um ticker específico"""
+        ticker = ticker.upper().replace('.SA', '')
+        
+        # Verificar se o ticker existe na nossa base
+        if ticker not in cls.TICKERS_SETORES:
+            print(f"⚠️ Ticker {ticker} não encontrado na base de dados")
+            return None
+        
+        return cls.get_rsl_data_cached(ticker, period)
+    
+    @classmethod
+    def get_database_info(cls) -> Dict:
+        """Retorna informações sobre a base de dados"""
+        setores_info = cls.get_setor_info()
+        
+        return {
+            'total_tickers': len(cls.TICKERS_SETORES),
+            'total_setores': len(setores_info),
+            'setores_detalhes': setores_info,
+            'maior_setor': max(setores_info.items(), key=lambda x: x[1]['total_empresas']),
+            'menor_setor': min(setores_info.items(), key=lambda x: x[1]['total_empresas']),
+            'media_empresas_por_setor': round(np.mean([info['total_empresas'] for info in setores_info.values()]), 1)
+        }
+    
+    @staticmethod
+    def clear_cache():
+        """Limpa o cache do RSL"""
+        YFinanceRSLService.get_rsl_data_cached.cache_clear()
+        print("🧹 Cache RSL limpo com sucesso!")
+    
+    @staticmethod
+    def get_cache_info() -> Dict:
+        """Retorna informações sobre o cache"""
+        cache_info = YFinanceRSLService.get_rsl_data_cached.cache_info()
+        return {
+            'hits': cache_info.hits,
+            'misses': cache_info.misses,
+            'maxsize': cache_info.maxsize,
+            'currsize': cache_info.currsize,
+            'hit_rate': round((cache_info.hits / (cache_info.hits + cache_info.misses)) * 100, 2) if (cache_info.hits + cache_info.misses) > 0 else 0
+        }
+
+# ✅ EXEMPLO DE USO (para testes)
+if __name__ == "__main__":
+    # Teste básico
+    service = YFinanceRSLService()
+    
+    print("🔍 Informações da base de dados:")
+    info = service.get_database_info()
+    print(f"Total de tickers: {info['total_tickers']}")
+    print(f"Total de setores: {info['total_setores']}")
+    
+    print("\n📊 Testando RSL de um ticker:")
+    rsl_petr4 = service.get_ticker_rsl('PETR4')
+    if rsl_petr4:
+        print(f"PETR4: RSL={rsl_petr4['rsl']}%, Vol={rsl_petr4['volatilidade']}%")
+    
+    print("\n📈 Testando RSL de um setor:")
+    rsl_petroleo = service.get_sector_rsl_data('Petróleo, Gás e Bio')
+    if rsl_petroleo:
+        print(f"Petróleo: RSL={rsl_petroleo['rsl']}%, Vol={rsl_petroleo['volatilidade']}%")
+    
+    print("\n📋 Cache info:")
+    cache_info = service.get_cache_info()
+    print(f"Hit rate: {cache_info['hit_rate']}%")

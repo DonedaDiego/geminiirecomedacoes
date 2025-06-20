@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Radar de Setores - Geminii Tech</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            dark: '#282a36',
+            light: '#ffffff',
+            subtle: 'rgba(255,255,255,0.1)',
+            geminii: '#ba39af'
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    body { 
+      font-family: 'Inter', sans-serif; 
+      overflow-x: hidden;
+      background: #282a36;
+    }
+    
+    .radar-card {
+      background: rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(20px) brightness(0.9);
+      -webkit-backdrop-filter: blur(20px) brightness(0.9);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 16px;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .radar-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 20px 40px rgba(186, 57, 175, 0.15);
+      border-color: rgba(186, 57, 175, 0.3);
+    }
+    
+    .loading {
+      opacity: 0.6;
+      pointer-events: none;
+    }
+    
+    .spinner {
+      border: 2px solid rgba(255, 255, 255, 0.1);
+      border-radius: 50%;
+      border-top: 2px solid #ba39af;
+      width: 20px;
+      height: 20px;
+      animation: spin 1s linear infinite;
+      display: inline-block;
+      margin: 0 auto;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    .quadrant-label {
+      position: absolute;
+      font-size: 12px;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.7);
+      padding: 4px 8px;
+      background: rgba(0, 0, 0, 0.5);
+      border-radius: 4px;
+    }
+    
+    .setor-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px;
+      margin-top: 24px;
+    }
+    
+    .stat-card {
+      background: rgba(255, 255, 255, 0.05);
+      padding: 16px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      transition: all 0.3s ease;
+    }
+    
+    .stat-card:hover {
+      background: rgba(186, 57, 175, 0.1);
+      border-color: rgba(186, 57, 175, 0.3);
+    }
+    
+    .progress-bar {
+      width: 100%;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 2px;
+      overflow: hidden;
+      margin-top: 8px;
+    }
+    
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #ba39af, #d946ef);
+      transition: width 0.3s ease;
+    }
+    
+    select {
+      background-color: rgba(0, 0, 0, 0.7) !important;
+      color: white !important;
+    }
+    
+    .empresas-section {
+      transition: max-height 0.5s ease-in-out;
+      overflow: hidden;
+    }
+    
+    .empresa-item {
+      transition: all 0.3s ease;
+    }
+    
+    .empresa-item:hover {
+      background: rgba(186, 57, 175, 0.1) !important;
+      transform: translateX(4px);
+    }
+    
+    .card-highlight {
+      box-shadow: 0 0 20px rgba(186, 57, 175, 0.5) !important;
+      border-color: rgba(186, 57, 175, 0.6) !important;
+    }
+
+    .empresas-scroll {
+      max-height: 400px;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(186, 57, 175, 0.5) transparent;
+    }
+
+    .empresas-scroll::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .empresas-scroll::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 3px;
+    }
+
+    .empresas-scroll::-webkit-scrollbar-thumb {
+      background: rgba(186, 57, 175, 0.5);
+      border-radius: 3px;
+    }
+
+    .empresas-scroll::-webkit-scrollbar-thumb:hover {
+      background: rgba(186, 57, 175, 0.7);
+    }
+
+    /* Neon Logo Effect */
+    .neon-logo {
+      transition: all 0.3s ease;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    
+    .neon-logo:hover {
+      filter: 
+        drop-shadow(0 0 5px #ba39af)
+        drop-shadow(0 0 10px #ba39af)
+        drop-shadow(0 0 15px #ba39af)
+        drop-shadow(0 0 20px #ba39af)
+        brightness(1.2);
+      transform: scale(1.1);
+    }
+
+    /* Navbar Effects */
+    nav:hover {
+      background: rgba(186, 57, 175, 0.05);
+      border-color: rgba(186, 57, 175, 0.3);
+      box-shadow: 
+        0 25px 50px -12px rgba(0, 0, 0, 0.25),
+        0 0 20px rgba(186, 57, 175, 0.2),
+        0 0 40px rgba(186, 57, 175, 0.1);
+      transition: all 0.3s ease;
+    }
+
+    nav a:hover {
+      color: #ba39af;
+      text-shadow: 
+        0 0 5px #ba39af,
+        0 0 10px #ba39af,
+        0 0 15px #ba39af;
+      transition: all 0.3s ease;
+    }
+  </style>
+</head>
+<body class="text-white">
+  <div class="relative min-h-screen">
+    <!-- Spline 3D background -->
+    <div class="fixed inset-0 z-0">
+      <iframe src="https://my.spline.design/thresholddarkambientui-v0gkZCfi6zXm69kE0wccy70f/" frameborder="0" width="100%" height="100%" class="w-full h-full"></iframe>
+    </div>
+    
+    <!-- Glass floating navbar -->
+    <nav class="fixed top-6 left-1/2 transform -translate-x-1/2 z-50 bg-opacity-5 border-opacity-10 bg-white border-white border rounded-full pt-4 pr-4 pb-4 pl-4 shadow-xl backdrop-blur-md">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center">
+          <img src="assets/logo.png" alt="Geminii Logo" class="w-6 h-6 neon-logo" onclick="navigateHome()" onerror="this.src='/assets/logo.png'; this.onerror=null;">
+        </div>
+        <div class="hidden md:flex items-center space-x-6 text-xs text-gray-300 ml-8">
+          <a href="/dashboard.html" class="hover:text-white transition-colors">Dashboard</a>
+          <a href="/planos.html" class="hover:text-white transition-colors">Planos</a>
+          <a href="/sobre.html" class="hover:text-white transition-colors">Sobre</a>
+        </div>
+        <div class="flex items-center space-x-3 ml-8">
+          <div id="apiStatus" class="w-8 h-8 bg-green-500 bg-opacity-10 border border-green-500 border-opacity-30 rounded-full flex items-center justify-center relative">
+            <i class="fas fa-shield-alt text-green-500 text-xs"></i>
+            <div class="absolute -top-1 -right-1 w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+          </div>
+          <a href="/planos.html" class="hover:bg-gray-200 transition-colors text-xs font-medium text-black bg-white rounded-full pt-1.5 pr-3 pb-1.5 pl-3">Começar</a>
+        </div>
+      </div>
+    </nav>
+    
+    <!-- Content -->
+    <div class="relative z-10 pt-32 pb-16">
+      <div class="max-w-7xl mx-auto px-6">
+        
+        <!-- Header -->
+        <div class="text-center mb-12">
+          <h1 class="text-4xl md:text-5xl font-bold mb-4">
+            <span style="color: #ba39af; font-weight: 900;">Radar</span>
+            <span class="text-white font-light">de Setores</span>
+          </h1>
+          <p class="text-neutral-300 text-lg max-w-2xl mx-auto">
+            Análise RSL vs Volatilidade por setor econômico da B3. Dados reais calculados com YFinance.
+          </p>
+        </div>
+
+        <!-- Controles -->
+        <div class="radar-card p-6 mb-8">
+          <div class="flex flex-col md:flex-row gap-4 items-center justify-between">
+            <div class="flex gap-3 flex-wrap">
+              <select id="periodoSelect" class="px-4 py-2 bg-white bg-opacity-10 border border-white border-opacity-20 rounded-lg text-white focus:outline-none focus:border-geminii backdrop-blur-sm">
+                <option value="1mo">Período: 1 mês</option>
+                <option value="3mo">Período: 3 meses</option>
+                <option value="6mo">Período: 6 meses</option>
+                <option value="1y" selected>Período: 1 ano</option>
+              </select>
+              
+              <select id="metricaSelect" class="px-4 py-2 bg-white bg-opacity-10 border border-white border-opacity-20 rounded-lg text-white focus:outline-none focus:border-geminii backdrop-blur-sm">
+                <option value="rsl" selected>RSL vs Volatilidade</option>
+                <option value="performance">Performance vs Volatilidade</option>
+              </select>
+            </div>
+            
+            <div class="flex gap-3">
+              <button id="atualizarBtn" class="px-6 py-2 bg-gradient-to-r from-pink-500 to-purple-600 hover:shadow-lg rounded-lg transition-all font-medium">
+                <i class="fas fa-sync-alt mr-2"></i>Atualizar
+              </button>
+              
+              <button id="exportarBtn" class="px-4 py-2 bg-white bg-opacity-10 hover:bg-opacity-20 rounded-lg transition-all font-medium backdrop-blur-sm border border-white border-opacity-20">
+                <i class="fas fa-download mr-2"></i>Exportar
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Status -->
+        <div id="statusMsg" class="mb-6 p-4 rounded-lg hidden backdrop-blur-sm"></div>
+
+        <!-- Gráfico Principal -->
+        <div class="radar-card p-6 mb-8">
+          <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-bold text-white">Mapa Setorial - RSL Real</h2>
+            <div class="text-sm text-gray-400">
+              <span id="totalSetores">0</span> setores • <span id="totalEmpresas">0</span> empresas
+            </div>
+          </div>
+          
+          <div class="relative">
+            <canvas id="radarChart" width="800" height="600"></canvas>
+            
+            <!-- Quadrant Labels -->
+            <div class="quadrant-label" style="top: 20px; left: 20px; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); color: #10b981;">
+              <i class="fas fa-gem"></i> IDEAL<br>
+              <small style="font-size: 10px; opacity: 0.8;">Alto RSL • Baixa Volatilidade</small>
+            </div>
+
+            <div class="quadrant-label" style="top: 20px; right: 20px; background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); color: #f59e0b;">
+              <i class="fas fa-rocket"></i> AGRESSIVO<br>
+              <small style="font-size: 10px; opacity: 0.8;">Alto RSL • Alta Volatilidade</small>
+            </div>
+
+            <div class="quadrant-label" style="bottom: 20px; left: 20px; background: rgba(107, 114, 128, 0.1); border: 1px solid rgba(107, 114, 128, 0.3); color: #9ca3af;">
+              <i class="fas fa-shield-alt"></i> DEFENSIVO<br>
+              <small style="font-size: 10px; opacity: 0.8;">Baixo RSL • Baixa Volatilidade</small>
+            </div>
+
+            <div class="quadrant-label" style="bottom: 20px; right: 20px; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); color: #f87171;">
+              <i class="fas fa-exclamation-triangle"></i> RISCO<br>
+              <small style="font-size: 10px; opacity: 0.8;">Baixo RSL • Alta Volatilidade</small>
+            </div>
+          </div>
+        </div>
+
+        <!-- Estatísticas por Setor -->
+        <div class="radar-card p-6">
+          <h2 class="text-2xl font-bold text-white mb-6">Estatísticas Detalhadas - RSL Real</h2>
+          <div id="setorStats" class="setor-stats">
+            <!-- Cards de estatísticas serão inseridos aqui -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Configurações
+    const API_BASE = window.location.origin + '/api';
+    let currentChart = null;
+    let setoresData = [];
+    
+    // Elementos DOM
+    const atualizarBtn = document.getElementById('atualizarBtn');
+    const exportarBtn = document.getElementById('exportarBtn');
+    const periodoSelect = document.getElementById('periodoSelect');
+    const metricaSelect = document.getElementById('metricaSelect');
+    const statusMsg = document.getElementById('statusMsg');
+    const totalSetores = document.getElementById('totalSetores');
+    const totalEmpresas = document.getElementById('totalEmpresas');
+    const setorStats = document.getElementById('setorStats');
+    
+    // Navigation
+    function navigateHome() {
+      window.location.href = '/dashboard.html';
+    }
+    
+    // Funções utilitárias
+    function showStatus(message, type = 'info') {
+      const bgClass = type === 'success' ? 'bg-green-600 bg-opacity-20 border-green-500 border-opacity-30' : 
+                     type === 'error' ? 'bg-red-600 bg-opacity-20 border-red-500 border-opacity-30' : 
+                     'bg-blue-600 bg-opacity-20 border-blue-500 border-opacity-30';
+      
+      statusMsg.className = `mb-6 p-4 rounded-lg border backdrop-blur-sm ${bgClass}`;
+      statusMsg.textContent = message;
+      statusMsg.classList.remove('hidden');
+      setTimeout(() => statusMsg.classList.add('hidden'), 4000);
+    }
+    
+    // ✅ FUNÇÃO ATUALIZADA: Buscar dados do radar usando nova API RSL
+    async function fetchRadarSetores() {
+      try {
+        const periodo = periodoSelect.value;
+        showStatus(`Carregando dados RSL dos setores (${periodo})...`, 'info');
+        
+        const response = await fetch(`${API_BASE}/radar-setores?period=${periodo}`);
+        const data = await response.json();
+        
+        if (data.success && data.data) {
+          console.log('✅ Dados do radar carregados:', data.data);
+          return data.data;
+        } else {
+          throw new Error(data.error || 'Erro na API');
+        }
+      } catch (error) {
+        console.error('❌ Erro ao buscar dados do radar:', error);
+        showStatus('❌ Erro ao carregar dados RSL', 'error');
+        return null;
+      }
+    }
+    
+    // ✅ FUNÇÃO SIMPLIFICADA: Buscar dados dos setores usando nova API
+    async function fetchSetoresData() {
+      try {
+        const radarData = await fetchRadarSetores();
+        
+        if (!radarData || !radarData.setores) {
+          throw new Error('Nenhum dado retornado da API');
+        }
+        
+        setoresData = radarData.setores;
+        
+        totalSetores.textContent = radarData.statistics.total_setores;
+        totalEmpresas.textContent = radarData.statistics.total_empresas;
+        
+        const setoresComDados = radarData.statistics.setores_com_dados;
+        
+        showStatus(`✅ ${setoresData.length} setores processados! ${setoresComDados} com RSL real.`, 'success');
+        console.log('📊 Dados finais dos setores:', setoresData);
+        
+        return setoresData;
+        
+      } catch (error) {
+        console.error('❌ Erro ao processar setores:', error);
+        showStatus('❌ Erro ao processar dados dos setores', 'error');
+        return [];
+      }
+    }
+    
+    // ✅ FUNÇÃO ATUALIZADA: Criar gráfico com RSL
+    function createRadarChart(data) {
+      const ctx = document.getElementById('radarChart').getContext('2d');
+      
+      if (currentChart) {
+        currentChart.destroy();
+      }
+      
+      const metrica = metricaSelect.value;
+      const xAxisLabel = metrica === 'rsl' ? 'RSL (%)' : 'Performance (%)';
+      const yAxisLabel = 'Volatilidade (%)';
+      
+      const datasets = [{
+        label: 'Setores',
+        data: data.map(setor => ({
+          x: metrica === 'rsl' ? setor.rsl : (setor.rsl || 0),
+          y: setor.volatilidade,
+          setor: setor.setor,
+          empresas: setor.empresas,
+          empresasComDados: setor.empresas_com_dados,
+          hasRealData: setor.has_real_data,
+          taxaSucesso: setor.taxa_sucesso,
+          setorId: setor.id
+        })),
+        backgroundColor: data.map(setor => setor.cor + '80'),
+        borderColor: data.map(setor => setor.cor),
+        borderWidth: 2,
+        pointRadius: 8,
+        pointHoverRadius: 12
+      }];
+      
+      currentChart = new Chart(ctx, {
+        type: 'scatter',
+        data: { datasets },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              display: false
+            },
+            tooltip: {
+              backgroundColor: 'rgba(0, 0, 0, 0.9)',
+              titleColor: '#ba39af',
+              bodyColor: 'white',
+              borderColor: '#ba39af',
+              borderWidth: 1,
+              position: 'nearest',
+              enabled: true,
+              callbacks: {
+                title: function(context) {
+                  return context[0].raw.setor;
+                },
+                label: function(context) {
+                  const point = context.raw;
+                  return [
+                    `${xAxisLabel}: ${point.x.toFixed(2)}%`,
+                    `Volatilidade: ${point.y.toFixed(2)}%`,
+                    `Empresas: ${point.empresas}`,
+                    `Com dados RSL: ${point.empresasComDados}`,
+                    `Taxa sucesso: ${point.taxaSucesso}%`,
+                    `Dados: ${point.hasRealData ? 'RSL Real' : 'Simulados'}`
+                  ];
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              title: {
+                display: true,
+                text: xAxisLabel,
+                color: 'white',
+                font: { size: 14, weight: 'bold' }
+              },
+              grid: {
+                color: function(context) {
+                  return context.tick.value === 0 ? 'rgba(186, 57, 175, 0.4)' : 'rgba(255, 255, 255, 0.1)';
+                },
+                lineWidth: function(context) {
+                  return context.tick.value === 0 ? 2 : 1;
+                },
+                drawOnChartArea: true
+              },
+              ticks: {
+                color: 'white',
+                callback: function(value) {
+                  return value.toFixed(1) + '%';
+                }
+              }
+            },
+            y: {
+              title: {
+                display: true,
+                text: yAxisLabel,
+                color: 'white',
+                font: { size: 14, weight: 'bold' }
+              },
+              grid: {
+                color: function(context) {
+                  return Math.abs(context.tick.value - 25) < 0.1 ? 'rgba(186, 57, 175, 0.4)' : 'rgba(255, 255, 255, 0.1)';
+                },
+                lineWidth: function(context) {
+                  return Math.abs(context.tick.value - 25) < 0.1 ? 2 : 1;
+                },
+                drawOnChartArea: true
+              },
+              ticks: {
+                color: 'white',
+                callback: function(value) {
+                  return value.toFixed(1) + '%';
+                }
+              }
+            }
+          },
+          onClick: (event, elements) => {
+            if (elements.length > 0) {
+              const element = elements[0];
+              const setorData = currentChart.data.datasets[0].data[element.index];
+              
+              const setor = setoresData.find(s => s.id === setorData.setorId);
+              
+              if (setor) {
+                console.log('🎯 Clicou no setor:', setor.setor);
+                toggleSetorExpansion(setor.id);
+                
+                const cardElement = document.getElementById(`card-${setor.id}`);
+                if (cardElement) {
+                  cardElement.scrollIntoView({ 
+                    behavior: 'smooth', 
+                    block: 'center' 
+                  });
+                  
+                  cardElement.classList.add('card-highlight');
+                  setTimeout(() => {
+                    cardElement.classList.remove('card-highlight');
+                  }, 3000);
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+    
+    // ✅ FUNÇÃO OTIMIZADA: Expandir setor usando API RSL
+    async function toggleSetorExpansion(setorId) {
+      const empresasSection = document.getElementById(`empresas-${setorId}`);
+      const chevron = document.getElementById(`chevron-${setorId}`);
+      const empresasList = document.getElementById(`empresas-list-${setorId}`);
+      
+      if (!empresasSection || !chevron || !empresasList) {
+        console.error('❌ Elementos não encontrados para setorId:', setorId);
+        return;
+      }
+      
+      const isExpanded = empresasSection.style.maxHeight && empresasSection.style.maxHeight !== '0px';
+      
+      if (isExpanded) {
+        // Contrair
+        empresasSection.style.maxHeight = '0px';
+        chevron.style.transform = 'rotate(0deg)';
+        console.log('📁 Contraindo setor:', setorId);
+      } else {
+        // Expandir
+        chevron.style.transform = 'rotate(180deg)';
+        empresasSection.style.maxHeight = '100px';
+        
+        try {
+          const setor = setoresData.find(s => s.id === setorId);
+          
+          if (!setor) {
+            throw new Error(`Setor com ID ${setorId} não encontrado`);
+          }
+          
+          console.log('📂 Expandindo setor:', setor.setor);
+          
+          // ✅ USAR DADOS RSL JÁ CALCULADOS (vem da API /radar-setores)
+          if (setor.detalhes_empresas && setor.detalhes_empresas.length > 0) {
+            // Usar dados RSL que já temos
+            const empresas = setor.detalhes_empresas;
+            
+            let empresasHTML = `
+              <div class="mb-4">
+                <h5 class="text-xs font-semibold text-green-400 mb-2 flex items-center gap-2">
+                  <i class="fas fa-chart-line"></i>
+                  Empresas com RSL Calculado (${empresas.length})
+                </h5>
+                <div class="space-y-2">
+                  ${empresas.map(empresa => `
+                    <div class="empresa-item flex items-center justify-between p-3 rounded-lg bg-white bg-opacity-5 hover:bg-opacity-10 transition-all cursor-pointer">
+                      <div class="flex items-center gap-3">
+                        <div class="w-2 h-2 rounded-full" style="background-color: ${setor.cor}"></div>
+                        <div>
+                          <span class="text-white font-medium text-sm">${empresa.symbol}</span>
+                          <div class="text-gray-400 text-xs">RSL: ${empresa.rsl}% | Vol: ${empresa.volatilidade}%</div>
+                          <div class="text-gray-500 text-xs">MM(30): R$ ${empresa.mm_30}</div>
+                        </div>
+                      </div>
+                      <div class="text-right">
+                        <div class="text-sm font-bold text-white">R$ ${empresa.close_atual}</div>
+                        <div class="text-xs ${empresa.rsl >= 0 ? 'text-green-400' : 'text-red-400'}">
+                          RSL: ${empresa.rsl >= 0 ? '+' : ''}${empresa.rsl}%
+                        </div>
+                      </div>
+                    </div>
+                  `).join('')}
+                </div>
+              </div>
+            `;
+            
+            empresasList.innerHTML = `<div class="empresas-scroll">${empresasHTML}</div>`;
+            
+          } else {
+            // Se não tem dados RSL, buscar lista básica de empresas do setor
+            showStatus(`Carregando empresas de ${setor.setor}...`, 'info');
+            
+            const response = await fetch(`${API_BASE}/setor/${encodeURIComponent(setor.setor)}`);
+            const data = await response.json();
+            
+            if (data.success && data.data && data.data.length > 0) {
+              const empresas = data.data;
+              
+              let empresasHTML = `
+                <div class="mb-4">
+                  <h5 class="text-xs font-semibold text-gray-400 mb-2 flex items-center gap-2">
+                    <i class="fas fa-building"></i>
+                    Empresas do Setor (${empresas.length})
+                  </h5>
+                  <div class="space-y-2">
+                    ${empresas.map(empresa => `
+                      <div class="empresa-item flex items-center justify-between p-2 rounded-lg bg-white bg-opacity-3 hover:bg-opacity-5 transition-all cursor-pointer">
+                        <div class="flex items-center gap-3">
+                          <div class="w-2 h-2 rounded-full bg-gray-500"></div>
+                          <div>
+                            <span class="text-gray-300 font-medium text-sm">${empresa.ticker}</span>
+                            <div class="text-gray-500 text-xs">${empresa.empresa || empresa.acao}</div>
+                          </div>
+                        </div>
+                        <div class="text-right">
+                          <div class="text-xs text-gray-500">RSL não calculado</div>
+                        </div>
+                      </div>
+                    `).join('')}
+                  </div>
+                </div>
+              `;
+              
+              empresasList.innerHTML = `<div class="empresas-scroll">${empresasHTML}</div>`;
+            } else {
+              throw new Error('Nenhuma empresa encontrada');
+            }
+          }
+          
+          // Expandir com altura dinâmica
+          empresasSection.style.maxHeight = Math.min(empresasSection.scrollHeight, 450) + 'px';
+          
+          showStatus(`✅ Dados carregados para ${setor.setor}`, 'success');
+          
+        } catch (error) {
+          console.error('❌ Erro ao carregar empresas:', error);
+          
+          empresasList.innerHTML = `
+            <div class="flex items-center justify-center py-4 text-red-400">
+              <i class="fas fa-exclamation-triangle mr-2"></i>
+              <span class="text-sm">Erro ao carregar empresas</span>
+            </div>
+          `;
+          
+          empresasSection.style.maxHeight = '60px';
+          showStatus('❌ Erro ao carregar empresas', 'error');
+        }
+      }
+    }
+    
+    // ✅ FUNÇÃO ATUALIZADA: Criar cards com dados RSL
+    function createStatsCards(data) {
+      const sortedData = [...data].sort((a, b) => b.rsl - a.rsl);
+      
+      setorStats.innerHTML = sortedData.map((setor) => `
+        <div class="stat-card" id="card-${setor.id}">
+          <div class="flex items-center justify-between mb-3 cursor-pointer" onclick="toggleSetorExpansion(${setor.id})">
+            <h3 class="font-semibold text-white flex items-center gap-2">
+              ${setor.setor}
+              <i class="fas fa-chevron-down transition-transform duration-300" id="chevron-${setor.id}"></i>
+            </h3>
+            <div class="flex items-center gap-2">
+              ${setor.has_real_data ? '<i class="fas fa-check-circle text-green-400 text-xs" title="RSL Real"></i>' : '<i class="fas fa-info-circle text-gray-400 text-xs" title="Dados Simulados"></i>'}
+              <div class="w-4 h-4 rounded-full" style="background-color: ${setor.cor}"></div>
+            </div>
+          </div>
+          
+          <div class="grid grid-cols-2 gap-4 text-sm">
+            <div>
+              <span class="text-gray-400">RSL</span>
+              <div class="font-bold ${setor.rsl >= 0 ? 'text-green-400' : 'text-red-400'}">
+                ${setor.rsl >= 0 ? '+' : ''}${setor.rsl.toFixed(2)}%
+              </div>
+            </div>
+            
+            <div>
+              <span class="text-gray-400">Volatilidade</span>
+              <div class="font-bold text-white">${setor.volatilidade.toFixed(2)}%</div>
+            </div>
+            
+            <div>
+              <span class="text-gray-400">Empresas</span>
+              <div class="font-bold text-white">
+                ${setor.empresas}
+                ${setor.empresas_com_dados > 0 ? `<span class="text-xs text-green-400 ml-1">(${setor.empresas_com_dados} com RSL)</span>` : ''}
+              </div>
+            </div>
+            
+            <div>
+              <span class="text-gray-400">Score RSL</span>
+              <div class="font-bold text-geminii">${setor.volatilidade > 0 ? (setor.rsl / setor.volatilidade * 100).toFixed(0) : '0'}</div>
+            </div>
+          </div>
+          
+          <!-- Taxa de Sucesso -->
+          ${setor.has_real_data ? `
+            <div class="mt-2 text-xs text-gray-400">
+              Taxa de sucesso: ${setor.taxa_sucesso}% • Dados: ${setor.has_real_data ? 'Reais' : 'Simulados'}
+            </div>
+          ` : ''}
+          
+          <div class="progress-bar">
+            <div class="progress-fill" style="width: ${Math.max(0, Math.min(100, (setor.rsl + 10) * 5))}%"></div>
+          </div>
+          
+          <!-- Seção Expansível de Empresas -->
+          <div class="empresas-section mt-4" id="empresas-${setor.id}" style="max-height: 0;">
+            <div class="border-t border-white border-opacity-20 pt-4">
+              <h4 class="text-sm font-semibold text-white mb-3 flex items-center gap-2">
+                <i class="fas fa-chart-line text-geminii"></i>
+                ${setor.has_real_data ? 'Empresas com RSL Real' : 'Empresas do Setor'}
+              </h4>
+              <div id="empresas-list-${setor.id}" class="space-y-2">
+                <!-- Lista de empresas será carregada aqui -->
+              </div>
+            </div>
+          </div>
+        </div>
+      `).join('');
+      
+      console.log('✅ Cards criados para', sortedData.length, 'setores');
+    }
+    
+    // Atualizar dados
+    async function atualizarDados() {
+      atualizarBtn.classList.add('loading');
+      atualizarBtn.innerHTML = '<div class="spinner"></div> Calculando RSL...';
+      
+      try {
+        const data = await fetchSetoresData();
+        
+        if (data.length > 0) {
+          createRadarChart(data);
+          createStatsCards(data);
+        } else {
+          throw new Error('Nenhum dado retornado');
+        }
+        
+      } catch (error) {
+        console.error('❌ Erro ao atualizar:', error);
+        showStatus('❌ Erro ao atualizar dados', 'error');
+      } finally {
+        atualizarBtn.classList.remove('loading');
+        atualizarBtn.innerHTML = '<i class="fas fa-sync-alt mr-2"></i>Atualizar';
+      }
+    }
+    
+    // Exportar dados
+    function exportarDados() {
+      if (setoresData.length === 0) {
+        showStatus('❌ Nenhum dado para exportar', 'error');
+        return;
+      }
+      
+      const csv = [
+        'Setor,RSL,Volatilidade,Empresas,EmpresasComRSL,TaxaSucesso,DadosReais',
+        ...setoresData.map(s => `${s.setor},${s.rsl.toFixed(2)},${s.volatilidade.toFixed(2)},${s.empresas},${s.empresas_com_dados},${s.taxa_sucesso},${s.has_real_data}`)
+      ].join('\n');
+      
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `radar-setores-rsl-${new Date().toISOString().split('T')[0]}.csv`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+      
+      showStatus('✅ Dados RSL exportados com sucesso!', 'success');
+    }
+    
+    // Event Listeners
+    atualizarBtn.addEventListener('click', atualizarDados);
+    exportarBtn.addEventListener('click', exportarDados);
+    periodoSelect.addEventListener('change', atualizarDados);
+    metricaSelect.addEventListener('change', () => {
+      if (setoresData.length > 0) {
+        createRadarChart(setoresData);
+      }
+    });
+    
+    // Inicializar
+    document.addEventListener('DOMContentLoaded', function() {
+      console.log('🚀 Inicializando Radar de Setores com API RSL...');
+      showStatus('Conectando com API RSL...', 'info');
+      atualizarDados();
+    });
+    
+    // Auto-refresh a cada 15 minutos (RSL demora mais para calcular)
+    setInterval(atualizarDados, 900000);
+    
+    // ✅ FUNÇÃO GLOBAL PARA EXPANSÃO
+    window.toggleSetorExpansion = toggleSetorExpansion;
+    window.navigateHome = navigateHome;
+    
+    // ✅ LOG DE DEBUG
+    console.log('🔧 Sistema RSL com API integrada inicializado com sucesso!');
+  </script>
+</body>
+</html>
