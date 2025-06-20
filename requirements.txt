@@ -8,3 +8,4 @@ PyJWT
 gunicorn
 Werkzeug
 requests
+statsmodels

@@ -165,6 +165,70 @@
       100% { transform: rotate(360deg); }
     }
 
+    /* Estilos para recomendações */
+    .recommendation-card {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      transition: all 0.3s ease;
+    }
+    
+    .recommendation-card:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(186, 57, 175, 0.3);
+      transform: translateY(-2px);
+    }
+    
+    .recommendation-badge {
+      padding: 4px 8px;
+      border-radius: 8px;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+    
+    .recommendation-badge.compra {
+      background: rgba(59, 130, 246, 0.2);
+      color: #3b82f6;
+      border: 1px solid rgba(59, 130, 246, 0.3);
+    }
+    
+    .recommendation-badge.compra-forte {
+      background: rgba(16, 185, 129, 0.2);
+      color: #10b981;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+    
+    .recommendation-badge.venda {
+      background: rgba(34, 197, 94, 0.2);
+      color: #22c55e;
+      border: 1px solid rgba(34, 197, 94, 0.3);
+    }
+    
+    .recommendation-badge.manter {
+      background: rgba(107, 114, 128, 0.2);
+      color: #9ca3af;
+      border: 1px solid rgba(107, 114, 128, 0.3);
+    }
+    
+    .recommendation-badge.indisponivel {
+      background: rgba(239, 68, 68, 0.2);
+      color: #ef4444;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+    
+    .performance-positive {
+      color: #22c55e;
+    }
+    
+    .performance-negative {
+      color: #ef4444;
+    }
+    
+    .performance-neutral {
+      color: #9ca3af;
+    }
+
     .floating-element:nth-child(1) {
       width: 200px;
       height: 200px;
@@ -197,18 +261,6 @@
 </head>
 <body class="bg-black text-white">
   <div class="relative min-h-screen">
-    <!-- Spline 3D background
-    <div class="fixed inset-0 z-0">
-      <iframe src="https://my.spline.design/thresholddarkambientui-v0gkZCfi6zXm69kE0wccy70f/" frameborder="0" width="100%" height="100%" class="w-full h-full"></iframe>
-    </div> -->
-    
-    <!-- Floating elements -->
-    <!-- <div class="floating-elements">
-      <div class="floating-element"></div>
-      <div class="floating-element"></div>
-      <div class="floating-element"></div>
-    </div>
-     -->
     <!-- Glass floating navbar -->
     <nav class="fixed top-6 left-1/2 transform -translate-x-1/2 z-50 bg-opacity-5 border-opacity-10 bg-white border-white border rounded-full pt-4 pr-4 pb-4 pl-4 shadow-xl backdrop-blur-md">
       <div class="flex items-center justify-between">
@@ -217,13 +269,7 @@
         </div>
         <div class="hidden md:flex items-center space-x-6 text-xs text-gray-300 ml-8">
           <a href="/home.html" class="hover:text-white transition-colors">Home</a>
-          <!-- <a href="/monitor-basico.html" class="hover:text-white transition-colors">Scanner</a>
-          <a href="/radar-setores.html" class="hover:text-white transition-colors">Radar de Setores</a>
-          <a href="/planos.html" class="hover:text-white transition-colors">Planos</a>
-          <a href="/relatorios.html" class="hover:text-white transition-colors">Relatórios</a>
-          <span class="text-white font-medium">Dashboard</span>
-          <a href="/conta.html" class="hover:text-white transition-colors">Conta</a> -->
-        </div>
+         </div>
         <div class="flex items-center space-x-3 ml-8">
           <div id="apiStatus" class="w-8 h-8 bg-green-500 bg-opacity-10 border border-green-500 border-opacity-30 rounded-full flex items-center justify-center relative">
             <i class="fas fa-shield-alt text-green-500 text-xs"></i>
@@ -244,7 +290,7 @@
             <i class="fas fa-check-circle text-xl"></i>
             <div>
               <h4 class="font-semibold">Bem-vindo à sua conta Geminii!</h4>
-              <p class="text-sm opacity-90">Sua conta foi criada com sucesso. Explore nossos recursos abaixo.</p>
+              <p class="text-sm opacity-90">Suas recomendações personalizadas estão prontas abaixo.</p>
             </div>
           </div>
         </div>
@@ -295,7 +341,7 @@
               <div class="text-2xl">📊</div>
               <div class="text-right">
                 <div class="text-2xl font-bold text-white" id="totalAnalysis">0</div>
-                <div class="text-sm text-gray-400">Análises Realizadas</div>
+                <div class="text-sm text-gray-400">Recomendações Ativas</div>
               </div>
             </div>
             <div class="progress-bar">
@@ -305,43 +351,43 @@
           
           <div class="dashboard-card stat-card green p-6">
             <div class="flex items-center justify-between mb-4">
-              <div class="text-2xl">⚡</div>
+              <div class="text-2xl">🔥</div>
               <div class="text-right">
-                <div class="text-2xl font-bold text-green-400" id="activeAlerts">0</div>
-                <div class="text-sm text-gray-400">Alertas Ativos</div>
+                <div class="text-2xl font-bold text-green-400" id="comprasCount">0</div>
+                <div class="text-sm text-gray-400">Sinais de Compra</div>
               </div>
             </div>
             <div class="text-xs text-green-400">
               <i class="fas fa-arrow-up mr-1"></i>
-              Sistema monitorando
+              <span id="comprasText">Oportunidades identificadas</span>
             </div>
           </div>
           
           <div class="dashboard-card stat-card yellow p-6">
             <div class="flex items-center justify-between mb-4">
-              <div class="text-2xl">🎯</div>
+              <div class="text-2xl">📈</div>
               <div class="text-right">
-                <div class="text-2xl font-bold text-yellow-400" id="watchlistItems">3</div>
-                <div class="text-sm text-gray-400">Ativos na Watchlist</div>
+                <div class="text-2xl font-bold text-yellow-400" id="portfolioPerformance">0%</div>
+                <div class="text-sm text-gray-400">Performance Média</div>
               </div>
             </div>
             <div class="text-xs text-yellow-400">
-              <i class="fas fa-eye mr-1"></i>
-              PETR4, VALE3, ITUB4
+              <i class="fas fa-chart-line mr-1"></i>
+              <span id="performanceText">Desde entrada</span>
             </div>
           </div>
           
           <div class="dashboard-card stat-card red p-6">
             <div class="flex items-center justify-between mb-4">
-              <div class="text-2xl">🚀</div>
+              <div class="text-2xl">⏰</div>
               <div class="text-right">
-                <div class="text-2xl font-bold text-red-400">7</div>
-                <div class="text-sm text-gray-400">Dias Restantes</div>
+                <div class="text-2xl font-bold text-red-400" id="lastUpdate">Agora</div>
+                <div class="text-sm text-gray-400">Última Atualização</div>
               </div>
             </div>
-            <div class="text-xs text-red-400" id="trialInfo">
-              <i class="fas fa-clock mr-1"></i>
-              Trial Premium
+            <div class="text-xs text-red-400" id="updateInfo">
+              <i class="fas fa-sync mr-1"></i>
+              <span>Dados em tempo real</span>
             </div>
           </div>
         </div>
@@ -354,43 +400,47 @@
           </h2>
           
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <a href="/monitor-basico.html" class="quick-action-btn p-4 rounded-lg block">
+            <a href="/monitor-basico" class="quick-action-btn p-4 rounded-lg block">
               <div class="flex items-center gap-3">
                 <div class="w-10 h-10 bg-green-500 bg-opacity-20 rounded-lg flex items-center justify-center">
                   <i class="fas fa-chart-line text-green-500"></i>
                 </div>
                 <div>
-                  <h3 class="font-semibold text-white">Monitor Básico</h3>
-                  <p class="text-xs text-gray-400">Análise técnica essencial</p>
+                  <h3 class="font-semibold text-white">Monitor Beta</h3>
+                  <p class="text-xs text-gray-400">Análise de risco vs IBOVESPA</p>
                 </div>
               </div>
             </a>
             
-            <a href="/radar-setores.html" class="quick-action-btn p-4 rounded-lg block">
+            <div onclick="showPremiumFeature('Long & Short')" class="quick-action-btn p-4 rounded-lg block cursor-pointer relative">
               <div class="flex items-center gap-3">
-                <div class="w-10 h-10 bg-blue-500 bg-opacity-20 rounded-lg flex items-center justify-center">
-                  <i class="fas fa-industry text-blue-500"></i>
+                <div class="w-10 h-10 bg-purple-500 bg-opacity-20 rounded-lg flex items-center justify-center">
+                  <i class="fas fa-exchange-alt text-purple-500"></i>
                 </div>
                 <div>
-                  <h3 class="font-semibold text-white">Radar de Setores</h3>
-                  <p class="text-xs text-gray-400">Mapeamento por RSL</p>
+                  <h3 class="font-semibold text-white">Long & Short</h3>
+                  <p class="text-xs text-gray-400">Análise de Cointegração</p>
                 </div>
               </div>
-            </a>
+              <div class="absolute top-2 right-2 text-xs bg-yellow-500 text-black px-2 py-1 rounded-full font-bold">
+                PRO
+              </div>
+            </div>
+            
             <a href="/relatorios.html" class="quick-action-btn p-4 rounded-lg block border-2 border-purple-500">
-                <div class="flex items-center gap-3">
-                  <div class="w-10 h-10 bg-purple-500 bg-opacity-20 rounded-lg flex items-center justify-center">
-                    <i class="fas fa-file-chart-line text-purple-500"></i>
-                  </div>
-                  <div>
-                    <h3 class="font-semibold text-purple-400">Relatórios Premium</h3>
-                    <p class="text-xs text-gray-400">Análises do Diego Doneda</p>
-                  </div>
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-purple-500 bg-opacity-20 rounded-lg flex items-center justify-center">
+                  <i class="fas fa-file-chart-line text-purple-500"></i>
                 </div>
-                <div class="absolute top-2 right-2 text-xs bg-purple-500 text-white px-2 py-1 rounded-full font-bold">
-                  ANALISTA
+                <div>
+                  <h3 class="font-semibold text-purple-400">Relatórios Premium</h3>
+                  <p class="text-xs text-gray-400">Análises do Diego Doneda</p>
                 </div>
-              </a>
+              </div>
+              <div class="absolute top-2 right-2 text-xs bg-purple-500 text-white px-2 py-1 rounded-full font-bold">
+                ANALISTA
+              </div>
+            </a>
 
             <div onclick="showPremiumFeature('RSL')" class="quick-action-btn p-4 rounded-lg block cursor-pointer relative">
               <div class="flex items-center gap-3">
@@ -451,78 +501,66 @@
           </div>
         </div>
 
-        <!-- Recent Activity -->
+        <!-- Recomendações Section -->
         <div class="dashboard-card p-6 mb-8">
-          <h2 class="text-xl font-bold text-white mb-6 flex items-center gap-2">
-            <i class="fas fa-clock text-geminii"></i>
-            Atividade Recente
-          </h2>
-          
-          <div class="space-y-4" id="recentActivity">
-            <div class="flex items-center gap-4 p-3 bg-white bg-opacity-5 rounded-lg">
-              <div class="w-8 h-8 bg-green-500 bg-opacity-20 rounded-full flex items-center justify-center">
-                <i class="fas fa-user-plus text-green-500 text-sm"></i>
-              </div>
-              <div class="flex-1">
-                <p class="text-white font-medium">Conta criada com sucesso</p>
-                <p class="text-xs text-gray-400">Agora mesmo</p>
-              </div>
-            </div>
-            
-            <div class="flex items-center gap-4 p-3 bg-white bg-opacity-5 rounded-lg">
-              <div class="w-8 h-8 bg-blue-500 bg-opacity-20 rounded-full flex items-center justify-center">
-                <i class="fas fa-eye text-blue-500 text-sm"></i>
-              </div>
-              <div class="flex-1">
-                <p class="text-white font-medium">Watchlist padrão criada</p>
-                <p class="text-xs text-gray-400">PETR4, VALE3, ITUB4 adicionados</p>
-              </div>
-            </div>
-            
-            <div class="flex items-center gap-4 p-3 bg-white bg-opacity-5 rounded-lg">
-              <div class="w-8 h-8 bg-purple-500 bg-opacity-20 rounded-full flex items-center justify-center">
-                <i class="fas fa-gift text-purple-500 text-sm"></i>
-              </div>
-              <div class="flex-1">
-                <p class="text-white font-medium">Trial Premium ativado</p>
-                <p class="text-xs text-gray-400">7 dias de acesso completo</p>
+          <div class="flex items-center justify-between mb-6">
+            <h2 class="text-xl font-bold text-white flex items-center gap-2">
+              <i class="fas fa-lightbulb text-geminii"></i>
+              Recomendações da Carteira BDR
+            </h2>
+            <div class="flex items-center gap-3">
+              <button onclick="refreshRecommendations()" class="text-sm text-gray-400 hover:text-white transition-colors">
+                <i class="fas fa-sync-alt mr-1" id="refreshIcon"></i>
+                Atualizar
+              </button>
+              <div class="text-xs text-gray-400" id="dataSource">
+                Dados: DB + Yahoo Finance
               </div>
             </div>
           </div>
-        </div>
-
-        <!-- Market Overview -->
-        <div class="dashboard-card p-6">
-          <h2 class="text-xl font-bold text-white mb-6 flex items-center gap-2">
-            <i class="fas fa-chart-area text-geminii"></i>
-            Visão Geral do Mercado
-          </h2>
           
-          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div>
-              <h3 class="text-lg font-semibold text-white mb-4">Principais Ações</h3>
-              <div class="space-y-3" id="topStocks">
-                <!-- Stocks will be loaded here -->
-                <div class="flex items-center justify-between p-3 bg-white bg-opacity-5 rounded-lg">
-                  <div class="flex items-center gap-3">
-                    <div class="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-bold">P</div>
-                    <div>
-                      <p class="text-white font-medium">PETR4</p>
-                      <p class="text-xs text-gray-400">Petrobras PN</p>
-                    </div>
-                  </div>
-                  <div class="text-right">
-                    <p class="text-white font-semibold">R$ 32,45</p>
-                    <p class="text-xs text-green-400">+2,3%</p>
-                  </div>
-                </div>
+          <!-- Loading State -->
+          <div id="recommendationsLoading" class="flex items-center justify-center py-12">
+            <div class="spinner mr-3"></div>
+            <span class="text-gray-400">Carregando recomendações...</span>
+          </div>
+          
+          <!-- Error State -->
+          <div id="recommendationsError" class="hidden bg-red-500 bg-opacity-10 border border-red-500 border-opacity-30 rounded-lg p-4">
+            <div class="flex items-center gap-3">
+              <i class="fas fa-exclamation-triangle text-red-500"></i>
+              <div>
+                <h4 class="font-semibold text-red-400">Erro ao carregar recomendações</h4>
+                <p class="text-sm text-red-300" id="errorMessage">Falha na conexão com o servidor</p>
               </div>
             </div>
+          </div>
+          
+          <!-- Recommendations Grid -->
+          <div id="recommendationsContainer" class="hidden">
+            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4" id="recommendationsGrid">
+              <!-- Recommendations will be loaded here -->
+            </div>
             
-            <div>
-              <h3 class="text-lg font-semibold text-white mb-4">Performance da Carteira</h3>
-              <div class="h-40 bg-white bg-opacity-5 rounded-lg flex items-center justify-center">
-                <p class="text-gray-400">Gráfico em desenvolvimento</p>
+            <!-- Portfolio Statistics -->
+            <div class="mt-6 pt-6 border-t border-gray-700">
+              <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="text-center">
+                  <div class="text-2xl font-bold text-white" id="totalStocks">0</div>
+                  <div class="text-xs text-gray-400">Total de Ações</div>
+                </div>
+                <div class="text-center">
+                  <div class="text-2xl font-bold text-blue-400" id="buySignals">0</div>
+                  <div class="text-xs text-gray-400">Sinais Compra</div>
+                </div>
+                <div class="text-center">
+                  <div class="text-2xl font-bold text-green-400" id="sellSignals">0</div>
+                  <div class="text-xs text-gray-400">Sinais Venda</div>
+                </div>
+                <div class="text-center">
+                  <div class="text-2xl font-bold text-yellow-400" id="avgPerformance">0%</div>
+                  <div class="text-xs text-gray-400">Performance Média</div>
+                </div>
               </div>
             </div>
           </div>
@@ -534,6 +572,7 @@
   <script>
     let currentUser = null;
     let userToken = null;
+    let dashboardData = null;
 
     // Check authentication and load user data
     async function checkAuth() {
@@ -588,24 +627,23 @@
       if (planId === 1) {
         planBadge.textContent = 'Básico';
         planBadge.className = 'plan-badge free';
-        document.getElementById('trialInfo').innerHTML = '<i class="fas fa-info-circle mr-1"></i>Plano Gratuito';
       } else if (planId === 2) {
         planBadge.textContent = 'Premium';
         planBadge.className = 'plan-badge premium';
-        document.getElementById('trialInfo').innerHTML = '<i class="fas fa-crown mr-1"></i>Plano Premium';
       } else if (planId >= 3) {
         planBadge.textContent = 'Estratégico';
         planBadge.className = 'plan-badge strategic';
-        document.getElementById('trialInfo').innerHTML = '<i class="fas fa-gem mr-1"></i>Plano Estratégico';
       }
 
       console.log('✅ Dashboard carregado para:', user.name, '- Plano:', user.plan_name);
     }
 
-    // Load dashboard data
+    // Load dashboard data with recommendations
     async function loadDashboardData() {
       try {
-        const response = await fetch('/api/dashboard', {
+        showLoading();
+        
+        const response = await fetch('/api/dashboard/recommendations?portfolio=carteira_bdr&limit=8', {
           headers: {
             'Authorization': `Bearer ${userToken}`
           }
@@ -614,36 +652,201 @@
         const result = await response.json();
 
         if (result.success) {
-          console.log('📊 Dados do dashboard:', result.data);
+          dashboardData = result.data;
+          console.log('📊 Dados do dashboard:', dashboardData);
           
-          // Update stats (you can expand this)
-          document.getElementById('totalAnalysis').textContent = Math.floor(Math.random() * 15);
-          document.getElementById('activeAlerts').textContent = Math.floor(Math.random() * 5);
+          updateDashboardStats(dashboardData);
+          displayRecommendations(dashboardData.recommendations);
+          hideLoading();
           
-          // Update progress bar
-          const progress = Math.floor(Math.random() * 100);
-          document.getElementById('analysisProgress').style.width = progress + '%';
-          
+        } else {
+          showError(result.error || 'Erro ao carregar dados');
         }
 
       } catch (error) {
         console.error('Failed to load dashboard data:', error);
+        showError('Falha na conexão com servidor');
+      }
+    }
+
+    // Update dashboard statistics
+    function updateDashboardStats(data) {
+      const recommendations = data.recommendations;
+      const stats = recommendations.statistics;
+      
+      // Update main stats
+      document.getElementById('totalAnalysis').textContent = stats.total_stocks;
+      document.getElementById('comprasCount').textContent = stats.signals.compras;
+      document.getElementById('portfolioPerformance').textContent = stats.avg_performance + '%';
+      document.getElementById('lastUpdate').textContent = recommendations.last_update.split(' ')[1]; // Only time
+      
+      // Update progress bar based on performance
+      const performanceProgress = Math.min(Math.max((stats.avg_performance + 10) * 5, 0), 100);
+      document.getElementById('analysisProgress').style.width = performanceProgress + '%';
+      
+      // Update text descriptions
+      document.getElementById('comprasText').textContent = 
+        stats.signals.compras > 0 ? `${stats.signals.compras} oportunidades` : 'Sem sinais';
+      
+      const perfClass = stats.avg_performance >= 0 ? 'performance-positive' : 'performance-negative';
+      document.getElementById('portfolioPerformance').className = `text-2xl font-bold ${perfClass}`;
+      
+      document.getElementById('performanceText').textContent = 
+        stats.avg_performance >= 0 ? 'Performance positiva' : 'Performance negativa';
+      
+      // Update portfolio statistics
+      document.getElementById('totalStocks').textContent = stats.total_stocks;
+      document.getElementById('buySignals').textContent = stats.signals.compras;
+      document.getElementById('sellSignals').textContent = stats.signals.vendas;
+      document.getElementById('avgPerformance').textContent = stats.avg_performance + '%';
+    }
+
+    // Display recommendations
+    function displayRecommendations(recommendationsData) {
+      const container = document.getElementById('recommendationsGrid');
+      const recommendations = recommendationsData.recommendations;
+      
+      if (!recommendations || recommendations.length === 0) {
+        container.innerHTML = `
+          <div class="col-span-full text-center py-8">
+            <i class="fas fa-inbox text-4xl text-gray-600 mb-4"></i>
+            <p class="text-gray-400">Nenhuma recomendação disponível</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = recommendations.map(rec => {
+        const badgeClass = getBadgeClass(rec.recomendacao);
+        const performanceClass = rec.performance.valor >= 0 ? 'performance-positive' : 'performance-negative';
+        
+        return `
+          <div class="recommendation-card p-4">
+            <div class="flex items-center justify-between mb-3">
+              <div class="flex items-center gap-2">
+                <span class="text-lg">${rec.icone}</span>
+                <div>
+                  <h3 class="font-bold text-white">${rec.ticker}</h3>
+                  <p class="text-xs text-gray-400">${rec.setor}</p>
+                </div>
+              </div>
+              <span class="recommendation-badge ${badgeClass}">${rec.recomendacao}</span>
+            </div>
+            
+            <div class="space-y-2 text-sm">
+              <div class="flex justify-between">
+                <span class="text-gray-400">Entrada:</span>
+                <span class="text-white">R$ ${rec.entrada.preco.toFixed(2)}</span>
+              </div>
+              
+              <div class="flex justify-between">
+                <span class="text-gray-400">Atual:</span>
+                <span class="text-white">R$ ${rec.atual.preco.toFixed(2)}</span>
+              </div>
+              
+              <div class="flex justify-between">
+                <span class="text-gray-400">Performance:</span>
+                <span class="${performanceClass} font-semibold">
+                  ${rec.performance.valor >= 0 ? '+' : ''}${rec.performance.valor.toFixed(2)}%
+                </span>
+              </div>
+              
+              <div class="flex justify-between">
+                <span class="text-gray-400">Período:</span>
+                <span class="text-white">${rec.performance.dias} dias</span>
+              </div>
+              
+              ${rec.fundamentals.sharpe ? `
+                <div class="flex justify-between">
+                  <span class="text-gray-400">Sharpe:</span>
+                  <span class="text-white">${rec.fundamentals.sharpe.toFixed(2)}</span>
+                </div>
+              ` : ''}
+            </div>
+            
+            <div class="mt-3 pt-3 border-t border-gray-700">
+              <div class="flex justify-between text-xs text-gray-400">
+                <span>Peso: ${rec.entrada.peso_percent.toFixed(1)}%</span>
+                <span>Data: ${rec.entrada.data}</span>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Get badge class based on recommendation type
+    function getBadgeClass(recomendacao) {
+      const recLower = recomendacao.toLowerCase();
+      
+      if (recLower.includes('compra forte')) return 'compra-forte';
+      if (recLower.includes('compra')) return 'compra';
+      if (recLower.includes('venda')) return 'venda';
+      if (recLower.includes('manter')) return 'manter';
+      return 'indisponivel';
+    }
+
+    // Show loading state
+    function showLoading() {
+      document.getElementById('recommendationsLoading').classList.remove('hidden');
+      document.getElementById('recommendationsContainer').classList.add('hidden');
+      document.getElementById('recommendationsError').classList.add('hidden');
+    }
+
+    // Hide loading state
+    function hideLoading() {
+      document.getElementById('recommendationsLoading').classList.add('hidden');
+      document.getElementById('recommendationsContainer').classList.remove('hidden');
+    }
+
+    // Show error state
+    function showError(message) {
+      document.getElementById('recommendationsLoading').classList.add('hidden');
+      document.getElementById('recommendationsContainer').classList.add('hidden');
+      document.getElementById('recommendationsError').classList.remove('hidden');
+      document.getElementById('errorMessage').textContent = message;
+    }
+
+    // Refresh recommendations
+    async function refreshRecommendations() {
+      const refreshIcon = document.getElementById('refreshIcon');
+      refreshIcon.classList.add('fa-spin');
+      
+      try {
+        await loadDashboardData();
+      } catch (error) {
+        console.error('Error refreshing:', error);
+      } finally {
+        setTimeout(() => {
+          refreshIcon.classList.remove('fa-spin');
+        }, 1000);
       }
     }
 
     // Show premium feature dialog
     function showPremiumFeature(featureName) {
       if (!currentUser) return;
-
+    
       const userPlanId = currentUser.plan_id || 1;
       let requiredPlan = 2; // Premium by default
       
       if (featureName === 'IA') {
         requiredPlan = 3; // Strategic
       }
-
+    
+      if (featureName === 'Long & Short') {
+        if (userPlanId >= 2) {
+          // Usuário tem plano Premium ou superior - redirecionar
+          window.location.href = '/long-short';
+          return;
+        }
+      }
+    
       if (userPlanId >= requiredPlan) {
-        alert(`🎉 ${featureName}\n\nFuncionalidade disponível em seu plano!\nEm breve será implementada.`);
+        // Para outras funcionalidades que ainda não existem
+        if (featureName !== 'Long & Short') {
+          alert(`🎉 ${featureName}\n\nFuncionalidade disponível em seu plano!\nEm breve será implementada.`);
+        }
       } else {
         const planNames = { 1: 'Básico', 2: 'Premium', 3: 'Estratégico' };
         const message = `💎 Recurso ${requiredPlan >= 3 ? 'Premium+' : 'Premium'}\n\n${featureName} está disponível apenas para planos ${planNames[requiredPlan]} ou superior.\n\nSeu plano atual: ${currentUser.plan_name}\nPlano necessário: ${planNames[requiredPlan]}\n\nDeseja fazer upgrade agora?`;
@@ -670,61 +873,8 @@
       } finally {
         localStorage.removeItem('geminii_token');
         localStorage.removeItem('geminii_user');
-        window.location.href = '/'; // ✅ CORRIGIDO - Vai para a raiz
+        window.location.href = '/';
       }
-    }
-
-    // Load stock data
-    async function loadStockData() {
-      try {
-        const response = await fetch('/api/stocks?symbols=PETR4,VALE3,ITUB4', {
-          headers: userToken ? { 'Authorization': `Bearer ${userToken}` } : {}
-        });
-
-        const result = await response.json();
-
-        if (result.success) {
-          const stocksContainer = document.getElementById('topStocks');
-          const stocks = Object.entries(result.data);
-          
-          stocksContainer.innerHTML = stocks.map(([symbol, data]) => {
-            const isPositive = data.change >= 0;
-            const colorClass = isPositive ? 'text-green-400' : 'text-red-400';
-            const icon = isPositive ? '+' : '';
-            
-            return `
-              <div class="flex items-center justify-between p-3 bg-white bg-opacity-5 rounded-lg">
-                <div class="flex items-center gap-3">
-                  <div class="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-bold">
-                    ${symbol[0]}
-                  </div>
-                  <div>
-                    <p class="text-white font-medium">${symbol}</p>
-                    <p class="text-xs text-gray-400">${getStockName(symbol)}</p>
-                  </div>
-                </div>
-                <div class="text-right">
-                  <p class="text-white font-semibold">R$ ${data.current_price}</p>
-                  <p class="text-xs ${colorClass}">${icon}${data.change_percent.toFixed(2)}%</p>
-                </div>
-              </div>
-            `;
-          }).join('');
-        }
-
-      } catch (error) {
-        console.error('Failed to load stock data:', error);
-      }
-    }
-
-    // Get stock display name
-    function getStockName(symbol) {
-      const names = {
-        'PETR4': 'Petrobras PN',
-        'VALE3': 'Vale ON',
-        'ITUB4': 'Itaú Unibanco PN'
-      };
-      return names[symbol] || symbol;
     }
 
     // Check API status
@@ -763,7 +913,7 @@
 
     // Initialize dashboard
     async function initDashboard() {
-      console.log('🚀 Inicializando Dashboard...');
+      console.log('🚀 Inicializando Dashboard com Recomendações...');
       
       // Check authentication first
       await checkAuth();
@@ -771,9 +921,6 @@
       // Check API status
       checkApiStatus();
       setInterval(checkApiStatus, 30000);
-      
-      // Load additional data
-      loadStockData();
       
       // Hide welcome alert after delay
       hideWelcomeAlert();
@@ -784,17 +931,25 @@
     // Make functions global
     window.logout = logout;
     window.showPremiumFeature = showPremiumFeature;
+    window.refreshRecommendations = refreshRecommendations;
 
     // Initialize when page loads
     document.addEventListener('DOMContentLoaded', initDashboard);
 
     // Handle page visibility change to refresh data
     document.addEventListener('visibilitychange', function() {
-      if (!document.hidden) {
-        loadStockData();
+      if (!document.hidden && dashboardData) {
+        refreshRecommendations();
         checkApiStatus();
       }
     });
+
+    // Auto-refresh recommendations every 5 minutes
+    setInterval(() => {
+      if (!document.hidden && dashboardData) {
+        refreshRecommendations();
+      }
+    }, 5 * 60 * 1000);
   </script>
 </body>
 </html>
