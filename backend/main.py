@@ -10,9 +10,12 @@ import os
 import secrets
 from yfinance_service import YFinanceService
 from database import get_db_connection
+import requests
+
 
 from beta_routes import beta_bp
 from long_short_routes import long_short_bp
+from rsl_routes import get_rsl_blueprint
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -75,6 +78,9 @@ except ImportError as e:
 # REGISTRAR BLUEPRINTS
 app.register_blueprint(beta_bp)
 app.register_blueprint(long_short_bp)
+rsl_bp = get_rsl_blueprint()
+app.register_blueprint(rsl_bp)
+
 
 # Registrar blueprint do Mercado Pago apenas se disponível
 if MP_AVAILABLE and mercadopago_bp:
@@ -338,6 +344,12 @@ def monitor_basico():
     except:
         return "<h1>Monitor Básico - Em construção</h1>"
 
+
+@app.route('/rsl')
+@app.route('/rsl.html')
+def rsl_page():
+    return send_from_directory('../frontend', 'rsl.html')
+
 @app.route('/Long-Short')
 @app.route('/long-short.html')
 def long_short():
@@ -440,34 +452,90 @@ def create_checkout_compat():
         traceback.print_exc()
         return jsonify({"success": False, "error": str(e)}), 500
 
+
+
+
 # ===== WEBHOOK DO MERCADO PAGO =====
 
-@app.route('/webhooks/mercadopago', methods=['POST'])
+@app.route('/webhook/mercadopago', methods=['POST'])
 def mercadopago_webhook():
-    """Webhook para receber notificações do Mercado Pago"""
-    if not MP_AVAILABLE:
-        return jsonify({"success": False, "error": "Mercado Pago não disponível"}), 500
-    
     try:
         data = request.get_json()
-        print(f"🔔 Webhook Mercado Pago recebido: {data}")
+        print(f"Webhook recebido: {data}")
         
-        # Processar webhook
-        webhook_type = data.get("type")
+        if data.get('type') == 'payment':
+            payment_id = data.get('data', {}).get('id')
+            if payment_id:
+                process_payment(payment_id)
         
-        if webhook_type == "payment":
-            payment_id = data.get("data", {}).get("id")
-            print(f"💳 Processando pagamento: {payment_id}")
-            
-            # Aqui você pode processar o pagamento
-            # Ex: Ativar assinatura, enviar email, etc.
-            
-        return jsonify({"success": True}), 200
+        return {'status': 'ok'}, 200
         
     except Exception as e:
-        print(f"❌ Erro no webhook: {e}")
-        return jsonify({"success": False, "error": str(e)}), 500
+        print(f"Erro webhook: {e}")
+        return {'error': str(e)}, 500
 
+
+
+
+def process_payment(payment_id):
+    try:
+        # Buscar dados do pagamento no Mercado Pago
+        access_token = os.getenv('MERCADOPAGO_ACCESS_TOKEN')
+        
+        response = requests.get(
+            f'https://api.mercadopago.com/v1/payments/{payment_id}',
+            headers={'Authorization': f'Bearer {access_token}'}
+        )
+        
+        if response.status_code == 200:
+            payment_data = response.json()
+            
+            # Verificar se pagamento foi aprovado
+            if payment_data.get('status') == 'approved':
+                # Pegar email do cliente
+                payer_email = payment_data.get('payer', {}).get('email')
+                
+                if payer_email:
+                    update_user_plan(payer_email, payment_data)
+        
+    except Exception as e:
+        print(f"Erro ao processar pagamento: {e}")
+
+def update_user_plan(email, payment_data):
+    try:
+        # Conectar no banco
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # Determinar qual plano baseado no valor pago
+        amount = payment_data.get('transaction_amount', 0)
+        
+        if amount >= 50:  # Ajuste os valores conforme seus planos
+            new_plan_id = 3  # Estratégico
+            plan_name = 'Estratégico'
+        elif amount >= 25:
+            new_plan_id = 2  # Premium
+            plan_name = 'Premium'
+        else:
+            new_plan_id = 1  # Básico
+            plan_name = 'Básico'
+        
+        # Atualizar usuário no banco
+        cursor.execute(
+            "UPDATE users SET plan_id = %s, plan_name = %s, updated_at = NOW() WHERE email = %s",
+            (new_plan_id, plan_name, email)
+        )
+        
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        print(f"✅ Plano atualizado: {email} -> {plan_name}")
+        
+    except Exception as e:
+        print(f"❌ Erro ao atualizar plano: {e}")
+    
+    
 # ===== PÁGINAS DE RETORNO DO PAGAMENTO =====
 
 @app.route('/payment/success')
@@ -1023,16 +1091,6 @@ def search_stocks():
 #         initialize_database()
 
 #     app.run(host='0.0.0.0', port=port, debug=True)
-
-# if __name__ == '__main__':
-#     # Só roda em desenvolvimento
-#     port = int(os.environ.get('PORT', 5000))
-#     debug_mode = os.environ.get("FLASK_ENV") == "development"
-    
-#     print("🚀 Iniciando Geminii API (DESENVOLVIMENTO)...")
-#     print("⚠️  Para produção, use Gunicorn!")
-    
-#     app.run(host='0.0.0.0', port=port, debug=debug_mode)
 
 
 def create_app():

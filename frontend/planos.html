@@ -159,6 +159,42 @@
     .toggle-slider {
       transition: transform 0.3s ease;
     }
+    /* Neon Logo Effect */
+    .neon-logo {
+      transition: all 0.3s ease;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .neon-logo:hover {
+      filter: 
+        drop-shadow(0 0 5px #ba39af)
+        drop-shadow(0 0 10px #ba39af)
+        drop-shadow(0 0 15px #ba39af)
+        drop-shadow(0 0 20px #ba39af)
+        brightness(1.2);
+      transform: scale(1.1);
+    }
+
+    /* Navbar Effects */
+    nav:hover {
+      background: rgba(186, 57, 175, 0.05);
+      border-color: rgba(186, 57, 175, 0.3);
+      box-shadow: 
+        0 25px 50px -12px rgba(0, 0, 0, 0.25),
+        0 0 20px rgba(186, 57, 175, 0.2),
+        0 0 40px rgba(186, 57, 175, 0.1);
+      transition: all 0.3s ease;
+    }
+
+    nav a:hover {
+      color: #ba39af;
+      text-shadow: 
+        0 0 5px #ba39af,
+        0 0 10px #ba39af,
+        0 0 15px #ba39af;
+      transition: all 0.3s ease;
+    }
 
     /* Otimizações para scroll suave */
     * {
@@ -188,7 +224,7 @@
           <img src="assets/logo.png" alt="Geminii Logo" class="w-6 h-6 neon-logo" onclick="navigateHome()" onerror="this.src='/assets/logo.png'; this.onerror=null;">
         </div>
         <div class="hidden md:flex items-center space-x-6 text-xs text-gray-300 ml-8">
-          <a href="/index.html" class="hover:text-white transition-colors">Home</a>
+          <a href="/dashboard.html" class="hover:text-white transition-colors">Dashboard</a>
           <a href="/planos" class="hover:text-white transition-colors">Planos</a>
           <a href="/sobre" class="hover:text-white transition-colors text-geminii">Sobre</a>
         </div>
