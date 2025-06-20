@@ -160,7 +160,6 @@
       transition: transform 0.3s ease;
     }
 
-
     /* Otimizações para scroll suave */
     * {
       scroll-behavior: smooth;
@@ -236,67 +235,10 @@
         </div>
 
         <!-- Plans Grid -->
-        <div class="grid md:grid-cols-3 gap-6 mb-16">
+        <div class="grid md:grid-cols-2 gap-8 mb-16 max-w-4xl mx-auto">
           
-          <!-- Plano Essencial -->
-          <div class="plan-card p-6" id="plan-essencial" onclick="selectPlan('essencial')">
-            <div class="text-center mb-6">
-              <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                <i class="fas fa-shield-alt text-white text-lg"></i>
-              </div>
-              <h3 class="text-xl font-bold text-white mb-2">Essencial</h3>
-              <p class="text-gray-400 text-sm">Para quem está começando ou quer o básico com segurança</p>
-            </div>
-            
-            <div class="text-center mb-6">
-              <div class="text-3xl font-bold price-gradient mb-1">
-                <span id="price-essencial">R$ 39</span>
-              </div>
-              <div class="text-gray-400 text-sm">
-                <span id="period-essencial">por mês</span>
-              </div>
-            </div>
-            
-            <div class="space-y-3 mb-6">
-              <div class="flex items-center">
-                <div class="feature-icon">
-                  <i class="fas fa-check text-white text-xs"></i>
-                </div>
-                <span class="text-gray-300 text-sm">Monitor básico de ações</span>
-              </div>
-              <div class="flex items-center">
-                <div class="feature-icon">
-                  <i class="fas fa-check text-white text-xs"></i>
-                </div>
-                <span class="text-gray-300 text-sm">Alertas de preço via email</span>
-              </div>
-              <div class="flex items-center">
-                <div class="feature-icon">
-                  <i class="fas fa-check text-white text-xs"></i>
-                </div>
-                <span class="text-gray-300 text-sm">Dados históricos (6 meses)</span>
-              </div>
-              <div class="flex items-center">
-                <div class="feature-icon">
-                  <i class="fas fa-check text-white text-xs"></i>
-                </div>
-                <span class="text-gray-300 text-sm">Radar de setores básico</span>
-              </div>
-              <div class="flex items-center">
-                <div class="feature-icon">
-                  <i class="fas fa-check text-white text-xs"></i>
-                </div>
-                <span class="text-gray-300 text-sm">Suporte por email</span>
-              </div>
-            </div>
-            
-            <button class="w-full py-3 btn-primary text-white font-medium rounded-lg text-sm" onclick="selectPlan('essencial')">
-              Escolher Essencial
-            </button>
-          </div>
-
-          <!-- Plano Tático (Featured) -->
-          <div class="plan-card featured p-6" id="plan-tatico" onclick="selectPlan('tatico')">
+          <!-- Plano Pro (Featured) -->
+          <div class="plan-card featured p-6" id="plan-pro" onclick="selectPlan('pro')">
             
             <!-- Badge Popular -->
             <div class="absolute -top-3 left-1/2 transform -translate-x-1/2">
@@ -309,16 +251,16 @@
               <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center mx-auto mb-4">
                 <i class="fas fa-crosshairs text-white text-lg"></i>
               </div>
-              <h3 class="text-xl font-bold text-white mb-2">Tático</h3>
+              <h3 class="text-xl font-bold text-white mb-2">Pro</h3>
               <p class="text-gray-400 text-sm">Para quem já investe e quer se posicionar melhor</p>
             </div>
             
             <div class="text-center mb-6">
               <div class="text-3xl font-bold price-gradient mb-1">
-                <span id="price-tatico">R$ 79</span>
+                <span id="price-pro">R$ 79</span>
               </div>
               <div class="text-gray-400 text-sm">
-                <span id="period-tatico">por mês</span>
+                <span id="period-pro">por mês</span>
               </div>
             </div>
             
@@ -327,7 +269,7 @@
                 <div class="feature-icon">
                   <i class="fas fa-check text-white text-xs"></i>
                 </div>
-                <span class="text-gray-300 text-sm"><strong>Tudo do Essencial +</strong></span>
+                <span class="text-gray-300 text-sm">Monitor avançado de ações</span>
               </div>
               <div class="flex items-center">
                 <div class="feature-icon">
@@ -361,27 +303,27 @@
               </div>
             </div>
             
-            <button class="w-full py-3 btn-primary text-white font-medium rounded-lg text-sm" onclick="selectPlan('tatico')">
-              Escolher Tático
+            <button class="w-full py-3 btn-primary text-white font-medium rounded-lg text-sm" onclick="selectPlan('pro')">
+              Escolher Pro
             </button>
           </div>
 
-          <!-- Plano Estratégico -->
-          <div class="plan-card p-6" id="plan-estrategico" onclick="selectPlan('estrategico')">
+          <!-- Plano Premium -->
+          <div class="plan-card p-6" id="plan-premium" onclick="selectPlan('premium')">
             <div class="text-center mb-6">
               <div class="w-12 h-12 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-full flex items-center justify-center mx-auto mb-4">
                 <i class="fas fa-crown text-white text-lg"></i>
               </div>
-              <h3 class="text-xl font-bold text-white mb-2">Estratégico</h3>
+              <h3 class="text-xl font-bold text-white mb-2">Premium</h3>
               <p class="text-gray-400 text-sm">Para investidores experientes que querem diferenciais</p>
             </div>
             
             <div class="text-center mb-6">
               <div class="text-3xl font-bold price-gradient mb-1">
-                <span id="price-estrategico">R$ 149</span>
+                <span id="price-premium">R$ 149</span>
               </div>
               <div class="text-gray-400 text-sm">
-                <span id="period-estrategico">por mês</span>
+                <span id="period-premium">por mês</span>
               </div>
             </div>
             
@@ -390,7 +332,7 @@
                 <div class="feature-icon">
                   <i class="fas fa-check text-white text-xs"></i>
                 </div>
-                <span class="text-gray-300 text-sm"><strong>Tudo do Tático +</strong></span>
+                <span class="text-gray-300 text-sm"><strong>Tudo do Pro +</strong></span>
               </div>
               <div class="flex items-center">
                 <div class="feature-icon">
@@ -424,24 +366,23 @@
               </div>
             </div>
             
-            <button class="w-full py-3 btn-primary text-white font-medium rounded-lg text-sm" onclick="selectPlan('estrategico')">
-              Escolher Estratégico
+            <button class="w-full py-3 btn-primary text-white font-medium rounded-lg text-sm" onclick="selectPlan('premium')">
+              Escolher Premium
             </button>
           </div>
         </div>
 
         <!-- Comparison Table -->
         <div class="comparison-table p-6 mb-16">
-          <h3 class="text-xl font-bold text-white text-center mb-6">Compare todos os recursos</h3>
+          <h3 class="text-xl font-bold text-white text-center mb-6">Compare os planos</h3>
           
           <div class="overflow-x-auto">
             <table class="w-full text-sm">
               <thead>
                 <tr class="border-b border-white border-opacity-10">
                   <th class="text-left py-3 text-gray-400 font-medium">Recursos</th>
-                  <th class="text-center py-3 text-white font-medium">Essencial</th>
-                  <th class="text-center py-3 text-white font-medium">Tático</th>
-                  <th class="text-center py-3 text-white font-medium">Estratégico</th>
+                  <th class="text-center py-3 text-white font-medium">Pro</th>
+                  <th class="text-center py-3 text-white font-medium">Premium</th>
                 </tr>
               </thead>
               <tbody>
@@ -449,35 +390,34 @@
                   <td class="py-3 text-gray-300">Monitor de ações</td>
                   <td class="text-center py-3"><i class="fas fa-check check-icon"></i></td>
                   <td class="text-center py-3"><i class="fas fa-check check-icon"></i></td>
-                  <td class="text-center py-3"><i class="fas fa-check check-icon"></i></td>
                 </tr>
                 <tr class="border-b border-white border-opacity-5">
                   <td class="py-3 text-gray-300">Radar de setores</td>
                   <td class="text-center py-3"><i class="fas fa-check check-icon"></i></td>
                   <td class="text-center py-3"><i class="fas fa-check check-icon"></i></td>
-                  <td class="text-center py-3"><i class="fas fa-check check-icon"></i></td>
                 </tr>
                 <tr class="border-b border-white border-opacity-5">
                   <td class="py-3 text-gray-300">RSL e análise técnica</td>
-                  <td class="text-center py-3"><i class="fas fa-times cross-icon"></i></td>
                   <td class="text-center py-3"><i class="fas fa-check check-icon"></i></td>
                   <td class="text-center py-3"><i class="fas fa-check check-icon"></i></td>
                 </tr>
                 <tr class="border-b border-white border-opacity-5">
                   <td class="py-3 text-gray-300">Backtests automáticos</td>
-                  <td class="text-center py-3"><i class="fas fa-times cross-icon"></i></td>
                   <td class="text-center py-3"><i class="fas fa-check check-icon"></i></td>
                   <td class="text-center py-3"><i class="fas fa-check check-icon"></i></td>
                 </tr>
                 <tr class="border-b border-white border-opacity-5">
                   <td class="py-3 text-gray-300">Long & Short strategies</td>
                   <td class="text-center py-3"><i class="fas fa-times cross-icon"></i></td>
-                  <td class="text-center py-3"><i class="fas fa-times cross-icon"></i></td>
                   <td class="text-center py-3"><i class="fas fa-check check-icon"></i></td>
                 </tr>
                 <tr class="border-b border-white border-opacity-5">
                   <td class="py-3 text-gray-300">IA para recomendações</td>
                   <td class="text-center py-3"><i class="fas fa-times cross-icon"></i></td>
+                  <td class="text-center py-3"><i class="fas fa-check check-icon"></i></td>
+                </tr>
+                <tr class="border-b border-white border-opacity-5">
+                  <td class="py-3 text-gray-300">Consultoria personalizada</td>
                   <td class="text-center py-3"><i class="fas fa-times cross-icon"></i></td>
                   <td class="text-center py-3"><i class="fas fa-check check-icon"></i></td>
                 </tr>
@@ -560,17 +500,17 @@
   <script>
     // Configurações
     const API_BASE = window.location.origin + '/api';
-    let selectedPlan = 'tatico'; // Plano selecionado por padrão
-    let plansData = []; // Dados dos planos do banco
-    let isAnnual = true; // Começar com anual selecionado
+    let selectedPlan = 'pro';
+    let plansData = [];
+    let isAnnual = true;
 
     // Elementos DOM
     const toggle = document.getElementById('annual-toggle');
 
-    // ✅ BUSCAR PLANOS REAIS DO BANCO
+    // ✅ BUSCAR PLANOS DO BACKEND FLASK
     async function loadPlansFromDatabase() {
       try {
-        console.log('🔄 Carregando planos do banco...');
+        console.log('🔄 Carregando planos do Flask...');
         
         const response = await fetch(`${API_BASE}/plans`);
         const data = await response.json();
@@ -579,15 +519,12 @@
           plansData = data.data;
           console.log('✅ Planos carregados:', plansData);
           
-          // Atualizar interface com dados reais
           updatePlansInterface();
-          
-          // Selecionar plano Tático por padrão
-          selectPlan('tatico');
+          selectPlan('pro');
+          updatePlanButtons(); // 🎯 CONFIGURAR BOTÕES APÓS CARREGAR PLANOS
           
         } else {
           console.error('❌ Erro ao carregar planos:', data.error);
-          // Usar dados fallback se API falhar
           useFallbackPlans();
         }
         
@@ -598,43 +535,33 @@
     }
 
     function useFallbackPlans() {
-      // Dados de fallback caso API falhe
       plansData = [
         {
-          id: 1,
-          name: 'essencial',
-          display_name: 'Essencial',
-          price_monthly: 39,
-          price_annual: 35,
-          description: 'Para quem está começando ou quer o básico com segurança',
-          features: ['Monitor básico de ações', 'Alertas de preço via email', 'Dados históricos (6 meses)', 'Radar de setores básico', 'Suporte por email']
-        },
-        {
-          id: 2,
-          name: 'tatico',
-          display_name: 'Tático',
+          id: "pro",
+          name: 'pro',
+          display_name: 'Pro',
           price_monthly: 79,
           price_annual: 72,
           description: 'Para quem já investe e quer se posicionar melhor',
-          features: ['Tudo do Essencial +', 'RSL e análise técnica avançada', 'Backtests automáticos', 'Alertas via WhatsApp', 'Dados históricos ilimitados', 'API para desenvolvedores']
+          features: ['Monitor avançado de ações', 'RSL e análise técnica avançada', 'Backtests automáticos', 'Alertas via WhatsApp', 'Dados históricos ilimitados', 'API para desenvolvedores']
         },
         {
-          id: 3,
-          name: 'estrategico',
-          display_name: 'Estratégico',
+          id: "premium",
+          name: 'premium',
+          display_name: 'Premium',
           price_monthly: 149,
           price_annual: 137,
           description: 'Para investidores experientes que querem diferenciais',
-          features: ['Tudo do Tático +', 'Long & Short strategies', 'IA para recomendações', 'Consultoria personalizada', 'Acesso prioritário', 'Relatórios exclusivos']
+          features: ['Tudo do Pro +', 'Long & Short strategies', 'IA para recomendações', 'Consultoria personalizada', 'Acesso prioritário', 'Relatórios exclusivos']
         }
       ];
       
       updatePlansInterface();
-      selectPlan('tatico');
+      selectPlan('pro');
+      updatePlanButtons();
     }
 
     function updatePlansInterface() {
-      // Atualizar preços na interface
       plansData.forEach(plan => {
         const priceElement = document.getElementById(`price-${plan.name}`);
         const periodElement = document.getElementById(`period-${plan.name}`);
@@ -645,10 +572,14 @@
           periodElement.textContent = isAnnual ? 'por mês (anual)' : 'por mês';
         }
       });
+      
+      // 🎯 ATUALIZAR BOTÕES TAMBÉM QUANDO PREÇOS MUDAM
+      updatePlanButtons();
     }
 
     function updatePrices() {
       isAnnual = toggle.checked;
+      console.log(`🔄 Modo alterado para: ${isAnnual ? 'Anual' : 'Mensal'}`);
       updatePlansInterface();
     }
 
@@ -666,22 +597,12 @@
         }
         
         selectedPlan = planName;
-        
         console.log(`✅ Plano selecionado: ${planName}`);
         
         // Encontrar dados do plano
         const planData = plansData.find(p => p.name === planName);
         
         if (planData) {
-          // Preparar dados para enviar para API
-          const selectionData = {
-            plan_id: planData.id,
-            billing_cycle: isAnnual ? 'annual' : 'monthly'
-          };
-          
-          // Opcional: Enviar seleção para o backend
-          // await sendPlanSelection(selectionData);
-          
           console.log('📊 Dados do plano selecionado:', {
             nome: planData.display_name,
             preco: isAnnual ? planData.price_annual : planData.price_monthly,
@@ -694,40 +615,276 @@
       }
     }
 
-    async function sendPlanSelection(selectionData) {
+    // 🛒 REDIRECIONAR PARA CHECKOUT DO MERCADO PAGO
+    async function redirectToCheckout(planName) {
       try {
-        const response = await fetch(`${API_BASE}/plans/select`, {
+        showLoading(true);
+        
+        const planData = plansData.find(p => p.name === planName);
+        
+        if (!planData) {
+          console.error('❌ Plano não encontrado:', planName);
+          showMessage('Plano não encontrado. Tente novamente.', 'error');
+          showLoading(false);
+          return;
+        }
+        
+        // Preparar dados para o checkout
+        const checkoutData = {
+          plan: planData.name,
+          cycle: isAnnual ? 'annual' : 'monthly',
+          customer_email: null // Pode implementar coleta de email aqui se necessário
+        };
+        
+        console.log('🛒 Criando checkout no Flask:', checkoutData);
+        console.log(`💰 Preço: R$ ${isAnnual ? planData.price_annual : planData.price_monthly} (${isAnnual ? 'anual' : 'mensal'})`);
+        
+        // Criar checkout no backend Flask
+        const response = await fetch(`${API_BASE}/checkout/create`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify(selectionData)
+          body: JSON.stringify(checkoutData)
         });
         
         const result = await response.json();
         
         if (result.success) {
-          console.log('✅ Seleção enviada:', result.data.message);
+          console.log('✅ Checkout criado:', result.data);
+          
+          // Salvar dados localmente para referência
+          localStorage.setItem('geminii_checkout', JSON.stringify({
+            preference_id: result.data.preference_id,
+            plan: result.data.plan,
+            cycle: result.data.cycle,
+            price: result.data.price,
+            timestamp: Date.now()
+          }));
+          
+          // Determinar URL baseado no ambiente
+          const isProduction = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
+          const redirectUrl = isProduction ? result.data.checkout_url : result.data.sandbox_url;
+          
+          console.log(`🔗 Redirecionando para: ${redirectUrl}`);
+          console.log(`🌍 Ambiente: ${isProduction ? 'PRODUÇÃO' : 'DESENVOLVIMENTO'}`);
+          
+          // Pequeno delay para o usuário ver o loading
+          setTimeout(() => {
+            window.location.href = redirectUrl;
+          }, 1000);
+          
+        } else {
+          console.error('❌ Erro ao criar checkout:', result);
+          showMessage('Erro ao carregar checkout. Tente novamente.', 'error');
+          showLoading(false);
         }
         
       } catch (error) {
-        console.error('❌ Erro ao enviar seleção:', error);
+        console.error('❌ Erro:', error);
+        showMessage('Erro de conexão. Verifique sua internet e tente novamente.', 'error');
+        showLoading(false);
       }
     }
 
-    // Inicializar página
+    // 🎯 CONFIGURAR BOTÕES BASEADO NA ESCOLHA DO USUÁRIO
+    function updatePlanButtons() {
+      console.log('🔧 Atualizando botões dos planos...');
+      
+      // 🎯 BOTÃO PRO - ESTE É O IMPORTANTE!
+      const proButton = document.querySelector('#plan-pro button');
+      if (proButton) {
+        // Atualizar texto do botão baseado na escolha
+        const proData = plansData.find(p => p.name === 'pro');
+        if (proData) {
+          const price = isAnnual ? proData.price_annual : proData.price_monthly;
+          const cycle = isAnnual ? 'Anual' : 'Mensal';
+          proButton.innerHTML = `Escolher Pro ${cycle} - R$ ${price}`;
+        }
+        
+        // 🚀 CONFIGURAR EVENTO DE CLICK - AQUI É ONDE A MÁGICA ACONTECE!
+        proButton.onclick = (e) => {
+          e.stopPropagation();
+          console.log(`🎯 Botão Pro clicado - ${isAnnual ? 'Anual' : 'Mensal'}`);
+          redirectToCheckout('pro'); // 🔥 CHAMA A FUNÇÃO DO MERCADO PAGO
+        };
+      }
+      
+      // 🎯 BOTÃO PREMIUM
+      const premiumButton = document.querySelector('#plan-premium button');
+      if (premiumButton) {
+        // Atualizar texto do botão baseado na escolha
+        const premiumData = plansData.find(p => p.name === 'premium');
+        if (premiumData) {
+          const price = isAnnual ? premiumData.price_annual : premiumData.price_monthly;
+          const cycle = isAnnual ? 'Anual' : 'Mensal';
+          premiumButton.innerHTML = `Escolher Premium ${cycle} - R$ ${price}`;
+        }
+        
+        // 🚀 CONFIGURAR EVENTO DE CLICK
+        premiumButton.onclick = (e) => {
+          e.stopPropagation();
+          console.log(`🎯 Botão Premium clicado - ${isAnnual ? 'Anual' : 'Mensal'}`);
+          redirectToCheckout('premium'); // 🔥 CHAMA A FUNÇÃO DO MERCADO PAGO
+        };
+      }
+      
+      // 🎯 BOTÕES CTA DO FINAL DA PÁGINA
+      const ctaPrimaryButtons = document.querySelectorAll('.btn-primary');
+      ctaPrimaryButtons.forEach(button => {
+        if (button.textContent.includes('Começar teste grátis') || button.textContent.includes('teste grátis')) {
+          // Atualizar texto do CTA
+          const selectedPlanData = plansData.find(p => p.name === selectedPlan);
+          if (selectedPlanData) {
+            const price = isAnnual ? selectedPlanData.price_annual : selectedPlanData.price_monthly;
+            const cycle = isAnnual ? 'Anual' : 'Mensal';
+            button.innerHTML = `Começar ${selectedPlanData.display_name} ${cycle} - R$ ${price}`;
+          }
+          
+          // 🚀 CONFIGURAR EVENTO DE CLICK
+          button.onclick = (e) => {
+            e.stopPropagation();
+            console.log(`🎯 Botão CTA clicado - ${selectedPlan} ${isAnnual ? 'Anual' : 'Mensal'}`);
+            redirectToCheckout(selectedPlan); // 🔥 CHAMA A FUNÇÃO DO MERCADO PAGO
+          };
+        }
+      });
+      
+      console.log(`✅ Botões configurados para modo: ${isAnnual ? 'ANUAL' : 'MENSAL'}`);
+    }
+
+    function showLoading(show) {
+      const loadingOverlay = document.getElementById('loading-overlay');
+      
+      if (show) {
+        if (!loadingOverlay) {
+          const overlay = document.createElement('div');
+          overlay.id = 'loading-overlay';
+          overlay.className = 'fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50';
+          overlay.innerHTML = `
+            <div class="text-center bg-gray-800 p-8 rounded-lg border border-gray-700">
+              <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500 mx-auto mb-4"></div>
+              <p class="text-white font-medium">Redirecionando para pagamento...</p>
+              <p class="text-gray-400 text-sm mt-2">Aguarde, não feche esta página</p>
+            </div>
+          `;
+          document.body.appendChild(overlay);
+        }
+      } else {
+        if (loadingOverlay) {
+          loadingOverlay.remove();
+        }
+      }
+    }
+
     function initializePlans() {
+      console.log('🚀 Inicializando página de planos...');
+      
       // Carregar planos do banco
       loadPlansFromDatabase();
       
-      // Configurar toggle
-      toggle.addEventListener('change', updatePrices);
+      // Configurar toggle de anual/mensal
+      toggle.addEventListener('change', () => {
+        updatePrices();
+        console.log(`🔄 Toggle alterado para: ${isAnnual ? 'ANUAL' : 'MENSAL'}`);
+      });
       
       // Inicializar com preços anuais
       updatePrices();
     }
 
-    // FAQ Toggle otimizado
+    // 🎯 VERIFICAR SE VOLTOU DE UM PAGAMENTO
+    function checkPaymentReturn() {
+      const urlParams = new URLSearchParams(window.location.search);
+      
+      // Mercado Pago retorna estes parâmetros
+      const collection_id = urlParams.get('collection_id');
+      const collection_status = urlParams.get('collection_status');
+      const payment_id = urlParams.get('payment_id');
+      const status = urlParams.get('status');
+      const external_reference = urlParams.get('external_reference');
+      const payment_type = urlParams.get('payment_type');
+      const merchant_order_id = urlParams.get('merchant_order_id');
+      const preference_id = urlParams.get('preference_id');
+      const site_id = urlParams.get('site_id');
+      const processing_mode = urlParams.get('processing_mode');
+      const merchant_account_id = urlParams.get('merchant_account_id');
+      
+      // Se tem parâmetros do MP, significa que voltou do pagamento
+      if (collection_id || payment_id || status) {
+        console.log('🔙 Cliente voltou do Mercado Pago!');
+        console.log('📊 Parâmetros recebidos:', {
+          collection_id,
+          collection_status,
+          payment_id,
+          status,
+          external_reference,
+          payment_type,
+          preference_id
+        });
+        
+        // Limpar dados salvos
+        localStorage.removeItem('geminii_checkout');
+        
+        // Mostrar feedback baseado no status
+        if (collection_status === 'approved' || status === 'approved') {
+          showMessage('🎉 Pagamento aprovado! Bem-vindo ao Geminii!', 'success');
+          
+          // Opcional: Redirecionar para dashboard após alguns segundos
+          setTimeout(() => {
+            window.location.href = '/dashboard';
+          }, 3000);
+          
+        } else if (collection_status === 'pending' || status === 'pending') {
+          showMessage('⏳ Pagamento em análise. Você receberá um email de confirmação.', 'warning');
+          
+        } else if (collection_status === 'rejected' || status === 'rejected' || collection_status === 'cancelled') {
+          showMessage('❌ Pagamento rejeitado. Tente novamente com outro método.', 'error');
+          
+        } else {
+          // Status desconhecido
+          showMessage(`ℹ️ Status do pagamento: ${collection_status || status}`, 'info');
+        }
+        
+        // Limpar URL após mostrar feedback
+        setTimeout(() => {
+          window.history.replaceState({}, document.title, window.location.pathname);
+        }, 1000);
+      }
+    }
+
+    function showMessage(message, type) {
+      const colors = {
+        success: 'bg-green-600 border-green-500',
+        warning: 'bg-yellow-600 border-yellow-500', 
+        error: 'bg-red-600 border-red-500',
+        info: 'bg-blue-600 border-blue-500'
+      };
+      
+      const icons = {
+        success: '✅',
+        warning: '⚠️',
+        error: '❌',
+        info: 'ℹ️'
+      };
+      
+      const messageDiv = document.createElement('div');
+      messageDiv.className = `fixed top-4 right-4 ${colors[type]} text-white px-6 py-4 rounded-lg shadow-lg z-50 max-w-sm border`;
+      messageDiv.innerHTML = `
+        <div class="flex items-center">
+          <span class="text-xl mr-3">${icons[type]}</span>
+          <span class="text-sm font-medium">${message}</span>
+        </div>
+      `;
+      
+      document.body.appendChild(messageDiv);
+      
+      // Remover após 5 segundos
+      setTimeout(() => {
+        messageDiv.remove();
+      }, 5000);
+    }
+
     function toggleFAQ(index) {
       const faqItems = document.querySelectorAll('.faq-item');
       const currentItem = faqItems[index];
@@ -742,13 +899,19 @@
       }
     }
 
-    // Event listeners
-    document.addEventListener('DOMContentLoaded', initializePlans);
+    // 🎯 EVENT LISTENERS PRINCIPAIS
+    document.addEventListener('DOMContentLoaded', () => {
+      console.log('📄 DOM carregado, inicializando...');
+      initializePlans();
+      checkPaymentReturn(); // 🔥 VERIFICAR SE VOLTOU DO PAGAMENTO
+    });
 
-    // Tornar função global
+    // Funções globais para o HTML
     window.selectPlan = selectPlan;
+    window.redirectToCheckout = redirectToCheckout;
+    window.toggleFAQ = toggleFAQ;
 
-    console.log('🎯 Página de planos com dados reais carregada!');
+    console.log('🛒 Sistema de planos Flask + Mercado Pago carregado!');
   </script>
 </body>
 </html>
