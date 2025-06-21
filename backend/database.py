@@ -610,7 +610,8 @@ def setup_enhanced_database():
         
         # 6. Agora criar cupons (que precisam do admin)
         create_coupons_table()        # Sistema de cupons
-        create_portfolio_system()     # Sistema de carteiras
+        create_portfolio_system()     # Sistema de carteiras  
+        create_recommendations_table()
         create_payment_history()      # Histórico de pagamentos
         
         # Limpar tokens expirados
@@ -621,6 +622,7 @@ def setup_enhanced_database():
         print("   • Sistema de administração")
         print("   • Cupons de desconto")
         print("   • Carteiras de investimento")
+        print("   • Recomendações por carteira")
         print("   • Histórico de pagamentos")
         print("   • Login dual (user/admin)")
         
@@ -628,6 +630,99 @@ def setup_enhanced_database():
     else:
         print("❌ Falha na configuração do banco")
         return False
+
+def create_recommendations_table():
+    """Criar tabela de recomendações das carteiras"""
+    try:
+        conn = get_db_connection()
+        if not conn:
+            return False
+            
+        cursor = conn.cursor()
+        
+        # Criar tabela de recomendações
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS portfolio_recommendations (
+                id SERIAL PRIMARY KEY,
+                portfolio_name VARCHAR(50) NOT NULL,
+                ticker VARCHAR(20) NOT NULL,
+                action_type VARCHAR(10) NOT NULL CHECK (action_type IN ('BUY', 'SELL', 'HOLD')),
+                target_weight DECIMAL(5,2) CHECK (target_weight >= 0 AND target_weight <= 100),
+                recommendation_date DATE NOT NULL,
+                reason TEXT,
+                price_target DECIMAL(10,2),
+                current_price DECIMAL(10,2),
+                is_active BOOLEAN DEFAULT true,
+                created_by INTEGER REFERENCES users(id),
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        
+        # Criar índices para performance
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_portfolio_recommendations_portfolio 
+            ON portfolio_recommendations(portfolio_name);
+        """)
+        
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_portfolio_recommendations_date 
+            ON portfolio_recommendations(recommendation_date);
+        """)
+        
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_portfolio_recommendations_active 
+            ON portfolio_recommendations(is_active);
+        """)
+        
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_portfolio_recommendations_ticker 
+            ON portfolio_recommendations(ticker);
+        """)
+        
+        # Inserir algumas recomendações de exemplo para Smart BDR
+        cursor.execute("SELECT COUNT(*) FROM portfolio_recommendations WHERE portfolio_name = 'smart_bdr';")
+        count = cursor.fetchone()[0]
+        
+        if count == 0:
+            # Buscar ID do admin para associar as recomendações
+            cursor.execute("SELECT id FROM users WHERE user_type = 'admin' LIMIT 1;")
+            admin_result = cursor.fetchone()
+            admin_id = admin_result[0] if admin_result else None
+            
+            if admin_id:
+                # Recomendações de exemplo
+                sample_recommendations = [
+                    ('smart_bdr', 'AAPL34', 'BUY', 18.0, '2024-06-20', 'Apple apresentou resultados excepcionais no Q2. Recomendamos aumentar posição.', 165.00, 155.50),
+                    ('smart_bdr', 'TSLA34', 'HOLD', 8.0, '2024-06-19', 'Tesla mantém fundamentals sólidos. Aguardar próximos resultados.', 180.00, 175.20),
+                    ('smart_bdr', 'MSFT34', 'BUY', 15.0, '2024-06-18', 'Microsoft com forte crescimento em cloud computing. Aumentar exposição.', 420.00, 405.30),
+                    ('smart_bdr', 'GOOGL34', 'SELL', 5.0, '2024-06-17', 'Google enfrentando pressão regulatória. Reduzir posição temporariamente.', 135.00, 142.80),
+                    ('growth', 'NVDC34', 'BUY', 20.0, '2024-06-16', 'NVIDIA líder em IA. Forte potencial de crescimento no setor.', 450.00, 425.60)
+                ]
+                
+                for rec in sample_recommendations:
+                    cursor.execute("""
+                        INSERT INTO portfolio_recommendations 
+                        (portfolio_name, ticker, action_type, target_weight, recommendation_date, 
+                         reason, price_target, current_price, created_by)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    """, (*rec, admin_id))
+                
+                print("✅ Recomendações de exemplo inseridas!")
+            else:
+                print("⚠️ Admin não encontrado, recomendações de exemplo não inseridas")
+        
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        print("✅ Tabela 'portfolio_recommendations' criada com sucesso!")
+        return True
+        
+    except Exception as e:
+        print(f"❌ Erro ao criar tabela de recomendações: {e}")
+        return False
+
 
 # ===== FUNÇÕES AUXILIARES PARA O SISTEMA =====
 
