@@ -372,6 +372,11 @@ def serve_logo():
 def serve_logo_assets():
     return send_from_directory('../frontend', 'logo.png')
 
+@app.route('/admin-dashboard') 
+@app.route('/admin-dashboard.html')
+def admin_dashboard():
+    return send_from_directory('../frontend', 'admin-dashboard.html')
+
 # ===== ROTAS API BÁSICAS =====
 
 @app.route('/api/status')
@@ -762,6 +767,9 @@ def register():
     except Exception as e:
         return jsonify({'success': False, 'error': f'Erro interno: {str(e)}'}), 500
 
+# SUBSTITUA estas partes no seu main.py:
+
+# ===== CORREÇÃO 1: LOGIN (linha ~788) =====
 @app.route('/api/auth/login', methods=['POST'])
 def login():
     """Login do usuário"""
@@ -783,8 +791,9 @@ def login():
         
         cursor = conn.cursor()
         
+        # ✅ CORRIGIDO: Agora busca user_type também
         cursor.execute("""
-            SELECT id, name, email, password, plan_id, plan_name 
+            SELECT id, name, email, password, plan_id, plan_name, user_type 
             FROM users WHERE email = %s
         """, (email,))
         
@@ -795,7 +804,8 @@ def login():
         if not user:
             return jsonify({'success': False, 'error': 'E-mail não encontrado'}), 401
         
-        user_id, name, email, stored_password, plan_id, plan_name = user
+        # ✅ CORRIGIDO: Agora pega user_type do resultado
+        user_id, name, email, stored_password, plan_id, plan_name, user_type = user
         
         if hash_password(password) != stored_password:
             return jsonify({'success': False, 'error': 'Senha incorreta'}), 401
@@ -817,7 +827,8 @@ def login():
                     'name': name,
                     'email': email,
                     'plan_id': plan_id,
-                    'plan_name': plan_name
+                    'plan_name': plan_name,
+                    'user_type': user_type  # ✅ CORRIGIDO: Agora retorna user_type
                 },
                 'token': token
             }
@@ -846,8 +857,10 @@ def verify_token():
                 return jsonify({'success': False, 'error': 'Erro de conexão com banco'}), 500
             
             cursor = conn.cursor()
+            
+            # ✅ CORRIGIDO: Agora busca user_type também
             cursor.execute("""
-                SELECT id, name, email, plan_id, plan_name 
+                SELECT id, name, email, plan_id, plan_name, user_type 
                 FROM users WHERE id = %s
             """, (user_id,))
             
@@ -858,7 +871,8 @@ def verify_token():
             if not user:
                 return jsonify({'success': False, 'error': 'Usuário não encontrado'}), 401
             
-            user_id, name, email, plan_id, plan_name = user
+            # ✅ CORRIGIDO: Agora pega user_type do resultado
+            user_id, name, email, plan_id, plan_name, user_type = user
             
             return jsonify({
                 'success': True,
@@ -868,7 +882,8 @@ def verify_token():
                         'name': name,
                         'email': email,
                         'plan_id': plan_id,
-                        'plan_name': plan_name
+                        'plan_name': plan_name,
+                        'user_type': user_type  # ✅ CORRIGIDO: Agora retorna user_type
                     }
                 }
             })

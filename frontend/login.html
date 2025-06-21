@@ -66,6 +66,22 @@
       transform: none;
     }
 
+    .admin-btn {
+      background: linear-gradient(135deg, #f59e0b, #f97316);
+      transition: all 0.3s ease;
+    }
+
+    .admin-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 20px 40px rgba(245, 158, 11, 0.4);
+    }
+
+    .admin-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
     .logo-glow:hover {
       filter: drop-shadow(0 0 20px #ba39af);
       transform: scale(1.1);
@@ -114,9 +130,40 @@
       animation-delay: 7s;
     }
 
+    .user-type-selector {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 12px;
+      padding: 6px;
+      margin-bottom: 24px;
+    }
+    
+    .user-type-btn {
+      border-radius: 8px;
+      transition: all 0.3s ease;
+      position: relative;
+    }
+    
+    .user-type-btn.active {
+      background: linear-gradient(135deg, #ba39af, #d946ef);
+      color: white;
+      box-shadow: 0 5px 15px rgba(186, 57, 175, 0.3);
+    }
+
+    .admin-mode-indicator {
+      background: linear-gradient(135deg, #f59e0b, #f97316);
+      border: 2px solid rgba(245, 158, 11, 0.3);
+      animation: pulse 2s infinite;
+    }
+
     @keyframes float {
       0%, 100% { transform: translateY(0px) rotate(0deg); opacity: 0.3; }
       50% { transform: translateY(-30px) rotate(180deg); opacity: 0.6; }
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 0.8; }
+      50% { opacity: 1; }
     }
   </style>
 </head>
@@ -135,11 +182,37 @@
         <img src="assets/logo.png" alt="Geminii Logo" class="w-16 h-16 mx-auto logo-glow transition-all duration-300 cursor-pointer" onclick="window.location.href='/'" onerror="this.src='/assets/logo.png';">
       </div>
       <h1 class="text-3xl font-bold text-white mb-2">Bem-vindo de volta!</h1>
-      <p class="text-gray-400">Entre na sua conta Geminii Tech</p>
+      <p class="text-gray-400" id="loginSubtitle">Entre na sua conta Geminii Tech</p>
     </div>
 
     <!-- Login Form -->
     <div class="auth-container p-8">
+      
+      <!-- User Type Selector -->
+      <div class="user-type-selector">
+        <div class="flex">
+          <button id="userBtn" class="user-type-btn flex-1 py-3 px-4 text-sm font-medium active" onclick="setUserType('user')">
+            <i class="fas fa-user mr-2"></i>
+            Usuário
+          </button>
+          <button id="adminBtn" class="user-type-btn flex-1 py-3 px-4 text-sm font-medium" onclick="setUserType('admin')">
+            <i class="fas fa-crown mr-2"></i>
+            Administrador
+          </button>
+        </div>
+      </div>
+
+      <!-- Admin Mode Indicator -->
+      <div id="adminModeIndicator" class="hidden admin-mode-indicator p-3 rounded-lg mb-4 text-center">
+        <div class="flex items-center justify-center text-yellow-900 font-medium">
+          <i class="fas fa-shield-alt mr-2"></i>
+          Modo Administrador Ativado
+        </div>
+        <div class="text-xs text-yellow-800 mt-1">
+          Acesso completo ao sistema
+        </div>
+      </div>
+
       <form id="loginForm" class="space-y-6">
         <div>
           <label for="loginEmail" class="block text-sm font-medium text-gray-300 mb-2">
@@ -179,6 +252,19 @@
         </button>
       </form>
       
+      <!-- Quick Admin Access -->
+      <div id="adminQuickAccess" class="hidden mt-4 p-3 bg-yellow-500 bg-opacity-10 border border-yellow-500 border-opacity-30 rounded-lg">
+        <div class="text-center">
+          <p class="text-yellow-400 text-sm mb-2">
+            <i class="fas fa-key mr-1"></i>
+            Acesso Rápido Admin
+          </p>
+          <button onclick="quickAdminLogin()" class="text-xs text-yellow-300 hover:text-yellow-100 underline">
+            Entrar como diego@geminii.com.br
+          </button>
+        </div>
+      </div>
+      
       <!-- Messages -->
       <div id="loginMessage" class="mt-4 text-center"></div>
       
@@ -214,6 +300,44 @@
   </div>
 
   <script>
+    let currentUserType = 'user';
+
+    // Set user type
+    function setUserType(type) {
+      currentUserType = type;
+      
+      // Update buttons
+      document.getElementById('userBtn').classList.toggle('active', type === 'user');
+      document.getElementById('adminBtn').classList.toggle('active', type === 'admin');
+      
+      // Update UI based on type
+      const subtitle = document.getElementById('loginSubtitle');
+      const loginBtn = document.getElementById('loginBtn');
+      const loginBtnText = document.getElementById('loginBtnText');
+      const adminIndicator = document.getElementById('adminModeIndicator');
+      const adminQuickAccess = document.getElementById('adminQuickAccess');
+      
+      if (type === 'admin') {
+        subtitle.textContent = 'Acesso administrativo ao sistema';
+        loginBtn.className = 'admin-btn w-full py-3 text-white font-semibold rounded-lg';
+        loginBtnText.innerHTML = '<i class="fas fa-crown mr-2"></i>Entrar como Admin';
+        adminIndicator.classList.remove('hidden');
+        adminQuickAccess.classList.remove('hidden');
+      } else {
+        subtitle.textContent = 'Entre na sua conta Geminii Tech';
+        loginBtn.className = 'login-btn w-full py-3 text-white font-semibold rounded-lg';
+        loginBtnText.innerHTML = '<i class="fas fa-sign-in-alt mr-2"></i>Entrar';
+        adminIndicator.classList.add('hidden');
+        adminQuickAccess.classList.add('hidden');
+      }
+    }
+
+    // Quick admin login
+    function quickAdminLogin() {
+      document.getElementById('loginEmail').value = 'diego@geminii.com.br';
+      document.getElementById('loginPassword').value = 'admin123';
+    }
+
     // Check if already logged in
     async function checkAuthStatus() {
       const token = localStorage.getItem('geminii_token');
@@ -226,7 +350,15 @@
 
         const result = await response.json();
         if (result.success) {
-          window.location.href = '/dashboard.html';
+          const user = result.data.user;
+          const isAdmin = user.user_type === 'admin' || user.user_type === 'master';
+          
+          // Redirect based on user type
+          if (isAdmin) {
+            window.location.href = '/admin-dashboard.html';
+          } else {
+            window.location.href = '/dashboard.html';
+          }
         } else {
           localStorage.removeItem('geminii_token');
           localStorage.removeItem('geminii_user');
@@ -255,6 +387,7 @@
 
       // Loading state
       loginBtn.disabled = true;
+      const originalText = loginBtnText.innerHTML;
       loginBtnText.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Entrando...';
       messageDiv.innerHTML = '';
       
@@ -268,14 +401,29 @@
         const data = await response.json();
         
         if (data.success) {
+          const user = data.data.user;
+          const isAdmin = user.user_type === 'admin' || user.user_type === 'master';
+          
+          // Check if admin mode is selected but user is not admin
+          if (currentUserType === 'admin' && !isAdmin) {
+            messageDiv.innerHTML = '<p class="text-red-400"><i class="fas fa-shield-alt mr-1"></i>Acesso negado! Este usuário não tem privilégios de administrador.</p>';
+            loginBtn.disabled = false;
+            loginBtnText.innerHTML = originalText;
+            return;
+          }
+          
           // Store auth data
           localStorage.setItem('geminii_token', data.data.token);
-          localStorage.setItem('geminii_user', JSON.stringify(data.data.user));
+          localStorage.setItem('geminii_user', JSON.stringify(user));
           
           messageDiv.innerHTML = '<p class="text-green-400"><i class="fas fa-check-circle mr-1"></i>Login realizado! Redirecionando...</p>';
           
           setTimeout(() => {
-            window.location.href = '/dashboard.html';
+            if (currentUserType === 'admin' && isAdmin) {
+              window.location.href = '/admin-dashboard.html';
+            } else {
+              window.location.href = '/dashboard.html';
+            }
           }, 1500);
           
         } else {
@@ -286,7 +434,7 @@
         messageDiv.innerHTML = '<p class="text-red-400"><i class="fas fa-exclamation-triangle mr-1"></i>Erro de conexão. Tente novamente.</p>';
       } finally {
         loginBtn.disabled = false;
-        loginBtnText.innerHTML = 'Entrar';
+        loginBtnText.innerHTML = originalText;
       }
     });
 
@@ -294,8 +442,9 @@
     document.addEventListener('DOMContentLoaded', function() {
       checkAuthStatus();
       document.getElementById('loginEmail').focus();
+      setUserType('user'); // Default to user
       
-      console.log('🔐 Página de Login carregada');
+      console.log('🔐 Página de Login Enhanced carregada');
     });
 
     // Enter key handling

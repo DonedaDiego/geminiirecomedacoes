@@ -822,5 +822,71 @@ def remove_portfolio_asset(portfolio_name, ticker):
     except Exception as e:
         return {'success': False, 'error': f'Erro interno: {str(e)}'}
 
+def fix_admin_account():
+    """Corrigir conta do admin completamente"""
+    try:
+        import hashlib
+        from datetime import datetime, timezone
+        
+        conn = get_db_connection()
+        if not conn:
+            return False
+            
+        cursor = conn.cursor()
+        
+        # Deletar admin antigo
+        cursor.execute("DELETE FROM users WHERE user_type = 'admin'")
+        print(f"🗑️ {cursor.rowcount} admin(s) antigo(s) deletado(s)")
+        
+        # Criar admin novo com dados corretos
+        admin_email = "diego@geminii.com.br"
+        admin_password = "@Lice8127"
+        password_hash = hashlib.sha256(admin_password.encode()).hexdigest()
+        
+        cursor.execute("""
+            INSERT INTO users (name, email, password, plan_id, plan_name, user_type, created_at) 
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
+            RETURNING id
+        """, (
+            "Diego Doneda - Admin", 
+            admin_email, 
+            password_hash, 
+            3, 
+            "Estratégico", 
+            "admin", 
+            datetime.now(timezone.utc)
+        ))
+        
+        admin_id = cursor.fetchone()[0]
+        
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        print("👑 ADMIN CRIADO COM SUCESSO!")
+        print(f"📧 Email: {admin_email}")
+        print(f"🔑 Senha: {admin_password}")
+        print(f"🆔 ID: {admin_id}")
+        print(f"🔐 Hash: {password_hash}")
+        
+        return True
+        
+    except Exception as e:
+        print(f"❌ Erro ao corrigir admin: {e}")
+        return False
+
+
+
 if __name__ == "__main__":
     setup_enhanced_database()
+    
+    
+# if __name__ == "__main__":
+#     print("1. Setup completo")
+#     print("2. Corrigir admin")
+#     choice = input("Escolha (1 ou 2): ")
+    
+#     if choice == "2":
+#         fix_admin_account()
+#     else:
+#         setup_enhanced_database()
