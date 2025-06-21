@@ -12,10 +12,11 @@ from yfinance_service import YFinanceService
 from database import get_db_connection
 import requests
 
-
+from admin_routes import get_admin_blueprint
 from beta_routes import beta_bp
 from long_short_routes import long_short_bp
 from rsl_routes import get_rsl_blueprint
+
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -80,6 +81,8 @@ app.register_blueprint(beta_bp)
 app.register_blueprint(long_short_bp)
 rsl_bp = get_rsl_blueprint()
 app.register_blueprint(rsl_bp)
+admin_bp = get_admin_blueprint()
+app.register_blueprint(admin_bp)
 
 
 # Registrar blueprint do Mercado Pago apenas se disponível
@@ -288,9 +291,9 @@ def reset_password_db(token, new_password):
 def initialize_database():
     """Inicializar banco se necessário"""
     try:
-        from database import setup_database
-        setup_database()
-        print("✅ Banco verificado/criado com sucesso!")
+        from database import setup_enhanced_database  # ← Nova versão
+        setup_enhanced_database()                     # ← Tudo completo
+        print("✅ Banco enhanced verificado/criado com sucesso!")
     except Exception as e:
         print(f"⚠️ Erro ao verificar banco: {e}")
 
@@ -453,8 +456,6 @@ def create_checkout_compat():
         return jsonify({"success": False, "error": str(e)}), 500
 
 
-
-
 # ===== WEBHOOK DO MERCADO PAGO =====
 
 @app.route('/webhook/mercadopago', methods=['POST'])
@@ -473,8 +474,6 @@ def mercadopago_webhook():
     except Exception as e:
         print(f"Erro webhook: {e}")
         return {'error': str(e)}, 500
-
-
 
 
 def process_payment(payment_id):
@@ -894,6 +893,27 @@ def logout():
     except Exception as e:
         return jsonify({'success': False, 'error': f'Erro interno: {str(e)}'}), 500
 
+@app.route('/api/force-admin')
+def force_admin():
+    """Temporário - forçar admin"""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            UPDATE users 
+            SET user_type = 'admin', plan_id = 3, plan_name = 'Estratégico'
+            WHERE email = 'diego@geminii.com.br'
+        """)
+        
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        return jsonify({'success': True, 'message': 'Admin forçado!'})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
 # ===== ROTAS DE RECUPERAÇÃO DE SENHA =====
 
 @app.route('/api/auth/forgot-password', methods=['POST'])
@@ -1000,6 +1020,301 @@ def reset_password_api():
         
     except Exception as e:
         return jsonify({'success': False, 'error': f'Erro interno: {str(e)}'}), 500
+
+
+@app.route('/api/validate-coupon', methods=['POST'])
+def validate_coupon_api():
+    """Validar cupom no checkout"""
+    try:
+        data = request.get_json()
+        coupon_code = data.get('coupon_code', '').upper().strip()
+        plan_name = data.get('plan_name', '').lower()
+        user_id = data.get('user_id')
+        
+        if not coupon_code or not plan_name or not user_id:
+            return jsonify({'success': False, 'error': 'Dados incompletos'}), 400
+        
+        # Usar função de validação do database.py
+        from database import validate_coupon, apply_coupon_discount
+        
+        validation = validate_coupon(coupon_code, plan_name, user_id)
+        
+        if not validation['valid']:
+            return jsonify({
+                'success': False,
+                'error': validation['error']
+            }), 400
+        
+        # Simular preço original baseado no plano
+        plan_prices = {
+            'premium': 49.90,
+            'estrategico': 99.90
+        }
+        
+        original_price = plan_prices.get(plan_name, 0)
+        
+        if original_price == 0:
+            return jsonify({'success': False, 'error': 'Plano não encontrado'}), 400
+        
+        # Aplicar desconto
+        discount_result = apply_coupon_discount(original_price, validation)
+        
+        if not discount_result:
+            return jsonify({'success': False, 'error': 'Erro ao calcular desconto'}), 500
+        
+        return jsonify({
+            'success': True,
+            'coupon': {
+                'code': coupon_code,
+                'discount_percent': validation['discount_percent'],
+                'original_price': discount_result['original_price'],
+                'discount_amount': discount_result['discount_amount'],
+                'final_price': discount_result['final_price']
+            }
+        })
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    
+    
+@app.route('/api/dashboard/recommendations')
+def get_portfolio_recommendations():
+    """Buscar recomendações de carteira com dados do YFinance"""
+    try:
+        auth_header = request.headers.get('Authorization')
+        if not auth_header or not auth_header.startswith('Bearer '):
+            return jsonify({'success': False, 'error': 'Token não fornecido'}), 401
+        
+        token = auth_header.replace('Bearer ', '')
+        
+        try:
+            payload = jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
+            user_id = payload['user_id']
+        except jwt.InvalidTokenError:
+            return jsonify({'success': False, 'error': 'Token inválido'}), 401
+        
+        # Parâmetros da requisição
+        portfolio_name = request.args.get('portfolio', 'smart_bdr')
+        limit = int(request.args.get('limit', 10))
+        
+        from database import get_portfolio_assets
+        assets = get_portfolio_assets(portfolio_name)
+        
+        if not assets:
+            return jsonify({
+                'success': False,
+                'error': f'Nenhum ativo encontrado na carteira {portfolio_name}'
+            }), 404
+        
+        # Buscar dados dos ativos usando YFinance
+        from yfinance_service import YFinanceService
+        
+        recommendations = []
+        total_performance = 0
+        signals = {'compras': 0, 'vendas': 0, 'manter': 0}
+        
+        for asset in assets[:limit]:
+            try:
+                # Buscar dados atuais do ativo
+                stock_data = YFinanceService.get_stock_data(asset['ticker'])
+                
+                if stock_data['success']:
+                    stock_info = stock_data['data']
+                    
+                    # Simular dados de entrada (preço de 30 dias atrás)
+                    current_price = stock_info['current_price']
+                    entry_price = current_price * 0.95  # Simular entrada 5% abaixo
+                    
+                    # Calcular performance
+                    performance = ((current_price - entry_price) / entry_price) * 100
+                    total_performance += performance * (asset['weight'] / 100)
+                    
+                    # Gerar recomendação baseada na performance
+                    if performance > 5:
+                        recommendation = "Venda"
+                        signals['vendas'] += 1
+                    elif performance < -3:
+                        recommendation = "Compra Forte"
+                        signals['compras'] += 1
+                    elif performance < 0:
+                        recommendation = "Compra"
+                        signals['compras'] += 1
+                    else:
+                        recommendation = "Manter"
+                        signals['manter'] += 1
+                    
+                    # Adicionar ícone baseado no setor
+                    sector_icons = {
+                        'Tecnologia': '💻',
+                        'Financeiro': '🏦',
+                        'Saúde': '🏥',
+                        'Energia': '⚡',
+                        'Consumo': '🛒',
+                        'Industrial': '🏭',
+                        'default': '📈'
+                    }
+                    
+                    icon = sector_icons.get(asset['sector'], sector_icons['default'])
+                    
+                    recommendation_data = {
+                        'ticker': asset['ticker'],
+                        'setor': asset['sector'],
+                        'icone': icon,
+                        'recomendacao': recommendation,
+                        'entrada': {
+                            'preco': entry_price,
+                            'data': (datetime.now() - timedelta(days=30)).strftime('%d/%m/%Y'),
+                            'peso_percent': asset['weight']
+                        },
+                        'atual': {
+                            'preco': current_price,
+                            'data': datetime.now().strftime('%d/%m/%Y')
+                        },
+                        'performance': {
+                            'valor': performance,
+                            'dias': 30
+                        },
+                        'fundamentals': {
+                            'sharpe': round(performance / 10, 2) if performance != 0 else 0,
+                            'volatilidade': stock_info.get('beta', 1.0)
+                        }
+                    }
+                    
+                    recommendations.append(recommendation_data)
+                    
+            except Exception as e:
+                print(f"Erro ao processar {asset['ticker']}: {e}")
+                continue
+        
+        # Calcular estatísticas
+        total_stocks = len(recommendations)
+        avg_performance = total_performance / total_stocks if total_stocks > 0 else 0
+        
+        response_data = {
+            'success': True,
+            'data': {
+                'recommendations': {
+                    'recommendations': recommendations,
+                    'last_update': datetime.now().strftime('%d/%m/%Y %H:%M'),
+                    'portfolio': portfolio_name
+                },
+                'statistics': {
+                    'total_stocks': total_stocks,
+                    'avg_performance': round(avg_performance, 2),
+                    'signals': signals
+                }
+            }
+        }
+        
+        return jsonify(response_data)
+        
+    except Exception as e:
+        print(f"Erro em get_portfolio_recommendations: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            'success': False,
+            'error': 'Erro interno do servidor'
+        }), 500
+        
+@app.route('/api/checkout/create-with-coupon', methods=['POST'])
+def create_checkout_with_coupon():
+    """Criar checkout com cupom aplicado"""
+    try:
+        data = request.get_json()
+        user_id = data.get('user_id')
+        plan_id = data.get('plan_id')
+        billing_type = data.get('billing_type', 'monthly')  # monthly ou annual
+        coupon_code = data.get('coupon_code', '').upper().strip()
+        
+        if not user_id or not plan_id:
+            return jsonify({'success': False, 'error': 'Dados incompletos'}), 400
+        
+        # Buscar dados do plano
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute("SELECT name, price_monthly, price_annual FROM plans WHERE id = %s", (plan_id,))
+        plan = cursor.fetchone()
+        
+        if not plan:
+            cursor.close()
+            conn.close()
+            return jsonify({'success': False, 'error': 'Plano não encontrado'}), 404
+        
+        plan_name, price_monthly, price_annual = plan
+        
+        # Determinar preço base
+        if billing_type == 'annual':
+            base_price = float(price_annual)
+            period_text = 'Anual'
+        else:
+            base_price = float(price_monthly)
+            period_text = 'Mensal'
+        
+        final_price = base_price
+        discount_amount = 0
+        coupon_data = None
+        
+        # Aplicar cupom se fornecido
+        if coupon_code:
+            from database import validate_coupon, apply_coupon_discount
+            
+            validation = validate_coupon(coupon_code, plan_name.lower(), user_id)
+            
+            if validation['valid']:
+                discount_result = apply_coupon_discount(base_price, validation)
+                if discount_result:
+                    final_price = discount_result['final_price']
+                    discount_amount = discount_result['discount_amount']
+                    coupon_data = {
+                        'code': coupon_code,
+                        'discount_percent': validation['discount_percent'],
+                        'discount_amount': discount_amount
+                    }
+        
+        cursor.close()
+        conn.close()
+        
+        # Criar preference no Mercado Pago (se disponível)
+        if MP_AVAILABLE:
+            try:
+                from checkout_mercadopago import create_preference_with_coupon
+                preference = create_preference_with_coupon(
+                    user_id, plan_id, plan_name, period_text, 
+                    base_price, final_price, coupon_data
+                )
+                
+                return jsonify({
+                    'success': True,
+                    'checkout_url': preference['init_point'],
+                    'preference_id': preference['id'],
+                    'pricing': {
+                        'base_price': base_price,
+                        'discount_amount': discount_amount,
+                        'final_price': final_price,
+                        'coupon': coupon_data
+                    }
+                })
+                
+            except Exception as e:
+                return jsonify({'success': False, 'error': f'Erro no Mercado Pago: {str(e)}'}), 500
+        else:
+            return jsonify({
+                'success': True,
+                'message': 'Checkout simulado (Mercado Pago não disponível)',
+                'pricing': {
+                    'base_price': base_price,
+                    'discount_amount': discount_amount,
+                    'final_price': final_price,
+                    'coupon': coupon_data
+                }
+            })
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+        
+
 
 # ===== ROTAS DE AÇÕES (YFINANCE) =====
 
