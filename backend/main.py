@@ -16,6 +16,7 @@ from admin_routes import get_admin_blueprint
 from beta_routes import beta_bp
 from long_short_routes import long_short_bp
 from rsl_routes import get_rsl_blueprint
+from recommendations_routes import get_recommendations_blueprint
 
 from dotenv import load_dotenv
 
@@ -83,6 +84,8 @@ rsl_bp = get_rsl_blueprint()
 app.register_blueprint(rsl_bp)
 admin_bp = get_admin_blueprint()
 app.register_blueprint(admin_bp)
+recommendations_bp = get_recommendations_blueprint()
+app.register_blueprint(recommendations_bp)
 
 
 # Registrar blueprint do Mercado Pago apenas se disponível
