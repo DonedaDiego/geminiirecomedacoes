@@ -360,7 +360,7 @@
       <div id="usersSection" class="section hidden">
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
           
-          <!-- User Management -->
+          <!-- Lista de Usuários -->
           <div class="lg:col-span-2">
             <div class="admin-card p-6 mb-6">
               <div class="flex items-center justify-between mb-4">
@@ -373,7 +373,7 @@
                   Atualizar
                 </button>
               </div>
-              
+
               <div class="overflow-x-auto">
                 <table class="w-full">
                   <thead>
@@ -397,50 +397,125 @@
               </div>
             </div>
           </div>
-          <!-- User Actions -->
-          <div>
+
+          <!-- Coluna lateral direita -->
+          <div class="space-y-6">
+            <!-- Gerenciar Usuário -->
             <div class="admin-card p-6">
               <h3 class="text-lg font-bold text-white mb-4">
                 <i class="fas fa-user-cog mr-2"></i>
                 Gerenciar Usuário
               </h3>
-              
+
               <div class="space-y-4">
                 <div>
                   <label class="block text-sm text-gray-300 mb-1">E-mail do Usuário</label>
                   <input type="email" id="manageUserEmail" 
-                         class="w-full px-3 py-2 bg-white bg-opacity-10 border border-gray-600 rounded-lg text-white text-sm"
-                         placeholder="usuario@email.com">
+                        class="w-full px-3 py-2 bg-white bg-opacity-10 border border-gray-600 rounded-lg text-white text-sm"
+                        placeholder="usuario@email.com">
                 </div>
-                
-                <div>
-                  <label class="block text-sm text-gray-300 mb-1">Novo Plano</label>
-                  <select id="newPlanId" class="w-full px-3 py-2 bg-white bg-opacity-10 border border-gray-600 rounded-lg text-white text-sm">
-                    <option value="1">Básico (Grátis)</option>
-                    <option value="2">Premium</option>
-                    <option value="3">Estratégico</option>
-                  </select>
-                </div>
-                
-                <div class="flex flex-col gap-2">
-                  <button onclick="grantSubscription()" class="action-btn bg-green-600 hover:bg-green-700 py-2 px-4 rounded-lg text-sm font-medium">
-                    <i class="fas fa-plus mr-1"></i>
-                    Dar Assinatura
-                  </button>
-                  <button onclick="removeUserPlan()" class="action-btn bg-red-600 hover:bg-red-700 py-2 px-4 rounded-lg text-sm font-medium">
-                    <i class="fas fa-minus mr-1"></i>
-                    Remover Assinatura
-                  </button>
-                  <button onclick="promoteToAdmin()" class="action-btn bg-purple-600 hover:bg-purple-700 py-2 px-4 rounded-lg text-sm font-medium">
-                    <i class="fas fa-crown mr-1"></i>
-                    Promover a Admin
-                  </button>
+
+                <div class="space-y-3">
+                  <div>
+                    <label class="block text-sm text-gray-300 mb-1">Conceder Acesso à Carteira</label>
+                    <select id="portfolioToGrantUserActions" class="w-full px-3 py-2 bg-white bg-opacity-10 border border-gray-600 rounded-lg text-white text-sm">
+                      <option value="">Selecione uma carteira...</option>
+                      <option value="smart_bdr">Smart BDR</option>
+                      <option value="growth">Growth</option>
+                      <option value="smallcaps">Small Caps</option>
+                      <option value="bluechips">Blue Chips</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label class="block text-sm text-gray-300 mb-1">Novo Plano</label>
+                    <select id="newPlanId" class="w-full px-3 py-2 bg-white bg-opacity-10 border border-gray-600 rounded-lg text-white text-sm">
+                      <option value="1">Básico (Grátis)</option>
+                      <option value="2">Premium</option>
+                      <option value="3">Estratégico</option>
+                    </select>
+                  </div>
+
+                  <div class="flex flex-col gap-2">
+                    <button onclick="grantSubscription()" class="action-btn bg-green-600 hover:bg-green-700 py-2 px-4 rounded-lg text-sm font-medium">
+                      <i class="fas fa-plus mr-1"></i>
+                      Dar Assinatura
+                    </button>
+                    <button onclick="removeUserPlan()" class="action-btn bg-red-600 hover:bg-red-700 py-2 px-4 rounded-lg text-sm font-medium">
+                      <i class="fas fa-minus mr-1"></i>
+                      Remover Assinatura
+                    </button>
+                    <button onclick="promoteToAdmin()" class="action-btn bg-purple-600 hover:bg-purple-700 py-2 px-4 rounded-lg text-sm font-medium">
+                      <i class="fas fa-crown mr-1"></i>
+                      Promover a Admin
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
+
+            <!-- Carteiras do Usuário -->
+            <div class="admin-card p-6 mb-6">
+              <h3 class="text-lg font-bold text-white mb-4">
+                <i class="fas fa-briefcase mr-2"></i>
+                Carteiras do Usuário
+              </h3>
+
+              <div class="space-y-4">
+                <div>
+                  <label class="block text-sm text-gray-300 mb-1">E-mail do Usuário</label>
+                  <input type="email" id="portfolioUserEmail" 
+                        class="w-full px-3 py-2 bg-white bg-opacity-10 border border-gray-600 rounded-lg text-white text-sm"
+                        placeholder="usuario@email.com">
+                </div>
+
+                <button onclick="loadUserPortfolios()" class="w-full bg-blue-600 hover:bg-blue-700 py-2 px-4 rounded-lg text-sm font-medium">
+                  <i class="fas fa-search mr-1"></i>
+                  Buscar Carteiras
+                </button>
+
+                <!-- User Portfolios Display -->
+                <div id="userPortfoliosDisplay" class="hidden">
+                  <div class="bg-gray-800 bg-opacity-30 rounded-lg p-4 mb-4">
+                    <h4 class="text-sm font-medium text-white mb-2">Carteiras Ativas:</h4>
+                    <div id="userPortfoliosList" class="space-y-2">
+                      <!-- Portfolios will be loaded here -->
+                    </div>
+                  </div>
+
+                  <div class="space-y-3">
+                    <div>
+                      <label class="block text-sm text-gray-300 mb-1">Conceder Acesso à Carteira</label>
+                      <select id="portfolioToGrant" class="w-full px-3 py-2 bg-white bg-opacity-10 border border-gray-600 rounded-lg text-white text-sm">
+                        <option value="">Selecione uma carteira...</option>
+                        <option value="smart_bdr">Smart BDR</option>
+                        <option value="growth">Growth</option>
+                        <option value="smallcaps">Small Caps</option>
+                        <option value="bluechips">Blue Chips</option>
+                      </select>
+                    </div>
+
+                    <div class="flex gap-2">
+                      <button onclick="grantPortfolioAccess()" class="flex-1 bg-green-600 hover:bg-green-700 py-2 px-4 rounded-lg text-sm font-medium">
+                        <i class="fas fa-plus mr-1"></i>
+                        Conceder Acesso
+                      </button>
+                      <button onclick="revokePortfolioAccess()" class="flex-1 bg-red-600 hover:bg-red-700 py-2 px-4 rounded-lg text-sm font-medium">
+                        <i class="fas fa-minus mr-1"></i>
+                        Remover Acesso
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div> <!-- Fim carteiras -->
           </div>
         </div>
       </div>
+
+
+      
+      
       
       <!-- Coupons Section -->
       <div id="couponsSection" class="section hidden">
@@ -922,7 +997,182 @@
         displayPortfolioAssets([], 0);
       }
     }
+// Load user portfolios
+async function loadUserPortfolios() {
+  const email = document.getElementById('portfolioUserEmail').value.trim();
+  
+  if (!email) {
+    alert('Digite o e-mail do usuário');
+    return;
+  }
+  
+  try {
+    const response = await fetch(`/api/admin/user/${email}/portfolios`, {
+      headers: { 'Authorization': `Bearer ${adminToken}` }
+    });
+    
+    const result = await response.json();
+    
+    if (result.success) {
+      displayUserPortfolios(result.user, result.portfolios);
+      document.getElementById('userPortfoliosDisplay').classList.remove('hidden');
+    } else {
+      alert('❌ ' + result.error);
+      document.getElementById('userPortfoliosDisplay').classList.add('hidden');
+    }
+    
+  } catch (error) {
+    console.error('Error loading user portfolios:', error);
+    alert('❌ Erro de conexão');
+  }
+}
 
+// Display user portfolios
+function displayUserPortfolios(user, portfolios) {
+  const container = document.getElementById('userPortfoliosList');
+  
+  if (!portfolios || portfolios.length === 0) {
+    container.innerHTML = '<p class="text-gray-400 text-sm">Usuário não tem acesso a nenhuma carteira</p>';
+    return;
+  }
+  
+  const portfolioNames = {
+    'smart_bdr': 'Smart BDR',
+    'growth': 'Growth',
+    'smallcaps': 'Small Caps',
+    'bluechips': 'Blue Chips'
+  };
+  
+  container.innerHTML = portfolios.map(portfolio => `
+    <div class="flex items-center justify-between bg-gray-700 bg-opacity-50 rounded-lg p-3">
+      <div>
+        <div class="font-medium text-white">${portfolioNames[portfolio.name] || portfolio.display_name}</div>
+        <div class="text-xs text-gray-400">Concedido em: ${formatDate(portfolio.granted_at)}</div>
+      </div>
+      <button onclick="revokeSpecificPortfolio('${portfolio.name}')" class="text-red-400 hover:text-red-300 text-sm">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+  `).join('');
+}
+
+// Grant portfolio access
+async function grantPortfolioAccess() {
+  const email = document.getElementById('portfolioUserEmail').value.trim();
+  const portfolio = document.getElementById('portfolioToGrant').value;
+  
+  if (!email || !portfolio) {
+    alert('Preencha o e-mail e selecione uma carteira');
+    return;
+  }
+  
+  try {
+    const response = await fetch('/api/admin/user-portfolios', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${adminToken}`
+      },
+      body: JSON.stringify({
+        action: 'grant',
+        user_email: email,
+        portfolio_name: portfolio
+      })
+    });
+    
+    const result = await response.json();
+    
+    if (result.success) {
+      alert('✅ ' + result.message);
+      loadUserPortfolios(); // Refresh
+      document.getElementById('portfolioToGrant').value = '';
+    } else {
+      alert('❌ ' + result.error);
+    }
+    
+  } catch (error) {
+    console.error('Error granting portfolio access:', error);
+    alert('❌ Erro de conexão');
+  }
+}
+
+    // Revoke portfolio access (from selector)
+    async function revokePortfolioAccess() {
+      const email = document.getElementById('portfolioUserEmail').value.trim();
+      const portfolio = document.getElementById('portfolioToGrant').value;
+      
+      if (!email || !portfolio) {
+        alert('Preencha o e-mail e selecione uma carteira');
+        return;
+      }
+      
+      if (!confirm(`Remover acesso à carteira ${portfolio} para ${email}?`)) return;
+      
+      try {
+        const response = await fetch('/api/admin/user-portfolios', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${adminToken}`
+          },
+          body: JSON.stringify({
+            action: 'revoke',
+            user_email: email,
+            portfolio_name: portfolio
+          })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+          alert('✅ ' + result.message);
+          loadUserPortfolios(); // Refresh
+          document.getElementById('portfolioToGrant').value = '';
+        } else {
+          alert('❌ ' + result.error);
+        }
+        
+      } catch (error) {
+        console.error('Error revoking portfolio access:', error);
+        alert('❌ Erro de conexão');
+      }
+    }
+
+    // Revoke specific portfolio (from list)
+    async function revokeSpecificPortfolio(portfolioName) {
+      const email = document.getElementById('portfolioUserEmail').value.trim();
+      
+      if (!confirm(`Remover acesso à carteira ${portfolioName}?`)) return;
+      
+      try {
+        const response = await fetch('/api/admin/user-portfolios', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${adminToken}`
+          },
+          body: JSON.stringify({
+            action: 'revoke',
+            user_email: email,
+            portfolio_name: portfolioName
+          })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+          alert('✅ ' + result.message);
+          loadUserPortfolios(); // Refresh
+        } else {
+          alert('❌ ' + result.error);
+        }
+        
+      } catch (error) {
+        console.error('Error revoking portfolio access:', error);
+        alert('❌ Erro de conexão');
+      }
+    }
+    
     function displayPortfolioAssets(assets, totalWeight) {
       const container = document.getElementById('portfolioAssetsList');
       
