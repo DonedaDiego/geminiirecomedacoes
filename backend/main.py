@@ -17,6 +17,7 @@ from beta_routes import beta_bp
 from long_short_routes import long_short_bp
 from rsl_routes import get_rsl_blueprint
 from recommendations_routes import get_recommendations_blueprint
+from mercadopago_routes import get_mercadopago_blueprint
 
 from dotenv import load_dotenv
 
@@ -38,44 +39,13 @@ MP_AVAILABLE = False
 mercadopago_bp = None
 
 try:
-    from checkout_mercadopago import get_mercadopago_blueprint, test_mercadopago_connection, PLANS
     mercadopago_bp = get_mercadopago_blueprint()
     MP_AVAILABLE = True
-    print("✅ Módulo Mercado Pago carregado com sucesso!")
+    print("✅ Blueprint Mercado Pago carregado com sucesso!")
 except ImportError as e:
     print(f"⚠️ Mercado Pago não disponível: {e}")
-    PLANS = {
-        "pro": {
-            "id": "pro",
-            "name": "Pro",
-            "description": "Para quem já investe e quer se posicionar melhor",
-            "monthly_price": 79,
-            "annual_price": 72,
-            "features": [
-                "Monitor avançado de ações",
-                "RSL e análise técnica avançada", 
-                "Backtests automáticos",
-                "Alertas via WhatsApp",
-                "Dados históricos ilimitados",
-                "API para desenvolvedores"
-            ]
-        },
-        "premium": {
-            "id": "premium", 
-            "name": "Premium",
-            "description": "Para investidores experientes que querem diferenciais",
-            "monthly_price": 149,
-            "annual_price": 137,
-            "features": [
-                "Tudo do Pro +",
-                "Long & Short strategies",
-                "IA para recomendações", 
-                "Consultoria personalizada",
-                "Acesso prioritário",
-                "Relatórios exclusivos"
-            ]
-        }
-    }
+except Exception as e:
+    print(f"❌ Erro ao carregar Mercado Pago: {e}")
 
 # REGISTRAR BLUEPRINTS
 app.register_blueprint(beta_bp)
@@ -86,7 +56,6 @@ admin_bp = get_admin_blueprint()
 app.register_blueprint(admin_bp)
 recommendations_bp = get_recommendations_blueprint()
 app.register_blueprint(recommendations_bp)
-
 
 # Registrar blueprint do Mercado Pago apenas se disponível
 if MP_AVAILABLE and mercadopago_bp:
@@ -294,9 +263,16 @@ def reset_password_db(token, new_password):
 def initialize_database():
     """Inicializar banco se necessário"""
     try:
-        from database import setup_enhanced_database  # ← Nova versão
-        setup_enhanced_database()                     # ← Tudo completo
+        from database import setup_enhanced_database
+        setup_enhanced_database()
         print("✅ Banco enhanced verificado/criado com sucesso!")
+        
+        # Inicializar Mercado Pago se disponível
+        if MP_AVAILABLE:
+            from mercadopago_routes import create_payments_table, add_plan_expires_field
+            create_payments_table()
+            add_plan_expires_field()
+            
     except Exception as e:
         print(f"⚠️ Erro ao verificar banco: {e}")
 
@@ -341,7 +317,6 @@ def planos():
 def sobre():
     return send_from_directory('../frontend', 'sobre.html')
 
-
 @app.route('/monitor-basico')
 @app.route('/monitor-basico.html')
 def monitor_basico():
@@ -349,7 +324,6 @@ def monitor_basico():
         return send_from_directory('../frontend', 'monitor-basico.html')
     except:
         return "<h1>Monitor Básico - Em construção</h1>"
-
 
 @app.route('/rsl')
 @app.route('/rsl.html')
@@ -380,169 +354,6 @@ def serve_logo_assets():
 def admin_dashboard():
     return send_from_directory('../frontend', 'admin-dashboard.html')
 
-# ===== ROTAS API BÁSICAS =====
-
-@app.route('/api/status')
-def status():
-    """Status da API com info do Mercado Pago"""
-    if MP_AVAILABLE:
-        mp_status = test_mercadopago_connection()
-    else:
-        mp_status = {"success": False, "error": "Módulo MP não carregado"}
-    
-    return jsonify({
-        'message': 'API Flask Online!',
-        'status': 'online',
-        'database': 'Connected',
-        'mercadopago': mp_status
-    })
-
-@app.route('/api/test-db')
-def test_db():
-    """Testar conexão com banco"""
-    try:
-        conn = get_db_connection()
-        if conn:
-            cursor = conn.cursor()
-            cursor.execute("SELECT COUNT(*) FROM plans")
-            plans_count = cursor.fetchone()[0]
-            cursor.execute("SELECT COUNT(*) FROM users") 
-            users_count = cursor.fetchone()[0]
-            cursor.close()
-            conn.close()
-            
-            return jsonify({
-                'success': True,
-                'message': 'Banco conectado!',
-                'data': {
-                    'plans': plans_count,
-                    'users': users_count
-                }
-            })
-        else:
-            return jsonify({'success': False, 'error': 'Falha na conexão'}), 500
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
-
-# ===== ROTAS DE COMPATIBILIDADE MERCADO PAGO =====
-
-@app.route('/api/plans')
-def get_plans_compat():
-    """Rota de compatibilidade para planos"""
-    try:
-        plans_list = []
-        for plan_id, plan_data in PLANS.items():
-            plans_list.append({
-                "id": plan_data["id"],
-                "name": plan_id,
-                "display_name": plan_data["name"],
-                "description": plan_data["description"],
-                "price_monthly": plan_data["monthly_price"],
-                "price_annual": plan_data["annual_price"],
-                "features": plan_data["features"]
-            })
-        
-        return jsonify({"success": True, "data": plans_list})
-        
-    except Exception as e:
-        return jsonify({"success": False, "error": str(e)}), 500
-
-@app.route('/api/checkout/create', methods=['POST'])
-def create_checkout_compat():
-    """Rota de compatibilidade para checkout"""
-    if not MP_AVAILABLE:
-        return jsonify({"success": False, "error": "Módulo Mercado Pago não disponível"}), 500
-    
-    try:
-        # Importar função dinamicamente
-        from checkout_mercadopago import create_checkout_function
-        return create_checkout_function()
-    except Exception as e:
-        print(f"❌ Erro no checkout: {e}")
-        import traceback
-        traceback.print_exc()
-        return jsonify({"success": False, "error": str(e)}), 500
-
-
-# ===== WEBHOOK DO MERCADO PAGO =====
-
-@app.route('/webhook/mercadopago', methods=['POST'])
-def mercadopago_webhook():
-    try:
-        data = request.get_json()
-        print(f"Webhook recebido: {data}")
-        
-        if data.get('type') == 'payment':
-            payment_id = data.get('data', {}).get('id')
-            if payment_id:
-                process_payment(payment_id)
-        
-        return {'status': 'ok'}, 200
-        
-    except Exception as e:
-        print(f"Erro webhook: {e}")
-        return {'error': str(e)}, 500
-
-
-def process_payment(payment_id):
-    try:
-        # Buscar dados do pagamento no Mercado Pago
-        access_token = os.getenv('MERCADOPAGO_ACCESS_TOKEN')
-        
-        response = requests.get(
-            f'https://api.mercadopago.com/v1/payments/{payment_id}',
-            headers={'Authorization': f'Bearer {access_token}'}
-        )
-        
-        if response.status_code == 200:
-            payment_data = response.json()
-            
-            # Verificar se pagamento foi aprovado
-            if payment_data.get('status') == 'approved':
-                # Pegar email do cliente
-                payer_email = payment_data.get('payer', {}).get('email')
-                
-                if payer_email:
-                    update_user_plan(payer_email, payment_data)
-        
-    except Exception as e:
-        print(f"Erro ao processar pagamento: {e}")
-
-def update_user_plan(email, payment_data):
-    try:
-        # Conectar no banco
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        
-        # Determinar qual plano baseado no valor pago
-        amount = payment_data.get('transaction_amount', 0)
-        
-        if amount >= 50:  # Ajuste os valores conforme seus planos
-            new_plan_id = 3  # Estratégico
-            plan_name = 'Estratégico'
-        elif amount >= 25:
-            new_plan_id = 2  # Premium
-            plan_name = 'Premium'
-        else:
-            new_plan_id = 1  # Básico
-            plan_name = 'Básico'
-        
-        # Atualizar usuário no banco
-        cursor.execute(
-            "UPDATE users SET plan_id = %s, plan_name = %s, updated_at = NOW() WHERE email = %s",
-            (new_plan_id, plan_name, email)
-        )
-        
-        conn.commit()
-        cursor.close()
-        conn.close()
-        
-        print(f"✅ Plano atualizado: {email} -> {plan_name}")
-        
-    except Exception as e:
-        print(f"❌ Erro ao atualizar plano: {e}")
-    
-    
 # ===== PÁGINAS DE RETORNO DO PAGAMENTO =====
 
 @app.route('/payment/success')
@@ -552,12 +363,9 @@ def payment_success():
     status_param = request.args.get('status')
     external_reference = request.args.get('external_reference')
     
-    print(f"✅ Pagamento aprovado!")
-    print(f"Payment ID: {payment_id}")
-    print(f"Status: {status_param}")
-    print(f"Reference: {external_reference}")
+    print(f"✅ Pagamento aprovado - ID: {payment_id}")
     
-    return """
+    return f"""
     <!DOCTYPE html>
     <html lang="pt-BR">
     <head>
@@ -565,21 +373,27 @@ def payment_success():
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Pagamento Aprovado - Geminii</title>
         <script src="https://cdn.tailwindcss.com"></script>
-        <style>body { font-family: 'Inter', sans-serif; }</style>
+        <style>body {{ font-family: 'Inter', sans-serif; }}</style>
     </head>
     <body class="bg-gray-900 text-white min-h-screen">
         <div class="min-h-screen flex items-center justify-center p-4">
             <div class="text-center p-8 bg-gray-800 rounded-lg max-w-md w-full border border-gray-700">
                 <div class="text-6xl mb-6">✅</div>
                 <h1 class="text-3xl font-bold mb-4 text-green-400">Pagamento Aprovado!</h1>
+                
+                <div id="status-check" class="mb-6">
+                    <div class="text-yellow-400 mb-2">🔄 Ativando sua assinatura...</div>
+                    <div class="w-full bg-gray-700 rounded-full h-2">
+                        <div id="progress-bar" class="bg-green-600 h-2 rounded-full transition-all duration-1000" style="width: 0%"></div>
+                    </div>
+                </div>
+                
                 <p class="text-gray-300 mb-6 leading-relaxed">
-                    Parabéns! Sua assinatura do Geminii foi ativada com sucesso.
+                    Parabéns! Sua assinatura está sendo ativada.
                 </p>
-                <p class="text-sm text-gray-400 mb-8">
-                    Você receberá um email com os detalhes de acesso em breve.
-                </p>
+                
                 <div class="space-y-3">
-                    <button onclick="window.location.href='/dashboard'" 
+                    <button onclick="checkAndRedirect()" 
                             class="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 px-6 py-3 rounded-lg font-medium transition-colors">
                         Ir para Dashboard
                     </button>
@@ -590,6 +404,59 @@ def payment_success():
                 </div>
             </div>
         </div>
+        
+        <script>
+            let checkCount = 0;
+            const maxChecks = 12;
+            
+            function updateProgress() {{
+                const progress = (checkCount / maxChecks) * 100;
+                document.getElementById('progress-bar').style.width = progress + '%';
+            }}
+            
+            function checkPaymentStatus() {{
+                if (checkCount >= maxChecks) {{
+                    document.getElementById('status-check').innerHTML = 
+                        '<div class="text-green-400">✅ Ativação concluída!</div>';
+                    return;
+                }}
+                
+                const paymentId = '{payment_id}';
+                if (!paymentId) return;
+                
+                fetch(`/api/mercadopago/payment/status/${{paymentId}}`)
+                    .then(response => response.json())
+                    .then(data => {{
+                        updateProgress();
+                        
+                        if (data.success && data.data.status === 'approved') {{
+                            document.getElementById('status-check').innerHTML = 
+                                '<div class="text-green-400">✅ Assinatura ativada com sucesso!</div>';
+                            return;
+                        }}
+                        
+                        checkCount++;
+                        if (checkCount < maxChecks) {{
+                            setTimeout(checkPaymentStatus, 5000);
+                        }}
+                    }})
+                    .catch(error => {{
+                        console.error('Erro:', error);
+                        checkCount++;
+                        if (checkCount < maxChecks) {{
+                            setTimeout(checkPaymentStatus, 5000);
+                        }}
+                    }});
+            }}
+            
+            function checkAndRedirect() {{
+                setTimeout(() => {{
+                    window.location.href = '/dashboard';
+                }}, 1000);
+            }}
+            
+            setTimeout(checkPaymentStatus, 2000);
+        </script>
     </body>
     </html>
     """
@@ -647,6 +514,101 @@ def payment_failure():
     </body>
     </html>
     """
+
+# ===== ROTAS API BÁSICAS =====
+
+@app.route('/api/status')
+def status():
+    """Status da API com info do Mercado Pago"""
+    mp_status = {"success": MP_AVAILABLE, "message": "Blueprint carregado" if MP_AVAILABLE else "Não disponível"}
+    
+    return jsonify({
+        'message': 'API Flask Online!',
+        'status': 'online',
+        'database': 'Connected',
+        'mercadopago': mp_status
+    })
+
+@app.route('/api/test-db')
+def test_db():
+    """Testar conexão com banco"""
+    try:
+        conn = get_db_connection()
+        if conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT COUNT(*) FROM plans")
+            plans_count = cursor.fetchone()[0]
+            cursor.execute("SELECT COUNT(*) FROM users") 
+            users_count = cursor.fetchone()[0]
+            cursor.close()
+            conn.close()
+            
+            return jsonify({
+                'success': True,
+                'message': 'Banco conectado!',
+                'data': {
+                    'plans': plans_count,
+                    'users': users_count
+                }
+            })
+        else:
+            return jsonify({'success': False, 'error': 'Falha na conexão'}), 500
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+# ===== ROTAS DE COMPATIBILIDADE =====
+
+@app.route('/api/plans')
+def get_plans_compat():
+    """Rota de compatibilidade para planos - redireciona para blueprint"""
+    if MP_AVAILABLE:
+        from mercadopago_routes import PLANS
+        
+        plans_list = []
+        for plan_id, plan_data in PLANS.items():
+            plans_list.append({
+                "id": plan_data["id"],
+                "name": plan_id,
+                "display_name": plan_data["name"],
+                "description": plan_data["description"],
+                "price_monthly": plan_data["monthly_price"],
+                "price_annual": plan_data["annual_price"],
+                "features": plan_data["features"]
+            })
+        
+        return jsonify({"success": True, "data": plans_list})
+    else:
+        return jsonify({"success": False, "error": "Mercado Pago não disponível"}), 500
+
+@app.route('/api/checkout/create', methods=['POST'])
+def create_checkout_compat():
+    """Rota de compatibilidade para checkout - redireciona para blueprint"""
+    if not MP_AVAILABLE:
+        return jsonify({"success": False, "error": "Mercado Pago não disponível"}), 500
+    
+    try:
+        from mercadopago_routes import create_checkout_function
+        return create_checkout_function()
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({"success": False, "error": str(e)}), 500
+
+# ===== WEBHOOK PRINCIPAL =====
+
+@app.route('/webhook/mercadopago', methods=['POST'])
+def mercadopago_webhook():
+    """Webhook principal - redireciona para blueprint"""
+    if not MP_AVAILABLE:
+        return jsonify({"success": False, "error": "Mercado Pago não disponível"}), 500
+    
+    try:
+        from mercadopago_routes import webhook
+        return webhook()
+        
+    except Exception as e:
+        print(f"❌ Erro no webhook principal: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
 
 # ===== ROTAS DE AUTENTICAÇÃO =====
 
@@ -770,9 +732,6 @@ def register():
     except Exception as e:
         return jsonify({'success': False, 'error': f'Erro interno: {str(e)}'}), 500
 
-# SUBSTITUA estas partes no seu main.py:
-
-# ===== CORREÇÃO 1: LOGIN (linha ~788) =====
 @app.route('/api/auth/login', methods=['POST'])
 def login():
     """Login do usuário"""
@@ -794,7 +753,6 @@ def login():
         
         cursor = conn.cursor()
         
-        # ✅ CORRIGIDO: Agora busca user_type também
         cursor.execute("""
             SELECT id, name, email, password, plan_id, plan_name, user_type 
             FROM users WHERE email = %s
@@ -807,7 +765,6 @@ def login():
         if not user:
             return jsonify({'success': False, 'error': 'E-mail não encontrado'}), 401
         
-        # ✅ CORRIGIDO: Agora pega user_type do resultado
         user_id, name, email, stored_password, plan_id, plan_name, user_type = user
         
         if hash_password(password) != stored_password:
@@ -831,7 +788,7 @@ def login():
                     'email': email,
                     'plan_id': plan_id,
                     'plan_name': plan_name,
-                    'user_type': user_type  # ✅ CORRIGIDO: Agora retorna user_type
+                    'user_type': user_type
                 },
                 'token': token
             }
@@ -861,7 +818,6 @@ def verify_token():
             
             cursor = conn.cursor()
             
-            # ✅ CORRIGIDO: Agora busca user_type também
             cursor.execute("""
                 SELECT id, name, email, plan_id, plan_name, user_type 
                 FROM users WHERE id = %s
@@ -874,7 +830,6 @@ def verify_token():
             if not user:
                 return jsonify({'success': False, 'error': 'Usuário não encontrado'}), 401
             
-            # ✅ CORRIGIDO: Agora pega user_type do resultado
             user_id, name, email, plan_id, plan_name, user_type = user
             
             return jsonify({
@@ -886,7 +841,7 @@ def verify_token():
                         'email': email,
                         'plan_id': plan_id,
                         'plan_name': plan_name,
-                        'user_type': user_type  # ✅ CORRIGIDO: Agora retorna user_type
+                        'user_type': user_type
                     }
                 }
             })
@@ -1039,62 +994,6 @@ def reset_password_api():
     except Exception as e:
         return jsonify({'success': False, 'error': f'Erro interno: {str(e)}'}), 500
 
-
-@app.route('/api/validate-coupon', methods=['POST'])
-def validate_coupon_api():
-    """Validar cupom no checkout"""
-    try:
-        data = request.get_json()
-        coupon_code = data.get('coupon_code', '').upper().strip()
-        plan_name = data.get('plan_name', '').lower()
-        user_id = data.get('user_id')
-        
-        if not coupon_code or not plan_name or not user_id:
-            return jsonify({'success': False, 'error': 'Dados incompletos'}), 400
-        
-        # Usar função de validação do database.py
-        from database import validate_coupon, apply_coupon_discount
-        
-        validation = validate_coupon(coupon_code, plan_name, user_id)
-        
-        if not validation['valid']:
-            return jsonify({
-                'success': False,
-                'error': validation['error']
-            }), 400
-        
-        # Simular preço original baseado no plano
-        plan_prices = {
-            'premium': 49.90,
-            'estrategico': 99.90
-        }
-        
-        original_price = plan_prices.get(plan_name, 0)
-        
-        if original_price == 0:
-            return jsonify({'success': False, 'error': 'Plano não encontrado'}), 400
-        
-        # Aplicar desconto
-        discount_result = apply_coupon_discount(original_price, validation)
-        
-        if not discount_result:
-            return jsonify({'success': False, 'error': 'Erro ao calcular desconto'}), 500
-        
-        return jsonify({
-            'success': True,
-            'coupon': {
-                'code': coupon_code,
-                'discount_percent': validation['discount_percent'],
-                'original_price': discount_result['original_price'],
-                'discount_amount': discount_result['discount_amount'],
-                'final_price': discount_result['final_price']
-            }
-        })
-        
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
-    
-    
 @app.route('/api/dashboard/recommendations')
 def get_portfolio_recommendations():
     """Buscar recomendações de carteira com dados do YFinance"""
@@ -1234,105 +1133,6 @@ def get_portfolio_recommendations():
             'success': False,
             'error': 'Erro interno do servidor'
         }), 500
-        
-@app.route('/api/checkout/create-with-coupon', methods=['POST'])
-def create_checkout_with_coupon():
-    """Criar checkout com cupom aplicado"""
-    try:
-        data = request.get_json()
-        user_id = data.get('user_id')
-        plan_id = data.get('plan_id')
-        billing_type = data.get('billing_type', 'monthly')  # monthly ou annual
-        coupon_code = data.get('coupon_code', '').upper().strip()
-        
-        if not user_id or not plan_id:
-            return jsonify({'success': False, 'error': 'Dados incompletos'}), 400
-        
-        # Buscar dados do plano
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        
-        cursor.execute("SELECT name, price_monthly, price_annual FROM plans WHERE id = %s", (plan_id,))
-        plan = cursor.fetchone()
-        
-        if not plan:
-            cursor.close()
-            conn.close()
-            return jsonify({'success': False, 'error': 'Plano não encontrado'}), 404
-        
-        plan_name, price_monthly, price_annual = plan
-        
-        # Determinar preço base
-        if billing_type == 'annual':
-            base_price = float(price_annual)
-            period_text = 'Anual'
-        else:
-            base_price = float(price_monthly)
-            period_text = 'Mensal'
-        
-        final_price = base_price
-        discount_amount = 0
-        coupon_data = None
-        
-        # Aplicar cupom se fornecido
-        if coupon_code:
-            from database import validate_coupon, apply_coupon_discount
-            
-            validation = validate_coupon(coupon_code, plan_name.lower(), user_id)
-            
-            if validation['valid']:
-                discount_result = apply_coupon_discount(base_price, validation)
-                if discount_result:
-                    final_price = discount_result['final_price']
-                    discount_amount = discount_result['discount_amount']
-                    coupon_data = {
-                        'code': coupon_code,
-                        'discount_percent': validation['discount_percent'],
-                        'discount_amount': discount_amount
-                    }
-        
-        cursor.close()
-        conn.close()
-        
-        # Criar preference no Mercado Pago (se disponível)
-        if MP_AVAILABLE:
-            try:
-                from checkout_mercadopago import create_preference_with_coupon
-                preference = create_preference_with_coupon(
-                    user_id, plan_id, plan_name, period_text, 
-                    base_price, final_price, coupon_data
-                )
-                
-                return jsonify({
-                    'success': True,
-                    'checkout_url': preference['init_point'],
-                    'preference_id': preference['id'],
-                    'pricing': {
-                        'base_price': base_price,
-                        'discount_amount': discount_amount,
-                        'final_price': final_price,
-                        'coupon': coupon_data
-                    }
-                })
-                
-            except Exception as e:
-                return jsonify({'success': False, 'error': f'Erro no Mercado Pago: {str(e)}'}), 500
-        else:
-            return jsonify({
-                'success': True,
-                'message': 'Checkout simulado (Mercado Pago não disponível)',
-                'pricing': {
-                    'base_price': base_price,
-                    'discount_amount': discount_amount,
-                    'final_price': final_price,
-                    'coupon': coupon_data
-                }
-            })
-        
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
-        
-
 
 # ===== ROTAS DE AÇÕES (YFINANCE) =====
 
@@ -1384,54 +1184,54 @@ def search_stocks():
 
 # ===== EXECUTAR EM PRODUÇÃO =====
 
-# if __name__ == '__main__':
-#     # FORÇAR MODO LOCAL
-#     print("🏠 FORÇANDO MODO DESENVOLVIMENTO LOCAL...")
+if __name__ == '__main__':
+    # FORÇAR MODO LOCAL
+    print("🏠 FORÇANDO MODO DESENVOLVIMENTO LOCAL...")
     
-#     # Remover DATABASE_URL para forçar banco local
-#     if 'DATABASE_URL' in os.environ:
-#         del os.environ['DATABASE_URL']
-#         print("✅ DATABASE_URL removida - usando banco local")
+    # Remover DATABASE_URL para forçar banco local
+    if 'DATABASE_URL' in os.environ:
+        del os.environ['DATABASE_URL']
+        print("✅ DATABASE_URL removida - usando banco local")
     
-#     # Configurar ambiente local
-#     os.environ['FLASK_ENV'] = 'development'
-#     os.environ['DB_HOST'] = 'localhost'
-#     os.environ['DB_NAME'] = 'postgres'
-#     os.environ['DB_USER'] = 'postgres'
-#     os.environ['DB_PASSWORD'] = '#geminii'
-#     os.environ['DB_PORT'] = '5432'
+    # Configurar ambiente local
+    os.environ['FLASK_ENV'] = 'development'
+    os.environ['DB_HOST'] = 'localhost'
+    os.environ['DB_NAME'] = 'postgres'
+    os.environ['DB_USER'] = 'postgres'
+    os.environ['DB_PASSWORD'] = '#geminii'
+    os.environ['DB_PORT'] = '5432'
     
-#     port = int(os.environ.get('PORT', 5000))
+    port = int(os.environ.get('PORT', 5000))
     
-#     # Só mostrar diagnóstico uma vez
-#     if not os.environ.get('WERKZEUG_RUN_MAIN'):
-#         print("🔍 DIAGNÓSTICO DE CONEXÃO:")
-#         print(f"DATABASE_URL existe: {'✅' if os.environ.get('DATABASE_URL') else '❌'}")
-#         print(f"Modo: {'RENDER' if os.environ.get('DATABASE_URL') else 'LOCAL'}")
-#         print("🏠 Configurações locais:")
-#         print(f"  Host: {os.environ.get('DB_HOST')}")
-#         print(f"  Database: {os.environ.get('DB_NAME')}")
-#         print(f"  User: {os.environ.get('DB_USER')}")
-#         print(f"  Password: ***")
-#         print(f"  Port: {os.environ.get('DB_PORT')}")
+    # Só mostrar diagnóstico uma vez
+    if not os.environ.get('WERKZEUG_RUN_MAIN'):
+        print("🔍 DIAGNÓSTICO DE CONEXÃO:")
+        print(f"DATABASE_URL existe: {'✅' if os.environ.get('DATABASE_URL') else '❌'}")
+        print(f"Modo: {'RENDER' if os.environ.get('DATABASE_URL') else 'LOCAL'}")
+        print("🏠 Configurações locais:")
+        print(f"  Host: {os.environ.get('DB_HOST')}")
+        print(f"  Database: {os.environ.get('DB_NAME')}")
+        print(f"  User: {os.environ.get('DB_USER')}")
+        print(f"  Password: ***")
+        print(f"  Port: {os.environ.get('DB_PORT')}")
         
-#         print("🚀 Iniciando Geminii API (DESENVOLVIMENTO)...")
-#         print("📊 APIs disponíveis em http://localhost:5000")
-#         print(f"🛒 Mercado Pago: {'✅ ATIVO' if MP_AVAILABLE else '❌ INATIVO'}")
+        print("🚀 Iniciando Geminii API (DESENVOLVIMENTO)...")
+        print("📊 APIs disponíveis em http://localhost:5000")
+        print(f"🛒 Mercado Pago: {'✅ ATIVO' if MP_AVAILABLE else '❌ INATIVO'}")
     
-#     # Inicializar banco apenas uma vez
-#     if not os.environ.get('WERKZEUG_RUN_MAIN'):
-#         initialize_database()
+    # Inicializar banco apenas uma vez
+    if not os.environ.get('WERKZEUG_RUN_MAIN'):
+        initialize_database()
 
-#     app.run(host='0.0.0.0', port=port, debug=True)
+    app.run(host='0.0.0.0', port=port, debug=True)
 
 
-def create_app():
-    """Factory para criar app - Railway"""
-    if os.environ.get('RAILWAY_ENVIRONMENT'):
-        print("🚄 Executando no Railway...")
-        app.config['ENV'] = 'production'
-        app.config['DEBUG'] = False
+# def create_app():
+#     """Factory para criar app - Railway"""
+#     if os.environ.get('RAILWAY_ENVIRONMENT'):
+#         print("🚄 Executando no Railway...")
+#         app.config['ENV'] = 'production'
+#         app.config['DEBUG'] = False
     
-    initialize_database()
-    return app
+#     initialize_database()
+#     return app
