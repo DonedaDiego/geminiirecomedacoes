@@ -741,6 +741,49 @@ def register():
     except Exception as e:
         return jsonify({'success': False, 'error': f'Erro interno: {str(e)}'}), 500
 
+
+@app.route('/api/validate-coupon', methods=['POST'])
+def validate_coupon():
+   """Validar cupom de desconto"""
+   try:
+       data = request.get_json()
+       
+       if not data:
+           return jsonify({'success': False, 'error': 'Dados JSON necessários'}), 400
+       
+       code = data.get('code', '').strip().upper()
+       plan_name = data.get('plan_name', '')
+       user_id = data.get('user_id', 1)  # Em produção, pegar do token JWT
+       
+       if not code:
+           return jsonify({'success': False, 'error': 'Código do cupom é obrigatório'}), 400
+       
+       # Usar função do database.py
+       from database import validate_coupon as validate_coupon_db
+       result = validate_coupon_db(code, plan_name, user_id)
+       
+       if result['valid']:
+           return jsonify({
+               'success': True,
+               'message': 'Cupom válido!',
+               'data': {
+                   'coupon_id': result['coupon_id'],
+                   'discount_percent': result['discount_percent'],
+                   'discount_type': result['discount_type'],
+                   'applicable_plans': result.get('applicable_plans', [])
+               }
+           })
+       else:
+           return jsonify({
+               'success': False,
+               'error': result['error']
+           }), 400
+       
+   except Exception as e:
+       return jsonify({'success': False, 'error': f'Erro interno: {str(e)}'}), 500
+
+
+
 @app.route('/api/auth/login', methods=['POST'])
 def login():
     """Login do usuário"""
@@ -1004,8 +1047,331 @@ def reset_password_api():
         return jsonify({'success': False, 'error': f'Erro interno: {str(e)}'}), 500
 
 @app.route('/api/dashboard/recommendations')
-def get_portfolio_recommendations():
-    """Buscar recomendações de carteira com dados do YFinance"""
+def get_dashboard_recommendations():
+    """Buscar recomendações de TODAS as carteiras"""
+    try:
+        auth_header = request.headers.get('Authorization')
+        
+        if not auth_header or not auth_header.startswith('Bearer '):
+            return jsonify({'success': False, 'error': 'Token não fornecido'}), 401
+        
+        token = auth_header.replace('Bearer ', '')
+        
+        try:
+            payload = jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
+            user_id = payload['user_id']
+        except jwt.InvalidTokenError:
+            return jsonify({'success': False, 'error': 'Token inválido'}), 401
+        
+        limit = int(request.args.get('limit', 20))  # Aumentar limite para mostrar mais
+        
+        conn = get_db_connection()
+        if not conn:
+            return jsonify({'success': False, 'error': 'Erro de conexão'}), 500
+            
+        cursor = conn.cursor()
+        
+        # ✅ BUSCAR TODAS AS CARTEIRAS E SEUS ATIVOS
+        cursor.execute("""
+            SELECT 
+                pa.portfolio_name,
+                pa.ticker, 
+                pa.weight, 
+                pa.sector,
+                pa.entry_price,
+                pa.current_price,
+                pa.target_price,
+                p.display_name as portfolio_display_name
+            FROM portfolio_assets pa
+            JOIN portfolios p ON pa.portfolio_name = p.name
+            WHERE pa.is_active = true
+            ORDER BY pa.portfolio_name, pa.weight DESC
+            LIMIT %s
+        """, (limit,))
+        
+        assets = cursor.fetchall()
+        
+        if not assets:
+            cursor.close()
+            conn.close()
+            return jsonify({
+                'success': False,
+                'error': 'Nenhum ativo encontrado nas carteiras'
+            }), 404
+        
+        # ✅ PROCESSAR DADOS DOS ATIVOS
+        recommendations = []
+        portfolio_stats = {}
+        
+        for asset in assets:
+            portfolio_name, ticker, weight, sector, entry_price, current_price, target_price, portfolio_display = asset
+            
+            # Usar preços do banco ou simular se não existirem
+            entry = float(entry_price) if entry_price else 100.0
+            current = float(current_price) if current_price else entry * 1.02  # Simular 2% de alta
+            target = float(target_price) if target_price else entry * 1.10    # Simular 10% de meta
+            
+            # Calcular performance
+            performance = ((current - entry) / entry) * 100 if entry > 0 else 0
+            
+            # Gerar recomendação baseada na performance
+            if performance > 8:
+                recomendacao = "Venda"
+            elif performance > 5:
+                recomendacao = "Manter"
+            elif performance < -5:
+                recomendacao = "Compra Forte"
+            elif performance < 0:
+                recomendacao = "Compra"
+            else:
+                recomendacao = "Manter"
+            
+            # Ícones por setor
+            sector_icons = {
+                'Tecnologia': '💻',
+                'Financeiro': '🏦',
+                'Saúde': '🏥',
+                'Energia': '⚡',
+                'Consumo': '🛒',
+                'Industrial': '🏭',
+                'Mineração': '⛏️',
+                'Telecomunicações': '📡',
+                'Utilities': '🔌',
+                'Real Estate': '🏢',
+                'default': '📈'
+            }
+            
+            icon = sector_icons.get(sector, sector_icons['default'])
+            
+            recommendation_data = {
+                'ticker': ticker,
+                'setor': sector or 'Diversificado',
+                'icone': icon,
+                'recomendacao': recomendacao,
+                'portfolio_name': portfolio_name,
+                'portfolio_display': portfolio_display,
+                'entrada': {
+                    'preco': entry,
+                    'data': (datetime.now() - timedelta(days=30)).strftime('%d/%m/%Y'),
+                    'peso_percent': float(weight) if weight else 0
+                },
+                'atual': {
+                    'preco': current,
+                    'data': datetime.now().strftime('%d/%m/%Y')
+                },
+                'performance': {
+                    'valor': performance,
+                    'dias': 30
+                },
+                'fundamentals': {
+                    'sharpe': round(performance / 10, 2) if performance != 0 else 0,
+                    'volatilidade': 1.2
+                }
+            }
+            
+            recommendations.append(recommendation_data)
+            
+            # Acumular stats por portfolio
+            if portfolio_name not in portfolio_stats:
+                portfolio_stats[portfolio_name] = {
+                    'total_stocks': 0,
+                    'compras': 0,
+                    'vendas': 0,
+                    'manter': 0,
+                    'total_performance': 0
+                }
+            
+            portfolio_stats[portfolio_name]['total_stocks'] += 1
+            portfolio_stats[portfolio_name]['total_performance'] += performance
+            
+            if 'Compra' in recomendacao:
+                portfolio_stats[portfolio_name]['compras'] += 1
+            elif 'Venda' in recomendacao:
+                portfolio_stats[portfolio_name]['vendas'] += 1
+            else:
+                portfolio_stats[portfolio_name]['manter'] += 1
+        
+        cursor.close()
+        conn.close()
+        
+        # ✅ CALCULAR ESTATÍSTICAS GERAIS
+        total_stocks = len(recommendations)
+        total_compras = sum(stats['compras'] for stats in portfolio_stats.values())
+        total_vendas = sum(stats['vendas'] for stats in portfolio_stats.values())
+        total_manter = sum(stats['manter'] for stats in portfolio_stats.values())
+        avg_performance = sum(rec['performance']['valor'] for rec in recommendations) / total_stocks if total_stocks > 0 else 0
+        
+        response_data = {
+            'success': True,
+            'data': {
+                'recommendations': {
+                    'recommendations': recommendations,
+                    'last_update': datetime.now().strftime('%d/%m/%Y %H:%M'),
+                    'source': 'database'
+                },
+                'statistics': {
+                    'total_stocks': total_stocks,
+                    'avg_performance': round(avg_performance, 2),
+                    'signals': {
+                        'compras': total_compras,
+                        'vendas': total_vendas,
+                        'manter': total_manter
+                    }
+                },
+                'portfolios': [
+                    {
+                        'name': name,
+                        'stats': {
+                            'total': stats['total_stocks'],
+                            'avg_performance': round(stats['total_performance'] / stats['total_stocks'], 2) if stats['total_stocks'] > 0 else 0,
+                            'signals': {
+                                'compras': stats['compras'],
+                                'vendas': stats['vendas'],
+                                'manter': stats['manter']
+                            }
+                        }
+                    }
+                    for name, stats in portfolio_stats.items()
+                ]
+            }
+        }
+        
+        return jsonify(response_data)
+        
+    except Exception as e:
+        print(f"Erro em get_dashboard_recommendations: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            'success': False,
+            'error': 'Erro interno do servidor'
+        }), 500
+
+
+@app.route('/api/admin/user-portfolios', methods=['POST'])
+def manage_user_portfolios():
+    """Gerenciar carteiras de usuário"""
+    try:
+        auth_header = request.headers.get('Authorization')
+        if not auth_header or not auth_header.startswith('Bearer '):
+            return jsonify({'success': False, 'error': 'Token não fornecido'}), 401
+        
+        token = auth_header.replace('Bearer ', '')
+        
+        try:
+            payload = jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
+            admin_id = payload['user_id']
+            
+            # Verificar se é admin
+            conn = get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute("SELECT user_type FROM users WHERE id = %s", (admin_id,))
+            result = cursor.fetchone()
+            cursor.close()
+            conn.close()
+            
+            if not result or result[0] not in ['admin', 'master']:
+                return jsonify({'success': False, 'error': 'Acesso negado'}), 403
+                
+        except jwt.InvalidTokenError:
+            return jsonify({'success': False, 'error': 'Token inválido'}), 401
+        
+        data = request.get_json()
+        action = data.get('action')  # 'grant' ou 'revoke'
+        user_email = data.get('user_email')
+        portfolio_name = data.get('portfolio_name')
+        
+        if not all([action, user_email, portfolio_name]):
+            return jsonify({'success': False, 'error': 'Dados obrigatórios faltando'}), 400
+        
+        # Buscar user_id pelo email
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT id FROM users WHERE email = %s", (user_email,))
+        user_result = cursor.fetchone()
+        cursor.close()
+        conn.close()
+        
+        if not user_result:
+            return jsonify({'success': False, 'error': 'Usuário não encontrado'}), 404
+        
+        user_id = user_result[0]
+        
+        if action == 'grant':
+            from database import grant_portfolio_access
+            result = grant_portfolio_access(user_id, portfolio_name, admin_id)
+        elif action == 'revoke':
+            from database import revoke_portfolio_access
+            result = revoke_portfolio_access(user_id, portfolio_name)
+        else:
+            return jsonify({'success': False, 'error': 'Ação inválida'}), 400
+        
+        return jsonify(result)
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': f'Erro interno: {str(e)}'}), 500
+
+@app.route('/api/admin/user/<user_email>/portfolios')
+def get_user_portfolios_admin(user_email):
+    """Buscar carteiras de um usuário (Admin)"""
+    try:
+        auth_header = request.headers.get('Authorization')
+        if not auth_header or not auth_header.startswith('Bearer '):
+            return jsonify({'success': False, 'error': 'Token não fornecido'}), 401
+        
+        token = auth_header.replace('Bearer ', '')
+        
+        try:
+            payload = jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
+            admin_id = payload['user_id']
+            
+            # Verificar se é admin
+            conn = get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute("SELECT user_type FROM users WHERE id = %s", (admin_id,))
+            result = cursor.fetchone()
+            
+            if not result or result[0] not in ['admin', 'master']:
+                cursor.close()
+                conn.close()
+                return jsonify({'success': False, 'error': 'Acesso negado'}), 403
+                
+        except jwt.InvalidTokenError:
+            return jsonify({'success': False, 'error': 'Token inválido'}), 401
+        
+        # Buscar user_id pelo email
+        cursor.execute("SELECT id, name FROM users WHERE email = %s", (user_email,))
+        user_result = cursor.fetchone()
+        
+        if not user_result:
+            cursor.close()
+            conn.close()
+            return jsonify({'success': False, 'error': 'Usuário não encontrado'}), 404
+        
+        user_id, user_name = user_result
+        
+        # Buscar portfolios do usuário
+        from database import get_user_portfolios
+        portfolios = get_user_portfolios(user_id)
+        
+        cursor.close()
+        conn.close()
+        
+        return jsonify({
+            'success': True,
+            'user': {
+                'name': user_name,
+                'email': user_email
+            },
+            'portfolios': portfolios
+        })
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': f'Erro interno: {str(e)}'}), 500
+
+@app.route('/api/user/portfolios')
+def get_my_portfolios():
+    """Buscar minhas carteiras (Usuário)"""
     try:
         auth_header = request.headers.get('Authorization')
         if not auth_header or not auth_header.startswith('Bearer '):
@@ -1019,129 +1385,16 @@ def get_portfolio_recommendations():
         except jwt.InvalidTokenError:
             return jsonify({'success': False, 'error': 'Token inválido'}), 401
         
-        # Parâmetros da requisição
-        portfolio_name = request.args.get('portfolio', 'smart_bdr')
-        limit = int(request.args.get('limit', 10))
+        from database import get_user_portfolios
+        portfolios = get_user_portfolios(user_id)
         
-        from database import get_portfolio_assets
-        assets = get_portfolio_assets(portfolio_name)
-        
-        if not assets:
-            return jsonify({
-                'success': False,
-                'error': f'Nenhum ativo encontrado na carteira {portfolio_name}'
-            }), 404
-        
-        # Buscar dados dos ativos usando YFinance
-        from yfinance_service import YFinanceService
-        
-        recommendations = []
-        total_performance = 0
-        signals = {'compras': 0, 'vendas': 0, 'manter': 0}
-        
-        for asset in assets[:limit]:
-            try:
-                # Buscar dados atuais do ativo
-                stock_data = YFinanceService.get_stock_data(asset['ticker'])
-                
-                if stock_data['success']:
-                    stock_info = stock_data['data']
-                    
-                    # Simular dados de entrada (preço de 30 dias atrás)
-                    current_price = stock_info['current_price']
-                    entry_price = current_price * 0.95  # Simular entrada 5% abaixo
-                    
-                    # Calcular performance
-                    performance = ((current_price - entry_price) / entry_price) * 100
-                    total_performance += performance * (asset['weight'] / 100)
-                    
-                    # Gerar recomendação baseada na performance
-                    if performance > 5:
-                        recommendation = "Venda"
-                        signals['vendas'] += 1
-                    elif performance < -3:
-                        recommendation = "Compra Forte"
-                        signals['compras'] += 1
-                    elif performance < 0:
-                        recommendation = "Compra"
-                        signals['compras'] += 1
-                    else:
-                        recommendation = "Manter"
-                        signals['manter'] += 1
-                    
-                    # Adicionar ícone baseado no setor
-                    sector_icons = {
-                        'Tecnologia': '💻',
-                        'Financeiro': '🏦',
-                        'Saúde': '🏥',
-                        'Energia': '⚡',
-                        'Consumo': '🛒',
-                        'Industrial': '🏭',
-                        'default': '📈'
-                    }
-                    
-                    icon = sector_icons.get(asset['sector'], sector_icons['default'])
-                    
-                    recommendation_data = {
-                        'ticker': asset['ticker'],
-                        'setor': asset['sector'],
-                        'icone': icon,
-                        'recomendacao': recommendation,
-                        'entrada': {
-                            'preco': entry_price,
-                            'data': (datetime.now() - timedelta(days=30)).strftime('%d/%m/%Y'),
-                            'peso_percent': asset['weight']
-                        },
-                        'atual': {
-                            'preco': current_price,
-                            'data': datetime.now().strftime('%d/%m/%Y')
-                        },
-                        'performance': {
-                            'valor': performance,
-                            'dias': 30
-                        },
-                        'fundamentals': {
-                            'sharpe': round(performance / 10, 2) if performance != 0 else 0,
-                            'volatilidade': stock_info.get('beta', 1.0)
-                        }
-                    }
-                    
-                    recommendations.append(recommendation_data)
-                    
-            except Exception as e:
-                print(f"Erro ao processar {asset['ticker']}: {e}")
-                continue
-        
-        # Calcular estatísticas
-        total_stocks = len(recommendations)
-        avg_performance = total_performance / total_stocks if total_stocks > 0 else 0
-        
-        response_data = {
+        return jsonify({
             'success': True,
-            'data': {
-                'recommendations': {
-                    'recommendations': recommendations,
-                    'last_update': datetime.now().strftime('%d/%m/%Y %H:%M'),
-                    'portfolio': portfolio_name
-                },
-                'statistics': {
-                    'total_stocks': total_stocks,
-                    'avg_performance': round(avg_performance, 2),
-                    'signals': signals
-                }
-            }
-        }
-        
-        return jsonify(response_data)
+            'portfolios': portfolios
+        })
         
     except Exception as e:
-        print(f"Erro em get_portfolio_recommendations: {e}")
-        import traceback
-        traceback.print_exc()
-        return jsonify({
-            'success': False,
-            'error': 'Erro interno do servidor'
-        }), 500
+        return jsonify({'success': False, 'error': f'Erro interno: {str(e)}'}), 500
 
 # ===== ROTAS DE AÇÕES (YFINANCE) =====
 
@@ -1192,46 +1445,46 @@ def search_stocks():
     return jsonify(result)
 
 
-# if __name__ == '__main__':
-#     # FORÇAR MODO LOCAL
-#     print("🏠 FORÇANDO MODO DESENVOLVIMENTO LOCAL...")
+if __name__ == '__main__':
+    # FORÇAR MODO LOCAL
+    print("🏠 FORÇANDO MODO DESENVOLVIMENTO LOCAL...")
     
-#     # Remover DATABASE_URL para forçar banco local
-#     if 'DATABASE_URL' in os.environ:
-#         del os.environ['DATABASE_URL']
-#         print("✅ DATABASE_URL removida - usando banco local")
+    # Remover DATABASE_URL para forçar banco local
+    if 'DATABASE_URL' in os.environ:
+        del os.environ['DATABASE_URL']
+        print("✅ DATABASE_URL removida - usando banco local")
     
-#     # Configurar ambiente local
-#     os.environ['FLASK_ENV'] = 'development'
-#     os.environ['DB_HOST'] = 'localhost'
-#     os.environ['DB_NAME'] = 'postgres'
-#     os.environ['DB_USER'] = 'postgres'
-#     os.environ['DB_PASSWORD'] = '#geminii'
-#     os.environ['DB_PORT'] = '5432'
+    # Configurar ambiente local
+    os.environ['FLASK_ENV'] = 'development'
+    os.environ['DB_HOST'] = 'localhost'
+    os.environ['DB_NAME'] = 'postgres'
+    os.environ['DB_USER'] = 'postgres'
+    os.environ['DB_PASSWORD'] = '#geminii'
+    os.environ['DB_PORT'] = '5432'
     
-#     port = int(os.environ.get('PORT', 5000))
+    port = int(os.environ.get('PORT', 5000))
     
-#     # Só mostrar diagnóstico uma vez
-#     if not os.environ.get('WERKZEUG_RUN_MAIN'):
-#         print("🔍 DIAGNÓSTICO DE CONEXÃO:")
-#         print(f"DATABASE_URL existe: {'✅' if os.environ.get('DATABASE_URL') else '❌'}")
-#         print(f"Modo: {'RENDER' if os.environ.get('DATABASE_URL') else 'LOCAL'}")
-#         print("🏠 Configurações locais:")
-#         print(f"  Host: {os.environ.get('DB_HOST')}")
-#         print(f"  Database: {os.environ.get('DB_NAME')}")
-#         print(f"  User: {os.environ.get('DB_USER')}")
-#         print(f"  Password: ***")
-#         print(f"  Port: {os.environ.get('DB_PORT')}")
+    # Só mostrar diagnóstico uma vez
+    # if not os.environ.get('WERKZEUG_RUN_MAIN'):
+    #     print("🔍 DIAGNÓSTICO DE CONEXÃO:")
+    #     print(f"DATABASE_URL existe: {'✅' if os.environ.get('DATABASE_URL') else '❌'}")
+    #     print(f"Modo: {'RENDER' if os.environ.get('DATABASE_URL') else 'LOCAL'}")
+    #     print("🏠 Configurações locais:")
+    #     print(f"  Host: {os.environ.get('DB_HOST')}")
+    #     print(f"  Database: {os.environ.get('DB_NAME')}")
+    #     print(f"  User: {os.environ.get('DB_USER')}")
+    #     print(f"  Password: ***")
+    #     print(f"  Port: {os.environ.get('DB_PORT')}")
         
-#         print("🚀 Iniciando Geminii API (DESENVOLVIMENTO)...")
-#         print("📊 APIs disponíveis em http://localhost:5000")
-#         print(f"🛒 Mercado Pago: {'✅ ATIVO' if MP_AVAILABLE else '❌ INATIVO'}")
+    #     print("🚀 Iniciando Geminii API (DESENVOLVIMENTO)...")
+    #     print("📊 APIs disponíveis em http://localhost:5000")
+    #     print(f"🛒 Mercado Pago: {'✅ ATIVO' if MP_AVAILABLE else '❌ INATIVO'}")
     
-#     # Inicializar banco apenas uma vez
-#     if not os.environ.get('WERKZEUG_RUN_MAIN'):
-#         initialize_database()
+    # # Inicializar banco apenas uma vez
+    # if not os.environ.get('WERKZEUG_RUN_MAIN'):
+    #     initialize_database()
 
-#     app.run(host='0.0.0.0', port=port, debug=True)
+    # app.run(host='0.0.0.0', port=port, debug=True)
 
 
 def create_app():

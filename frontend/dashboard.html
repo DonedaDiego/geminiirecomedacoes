@@ -510,7 +510,7 @@
       try {
         showLoading();
         
-        const response = await fetch('/api/dashboard/recommendations?portfolio=carteira_bdr&limit=8', {
+        const response = await fetch('/api/dashboard/recommendations?limit=20', {
           headers: { 'Authorization': `Bearer ${userToken}` }
         });
 

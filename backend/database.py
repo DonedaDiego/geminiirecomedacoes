@@ -412,6 +412,8 @@ def create_portfolio_system():
                 weight DECIMAL(5,2) NOT NULL CHECK (weight >= 0 AND weight <= 100),
                 sector VARCHAR(100),
                 entry_price DECIMAL(10,2),
+                current_price DECIMAL(10,2),      
+                target_price DECIMAL(10,2),       
                 entry_date DATE DEFAULT CURRENT_DATE,
                 is_active BOOLEAN DEFAULT true,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -527,7 +529,7 @@ def create_payment_history():
         return False
 
 def create_initial_admin():
-    """Criar usuário admin inicial"""
+    """Criar usuário admin inicial - VERSÃO PRODUÇÃO"""
     try:
         conn = get_db_connection()
         if not conn:
@@ -564,29 +566,10 @@ def create_initial_admin():
         
         admin_id = cursor.fetchone()[0]
         
-        # Agora inserir cupons de exemplo com o ID do admin correto
-        cursor.execute("SELECT COUNT(*) FROM coupons;")
-        coupons_count = cursor.fetchone()[0]
-        
-        if coupons_count == 0:
-            cursor.execute("""
-                INSERT INTO coupons (code, discount_percent, applicable_plans, max_uses, valid_until, created_by) VALUES
-                ('CURSO50', 50.00, ARRAY['premium'], 100, CURRENT_TIMESTAMP + INTERVAL '1 year', %s),
-                ('MEMBRO30', 30.00, ARRAY['premium', 'estrategico'], 50, CURRENT_TIMESTAMP + INTERVAL '6 months', %s),
-                ('WELCOME20', 20.00, ARRAY['premium'], NULL, CURRENT_TIMESTAMP + INTERVAL '3 months', %s),
-                ('VIP70', 70.00, ARRAY['estrategico'], 20, CURRENT_TIMESTAMP + INTERVAL '1 month', %s);
-            """, (admin_id, admin_id, admin_id, admin_id))
-            print("✅ Cupons de exemplo inseridos!")
-        
         conn.commit()
         cursor.close()
         conn.close()
         
-        print("👑 Usuário ADMIN criado/atualizado!")
-        print(f"📧 Email: {admin_email}")
-        print("🔑 Senha: @Lice8127")
-        print("✅ Conta configurada como administrador!")
-        print("✅ Cupons de exemplo criados!")
         
         return True
         
@@ -594,42 +577,191 @@ def create_initial_admin():
         print(f"❌ Erro ao criar admin: {e}")
         return False
 
+def create_user_portfolios_table():
+    """Criar tabela de portfolios por usuário"""
+    try:
+        conn = get_db_connection()
+        if not conn:
+            return False
+            
+        cursor = conn.cursor()
+        
+        # Tabela de portfolios que cada usuário pode acessar
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS user_portfolios (
+                id SERIAL PRIMARY KEY,
+                user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+                portfolio_name VARCHAR(50) REFERENCES portfolios(name) ON DELETE CASCADE,
+                granted_by INTEGER REFERENCES users(id),
+                granted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                is_active BOOLEAN DEFAULT true,
+                UNIQUE(user_id, portfolio_name)
+            )
+        """)
+        
+        # Criar índices para performance
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_user_portfolios_user 
+            ON user_portfolios(user_id);
+        """)
+        
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_user_portfolios_portfolio 
+            ON user_portfolios(portfolio_name);
+        """)
+        
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_user_portfolios_active 
+            ON user_portfolios(is_active);
+        """)
+        
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        print("✅ Tabela 'user_portfolios' criada com sucesso!")
+        return True
+        
+    except Exception as e:
+        print(f"❌ Erro ao criar tabela user_portfolios: {e}")
+        return False
+
+
 def setup_enhanced_database():
     """Configurar banco completo com novos recursos"""
     print("🚀 Configurando banco de dados ENHANCED...")
     
     if test_connection():
-        # Criar/atualizar estruturas na ordem correta
-        create_plans_table()          # 1. Planos primeiro
-        create_users_table()          # 2. Usuários  
-        create_password_reset_table() # 3. Reset senha
-        create_admin_system()         # 4. Sistema admin (adiciona coluna user_type)
-        
-        # 5. Criar admin ANTES dos cupons
+        create_plans_table()
+        create_users_table()
+        create_password_reset_table()
+        create_admin_system()
         create_initial_admin()
-        
-        # 6. Agora criar cupons (que precisam do admin)
-        create_coupons_table()        # Sistema de cupons
-        create_portfolio_system()     # Sistema de carteiras  
+        create_coupons_table()
+        create_portfolio_system()
         create_recommendations_table()
-        create_payment_history()      # Histórico de pagamentos
+        create_payment_history()
+        create_user_portfolios_table()  # ✅ ADICIONAR ESTA LINHA
         
-        # Limpar tokens expirados
         cleanup_expired_tokens()
         
         print("✅ Banco ENHANCED configurado com sucesso!")
-        print("\n🎯 Recursos disponíveis:")
-        print("   • Sistema de administração")
-        print("   • Cupons de desconto")
-        print("   • Carteiras de investimento")
-        print("   • Recomendações por carteira")
-        print("   • Histórico de pagamentos")
-        print("   • Login dual (user/admin)")
-        
         return True
     else:
         print("❌ Falha na configuração do banco")
         return False
+
+def grant_portfolio_access(user_id, portfolio_name, granted_by_admin_id):
+    """Dar acesso a uma carteira para um usuário"""
+    try:
+        conn = get_db_connection()
+        if not conn:
+            return {'success': False, 'error': 'Erro de conexão'}
+            
+        cursor = conn.cursor()
+        
+        # Verificar se usuário existe
+        cursor.execute("SELECT name, email FROM users WHERE id = %s", (user_id,))
+        user = cursor.fetchone()
+        if not user:
+            cursor.close()
+            conn.close()
+            return {'success': False, 'error': 'Usuário não encontrado'}
+        
+        # Verificar se portfolio existe
+        cursor.execute("SELECT display_name FROM portfolios WHERE name = %s", (portfolio_name,))
+        portfolio = cursor.fetchone()
+        if not portfolio:
+            cursor.close()
+            conn.close()
+            return {'success': False, 'error': 'Carteira não encontrada'}
+        
+        # Inserir ou ativar acesso
+        cursor.execute("""
+            INSERT INTO user_portfolios (user_id, portfolio_name, granted_by, is_active)
+            VALUES (%s, %s, %s, true)
+            ON CONFLICT (user_id, portfolio_name) 
+            DO UPDATE SET 
+                is_active = true,
+                granted_by = EXCLUDED.granted_by,
+                granted_at = CURRENT_TIMESTAMP
+        """, (user_id, portfolio_name, granted_by_admin_id))
+        
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        return {
+            'success': True,
+            'message': f'Acesso à carteira {portfolio[0]} concedido para {user[0]}'
+        }
+        
+    except Exception as e:
+        return {'success': False, 'error': f'Erro interno: {str(e)}'}
+
+def revoke_portfolio_access(user_id, portfolio_name):
+    """Remover acesso a uma carteira"""
+    try:
+        conn = get_db_connection()
+        if not conn:
+            return {'success': False, 'error': 'Erro de conexão'}
+            
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            UPDATE user_portfolios 
+            SET is_active = false 
+            WHERE user_id = %s AND portfolio_name = %s
+        """, (user_id, portfolio_name))
+        
+        if cursor.rowcount == 0:
+            cursor.close()
+            conn.close()
+            return {'success': False, 'error': 'Acesso não encontrado'}
+        
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        return {'success': True, 'message': 'Acesso removido com sucesso'}
+        
+    except Exception as e:
+        return {'success': False, 'error': f'Erro interno: {str(e)}'}
+
+def get_user_portfolios(user_id):
+    """Buscar carteiras que um usuário pode acessar"""
+    try:
+        conn = get_db_connection()
+        if not conn:
+            return []
+            
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            SELECT up.portfolio_name, p.display_name, up.granted_at
+            FROM user_portfolios up
+            JOIN portfolios p ON up.portfolio_name = p.name
+            WHERE up.user_id = %s AND up.is_active = true
+            ORDER BY p.display_name
+        """, (user_id,))
+        
+        portfolios = []
+        for row in cursor.fetchall():
+            portfolios.append({
+                'name': row[0],
+                'display_name': row[1],
+                'granted_at': row[2].isoformat() if row[2] else None
+            })
+        
+        cursor.close()
+        conn.close()
+        
+        return portfolios
+        
+    except Exception as e:
+        print(f"❌ Erro ao buscar portfolios do usuário: {e}")
+        return []
+
 
 def create_recommendations_table():
     """Criar tabela de recomendações das carteiras"""
