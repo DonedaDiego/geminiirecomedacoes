@@ -498,7 +498,316 @@ def get_company_info(ticker):
     })
 
 
+# ===== ROTAS DE PORTFOLIO (ADICIONAR NO SEU recommendations_routes.py) =====
+
+@recommendations_bp.route('/admin/portfolio/<portfolio_name>/assets', methods=['GET'])
+@require_admin
+def get_portfolio_assets_api(portfolio_name):
+    """Buscar ativos de uma carteira"""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            SELECT id, ticker, weight, sector, entry_price, current_price, target_price, entry_date
+            FROM portfolio_assets 
+            WHERE portfolio_name = %s 
+            ORDER BY weight DESC
+        """, (portfolio_name,))
+        
+        assets = []
+        total_weight = 0
+        
+        for row in cursor.fetchall():
+            asset = {
+                'id': row[0],
+                'ticker': row[1],
+                'weight': float(row[2]),
+                'sector': row[3],
+                'entry_price': float(row[4]) if row[4] else 0,
+                'current_price': float(row[5]) if row[5] else 0,
+                'target_price': float(row[6]) if row[6] else 0,
+                'entry_date': row[7].isoformat() if row[7] else None
+            }
+            assets.append(asset)
+            total_weight += asset['weight']
+        
+        cursor.close()
+        conn.close()
+        
+        return jsonify({
+            'success': True,
+            'assets': assets,
+            'total_weight': total_weight,
+            'portfolio': portfolio_name
+        })
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@recommendations_bp.route('/admin/portfolio/add-asset', methods=['POST'])
+@require_admin
+def add_portfolio_asset_api():
+    """Adicionar ativo a carteira - COM DEBUG"""
+    try:
+        data = request.get_json()
+        
+        # # 🔍 DEBUG: Ver o que está chegando do frontend
+        # print(f"🔍 DADOS RECEBIDOS DO FRONTEND:")
+        # print(f"   data completo: {data}")
+        
+        portfolio = data.get('portfolio')
+        ticker = data.get('ticker', '').upper()
+        weight = data.get('weight')
+        sector = data.get('sector', '').strip()
+        entry_price = data.get('entry_price')
+        current_price = data.get('current_price')
+        target_price = data.get('target_price')
+        entry_date = data.get('entry_date')
+        
+        # # 🔍 DEBUG: Ver cada campo individualmente
+        # print(f"   portfolio: {portfolio}")
+        # print(f"   ticker: {ticker}")
+        # print(f"   weight: {weight}")
+        # print(f"   sector: {sector}")
+        # print(f"   entry_price: {entry_price} (tipo: {type(entry_price)})")
+        # print(f"   current_price: {current_price} (tipo: {type(current_price)})")
+        # print(f"   target_price: {target_price} (tipo: {type(target_price)})")
+        # print(f"   entry_date: {entry_date}")
+        
+        if not all([portfolio, ticker, weight, sector, entry_price, target_price, entry_date]):
+            missing_fields = []
+            if not portfolio: missing_fields.append('portfolio')
+            if not ticker: missing_fields.append('ticker')
+            if not weight: missing_fields.append('weight')
+            if not sector: missing_fields.append('sector')
+            if not entry_price: missing_fields.append('entry_price')
+            if not target_price: missing_fields.append('target_price')
+            if not entry_date: missing_fields.append('entry_date')
+            
+            print(f"❌ Campos faltando: {missing_fields}")
+            return jsonify({'success': False, 'error': f'Campos obrigatórios faltando: {missing_fields}'}), 400
+        
+        if weight < 0 or weight > 100:
+            return jsonify({'success': False, 'error': 'Peso deve estar entre 0 e 100'}), 400
+        
+        # Buscar user_id do token
+        token = request.headers.get('Authorization').replace('Bearer ', '')
+        user_data = verify_token(token)
+        admin_user_id = user_data['user_id'] if user_data else None
+        
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # Verificar se ativo já existe na carteira
+        cursor.execute("""
+            SELECT id FROM portfolio_assets 
+            WHERE portfolio_name = %s AND ticker = %s
+        """, (portfolio, ticker))
+        
+        if cursor.fetchone():
+            cursor.close()
+            conn.close()
+            return jsonify({'success': False, 'error': f'Ativo {ticker} já existe na carteira {portfolio}'}), 400
+        
+        # # 🔍 DEBUG: Mostrar valores que vão ser inseridos
+        # print(f"🔍 VALORES QUE VÃO SER INSERIDOS:")
+        # print(f"   entry_price convertido: {float(entry_price) if entry_price else None}")
+        # print(f"   current_price convertido: {float(current_price) if current_price else None}")
+        # print(f"   target_price convertido: {float(target_price) if target_price else None}")
+        
+        # Inserir ativo - VERSÃO CORRIGIDA
+        cursor.execute("""
+            INSERT INTO portfolio_assets 
+            (portfolio_name, ticker, weight, sector, entry_price, current_price, target_price, entry_date)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+        """, (
+            portfolio, 
+            ticker, 
+            float(weight), 
+            sector, 
+            float(entry_price) if entry_price else None,
+            float(current_price) if current_price else None, 
+            float(target_price) if target_price else None, 
+            entry_date
+        ))
+        
+        print(f"✅ SQL executado com sucesso!")
+        
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        return jsonify({
+            'success': True,
+            'message': f'Ativo {ticker} adicionado à carteira {portfolio} com sucesso!'
+        })
+        
+    except Exception as e:
+        print(f"❌ ERRO NA ROTA: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@recommendations_bp.route('/admin/portfolio/remove-asset', methods=['DELETE'])
+@require_admin
+def remove_portfolio_asset_api():
+    """Remover ativo da carteira por ID"""
+    try:
+        data = request.get_json()
+        asset_id = data.get('id')
+        
+        if not asset_id:
+            return jsonify({'success': False, 'error': 'ID do ativo é obrigatório'}), 400
+        
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # Buscar informações do ativo antes de remover
+        cursor.execute("""
+            SELECT ticker, portfolio_name FROM portfolio_assets WHERE id = %s
+        """, (asset_id,))
+        asset_info = cursor.fetchone()
+        
+        if not asset_info:
+            cursor.close()
+            conn.close()
+            return jsonify({'success': False, 'error': 'Ativo não encontrado'}), 404
+        
+        ticker, portfolio = asset_info
+        
+        # Remover ativo
+        cursor.execute("DELETE FROM portfolio_assets WHERE id = %s", (asset_id,))
+        
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        return jsonify({
+            'success': True,
+            'message': f'Ativo {ticker} removido da carteira {portfolio} com sucesso!'
+        })
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@recommendations_bp.route('/admin/portfolio/clear-assets', methods=['DELETE'])
+@require_admin
+def clear_portfolio_assets():
+    """Limpar todos os ativos de uma carteira"""
+    try:
+        data = request.get_json()
+        portfolio = data.get('portfolio')
+        
+        if not portfolio:
+            return jsonify({'success': False, 'error': 'Nome da carteira é obrigatório'}), 400
+        
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # Contar quantos ativos serão removidos
+        cursor.execute("SELECT COUNT(*) FROM portfolio_assets WHERE portfolio_name = %s", (portfolio,))
+        count = cursor.fetchone()[0]
+        
+        # Remover todos os ativos da carteira
+        cursor.execute("DELETE FROM portfolio_assets WHERE portfolio_name = %s", (portfolio,))
+        
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        return jsonify({
+            'success': True,
+            'message': f'{count} ativos removidos da carteira {portfolio.upper()}!'
+        })
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@recommendations_bp.route('/admin/portfolio/generate-rebalance', methods=['POST'])
+@require_admin
+def generate_rebalance_recommendations():
+    """Gerar recomendações de VENDA automáticas para rebalanceamento"""
+    try:
+        data = request.get_json()
+        portfolio = data.get('portfolio')
+        reason = data.get('reason', 'Rebalanceamento automático - Ajuste de portfólio conforme nova estratégia')
+        
+        if not portfolio:
+            return jsonify({'success': False, 'error': 'Nome da carteira é obrigatório'}), 400
+        
+        # Extrair user_id do token
+        token = request.headers.get('Authorization').replace('Bearer ', '')
+        user_data = verify_token(token)
+        admin_user_id = user_data['user_id'] if user_data else None
+        
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # Buscar todos os ativos atuais da carteira
+        cursor.execute("""
+            SELECT ticker, current_price, target_price, weight
+            FROM portfolio_assets 
+            WHERE portfolio_name = %s
+        """, (portfolio,))
+        
+        assets = cursor.fetchall()
+        
+        if not assets:
+            cursor.close()
+            conn.close()
+            return jsonify({'success': False, 'error': f'Nenhum ativo encontrado na carteira {portfolio}'}), 404
+        
+        recommendations_created = 0
+        from datetime import datetime
+        today = datetime.now().date()
+        
+        # Criar recomendação de VENDA para cada ativo existente
+        for asset in assets:
+            ticker, current_price, target_price, weight = asset
+            
+            # Usar preço atual como preço de entrada/mercado
+            entry_price = current_price if current_price and current_price > 0 else target_price
+            market_price = current_price if current_price and current_price > 0 else target_price
+            
+            # Verificar se já existe recomendação de SELL recente para este ticker
+            cursor.execute("""
+                SELECT id FROM portfolio_recommendations 
+                WHERE portfolio_name = %s AND ticker = %s AND action_type = 'SELL'
+                AND recommendation_date >= %s
+            """, (portfolio, ticker, today))
+            
+            existing_rec = cursor.fetchone()
+            
+            if not existing_rec:
+                # Inserir nova recomendação de VENDA
+                cursor.execute("""
+                    INSERT INTO portfolio_recommendations 
+                    (portfolio_name, ticker, action_type, target_weight, 
+                     recommendation_date, price_target, reason, created_by)
+                    VALUES (%s, %s, 'SELL', 0, %s, %s, %s, %s)
+                """, (portfolio, ticker, today, target_price, reason, admin_user_id))
+                
+                recommendations_created += 1
+        
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        return jsonify({
+            'success': True,
+            'message': f'Rebalanceamento criado com sucesso!',
+            'recommendations_created': recommendations_created,
+            'portfolio': portfolio
+        })
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
 # ===== FUNÇÃO PARA REGISTRAR O BLUEPRINT =====
+
+
+
+
 
 def get_recommendations_blueprint():
     """Retorna o blueprint configurado"""

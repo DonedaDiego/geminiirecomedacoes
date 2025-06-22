@@ -470,6 +470,190 @@ def remove_portfolio_asset_api():
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
+# ✅ NOVA ROTA: LIMPAR TODOS OS ATIVOS
+@admin_bp.route('/portfolio/clear-assets', methods=['DELETE'])
+def clear_portfolio_assets():
+    """Limpar todos os ativos de uma carteira"""
+    try:
+        auth_header = request.headers.get('Authorization')
+        if not verify_admin_access(auth_header):
+            return jsonify({'success': False, 'error': 'Acesso negado'}), 403
+        
+        data = request.get_json()
+        portfolio = data.get('portfolio')
+        
+        if not portfolio:
+            return jsonify({'success': False, 'error': 'Nome da carteira é obrigatório'}), 400
+        
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # Contar quantos ativos serão removidos
+        cursor.execute("SELECT COUNT(*) FROM portfolio_assets WHERE portfolio_name = %s", (portfolio,))
+        count = cursor.fetchone()[0]
+        
+        # Remover todos os ativos da carteira
+        cursor.execute("DELETE FROM portfolio_assets WHERE portfolio_name = %s", (portfolio,))
+        
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        return jsonify({
+            'success': True,
+            'message': f'{count} ativos removidos da carteira {portfolio.upper()}!'
+        })
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+# ✅ NOVA ROTA: GERAR REBALANCEAMENTO AUTOMÁTICO
+@admin_bp.route('/portfolio/generate-rebalance', methods=['POST'])
+def generate_rebalance_recommendations():
+    """Gerar recomendações de VENDA automáticas para rebalanceamento"""
+    try:
+        auth_header = request.headers.get('Authorization')
+        if not verify_admin_access(auth_header):
+            return jsonify({'success': False, 'error': 'Acesso negado'}), 403
+        
+        data = request.get_json()
+        portfolio = data.get('portfolio')
+        reason = data.get('reason', 'Rebalanceamento automático - Ajuste de portfólio conforme nova estratégia')
+        
+        if not portfolio:
+            return jsonify({'success': False, 'error': 'Nome da carteira é obrigatório'}), 400
+        
+        # Extrair user_id do token
+        token = request.headers.get('Authorization').replace('Bearer ', '')
+        from flask import current_app
+        payload = jwt.decode(token, current_app.config['SECRET_KEY'], algorithms=['HS256'])
+        admin_user_id = payload['user_id']
+        
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # Buscar todos os ativos atuais da carteira
+        cursor.execute("""
+            SELECT ticker, current_price, target_price, weight
+            FROM portfolio_assets 
+            WHERE portfolio_name = %s
+        """, (portfolio,))
+        
+        assets = cursor.fetchall()
+        
+        if not assets:
+            cursor.close()
+            conn.close()
+            return jsonify({'success': False, 'error': f'Nenhum ativo encontrado na carteira {portfolio}'}), 404
+        
+        recommendations_created = 0
+        today = datetime.now().date()
+        
+        # Criar recomendação de VENDA para cada ativo existente
+        for asset in assets:
+            ticker, current_price, target_price, weight = asset
+            
+            # Usar preço atual como preço de entrada/mercado
+            entry_price = current_price if current_price and current_price > 0 else target_price
+            market_price = current_price if current_price and current_price > 0 else target_price
+            
+            # Verificar se já existe recomendação de SELL recente para este ticker
+            cursor.execute("""
+                SELECT id FROM portfolio_recommendations 
+                WHERE portfolio_name = %s AND ticker = %s AND action_type = 'SELL'
+                AND recommendation_date >= %s
+            """, (portfolio, ticker, today))
+            
+            existing_rec = cursor.fetchone()
+            
+            if not existing_rec:
+                # Inserir nova recomendação de VENDA
+                cursor.execute("""
+                    INSERT INTO portfolio_recommendations 
+                    (portfolio_name, ticker, action_type, entry_price, market_price, target_weight, 
+                     recommendation_date, price_target, reason, created_by)
+                    VALUES (%s, %s, 'SELL', %s, %s, 0, %s, %s, %s, %s)
+                """, (portfolio, ticker, entry_price, market_price, today, target_price, reason, admin_user_id))
+                
+                recommendations_created += 1
+        
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        return jsonify({
+            'success': True,
+            'message': f'Rebalanceamento criado com sucesso!',
+            'recommendations_created': recommendations_created,
+            'portfolio': portfolio
+        })
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@admin_bp.route('/users/delete', methods=['DELETE'])
+def delete_user():
+    """Remover usuário (soft delete)"""
+    try:
+        auth_header = request.headers.get('Authorization')
+        if not verify_admin_access(auth_header):
+            return jsonify({'success': False, 'error': 'Acesso negado'}), 403
+        
+        data = request.get_json()
+        
+        if not data or 'email' not in data:
+            return jsonify({'success': False, 'error': 'E-mail é obrigatório'}), 400
+        
+        email = data['email']
+        
+        # Não permitir remover admin
+        if email == 'diego@geminii.com.br':
+            return jsonify({'success': False, 'error': 'Não é possível remover este usuário'}), 400
+        
+        conn = get_db_connection()
+        if not conn:
+            return jsonify({'success': False, 'error': 'Erro de conexão'}), 500
+        
+        cursor = conn.cursor()
+        
+        # Verificar se usuário existe e não está já removido
+        cursor.execute("""
+            SELECT id, name, user_type 
+            FROM users 
+            WHERE email = %s AND user_type != 'removed'
+        """, (email,))
+        user = cursor.fetchone()
+        
+        if not user:
+            cursor.close()
+            conn.close()
+            return jsonify({'success': False, 'error': 'Usuário não encontrado ou já removido'}), 404
+        
+        user_id, user_name, user_type = user
+        
+        # Soft delete - marcar como removido
+        cursor.execute("""
+            UPDATE users 
+            SET user_type = 'removed', 
+                plan_id = 0, 
+                plan_name = 'Removido',
+                updated_at = CURRENT_TIMESTAMP 
+            WHERE email = %s
+        """, (email,))
+        
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        return jsonify({
+            'success': True,
+            'message': f'Usuário {user_name} removido com sucesso!'
+        })
+        
+    except Exception as e:
+        print(f"Error deleting user: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 # ===== FUNÇÃO PARA EXPORTAR O BLUEPRINT =====
 
 def get_admin_blueprint():

@@ -13,7 +13,7 @@ from yfinance_service import YFinanceService
 from database import get_db_connection
 import requests
 
-from admin_routes import get_admin_blueprint
+
 from beta_routes import beta_bp
 from long_short_routes import long_short_bp
 from rsl_routes import get_rsl_blueprint
@@ -53,8 +53,6 @@ app.register_blueprint(beta_bp)
 app.register_blueprint(long_short_bp)
 rsl_bp = get_rsl_blueprint()
 app.register_blueprint(rsl_bp)
-admin_bp = get_admin_blueprint()
-app.register_blueprint(admin_bp)
 recommendations_bp = get_recommendations_blueprint()
 app.register_blueprint(recommendations_bp)
 

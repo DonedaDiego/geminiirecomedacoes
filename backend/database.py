@@ -823,32 +823,36 @@ def get_portfolio_assets(portfolio_name):
         conn = get_db_connection()
         if not conn:
             return []
-            
+                     
         cursor = conn.cursor()
         
+        # ✅ QUERY CORRIGIDA - incluindo todas as colunas necessárias
         cursor.execute("""
-            SELECT ticker, weight, sector, entry_price, entry_date, is_active
+            SELECT id, ticker, weight, sector, entry_price, current_price, target_price, entry_date, is_active
             FROM portfolio_assets 
             WHERE portfolio_name = %s AND is_active = true
             ORDER BY weight DESC
         """, (portfolio_name,))
-        
+                 
         assets = []
         for row in cursor.fetchall():
             assets.append({
-                'ticker': row[0],
-                'weight': float(row[1]),
-                'sector': row[2],
-                'entry_price': float(row[3]) if row[3] else None,
-                'entry_date': row[4].isoformat() if row[4] else None,
-                'is_active': row[5]
+                'id': row[0],                                                    # ✅ ID do ativo
+                'ticker': row[1],                                               # ✅ Ticker
+                'weight': float(row[2]),                                        # ✅ Peso
+                'sector': row[3],                                               # ✅ Setor
+                'entry_price': float(row[4]) if row[4] else 0,                  # ✅ Preço entrada
+                'current_price': float(row[5]) if row[5] else 0,               # ✅ Preço atual
+                'target_price': float(row[6]) if row[6] else 0,                # ✅ Preço alvo
+                'entry_date': row[7].isoformat() if row[7] else None,          # ✅ Data entrada
+                'is_active': row[8]                                            # ✅ Ativo
             })
-        
+                 
         cursor.close()
         conn.close()
-        
+                 
         return assets
-        
+             
     except Exception as e:
         print(f"❌ Erro ao buscar ativos: {e}")
         return []
@@ -971,9 +975,8 @@ def fix_admin_account():
         return False
 
 
-
 if __name__ == "__main__":
-    setup_enhanced_database()
+     setup_enhanced_database()
     
     
 # if __name__ == "__main__":
