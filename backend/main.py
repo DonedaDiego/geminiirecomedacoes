@@ -1,4 +1,5 @@
 from flask import Flask, jsonify, send_from_directory, request
+import time
 import hashlib
 import jwt
 from datetime import datetime, timedelta, timezone
@@ -1181,6 +1182,90 @@ def search_stocks():
     
     result = YFinanceService.search_stocks(query, limit)
     return jsonify(result)
+
+# @app.route('/test-webhook-local', methods=['POST'])
+# def test_webhook_local():
+#     """Simular webhook localmente"""
+#     try:
+#         data = request.get_json()
+        
+#         email = data.get('email')
+#         payment_id = data.get('payment_id', f'TEST_{int(time.time())}')
+#         plan_name = data.get('plan_name', 'Premium')
+        
+#         if not email:
+#             return jsonify({'error': 'Email obrigatório'}), 400
+        
+#         print(f"🧪 TESTE LOCAL - Simulando pagamento aprovado")
+#         print(f"📧 Email: {email}")
+#         print(f"💳 Payment ID: {payment_id}")
+#         print(f"📦 Plano: {plan_name}")
+        
+#         # Simular atualização do usuário
+#         conn = get_db_connection()
+#         if not conn:
+#             return jsonify({'error': 'Erro de conexão'}), 500
+        
+#         cursor = conn.cursor()
+        
+#         # Verificar se usuário existe
+#         cursor.execute("SELECT id, name, plan_name FROM users WHERE email = %s", (email,))
+#         user = cursor.fetchone()
+        
+#         if not user:
+#             cursor.close()
+#             conn.close()
+#             return jsonify({'error': f'Usuário não encontrado: {email}'}), 404
+        
+#         user_id, user_name, current_plan = user
+#         print(f"👤 Usuário: {user_name} - Plano atual: {current_plan}")
+        
+#         # Determinar novo plano
+#         plan_id = 2 if plan_name == 'Premium' else 3
+        
+#         # Calcular expiração
+#         from datetime import datetime, timedelta, timezone
+#         expires_at = datetime.now(timezone.utc) + timedelta(days=365)
+        
+#         # Atualizar usuário
+#         cursor.execute("""
+#             UPDATE users 
+#             SET plan_id = %s, plan_name = %s, plan_expires_at = %s, updated_at = CURRENT_TIMESTAMP 
+#             WHERE email = %s
+#         """, (plan_id, plan_name, expires_at, email))
+        
+#         print(f"📊 Usuário atualizado: {cursor.rowcount} linha(s)")
+        
+#         # Inserir no histórico
+#         try:
+#             cursor.execute("""
+#                 INSERT INTO payment_history (
+#                     user_id, payment_id, status, amount, currency, plan_id, created_at
+#                 ) VALUES (%s, %s, %s, %s, %s, %s, %s)
+#                 ON CONFLICT (payment_id) DO NOTHING
+#             """, (user_id, payment_id, 'approved', 79.0, 'BRL', plan_id, datetime.now()))
+#             print("✅ Histórico de pagamento inserido")
+#         except Exception as e:
+#             print(f"⚠️ Erro no histórico: {e}")
+        
+#         conn.commit()
+#         cursor.close()
+#         conn.close()
+        
+#         return jsonify({
+#             'success': True,
+#             'message': f'Plano {plan_name} ativado para {user_name}!',
+#             'data': {
+#                 'user_name': user_name,
+#                 'email': email,
+#                 'plan_name': plan_name,
+#                 'expires_at': expires_at.isoformat()
+#             }
+#         })
+        
+#     except Exception as e:
+#         print(f"❌ Erro: {e}")
+#         return jsonify({'error': str(e)}), 500
 
 # ===== EXECUTAR EM PRODUÇÃO =====
 

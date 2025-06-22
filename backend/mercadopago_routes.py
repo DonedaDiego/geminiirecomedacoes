@@ -176,7 +176,8 @@ def create_checkout_function():
                 "pending": f"{base_url}/payment/pending", 
                 "failure": f"{base_url}/payment/failure"
             },
-            "external_reference": f"geminii_{plan_id}_{cycle}_{int(time.time())}"
+            "external_reference": f"geminii_{plan_id}_{cycle}_{int(time.time())}",
+            "notification_url": f"{base_url}/webhook/mercadopago"
         }
         
         if customer_email and customer_email != 'cliente@geminii.com.br':
@@ -215,6 +216,7 @@ def create_checkout_function():
                 "details": error_info
             }), 500
             
+            
     except Exception as e:
         import traceback
         traceback.print_exc()
@@ -224,6 +226,8 @@ def create_checkout_function():
             "error": "Erro interno do servidor",
             "details": str(e)
         }), 500
+        
+        
 
 def determine_plan_from_payment(external_reference, amount):
     """Determinar plano baseado na referência externa ou valor"""
@@ -585,48 +589,91 @@ def create_checkout():
     """Criar checkout do Mercado Pago"""
     return create_checkout_function()
 
-@mercadopago_bp.route('/webhook', methods=['POST'])
+@mercadopago_bp.route('/webhook', methods=['POST', 'GET'])
 def webhook():
-    """Webhook para receber notificações do Mercado Pago"""
+    """Webhook do Mercado Pago - Versão Railway"""
+    
+    # Se for GET, retornar status
+    if request.method == 'GET':
+        return jsonify({
+            'status': 'webhook_active',
+            'service': 'mercadopago',
+            'timestamp': datetime.now().isoformat()
+        })
+    
     try:
-        print("\n🔔 WEBHOOK RECEBIDO!")
-        print("=" * 50)
+        # LOG DETALHADO
+        print(f"\n🔔 WEBHOOK MERCADO PAGO - {datetime.now()}")
+        print("=" * 60)
         
+        # Verificar se há dados
         data = request.get_json()
-        
         if not data:
-            return jsonify({"success": False, "error": "Dados não fornecidos"}), 400
+            print("❌ Nenhum dado JSON recebido")
+            # Tentar pegar dados do form
+            data = request.form.to_dict()
+            if not data:
+                print("❌ Nenhum dado encontrado")
+                return jsonify({"error": "No data"}), 400
         
         print(f"📊 Dados recebidos: {data}")
         
-        webhook_type = data.get("type")
-        print(f"🔍 Tipo de webhook: {webhook_type}")      
+        # Verificar headers
+        headers = dict(request.headers)
+        print(f"📋 Headers: {headers}")
         
+        webhook_type = data.get("type")
+        print(f"🔍 Tipo: {webhook_type}")
         
         if webhook_type == "payment":
-            payment_id = data.get("data", {}).get("id")
+            payment_data = data.get("data", {})
+            payment_id = payment_data.get("id")
+            
             print(f"💳 Payment ID: {payment_id}")
             
             if payment_id:
-                print(f"🔄 Processando pagamento: {payment_id}")
+                # Processar pagamento
                 result = process_payment(payment_id)
+                print(f"📊 Resultado: {result}")
                 
-                print(f"📊 Resultado do processamento: {result}")
+                # Salvar log no banco
+                try:
+                    conn = get_db_connection()
+                    if conn:
+                        cursor = conn.cursor()
+                        cursor.execute("""
+                            INSERT INTO payment_history (
+                                payment_id, status, amount, currency,
+                                created_at
+                            ) VALUES (%s, %s, %s, %s, %s)
+                            ON CONFLICT (payment_id) DO NOTHING
+                        """, (
+                            payment_id,
+                            'webhook_received',
+                            0,
+                            'BRL',
+                            datetime.now()
+                        ))
+                        conn.commit()
+                        cursor.close()
+                        conn.close()
+                        print("✅ Log salvo no banco")
+                except Exception as e:
+                    print(f"⚠️ Erro ao salvar log: {e}")
                 
-                if result['success']:
-                    print(f"✅ Pagamento processado com sucesso: {result['message']}")
-                else:
-                    print(f"❌ Erro ao processar pagamento: {result['error']}")
+                return jsonify({"success": True, "processed": True}), 200
+            else:
+                print("❌ Payment ID não encontrado")
+                return jsonify({"error": "Payment ID missing"}), 400
         else:
             print(f"⚠️ Tipo de webhook ignorado: {webhook_type}")
+            return jsonify({"success": True, "ignored": True}), 200
             
-        return jsonify({"success": True}), 200
-        
     except Exception as e:
         print(f"❌ ERRO NO WEBHOOK: {e}")
         import traceback
         traceback.print_exc()
-        return jsonify({"success": False, "error": str(e)}), 500
+        return jsonify({"error": str(e)}), 500
 
 @mercadopago_bp.route('/payment/status/<payment_id>')
 def check_payment_status(payment_id):
