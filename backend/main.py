@@ -1487,12 +1487,12 @@ if __name__ == '__main__':
     app.run(host='0.0.0.0', port=port, debug=True)
 
 
-def create_app():
-    """Factory para criar app - Railway"""
-    if os.environ.get('RAILWAY_ENVIRONMENT'):
-        print("🚄 Executando no Railway...")
-        app.config['ENV'] = 'production'
-        app.config['DEBUG'] = False
+# def create_app():
+#     """Factory para criar app - Railway"""
+#     if os.environ.get('RAILWAY_ENVIRONMENT'):
+#         print("🚄 Executando no Railway...")
+#         app.config['ENV'] = 'production'
+#         app.config['DEBUG'] = False
     
-    initialize_database()
-    return app
+#     initialize_database()
+#     return app
