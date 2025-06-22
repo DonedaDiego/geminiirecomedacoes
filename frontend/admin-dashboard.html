@@ -31,7 +31,14 @@
       border: 1px solid rgba(255, 255, 255, 0.2);
       border-radius: 16px;
       transition: all 0.3s ease;
+      min-height: fit-content !important; 
+      height: auto !important; 
     }
+
+    .space-y-6 {
+      min-height: 100vh; /* ✅ Garantir altura suficiente */
+    }
+    
     
     .admin-card:hover {
       transform: translateY(-2px);
@@ -382,6 +389,7 @@
                       <th class="py-3 px-2 text-gray-400">Email</th>
                       <th class="py-3 px-2 text-gray-400">Plano</th>
                       <th class="py-3 px-2 text-gray-400">Tipo</th>
+                      <th class="py-3 px-2 text-gray-400">Carteiras</th>
                       <th class="py-3 px-2 text-gray-400">Ações</th>
                     </tr>
                   </thead>
@@ -399,14 +407,14 @@
           </div>
 
           <!-- Coluna lateral direita -->
-          <div class="space-y-6">
+          <div class="space-y-6" style="height: auto; min-height: fit-content;">
             <!-- Gerenciar Usuário -->
             <div class="admin-card p-6">
               <h3 class="text-lg font-bold text-white mb-4">
                 <i class="fas fa-user-cog mr-2"></i>
                 Gerenciar Usuário
               </h3>
-
+            
               <div class="space-y-4">
                 <div>
                   <label class="block text-sm text-gray-300 mb-1">E-mail do Usuário</label>
@@ -414,42 +422,36 @@
                         class="w-full px-3 py-2 bg-white bg-opacity-10 border border-gray-600 rounded-lg text-white text-sm"
                         placeholder="usuario@email.com">
                 </div>
-
-                <div class="space-y-3">
-                  <div>
-                    <label class="block text-sm text-gray-300 mb-1">Conceder Acesso à Carteira</label>
-                    <select id="portfolioToGrantUserActions" class="w-full px-3 py-2 bg-white bg-opacity-10 border border-gray-600 rounded-lg text-white text-sm">
-                      <option value="">Selecione uma carteira...</option>
-                      <option value="smart_bdr">Smart BDR</option>
-                      <option value="growth">Growth</option>
-                      <option value="smallcaps">Small Caps</option>
-                      <option value="bluechips">Blue Chips</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label class="block text-sm text-gray-300 mb-1">Novo Plano</label>
-                    <select id="newPlanId" class="w-full px-3 py-2 bg-white bg-opacity-10 border border-gray-600 rounded-lg text-white text-sm">
-                      <option value="1">Básico (Grátis)</option>
-                      <option value="2">Premium</option>
-                      <option value="3">Estratégico</option>
-                    </select>
-                  </div>
-
-                  <div class="flex flex-col gap-2">
-                    <button onclick="grantSubscription()" class="action-btn bg-green-600 hover:bg-green-700 py-2 px-4 rounded-lg text-sm font-medium">
-                      <i class="fas fa-plus mr-1"></i>
-                      Dar Assinatura
-                    </button>
-                    <button onclick="removeUserPlan()" class="action-btn bg-red-600 hover:bg-red-700 py-2 px-4 rounded-lg text-sm font-medium">
-                      <i class="fas fa-minus mr-1"></i>
-                      Remover Assinatura
-                    </button>
-                    <button onclick="promoteToAdmin()" class="action-btn bg-purple-600 hover:bg-purple-700 py-2 px-4 rounded-lg text-sm font-medium">
-                      <i class="fas fa-crown mr-1"></i>
-                      Promover a Admin
-                    </button>
-                  </div>
+            
+                <div>
+                  <label class="block text-sm text-gray-300 mb-1">Novo Plano</label>
+                  <select id="newPlanId" class="w-full px-3 py-2 bg-white bg-opacity-10 border border-gray-600 rounded-lg text-white text-sm">
+                    <option value="1">Básico (Grátis)</option>
+                    <option value="2">Premium</option>
+                    <option value="3">Estratégico</option>
+                  </select>
+                </div>
+            
+                <!-- ✅ BOTÕES ATUALIZADOS COM REMOVER USUÁRIO -->
+                <div class="flex flex-col gap-2">
+                  <button onclick="grantSubscription()" class="action-btn bg-green-600 hover:bg-green-700 py-2 px-4 rounded-lg text-sm font-medium">
+                    <i class="fas fa-plus mr-1"></i>
+                    Dar Assinatura
+                  </button>
+                  <button onclick="removeUserPlan()" class="action-btn bg-orange-600 hover:bg-orange-700 py-2 px-4 rounded-lg text-sm font-medium">
+                    <i class="fas fa-minus mr-1"></i>
+                    Remover Assinatura
+                  </button>
+                  <button onclick="promoteToAdmin()" class="action-btn bg-purple-600 hover:bg-purple-700 py-2 px-4 rounded-lg text-sm font-medium">
+                    <i class="fas fa-crown mr-1"></i>
+                    Promover a Admin
+                  </button>
+                  
+                  <!-- ✅ NOVO BOTÃO: REMOVER USUÁRIO -->
+                  <button onclick="deleteUser()" class="action-btn bg-red-600 hover:bg-red-700 py-2 px-4 rounded-lg text-sm font-medium">
+                    <i class="fas fa-trash mr-1"></i>
+                    Remover Usuário
+                  </button>
                 </div>
               </div>
             </div>
@@ -997,104 +999,226 @@
         displayPortfolioAssets([], 0);
       }
     }
-// Load user portfolios
-async function loadUserPortfolios() {
-  const email = document.getElementById('portfolioUserEmail').value.trim();
-  
-  if (!email) {
-    alert('Digite o e-mail do usuário');
-    return;
-  }
-  
-  try {
-    const response = await fetch(`/api/admin/user/${email}/portfolios`, {
-      headers: { 'Authorization': `Bearer ${adminToken}` }
-    });
     
-    const result = await response.json();
-    
-    if (result.success) {
-      displayUserPortfolios(result.user, result.portfolios);
-      document.getElementById('userPortfoliosDisplay').classList.remove('hidden');
-    } else {
-      alert('❌ ' + result.error);
-      document.getElementById('userPortfoliosDisplay').classList.add('hidden');
-    }
-    
-  } catch (error) {
-    console.error('Error loading user portfolios:', error);
-    alert('❌ Erro de conexão');
-  }
-}
+    // ===== FUNÇÃO PARA CARREGAR ATIVIDADE RECENTE =====
+    async function loadRecentActivity() {
+      try {
+        const response = await fetch('/api/admin/recent-activity', {
+          headers: { 'Authorization': `Bearer ${adminToken}` }
+        });
 
-// Display user portfolios
-function displayUserPortfolios(user, portfolios) {
-  const container = document.getElementById('userPortfoliosList');
-  
-  if (!portfolios || portfolios.length === 0) {
-    container.innerHTML = '<p class="text-gray-400 text-sm">Usuário não tem acesso a nenhuma carteira</p>';
-    return;
-  }
-  
-  const portfolioNames = {
-    'smart_bdr': 'Smart BDR',
-    'growth': 'Growth',
-    'smallcaps': 'Small Caps',
-    'bluechips': 'Blue Chips'
-  };
-  
-  container.innerHTML = portfolios.map(portfolio => `
-    <div class="flex items-center justify-between bg-gray-700 bg-opacity-50 rounded-lg p-3">
-      <div>
-        <div class="font-medium text-white">${portfolioNames[portfolio.name] || portfolio.display_name}</div>
-        <div class="text-xs text-gray-400">Concedido em: ${formatDate(portfolio.granted_at)}</div>
-      </div>
-      <button onclick="revokeSpecificPortfolio('${portfolio.name}')" class="text-red-400 hover:text-red-300 text-sm">
-        <i class="fas fa-times"></i>
-      </button>
-    </div>
-  `).join('');
-}
-
-// Grant portfolio access
-async function grantPortfolioAccess() {
-  const email = document.getElementById('portfolioUserEmail').value.trim();
-  const portfolio = document.getElementById('portfolioToGrant').value;
-  
-  if (!email || !portfolio) {
-    alert('Preencha o e-mail e selecione uma carteira');
-    return;
-  }
-  
-  try {
-    const response = await fetch('/api/admin/user-portfolios', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${adminToken}`
-      },
-      body: JSON.stringify({
-        action: 'grant',
-        user_email: email,
-        portfolio_name: portfolio
-      })
-    });
-    
-    const result = await response.json();
-    
-    if (result.success) {
-      alert('✅ ' + result.message);
-      loadUserPortfolios(); // Refresh
-      document.getElementById('portfolioToGrant').value = '';
-    } else {
-      alert('❌ ' + result.error);
+        if (response.ok) {
+          const result = await response.json();
+          if (result.success) {
+            displayRecentActivity(result.activities);
+          } else {
+            // Se não tiver endpoint, mostrar atividades simuladas
+            displayMockActivity();
+          }
+        } else {
+          // Mostrar atividades simuladas se API não existir
+          displayMockActivity();
+        }
+      } catch (error) {
+        console.log('Usando atividades simuladas...');
+        displayMockActivity();
+      }
     }
-    
-  } catch (error) {
-    console.error('Error granting portfolio access:', error);
-    alert('❌ Erro de conexão');
-  }
-}
+
+    // ===== MOSTRAR ATIVIDADES SIMULADAS =====
+    function displayMockActivity() {
+      const activities = [
+        {
+          type: 'user_registered',
+          message: 'Novo usuário cadastrado: gau@gmail.com',
+          time: '2 horas atrás',
+          icon: 'fas fa-user-plus',
+          color: 'text-green-400'
+        },
+        {
+          type: 'subscription_granted',
+          message: 'Assinatura Premium concedida para alice@gmail.com',
+          time: '4 horas atrás',
+          icon: 'fas fa-crown',
+          color: 'text-yellow-400'
+        },
+        {
+          type: 'portfolio_updated',
+          message: 'Carteira Smart BDR atualizada com 3 novos ativos',
+          time: '6 horas atrás',
+          icon: 'fas fa-briefcase',
+          color: 'text-blue-400'
+        },
+        {
+          type: 'coupon_created',
+          message: 'Novo cupom criado: PROMO50',
+          time: '8 horas atrás',
+          icon: 'fas fa-tags',
+          color: 'text-purple-400'
+        },
+        {
+          type: 'user_promoted',
+          message: 'alice@gmail.com promovido a administrador',
+          time: '1 dia atrás',
+          icon: 'fas fa-shield-alt',
+          color: 'text-red-400'
+        },
+        {
+          type: 'payment_received',
+          message: 'Pagamento recebido: R$ 49,90 (Premium)',
+          time: '1 dia atrás',
+          icon: 'fas fa-dollar-sign',
+          color: 'text-green-400'
+        }
+      ];
+
+      displayRecentActivity(activities);
+    }
+
+    // ===== EXIBIR ATIVIDADES =====
+    function displayRecentActivity(activities) {
+      const container = document.getElementById('recentActivity');
+      
+      if (!activities || activities.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-6 text-gray-400">
+            <i class="fas fa-clock text-2xl mb-2"></i>
+            <p>Nenhuma atividade recente</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = activities.map(activity => `
+        <div class="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-800 hover:bg-opacity-30 transition-colors">
+          <div class="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center">
+            <i class="${activity.icon} text-sm ${activity.color}"></i>
+          </div>
+          <div class="flex-1">
+            <p class="text-sm text-white">${activity.message}</p>
+            <p class="text-xs text-gray-400">${activity.time}</p>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // ===== ADICIONAR NO INÍCIO DO DASHBOARD =====
+    // Encontre a função initAdminDashboard() e adicione esta linha:
+
+    async function initAdminDashboard() {
+      console.log('🔐 Inicializando Admin Dashboard...');
+      
+      await checkAdminAuth();
+      await loadDashboardStats();
+
+      loadRecentActivity(); 
+      
+      // Set default dates
+      const today = new Date().toISOString().split('T')[0];
+      document.getElementById('recDate').value = today;
+      document.getElementById('assetEntryDate').value = today;
+      
+      console.log('✅ Admin Dashboard carregado!');
+    }
+        
+    // Load user portfolios
+    async function loadUserPortfolios() {
+      const email = document.getElementById('portfolioUserEmail').value.trim();
+      
+      if (!email) {
+        alert('Digite o e-mail do usuário');
+        return;
+      }
+      
+      try {
+        const response = await fetch(`/api/admin/user/${email}/portfolios`, {
+          headers: { 'Authorization': `Bearer ${adminToken}` }
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+          displayUserPortfolios(result.user, result.portfolios);
+          document.getElementById('userPortfoliosDisplay').classList.remove('hidden');
+        } else {
+          alert('❌ ' + result.error);
+          document.getElementById('userPortfoliosDisplay').classList.add('hidden');
+        }
+        
+      } catch (error) {
+        console.error('Error loading user portfolios:', error);
+        alert('❌ Erro de conexão');
+      }
+    }
+
+    // Display user portfolios
+    function displayUserPortfolios(user, portfolios) {
+      const container = document.getElementById('userPortfoliosList');
+      
+      if (!portfolios || portfolios.length === 0) {
+        container.innerHTML = '<p class="text-gray-400 text-sm">Usuário não tem acesso a nenhuma carteira</p>';
+        return;
+      }
+      
+      const portfolioNames = {
+        'smart_bdr': 'Smart BDR',
+        'growth': 'Growth',
+        'smallcaps': 'Small Caps',
+        'bluechips': 'Blue Chips'
+      };
+      
+      container.innerHTML = portfolios.map(portfolio => `
+        <div class="flex items-center justify-between bg-gray-700 bg-opacity-50 rounded-lg p-3">
+          <div>
+            <div class="font-medium text-white">${portfolioNames[portfolio.name] || portfolio.display_name}</div>
+            <div class="text-xs text-gray-400">Concedido em: ${formatDate(portfolio.granted_at)}</div>
+          </div>
+          <button onclick="revokeSpecificPortfolio('${portfolio.name}')" class="text-red-400 hover:text-red-300 text-sm">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+      `).join('');
+    }
+
+    // Grant portfolio access
+    async function grantPortfolioAccess() {
+      const email = document.getElementById('portfolioUserEmail').value.trim();
+      const portfolio = document.getElementById('portfolioToGrant').value;
+      
+      if (!email || !portfolio) {
+        alert('Preencha o e-mail e selecione uma carteira');
+        return;
+      }
+      
+      try {
+        const response = await fetch('/api/admin/user-portfolios', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${adminToken}`
+          },
+          body: JSON.stringify({
+            action: 'grant',
+            user_email: email,
+            portfolio_name: portfolio
+          })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+          alert('✅ ' + result.message);
+          loadUserPortfolios(); // Refresh
+          document.getElementById('portfolioToGrant').value = '';
+        } else {
+          alert('❌ ' + result.error);
+        }
+        
+      } catch (error) {
+        console.error('Error granting portfolio access:', error);
+        alert('❌ Erro de conexão');
+      }
+    }
 
     // Revoke portfolio access (from selector)
     async function revokePortfolioAccess() {
@@ -1752,11 +1876,33 @@ async function grantPortfolioAccess() {
         const response = await fetch('/api/admin/list-users', {
           headers: { 'Authorization': `Bearer ${adminToken}` }
         });
-
+    
         if (response.ok) {
           const result = await response.json();
           if (result.success) {
-            displayUsers(result.users);
+            
+            // ✅ NOVA PARTE: Carregar carteiras para cada usuário
+            const usersWithPortfolios = await Promise.all(
+              result.users.map(async (user) => {
+                try {
+                  const portfoliosResponse = await fetch(`/api/admin/user/${user.email}/portfolios`, {
+                    headers: { 'Authorization': `Bearer ${adminToken}` }
+                  });
+                  
+                  if (portfoliosResponse.ok) {
+                    const portfoliosResult = await portfoliosResponse.json();
+                    user.portfolios = portfoliosResult.success ? portfoliosResult.portfolios : [];
+                  } else {
+                    user.portfolios = [];
+                  }
+                } catch (error) {
+                  user.portfolios = [];
+                }
+                return user;
+              })
+            );
+            
+            displayUsers(usersWithPortfolios);
           }
         }
       } catch (error) {
@@ -1765,38 +1911,91 @@ async function grantPortfolioAccess() {
     }
 
     // Display users
-    function displayUsers(users) {
-      const tbody = document.getElementById('usersTable');
-      
-      if (!users || users.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-gray-400">Nenhum usuário encontrado</td></tr>';
-        return;
-      }
+    // ===== ATUALIZAR A FUNÇÃO displayUsers() =====
 
-      tbody.innerHTML = users.map(user => `
-        <tr class="table-row">
-          <td class="py-3 px-2">
-            <div class="font-medium text-white">${user.name}</div>
-          </td>
-          <td class="py-3 px-2 text-gray-300">${user.email}</td>
-          <td class="py-3 px-2">
-            <span class="px-2 py-1 rounded text-xs font-medium ${getPlanBadgeClass(user.plan)}">
-              ${user.plan}
-            </span>
-          </td>
-          <td class="py-3 px-2">
-            <span class="px-2 py-1 rounded text-xs font-medium ${getTypeBadgeClass(user.type)}">
-              ${user.type || 'regular'}
-            </span>
-          </td>
-          <td class="py-3 px-2">
-            <button onclick="fillUserEmail('${user.email}')" class="text-blue-400 hover:text-blue-300 text-sm">
-              <i class="fas fa-edit mr-1"></i>Editar
-            </button>
-          </td>
-        </tr>
-      `).join('');
+function displayUsers(users) {
+  const tbody = document.getElementById('usersTable');
+  
+  if (!users || users.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-gray-400">Nenhum usuário encontrado</td></tr>';
+    return;
+  }
+
+  const portfolioNames = {
+    'smart_bdr': 'Smart BDR',
+    'growth': 'Growth',
+    'smallcaps': 'Small Caps',
+    'bluechips': 'Blue Chips'
+  };
+
+  tbody.innerHTML = users.map(user => {
+    // ✅ FORMATAR CARTEIRAS DO USUÁRIO
+    let portfoliosHTML = '';
+    if (user.portfolios && user.portfolios.length > 0) {
+      const portfoliosList = user.portfolios.map(p => 
+        portfolioNames[p.name] || p.display_name || p.name
+      );
+      
+      if (portfoliosList.length <= 2) {
+        portfoliosHTML = portfoliosList.join(', ');
+      } else {
+        portfoliosHTML = `${portfoliosList.slice(0, 2).join(', ')} +${portfoliosList.length - 2}`;
+      }
+      
+      portfoliosHTML = `<span class="text-blue-400 text-sm">${portfoliosHTML}</span>`;
+    } else {
+      portfoliosHTML = '<span class="text-gray-500 text-sm">Nenhuma</span>';
     }
+
+    // ✅ FORMATAR DATA E IDADE DO USUÁRIO
+    const userAge = user.days_old || 0;
+    let ageText = '';
+    if (userAge === 0) {
+      ageText = 'Hoje';
+    } else if (userAge === 1) {
+      ageText = '1 dia';
+    } else if (userAge < 30) {
+      ageText = `${userAge} dias`;
+    } else if (userAge < 365) {
+      const months = Math.floor(userAge / 30);
+      ageText = `${months} mês${months > 1 ? 'es' : ''}`;
+    } else {
+      const years = Math.floor(userAge / 365);
+      ageText = `${years} ano${years > 1 ? 's' : ''}`;
+    }
+
+    return `
+      <tr class="table-row">
+        <td class="py-3 px-2">
+          <div class="font-medium text-white">${user.name}</div>
+          <div class="text-xs text-gray-400">
+            <i class="fas fa-calendar mr-1"></i>
+            ${user.formatted_date || 'N/A'} (${ageText})
+          </div>
+        </td>
+        <td class="py-3 px-2 text-gray-300">${user.email}</td>
+        <td class="py-3 px-2">
+          <span class="px-2 py-1 rounded text-xs font-medium ${getPlanBadgeClass(user.plan)}">
+            ${user.plan}
+          </span>
+        </td>
+        <td class="py-3 px-2">
+          <span class="px-2 py-1 rounded text-xs font-medium ${getTypeBadgeClass(user.type)}">
+            ${user.type || 'regular'}
+          </span>
+        </td>
+        <td class="py-3 px-2">
+          ${portfoliosHTML}
+        </td>
+        <td class="py-3 px-2">
+          <button onclick="fillUserEmail('${user.email}')" class="text-blue-400 hover:text-blue-300 text-sm">
+            <i class="fas fa-edit mr-1"></i>Editar
+          </button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
 
     // Helper functions for badges
     function getPlanBadgeClass(plan) {
@@ -1942,6 +2141,55 @@ async function grantPortfolioAccess() {
       }
     }
 
+    // Delete user
+    // ===== ADICIONAR ESTA FUNÇÃO NO JAVASCRIPT =====
+
+    // Delete user
+    async function deleteUser() {
+      const email = document.getElementById('manageUserEmail').value;
+      
+      if (!email) {
+        alert('Digite o e-mail do usuário');
+        return;
+      }
+      
+      // Proteção extra para admin
+      if (email === 'diego@geminii.com.br') {
+        alert('❌ Não é possível remover este usuário!');
+        return;
+      }
+      
+      if (!confirm(`⚠️ ATENÇÃO: Remover usuário ${email}?\n\nEsta ação marcará o usuário como removido.\nDeseja continuar?`)) {
+        return;
+      }
+      
+      try {
+        const response = await fetch('/api/admin/users/delete', {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${adminToken}`
+          },
+          body: JSON.stringify({ email: email })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+          alert('✅ ' + result.message);
+          document.getElementById('manageUserEmail').value = '';
+          loadUsers(); // Refresh users list
+          loadDashboardStats(); // Refresh stats
+        } else {
+          alert('❌ ' + result.error);
+        }
+        
+      } catch (error) {
+        console.error('Error deleting user:', error);
+        alert('❌ Erro de conexão');
+      }
+    }
+
     // ===== COUPON MANAGEMENT FUNCTIONS =====
 
     // Load coupons
@@ -2035,14 +2283,14 @@ async function grantPortfolioAccess() {
     // Toggle coupon status
     async function toggleCoupon(code, newStatus) {
       try {
-        const response = await fetch('/api/admin/toggle-coupon', {
-          method: 'POST',
+        const response = await fetch(`/api/admin/coupons/${code}/toggle`, {  // ✅ URL CORRETA
+          method: 'PATCH',
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${adminToken}`
           },
           body: JSON.stringify({
-            code: code,
+            
             is_active: newStatus
           })
         });

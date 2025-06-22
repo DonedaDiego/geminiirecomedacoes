@@ -78,6 +78,51 @@ def admin_stats():
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
+
+# ===== CORRIGIR A ROTA toggle_coupon NO admin_routes.py =====
+
+@admin_bp.route('/toggle-coupon', methods=['PATCH'])  # ✅ CORRIGIR URL
+def toggle_coupon():
+    """Ativar/desativar cupom"""
+    try:
+        auth_header = request.headers.get('Authorization')
+        if not verify_admin_access(auth_header):
+            return jsonify({'success': False, 'error': 'Acesso negado'}), 403
+        
+        data = request.get_json()
+        code = data.get('code', '').upper()
+        is_active = data.get('is_active', True)
+        
+        if not code:
+            return jsonify({'success': False, 'error': 'Código do cupom é obrigatório'}), 400
+        
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            UPDATE coupons 
+            SET is_active = %s, updated_at = CURRENT_TIMESTAMP
+            WHERE code = %s
+        """, (is_active, code))
+        
+        if cursor.rowcount == 0:
+            cursor.close()
+            conn.close()
+            return jsonify({'success': False, 'error': 'Cupom não encontrado'}), 404
+        
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        status = 'ativado' if is_active else 'desativado'
+        return jsonify({
+            'success': True,
+            'message': f'Cupom {code} {status} com sucesso!'
+        })
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 # ===== ROTAS ADMIN DE USUÁRIOS =====
 
 @admin_bp.route('/list-users')
@@ -91,14 +136,29 @@ def list_all_users():
         conn = get_db_connection()
         cursor = conn.cursor()
         
+        # ✅ QUERY SIMPLES - SEM FORMATAÇÃO NO SQL
         cursor.execute("""
             SELECT id, name, email, plan_name, user_type, created_at, updated_at
             FROM users 
-            ORDER BY created_at DESC
+            ORDER BY created_at ASC
         """)
         
         users = []
         for row in cursor.fetchall():
+            # ✅ FORMATAÇÃO NO PYTHON (mais compatível)
+            created_date = row[5]
+            formatted_date = 'N/A'
+            days_old = 0
+            
+            if created_date:
+                try:
+                    formatted_date = created_date.strftime('%d/%m/%Y')
+                    from datetime import datetime
+                    days_old = (datetime.now() - created_date).days
+                except:
+                    formatted_date = 'N/A'
+                    days_old = 0
+            
             users.append({
                 'id': row[0],
                 'name': row[1],
@@ -106,7 +166,9 @@ def list_all_users():
                 'plan': row[3],
                 'type': row[4] or 'regular',
                 'created_at': row[5].isoformat() if row[5] else None,
-                'updated_at': row[6].isoformat() if row[6] else None
+                'updated_at': row[6].isoformat() if row[6] else None,
+                'formatted_date': formatted_date,  # ✅ Data formatada
+                'days_old': max(0, days_old)       # ✅ Dias desde criação
             })
         
         cursor.close()
@@ -119,6 +181,7 @@ def list_all_users():
         })
         
     except Exception as e:
+        print(f"Erro em list_all_users: {e}")  # ✅ Debug
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @admin_bp.route('/manage-subscription', methods=['POST'])
@@ -631,15 +694,22 @@ def delete_user():
         
         user_id, user_name, user_type = user
         
-        # Soft delete - marcar como removido
+        # ✅ CORREÇÃO: Usar plan_id = 1 (Básico) ao invés de 0
         cursor.execute("""
             UPDATE users 
             SET user_type = 'removed', 
-                plan_id = 0, 
+                plan_id = 1, 
                 plan_name = 'Removido',
                 updated_at = CURRENT_TIMESTAMP 
             WHERE email = %s
         """, (email,))
+        
+        # ✅ OPCIONAL: Remover também das carteiras
+        cursor.execute("""
+            UPDATE user_portfolios 
+            SET is_active = false 
+            WHERE user_id = %s
+        """, (user_id,))
         
         conn.commit()
         cursor.close()

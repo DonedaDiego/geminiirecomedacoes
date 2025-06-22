@@ -19,6 +19,7 @@ from long_short_routes import long_short_bp
 from rsl_routes import get_rsl_blueprint
 from recommendations_routes import get_recommendations_blueprint
 from mercadopago_routes import get_mercadopago_blueprint
+from admin_routes import get_admin_blueprint
 
 from dotenv import load_dotenv
 
@@ -48,12 +49,23 @@ except ImportError as e:
 except Exception as e:
     print(f"❌ Erro ao carregar Mercado Pago: {e}")
 
+
+try:
+    admin_bp = get_admin_blueprint()
+    app.register_blueprint(admin_bp)
+    print("✅ Blueprint Admin registrado com sucesso!")
+except ImportError as e:
+    print(f"❌ Erro ao importar admin blueprint: {e}")
+except Exception as e:
+    print(f"❌ Erro ao registrar admin blueprint: {e}")
+
 # REGISTRAR BLUEPRINTS
 app.register_blueprint(beta_bp)
 app.register_blueprint(long_short_bp)
 rsl_bp = get_rsl_blueprint()
 app.register_blueprint(rsl_bp)
 recommendations_bp = get_recommendations_blueprint()
+
 app.register_blueprint(recommendations_bp)
 
 # Registrar blueprint do Mercado Pago apenas se disponível
