@@ -296,14 +296,14 @@
             <span class="absolute top-4 right-4 bg-green-500 text-white text-xs px-2 py-1 rounded-full font-bold">GRÁTIS</span>
           </a>
 
-          <div onclick="showPremiumFeature('Backtests')" class="bg-gradient-to-r from-orange-500/10 to-orange-500/5 hover:from-orange-500/20 hover:to-orange-500/10 border border-orange-500/20 rounded-xl p-6 transition-all group cursor-pointer relative">
+          <div onclick="showPremiumFeature('Hunter Walls')" class="bg-gradient-to-r from-orange-500/10 to-orange-500/5 hover:from-orange-500/20 hover:to-orange-500/10 border border-orange-500/20 rounded-xl p-6 transition-all group cursor-pointer relative">
             <div class="flex items-center gap-4">
               <div class="w-12 h-12 bg-orange-500/20 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
-                <i class="fas fa-history text-orange-400 text-lg"></i>
+                <i class="fas fa-crosshairs text-orange-400 text-lg"></i>
               </div>
               <div>
-                <h3 class="font-semibold text-white">Opções</h3>
-                <p class="text-sm text-gray-300">Rastreadores</p>
+                <h3 class="font-semibold text-white">Hunter Walls</h3>
+                <p class="text-sm text-gray-300">Análise de Opções</p>
               </div>
             </div>
             <span class="absolute top-4 right-4 bg-warning text-white text-xs px-2 py-1 rounded-full font-bold">PRO</span>
@@ -460,18 +460,26 @@
         requiredPlan = 3;
       }
     
-      if (featureName === 'Long & Short' && userPlanId >= 2) {
-        window.location.href = 'long-short.html';
-        return;
-      }
-    
+      // Verificar se tem acesso ao recurso
       if (userPlanId >= requiredPlan) {
-        if (featureName !== 'Long & Short') {
-          alert(`🎉 ${featureName}\n\nFuncionalidade disponível em seu plano!\nEm breve será implementada.`);
+        // Redirecionar para a página específica
+        if (featureName === 'Long & Short') {
+          window.location.href = 'long-short.html';
+          return;
         }
+        
+        if (featureName === 'Hunter Walls') {
+          window.location.href = 'opcoes.html';
+          return;
+        }
+        
+        // Para outros recursos ainda não implementados
+        alert(`🎉 ${featureName}\n\nFuncionalidade disponível em seu plano!\nEm breve será implementada.`);
+        
       } else {
+        // Usuário não tem plano suficiente
         const planNames = { 1: 'Básico', 2: 'Premium', 3: 'Estratégico' };
-        const message = `💎 Recurso ${requiredPlan >= 3 ? 'Premium+' : 'Premium'}\n\n${featureName} está disponível apenas para planos ${planNames[requiredPlan]} ou superior.\n\nSeu plano atual: ${currentUser.plan_name}\nPlano necessário: ${planNames[requiredPlan]}\n\nDeseja fazer upgrade agora?`;
+        const message = `💎 Recurso ${requiredPlan >= 3 ? 'Premium+' : 'Premium'}\n\n${featureName} está disponível apenas para planos ${planNames[requiredPlan]} ou superior.\n\nSeu plano atual: ${currentUser.plan_name || planNames[userPlanId]}\nPlano necessário: ${planNames[requiredPlan]}\n\nDeseja fazer upgrade agora?`;
         
         if (confirm(message)) {
           window.location.href = '/planos.html';

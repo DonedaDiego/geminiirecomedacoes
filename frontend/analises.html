@@ -136,26 +136,13 @@
         <p class="text-gray-300 text-lg">Suas recomendações personalizadas de investimento</p>
       </div>
 
-      <!-- Seletor de Carteiras (aparece se houver múltiplas) -->
-      <div class="mb-6" id="portfolioSelectorSection" style="display: none;">
-        <div class="card rounded-2xl p-6 fade-in">
-          <h3 class="text-xl font-bold text-white mb-4">
-            <i class="fas fa-briefcase mr-2"></i>
-            Suas Carteiras
-          </h3>
-          <div id="portfolioSelector" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <!-- Carteiras serão carregadas aqui -->
-          </div>
-        </div>
-      </div>
-
       <!-- Container Principal das Recomendações -->
       <div id="recommendationsContainer">
         <!-- Estado inicial de loading -->
         <div class="card rounded-2xl p-8 fade-in">
           <div class="text-center py-12">
             <div class="spinner mx-auto mb-4"></div>
-            <p class="text-gray-300">Carregando suas carteiras...</p>
+            <p class="text-gray-300">Carregando suas recomendações...</p>
           </div>
         </div>
       </div>
@@ -166,397 +153,259 @@
   <script>
     // ===== VARIÁVEIS GLOBAIS =====
     let userToken = null;
-    let userPortfolios = [];
-    let selectedUserPortfolio = null;
     let currentUser = null;
 
     // ===== INICIALIZAÇÃO =====
     document.addEventListener('DOMContentLoaded', function() {
+      console.log('🚀 Página Análises carregada');
       initAnalises();
     });
 
     async function initAnalises() {
-      console.log('🚀 Inicializando Análises...');
+      console.log('🔍 Inicializando sistema de análises...');
       
       // Verificar autenticação
       if (!checkAuth()) return;
       
-      // Carregar dados do usuário
-      await loadUserData();
+      // Carregar dados das carteiras
+      await loadPortfolioData();
       
-      // Inicializar sistema de carteiras
-      await initUserPortfolios();
-      
-      console.log('✅ Análises carregadas!');
+      console.log('✅ Análises inicializadas!');
     }
 
     // ===== AUTENTICAÇÃO =====
     function checkAuth() {
-      userToken = localStorage.getItem('geminii_token');
+      // Tentar ambos os formatos de token para compatibilidade
+      userToken = localStorage.getItem('authToken') || localStorage.getItem('geminii_token');
       const userData = localStorage.getItem('geminii_user');
       
-      if (!userToken || !userData) {
-        window.location.href = '/login.html';
+      if (!userToken) {
+        console.log('❌ Token não encontrado, redirecionando...');
+        window.location.href = '/login';
         return false;
       }
       
-      try {
-        currentUser = JSON.parse(userData);
-        return true;
-      } catch (error) {
-        console.error('Erro ao parsear dados do usuário:', error);
-        window.location.href = '/login.html';
-        return false;
-      }
-    }
-
-    async function loadUserData() {
-      // Verificar se token ainda é válido
-      try {
-        const response = await fetch('/api/auth/verify', {
-          headers: { 'Authorization': `Bearer ${userToken}` }
-        });
-        
-        if (!response.ok) {
-          throw new Error('Token inválido');
+      if (userData) {
+        try {
+          currentUser = JSON.parse(userData);
+        } catch (error) {
+          console.error('Erro ao parsear dados do usuário:', error);
         }
-        
-      } catch (error) {
-        console.error('Token expirado:', error);
-        localStorage.removeItem('geminii_token');
-        localStorage.removeItem('geminii_user');
-        window.location.href = '/login.html';
       }
+      
+      return true;
     }
 
     function logout() {
       if (confirm('Deseja realmente sair?')) {
+        localStorage.removeItem('authToken');
         localStorage.removeItem('geminii_token');
         localStorage.removeItem('geminii_user');
         window.location.href = '/';
       }
     }
 
-    // ===== SISTEMA DE CARTEIRAS =====
-    async function initUserPortfolios() {
-      console.log('📊 Inicializando carteiras do usuário...');
+    // ===== CARREGAR DADOS DAS CARTEIRAS =====
+    async function loadPortfolioData() {
+      const container = document.getElementById('recommendationsContainer');
       
       try {
-        // Carregar carteiras do usuário
-        await loadUserPortfolios();
+        console.log('🔍 Buscando dados das carteiras...');
         
-        if (userPortfolios.length === 0) {
-          showNoAccess();
-          return;
-        }
+        // Mostrar loading
+        showLoading();
         
-        // Se há múltiplas carteiras, mostrar seletor
-        if (userPortfolios.length > 1) {
-          document.getElementById('portfolioSelectorSection').style.display = 'block';
-          updatePortfolioSelector();
-        }
-        
-        // Carregar primeira carteira
-        selectedUserPortfolio = userPortfolios[0].name;
-        await loadPortfolioData(selectedUserPortfolio);
-        
-        console.log('✅ Carteiras carregadas!');
-        
-      } catch (error) {
-        console.error('❌ Erro ao carregar carteiras:', error);
-        showLoadError();
-      }
-    }
-
-    async function loadUserPortfolios() {
-      try {
-        const response = await fetch('/api/user/my-portfolios', {
-          headers: { 'Authorization': `Bearer ${userToken}` }
-        });
-        
-        if (response.ok) {
-          const result = await response.json();
-          if (result.success) {
-            userPortfolios = result.portfolios;
-            console.log('📈 Carteiras encontradas:', userPortfolios.length);
-          } else {
-            userPortfolios = [];
+        const response = await fetch('/api/dashboard/recommendations?limit=50', {
+          headers: {
+            'Authorization': `Bearer ${userToken}`,
+            'Content-Type': 'application/json'
           }
-        } else if (response.status === 401) {
-          localStorage.removeItem('geminii_token');
-          window.location.href = '/login.html';
-        } else {
-          console.error('Erro ao buscar carteiras');
-          userPortfolios = [];
-        }
-        
-      } catch (error) {
-        console.error('Erro de conexão:', error);
-        userPortfolios = [];
-      }
-    }
-
-    function updatePortfolioSelector() {
-      const selector = document.getElementById('portfolioSelector');
-      if (!selector) return;
-      
-      selector.innerHTML = userPortfolios.map(portfolio => `
-        <button onclick="selectUserPortfolio('${portfolio.name}')" 
-                class="portfolio-card p-4 border border-gray-600 rounded-lg hover:border-primary transition-colors text-left ${selectedUserPortfolio === portfolio.name ? 'border-primary bg-primary bg-opacity-10' : ''}">
-          <div class="flex items-center justify-between">
-            <div>
-              <h4 class="font-semibold text-white">${portfolio.display_name}</h4>
-              <p class="text-sm text-gray-400 mt-1">${portfolio.description}</p>
-            </div>
-            ${selectedUserPortfolio === portfolio.name ? '<i class="fas fa-check text-primary"></i>' : ''}
-          </div>
-        </button>
-      `).join('');
-    }
-
-    async function selectUserPortfolio(portfolioName) {
-      if (selectedUserPortfolio === portfolioName) return;
-      
-      selectedUserPortfolio = portfolioName;
-      updatePortfolioSelector();
-      await loadPortfolioData(portfolioName);
-    }
-
-    async function loadPortfolioData(portfolioName) {
-      if (!portfolioName) return;
-      
-      try {
-        showPortfolioLoading();
-        
-        const recommendationsData = await loadPortfolioRecommendations(portfolioName);
-        updateRecommendationsSection(portfolioName, recommendationsData);
-        
-      } catch (error) {
-        console.error('Erro ao carregar dados da carteira:', error);
-        showPortfolioError();
-      }
-    }
-
-    async function loadPortfolioRecommendations(portfolioName) {
-      try {
-        const response = await fetch(`/api/user/portfolio/${portfolioName}/recommendations`, {
-          headers: { 'Authorization': `Bearer ${userToken}` }
         });
         
-        if (response.ok) {
-          const result = await response.json();
-          return result.success ? result.recommendations : [];
+        console.log('📡 Response status:', response.status);
+        
+        if (!response.ok) {
+          if (response.status === 401) {
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('geminii_token');
+            window.location.href = '/login';
+            return;
+          }
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
         
-        return [];
+        const data = await response.json();
+        console.log('📊 Dados recebidos:', data);
+        
+        if (data.success && data.data) {
+          displayRecommendations(data.data);
+        } else {
+          throw new Error(data.error || 'Nenhum dado encontrado');
+        }
         
       } catch (error) {
-        console.error('Erro ao carregar recomendações:', error);
-        return [];
+        console.error('❌ Erro ao carregar dados:', error);
+        showError(error.message);
       }
     }
 
-    // ===== ATUALIZAÇÃO DA UI =====
-    function updateRecommendationsSection(portfolioName, recommendations) {
+    // ===== EXIBIR RECOMENDAÇÕES =====
+    function displayRecommendations(data) {
       const container = document.getElementById('recommendationsContainer');
       if (!container) return;
       
-      const portfolioDisplayName = userPortfolios.find(p => p.name === portfolioName)?.display_name || portfolioName;
+      const recommendations = data.recommendations?.recommendations || [];
+      console.log(`📈 Exibindo ${recommendations.length} recomendações`);
       
-      if (!recommendations || recommendations.length === 0) {
-        container.innerHTML = `
-          <div class="card rounded-2xl p-8 fade-in">
+      if (recommendations.length === 0) {
+        showNoData();
+        return;
+      }
+      
+      // Agrupar por carteira
+      const portfolioGroups = {};
+      recommendations.forEach(rec => {
+        const portfolio = rec.portfolio_display || rec.portfolio_name || 'Sem Portfolio';
+        if (!portfolioGroups[portfolio]) {
+          portfolioGroups[portfolio] = [];
+        }
+        portfolioGroups[portfolio].push(rec);
+      });
+      
+      let html = '';
+      
+      Object.entries(portfolioGroups).forEach(([portfolioName, recs]) => {
+        const totalStocks = recs.length;
+        const avgPerformance = recs.reduce((sum, r) => sum + (r.performance?.valor || 0), 0) / totalStocks;
+        
+        // Contar recomendações por tipo
+        const compras = recs.filter(r => r.recomendacao && r.recomendacao.includes('Compra')).length;
+        const vendas = recs.filter(r => r.recomendacao === 'Venda').length;
+        const manter = recs.filter(r => r.recomendacao === 'Manter').length;
+        
+        html += `
+          <div class="card rounded-2xl p-8 mb-6 fade-in">
             <div class="flex items-center justify-between mb-6">
               <div>
                 <h2 class="text-2xl font-bold text-white flex items-center">
-                  <i class="fas fa-lightbulb text-warning mr-3"></i>
-                  ${portfolioDisplayName}
+                  <i class="fas fa-briefcase text-primary mr-3"></i>
+                  ${portfolioName}
                 </h2>
-                <p class="text-gray-300 mt-1">Recomendações personalizadas</p>
+                <p class="text-gray-400">${totalStocks} ativos • Performance média: ${avgPerformance.toFixed(2)}%</p>
               </div>
-              <button onclick="loadPortfolioData('${portfolioName}')" class="text-primary hover:text-secondary">
+              <button onclick="loadPortfolioData()" class="text-primary hover:text-secondary">
                 <i class="fas fa-sync mr-1"></i>
                 Atualizar
               </button>
             </div>
             
-            <div class="text-center py-12">
-              <i class="fas fa-clock text-5xl text-gray-400 mb-4"></i>
-              <h3 class="text-xl font-semibold text-gray-300 mb-2">Aguardando Recomendações</h3>
-              <p class="text-gray-400">Novas análises serão exibidas aqui em breve</p>
+            <!-- Estatísticas rápidas -->
+            <div class="grid grid-cols-3 gap-4 mb-6">
+              <div class="bg-success bg-opacity-10 border border-success border-opacity-30 rounded-lg p-4 text-center">
+                <div class="text-2xl font-bold text-success">${compras}</div>
+                <div class="text-sm text-green-300">Comprar</div>
+              </div>
+              <div class="bg-danger bg-opacity-10 border border-danger border-opacity-30 rounded-lg p-4 text-center">
+                <div class="text-2xl font-bold text-danger">${vendas}</div>
+                <div class="text-sm text-red-300">Vender</div>
+              </div>
+              <div class="bg-warning bg-opacity-10 border border-warning border-opacity-30 rounded-lg p-4 text-center">
+                <div class="text-2xl font-bold text-warning">${manter}</div>
+                <div class="text-sm text-yellow-300">Manter</div>
+              </div>
+            </div>
+            
+            <!-- Lista de recomendações -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-h-96 overflow-y-auto">
+        `;
+        
+        recs.forEach(rec => {
+          const performanceColor = (rec.performance?.valor || 0) >= 0 ? 'text-green-400' : 'text-red-400';
+          const recommendationColor = {
+            'Compra': 'bg-green-600',
+            'Compra Forte': 'bg-green-700', 
+            'Venda': 'bg-red-600',
+            'Manter': 'bg-yellow-600'
+          }[rec.recomendacao] || 'bg-gray-600';
+          
+          html += `
+            <div class="bg-gray-800 bg-opacity-50 rounded-lg p-4 border border-gray-700 hover:border-primary transition-colors">
+              <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center space-x-2">
+                  <span class="text-2xl">${rec.icone || '📈'}</span>
+                  <div>
+                    <h4 class="font-bold text-white">${rec.ticker}</h4>
+                    <p class="text-sm text-gray-400">${rec.setor || 'N/A'}</p>
+                  </div>
+                </div>
+                <span class="${recommendationColor} text-white px-2 py-1 rounded-lg text-sm font-medium">
+                  ${rec.recomendacao || 'N/A'}
+                </span>
+              </div>
+              
+              <div class="space-y-2 text-sm">
+                <div class="flex justify-between">
+                  <span class="text-gray-400">Entrada:</span>
+                  <span class="text-white">R$ ${(rec.entrada?.preco || 0).toFixed(2)}</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-gray-400">Atual:</span>
+                  <span class="text-white">R$ ${(rec.atual?.preco || 0).toFixed(2)}</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-gray-400">Performance:</span>
+                  <span class="${performanceColor} font-medium">
+                    ${(rec.performance?.valor || 0) > 0 ? '+' : ''}${(rec.performance?.valor || 0).toFixed(2)}%
+                  </span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-gray-400">Peso:</span>
+                  <span class="text-white">${(rec.entrada?.peso_percent || 0).toFixed(1)}%</span>
+                </div>
+              </div>
+            </div>
+          `;
+        });
+        
+        html += `
             </div>
           </div>
         `;
-        return;
-      }
+      });
       
-      // Separar recomendações por tipo
-      const buyRecommendations = recommendations.filter(r => r.action_type === 'BUY');
-      const sellRecommendations = recommendations.filter(r => r.action_type === 'SELL');
-      const holdRecommendations = recommendations.filter(r => r.action_type === 'HOLD');
-      
-      container.innerHTML = `
-        <div class="card rounded-2xl p-8 fade-in">
-          <div class="flex items-center justify-between mb-6">
-            <div>
-              <h2 class="text-2xl font-bold text-white flex items-center">
-                <i class="fas fa-lightbulb text-warning mr-3"></i>
-                ${portfolioDisplayName}
-              </h2>
-              <p class="text-gray-300 mt-1">Recomendações personalizadas</p>
-            </div>
-            <button onclick="loadPortfolioData('${portfolioName}')" class="text-primary hover:text-secondary">
-              <i class="fas fa-sync mr-1"></i>
-              Atualizar
-            </button>
-          </div>
-          
-          <!-- Estatísticas rápidas -->
-          <div class="grid grid-cols-3 gap-4 mb-6">
-            <div class="bg-success bg-opacity-10 border border-success border-opacity-30 rounded-lg p-4 text-center">
-              <div class="text-2xl font-bold text-success">${buyRecommendations.length}</div>
-              <div class="text-sm text-green-300">Comprar</div>
-            </div>
-            <div class="bg-danger bg-opacity-10 border border-danger border-opacity-30 rounded-lg p-4 text-center">
-              <div class="text-2xl font-bold text-danger">${sellRecommendations.length}</div>
-              <div class="text-sm text-red-300">Vender</div>
-            </div>
-            <div class="bg-warning bg-opacity-10 border border-warning border-opacity-30 rounded-lg p-4 text-center">
-              <div class="text-2xl font-bold text-warning">${holdRecommendations.length}</div>
-              <div class="text-sm text-yellow-300">Manter</div>
-            </div>
-          </div>
-          
-          <!-- Lista de recomendações -->
-          <div class="space-y-4 max-h-96 overflow-y-auto">
-            ${recommendations.map(rec => createRecommendationCard(rec)).join('')}
-          </div>
-        </div>
-      `;
+      container.innerHTML = html;
     }
 
-    function createRecommendationCard(rec) {
-      const actionColors = {
-        'BUY': { bg: 'bg-success', text: 'text-green-200', icon: 'fas fa-arrow-up' },
-        'SELL': { bg: 'bg-danger', text: 'text-red-200', icon: 'fas fa-arrow-down' },
-        'HOLD': { bg: 'bg-warning', text: 'text-yellow-200', icon: 'fas fa-pause' }
-      };
-      
-      const colors = actionColors[rec.action_type] || actionColors['HOLD'];
-      
-      // Calcular potencial se tiver preços
-      let potentialHtml = '';
-      if (rec.current_price && rec.price_target) {
-        const potential = ((rec.price_target - rec.current_price) / rec.current_price * 100);
-        potentialHtml = `
-          <div class="text-right">
-            <div class="text-xs text-gray-400">Potencial</div>
-            <div class="font-semibold ${potential >= 0 ? 'text-success' : 'text-danger'}">
-              ${potential >= 0 ? '+' : ''}${potential.toFixed(1)}%
-            </div>
-          </div>
-        `;
-      }
-      
-      return `
-        <div class="bg-gray-800 bg-opacity-50 rounded-lg p-4 border border-gray-700 hover:border-gray-600 transition-colors">
-          <div class="flex items-center justify-between mb-3">
-            <div class="flex items-center space-x-3">
-              <div>
-                <h4 class="font-bold text-white text-lg">${rec.ticker}</h4>
-                ${rec.company_name !== rec.ticker ? `<p class="text-sm text-gray-400">${rec.company_name}</p>` : ''}
-              </div>
-              <span class="px-2 py-1 rounded text-xs font-medium ${colors.bg} ${colors.text}">
-                <i class="${colors.icon} mr-1"></i>
-                ${getActionText(rec.action_type)}
-              </span>
-            </div>
-            ${potentialHtml}
-          </div>
-          
-          ${rec.current_price && rec.price_target ? `
-            <div class="grid grid-cols-2 gap-4 text-sm mb-3">
-              <div>
-                <div class="text-gray-400">Preço Atual</div>
-                <div class="font-semibold text-white">R$ ${rec.current_price.toFixed(2)}</div>
-              </div>
-              <div>
-                <div class="text-gray-400">Preço Alvo</div>
-                <div class="font-semibold text-success">R$ ${rec.price_target.toFixed(2)}</div>
-              </div>
-            </div>
-          ` : ''}
-          
-          ${rec.target_weight ? `
-            <div class="mb-3">
-              <span class="text-gray-400 text-sm">Peso Alvo: </span>
-              <span class="font-semibold text-primary">${rec.target_weight}%</span>
-            </div>
-          ` : ''}
-          
-          ${rec.reason ? `
-            <div class="bg-gray-700 bg-opacity-50 rounded-lg p-3 mb-3">
-              <p class="text-sm text-gray-300 leading-relaxed">${rec.reason}</p>
-            </div>
-          ` : ''}
-          
-          <div class="text-xs text-gray-400">
-            <i class="fas fa-calendar mr-1"></i>
-            ${formatDate(rec.recommendation_date)}
-          </div>
-        </div>
-      `;
-    }
-
-    // ===== ESTADOS DE LOADING E ERRO =====
-    function showPortfolioLoading() {
+    // ===== ESTADOS DA UI =====
+    function showLoading() {
       const container = document.getElementById('recommendationsContainer');
       if (container) {
         container.innerHTML = `
           <div class="card rounded-2xl p-8 fade-in">
             <div class="text-center py-12">
               <div class="spinner mx-auto mb-4"></div>
-              <p class="text-gray-300">Carregando recomendações...</p>
+              <p class="text-gray-300">Carregando suas recomendações...</p>
             </div>
           </div>
         `;
       }
     }
 
-    function showPortfolioError() {
+    function showNoData() {
       const container = document.getElementById('recommendationsContainer');
       if (container) {
         container.innerHTML = `
           <div class="card rounded-2xl p-8 fade-in">
             <div class="text-center py-12">
-              <i class="fas fa-exclamation-triangle text-5xl text-danger mb-4"></i>
-              <h3 class="text-xl font-semibold text-gray-300 mb-2">Erro ao Carregar</h3>
-              <p class="text-gray-400 mb-4">Não foi possível carregar as recomendações</p>
-              <button onclick="initUserPortfolios()" class="bg-primary hover:bg-secondary px-4 py-2 rounded-lg text-white">
-                <i class="fas fa-refresh mr-1"></i>
-                Tentar Novamente
-              </button>
-            </div>
-          </div>
-        `;
-      }
-    }
-
-    function showNoAccess() {
-      const container = document.getElementById('recommendationsContainer');
-      if (container) {
-        container.innerHTML = `
-          <div class="card rounded-2xl p-8 fade-in">
-            <div class="text-center py-12">
-              <i class="fas fa-lock text-5xl text-gray-400 mb-4"></i>
-              <h3 class="text-xl font-semibold text-gray-300 mb-2">Nenhuma Carteira Disponível</h3>
-              <p class="text-gray-400 mb-4">Entre em contato para ter acesso às carteiras de investimento</p>
+              <i class="fas fa-inbox text-5xl text-gray-400 mb-4"></i>
+              <h3 class="text-xl font-bold mb-2 text-gray-300">Nenhuma recomendação encontrada</h3>
+              <p class="text-gray-400 mb-4">Verifique se você tem acesso às carteiras ou aguarde novas análises.</p>
               <div class="flex justify-center space-x-4">
-                <a href="planos.html" class="bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90 px-6 py-2 rounded-lg text-white font-medium">
+                <a href="/planos" class="bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90 px-6 py-2 rounded-lg text-white font-medium">
                   <i class="fas fa-crown mr-2"></i>
                   Fazer Upgrade
                 </a>
-                <button onclick="initUserPortfolios()" class="bg-gray-700 hover:bg-gray-600 px-6 py-2 rounded-lg text-white">
+                <button onclick="loadPortfolioData()" class="bg-gray-700 hover:bg-gray-600 px-6 py-2 rounded-lg text-white">
                   <i class="fas fa-refresh mr-1"></i>
                   Atualizar
                 </button>
@@ -567,16 +416,18 @@
       }
     }
 
-    function showLoadError() {
+    
+
+    function showError(message) {
       const container = document.getElementById('recommendationsContainer');
       if (container) {
         container.innerHTML = `
           <div class="card rounded-2xl p-8 fade-in">
             <div class="text-center py-12">
-              <i class="fas fa-wifi text-5xl text-danger mb-4"></i>
-              <h3 class="text-xl font-semibold text-gray-300 mb-2">Erro de Conexão</h3>
-              <p class="text-gray-400 mb-4">Verifique sua conexão com a internet</p>
-              <button onclick="initUserPortfolios()" class="bg-primary hover:bg-secondary px-4 py-2 rounded-lg text-white">
+              <i class="fas fa-exclamation-triangle text-5xl text-danger mb-4"></i>
+              <h3 class="text-xl font-bold mb-2 text-red-400">Erro ao carregar dados</h3>
+              <p class="text-gray-400 mb-4">${message}</p>
+              <button onclick="loadPortfolioData()" class="bg-primary hover:bg-secondary px-6 py-2 rounded-lg text-white">
                 <i class="fas fa-refresh mr-1"></i>
                 Tentar Novamente
               </button>
@@ -586,15 +437,269 @@
       }
     }
 
-    // ===== FUNÇÕES AUXILIARES =====
-    function getActionText(action) {
-      const texts = { 'BUY': 'Comprar', 'SELL': 'Vender', 'HOLD': 'Manter' };
-      return texts[action] || action;
+    // Função global para refresh
+    window.refreshAnalyses = function() {
+      console.log('🔄 Atualizando análises...');
+      loadPortfolioData();
+    };
+    // ===== ADICIONAR NO FINAL DO <script> do analises.html =====
+
+    // ===== SISTEMA DE PREÇOS EM TEMPO REAL =====
+    async function updatePricesRealTime(forceUpdate = false) {
+      try {
+          console.log('🔄 Atualizando preços...');
+          
+          // Mostrar indicador de loading
+          showPriceUpdateLoading();
+          
+          const response = await fetch('/api/prices/update', {
+              method: 'POST',
+              headers: {
+                  'Authorization': `Bearer ${userToken}`,
+                  'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({ force_update: forceUpdate })
+          });
+          
+          const result = await response.json();
+          
+          if (result.success) {
+              console.log('✅ Preços atualizados:', result.data);
+              showPriceUpdateSuccess(result.data);
+              
+              // Recarregar dados
+              await loadPortfolioData();
+              
+          } else {
+              console.error('❌ Erro:', result.error);
+              showPriceUpdateError(result.error);
+          }
+          
+      } catch (error) {
+          console.error('❌ Erro na atualização:', error);
+          showPriceUpdateError('Erro de conexão');
+      } finally {
+          hidePriceUpdateLoading();
+      }
     }
 
-    function formatDate(dateString) {
-      return new Date(dateString).toLocaleDateString('pt-BR');
+    // Função para obter status dos preços
+    async function getPricesStatus() {
+      try {
+          const response = await fetch('/api/prices/status', {
+              headers: { 'Authorization': `Bearer ${userToken}` }
+          });
+          
+          const result = await response.json();
+          return result.success ? result.data : null;
+          
+      } catch (error) {
+          console.error('❌ Erro ao buscar status:', error);
+          return null;
+      }
     }
+
+    // Mostrar/esconder loading
+    function showPriceUpdateLoading() {
+      let loadingEl = document.getElementById('priceUpdateLoading');
+      if (!loadingEl) {
+          loadingEl = document.createElement('div');
+          loadingEl.id = 'priceUpdateLoading';
+          loadingEl.className = 'fixed top-4 right-4 bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg z-50 flex items-center space-x-2';
+          loadingEl.innerHTML = `
+              <div class="spinner border-2 border-white border-t-transparent rounded-full w-4 h-4 animate-spin"></div>
+              <span>Atualizando preços...</span>
+          `;
+          document.body.appendChild(loadingEl);
+      }
+      loadingEl.style.display = 'flex';
+    }
+
+    function hidePriceUpdateLoading() {
+      const loadingEl = document.getElementById('priceUpdateLoading');
+      if (loadingEl) {
+          loadingEl.style.display = 'none';
+      }
+    }
+
+    // Notificações de sucesso/erro
+    function showPriceUpdateSuccess(data) {
+      const updated = data.updated || [];
+      const errors = data.errors || [];
+      
+      if (updated.length > 0) {
+          showNotification(
+              `✅ ${updated.length} preços atualizados`,
+              'success',
+              3000
+          );
+      }
+      
+      if (errors.length > 0) {
+          showNotification(
+              `⚠️ ${errors.length} erros na atualização`,
+              'warning',
+              4000
+          );
+      }
+    }
+
+    function showPriceUpdateError(message) {
+      showNotification(`❌ Erro: ${message}`, 'error', 5000);
+    }
+
+    function showNotification(message, type = 'info', duration = 3000) {
+      const colors = {
+          success: 'bg-green-600',
+          error: 'bg-red-600',
+          warning: 'bg-yellow-600',
+          info: 'bg-blue-600'
+      };
+      
+      const notification = document.createElement('div');
+      notification.className = `fixed top-4 right-4 ${colors[type]} text-white px-6 py-3 rounded-lg shadow-lg z-50 fade-in`;
+      notification.textContent = message;
+      
+      document.body.appendChild(notification);
+      
+      setTimeout(() => {
+          notification.remove();
+      }, duration);
+    }
+
+    // Botão flutuante de atualização
+    function addPriceUpdateButton() {
+      // Verificar se já existe
+      if (document.getElementById('priceUpdateButton')) return;
+      
+      const button = document.createElement('button');
+      button.id = 'priceUpdateButton';
+      button.className = 'fixed bottom-6 right-6 bg-primary hover:bg-secondary text-white p-4 rounded-full shadow-lg z-40 transition-all duration-300 hover:scale-110';
+      button.innerHTML = '<i class="fas fa-sync"></i>';
+      button.title = 'Atualizar preços em tempo real';
+      
+      button.addEventListener('click', async () => {
+          // Animação do botão
+          button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+          button.disabled = true;
+          
+          await updatePricesRealTime();
+          
+          // Restaurar botão
+          button.innerHTML = '<i class="fas fa-sync"></i>';
+          button.disabled = false;
+      });
+      
+      document.body.appendChild(button);
+      
+      // Animação de entrada
+      setTimeout(() => {
+          button.style.transform = 'scale(1.1)';
+          setTimeout(() => {
+              button.style.transform = 'scale(1)';
+          }, 200);
+      }, 100);
+    }
+
+    // Status de preços na interface
+    async function showPricesStatusInfo() {
+      const status = await getPricesStatus();
+      if (!status) return;
+      
+      const stats = status.statistics;
+      const statusText = `📊 ${stats.total} ativos • ${stats.recent} atualizados • ${stats.outdated + stats.very_old} desatualizados`;
+      
+      // Adicionar info no header se não existir
+      let statusEl = document.getElementById('pricesStatusInfo');
+      if (!statusEl) {
+          statusEl = document.createElement('div');
+          statusEl.id = 'pricesStatusInfo';
+          statusEl.className = 'text-sm text-gray-400 mt-1';
+          
+          const headerEl = document.querySelector('h1').parentNode;
+          headerEl.appendChild(statusEl);
+      }
+      
+      statusEl.textContent = statusText;
+      
+      // Colorir baseado no status
+      if (stats.very_old > stats.total * 0.5) {
+          statusEl.className = 'text-sm text-red-400 mt-1';
+      } else if (stats.outdated > stats.total * 0.3) {
+          statusEl.className = 'text-sm text-yellow-400 mt-1';
+      } else {
+          statusEl.className = 'text-sm text-green-400 mt-1';
+      }
+    }
+
+    // Auto-atualização inteligente
+    function startAutoUpdate() {
+      const now = new Date();
+      const hour = now.getHours();
+      const day = now.getDay(); // 0=domingo, 6=sábado
+      
+      // Verificar se é horário de mercado (9h-18h, segunda a sexta)
+      const isMarketHours = (day >= 1 && day <= 5) && (hour >= 9 && hour <= 18);
+      
+      if (isMarketHours) {
+          console.log('📈 Auto-atualização ativa (horário de mercado)');
+          
+          // Atualizar a cada 10 minutos durante o mercado
+          setInterval(async () => {
+              console.log('🔄 Auto-atualização...');
+              await updatePricesRealTime(false); // Sem forçar
+          }, 10 * 60 * 1000); // 10 minutos
+          
+      } else {
+          console.log('🏠 Fora do horário de mercado');
+          
+          // Atualizar uma vez a cada 30 minutos fora do mercado
+          setInterval(async () => {
+              console.log('🔄 Auto-atualização (fora do mercado)...');
+              await updatePricesRealTime(false);
+          }, 30 * 60 * 1000); // 30 minutos
+      }
+    }
+
+    // Inicializar sistema de preços
+    function initPriceSystem() {
+      console.log('💰 Inicializando sistema de preços...');
+      
+      // Adicionar botão de atualização
+      addPriceUpdateButton();
+      
+      // Mostrar status inicial
+      showPricesStatusInfo();
+      
+      // Iniciar auto-atualização
+      startAutoUpdate();
+      
+      // Atualizar status a cada 5 minutos
+      setInterval(() => {
+          showPricesStatusInfo();
+      }, 5 * 60 * 1000);
+      
+      console.log('✅ Sistema de preços inicializado!');
+    }
+
+    // ===== INTEGRAR NA INICIALIZAÇÃO =====
+    // Modificar a função initAnalises para incluir o sistema de preços
+    const originalInitAnalises = initAnalises;
+    initAnalises = async function() {
+      await originalInitAnalises();
+      
+      // Inicializar sistema de preços após carregar dados
+      setTimeout(() => {
+          initPriceSystem();
+      }, 2000);
+    };
+
+    // Função para forçar atualização completa (botão de admin)
+    window.forceUpdateAllPrices = async function() {
+      if (confirm('Deseja forçar a atualização de TODOS os preços? Isso pode demorar alguns minutos.')) {
+          await updatePricesRealTime(true); // Forçar atualização
+      }
+    };
   </script>
 </body>
 </html>

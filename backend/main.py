@@ -1,4 +1,5 @@
 from flask import Flask, jsonify, send_from_directory, request
+from flask import send_from_directory
 import time
 import hashlib
 import jwt
@@ -20,11 +21,17 @@ from rsl_routes import get_rsl_blueprint
 from recommendations_routes import get_recommendations_blueprint
 from mercadopago_routes import get_mercadopago_blueprint
 from admin_routes import get_admin_blueprint
-
+from opcoes_routes import opcoes_bp
 from dotenv import load_dotenv
 
 load_dotenv()
+if not os.getenv('JWT_SECRET'):
+    os.environ['JWT_SECRET'] = 'geminii-jwt-secret-key-2024'
+    print("⚠️ JWT_SECRET forçado manualmente")
 
+# Debug
+print(f"JWT_SECRET final: {os.getenv('JWT_SECRET', 'AINDA NÃO ENCONTRADO')}")
+print(f"OPLAB_TOKEN: {os.getenv('OPLAB_TOKEN', 'NÃO ENCONTRADO')}")
 # ===== CONFIGURAÇÃO DO FLASK =====
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'geminii-secret-2024')
@@ -60,6 +67,7 @@ except Exception as e:
     print(f"❌ Erro ao registrar admin blueprint: {e}")
 
 # REGISTRAR BLUEPRINTS
+app.register_blueprint(opcoes_bp)
 app.register_blueprint(beta_bp)
 app.register_blueprint(long_short_bp)
 rsl_bp = get_rsl_blueprint()
@@ -383,6 +391,12 @@ def relatorios():
         return send_from_directory('../frontend', 'relatorios.html')
     except:
         return "<h1>Relatórios - Em construção</h1>"
+    
+    
+@app.route('/opcoes')
+@app.route('/opcoes.html')
+def opcoes_page():
+    return send_from_directory('../frontend', 'opcoes.html')    
 
 # ===== PÁGINAS DE RETORNO DO PAGAMENTO =====
 
@@ -1482,6 +1496,7 @@ def search_stocks():
 #     os.environ['DB_USER'] = 'postgres'
 #     os.environ['DB_PASSWORD'] = '#geminii'
 #     os.environ['DB_PORT'] = '5432'
+
     
 #     port = int(os.environ.get('PORT', 5000))
     

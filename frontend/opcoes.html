@@ -1,0 +1,904 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hunter Walls - Geminii Tech</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#6366f1',
+            secondary: '#8b5cf6',
+            accent: '#06b6d4',
+            success: '#10b981',
+            warning: '#f59e0b',
+            danger: '#ef4444',
+            geminii: '#ba39af'
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  <style>
+    * {
+      scroll-behavior: smooth;
+    }
+    
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #0f0f0f;
+    }
+    
+    .card {
+      background: rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      transition: all 0.3s ease;
+    }
+    
+    .card:hover {
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+    
+    .navbar {
+      background: rgba(15, 15, 15, 0.95);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .gradient-text {
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .btn-primary {
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      border: none;
+      color: white;
+      transition: all 0.3s ease;
+    }
+    
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px rgba(99, 102, 241, 0.3);
+    }
+    
+    .btn-primary:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+    
+    .nav-active {
+      color: #6366f1;
+      font-weight: 600;
+      border-bottom: 2px solid #6366f1;
+      padding-bottom: 4px;
+    }
+    
+    .fade-in {
+      animation: fadeIn 0.5s ease-in;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .loading-spinner {
+      border: 3px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top: 3px solid #6366f1;
+      width: 24px;
+      height: 24px;
+      animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    .grupo-input {
+      border: 2px solid rgba(255, 255, 255, 0.1);
+      background: rgba(255, 255, 255, 0.05);
+      transition: all 0.3s ease;
+    }
+    
+    .grupo-input:focus {
+      border-color: #6366f1;
+      background: rgba(255, 255, 255, 0.1);
+    }
+    
+    .chart-container {
+      min-height: 600px;
+      background: rgba(20, 20, 20, 0.9);
+      border-radius: 12px;
+      padding: 20px;
+    }
+  </style>
+</head>
+<body class="min-h-screen">
+  
+  <!-- Navigation -->
+  <nav class="navbar fixed top-0 left-0 right-0 z-50 px-6 py-4">
+    <div class="max-w-7xl mx-auto flex items-center justify-between">
+      <div class="flex items-center space-x-8">
+        <div class="flex items-center space-x-3">
+          <div class="w-8 h-8 bg-gradient-to-r from-primary to-secondary rounded-lg"></div>
+          <span class="text-xl font-bold text-white">Geminii</span>
+        </div>
+        <div class="hidden md:flex items-center space-x-6">
+          <a href="dashboard.html" class="text-gray-300 hover:text-primary transition-colors">Dashboard</a>
+          <a href="analises.html" class="text-gray-300 hover:text-primary transition-colors">Análises</a>
+          <a href="opcoes.html" class="nav-active transition-colors font-medium">Hunter Walls</a>
+          <a href="relatorios.html" class="text-gray-300 hover:text-primary transition-colors">Relatórios</a>
+        </div>
+      </div>
+      
+      <div class="flex items-center space-x-4">
+        <button onclick="logout()" class="bg-red-50 hover:bg-red-100 text-red-600 px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+          Sair
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <main class="pt-20 px-6 pb-12">
+    <div class="max-w-7xl mx-auto">
+      
+      <!-- Header -->
+      <div class="card rounded-2xl p-8 mb-8 fade-in">
+        <div class="text-center">
+          <div class="flex items-center justify-center mb-4">
+            <i class="fas fa-crosshairs text-6xl text-primary mr-4"></i>
+            <div>
+              <h1 class="text-4xl font-bold text-white mb-2">
+                🎯 <span class="gradient-text">Hunter Walls</span>
+              </h1>
+              <p class="text-gray-300 text-lg">Análise de Múltiplos Vencimentos de Opções</p>
+            </div>
+          </div>
+          <div class="bg-gradient-to-r from-primary/10 to-secondary/10 rounded-lg p-4 mt-6">
+            <p class="text-gray-300">
+              <strong>Exclusivo Premium:</strong> Compare volumes de calls e puts em diferentes vencimentos lado a lado
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Form Section -->
+      <div class="card rounded-2xl p-8 mb-8 fade-in">
+        <h2 class="text-2xl font-bold text-white mb-6 flex items-center">
+          <i class="fas fa-cog text-primary mr-3"></i>
+          Configuração da Análise
+        </h2>
+        
+        <div class="space-y-6">
+          <!-- Ticker Input -->
+          <div>
+            <label class="block text-gray-300 font-medium mb-2">
+              <i class="fas fa-chart-line mr-2"></i>Ticker
+            </label>
+            <div class="flex gap-4">
+              <input 
+                type="text" 
+                id="tickerInput"
+                placeholder="Ex: PETR4, VALE3, ITUB4"
+                class="grupo-input text-white rounded-lg px-4 py-3 flex-1 focus:outline-none"
+              >
+              <button 
+                onclick="buscarLetrasDisponiveis()"
+                class="btn-primary px-6 py-3 rounded-lg font-semibold flex items-center"
+                id="buscarBtn"
+              >
+                <i class="fas fa-search mr-2"></i>Buscar Vencimentos
+              </button>
+            </div>
+            <p class="text-gray-400 text-sm mt-2">Digite o código do ativo para buscar vencimentos disponíveis</p>
+          </div>
+
+          <!-- Ticker Info -->
+          <div id="tickerInfo" class="hidden bg-gradient-to-r from-success/10 to-success/5 rounded-lg p-4 border border-success/20">
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 id="tickerName" class="text-white font-semibold text-lg"></h3>
+                <p id="tickerPrice" class="text-gray-300"></p>
+              </div>
+              <div class="text-right">
+                <p id="tickerChange" class="font-semibold"></p>
+                <p id="tickerVolume" class="text-gray-400 text-sm"></p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Letras Disponíveis -->
+          <div id="letrasDisponiveis" class="hidden">
+            <label class="block text-gray-300 font-medium mb-2">
+              <i class="fas fa-calendar-alt mr-2"></i>Vencimentos Disponíveis
+            </label>
+            <div id="letrasContainer" class="flex flex-wrap gap-2 mb-4">
+              <!-- Letras serão inseridas aqui -->
+            </div>
+          </div>
+
+          <!-- Grupos de Vencimentos -->
+          <div>
+            <label class="block text-gray-300 font-medium mb-2">
+              <i class="fas fa-layer-group mr-2"></i>Grupos de Vencimentos
+            </label>
+            <div id="gruposContainer" class="space-y-3">
+              <div class="grupo-row flex gap-3 items-center">
+                <input 
+                  type="text" 
+                  placeholder="Ex: F,R"
+                  class="grupo-input text-white rounded-lg px-4 py-3 flex-1 focus:outline-none"
+                >
+                <button onclick="adicionarGrupo()" class="bg-success hover:bg-success/80 text-white px-4 py-3 rounded-lg">
+                  <i class="fas fa-plus"></i>
+                </button>
+              </div>
+            </div>
+            <div class="mt-3 text-gray-400 text-sm">
+              <p><strong>Exemplo:</strong> F,R para um grupo | G,S para outro grupo</p>
+              <p>Cada grupo será exibido como um gráfico separado lado a lado</p>
+            </div>
+          </div>
+
+          <!-- Botão Analisar -->
+          <div class="pt-4">
+            <button 
+              onclick="executarAnalise()"
+              class="btn-primary w-full py-4 rounded-xl font-bold text-lg flex items-center justify-center"
+              id="analisarBtn"
+            >
+              <i class="fas fa-rocket mr-3"></i>
+              Executar Hunter Walls Analysis
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Loading Section -->
+      <div id="loadingSection" class="hidden card rounded-2xl p-8 mb-8 text-center">
+        <div class="loading-spinner mx-auto mb-4"></div>
+        <h3 class="text-xl font-semibold text-white mb-2">Processando Análise...</h3>
+        <p class="text-gray-300">Obtendo dados de opções e gerando gráficos</p>
+      </div>
+
+      <!-- Results Section -->
+      <div id="resultsSection" class="hidden space-y-8">
+        
+        <!-- Summary Cards -->
+        <div id="summaryCards" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 fade-in">
+          <!-- Cards serão inseridos aqui -->
+        </div>
+
+        <!-- Charts Container -->
+        <div class="card rounded-2xl p-8 fade-in">
+          <h2 class="text-2xl font-bold text-white mb-6 flex items-center">
+            <i class="fas fa-chart-bar text-primary mr-3"></i>
+            Gráficos Hunter Walls
+          </h2>
+          <div id="chartsContainer" class="chart-container">
+            <!-- Gráficos serão inseridos aqui -->
+          </div>
+        </div>
+
+        <!-- Detailed Summary -->
+        <div class="card rounded-2xl p-8 fade-in">
+          <h2 class="text-2xl font-bold text-white mb-6 flex items-center">
+            <i class="fas fa-list-alt text-primary mr-3"></i>
+            Resumo Detalhado
+          </h2>
+          <div id="detailedSummary">
+            <!-- Resumo detalhado será inserido aqui -->
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </main>
+
+  <script>
+    let currentUser = null;
+    let userToken = null;
+    let currentTicker = '';
+    let letrasDisponiveis = [];
+
+    // Initialize page
+    async function initPage() {
+      console.log('🚀 Inicializando Hunter Walls...');
+      await checkAuth();
+      console.log('✅ Hunter Walls inicializado!');
+    }
+
+    // Check authentication
+    async function checkAuth() {
+      const token = localStorage.getItem('geminii_token');
+      const userData = localStorage.getItem('geminii_user');
+
+      if (!token || !userData) {
+        window.location.href = '/login.html';
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/auth/verify', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          userToken = token;
+          currentUser = result.data.user;
+          
+          // Verificar se tem plano Premium
+          if (currentUser.plan_id < 2) {
+            showUpgradeRequired();
+            return;
+          }
+          
+        } else {
+          localStorage.removeItem('geminii_token');
+          localStorage.removeItem('geminii_user');
+          window.location.href = '/login.html';
+        }
+      } catch (error) {
+        console.error('Auth check failed:', error);
+        window.location.href = '/login.html';
+      }
+    }
+
+    // Show upgrade required message
+    function showUpgradeRequired() {
+      document.querySelector('main').innerHTML = `
+        <div class="max-w-4xl mx-auto text-center">
+          <div class="card rounded-2xl p-12">
+            <i class="fas fa-crown text-6xl text-warning mb-6"></i>
+            <h1 class="text-3xl font-bold text-white mb-4">Recurso Premium</h1>
+            <p class="text-gray-300 text-lg mb-8">
+              Hunter Walls está disponível apenas para planos Premium ou superior.
+            </p>
+            <div class="space-y-4">
+              <p class="text-gray-400">
+                Seu plano atual: <span class="text-gray-300 font-semibold">${currentUser?.plan_name || 'Básico'}</span>
+              </p>
+              <div class="flex gap-4 justify-center">
+                <a href="planos.html" class="btn-primary px-8 py-3 rounded-xl font-semibold">
+                  <i class="fas fa-arrow-up mr-2"></i>Fazer Upgrade
+                </a>
+                <a href="dashboard.html" class="bg-gray-600 hover:bg-gray-500 text-white px-8 py-3 rounded-xl font-semibold transition-colors">
+                  <i class="fas fa-arrow-left mr-2"></i>Voltar ao Dashboard
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // Buscar letras disponíveis
+    async function buscarLetrasDisponiveis() {
+      const ticker = document.getElementById('tickerInput').value.trim().toUpperCase();
+      
+      if (!ticker) {
+        alert('⚠️ Digite um ticker válido');
+        return;
+      }
+
+      const btn = document.getElementById('buscarBtn');
+      const originalText = btn.innerHTML;
+      btn.innerHTML = '<div class="loading-spinner"></div>Buscando...';
+      btn.disabled = true;
+
+      try {
+        // Buscar info do ticker
+        const infoResponse = await fetch(`/api/opcoes/ticker-info?ticker=${ticker}`, {
+          headers: { 'Authorization': `Bearer ${userToken}` }
+        });
+
+        const infoResult = await infoResponse.json();
+
+        if (infoResult.success) {
+          currentTicker = ticker;
+          displayTickerInfo(infoResult.data);
+        }
+
+        // Buscar vencimentos disponíveis
+        const expResponse = await fetch(`/api/opcoes/available-expirations?ticker=${ticker}`, {
+          headers: { 'Authorization': `Bearer ${userToken}` }
+        });
+
+        const expResult = await expResponse.json();
+
+        if (expResult.success) {
+          letrasDisponiveis = expResult.data.letras_disponiveis;
+          displayLetrasDisponiveis(letrasDisponiveis);
+        } else {
+          throw new Error(expResult.message);
+        }
+
+      } catch (error) {
+        console.error('Erro ao buscar vencimentos:', error);
+        alert(`❌ Erro: ${error.message}`);
+      } finally {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+      }
+    }
+
+    // Display ticker info
+    function displayTickerInfo(info) {
+      const container = document.getElementById('tickerInfo');
+      const changeClass = info.change >= 0 ? 'text-success' : 'text-danger';
+      const changeIcon = info.change >= 0 ? 'fa-arrow-up' : 'fa-arrow-down';
+      
+      document.getElementById('tickerName').textContent = `${info.ticker} - ${info.name}`;
+      document.getElementById('tickerPrice').textContent = `Preço: R$ ${info.current_price.toFixed(2)}`;
+      document.getElementById('tickerChange').innerHTML = `
+        <i class="fas ${changeIcon} mr-1"></i>
+        R$ ${info.change.toFixed(2)} (${info.change_percent.toFixed(2)}%)
+      `;
+      document.getElementById('tickerChange').className = `font-semibold ${changeClass}`;
+      document.getElementById('tickerVolume').textContent = `Volume: ${info.volume.toLocaleString()}`;
+      
+      container.classList.remove('hidden');
+    }
+
+    // Display letras disponíveis
+    function displayLetrasDisponiveis(letras) {
+      const container = document.getElementById('letrasContainer');
+      container.innerHTML = '';
+      
+      letras.forEach(letra => {
+        const span = document.createElement('span');
+        span.className = 'bg-primary/20 text-primary px-3 py-1 rounded-full text-sm font-semibold cursor-pointer hover:bg-primary/30 transition-colors';
+        span.textContent = letra;
+        span.onclick = () => adicionarLetraAoGrupo(letra);
+        container.appendChild(span);
+      });
+      
+      document.getElementById('letrasDisponiveis').classList.remove('hidden');
+    }
+
+    // Adicionar letra ao grupo atual
+    function adicionarLetraAoGrupo(letra) {
+      const inputs = document.querySelectorAll('.grupo-row input');
+      const ultimoInput = inputs[inputs.length - 1];
+      
+      if (ultimoInput.value) {
+        ultimoInput.value += ',' + letra;
+      } else {
+        ultimoInput.value = letra;
+      }
+    }
+
+    // Adicionar novo grupo
+    function adicionarGrupo() {
+      const container = document.getElementById('gruposContainer');
+      const novoGrupo = document.createElement('div');
+      novoGrupo.className = 'grupo-row flex gap-3 items-center';
+      novoGrupo.innerHTML = `
+        <input 
+          type="text" 
+          placeholder="Ex: G,S"
+          class="grupo-input text-white rounded-lg px-4 py-3 flex-1 focus:outline-none"
+        >
+        <button onclick="removerGrupo(this)" class="bg-danger hover:bg-danger/80 text-white px-4 py-3 rounded-lg">
+          <i class="fas fa-minus"></i>
+        </button>
+      `;
+      container.appendChild(novoGrupo);
+    }
+
+    // Remover grupo
+    function removerGrupo(btn) {
+      btn.parentElement.remove();
+    }
+
+    // Executar análise
+    async function executarAnalise() {
+      if (!currentTicker) {
+        alert('⚠️ Primeiro busque um ticker válido');
+        return;
+      }
+
+      // Coletar grupos
+      const inputs = document.querySelectorAll('.grupo-row input');
+      const grupos = [];
+      
+      inputs.forEach(input => {
+        const valor = input.value.trim().toUpperCase();
+        if (valor) {
+          const letras = valor.split(',').map(l => l.trim()).filter(l => l);
+          if (letras.length > 0) {
+            grupos.push(letras);
+          }
+        }
+      });
+
+      if (grupos.length === 0) {
+        alert('⚠️ Configure pelo menos um grupo de vencimentos');
+        return;
+      }
+
+      console.log('🎯 Executando análise:', currentTicker, grupos);
+
+      // Mostrar loading
+      document.getElementById('loadingSection').classList.remove('hidden');
+      document.getElementById('resultsSection').classList.add('hidden');
+
+      const btn = document.getElementById('analisarBtn');
+      const originalText = btn.innerHTML;
+      btn.innerHTML = '<div class="loading-spinner mr-2"></div>Analisando...';
+      btn.disabled = true;
+
+      try {
+        const response = await fetch('/api/opcoes/hunter-walls', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${userToken}`
+          },
+          body: JSON.stringify({
+            ticker: currentTicker,
+            grupos_vencimentos: grupos
+          })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          displayResults(result.data);
+        } else {
+          throw new Error(result.message);
+        }
+
+      } catch (error) {
+        console.error('Erro na análise:', error);
+        alert(`❌ Erro na análise: ${error.message}`);
+      } finally {
+        document.getElementById('loadingSection').classList.add('hidden');
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+      }
+    }
+
+    // Display results
+    function displayResults(data) {
+      console.log('📊 Exibindo resultados:', data);
+      
+      // Summary cards
+      displaySummaryCards(data.summary);
+      
+      // Charts
+      displayCharts(data.chart_data, data.ticker_info);
+      
+      // Detailed summary
+      displayDetailedSummary(data.summary);
+      
+      // Show results section
+      document.getElementById('resultsSection').classList.remove('hidden');
+      
+      // Scroll to results
+      document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // Display summary cards
+    function displaySummaryCards(summary) {
+      const container = document.getElementById('summaryCards');
+      const putCallRatio = summary.put_call_ratio_geral;
+      
+      let ratioColor = 'text-gray-300';
+      let ratioIcon = 'fa-balance-scale';
+      
+      if (putCallRatio > 1.2) {
+        ratioColor = 'text-danger';
+        ratioIcon = 'fa-arrow-down';
+      } else if (putCallRatio < 0.8) {
+        ratioColor = 'text-success';
+        ratioIcon = 'fa-arrow-up';
+      }
+      
+      container.innerHTML = `
+        <div class="bg-gradient-to-r from-primary/10 to-primary/5 rounded-xl p-6 border border-primary/20">
+          <div class="flex items-center justify-between mb-4">
+            <div class="w-12 h-12 bg-primary/20 rounded-lg flex items-center justify-center">
+              <i class="fas fa-chart-line text-primary text-xl"></i>
+            </div>
+            <div class="text-right">
+              <div class="text-2xl font-bold text-white">${summary.total_volume.toLocaleString()}</div>
+              <div class="text-sm text-gray-400">Volume Total</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-gradient-to-r from-success/10 to-success/5 rounded-xl p-6 border border-success/20">
+          <div class="flex items-center justify-between mb-4">
+            <div class="w-12 h-12 bg-success/20 rounded-lg flex items-center justify-center">
+              <i class="fas fa-arrow-up text-success text-xl"></i>
+            </div>
+            <div class="text-right">
+              <div class="text-2xl font-bold text-success">${summary.total_calls.toLocaleString()}</div>
+              <div class="text-sm text-gray-400">Calls (${summary.percent_calls}%)</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-gradient-to-r from-orange-500/10 to-orange-500/5 rounded-xl p-6 border border-orange-500/20">
+          <div class="flex items-center justify-between mb-4">
+            <div class="w-12 h-12 bg-orange-500/20 rounded-lg flex items-center justify-center">
+              <i class="fas fa-arrow-down text-orange-400 text-xl"></i>
+            </div>
+            <div class="text-right">
+              <div class="text-2xl font-bold text-orange-400">${summary.total_puts.toLocaleString()}</div>
+              <div class="text-sm text-gray-400">Puts (${summary.percent_puts}%)</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-gradient-to-r from-secondary/10 to-secondary/5 rounded-xl p-6 border border-secondary/20">
+          <div class="flex items-center justify-between mb-4">
+            <div class="w-12 h-12 bg-secondary/20 rounded-lg flex items-center justify-center">
+              <i class="fas ${ratioIcon} text-secondary text-xl"></i>
+            </div>
+            <div class="text-right">
+              <div class="text-2xl font-bold ${ratioColor}">${putCallRatio}</div>
+              <div class="text-sm text-gray-400">Put/Call Ratio</div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // Display charts
+    function displayCharts(chartData, tickerInfo) {
+      const container = document.getElementById('chartsContainer');
+      
+      // Limpar container
+      container.innerHTML = '';
+      
+      const grupos = Object.keys(chartData);
+      const numGrupos = grupos.length;
+      
+      // Calcular layout dos subplots
+      const cols = Math.min(3, numGrupos);
+      const rows = Math.ceil(numGrupos / cols);
+      
+      // Preparar dados para Plotly
+      const traces = [];
+      const subplotTitles = [];
+      
+      grupos.forEach((nomeGrupo, index) => {
+        const dados = chartData[nomeGrupo];
+        const row = Math.floor(index / cols) + 1;
+        const col = (index % cols) + 1;
+        
+        subplotTitles.push(nomeGrupo);
+        
+        // CALLS trace
+        traces.push({
+          type: 'bar',
+          orientation: 'h',
+          y: dados.labels,
+          x: dados.calls_volumes,
+          name: index === 0 ? 'CALLS' : '',
+          marker: { color: '#0099ff' },
+          showlegend: index === 0,
+          legendgroup: 'calls',
+          xaxis: `x${index + 1}`,
+          yaxis: `y${index + 1}`,
+          hovertemplate: '<b>CALLS</b><br>Strike: %{y}<br>Volume: %{text}<extra></extra>',
+          text: dados.calls_volumes.map(v => Math.abs(v).toLocaleString())
+        });
+        
+        // PUTS trace
+        traces.push({
+          type: 'bar',
+          orientation: 'h',
+          y: dados.labels,
+          x: dados.puts_volumes,
+          name: index === 0 ? 'PUTS' : '',
+          marker: { color: '#ff6600' },
+          showlegend: index === 0,
+          legendgroup: 'puts',
+          xaxis: `x${index + 1}`,
+          yaxis: `y${index + 1}`,
+          hovertemplate: '<b>PUTS</b><br>Strike: %{y}<br>Volume: %{x:,}<extra></extra>'
+        });
+      });
+      
+      // Layout
+      const layout = {
+        title: {
+          text: `🎯 Hunter Walls Analysis - ${tickerInfo.ticker}<br>Preço Atual: R$ ${tickerInfo.current_price.toFixed(2)}`,
+          font: { size: 20, color: 'white' },
+          x: 0.5
+        },
+        template: 'plotly_dark',
+        height: Math.max(600, 400 * rows),
+        margin: { l: 80, r: 80, t: 120, b: 80 },
+        grid: { rows: rows, columns: cols, pattern: 'independent' },
+        legend: {
+          orientation: 'h',
+          yanchor: 'bottom',
+          y: 1.02,
+          xanchor: 'center',
+          x: 0.5,
+          font: { color: 'white' }
+        },
+        paper_bgcolor: 'rgba(20,20,20,0.9)',
+        plot_bgcolor: 'rgba(20,20,20,0.9)'
+      };
+      
+      // Configurar eixos para cada subplot
+      grupos.forEach((_, index) => {
+        const axisNum = index + 1;
+        
+        layout[`xaxis${axisNum}`] = {
+          title: '← CALLS | PUTS →',
+          tickfont: { color: 'lightgray' },
+          titlefont: { color: 'white' }
+        };
+        
+        layout[`yaxis${axisNum}`] = {
+          title: axisNum === 1 || (axisNum - 1) % cols === 0 ? 'Strike' : '',
+          tickfont: { color: 'lightgray' },
+          titlefont: { color: 'white' }
+        };
+      });
+      
+      // Criar gráfico
+      Plotly.newPlot(container, traces, layout, {
+        responsive: true,
+        displayModeBar: true,
+        modeBarButtonsToRemove: ['pan2d', 'lasso2d', 'select2d']
+      });
+    }
+
+    // Display detailed summary
+    function displayDetailedSummary(summary) {
+      const container = document.getElementById('detailedSummary');
+      
+      let html = `
+        <div class="mb-8">
+          <h3 class="text-xl font-bold text-white mb-4">📊 Resumo por Grupo</h3>
+          <div class="overflow-x-auto">
+            <table class="w-full border-collapse">
+              <thead>
+                <tr class="bg-gray-700">
+                  <th class="border border-gray-600 px-4 py-3 text-left text-white">Grupo</th>
+                  <th class="border border-gray-600 px-4 py-3 text-right text-white">Volume Total</th>
+                  <th class="border border-gray-600 px-4 py-3 text-right text-white">Calls</th>
+                  <th class="border border-gray-600 px-4 py-3 text-right text-white">Puts</th>
+                  <th class="border border-gray-600 px-4 py-3 text-right text-white">P/C Ratio</th>
+                  <th class="border border-gray-600 px-4 py-3 text-right text-white">% do Total</th>
+                </tr>
+              </thead>
+              <tbody>
+      `;
+      
+      summary.grupos.forEach(grupo => {
+        let rowColor = 'bg-gray-800';
+        if (grupo.put_call_ratio > 1.2) {
+          rowColor = 'bg-red-900/30';
+        } else if (grupo.put_call_ratio < 0.8) {
+          rowColor = 'bg-green-900/30';
+        }
+        
+        html += `
+          <tr class="${rowColor}">
+            <td class="border border-gray-600 px-4 py-3 text-white font-semibold">${grupo.nome}</td>
+            <td class="border border-gray-600 px-4 py-3 text-right text-white">${grupo.total_volume.toLocaleString()}</td>
+            <td class="border border-gray-600 px-4 py-3 text-right text-blue-400">${grupo.total_calls.toLocaleString()}</td>
+            <td class="border border-gray-600 px-4 py-3 text-right text-orange-400">${grupo.total_puts.toLocaleString()}</td>
+            <td class="border border-gray-600 px-4 py-3 text-right text-white">${grupo.put_call_ratio}</td>
+            <td class="border border-gray-600 px-4 py-3 text-right text-white">${grupo.percent_of_total}%</td>
+          </tr>
+        `;
+      });
+      
+      html += `
+              </tbody>
+            </table>
+          </div>
+        </div>
+        
+        <div class="space-y-6">
+          <h3 class="text-xl font-bold text-white">🏆 Top Opções por Grupo</h3>
+      `;
+      
+      summary.grupos.forEach(grupo => {
+        html += `
+          <div class="bg-gray-800/50 rounded-lg p-6">
+            <h4 class="text-lg font-semibold text-white mb-4">${grupo.nome}</h4>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <h5 class="text-blue-400 font-semibold mb-2">🔵 Top Calls</h5>
+                <ul class="space-y-1">
+        `;
+        
+        grupo.top_calls.forEach(call => {
+          html += `
+            <li class="text-gray-300 text-sm">
+              ${call.symbol} | R$ ${call.strike.toFixed(2)} | Vol: ${call.volume.toLocaleString()}
+            </li>
+          `;
+        });
+        
+        html += `
+                </ul>
+              </div>
+              <div>
+                <h5 class="text-orange-400 font-semibold mb-2">🟠 Top Puts</h5>
+                <ul class="space-y-1">
+        `;
+        
+        grupo.top_puts.forEach(put => {
+          html += `
+            <li class="text-gray-300 text-sm">
+              ${put.symbol} | R$ ${put.strike.toFixed(2)} | Vol: ${put.volume.toLocaleString()}
+            </li>
+          `;
+        });
+        
+        html += `
+                </ul>
+              </div>
+            </div>
+          </div>
+        `;
+      });
+      
+      html += '</div>';
+      
+      container.innerHTML = html;
+    }
+
+    // Logout function
+    async function logout() {
+      try {
+        if (userToken) {
+          await fetch('/api/auth/logout', {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${userToken}` }
+          });
+        }
+      } catch (error) {
+        console.error('Logout error:', error);
+      } finally {
+        localStorage.removeItem('geminii_token');
+        localStorage.removeItem('geminii_user');
+        window.location.href = '/';
+      }
+    }
+
+    // Make functions global
+    window.logout = logout;
+    window.buscarLetrasDisponiveis = buscarLetrasDisponiveis;
+    window.adicionarGrupo = adicionarGrupo;
+    window.removerGrupo = removerGrupo;
+    window.executarAnalise = executarAnalise;
+    window.adicionarLetraAoGrupo = adicionarLetraAoGrupo;
+
+    // Initialize when page loads
+    document.addEventListener('DOMContentLoaded', initPage);
+  </script>
+</body>
+</html>
