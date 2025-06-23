@@ -254,7 +254,7 @@ class SwingTradeMachineLearningService:
         return ensemble_model, scaler, metrics
 
     def calculate_dynamic_stops(self, df):
-        """Calcula os stops dinâmicos"""
+        """Calcula os stops dinâmicos - EXATAMENTE como o MetaTrader"""
         print("Calculando stops dinâmicos...")
         
         # Verificar se as colunas necessárias existem
@@ -284,41 +284,153 @@ class SwingTradeMachineLearningService:
         else:
             vol_series = df['Volatility_60_Pct']
         
-        # Calcular ATR como percentual do preço
+        # Calcular stops - EXATAMENTE como o MetaTrader (usando apply)
         df['ATR_Pct'] = atr_series / close_series
-        
-        # Calcular Stop Loss (limitado entre MIN_STOP e MAX_STOP)
-        df['Stop_Loss'] = (df['ATR_Pct'] * self.ATR_FACTOR).clip(
-            lower=self.MIN_STOP, 
-            upper=self.MAX_STOP
-        )
-        
-        # Calcular Take Profit (limitado entre MIN_TAKE e MAX_TAKE)
-        df['Take_Profit'] = (vol_series * self.VOL_FACTOR).clip(
-            lower=self.MIN_TAKE,
-            upper=self.MAX_TAKE
-        )
+        df['Stop_Loss'] = df.apply(lambda x: min(max(x['ATR_Pct'] * self.ATR_FACTOR, self.MIN_STOP), self.MAX_STOP), axis=1)
+        df['Take_Profit'] = df.apply(lambda x: min(max(x['Volatility_60_Pct'] * self.VOL_FACTOR, self.MIN_TAKE), self.MAX_TAKE), axis=1)
         
         print("Stops dinâmicos calculados com sucesso")
         return df
 
     def generate_predictions(self, df, model, scaler, features):
-        """Gera as previsões e cores"""
+        """Gera as previsões e cores - EXATAMENTE como o MetaTrader"""
         print("Gerando previsões...")
         
         X_scaled = scaler.transform(df[features])
         df['prediction'] = model.predict(X_scaled)
         
-        # Aplicar cores baseadas nas previsões
-        df['color'] = df['prediction'].apply(
-            lambda x: self.cyberpunk_colors['neon_green'] if x == 1 else self.cyberpunk_colors['neon_red']
-        )
+        # Aplicar cores - EXATAMENTE como no MetaTrader
+        df['color'] = np.where(df['prediction'] == 1, self.cyberpunk_colors['neon_green'], self.cyberpunk_colors['neon_red'])
         
         print("Previsões geradas")
         return df
 
+    def get_analysis_data(self, df, ticker, prediction_days, metrics):
+        """Retorna os dados para análise em cards - FORMATO MetaTrader"""
+        print("Preparando dados de análise...")
+        
+        # Valores atuais
+        today_price = df['Close'].iloc[-1]
+        today_prediction = df['prediction'].iloc[-1]
+        current_atr = df['ATR'].iloc[-1]
+        current_vol = df['Volatility_60_Pct'].iloc[-1]
+
+        # Cálculo dos níveis atuais
+        stop_loss = min(max(current_atr / today_price * self.ATR_FACTOR, self.MIN_STOP), self.MAX_STOP)
+        take_profit = min(max(current_vol * self.VOL_FACTOR, self.MIN_TAKE), self.MAX_TAKE)
+
+        if today_prediction == 1:
+            take_profit_price = today_price * (1 + take_profit)
+            stop_loss_price = today_price * (1 - stop_loss)
+        else:
+            take_profit_price = today_price * (1 - take_profit)
+            stop_loss_price = today_price * (1 + stop_loss)
+
+        # Dados históricos - EXATAMENTE como o MetaTrader
+        historical_date = df.index[-prediction_days]
+        historical_price = df['Close'].iloc[-prediction_days]
+        historical_prediction = df['prediction'].iloc[-prediction_days]
+
+        # Resultado histórico - EXATAMENTE como o MetaTrader
+        if historical_prediction == 1:  # COMPRA
+            resultado_historico = ((today_price - historical_price) / historical_price * 100)
+        else:  # VENDA
+            resultado_historico = ((historical_price - today_price) / historical_price * 100)
+
+        variacao_percentual = ((today_price - historical_price) / historical_price * 100)
+
+        analysis_data = {
+            'ticker': ticker,
+            'data_atual': datetime.now().strftime('%Y-%m-%d'),
+            'preco_atual': float(today_price),
+            'direcao': 'COMPRA' if today_prediction == 1 else 'VENDA',
+            'take_profit_price': float(take_profit_price),
+            'stop_loss_price': float(stop_loss_price),
+            'take_profit_pct': float(take_profit * 100),
+            'stop_loss_pct': float(stop_loss * 100),
+            'atr_atual': float(current_atr),
+            'atr_pct': float(current_atr / today_price * 100),
+            'atr_medio': float(df['ATR'].mean() / df['Close'].mean() * 100),
+            'volatilidade_60d': float(current_vol * 100),
+            'vol_maxima_60d': float(df['Volatility_60_Pct'].max() * 100),
+            'stop_loss_medio': float(df['Stop_Loss'].mean() * 100),
+            'take_profit_medio': float(df['Take_Profit'].mean() * 100),
+            'data_historica': historical_date.strftime('%Y-%m-%d'),
+            'preco_historico': float(historical_price),
+            'sinal_historico': 'COMPRA' if historical_prediction == 1 else 'VENDA',
+            'resultado_historico': float(resultado_historico),
+            'resultado_status': 'LUCRO' if resultado_historico > 0 else 'PREJUÍZO',
+            'variacao_percentual': float(variacao_percentual),
+            'direcao_movimento': 'subiu' if variacao_percentual > 0 else 'caiu',
+            'accuracy': float(metrics['accuracy']),
+            'precision': float(metrics['precision']),
+            'recall': float(metrics['recall']),
+            'confusion_matrix': {
+                'tn': int(metrics['confusion_matrix'][0, 0]),
+                'fp': int(metrics['confusion_matrix'][0, 1]),
+                'fn': int(metrics['confusion_matrix'][1, 0]),
+                'tp': int(metrics['confusion_matrix'][1, 1])
+            },
+            # Análise textual completa como no MetaTrader
+            'analise_completa': self.generate_complete_analysis(
+                ticker, today_price, today_prediction, take_profit_price, stop_loss_price,
+                take_profit, stop_loss, current_atr, current_vol, df,
+                historical_date, historical_price, historical_prediction,
+                resultado_historico, variacao_percentual, metrics
+            )
+        }
+        
+        print("Dados de análise preparados")
+        return analysis_data
+
+    def generate_complete_analysis(self, ticker, today_price, today_prediction, take_profit_price, 
+                                 stop_loss_price, take_profit, stop_loss, current_atr, current_vol, df,
+                                 historical_date, historical_price, historical_prediction, 
+                                 resultado_historico, variacao_percentual, metrics):
+        """Gera análise completa EXATAMENTE como o MetaTrader imprime"""
+        
+        analysis_text = f"""
+{'='*70}
+ANÁLISE DE TRADING - {ticker}
+{'='*70}
+Data atual: {datetime.now().strftime('%Y-%m-%d')}
+Preço atual: {today_price:.2f}
+Direção: {'COMPRA' if today_prediction == 1 else 'VENDA'}
+{'-'*70}
+NÍVEIS DE OPERAÇÃO:
+Take Profit: {take_profit_price:.2f} ({take_profit*100:.1f}% dinâmico)
+Stop Loss: {stop_loss_price:.2f} ({stop_loss*100:.1f}% dinâmico)
+{'-'*70}
+MÉTRICAS DE VOLATILIDADE:
+ATR atual: {current_atr:.4f} ({(current_atr/today_price*100):.2f}% do preço)
+ATR médio: {(df['ATR'].mean()/df['Close'].mean()*100):.2f}%
+Volatilidade 60d: {(current_vol*100):.2f}%
+Vol máxima 60d: {(df['Volatility_60_Pct'].max()*100):.2f}%
+{'-'*70}
+PERFORMANCE DO STOP DINÂMICO:
+Stop Loss médio: {(df['Stop_Loss'].mean()*100):.2f}%
+Take Profit médio: {(df['Take_Profit'].mean()*100):.2f}%
+{'-'*70}
+
+ANÁLISE HISTÓRICA:
+Data histórica: {historical_date.strftime('%Y-%m-%d')}
+Preço histórico: {historical_price:.2f}
+Preço atual: {today_price:.2f}
+Sinal histórico: {'COMPRA' if historical_prediction == 1 else 'VENDA'}
+"""
+
+        if historical_prediction == 1:  # COMPRA
+            analysis_text += f"Resultado (Compra): {resultado_historico:.2f}% {'LUCRO' if resultado_historico > 0 else 'PREJUÍZO'}\n"
+        else:  # VENDA
+            analysis_text += f"Resultado (Venda): {resultado_historico:.2f}% {'LUCRO' if resultado_historico > 0 else 'PREJUÍZO'}\n"
+        
+        analysis_text += f"Preço {'subiu' if variacao_percentual > 0 else 'caiu'} {abs(variacao_percentual):.2f}% desde a previsão\n"
+        analysis_text += f"{'-'*70}\n"
+        
+        return analysis_text
+
     def create_chart(self, df, ticker, prediction_days):
-        """Cria o gráfico interativo"""
+        """Cria o gráfico interativo - EXATAMENTE como o MetaTrader"""
         print("Criando gráfico...")
         
         try:
@@ -339,216 +451,232 @@ class SwingTradeMachineLearningService:
                 take_profit_price = today_price * (1 - take_profit)
                 stop_loss_price = today_price * (1 + stop_loss)
 
-            # Usar dados mais recentes para melhor performance
-            recent_data = df.tail(252).copy()  # Último ano de dados
-            
-            # Converter index para string se for datetime
-            if hasattr(recent_data.index, 'strftime'):
-                recent_data.index = recent_data.index.strftime('%Y-%m-%d')
+            # Criação do gráfico - EXATAMENTE como o MetaTrader
+            fig = make_subplots(
+                rows=2, cols=1, 
+                shared_xaxes=True,
+                vertical_spacing=0.05,
+                row_heights=[0.75, 0.25],
+                subplot_titles=('Preço, Previsões e Níveis', 'Sinais de Trading')
+            )
 
-            # Criação do gráfico principal - Estilo MetaTrader
-            fig = go.Figure()
+            # Gráfico de preços - linha principal
+            fig.add_trace(
+                go.Scatter(
+                    x=df.index, 
+                    y=df['Close'],
+                    mode='lines',
+                    name='Preço',
+                    line=dict(color=self.cyberpunk_colors['neon_blue'], width=1)
+                ),
+                row=1, col=1
+            )
 
-            # Candlestick principal
-            fig.add_trace(go.Candlestick(
-                x=recent_data.index,
-                open=recent_data['Open'],
-                high=recent_data['High'],
-                low=recent_data['Low'],
-                close=recent_data['Close'],
-                name='Preço',
-                increasing_line_color='#00ff00',
-                decreasing_line_color='#ff0000'
-            ))
-
-            # Linha de previsões coloridas
-            buy_signals = recent_data[recent_data['prediction'] == 1]
-            sell_signals = recent_data[recent_data['prediction'] == 0]
-
-            # Pontos de compra
-            if not buy_signals.empty:
-                fig.add_trace(go.Scatter(
-                    x=buy_signals.index,
-                    y=buy_signals['Close'],
-                    mode='markers',
-                    marker=dict(
-                        symbol='triangle-up',
-                        size=10,
-                        color='#00ff88',
-                        line=dict(width=2, color='#ffffff')
+            # Linhas coloridas das previsões - EXATAMENTE como o MetaTrader
+            for i in range(1, len(df)):
+                fig.add_trace(
+                    go.Scatter(
+                        x=[df.index[i-1], df.index[i]], 
+                        y=[df['Close'].iloc[i-1], df['Close'].iloc[i]],
+                        mode='lines',
+                        line=dict(color=df['color'].iloc[i], width=2),
+                        showlegend=False
                     ),
-                    name='Sinal de COMPRA'
-                ))
+                    row=1, col=1
+                )
 
-            # Pontos de venda
-            if not sell_signals.empty:
-                fig.add_trace(go.Scatter(
-                    x=sell_signals.index,
-                    y=sell_signals['Close'],
-                    mode='markers',
-                    marker=dict(
-                        symbol='triangle-down',
-                        size=10,
-                        color='#ff4444',
-                        line=dict(width=2, color='#ffffff')
-                    ),
-                    name='Sinal de VENDA'
-                ))
-
-            # Níveis atuais - Stop Loss e Take Profit
-            last_date = recent_data.index[-1]
-            
+            # Níveis de stop e take atuais - EXATAMENTE como o MetaTrader
             if today_prediction == 1:
-                # Take Profit linha
-                fig.add_trace(go.Scatter(
-                    x=[last_date, last_date],
-                    y=[today_price, take_profit_price],
-                    mode='lines',
-                    line=dict(color='#00ff00', width=3, dash='dash'),
-                    name=f'Take Profit: R$ {take_profit_price:.2f}',
-                    showlegend=True
-                ))
-                
-                # Stop Loss linha
-                fig.add_trace(go.Scatter(
-                    x=[last_date, last_date],
-                    y=[today_price, stop_loss_price],
-                    mode='lines',
-                    line=dict(color='#ff0000', width=3, dash='dash'),
-                    name=f'Stop Loss: R$ {stop_loss_price:.2f}',
-                    showlegend=True
-                ))
+                fig.add_trace(
+                    go.Scatter(
+                        x=[df.index[-1], df.index[-1]],
+                        y=[today_price, take_profit_price],
+                        mode='lines',
+                        name='Take Profit',
+                        line=dict(color=self.cyberpunk_colors['neon_green'], width=2, dash='dash')
+                    ),
+                    row=1, col=1
+                )
+                fig.add_trace(
+                    go.Scatter(
+                        x=[df.index[-1], df.index[-1]],
+                        y=[today_price, stop_loss_price],
+                        mode='lines',
+                        name='Stop Loss',
+                        line=dict(color=self.cyberpunk_colors['neon_red'], width=2, dash='dash')
+                    ),
+                    row=1, col=1
+                )
 
-            # Layout estilo MetaTrader
+            # Sinais - EXATAMENTE como o MetaTrader
+            fig.add_trace(
+                go.Scatter(
+                    x=df.index,
+                    y=df['prediction'],
+                    mode='lines',
+                    name='Sinais',
+                    line=dict(color=self.cyberpunk_colors['neon_purple'], width=1),
+                    fill='tozeroy',
+                    fillcolor=self.cyberpunk_colors['neon_purple'].replace('0.8', '0.2')
+                ),
+                row=2, col=1
+            )
+
+            # Layout - EXATAMENTE como o MetaTrader
             fig.update_layout(
-                title=dict(
-                    text=f'{ticker} - Análise Swing Trade ML | Previsão: {"COMPRA" if today_prediction == 1 else "VENDA"}',
-                    font=dict(size=20, color='white'),
-                    x=0.5
-                ),
                 template='plotly_dark',
-                plot_bgcolor='#1a1a1a',
-                paper_bgcolor='#1a1a1a',
-                font=dict(color='white', size=12),
-                height=600,
-                showlegend=True,
-                legend=dict(
-                    bgcolor='rgba(26, 26, 26, 0.8)',
-                    bordercolor='rgba(255, 255, 255, 0.2)',
-                    borderwidth=1,
-                    font=dict(size=11)
+                plot_bgcolor='rgb(27, 27, 50)',
+                paper_bgcolor='rgb(27, 27, 50)',
+                font=dict(color='rgb(170, 170, 220)'),
+                title=dict(
+                    text=f'Análise Preditiva com Stops Dinâmicos - {ticker}',
+                    font=dict(color='rgb(200, 200, 250)', size=24)
                 ),
-                margin=dict(l=50, r=50, t=80, b=50)
+                showlegend=True,
+                width=1200,  # MESMO TAMANHO do MetaTrader
+                height=600,  # MESMO TAMANHO do MetaTrader
+                legend=dict(
+                    bgcolor='rgba(27, 27, 50, 0.8)',
+                    bordercolor='rgba(70, 70, 120, 0.8)',
+                    borderwidth=1
+                )
             )
 
-            # Configurações dos eixos
-            fig.update_xaxes(
-                gridcolor='rgba(255, 255, 255, 0.1)',
-                showgrid=True,
-                rangeslider_visible=False,
-                type='category'
-            )
-            
-            fig.update_yaxes(
-                gridcolor='rgba(255, 255, 255, 0.1)',
-                showgrid=True,
-                title_text="Preço (R$)",
-                side='right'
-            )
+            # Atualizar eixos - EXATAMENTE como o MetaTrader
+            for i in range(1, 3):  # Corrigido para 1, 3 (era 1, 4 no MetaTrader)
+                fig.update_xaxes(
+                    gridcolor='rgba(70, 70, 120, 0.2)',
+                    zerolinecolor='rgba(70, 70, 120, 0.2)',
+                    showgrid=True,
+                    gridwidth=1,
+                    row=i, col=1
+                )
+                
+                fig.update_yaxes(
+                    gridcolor='rgba(70, 70, 120, 0.2)',
+                    zerolinecolor='rgba(70, 70, 120, 0.2)',
+                    showgrid=True,
+                    gridwidth=1,
+                    row=i, col=1
+                )
 
-            # Anotações informativas
+            # Títulos dos eixos - EXATAMENTE como o MetaTrader
+            fig.update_yaxes(title_text="Preço", row=1, col=1)
+            fig.update_yaxes(title_text="Sinal", row=2, col=1)
+
+            # Marca d'água - EXATAMENTE como o MetaTrader
             fig.add_annotation(
-                text=f"<b>Informações Atuais:</b><br>" +
-                     f"Preço: R$ {today_price:.2f}<br>" +
-                     f"ATR: {(current_atr/today_price*100):.2f}%<br>" +
-                     f"Stop: {stop_loss*100:.1f}% | Take: {take_profit*100:.1f}%",
-                xref="paper", yref="paper",
-                x=0.02, y=0.98,
+                text=f"Geminii Research - {datetime.now().strftime('%Y-%m-%d')}",
+                xref="paper",
+                yref="paper",
+                x=0.98,
+                y=0.02,
                 showarrow=False,
-                font=dict(size=10, color='white'),
-                bgcolor='rgba(0, 0, 0, 0.7)',
-                bordercolor='rgba(255, 255, 255, 0.3)',
-                borderwidth=1,
-                align='left'
+                font=dict(size=10, color='rgba(170, 170, 220, 0.7)'),
+                opacity=0.7
             )
 
-            print("Gráfico criado com sucesso")
+            # Anotação com métricas atuais - EXATAMENTE como o MetaTrader
+            fig.add_annotation(
+                text=f"Stop Loss: {stop_loss*100:.1f}%<br>Take Profit: {take_profit*100:.1f}%",
+                xref="paper",
+                yref="paper",
+                x=0.98,
+                y=0.98,
+                showarrow=False,
+                font=dict(size=12, color='rgba(170, 170, 220, 1)'),
+                bgcolor='rgba(27, 27, 50, 0.8)',
+                bordercolor='rgba(70, 70, 120, 0.8)',
+                borderwidth=1,
+                align='right'
+            )
+
+            print("Gráfico criado com sucesso - versão MetaTrader")
             
-            # Retornar HTML mais robusto
-            config = {
-                'displayModeBar': True,
-                'displaylogo': False,
-                'modeBarButtonsToRemove': ['pan2d', 'lasso2d', 'select2d'],
-                'responsive': True
-            }
-            
-            html_str = fig.to_html(
+            # Retornar HTML com configuração explícita
+            html_output = fig.to_html(
                 include_plotlyjs='cdn',
-                config=config,
-                div_id="trading-chart"
+                div_id="trading-chart-mt5",
+                config={
+                    'displayModeBar': True,
+                    'displaylogo': False,
+                    'toImageButtonOptions': {
+                        'format': 'png',
+                        'filename': f'analise_{ticker}',
+                        'height': 600,
+                        'width': 1200,
+                        'scale': 1
+                    },
+                    'responsive': True
+                }
             )
             
-            return html_str
+            return html_output
             
         except Exception as e:
-            print(f"Erro ao criar gráfico: {e}")
-            # Retornar gráfico simples em caso de erro
-            return self.create_simple_chart(df, ticker)
+            print(f"Erro ao criar gráfico MetaTrader: {e}")
+            import traceback
+            traceback.print_exc()
+            return self.create_fallback_chart(df, ticker)
 
-    def create_simple_chart(self, df, ticker):
-        """Cria um gráfico simples em caso de erro no principal"""
-        print("Criando gráfico simples...")
+    def create_fallback_chart(self, df, ticker):
+        """Gráfico de emergência super simples"""
+        print("Criando gráfico de emergência...")
         
         try:
-            recent_data = df.tail(100)
+            # Apenas os últimos 100 pontos
+            recent_data = df.tail(100).copy()
             
+            # Criar figura simples
             fig = go.Figure()
             
-            # Linha simples de preços
+            # Linha de preço simples
             fig.add_trace(go.Scatter(
-                x=list(range(len(recent_data))),
                 y=recent_data['Close'].values,
                 mode='lines',
                 name='Preço',
                 line=dict(color='#00aaff', width=2)
             ))
             
-            # Sinais
-            buy_points = recent_data[recent_data['prediction'] == 1]
-            sell_points = recent_data[recent_data['prediction'] == 0]
+            # Marcadores de sinais
+            for i, (idx, row) in enumerate(recent_data.iterrows()):
+                if row['prediction'] == 1:
+                    fig.add_trace(go.Scatter(
+                        x=[i], y=[row['Close']],
+                        mode='markers',
+                        marker=dict(symbol='triangle-up', size=8, color='green'),
+                        showlegend=False
+                    ))
+                else:
+                    fig.add_trace(go.Scatter(
+                        x=[i], y=[row['Close']],
+                        mode='markers',
+                        marker=dict(symbol='triangle-down', size=8, color='red'),
+                        showlegend=False
+                    ))
             
-            if not buy_points.empty:
-                buy_indices = [list(recent_data.index).index(idx) for idx in buy_points.index]
-                fig.add_trace(go.Scatter(
-                    x=buy_indices,
-                    y=buy_points['Close'].values,
-                    mode='markers',
-                    marker=dict(symbol='triangle-up', size=8, color='green'),
-                    name='Compra'
-                ))
-            
-            if not sell_points.empty:
-                sell_indices = [list(recent_data.index).index(idx) for idx in sell_points.index]
-                fig.add_trace(go.Scatter(
-                    x=sell_indices,
-                    y=sell_points['Close'].values,
-                    mode='markers',
-                    marker=dict(symbol='triangle-down', size=8, color='red'),
-                    name='Venda'
-                ))
-            
+            # Layout simples
             fig.update_layout(
-                title=f'{ticker} - Análise Simplificada',
+                title=f'{ticker} - Análise de Emergência',
                 template='plotly_dark',
                 height=400,
-                showlegend=True
+                showlegend=True,
+                xaxis_title="Período",
+                yaxis_title="Preço"
             )
             
-            return fig.to_html(include_plotlyjs='cdn', div_id="simple-chart")
+            return fig.to_html(include_plotlyjs='cdn', div_id="emergency-chart")
             
         except Exception as e:
-            print(f"Erro no gráfico simples: {e}")
-            return f"<div style='color: white; padding: 20px;'>Erro ao gerar gráfico: {str(e)}</div>"
+            print(f"Erro no gráfico de emergência: {e}")
+            return f"""
+            <div style="color: white; background: #1a1a1a; padding: 20px; border-radius: 8px;">
+                <h3>Erro no Gráfico</h3>
+                <p>Não foi possível gerar o gráfico: {str(e)}</p>
+                <p>Ticker: {ticker}</p>
+                <p>Shape dos dados: {df.shape if df is not None else 'N/A'}</p>
+            </div>
+            """
 
     def get_analysis_data(self, df, ticker, prediction_days, metrics):
         """Retorna os dados para análise em cards"""
