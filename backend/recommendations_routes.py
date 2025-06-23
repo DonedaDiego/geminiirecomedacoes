@@ -805,7 +805,184 @@ def generate_rebalance_recommendations():
 
 # ===== FUNÇÃO PARA REGISTRAR O BLUEPRINT =====
 
+# ===== ENDPOINTS PARA USUÁRIOS FINAIS =====
 
+@recommendations_bp.route('/user/my-portfolios', methods=['GET'])
+@require_token
+def get_user_portfolios():
+    """Buscar carteiras que o usuário tem acesso"""
+    try:
+        # Extrair user_id do token
+        auth_header = request.headers.get('Authorization')
+        token = auth_header.replace('Bearer ', '')
+        user_data = verify_token(token)
+        user_id = user_data['user_id']
+        
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # Buscar carteiras do usuário
+        cursor.execute("""
+            SELECT up.portfolio_name, p.display_name, p.description, up.granted_at
+            FROM user_portfolios up
+            JOIN portfolios p ON up.portfolio_name = p.name
+            WHERE up.user_id = %s AND up.is_active = true
+            ORDER BY p.display_name
+        """, (user_id,))
+        
+        portfolios = []
+        for row in cursor.fetchall():
+            portfolios.append({
+                'name': row[0],
+                'display_name': row[1],
+                'description': row[2],
+                'granted_at': row[3].isoformat() if row[3] else None
+            })
+        
+        cursor.close()
+        conn.close()
+        
+        return jsonify({
+            'success': True,
+            'portfolios': portfolios
+        })
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@recommendations_bp.route('/user/portfolio/<portfolio_name>/recommendations', methods=['GET'])
+@require_token
+def get_user_portfolio_recommendations_detailed(portfolio_name):
+    """Buscar recomendações detalhadas de uma carteira para o usuário"""
+    try:
+        # Extrair user_id do token
+        auth_header = request.headers.get('Authorization')
+        token = auth_header.replace('Bearer ', '')
+        user_data = verify_token(token)
+        user_id = user_data['user_id']
+        
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # Verificar se usuário tem acesso a esta carteira
+        cursor.execute("""
+            SELECT id FROM user_portfolios 
+            WHERE user_id = %s AND portfolio_name = %s AND is_active = true
+        """, (user_id, portfolio_name))
+        
+        if not cursor.fetchone():
+            cursor.close()
+            conn.close()
+            return jsonify({'success': False, 'error': 'Acesso negado a esta carteira'}), 403
+        
+        # Buscar recomendações ativas
+        cursor.execute("""
+            SELECT 
+                ticker, action_type, target_weight, 
+                recommendation_date, reason, price_target, current_price
+            FROM portfolio_recommendations 
+            WHERE portfolio_name = %s AND is_active = true
+            ORDER BY recommendation_date DESC
+            LIMIT 20
+        """, (portfolio_name,))
+        
+        recommendations = []
+        for row in cursor.fetchall():
+            ticker = row[0]
+            company_info = get_company_info(ticker)
+            
+            recommendations.append({
+                'ticker': ticker,
+                'action_type': row[1],
+                'target_weight': float(row[2]) if row[2] else None,
+                'recommendation_date': row[3].isoformat() if row[3] else None,
+                'reason': row[4],
+                'price_target': float(row[5]) if row[5] else None,
+                'current_price': float(row[6]) if row[6] else None,
+                'company_name': company_info['name'],
+                'company_description': company_info['description'],
+                'company_sector': company_info['sector']
+            })
+        
+        cursor.close()
+        conn.close()
+        
+        return jsonify({
+            'success': True,
+            'portfolio_name': portfolio_name,
+            'recommendations': recommendations
+        })
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@recommendations_bp.route('/user/portfolio/<portfolio_name>/assets', methods=['GET'])
+@require_token  
+def get_user_portfolio_assets(portfolio_name):
+    """Buscar ativos de uma carteira para o usuário"""
+    try:
+        # Extrair user_id do token
+        auth_header = request.headers.get('Authorization')
+        token = auth_header.replace('Bearer ', '')
+        user_data = verify_token(token)
+        user_id = user_data['user_id']
+        
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # Verificar acesso
+        cursor.execute("""
+            SELECT id FROM user_portfolios 
+            WHERE user_id = %s AND portfolio_name = %s AND is_active = true
+        """, (user_id, portfolio_name))
+        
+        if not cursor.fetchone():
+            cursor.close()
+            conn.close()
+            return jsonify({'success': False, 'error': 'Acesso negado a esta carteira'}), 403
+        
+        # Buscar ativos da carteira
+        cursor.execute("""
+            SELECT ticker, weight, sector, entry_price, current_price, target_price, entry_date
+            FROM portfolio_assets 
+            WHERE portfolio_name = %s AND is_active = true
+            ORDER BY weight DESC
+        """, (portfolio_name,))
+        
+        assets = []
+        total_weight = 0
+        
+        for row in cursor.fetchall():
+            ticker = row[0]
+            weight = float(row[1])
+            company_info = get_company_info(ticker)
+            
+            assets.append({
+                'ticker': ticker,
+                'weight': weight,
+                'sector': row[2],
+                'entry_price': float(row[3]) if row[3] else 0,
+                'current_price': float(row[4]) if row[4] else 0,
+                'target_price': float(row[5]) if row[5] else 0,
+                'entry_date': row[6].isoformat() if row[6] else None,
+                'company_name': company_info['name'],
+                'company_description': company_info['description']
+            })
+            
+            total_weight += weight
+        
+        cursor.close()
+        conn.close()
+        
+        return jsonify({
+            'success': True,
+            'portfolio_name': portfolio_name,
+            'assets': assets,
+            'total_weight': total_weight
+        })
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 
 

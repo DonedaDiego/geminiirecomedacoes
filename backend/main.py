@@ -346,10 +346,6 @@ def rsl_page():
 def long_short():
     return send_from_directory('../frontend', 'long-short.html')
 
-@app.route('/relatorios')
-@app.route('/relatorios.html')
-def relatorios():
-    return send_from_directory('../frontend', 'relatorios.html') if os.path.exists('../frontend/relatorios.html') else "<h1>Relatórios - Em construção</h1>"
 
 # Servir assets
 @app.route('/logo.png')
@@ -374,6 +370,19 @@ def politica_privacidade():
 @app.route('/termos-de-uso.html')
 def termos_uso():
     return send_from_directory('../frontend', 'termos-de-uso.html')
+
+@app.route('/analises')
+@app.route('/analises.html')
+def analises():
+    return send_from_directory('../frontend', 'analises.html')
+
+@app.route('/relatorios')
+@app.route('/relatorios.html')
+def relatorios():
+    try:
+        return send_from_directory('../frontend', 'relatorios.html')
+    except:
+        return "<h1>Relatórios - Em construção</h1>"
 
 # ===== PÁGINAS DE RETORNO DO PAGAMENTO =====
 

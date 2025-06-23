@@ -150,11 +150,9 @@ def create_checkout_function():
         plan = data.get('plan', 'pro')
         cycle = data.get('cycle', 'monthly')
         customer_email = data.get('customer_email', 'cliente@geminii.com.br')  # Email padrão se não fornecido
-        
-        print(f"🛒 CRIANDO CHECKOUT:")
-        print(f"  📋 Plano: {plan}")
-        print(f"  🔄 Ciclo: {cycle}")
-        print(f"  📧 Email: {customer_email}")
+        discounted_price = data.get('discounted_price')  
+        coupon_code = data.get('coupon_code')
+    
         
         # Validar plano
         if plan not in PLANS:
@@ -169,13 +167,20 @@ def create_checkout_function():
         
         # Determinar preço baseado no ciclo
         if cycle == 'annual':
-            price = plan_data["annual_price"]
+            original_price = plan_data["annual_price"]
             cycle_display = "Anual"
         else:
-            price = plan_data["monthly_price"]
+            original_price = plan_data["monthly_price"]
             cycle_display = "Mensal"
-        
-        print(f"💰 Preço calculado: R$ {price} ({cycle_display})")
+
+        # ✅ USAR PREÇO COM DESCONTO SE FORNECIDO
+        if discounted_price is not None:
+            price = float(discounted_price)
+            print(f"🎫 Cupom aplicado: {coupon_code}")
+            print(f"💰 Preço original: R$ {original_price}")
+            print(f"💰 Preço com desconto: R$ {price}")
+        else:
+            price = original_price
         
         # Determinar URLs de retorno baseado no ambiente
         if os.environ.get('DATABASE_URL'):
@@ -183,12 +188,18 @@ def create_checkout_function():
         else:
             base_url = "http://localhost:5000"
         
+        if coupon_code:
+            item_title = f"Geminii {plan_name} - {cycle_display} (Cupom: {coupon_code})"
+        else:
+            item_title = f"Geminii {plan_name} - {cycle_display}"    
+            
+        
         # ✅ ESTRUTURA CORRETA BASEADA NO SEU TESTE QUE FUNCIONOU
         preference_data = {
             "items": [
                 {
                     "id": plan_id,
-                    "title": f"Geminii {plan_name} - {cycle_display}",
+                    "title": item_title,
                     "quantity": 1,
                     "currency_id": "BRL",
                     "unit_price": float(price)
@@ -207,14 +218,6 @@ def create_checkout_function():
             preference_data["payer"] = {
                 "email": customer_email
             }
-        
-        print(f"🔗 URLs de retorno configuradas:")
-        print(f"  ✅ Success: {base_url}/payment/success")
-        print(f"  ⏳ Pending: {base_url}/payment/pending")
-        print(f"  ❌ Failure: {base_url}/payment/failure")
-        
-        print("🚀 Criando preferência no Mercado Pago...")
-        print(f"📊 Dados da preferência: {preference_data}")
         
         # ✅ USAR EXATAMENTE O MÉTODO QUE FUNCIONOU NO TESTE
         preference_response = preference_client.create(preference_data)
