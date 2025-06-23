@@ -53,7 +53,7 @@ class SwingTradeMachineLearningService:
         print("Dados normalizados com sucesso")
         return df
 
-    def download_data(self, ticker, start_date='2010-01-01', end_date='2025-12-31'):
+    def download_data(self, ticker, start_date='2010-01-01', end_date='2024-12-31'):
         """Download dos dados históricos"""
         try:
             ticker_symbol = ticker.upper() + ".SA" if not ticker.endswith('.SA') else ticker.upper()
@@ -434,11 +434,20 @@ Sinal histórico: {'COMPRA' if historical_prediction == 1 else 'VENDA'}
         print("Criando gráfico...")
         
         try:
+            # DEBUG: Verificar dados básicos
+            print(f"DEBUG: df.shape = {df.shape}")
+            print(f"DEBUG: df.columns = {df.columns.tolist()}")
+            print(f"DEBUG: prediction column exists = {'prediction' in df.columns}")
+            print(f"DEBUG: Close column exists = {'Close' in df.columns}")
+            
             # Valores atuais
             today_price = df['Close'].iloc[-1]
             today_prediction = df['prediction'].iloc[-1]
             current_atr = df['ATR'].iloc[-1]
             current_vol = df['Volatility_60_Pct'].iloc[-1]
+
+            print(f"DEBUG: today_price = {today_price}")
+            print(f"DEBUG: today_prediction = {today_prediction}")
 
             # Cálculo dos níveis atuais
             stop_loss = min(max(current_atr / today_price * self.ATR_FACTOR, self.MIN_STOP), self.MAX_STOP)
@@ -451,6 +460,9 @@ Sinal histórico: {'COMPRA' if historical_prediction == 1 else 'VENDA'}
                 take_profit_price = today_price * (1 - take_profit)
                 stop_loss_price = today_price * (1 + stop_loss)
 
+            print(f"DEBUG: stop_loss_price = {stop_loss_price}")
+            print(f"DEBUG: take_profit_price = {take_profit_price}")
+
             # Criação do gráfico - EXATAMENTE como o MetaTrader
             fig = make_subplots(
                 rows=2, cols=1, 
@@ -459,6 +471,8 @@ Sinal histórico: {'COMPRA' if historical_prediction == 1 else 'VENDA'}
                 row_heights=[0.75, 0.25],
                 subplot_titles=('Preço, Previsões e Níveis', 'Sinais de Trading')
             )
+
+            print("DEBUG: Subplots criados")
 
             # Gráfico de preços - linha principal
             fig.add_trace(
@@ -472,8 +486,14 @@ Sinal histórico: {'COMPRA' if historical_prediction == 1 else 'VENDA'}
                 row=1, col=1
             )
 
+            print("DEBUG: Linha de preço adicionada")
+
             # Linhas coloridas das previsões - EXATAMENTE como o MetaTrader
-            for i in range(1, len(df)):
+            print(f"DEBUG: Adicionando {len(df)} linhas coloridas...")
+            for i in range(1, min(len(df), 1000)):  # Limitar para não sobrecarregar
+                if i % 100 == 0:
+                    print(f"DEBUG: Processando linha {i}/{len(df)}")
+                
                 fig.add_trace(
                     go.Scatter(
                         x=[df.index[i-1], df.index[i]], 
@@ -484,6 +504,8 @@ Sinal histórico: {'COMPRA' if historical_prediction == 1 else 'VENDA'}
                     ),
                     row=1, col=1
                 )
+
+            print("DEBUG: Linhas coloridas adicionadas")
 
             # Níveis de stop e take atuais - EXATAMENTE como o MetaTrader
             if today_prediction == 1:
@@ -508,6 +530,8 @@ Sinal histórico: {'COMPRA' if historical_prediction == 1 else 'VENDA'}
                     row=1, col=1
                 )
 
+            print("DEBUG: Níveis de stop/take adicionados")
+
             # Sinais - EXATAMENTE como o MetaTrader
             fig.add_trace(
                 go.Scatter(
@@ -521,6 +545,8 @@ Sinal histórico: {'COMPRA' if historical_prediction == 1 else 'VENDA'}
                 ),
                 row=2, col=1
             )
+
+            print("DEBUG: Sinais adicionados")
 
             # Layout - EXATAMENTE como o MetaTrader
             fig.update_layout(
@@ -542,8 +568,10 @@ Sinal histórico: {'COMPRA' if historical_prediction == 1 else 'VENDA'}
                 )
             )
 
+            print("DEBUG: Layout configurado")
+
             # Atualizar eixos - EXATAMENTE como o MetaTrader
-            for i in range(1, 3):  # Corrigido para 1, 3 (era 1, 4 no MetaTrader)
+            for i in range(1, 3):
                 fig.update_xaxes(
                     gridcolor='rgba(70, 70, 120, 0.2)',
                     zerolinecolor='rgba(70, 70, 120, 0.2)',
@@ -591,8 +619,8 @@ Sinal histórico: {'COMPRA' if historical_prediction == 1 else 'VENDA'}
                 align='right'
             )
 
-            print("Gráfico criado com sucesso - versão MetaTrader")
-            
+            print("DEBUG: Anotações adicionadas")
+
             # Retornar HTML com configuração explícita
             html_output = fig.to_html(
                 include_plotlyjs='cdn',
@@ -611,10 +639,13 @@ Sinal histórico: {'COMPRA' if historical_prediction == 1 else 'VENDA'}
                 }
             )
             
+            print(f"DEBUG: HTML gerado com {len(html_output)} caracteres")
+            print("DEBUG: Gráfico criado com sucesso - versão MetaTrader")
+            
             return html_output
             
         except Exception as e:
-            print(f"Erro ao criar gráfico MetaTrader: {e}")
+            print(f"ERRO DETALHADO no create_chart: {e}")
             import traceback
             traceback.print_exc()
             return self.create_fallback_chart(df, ticker)
