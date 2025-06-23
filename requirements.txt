@@ -12,3 +12,6 @@ statsmodels
 pandas
 numpy
 mercadopago
+scikit-learn
+xgboost
+plotly

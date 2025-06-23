@@ -106,16 +106,16 @@
     <div class="max-w-7xl mx-auto flex items-center justify-between">
       <div class="flex items-center space-x-8">
         <div class="flex items-center space-x-3">
-          <div class="w-8 h-8 bg-gradient-to-r from-primary to-secondary rounded-lg"></div>
+          <img src="assets/logo.png" alt="Geminii Logo" class="w-8 h-8 rounded-lg" onerror="this.src='/assets/logo.png'; this.onerror=null;">
           <span class="text-xl font-bold text-white">Geminii</span>
         </div>
         <div class="hidden md:flex items-center space-x-6">
           <a href="dashboard.html" class="nav-active transition-colors font-medium">Dashboard</a>
-          <a href="analises.html" class="text-gray-300 hover:text-primary transition-colors">Análises</a>
-          <a href="relatorios.html" class="text-gray-300 hover:text-primary transition-colors">Relatórios</a>
+          <a href="analises.html" class="text-gray-300 hover:text-primary transition-colors">Smart Carteiras</a>
+          <a href="swing-trade-machine-learning.html" class="text-gray-300 hover:text-primary transition-colors">Machine Learning</a>
         </div>
       </div>
-      
+  
       <div class="flex items-center space-x-4">
         <div id="statusIndicator" class="flex items-center space-x-2">
           <div class="w-2 h-2 bg-success rounded-full animate-pulse"></div>
@@ -127,6 +127,7 @@
       </div>
     </div>
   </nav>
+  
 
   <!-- Main Content -->
   <main class="pt-20 px-6 pb-12">
@@ -270,14 +271,14 @@
             <span class="absolute top-4 right-4 bg-warning text-white text-xs px-2 py-1 rounded-full font-bold">PRO</span>
           </div>
 
-          <a href="relatorios.html" class="bg-gradient-to-r from-primary/10 to-primary/5 hover:from-primary/20 hover:to-primary/10 border border-primary/20 rounded-xl p-6 transition-all group relative">
+          <a href="analises.html" class="bg-gradient-to-r from-primary/10 to-primary/5 hover:from-primary/20 hover:to-primary/10 border border-primary/20 rounded-xl p-6 transition-all group relative">
             <div class="flex items-center gap-4">
               <div class="w-12 h-12 bg-primary/20 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
                 <i class="fas fa-file-chart-line text-primary text-lg"></i>
               </div>
               <div>
-                <h3 class="font-semibold text-white">Relatórios Premium</h3>
-                <p class="text-sm text-gray-300">Análises especializadas</p>
+                <h3 class="font-semibold text-white">Smart Carteiras</h3>
+                <p class="text-sm text-gray-300">Análises especializadas com Machine Learning</p>
               </div>
             </div>
             <span class="absolute top-4 right-4 bg-secondary text-white text-xs px-2 py-1 rounded-full font-bold">PREMIUM</span>
@@ -309,6 +310,20 @@
             <span class="absolute top-4 right-4 bg-warning text-white text-xs px-2 py-1 rounded-full font-bold">PRO</span>
           </div>
 
+
+          <div onclick="showPremiumFeature('Swing Trade ML')" class="bg-gradient-to-r from-purple-600/10 to-purple-600/5 hover:from-purple-600/20 hover:to-purple-600/10 border border-purple-600/20 rounded-xl p-6 transition-all group cursor-pointer relative">
+            <div class="flex items-center gap-4">
+              <div class="w-12 h-12 bg-purple-600/20 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                <i class="fas fa-brain text-purple-400 text-lg"></i>
+              </div>
+              <div>
+                <h3 class="font-semibold text-white">Swing Trade ML</h3>
+                <p class="text-sm text-gray-300">IA Preditiva + Stops Dinâmicos</p>
+              </div>
+            </div>
+            <span class="absolute top-4 right-4 bg-purple-600 text-white text-xs px-2 py-1 rounded-full font-bold">ESTRATÉGICO</span>
+          </div>
+
           <a href="planos.html" class="bg-gradient-to-r from-primary to-secondary text-white rounded-xl p-6 transition-all group hover:shadow-lg">
             <div class="flex items-center gap-4">
               <div class="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
@@ -323,28 +338,7 @@
         </div>
       </div>
 
-      <!-- Welcome Message -->
-      <div class="card rounded-2xl p-8 fade-in text-center">
-        <div class="max-w-2xl mx-auto">
-          <i class="fas fa-rocket text-6xl text-primary mb-6"></i>
-          <h2 class="text-3xl font-bold text-white mb-4">Bem-vindo ao Geminii Tech!</h2>
-          <p class="text-gray-300 text-lg mb-6">
-            Explore suas análises e recomendações de investimento nas abas acima.
-            Acesse <strong>Análises</strong> para ver suas carteiras e recomendações personalizadas.
-          </p>
-          <div class="flex flex-col sm:flex-row gap-4 justify-center">
-            <a href="analises.html" class="btn-primary px-8 py-3 rounded-xl font-semibold inline-block">
-              <i class="fas fa-chart-line mr-2"></i>
-              Ver Análises
-            </a>
-            <a href="relatorios.html" class="bg-gray-700 hover:bg-gray-600 text-white px-8 py-3 rounded-xl font-semibold transition-colors inline-block">
-              <i class="fas fa-file-alt mr-2"></i>
-              Relatórios
-            </a>
-          </div>
-        </div>
-      </div>
-    </div>
+      
   </main>
 
   <script>
@@ -472,7 +466,13 @@
           window.location.href = 'opcoes.html';
           return;
         }
-        
+
+        if (featureName === 'Swing Trade ML') {
+          window.location.href = 'swing-trade-machine-learning.html';
+          return;
+        }
+
+                
         // Para outros recursos ainda não implementados
         alert(`🎉 ${featureName}\n\nFuncionalidade disponível em seu plano!\nEm breve será implementada.`);
         

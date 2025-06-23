@@ -22,6 +22,8 @@ from recommendations_routes import get_recommendations_blueprint
 from mercadopago_routes import get_mercadopago_blueprint
 from admin_routes import get_admin_blueprint
 from opcoes_routes import opcoes_bp
+from swing_trade_ml_routes import swing_trade_ml_bp
+from swing_trade_ml_routes import get_swing_trade_ml_blueprint
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -73,8 +75,8 @@ app.register_blueprint(long_short_bp)
 rsl_bp = get_rsl_blueprint()
 app.register_blueprint(rsl_bp)
 recommendations_bp = get_recommendations_blueprint()
-
 app.register_blueprint(recommendations_bp)
+app.register_blueprint(get_swing_trade_ml_blueprint())
 
 # Registrar blueprint do Mercado Pago apenas se disponível
 if MP_AVAILABLE and mercadopago_bp:
@@ -396,7 +398,13 @@ def relatorios():
 @app.route('/opcoes')
 @app.route('/opcoes.html')
 def opcoes_page():
-    return send_from_directory('../frontend', 'opcoes.html')    
+    return send_from_directory('../frontend', 'opcoes.html')   
+
+
+@app.route('/swing-trade-machine-learning')
+@app.route('/swing-trade-machine-learning.html')
+def swing_trade_ml_page():
+    return send_from_directory('../frontend', 'swing-trade-machine-learning.html')  
 
 # ===== PÁGINAS DE RETORNO DO PAGAMENTO =====
 
