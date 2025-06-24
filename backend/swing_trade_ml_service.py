@@ -53,7 +53,7 @@ class SwingTradeMachineLearningService:
         print("Dados normalizados com sucesso")
         return df
 
-    def download_data(self, ticker, start_date='2010-01-01', end_date='2024-12-31'):
+    def download_data(self, ticker, start_date='2010-01-01', end_date='2025-12-31'):
         """Download dos dados históricos"""
         try:
             ticker_symbol = ticker.upper() + ".SA" if not ticker.endswith('.SA') else ticker.upper()
@@ -849,6 +849,7 @@ Sinal histórico: {'COMPRA' if historical_prediction == 1 else 'VENDA'}
                 'success': True,
                 'chart_html': chart_html,
                 'analysis_data': analysis_data,
+                'dataframe' :  df,
                 'debug_info': {
                     'df_shape': df.shape,
                     'html_size': len(chart_html),

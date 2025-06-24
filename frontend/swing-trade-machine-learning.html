@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Swing Trade Machine Learning - Geminii Tech</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/date-fns@2.29.3/index.min.js"></script>
   <script>
     tailwind.config = {
       theme: {
@@ -251,14 +253,7 @@
             <i class="fas fa-chart-line mr-2"></i>Análise Gráfica com Previsões
           </h3>
           <div class="chart-container">
-            <div id="chartDiv">
-              <div class="flex items-center justify-center h-full">
-                <div class="text-center">
-                  <div class="spinner mx-auto mb-4"></div>
-                  <p class="text-gray-400">Carregando gráfico...</p>
-                </div>
-              </div>
-            </div>
+            <canvas id="tradingChart" width="100%" height="400"></canvas>
           </div>
         </div>
 
@@ -404,19 +399,38 @@
   </div>
 
   <script>
+    console.log('=== SCRIPT INICIANDO ===');
+    
     // Configurações
     const API_BASE = '/api/swing-trade-ml';
     
     // Elementos DOM
-    const ticker = document.getElementById('ticker');
-    const predictionDays = document.getElementById('predictionDays');
-    const analyzeBtn = document.getElementById('analyzeBtn');
-    const statusMsg = document.getElementById('statusMsg');
-    const resultsSection = document.getElementById('resultsSection');
-    const tickerSuggestions = document.getElementById('tickerSuggestions');
+    let ticker, predictionDays, analyzeBtn, statusMsg, resultsSection, tickerSuggestions;
+    let tradingChart = null;
+    
+    // Inicializar elementos após DOM carregar
+    function initElements() {
+      ticker = document.getElementById('ticker');
+      predictionDays = document.getElementById('predictionDays');
+      analyzeBtn = document.getElementById('analyzeBtn');
+      statusMsg = document.getElementById('statusMsg');
+      resultsSection = document.getElementById('resultsSection');
+      tickerSuggestions = document.getElementById('tickerSuggestions');
+      
+      console.log('Elementos inicializados:', {
+        ticker: !!ticker,
+        analyzeBtn: !!analyzeBtn,
+        statusMsg: !!statusMsg,
+        resultsSection: !!resultsSection
+      });
+    }
     
     // Funções utilitárias
     function showStatus(message, type = 'info') {
+      console.log('Status:', message, '(', type, ')');
+      
+      if (!statusMsg) return;
+      
       const bgClasses = {
         success: 'bg-green-600 bg-opacity-20 border-green-500 border-opacity-30 border',
         error: 'bg-red-600 bg-opacity-20 border-red-500 border-opacity-30 border',
@@ -433,6 +447,8 @@
     }
     
     function setLoading(element, loading) {
+      if (!element) return;
+      
       if (loading) {
         element.classList.add('loading');
         element.innerHTML = '<span class="spinner mr-2"></span>Processando...';
@@ -450,13 +466,195 @@
     }
 
     function selectTicker(symbol) {
-      ticker.value = symbol;
-      ticker.focus();
+      if (ticker) {
+        ticker.value = symbol;
+        ticker.focus();
+      }
+    }
+
+    // Função para criar gráfico com Chart.js
+    function createTradingChart(chartData) {
+      console.log('=== CRIANDO GRÁFICO CHART.JS ===');
+      console.log('Dados recebidos:', chartData);
+      
+      const canvas = document.getElementById('tradingChart');
+      if (!canvas) {
+        console.error('Canvas não encontrado!');
+        return;
+      }
+      
+      // Destruir gráfico anterior se existir
+      if (tradingChart) {
+        tradingChart.destroy();
+      }
+      
+      // Usar dados reais se disponíveis, senão usar dados de exemplo
+      let labels, priceData, predictionData, stopLossData, takeProfitData;
+      
+      if (chartData && chartData.labels && chartData.prices) {
+        console.log('Usando dados reais do backend');
+        labels = chartData.labels;
+        priceData = chartData.prices;
+        predictionData = chartData.predictions || [];
+        stopLossData = chartData.stop_loss || [];
+        takeProfitData = chartData.take_profit || [];
+      } else {
+        console.log('Usando dados de exemplo');
+        // Gerar dados de exemplo para teste
+        labels = [];
+        priceData = [];
+        predictionData = [];
+        
+        const today = new Date();
+        for (let i = 252; i >= 0; i--) {
+          const date = new Date(today);
+          date.setDate(date.getDate() - i);
+          labels.push(date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }));
+          
+          const basePrice = 30 + Math.sin(i * 0.1) * 5 + Math.random() * 2;
+          priceData.push(basePrice);
+          
+          // Alternar entre compra (1) e venda (0) para exemplo
+          predictionData.push(Math.random() > 0.6 ? 1 : 0);
+        }
+      }
+      
+      console.log('Dados preparados:', { 
+        labels: labels.length, 
+        priceData: priceData.length,
+        predictionData: predictionData.length 
+      });
+      
+      const ctx = canvas.getContext('2d');
+      
+      // Criar datasets para segmentos coloridos
+      const datasets = [];
+      
+      // Criar segmentos de linha coloridos baseados nas predições
+      for (let i = 1; i < priceData.length; i++) {
+        const isCompra = predictionData[i] === 1;
+        const color = isCompra ? '#10b981' : '#ef4444'; // Verde para compra, vermelho para venda
+        
+        datasets.push({
+          label: '', // Sem label para não aparecer na legenda
+          data: [
+            { x: labels[i-1], y: priceData[i-1] },
+            { x: labels[i], y: priceData[i] }
+          ],
+          borderColor: color,
+          backgroundColor: color,
+          borderWidth: 2,
+          pointRadius: 0,
+          pointHoverRadius: 0,
+          showLine: true,
+          tension: 0,
+          fill: false
+        });
+      }
+      
+      // Adicionar dataset invisível para a legenda
+      datasets.push({
+        label: 'Sinal de Compra',
+        data: [],
+        borderColor: '#10b981',
+        backgroundColor: '#10b981',
+        borderWidth: 2
+      });
+      
+      datasets.push({
+        label: 'Sinal de Venda', 
+        data: [],
+        borderColor: '#ef4444',
+        backgroundColor: '#ef4444',
+        borderWidth: 2
+      });
+      
+      tradingChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: datasets
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: {
+            intersect: false,
+            mode: 'index'
+          },
+          plugins: {
+            legend: {
+              labels: {
+                color: '#ffffff',
+                font: {
+                  size: 12
+                },
+                usePointStyle: true,
+                filter: function(item, chart) {
+                  // Mostrar apenas as legendas nomeadas
+                  return item.text !== '';
+                }
+              }
+            },
+            tooltip: {
+              backgroundColor: 'rgba(0, 0, 0, 0.8)',
+              titleColor: '#ffffff',
+              bodyColor: '#ffffff',
+              borderColor: '#ba39af',
+              borderWidth: 1,
+              filter: function(tooltipItem) {
+                // Mostrar tooltip apenas para datasets com label
+                return tooltipItem.dataset.label && tooltipItem.dataset.label !== '';
+              },
+              callbacks: {
+                label: function(context) {
+                  const label = context.dataset.label || '';
+                  if (label === 'Sinal de Compra' || label === 'Sinal de Venda') {
+                    // Para os datasets de legenda, mostrar o preço do ponto mais próximo
+                    const pointIndex = context.dataIndex;
+                    if (priceData[pointIndex]) {
+                      return 'Preço: R$ ' + priceData[pointIndex].toFixed(2);
+                    }
+                  }
+                  return null;
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              ticks: {
+                color: '#9ca3af',
+                maxTicksLimit: 10
+              },
+              grid: {
+                color: 'rgba(255, 255, 255, 0.1)'
+              }
+            },
+            y: {
+              ticks: {
+                color: '#9ca3af',
+                callback: function(value) {
+                  return 'R$ ' + value.toFixed(2);
+                }
+              },
+              grid: {
+                color: 'rgba(255, 255, 255, 0.1)'
+              }
+            }
+          }
+        }
+      });
+      
+      console.log('Gráfico Chart.js criado com sucesso!');
     }
 
     // Carregar sugestões de tickers
     async function loadTickerSuggestions() {
+      if (!tickerSuggestions) return;
+      
       try {
+        console.log('Carregando sugestões de tickers...');
         const response = await fetch(`${API_BASE}/tickers`);
         const data = await response.json();
         
@@ -469,19 +667,31 @@
             suggestion.onclick = () => selectTicker(tickerData.symbol);
             tickerSuggestions.appendChild(suggestion);
           });
+          console.log('Sugestões carregadas:', data.tickers.length);
         } else {
           tickerSuggestions.innerHTML = '<span class="text-red-400">Erro ao carregar sugestões</span>';
         }
       } catch (error) {
         console.error('Erro ao carregar sugestões:', error);
-        tickerSuggestions.innerHTML = '<span class="text-red-400">Erro ao carregar sugestões</span>';
+        if (tickerSuggestions) {
+          tickerSuggestions.innerHTML = '<span class="text-red-400">Erro ao carregar sugestões</span>';
+        }
       }
     }
 
     // Executar análise
     async function runAnalysis() {
+      console.log('=== INICIANDO ANÁLISE ===');
+      
+      if (!ticker || !predictionDays) {
+        console.error('Elementos não encontrados');
+        return;
+      }
+      
       const tickerValue = ticker.value.trim().toUpperCase();
       const predictionDaysValue = parseInt(predictionDays.value);
+
+      console.log('Parâmetros:', { tickerValue, predictionDaysValue });
 
       if (!tickerValue) {
         showStatus('Por favor, digite o código da ação', 'error');
@@ -501,6 +711,8 @@
       showStatus('Executando análise de Machine Learning... Isso pode levar alguns minutos', 'info');
 
       try {
+        console.log('Fazendo requisição para:', `${API_BASE}/analysis`);
+        
         const response = await fetch(`${API_BASE}/analysis`, {
           method: 'POST',
           headers: {
@@ -513,10 +725,15 @@
           })
         });
 
+        console.log('Response status:', response.status);
+        
         const data = await response.json();
+        console.log('=== DADOS RECEBIDOS ===');
+        console.log('Success:', data.success);
+        console.log('Chart data:', data.chart_data);
         
         if (data.success) {
-          displayResults(data.analysis_data, data.chart_html);
+          displayResults(data.analysis_data, data.chart_data);
           showStatus(`Análise de ${tickerValue} concluída com sucesso!`, 'success');
         } else {
           if (response.status === 401) {
@@ -530,117 +747,157 @@
         }
       } catch (error) {
         showStatus('Erro ao executar análise: ' + error.message, 'error');
-        console.error('Erro:', error);
+        console.error('Erro na requisição:', error);
       }
 
       setLoading(analyzeBtn, false);
     }
 
     // Exibir resultados
-    function displayResults(analysisData, chartHtml) {
-      console.log('=== DEBUG FRONTEND ===');
-      console.log('analysisData recebido:', analysisData);
-      console.log('chartHtml tamanho:', chartHtml ? chartHtml.length : 'NULL');
-      console.log('chartHtml primeiros 200 chars:', chartHtml ? chartHtml.substring(0, 200) : 'NULL');
+    function displayResults(analysisData, chartData) {
+      console.log('=== DISPLAY RESULTS ===');
+      console.log('analysisData:', analysisData);
+      console.log('chartData:', chartData);
       
-      const chartDiv = document.getElementById('chartDiv');
-      console.log('chartDiv element:', chartDiv);
+      // Criar o gráfico primeiro
+      createTradingChart(chartData);
       
-      if (!chartDiv) {
-        console.error('ERRO: elemento chartDiv não encontrado!');
-        return;
+      // Preencher dados dos cards
+      try {
+        // Sinal de Trading
+        const tradingSignal = document.getElementById('tradingSignal');
+        if (tradingSignal && analysisData) {
+          const isCompra = analysisData.direcao === 'COMPRA';
+          tradingSignal.innerHTML = `
+            <div class="signal-badge ${isCompra ? 'signal-buy' : 'signal-sell'}">
+              <i class="fas fa-${isCompra ? 'arrow-up' : 'arrow-down'} mr-2"></i>
+              ${analysisData.direcao}
+            </div>
+          `;
+        }
+
+        // Preços
+        const currentPrice = document.getElementById('currentPrice');
+        const takeProfitPrice = document.getElementById('takeProfitPrice');
+        const stopLossPrice = document.getElementById('stopLossPrice');
+        
+        if (currentPrice && analysisData) currentPrice.textContent = formatCurrency(analysisData.preco_atual);
+        if (takeProfitPrice && analysisData) takeProfitPrice.textContent = formatCurrency(analysisData.take_profit_price);
+        if (stopLossPrice && analysisData) stopLossPrice.textContent = formatCurrency(analysisData.stop_loss_price);
+
+        // Níveis
+        const takeProfitPct = document.getElementById('takeProfitPct');
+        const stopLossPct = document.getElementById('stopLossPct');
+        
+        if (takeProfitPct && analysisData) takeProfitPct.textContent = `${analysisData.take_profit_pct.toFixed(1)}%`;
+        if (stopLossPct && analysisData) stopLossPct.textContent = `${analysisData.stop_loss_pct.toFixed(1)}%`;
+
+        // Volatilidade
+        const atrPct = document.getElementById('atrPct');
+        const vol60d = document.getElementById('vol60d');
+        const atrMedio = document.getElementById('atrMedio');
+        const volMaxima = document.getElementById('volMaxima');
+        
+        if (atrPct && analysisData) atrPct.textContent = `${analysisData.atr_pct.toFixed(2)}%`;
+        if (vol60d && analysisData) vol60d.textContent = `${analysisData.volatilidade_60d.toFixed(2)}%`;
+        if (atrMedio && analysisData) atrMedio.textContent = `${analysisData.atr_medio.toFixed(2)}%`;
+        if (volMaxima && analysisData) volMaxima.textContent = `${analysisData.vol_maxima_60d.toFixed(2)}%`;
+
+        // Análise Histórica
+        const dataHistorica = document.getElementById('dataHistorica');
+        const sinalHistoricoEl = document.getElementById('sinalHistorico');
+        const precoHistorico = document.getElementById('precoHistorico');
+        const resultadoHistorico = document.getElementById('resultadoHistorico');
+        const movimentoPreco = document.getElementById('movimentoPreco');
+        
+        if (dataHistorica && analysisData) dataHistorica.textContent = analysisData.data_historica;
+        
+        if (sinalHistoricoEl && analysisData) {
+          const isCompraHistorico = analysisData.sinal_historico === 'COMPRA';
+          sinalHistoricoEl.innerHTML = `
+            <span class="signal-badge ${isCompraHistorico ? 'signal-buy' : 'signal-sell'}" style="padding: 4px 8px; font-size: 10px;">
+              ${analysisData.sinal_historico}
+            </span>
+          `;
+        }
+        
+        if (precoHistorico && analysisData) precoHistorico.textContent = formatCurrency(analysisData.preco_historico);
+        
+        if (resultadoHistorico && analysisData) {
+          const isLucro = analysisData.resultado_status === 'LUCRO';
+          resultadoHistorico.innerHTML = `
+            <span class="${isLucro ? 'text-green-400' : 'text-red-400'} font-bold">
+              ${analysisData.resultado_historico.toFixed(2)}% ${analysisData.resultado_status}
+            </span>
+          `;
+        }
+        
+        if (movimentoPreco && analysisData) {
+          movimentoPreco.textContent = `Preço ${analysisData.direcao_movimento} ${Math.abs(analysisData.variacao_percentual).toFixed(2)}%`;
+        }
+
+        // Performance do Modelo
+        const accuracy = document.getElementById('accuracy');
+        const precision = document.getElementById('precision');
+        const recall = document.getElementById('recall');
+        
+        if (accuracy && analysisData) accuracy.textContent = (analysisData.accuracy * 100).toFixed(1) + '%';
+        if (precision && analysisData) precision.textContent = (analysisData.precision * 100).toFixed(1) + '%';
+        if (recall && analysisData) recall.textContent = (analysisData.recall * 100).toFixed(1) + '%';
+
+        // Matriz de Confusão
+        const truePositives = document.getElementById('truePositives');
+        const falsePositives = document.getElementById('falsePositives');
+        const trueNegatives = document.getElementById('trueNegatives');
+        const falseNegatives = document.getElementById('falseNegatives');
+        
+        if (truePositives && analysisData) truePositives.textContent = analysisData.confusion_matrix.tp;
+        if (falsePositives && analysisData) falsePositives.textContent = analysisData.confusion_matrix.fp;
+        if (trueNegatives && analysisData) trueNegatives.textContent = analysisData.confusion_matrix.tn;
+        if (falseNegatives && analysisData) falseNegatives.textContent = analysisData.confusion_matrix.fn;
+
+        // Performance dos Stops
+        const stopLossMedio = document.getElementById('stopLossMedio');
+        const takeProfitMedio = document.getElementById('takeProfitMedio');
+        
+        if (stopLossMedio && analysisData) stopLossMedio.textContent = `${analysisData.stop_loss_medio.toFixed(2)}%`;
+        if (takeProfitMedio && analysisData) takeProfitMedio.textContent = `${analysisData.take_profit_medio.toFixed(2)}%`;
+
+        console.log('Cards preenchidos com sucesso');
+      } catch (error) {
+        console.error('Erro ao preencher cards:', error);
       }
 
-      chartDiv.innerHTML = '<div style="color: white; text-align: center; padding: 50px; background: red;">TESTE: Gráfico carregando...</div>';
-      console.log('Teste inserido no chartDiv');
-
-      // Sinal de Trading
-      const tradingSignal = document.getElementById('tradingSignal');
-      const isCompra = analysisData.direcao === 'COMPRA';
-      
-      tradingSignal.innerHTML = `
-        <div class="signal-badge ${isCompra ? 'signal-buy' : 'signal-sell'}">
-          <i class="fas fa-${isCompra ? 'arrow-up' : 'arrow-down'} mr-2"></i>
-          ${analysisData.direcao}
-        </div>
-      `;
-
-      // Preços
-      document.getElementById('currentPrice').textContent = formatCurrency(analysisData.preco_atual);
-      document.getElementById('takeProfitPrice').textContent = formatCurrency(analysisData.take_profit_price);
-      document.getElementById('stopLossPrice').textContent = formatCurrency(analysisData.stop_loss_price);
-
-      // Níveis
-      document.getElementById('takeProfitPct').textContent = `${analysisData.take_profit_pct.toFixed(1)}%`;
-      document.getElementById('stopLossPct').textContent = `${analysisData.stop_loss_pct.toFixed(1)}%`;
-
-      // Volatilidade
-      document.getElementById('atrPct').textContent = `${analysisData.atr_pct.toFixed(2)}%`;
-      document.getElementById('vol60d').textContent = `${analysisData.volatilidade_60d.toFixed(2)}%`;
-      document.getElementById('atrMedio').textContent = `${analysisData.atr_medio.toFixed(2)}%`;
-      document.getElementById('volMaxima').textContent = `${analysisData.vol_maxima_60d.toFixed(2)}%`;
-
-      // Análise Histórica
-      document.getElementById('dataHistorica').textContent = analysisData.data_historica;
-      
-      console.log('Inserindo gráfico no elemento:', document.getElementById('chartDiv'));
-
-      const sinalHistoricoEl = document.getElementById('sinalHistorico');
-      const isCompraHistorico = analysisData.sinal_historico === 'COMPRA';
-      sinalHistoricoEl.innerHTML = `
-        <span class="signal-badge ${isCompraHistorico ? 'signal-buy' : 'signal-sell'}" style="padding: 4px 8px; font-size: 10px;">
-          ${analysisData.sinal_historico}
-        </span>
-      `;
-      
-      document.getElementById('precoHistorico').textContent = formatCurrency(analysisData.preco_historico);
-      
-      const resultadoEl = document.getElementById('resultadoHistorico');
-      const isLucro = analysisData.resultado_status === 'LUCRO';
-      resultadoEl.innerHTML = `
-        <span class="${isLucro ? 'text-green-400' : 'text-red-400'} font-bold">
-          ${analysisData.resultado_historico.toFixed(2)}% ${analysisData.resultado_status}
-        </span>
-      `;
-      
-      document.getElementById('movimentoPreco').textContent = 
-        `Preço ${analysisData.direcao_movimento} ${Math.abs(analysisData.variacao_percentual).toFixed(2)}%`;
-
-      // Performance do Modelo
-      document.getElementById('accuracy').textContent = (analysisData.accuracy * 100).toFixed(1) + '%';
-      document.getElementById('precision').textContent = (analysisData.precision * 100).toFixed(1) + '%';
-      document.getElementById('recall').textContent = (analysisData.recall * 100).toFixed(1) + '%';
-
-      // Matriz de Confusão
-      document.getElementById('truePositives').textContent = analysisData.confusion_matrix.tp;
-      document.getElementById('falsePositives').textContent = analysisData.confusion_matrix.fp;
-      document.getElementById('trueNegatives').textContent = analysisData.confusion_matrix.tn;
-      document.getElementById('falseNegatives').textContent = analysisData.confusion_matrix.fn;
-
-      // Performance dos Stops
-      document.getElementById('stopLossMedio').textContent = `${analysisData.stop_loss_medio.toFixed(2)}%`;
-      document.getElementById('takeProfitMedio').textContent = `${analysisData.take_profit_medio.toFixed(2)}%`;
-
-      // Inserir o gráfico
-      document.getElementById('chartDiv').innerHTML = chartHtml;
-
       // Mostrar seção de resultados
-      resultsSection.style.display = 'block';
-      
-      // Scroll para os resultados
-      resultsSection.scrollIntoView({ 
-        behavior: 'smooth' 
-      });
+      if (resultsSection) {
+        resultsSection.style.display = 'block';
+        console.log('Seção de resultados mostrada');
+        
+        // Scroll para os resultados
+        setTimeout(() => {
+          resultsSection.scrollIntoView({ 
+            behavior: 'smooth' 
+          });
+        }, 500);
+      }
     }
 
     // Event Listeners
-    analyzeBtn.addEventListener('click', runAnalysis);
-    
-    ticker.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') {
-        runAnalysis();
+    function setupEventListeners() {
+      if (analyzeBtn) {
+        analyzeBtn.addEventListener('click', runAnalysis);
+        console.log('Event listener do botão configurado');
       }
-    });
+      
+      if (ticker) {
+        ticker.addEventListener('keypress', (e) => {
+          if (e.key === 'Enter') {
+            runAnalysis();
+          }
+        });
+        console.log('Event listener do ticker configurado');
+      }
+    }
 
     // Verificar autenticação na inicialização
     function checkAuth() {
@@ -655,12 +912,21 @@
 
     // Inicialização
     document.addEventListener('DOMContentLoaded', function() {
-      console.log('Inicializando Swing Trade ML...');
+      console.log('=== DOM CARREGADO ===');
       
+      // Inicializar elementos
+      initElements();
+      
+      // Configurar event listeners
+      setupEventListeners();
+      
+      console.log('Verificando autenticação...');
       if (checkAuth()) {
         loadTickerSuggestions();
         showStatus('Swing Trade ML carregado! Digite o código de uma ação para começar.', 'info');
       }
+      
+      console.log('=== INICIALIZAÇÃO COMPLETA ===');
     });
   </script>
 </body>

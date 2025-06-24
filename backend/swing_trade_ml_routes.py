@@ -1,7 +1,6 @@
-from flask import Blueprint, render_template, request, jsonify, session, redirect, url_for
+from flask import Blueprint, render_template, request, jsonify, current_app
 from swing_trade_ml_service import SwingTradeMachineLearningService
 import jwt
-from flask import current_app
 import json
 
 # Criar blueprint
@@ -32,16 +31,16 @@ def run_swing_trade_analysis():
         
         # Verificar autenticação
         auth_header = request.headers.get('Authorization')
-        user_id = verify_user_access(auth_header)
+        current_user_id = verify_user_access(auth_header)
         
-        if not user_id:
+        if not current_user_id:
             print("Erro: Usuário não autenticado")
             return jsonify({
                 'success': False,
                 'error': 'Usuário não autenticado'
             }), 401
-
-        print(f"Usuário autenticado: {user_id}")
+        
+        print(f"Usuário autenticado: {current_user_id}")
 
         # Obter dados da requisição
         data = request.get_json()
@@ -84,9 +83,33 @@ def run_swing_trade_analysis():
         
         if result['success']:
             print("Análise concluída com sucesso!")
+            
+            # Preparar dados para Chart.js
+            df = result.get('dataframe')
+            chart_data = None
+            
+            if df is not None:
+                try:
+                    # Pegar últimos 252 pontos para o gráfico (1 ano de pregões)
+                    last_252 = df.tail(252)
+                    
+                    chart_data = {
+                        'labels': last_252.index.strftime('%d/%m').tolist(),
+                        'prices': last_252['Close'].round(2).tolist(),
+                        'predictions': last_252['prediction'].tolist() if 'prediction' in last_252.columns else [],
+                        'stop_loss': last_252['Stop_Loss'].round(2).tolist() if 'Stop_Loss' in last_252.columns else [],
+                        'take_profit': last_252['Take_Profit'].round(2).tolist() if 'Take_Profit' in last_252.columns else [],
+                        'colors': last_252['color'].tolist() if 'color' in last_252.columns else []
+                    }
+                    print(f"Dados do gráfico preparados: {len(chart_data['labels'])} pontos (252 dias)")
+                except Exception as e:
+                    print(f"Erro ao preparar dados do gráfico: {e}")
+                    chart_data = None
+            
             return jsonify({
                 'success': True,
-                'chart_html': result['chart_html'],
+                'chart_html': result['chart_html'],    # Plotly (backup)
+                'chart_data': chart_data,              # Chart.js (principal)
                 'analysis_data': result['analysis_data']
             })
         else:
