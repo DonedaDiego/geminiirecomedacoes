@@ -9,9 +9,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # ===== CONFIGURAÇÃO MERCADO PAGO =====
-print("🔍 DEBUG - Variáveis de ambiente:")
 mp_token = os.environ.get('MP_ACCESS_TOKEN', 'TEST-8540613393237089-091618-106d38d51fc598ab9762456309594429-1968398743')
-print(f"TOKEN: {mp_token[:20]}...")
+
 
 # Importar SDK do Mercado Pago
 mp_sdk = None
@@ -23,9 +22,7 @@ try:
     # ✅ MÉTODO CORRETO BASEADO NO SEU TESTE
     mp_sdk = mercadopago.SDK(mp_token)
     preference_client = mp_sdk.preference()  # Seu teste mostrou que isso funciona
-    
-    print("✅ SDK Mercado Pago v2.2+ carregado com sucesso!")
-    print(f"✅ Preference client: {type(preference_client)}")
+
     
 except ImportError:
     print("❌ Módulo mercadopago não encontrado. Instale com: pip install mercadopago")

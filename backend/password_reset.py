@@ -87,8 +87,7 @@ def generate_reset_token(email):
         reset_token = secrets.token_urlsafe(32)
         expires_at = datetime.now() + timedelta(hours=1)  # Usar horário local
         
-        print(f"🕐 Gerando token que expira em: {expires_at}")
-        
+               
         # Salvar token no banco
         cursor.execute("""
             INSERT INTO password_reset_tokens (user_id, token, expires_at)

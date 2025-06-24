@@ -69,21 +69,23 @@ def create_plans_table():
             );
         """)
         
-        # Inserir planos padrão se não existirem
+        # 🔧 ATUALIZAR PLANOS PARA PRO E PREMIUM
         cursor.execute("SELECT COUNT(*) FROM plans;")
         count = cursor.fetchone()[0]
         
         if count == 0:
+            # Inserir apenas Pro e Premium
             cursor.execute("""
                 INSERT INTO plans (name, display_name, price_monthly, price_annual, description, features) VALUES
-                ('basico', 'Básico', 0.00, 0.00, 'Acesso básico aos indicadores', 
-                 ARRAY['Monitor Básico', 'Radar de Setores']),
-                ('premium', 'Premium', 49.90, 499.00, 'Análises avançadas e indicadores premium', 
-                 ARRAY['Tudo do Básico', 'Long&Short', 'Backtests', 'Alertas']),
-                ('estrategico', 'Estratégico', 99.90, 999.00, 'Funcionalidades completas com IA', 
-                 ARRAY['Tudo do Premium', 'Carteiras Quantitativas', 'IA Recomendações']);
+                ('pro', 'Pro', 79.00, 72.00, 'Para quem já investe e quer se posicionar melhor', 
+                 ARRAY['Monitor avançado de ações', 'RSL e análise técnica avançada', 'Backtests automáticos', 'Alertas via WhatsApp', 'Dados históricos ilimitados', 'API para desenvolvedores']),
+                ('premium', 'Premium', 149.00, 137.00, 'Para investidores experientes que querem diferenciais', 
+                 ARRAY['Tudo do Pro +', 'Long & Short strategies', 'IA para recomendações', 'Consultoria personalizada', 'Acesso prioritário', 'Relatórios exclusivos']);
             """)
-            print("✅ Planos padrão inseridos!")
+            print("✅ Planos Pro e Premium inseridos!")
+        else:
+            # Se já existem planos, vamos atualizar
+            print("⚠️ Planos já existem. Execute o script de atualização separadamente.")
         
         conn.commit()
         cursor.close()
@@ -134,6 +136,78 @@ def create_users_table():
     except Exception as e:
         print(f"❌ Erro ao criar tabela users: {e}")
         return False
+
+def update_plans_to_pro_premium():
+    """Atualizar planos existentes para Pro e Premium apenas"""
+    try:
+        conn = get_db_connection()
+        if not conn:
+            return False
+            
+        cursor = conn.cursor()
+        
+        # Limpar planos existentes
+        cursor.execute("DELETE FROM plans")
+        print("🗑️ Planos antigos removidos")
+        
+        # Inserir novos planos Pro e Premium
+        cursor.execute("""
+            INSERT INTO plans (id, name, display_name, price_monthly, price_annual, description, features) VALUES
+            (1, 'pro', 'Pro', 79.00, 72.00, 'Para quem já investe e quer se posicionar melhor', 
+             ARRAY['Monitor avançado de ações', 'RSL e análise técnica avançada', 'Backtests automáticos', 'Alertas via WhatsApp', 'Dados históricos ilimitados', 'API para desenvolvedores']),
+            (2, 'premium', 'Premium', 149.00, 137.00, 'Para investidores experientes que querem diferenciais', 
+             ARRAY['Tudo do Pro +', 'Long & Short strategies', 'IA para recomendações', 'Consultoria personalizada', 'Acesso prioritário', 'Relatórios exclusivos']);
+        """)
+        
+        # Resetar sequence para começar do 3
+        cursor.execute("SELECT setval('plans_id_seq', 2, true)")
+        
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        print("✅ Planos atualizados para Pro (id=1) e Premium (id=2)!")
+        return True
+        
+    except Exception as e:
+        print(f"❌ Erro ao atualizar planos: {e}")
+        return False
+
+def update_cupons_for_new_plans():
+    """Atualizar cupons para trabalhar com pro e premium"""
+    try:
+        conn = get_db_connection()
+        if not conn:
+            return False
+            
+        cursor = conn.cursor()
+        
+        # Atualizar cupons existentes para aceitar pro e premium
+        cursor.execute("""
+            UPDATE coupons 
+            SET applicable_plans = ARRAY['pro', 'premium']
+            WHERE applicable_plans IS NOT NULL
+        """)
+        
+        print(f"✅ {cursor.rowcount} cupons atualizados para pro/premium")
+        
+        # Verificar se tem cupons
+        cursor.execute("SELECT code, applicable_plans FROM coupons WHERE is_active = true")
+        cupons = cursor.fetchall()
+        
+        for cupom in cupons:
+            print(f"🎫 Cupom: {cupom[0]} | Planos: {cupom[1]}")
+        
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        return True
+        
+    except Exception as e:
+        print(f"❌ Erro ao atualizar cupons: {e}")
+        return False
+
 
 def create_password_reset_table():
     """Criar tabela para tokens de reset de senha"""
@@ -1112,11 +1186,19 @@ if __name__ == "__main__":
     
     
 # if __name__ == "__main__":
+#     print("🔧 OPÇÕES DE SETUP:")
 #     print("1. Setup completo")
 #     print("2. Corrigir admin")
-#     choice = input("Escolha (1 ou 2): ")
+#     print("3. Atualizar planos para Pro/Premium")  # 🆕 NOVA OPÇÃO
+#     print("4. Atualizar cupons para novos planos") # 🆕 NOVA OPÇÃO
+    
+#     choice = input("Escolha (1, 2, 3 ou 4): ")
     
 #     if choice == "2":
 #         fix_admin_account()
+#     elif choice == "3":
+#         update_plans_to_pro_premium()
+#     elif choice == "4":
+#         update_cupons_for_new_plans()
 #     else:
 #         setup_enhanced_database()

@@ -158,8 +158,8 @@
         </div>
         <div class="hidden md:flex items-center space-x-6">
           <a href="dashboard.html" class="nav-active transition-colors font-medium">Dashboard</a>
-          <a href="analises.html" class="text-gray-300 hover:text-primary transition-colors">Smart Carteiras</a>
-          <a href="swing-trade-machine-learning.html" class="text-gray-300 hover:text-primary transition-colors">Machine Learning</a>
+          <!-- <a href="analises.html" class="text-gray-300 hover:text-primary transition-colors">Smart Carteiras</a> -->
+          <!-- <a href="swing-trade-machine-learning.html" class="text-gray-300 hover:text-primary transition-colors">Machine Learning</a> -->
         </div>
       </div>
   
@@ -211,9 +211,9 @@
             <a href="planos.html" class="btn-primary px-6 py-3 rounded-xl font-semibold inline-block text-center">
               <i class="fas fa-crown mr-2"></i>Fazer Upgrade
             </a>
-            <button class="bg-gray-700 hover:bg-gray-600 text-gray-200 px-6 py-3 rounded-xl font-semibold transition-colors">
+            <!-- <button class="bg-gray-700 hover:bg-gray-600 text-gray-200 px-6 py-3 rounded-xl font-semibold transition-colors">
               <i class="fas fa-cog mr-2"></i>Configurações
-            </button>
+            </button> -->
           </div>
         </div>
       </div>
@@ -326,10 +326,10 @@
 
             <div class="bg-white/5 rounded-lg p-4 border border-white/10">
               <div class="flex items-center gap-3 mb-2">
-                <i class="fas fa-network-wired text-purple-400"></i>
-                <span class="text-white font-semibold">Neural Networks</span>
+                <i class="fas fa-rocket text-purple-400"></i>
+                <span class="text-white font-semibold">ATSMOM</span>
               </div>
-              <p class="text-gray-400 text-sm">Redes Neurais para Previsões</p>
+              <p class="text-gray-400 text-sm">Adaptive Time Series Momentum</p>
             </div>
 
             <div class="bg-white/5 rounded-lg p-4 border border-white/10">
@@ -351,7 +351,9 @@
         </h2>
         
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <a href="monitor-basico.html" class="bg-gradient-to-r from-success/10 to-success/5 hover:from-success/20 hover:to-success/10 border border-success/20 rounded-xl p-6 transition-all group">
+          
+          <!-- GRÁTIS -->
+          <a href="monitor-basico.html" class="relative bg-gradient-to-r from-success/10 to-success/5 hover:from-success/20 hover:to-success/10 border border-success/20 rounded-xl p-6 transition-all group">
             <div class="flex items-center gap-4">
               <div class="w-12 h-12 bg-success/20 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
                 <i class="fas fa-chart-area text-success text-lg"></i>
@@ -361,32 +363,7 @@
                 <p class="text-sm text-gray-300">Análise vs IBOVESPA</p>
               </div>
             </div>
-          </a>
-
-          <div onclick="showPremiumFeature('Long & Short')" class="bg-gradient-to-r from-secondary/10 to-secondary/5 hover:from-secondary/20 hover:to-secondary/10 border border-secondary/20 rounded-xl p-6 transition-all group cursor-pointer relative">
-            <div class="flex items-center gap-4">
-              <div class="w-12 h-12 bg-secondary/20 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
-                <i class="fas fa-exchange-alt text-secondary text-lg"></i>
-              </div>
-              <div>
-                <h3 class="font-semibold text-white">Long & Short</h3>
-                <p class="text-sm text-gray-300">Cointegração</p>
-              </div>
-            </div>
-            <span class="absolute top-4 right-4 bg-warning text-white text-xs px-2 py-1 rounded-full font-bold">PRO</span>
-          </div>
-
-          <a href="analises.html" class="bg-gradient-to-r from-primary/10 to-primary/5 hover:from-primary/20 hover:to-primary/10 border border-primary/20 rounded-xl p-6 transition-all group relative">
-            <div class="flex items-center gap-4">
-              <div class="w-12 h-12 bg-primary/20 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
-                <i class="fas fa-file-chart-line text-primary text-lg"></i>
-              </div>
-              <div>
-                <h3 class="font-semibold text-white">Smart Carteiras</h3>
-                <p class="text-sm text-gray-300">Análises especializadas com Machine Learning</p>
-              </div>
-            </div>
-            <span class="absolute top-4 right-4 bg-secondary text-white text-xs px-2 py-1 rounded-full font-bold">PREMIUM</span>
+            <span class="absolute top-4 right-4 bg-green-500 text-white text-xs px-2 py-1 rounded-full font-bold">GRÁTIS</span>
           </a>
 
           <a href="rsl.html" class="bg-gradient-to-r from-pink-500/10 to-pink-500/5 hover:from-pink-500/20 hover:to-pink-500/10 border border-pink-500/20 rounded-xl p-6 transition-all group cursor-pointer relative">
@@ -402,6 +379,20 @@
             <span class="absolute top-4 right-4 bg-green-500 text-white text-xs px-2 py-1 rounded-full font-bold">GRÁTIS</span>
           </a>
 
+          <!-- PLANO PRO -->
+          <div onclick="showPremiumFeature('Long & Short')" class="bg-gradient-to-r from-secondary/10 to-secondary/5 hover:from-secondary/20 hover:to-secondary/10 border border-secondary/20 rounded-xl p-6 transition-all group cursor-pointer relative">
+            <div class="flex items-center gap-4">
+              <div class="bg-gradient-to-r from-primary/10 to-primary/5 hover:from-primary/20 hover:to-primary/10 border border-primary/20 rounded-xl p-6 transition-all group cursor-pointer relative">
+                <i class="fas fa-exchange-alt text-secondary text-lg"></i>
+              </div>
+              <div>
+                <h3 class="font-semibold text-white">Long & Short</h3>
+                <p class="text-sm text-gray-300">Cointegração</p>
+              </div>
+            </div>
+            <span class="absolute top-4 right-4 bg-warning text-white text-xs px-2 py-1 rounded-full font-bold">PRO</span>
+          </div>
+
           <div onclick="showPremiumFeature('Hunter Walls')" class="bg-gradient-to-r from-orange-500/10 to-orange-500/5 hover:from-orange-500/20 hover:to-orange-500/10 border border-orange-500/20 rounded-xl p-6 transition-all group cursor-pointer relative">
             <div class="flex items-center gap-4">
               <div class="w-12 h-12 bg-orange-500/20 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
@@ -415,14 +406,28 @@
             <span class="absolute top-4 right-4 bg-warning text-white text-xs px-2 py-1 rounded-full font-bold">PRO</span>
           </div>
 
+          <!-- PLANO PREMIUM (ESTRATÉGICO) -->
+          <div onclick="showPremiumFeature('Smart Carteiras')" class="bg-gradient-to-r from-primary/10 to-primary/5 hover:from-primary/20 hover:to-primary/10 border border-primary/20 rounded-xl p-6 transition-all group cursor-pointer relative">
+            <div class="flex items-center gap-4">
+              <div class="w-12 h-12 bg-primary/20 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                <i class="fa-solid fa-square-poll-vertical fa-beat-fade" style="color: #B197FC;"></i>
+              </div>
+              <div>
+                <h3 class="font-semibold text-white">Smart Carteiras</h3>
+                <p class="text-sm text-gray-300">Análises especializadas com Machine Learning</p>
+              </div>
+            </div>
+            <span class="absolute top-4 right-4 bg-secondary text-white text-xs px-2 py-1 rounded-full font-bold">PREMIUM</span>
+          </div>
+
           <!-- Machine Learning com Submenu -->
           <div class="relative">
             <div 
-              onclick="toggleMLDropdown()" 
-              class="bg-gradient-to-r from-purple-600/10 to-purple-600/5 hover:from-purple-600/20 hover:to-purple-600/10 border border-purple-600/20 rounded-xl p-6 transition-all group cursor-pointer relative"
+              onclick="showPremiumFeature('Machine Learning')"
+              class="bg-gradient-to-r from-purple-500/10 to-purple-500/5 hover:from-purple-500/20 hover:to-purple-500/10 border border-purple-500/20 rounded-xl p-6 transition-all group cursor-pointer relative"
             >
               <div class="flex items-center gap-4">
-                <div class="w-12 h-12 bg-purple-600/20 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                <div class="bg-gradient-to-r from-primary/10 to-primary/5 hover:from-primary/20 hover:to-primary/10 border border-primary/20 rounded-xl p-6 transition-all group cursor-pointer relative">
                   <i class="fas fa-brain text-purple-400 text-lg"></i>
                 </div>
                 <div class="flex-1">
@@ -431,7 +436,7 @@
                 </div>
                 <i class="fas fa-chevron-down text-gray-400 transition-transform duration-300" id="mlChevron"></i>
               </div>
-              <span class="absolute top-4 right-4 bg-purple-600 text-white text-xs px-2 py-1 rounded-full font-bold">IA</span>
+              <span class="absolute top-4 right-4 bg-purple-600 text-white text-xs px-2 py-1 rounded-full font-bold">PREMIUM</span>
             </div>
             
             <!-- Submenu Dropdown -->
@@ -453,22 +458,21 @@
                   </div>
                 </a>
                 
-                <div onclick="showPremiumFeature('Neural Networks')" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white cursor-pointer">
-                  <i class="fas fa-network-wired text-purple-400 w-5"></i>
-                  <div class="flex-1">
-                    <div class="font-medium">Neural Networks</div>
-                    <div class="text-xs text-gray-400">Redes Neurais Avançadas</div>
+                <a href="atsmom.html" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white">
+                  <i class="fas fa-rocket text-purple-400 w-5"></i>
+                  <div>
+                    <div class="font-medium">ATSMOM</div>
+                    <div class="text-xs text-gray-400">Adaptive Time Series Momentum</div>
                   </div>
-                  <span class="bg-warning text-white text-xs px-2 py-1 rounded-full font-bold">PRO</span>
-                </div>
+                </a>
                 
                 <div onclick="showPremiumFeature('Pattern Recognition')" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white cursor-pointer">
                   <i class="fas fa-eye text-orange-400 w-5"></i>
                   <div class="flex-1">
                     <div class="font-medium">Pattern Recognition</div>
-                    <div class="text-xs text-gray-400">Reconhecimento de Padrões</div>
+                    <div class="text-xs text-gray-400">Reconhecimento de Padrões Avançado</div>
                   </div>
-                  <span class="bg-secondary text-white text-xs px-2 py-1 rounded-full font-bold">IA+</span>
+                  <span class="bg-red-600 text-white text-xs px-2 py-1 rounded-full font-bold">EM BREVE</span>
                 </div>
                 
                 <div onclick="showPremiumFeature('AutoML')" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white cursor-pointer">
@@ -477,13 +481,13 @@
                     <div class="font-medium">AutoML</div>
                     <div class="text-xs text-gray-400">Machine Learning Automatizado</div>
                   </div>
-                  <span class="bg-purple-600 text-white text-xs px-2 py-1 rounded-full font-bold">PREMIUM+</span>
+                  <span class="bg-red-600 text-white text-xs px-2 py-1 rounded-full font-bold">EM BREVE</span>
                 </div>
               </div>
             </div>
           </div>
 
-          <a href="planos.html" class="bg-gradient-to-r from-primary to-secondary text-white rounded-xl p-6 transition-all group hover:shadow-lg">
+          <!-- <a href="planos.html" class="bg-gradient-to-r from-primary to-secondary text-white rounded-xl p-6 transition-all group hover:shadow-lg">
             <div class="flex items-center gap-4">
               <div class="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
                 <i class="fas fa-crown text-white text-lg"></i>
@@ -495,7 +499,7 @@
             </div>
           </a>
         </div>
-      </div>
+      </div> -->
 
       
     </div>
@@ -740,22 +744,29 @@
     }
 
     // Show premium feature dialog
+    // Show premium feature dialog
     function showPremiumFeature(featureName) {
       if (!currentUser) {
         console.log('⚠️ Usuário não disponível para verificar plano');
         return;
       }
-    
+
       const userPlanId = currentUser.plan_id || 1;
       let requiredPlan = 2;
       
-      if (featureName === 'Neural Networks' || featureName === 'Pattern Recognition' || featureName === 'AutoML') {
-        requiredPlan = 3;
+      // MUDANÇA 1: Definir planos corretos
+      if (featureName === 'Long & Short' || featureName === 'Hunter Walls') {
+        requiredPlan = 2; // Plano PRO
       }
-    
+      
+      if (featureName === 'Smart Carteiras' || featureName === 'Machine Learning') {
+        requiredPlan = 3; // Plano PREMIUM (Estratégico)
+      }
+
       // Verificar se tem acesso ao recurso
       if (userPlanId >= requiredPlan) {
-        // Redirecionar para a página específica
+        
+        // MUDANÇA 2: Redirecionamentos corretos
         if (featureName === 'Long & Short') {
           window.location.href = 'long-short.html';
           return;
@@ -766,24 +777,25 @@
           return;
         }
 
-        if (featureName === 'Swing Trade ML') {
-          window.location.href = 'swing-trade-machine-learning.html';
+        if (featureName === 'Smart Carteiras') {
+          window.location.href = 'analises.html';
           return;
         }
 
-        // Para recursos de IA avançados ainda não implementados
-        if (featureName === 'Neural Networks') {
-          alert(`🧠 Neural Networks\n\nRedes Neurais Avançadas para análise preditiva!\nRecurso disponível em seu plano.\n\nEm breve será implementado.`);
+        // MUDANÇA 3: Machine Learning abre dropdown
+        if (featureName === 'Machine Learning') {
+          toggleMLDropdown();
           return;
         }
 
+        // MUDANÇA 4: Recursos EM BREVE
         if (featureName === 'Pattern Recognition') {
-          alert(`👁️ Pattern Recognition\n\nReconhecimento de Padrões com IA!\nRecurso disponível em seu plano.\n\nEm breve será implementado.`);
+          alert(`👁️ Pattern Recognition\n\nReconhecimento de Padrões Avançado!\n\nEm breve será implementado.`);
           return;
         }
 
         if (featureName === 'AutoML') {
-          alert(`🪄 AutoML\n\nMachine Learning Automatizado!\nRecurso disponível em seu plano.\n\nEm breve será implementado.`);
+          alert(`🪄 AutoML\n\nMachine Learning Automatizado!\n\nEm breve será implementado.`);
           return;
         }
                 
@@ -792,8 +804,10 @@
         
       } else {
         // Usuário não tem plano suficiente
-        const planNames = { 1: 'Básico', 2: 'Premium', 3: 'Estratégico' };
-        const message = `💎 Recurso ${requiredPlan >= 3 ? 'Premium+' : 'Premium'}\n\n${featureName} está disponível apenas para planos ${planNames[requiredPlan]} ou superior.\n\nSeu plano atual: ${currentUser.plan_name || planNames[userPlanId]}\nPlano necessário: ${planNames[requiredPlan]}\n\nDeseja fazer upgrade agora?`;
+        const planNames = { 1: 'Básico', 2: 'Pro', 3: 'Premium' };
+        const planRequired = requiredPlan === 2 ? 'Pro' : 'Premium';
+        
+        const message = `💎 Recurso ${planRequired}\n\n${featureName} está disponível apenas para planos ${planNames[requiredPlan]} ou superior.\n\nSeu plano atual: ${currentUser.plan_name || planNames[userPlanId]}\nPlano necessário: ${planNames[requiredPlan]}\n\nDeseja fazer upgrade agora?`;
         
         if (confirm(message)) {
           window.location.href = '/planos.html';

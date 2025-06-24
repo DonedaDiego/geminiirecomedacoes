@@ -438,21 +438,3 @@ if __name__ == "__main__":
     # Teste básico
     service = YFinanceRSLService()
     
-    print("🔍 Informações da base de dados:")
-    info = service.get_database_info()
-    print(f"Total de tickers: {info['total_tickers']}")
-    print(f"Total de setores: {info['total_setores']}")
-    
-    print("\n📊 Testando RSL de um ticker:")
-    rsl_petr4 = service.get_ticker_rsl('PETR4')
-    if rsl_petr4:
-        print(f"PETR4: RSL={rsl_petr4['rsl']}%, Vol={rsl_petr4['volatilidade']}%")
-    
-    print("\n📈 Testando RSL de um setor:")
-    rsl_petroleo = service.get_sector_rsl_data('Petróleo, Gás e Bio')
-    if rsl_petroleo:
-        print(f"Petróleo: RSL={rsl_petroleo['rsl']}%, Vol={rsl_petroleo['volatilidade']}%")
-    
-    print("\n📋 Cache info:")
-    cache_info = service.get_cache_info()
-    print(f"Hit rate: {cache_info['hit_rate']}%")

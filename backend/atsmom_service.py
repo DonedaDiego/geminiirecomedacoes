@@ -17,21 +17,10 @@ warnings.simplefilter('ignore')
 
 class ATSMOMService:
     def __init__(self):
-        self.ibov_symbol = "^BVSP"  # Símbolo do IBOVESPA no Yahoo Finance
+        self.ibov_symbol = "^BVSP"
         
     def get_data(self, symbol: str, period: str = "2y") -> Optional[pd.DataFrame]:
-        """
-        Obtém dados do Yahoo Finance
-        
-        Args:
-            symbol: Símbolo do ativo (ex: PETR4.SA)
-            period: Período dos dados (1y, 2y, 5y, max)
-        
-        Returns:
-            DataFrame com dados OHLCV ou None se erro
-        """
         try:
-            # Adiciona .SA se não estiver presente (ações brasileiras)
             if not symbol.endswith('.SA') and not symbol.startswith('^'):
                 symbol = f"{symbol}.SA"
             
@@ -41,10 +30,8 @@ class ATSMOMService:
             if data.empty:
                 return None
             
-            # Padroniza nomes das colunas para minúsculas
             data.columns = [col.lower() for col in data.columns]
             
-            # Remove timezone para compatibilidade
             if hasattr(data.index, 'tz') and data.index.tz is not None:
                 data.index = data.index.tz_localize(None)
             
@@ -55,11 +42,9 @@ class ATSMOMService:
             return None
     
     def calculate_beta(self, asset_returns: pd.Series, market_returns: pd.Series) -> float:
-        """Calcula o beta do ativo em relação ao mercado"""
         try:
-            # Alinha as séries temporais
             aligned_data = pd.concat([asset_returns, market_returns], axis=1).dropna()
-            if len(aligned_data) < 20:  # Mínimo de dados necessários
+            if len(aligned_data) < 20:
                 return 1.0
             
             asset_aligned = aligned_data.iloc[:, 0]
@@ -81,83 +66,53 @@ class ATSMOMService:
     def calculate_atsmom(self, data: pd.DataFrame, min_lookback: int = 10, 
                         max_lookback: int = 260, vol_window: int = 60, 
                         vol_target: float = 0.4, max_leverage: float = 3) -> Tuple[pd.Series, pd.Series, pd.Series, pd.Series]:
-        """
-        Calcula o indicador ATSMOM (Adaptive Time Series Momentum)
-        
-        Args:
-            data: DataFrame com dados OHLCV
-            min_lookback: Período mínimo de lookback
-            max_lookback: Período máximo de lookback
-            vol_window: Janela para cálculo de volatilidade
-            vol_target: Target de volatilidade
-            max_leverage: Alavancagem máxima
-        
-        Returns:
-            Tupla com (sinal_final, sinal_combinado, volatilidade, retornos)
-        """
         try:
-            # Calcula retornos diários
             returns = data['close'].pct_change()
             returns = returns.fillna(0)
             
-            # Calcula volatilidade com EWMA
             volatility = returns.ewm(span=vol_window, min_periods=vol_window//2).std() * np.sqrt(252)
             
             signals = []
             weights = np.linspace(1.5, 1.0, max_lookback - min_lookback + 1)
             
-            # Calcula sinais para diferentes lookbacks
             for lookback, weight in zip(range(min_lookback, max_lookback + 1), weights):
                 period_return = data['close'].pct_change(lookback)
                 vol_adj_return = period_return / (returns.rolling(lookback).std() * np.sqrt(lookback))
                 signal = np.sign(vol_adj_return) * weight
                 signals.append(signal)
             
-            # Combina todos os sinais
             combined_signal = pd.concat(signals, axis=1).mean(axis=1)
             combined_signal = combined_signal / combined_signal.abs().max()
             
-            # Aplica sizing baseado em volatilidade
             position_size = (vol_target/np.sqrt(252)) / volatility
             position_size = position_size.clip(-max_leverage, max_leverage)
             
             final_signal = combined_signal * position_size
             
-            # Filtro de tendência com média móvel longa
             long_ma = data['close'].rolling(window=200).mean()
             trend_filter = (data['close'] > long_ma).astype(int) * 2 - 1
             
             final_signal = final_signal * trend_filter
             
-            # Suaviza o sinal
             final_signal = final_signal.ewm(span=5).mean()
             
-            # Escala baseada na volatilidade
             vol_scale = (1 / (1 + (volatility / vol_target - 1).clip(0))).fillna(1)
             final_signal = final_signal * vol_scale
             
-            # Preenche valores NaN
-            final_signal = final_signal.fillna(0)
-            combined_signal = combined_signal.fillna(0)
-            volatility = volatility.fillna(0)
+            final_signal = final_signal.replace([np.inf, -np.inf], 0).fillna(0)
+            combined_signal = combined_signal.replace([np.inf, -np.inf], 0).fillna(0)
+            volatility = volatility.replace([np.inf, -np.inf], 0.01).fillna(0.01)
             
             return final_signal, combined_signal, volatility, returns
             
         except Exception as e:
             print(f"Erro ao calcular ATSMOM: {e}")
-            # Retorna séries vazias em caso de erro
             empty_series = pd.Series(index=data.index, data=0)
             return empty_series, empty_series, empty_series, empty_series
     
     def create_plotly_chart(self, data: pd.DataFrame, signal: pd.Series, trend: pd.Series, 
                            symbol: str, ibov_data: pd.DataFrame, ibov_signal: pd.Series, 
                            ibov_trend: pd.Series, strike: Optional[float] = None) -> str:
-        """
-        Cria gráfico Plotly com análise ATSMOM
-        
-        Returns:
-            HTML string do gráfico
-        """
         try:
             fig = make_subplots(
                 rows=3, cols=1,
@@ -170,12 +125,10 @@ class ATSMOMService:
                 row_heights=[0.4, 0.3, 0.3]
             )
             
-            # Configurações de cores cyberpunk
             plot_bgcolor = '#11113a'
             paper_bgcolor = '#11113a'
             grid_color = 'rgba(255, 255, 255, 0.1)'
             
-            # Gráfico de Preço
             fig.add_trace(
                 go.Scatter(
                     x=data.index,
@@ -186,7 +139,6 @@ class ATSMOMService:
                 row=1, col=1
             )
             
-            # Adiciona IBOV normalizado para comparação
             ibov_normalized = ibov_data['close'] / ibov_data['close'].iloc[0] * data['close'].iloc[0]
             fig.add_trace(
                 go.Scatter(
@@ -198,7 +150,6 @@ class ATSMOMService:
                 row=1, col=1
             )
             
-            # Adiciona linha do strike se fornecido
             if strike is not None:
                 fig.add_hline(
                     y=strike,
@@ -208,10 +159,14 @@ class ATSMOMService:
                     row=1, col=1
                 )
             
-            # Calcula desvio médio da tendência
-            trend_mean_dev = abs(trend.tail(252)).mean()
+            if len(trend) >= 252:
+                trend_mean_dev = trend.tail(252).abs().mean()
+            else:
+                trend_mean_dev = trend.abs().mean()
+
+            if pd.isna(trend_mean_dev) or trend_mean_dev == 0:
+                trend_mean_dev = 0.001
             
-            # Gráfico de Força da Tendência
             fig.add_trace(
                 go.Scatter(
                     x=trend.index,
@@ -222,7 +177,6 @@ class ATSMOMService:
                 row=2, col=1
             )
             
-            # Linhas de desvio médio
             fig.add_hline(
                 y=trend_mean_dev,
                 line_dash="dot",
@@ -252,7 +206,6 @@ class ATSMOMService:
             
             fig.add_hline(y=0, line_dash="dash", line_color="white", opacity=0.5, row=2, col=1)
             
-            # Gráfico de Sinal Final
             fig.add_trace(
                 go.Scatter(
                     x=signal.index,
@@ -275,7 +228,6 @@ class ATSMOMService:
             
             fig.add_hline(y=0, line_dash="solid", line_color="white", opacity=0.5, row=3, col=1)
             
-            # Layout do gráfico
             fig.update_layout(
                 height=900,
                 showlegend=True,
@@ -290,7 +242,6 @@ class ATSMOMService:
                 margin=dict(t=100)
             )
             
-            # Configurações dos eixos
             fig.update_xaxes(
                 showgrid=True,
                 gridwidth=1,
@@ -319,19 +270,7 @@ class ATSMOMService:
     
     def analyze_single_asset(self, symbol: str, period: str = "2y", 
                            strike: Optional[float] = None) -> Dict[str, Any]:
-        """
-        Análise completa de um ativo usando ATSMOM
-        
-        Args:
-            symbol: Símbolo do ativo
-            period: Período de análise
-            strike: Preço de strike (opcional)
-        
-        Returns:
-            Dicionário com resultados da análise
-        """
         try:
-            # Obtém dados do ativo e do IBOV
             data = self.get_data(symbol, period)
             ibov_data = self.get_data(self.ibov_symbol, period)
             
@@ -347,28 +286,22 @@ class ATSMOMService:
                     'error': 'Não foi possível obter dados do IBOVESPA'
                 }
             
-            # Calcula ATSMOM para o ativo
             final_signal, trend_strength, volatility, returns = self.calculate_atsmom(data)
             
-            # Calcula ATSMOM para o IBOV
             ibov_signal, ibov_trend, ibov_vol, ibov_returns = self.calculate_atsmom(ibov_data)
             
-            # Calcula beta do ativo
             beta = self.calculate_beta(returns, ibov_returns)
             
-            # Cria gráfico
             chart_html = self.create_plotly_chart(
                 data, final_signal, trend_strength, symbol,
                 ibov_data, ibov_signal, ibov_trend, strike
             )
             
-            # Análises atuais
-            current_price = data['close'].iloc[-1]
-            current_signal = final_signal.iloc[-1]
-            current_trend = trend_strength.iloc[-1]
-            current_vol = volatility.iloc[-1]
+            current_price = float(data['close'].iloc[-1])
+            current_signal = float(final_signal.iloc[-1])
+            current_trend = float(trend_strength.iloc[-1])
+            current_vol = float(volatility.iloc[-1])
             
-            # Determina status do sinal
             if current_signal > 0.1:
                 signal_status = "COMPRA"
             elif current_signal < -0.1:
@@ -376,19 +309,17 @@ class ATSMOMService:
             else:
                 signal_status = "NEUTRO"
             
-            # Análise específica para opções
             analysis_data = {
                 'symbol': symbol,
                 'current_price': round(current_price, 2),
                 'current_signal': round(current_signal, 4),
                 'current_trend': round(current_trend, 4),
-                'current_volatility': round(current_vol * 100, 2),  # Em percentual
+                'current_volatility': round(current_vol * 100, 2),
                 'signal_status': signal_status,
                 'beta': round(beta, 2),
                 'last_update': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             }
             
-            # Análise de strike se fornecido
             if strike is not None:
                 distance_to_strike = (current_price - strike) / current_price * 100
                 analysis_data.update({
@@ -402,25 +333,24 @@ class ATSMOMService:
                 'analysis_data': analysis_data,
                 'chart_html': chart_html,
                 'raw_data': {
-                    'prices': data['close'].tail(60).tolist(),
-                    'signals': final_signal.tail(60).tolist(),
-                    'trends': trend_strength.tail(60).tolist(),
-                    'dates': [d.strftime('%Y-%m-%d') for d in data.index.tail(60)]
+                    'prices': [float(x) if not pd.isna(x) else 0.0 for x in data['close'].tail(60)],
+                    'signals': [float(x) if not pd.isna(x) else 0.0 for x in final_signal.tail(60)],
+                    'trends': [float(x) if not pd.isna(x) else 0.0 for x in trend_strength.tail(60)],
+                    'dates': [d.strftime('%Y-%m-%d') for d in data.index[-60:]]  # ✅ CORRETO
                 }
             }
             
         except Exception as e:
+            print(f"Erro detalhado na análise: {e}")
             return {
                 'success': False,
                 'error': f'Erro na análise: {str(e)}'
             }
     
     def _analyze_strike(self, current_price: float, strike: float, signal: float) -> str:
-        """Análise específica para opções com strike"""
         distance_pct = abs(current_price - strike) / current_price * 100
         
         if current_price > strike:
-            # Put fora do dinheiro
             if signal < -0.1 and distance_pct < 5:
                 return "PUT: Sinal de venda próximo ao strike - Oportunidade interessante"
             elif signal > 0.1:
@@ -428,7 +358,6 @@ class ATSMOMService:
             else:
                 return "PUT: Sinal neutro - Aguardar definição"
         else:
-            # Put dentro do dinheiro
             if signal < -0.1:
                 return "PUT: Sinal de venda - Put pode ganhar mais valor"
             elif signal > 0.1:
@@ -437,7 +366,6 @@ class ATSMOMService:
                 return "PUT: Sinal neutro - Monitorar closely"
     
     def get_available_symbols(self) -> list:
-        """Retorna lista de símbolos populares para análise"""
         return [
             'PETR4', 'VALE3', 'ITUB4', 'BBDC4', 'ABEV3',
             'MGLU3', 'WEGE3', 'RENT3', 'LREN3', 'JBSS3',

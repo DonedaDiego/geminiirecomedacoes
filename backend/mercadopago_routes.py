@@ -139,6 +139,10 @@ def create_checkout_function():
         cycle = data.get('cycle', 'monthly')
         customer_email = data.get('customer_email', 'cliente@geminii.com.br')
         
+        # ✅ PEGAR DADOS DO CUPOM
+        discounted_price = data.get('discounted_price')
+        coupon_code = data.get('coupon_code')
+        
         if plan not in PLANS:
             return jsonify({
                 "success": False,
@@ -149,26 +153,42 @@ def create_checkout_function():
         plan_id = plan_data["id"]
         plan_name = plan_data["name"]
         
+        # ✅ DETERMINAR PREÇO ORIGINAL
         if cycle == 'annual':
-            price = plan_data["annual_price"]
+            original_price = plan_data["annual_price"]
             cycle_display = "Anual"
         else:
-            price = plan_data["monthly_price"]
+            original_price = plan_data["monthly_price"]
             cycle_display = "Mensal"
+        
+        # ✅ USAR PREÇO COM DESCONTO SE FORNECIDO
+        if discounted_price is not None:
+            price = float(discounted_price)
+            print(f"🎫 Cupom aplicado: {coupon_code}")
+            print(f"💰 Preço original: R$ {original_price}")
+            print(f"💰 Preço com desconto: R$ {price}")
+        else:
+            price = original_price
+            print(f"💰 Preço sem desconto: R$ {price}")
         
         if os.environ.get('DATABASE_URL'):
             base_url = "https://app.geminii.com.br"
         else:
             base_url = "http://localhost:5000"
         
+        # ✅ TÍTULO COM CUPOM SE APLICADO
+        item_title = f"Geminii {plan_name} - {cycle_display}"
+        if coupon_code:
+            item_title += f" (Cupom: {coupon_code})"
+        
         preference_data = {
             "items": [
                 {
                     "id": plan_id,
-                    "title": f"Geminii {plan_name} - {cycle_display}",
+                    "title": item_title,
                     "quantity": 1,
                     "currency_id": "BRL",
-                    "unit_price": float(price)
+                    "unit_price": float(price)  # ✅ PREÇO COM DESCONTO
                 }
             ],
             "back_urls": {
@@ -202,7 +222,9 @@ def create_checkout_function():
                     "sandbox_url": sandbox_url,
                     "plan": plan,
                     "cycle": cycle,
-                    "price": price,
+                    "price": price,  # ✅ RETORNA PREÇO COM DESCONTO
+                    "original_price": original_price,
+                    "coupon_code": coupon_code,
                     "currency": "BRL",
                     "external_reference": preference_data["external_reference"]
                 }
@@ -216,7 +238,6 @@ def create_checkout_function():
                 "details": error_info
             }), 500
             
-            
     except Exception as e:
         import traceback
         traceback.print_exc()
@@ -226,8 +247,7 @@ def create_checkout_function():
             "error": "Erro interno do servidor",
             "details": str(e)
         }), 500
-        
-        
+                
 
 def determine_plan_from_payment(external_reference, amount):
     """Determinar plano baseado na referência externa ou valor"""
