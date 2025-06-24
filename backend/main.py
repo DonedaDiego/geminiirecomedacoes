@@ -1,3 +1,5 @@
+# main.py - CORREÇÃO PARA O ERRO DO ADMIN BLUEPRINT
+
 from flask import Flask, jsonify, send_from_directory, request
 from flask import send_from_directory
 import time
@@ -14,14 +16,11 @@ from yfinance_service import YFinanceService
 from database import get_db_connection
 import requests
 
-
-
 from beta_routes import beta_bp
 from long_short_routes import long_short_bp
 from rsl_routes import get_rsl_blueprint
 from recommendations_routes import get_recommendations_blueprint
 from mercadopago_routes import get_mercadopago_blueprint
-from admin_routes import get_admin_blueprint
 from opcoes_routes import opcoes_bp
 from swing_trade_ml_routes import swing_trade_ml_bp
 from swing_trade_ml_routes import get_swing_trade_ml_blueprint
@@ -37,6 +36,7 @@ if not os.getenv('JWT_SECRET'):
 # Debug
 print(f"JWT_SECRET final: {os.getenv('JWT_SECRET', 'AINDA NÃO ENCONTRADO')}")
 print(f"OPLAB_TOKEN: {os.getenv('OPLAB_TOKEN', 'NÃO ENCONTRADO')}")
+
 # ===== CONFIGURAÇÃO DO FLASK =====
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'geminii-secret-2024')
@@ -61,17 +61,25 @@ except ImportError as e:
 except Exception as e:
     print(f"❌ Erro ao carregar Mercado Pago: {e}")
 
+# ===== CONFIGURAÇÃO ADMIN BLUEPRINT - CORREÇÃO =====
+ADMIN_AVAILABLE = False
+admin_bp = None
 
 try:
+    from admin_routes import get_admin_blueprint
     admin_bp = get_admin_blueprint()
-    app.register_blueprint(admin_bp)
-    print("✅ Blueprint Admin registrado com sucesso!")
+    ADMIN_AVAILABLE = True
+    print("✅ Blueprint Admin carregado com sucesso!")
 except ImportError as e:
-    print(f"❌ Erro ao importar admin blueprint: {e}")
+    print(f"⚠️ Admin routes não disponível: {e}")
+    print("📝 Criando funções admin básicas...")
+    ADMIN_AVAILABLE = False
 except Exception as e:
-    print(f"❌ Erro ao registrar admin blueprint: {e}")
+    print(f"❌ Erro ao carregar admin blueprint: {e}")
+    print("📝 Continuando sem funcionalidades admin...")
+    ADMIN_AVAILABLE = False
 
-# REGISTRAR BLUEPRINTS
+# REGISTRAR BLUEPRINTS BÁSICOS
 app.register_blueprint(opcoes_bp)
 app.register_blueprint(beta_bp)
 app.register_blueprint(long_short_bp)
@@ -88,7 +96,17 @@ if MP_AVAILABLE and mercadopago_bp:
     app.register_blueprint(mercadopago_bp)
     print("✅ Blueprint Mercado Pago registrado!")
 
-# ===== FUNÇÕES AUXILIARES =====
+# ✅ REGISTRAR ADMIN BLUEPRINT APENAS SE DISPONÍVEL E SEM CONFLITOS
+if ADMIN_AVAILABLE and admin_bp:
+    try:
+        app.register_blueprint(admin_bp)
+        print("✅ Blueprint Admin registrado com sucesso!")
+    except Exception as e:
+        print(f"❌ Erro ao registrar admin blueprint: {e}")
+        print("⚠️ Continuando sem painel admin...")
+        ADMIN_AVAILABLE = False
+
+# ===== RESTO DO CÓDIGO PERMANECE IGUAL =====
 
 def hash_password(password):
     """Criptografar senha"""
@@ -361,7 +379,6 @@ def rsl_page():
 def long_short():
     return send_from_directory('../frontend', 'long-short.html')
 
-
 # Servir assets
 @app.route('/logo.png')
 def serve_logo():
@@ -399,18 +416,15 @@ def relatorios():
     except:
         return "<h1>Relatórios - Em construção</h1>"
     
-    
 @app.route('/opcoes')
 @app.route('/opcoes.html')
 def opcoes_page():
     return send_from_directory('../frontend', 'opcoes.html')   
 
-
 @app.route('/swing-trade-machine-learning')
 @app.route('/swing-trade-machine-learning.html')
 def swing_trade_ml_page():
     return send_from_directory('../frontend', 'swing-trade-machine-learning.html')  
-
 
 @app.route('/beta-regression')
 @app.route('/beta-regression.html')
@@ -588,12 +602,14 @@ def payment_failure():
 def status():
     """Status da API com info do Mercado Pago"""
     mp_status = {"success": MP_AVAILABLE, "message": "Blueprint carregado" if MP_AVAILABLE else "Não disponível"}
+    admin_status = {"success": ADMIN_AVAILABLE, "message": "Blueprint carregado" if ADMIN_AVAILABLE else "Não disponível"}
     
     return jsonify({
         'message': 'API Flask Online!',
         'status': 'online',
         'database': 'Connected',
-        'mercadopago': mp_status
+        'mercadopago': mp_status,
+        'admin': admin_status
     })
 
 @app.route('/api/test-db')
@@ -799,7 +815,6 @@ def register():
     except Exception as e:
         return jsonify({'success': False, 'error': f'Erro interno: {str(e)}'}), 500
 
-
 @app.route('/api/validate-coupon', methods=['POST'])
 def validate_coupon():
     """Validar cupom de desconto"""
@@ -922,6 +937,10 @@ def login():
     except Exception as e:
         return jsonify({'success': False, 'error': f'Erro interno: {str(e)}'}), 500
 
+# ===== ROTAS DE AUTENTICAÇÃO NO MAIN.PY =====
+
+# ===== ADICIONAR ESTAS ROTAS APÓS A ROTA DE LOGIN E ANTES DO if __name__ =====
+
 @app.route('/api/auth/verify', methods=['GET'])
 def verify_token():
     """Verificar se token é válido"""
@@ -942,7 +961,6 @@ def verify_token():
                 return jsonify({'success': False, 'error': 'Erro de conexão com banco'}), 500
             
             cursor = conn.cursor()
-            
             cursor.execute("""
                 SELECT id, name, email, plan_id, plan_name, user_type 
                 FROM users WHERE id = %s
@@ -982,37 +1000,7 @@ def verify_token():
 @app.route('/api/auth/logout', methods=['POST'])
 def logout():
     """Logout do usuário"""
-    try:
-        return jsonify({
-            'success': True,
-            'message': 'Logout realizado com sucesso!'
-        }), 200
-        
-    except Exception as e:
-        return jsonify({'success': False, 'error': f'Erro interno: {str(e)}'}), 500
-
-@app.route('/api/force-admin')
-def force_admin():
-    """Temporário - forçar admin"""
-    try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        
-        cursor.execute("""
-            UPDATE users 
-            SET user_type = 'admin', plan_id = 3, plan_name = 'Estratégico'
-            WHERE email = 'diego@geminii.com.br'
-        """)
-        
-        conn.commit()
-        cursor.close()
-        conn.close()
-        
-        return jsonify({'success': True, 'message': 'Admin forçado!'})
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
-
-# ===== ROTAS DE RECUPERAÇÃO DE SENHA =====
+    return jsonify({'success': True, 'message': 'Logout realizado com sucesso!'}), 200
 
 @app.route('/api/auth/forgot-password', methods=['POST'])
 def forgot_password():
@@ -1119,410 +1107,42 @@ def reset_password_api():
     except Exception as e:
         return jsonify({'success': False, 'error': f'Erro interno: {str(e)}'}), 500
 
-@app.route('/api/dashboard/recommendations')
-def get_dashboard_recommendations():
-    """Buscar recomendações de TODAS as carteiras"""
+@app.route('/api/force-admin')
+def force_admin():
+    """Temporário - forçar admin"""
     try:
-        auth_header = request.headers.get('Authorization')
-        
-        if not auth_header or not auth_header.startswith('Bearer '):
-            return jsonify({'success': False, 'error': 'Token não fornecido'}), 401
-        
-        token = auth_header.replace('Bearer ', '')
-        
-        try:
-            payload = jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
-            user_id = payload['user_id']
-        except jwt.InvalidTokenError:
-            return jsonify({'success': False, 'error': 'Token inválido'}), 401
-        
-        limit = int(request.args.get('limit', 20))  # Aumentar limite para mostrar mais
-        
         conn = get_db_connection()
-        if not conn:
-            return jsonify({'success': False, 'error': 'Erro de conexão'}), 500
-            
         cursor = conn.cursor()
         
-        # ✅ BUSCAR TODAS AS CARTEIRAS E SEUS ATIVOS
         cursor.execute("""
-            SELECT 
-                pa.portfolio_name,
-                pa.ticker, 
-                pa.weight, 
-                pa.sector,
-                pa.entry_price,
-                pa.current_price,
-                pa.target_price,
-                p.display_name as portfolio_display_name
-            FROM portfolio_assets pa
-            JOIN portfolios p ON pa.portfolio_name = p.name
-            WHERE pa.is_active = true
-            ORDER BY pa.portfolio_name, pa.weight DESC
-            LIMIT %s
-        """, (limit,))
+            UPDATE users 
+            SET user_type = 'admin', plan_id = 3, plan_name = 'Premium'
+            WHERE email = 'diego@geminii.com.br'
+        """)
         
-        assets = cursor.fetchall()
-        
-        if not assets:
-            cursor.close()
-            conn.close()
-            return jsonify({
-                'success': False,
-                'error': 'Nenhum ativo encontrado nas carteiras'
-            }), 404
-        
-        # ✅ PROCESSAR DADOS DOS ATIVOS
-        recommendations = []
-        portfolio_stats = {}
-        
-        for asset in assets:
-            portfolio_name, ticker, weight, sector, entry_price, current_price, target_price, portfolio_display = asset
-            
-            # Usar preços do banco ou simular se não existirem
-            entry = float(entry_price) if entry_price else 100.0
-            current = float(current_price) if current_price else entry * 1.02  # Simular 2% de alta
-            target = float(target_price) if target_price else entry * 1.10    # Simular 10% de meta
-            
-            # Calcular performance
-            performance = ((current - entry) / entry) * 100 if entry > 0 else 0
-            
-            # Gerar recomendação baseada na performance
-            if performance > 8:
-                recomendacao = "Venda"
-            elif performance > 5:
-                recomendacao = "Manter"
-            elif performance < -5:
-                recomendacao = "Compra Forte"
-            elif performance < 0:
-                recomendacao = "Compra"
-            else:
-                recomendacao = "Manter"
-            
-            # Ícones por setor
-            sector_icons = {
-                'Tecnologia': '💻',
-                'Financeiro': '🏦',
-                'Saúde': '🏥',
-                'Energia': '⚡',
-                'Consumo': '🛒',
-                'Industrial': '🏭',
-                'Mineração': '⛏️',
-                'Telecomunicações': '📡',
-                'Utilities': '🔌',
-                'Real Estate': '🏢',
-                'default': '📈'
-            }
-            
-            icon = sector_icons.get(sector, sector_icons['default'])
-            
-            recommendation_data = {
-                'ticker': ticker,
-                'setor': sector or 'Diversificado',
-                'icone': icon,
-                'recomendacao': recomendacao,
-                'portfolio_name': portfolio_name,
-                'portfolio_display': portfolio_display,
-                'entrada': {
-                    'preco': entry,
-                    'data': (datetime.now() - timedelta(days=30)).strftime('%d/%m/%Y'),
-                    'peso_percent': float(weight) if weight else 0
-                },
-                'atual': {
-                    'preco': current,
-                    'data': datetime.now().strftime('%d/%m/%Y')
-                },
-                'performance': {
-                    'valor': performance,
-                    'dias': 30
-                },
-                'fundamentals': {
-                    'sharpe': round(performance / 10, 2) if performance != 0 else 0,
-                    'volatilidade': 1.2
-                }
-            }
-            
-            recommendations.append(recommendation_data)
-            
-            # Acumular stats por portfolio
-            if portfolio_name not in portfolio_stats:
-                portfolio_stats[portfolio_name] = {
-                    'total_stocks': 0,
-                    'compras': 0,
-                    'vendas': 0,
-                    'manter': 0,
-                    'total_performance': 0
-                }
-            
-            portfolio_stats[portfolio_name]['total_stocks'] += 1
-            portfolio_stats[portfolio_name]['total_performance'] += performance
-            
-            if 'Compra' in recomendacao:
-                portfolio_stats[portfolio_name]['compras'] += 1
-            elif 'Venda' in recomendacao:
-                portfolio_stats[portfolio_name]['vendas'] += 1
-            else:
-                portfolio_stats[portfolio_name]['manter'] += 1
-        
+        conn.commit()
         cursor.close()
         conn.close()
         
-        # ✅ CALCULAR ESTATÍSTICAS GERAIS
-        total_stocks = len(recommendations)
-        total_compras = sum(stats['compras'] for stats in portfolio_stats.values())
-        total_vendas = sum(stats['vendas'] for stats in portfolio_stats.values())
-        total_manter = sum(stats['manter'] for stats in portfolio_stats.values())
-        avg_performance = sum(rec['performance']['valor'] for rec in recommendations) / total_stocks if total_stocks > 0 else 0
-        
-        response_data = {
-            'success': True,
-            'data': {
-                'recommendations': {
-                    'recommendations': recommendations,
-                    'last_update': datetime.now().strftime('%d/%m/%Y %H:%M'),
-                    'source': 'database'
-                },
-                'statistics': {
-                    'total_stocks': total_stocks,
-                    'avg_performance': round(avg_performance, 2),
-                    'signals': {
-                        'compras': total_compras,
-                        'vendas': total_vendas,
-                        'manter': total_manter
-                    }
-                },
-                'portfolios': [
-                    {
-                        'name': name,
-                        'stats': {
-                            'total': stats['total_stocks'],
-                            'avg_performance': round(stats['total_performance'] / stats['total_stocks'], 2) if stats['total_stocks'] > 0 else 0,
-                            'signals': {
-                                'compras': stats['compras'],
-                                'vendas': stats['vendas'],
-                                'manter': stats['manter']
-                            }
-                        }
-                    }
-                    for name, stats in portfolio_stats.items()
-                ]
-            }
-        }
-        
-        return jsonify(response_data)
-        
+        return jsonify({'success': True, 'message': 'Admin forçado!'})
     except Exception as e:
-        print(f"Erro em get_dashboard_recommendations: {e}")
-        import traceback
-        traceback.print_exc()
-        return jsonify({
-            'success': False,
-            'error': 'Erro interno do servidor'
-        }), 500
+        return jsonify({'success': False, 'error': str(e)})
 
-
-@app.route('/api/admin/user-portfolios', methods=['POST'])
-def manage_user_portfolios():
-    """Gerenciar carteiras de usuário"""
-    try:
-        auth_header = request.headers.get('Authorization')
-        if not auth_header or not auth_header.startswith('Bearer '):
-            return jsonify({'success': False, 'error': 'Token não fornecido'}), 401
-        
-        token = auth_header.replace('Bearer ', '')
-        
-        try:
-            payload = jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
-            admin_id = payload['user_id']
-            
-            # Verificar se é admin
-            conn = get_db_connection()
-            cursor = conn.cursor()
-            cursor.execute("SELECT user_type FROM users WHERE id = %s", (admin_id,))
-            result = cursor.fetchone()
-            cursor.close()
-            conn.close()
-            
-            if not result or result[0] not in ['admin', 'master']:
-                return jsonify({'success': False, 'error': 'Acesso negado'}), 403
-                
-        except jwt.InvalidTokenError:
-            return jsonify({'success': False, 'error': 'Token inválido'}), 401
-        
-        data = request.get_json()
-        action = data.get('action')  # 'grant' ou 'revoke'
-        user_email = data.get('user_email')
-        portfolio_name = data.get('portfolio_name')
-        
-        if not all([action, user_email, portfolio_name]):
-            return jsonify({'success': False, 'error': 'Dados obrigatórios faltando'}), 400
-        
-        # Buscar user_id pelo email
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        cursor.execute("SELECT id FROM users WHERE email = %s", (user_email,))
-        user_result = cursor.fetchone()
-        cursor.close()
-        conn.close()
-        
-        if not user_result:
-            return jsonify({'success': False, 'error': 'Usuário não encontrado'}), 404
-        
-        user_id = user_result[0]
-        
-        if action == 'grant':
-            from database import grant_portfolio_access
-            result = grant_portfolio_access(user_id, portfolio_name, admin_id)
-        elif action == 'revoke':
-            from database import revoke_portfolio_access
-            result = revoke_portfolio_access(user_id, portfolio_name)
-        else:
-            return jsonify({'success': False, 'error': 'Ação inválida'}), 400
-        
-        return jsonify(result)
-        
-    except Exception as e:
-        return jsonify({'success': False, 'error': f'Erro interno: {str(e)}'}), 500
-
-@app.route('/api/admin/user/<user_email>/portfolios')
-def get_user_portfolios_admin(user_email):
-    """Buscar carteiras de um usuário (Admin)"""
-    try:
-        auth_header = request.headers.get('Authorization')
-        if not auth_header or not auth_header.startswith('Bearer '):
-            return jsonify({'success': False, 'error': 'Token não fornecido'}), 401
-        
-        token = auth_header.replace('Bearer ', '')
-        
-        try:
-            payload = jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
-            admin_id = payload['user_id']
-            
-            # Verificar se é admin
-            conn = get_db_connection()
-            cursor = conn.cursor()
-            cursor.execute("SELECT user_type FROM users WHERE id = %s", (admin_id,))
-            result = cursor.fetchone()
-            
-            if not result or result[0] not in ['admin', 'master']:
-                cursor.close()
-                conn.close()
-                return jsonify({'success': False, 'error': 'Acesso negado'}), 403
-                
-        except jwt.InvalidTokenError:
-            return jsonify({'success': False, 'error': 'Token inválido'}), 401
-        
-        # Buscar user_id pelo email
-        cursor.execute("SELECT id, name FROM users WHERE email = %s", (user_email,))
-        user_result = cursor.fetchone()
-        
-        if not user_result:
-            cursor.close()
-            conn.close()
-            return jsonify({'success': False, 'error': 'Usuário não encontrado'}), 404
-        
-        user_id, user_name = user_result
-        
-        # Buscar portfolios do usuário
-        from database import get_user_portfolios
-        portfolios = get_user_portfolios(user_id)
-        
-        cursor.close()
-        conn.close()
-        
-        return jsonify({
-            'success': True,
-            'user': {
-                'name': user_name,
-                'email': user_email
-            },
-            'portfolios': portfolios
-        })
-        
-    except Exception as e:
-        return jsonify({'success': False, 'error': f'Erro interno: {str(e)}'}), 500
-
-@app.route('/api/user/portfolios')
-def get_my_portfolios():
-    """Buscar minhas carteiras (Usuário)"""
-    try:
-        auth_header = request.headers.get('Authorization')
-        if not auth_header or not auth_header.startswith('Bearer '):
-            return jsonify({'success': False, 'error': 'Token não fornecido'}), 401
-        
-        token = auth_header.replace('Bearer ', '')
-        
-        try:
-            payload = jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
-            user_id = payload['user_id']
-        except jwt.InvalidTokenError:
-            return jsonify({'success': False, 'error': 'Token inválido'}), 401
-        
-        from database import get_user_portfolios
-        portfolios = get_user_portfolios(user_id)
-        
-        return jsonify({
-            'success': True,
-            'portfolios': portfolios
-        })
-        
-    except Exception as e:
-        return jsonify({'success': False, 'error': f'Erro interno: {str(e)}'}), 500
-
-
-
-# ===== ROTAS DE AÇÕES (YFINANCE) =====
-
-@app.route('/api/stock/<symbol>')
-def get_stock_data(symbol):
-    """Buscar dados de uma ação"""
-    result = YFinanceService.get_stock_data(symbol)
+# ===== FUNÇÃO CREATE_APP PARA RAILWAY =====
+def create_app():
+    """Factory para criar app - Railway"""
+    if os.environ.get('RAILWAY_ENVIRONMENT'):
+        print("🚄 Executando no Railway...")
+        app.config['ENV'] = 'production'
+        app.config['DEBUG'] = False
     
-    if result['success']:
-        return jsonify(result)
-    else:
-        return jsonify(result), 404
+    initialize_database()
+    return app
 
-@app.route('/api/stocks')
-def get_multiple_stocks():
-    """Buscar dados de múltiplas ações"""
-    symbols_param = request.args.get('symbols', 'PETR4,VALE3,ITUB4,BBDC4')
-    symbols = [s.strip().upper() for s in symbols_param.split(',')]
-    
-    result = YFinanceService.get_multiple_stocks(symbols)
-    return jsonify(result)
-
-@app.route('/api/stock/<symbol>/history')
-def get_stock_history(symbol):
-    """Buscar histórico de uma ação"""
-    period = request.args.get('period', '1mo')
-    
-    result = YFinanceService.get_stock_history(symbol, period)
-    
-    if result['success']:
-        return jsonify(result)
-    else:
-        return jsonify(result), 404
-
-@app.route('/api/stocks/search')
-def search_stocks():
-    """Buscar ações por nome ou símbolo"""
-    query = request.args.get('q', '')
-    limit = int(request.args.get('limit', 10))
-    
-    if not query:
-        return jsonify({
-            'success': False,
-            'error': 'Parâmetro q (query) é obrigatório'
-        }), 400
-    
-    result = YFinanceService.search_stocks(query, limit)
-    return jsonify(result)
-
-
+# ===== SUBSTITUIR TODO O FINAL DO ARQUIVO POR ISSO =====
 # if __name__ == '__main__':
-#     # FORÇAR MODO LOCAL
-#     print("🏠 FORÇANDO MODO DESENVOLVIMENTO LOCAL...")
+#     # CONFIGURAÇÃO PARA MODO LOCAL
+#     print("🏠 MODO DESENVOLVIMENTO LOCAL...")
     
 #     # Remover DATABASE_URL para forçar banco local
 #     if 'DATABASE_URL' in os.environ:
@@ -1536,39 +1156,18 @@ def search_stocks():
 #     os.environ['DB_USER'] = 'postgres'
 #     os.environ['DB_PASSWORD'] = '#geminii'
 #     os.environ['DB_PORT'] = '5432'
-
     
 #     port = int(os.environ.get('PORT', 5000))
     
-#     #Só mostrar diagnóstico uma vez
+#     # Só mostrar diagnóstico uma vez
 #     if not os.environ.get('WERKZEUG_RUN_MAIN'):
 #         print("🔍 DIAGNÓSTICO DE CONEXÃO:")
-#         # print(f"DATABASE_URL existe: {'✅' if os.environ.get('DATABASE_URL') else '❌'}")
-#         # print(f"Modo: {'RENDER' if os.environ.get('DATABASE_URL') else 'LOCAL'}")
-#         # print("🏠 Configurações locais:")
-#         # print(f"  Host: {os.environ.get('DB_HOST')}")
-#         # print(f"  Database: {os.environ.get('DB_NAME')}")
-#         # print(f"  User: {os.environ.get('DB_USER')}")
-#         # print(f"  Password: ***")
-#         # print(f"  Port: {os.environ.get('DB_PORT')}")
+#         print(f"🛒 Mercado Pago: {'✅ ATIVO' if MP_AVAILABLE else '❌ INATIVO'}")
+#         print(f"👑 Admin Panel: {'✅ ATIVO' if ADMIN_AVAILABLE else '❌ INATIVO'}")
+#         print("🚀 Iniciando Geminii API (DESENVOLVIMENTO)...")
+#         print("📊 APIs disponíveis em http://localhost:5000")
         
-#         # print("🚀 Iniciando Geminii API (DESENVOLVIMENTO)...")
-#         # print("📊 APIs disponíveis em http://localhost:5000")
-#         # print(f"🛒 Mercado Pago: {'✅ ATIVO' if MP_AVAILABLE else '❌ INATIVO'}")
-    
-#     # Inicializar banco apenas uma vez
-#     if not os.environ.get('WERKZEUG_RUN_MAIN'):
+#         # Inicializar banco apenas uma vez
 #         initialize_database()
 
 #     app.run(host='0.0.0.0', port=port, debug=True)
-
-
-def create_app():
-    """Factory para criar app - Railway"""
-    if os.environ.get('RAILWAY_ENVIRONMENT'):
-        print("🚄 Executando no Railway...")
-        app.config['ENV'] = 'production'
-        app.config['DEBUG'] = False
-    
-    initialize_database()
-    return app
