@@ -802,43 +802,60 @@ def register():
 
 @app.route('/api/validate-coupon', methods=['POST'])
 def validate_coupon():
-   """Validar cupom de desconto"""
-   try:
-       data = request.get_json()
-       
-       if not data:
-           return jsonify({'success': False, 'error': 'Dados JSON necessários'}), 400
-       
-       code = data.get('code', '').strip().upper()
-       plan_name = data.get('plan_name', '')
-       user_id = data.get('user_id', 1)  # Em produção, pegar do token JWT
-       
-       if not code:
-           return jsonify({'success': False, 'error': 'Código do cupom é obrigatório'}), 400
-       
-       # Usar função do database.py
-       from database import validate_coupon as validate_coupon_db
-       result = validate_coupon_db(code, plan_name, user_id)
-       
-       if result['valid']:
-           return jsonify({
-               'success': True,
-               'message': 'Cupom válido!',
-               'data': {
-                   'coupon_id': result['coupon_id'],
-                   'discount_percent': result['discount_percent'],
-                   'discount_type': result['discount_type'],
-                   'applicable_plans': result.get('applicable_plans', [])
-               }
-           })
-       else:
-           return jsonify({
-               'success': False,
-               'error': result['error']
-           }), 400
-       
-   except Exception as e:
-       return jsonify({'success': False, 'error': f'Erro interno: {str(e)}'}), 500
+    """Validar cupom de desconto"""
+    try:
+        print(f"\n🎫 VALIDANDO CUPOM - {datetime.now()}")
+        print("=" * 40)
+        
+        data = request.get_json()
+        print(f"📊 Dados recebidos: {data}")
+        
+        if not data:
+            print("❌ Nenhum dado JSON recebido")
+            return jsonify({'success': False, 'error': 'Dados JSON necessários'}), 400
+        
+        code = data.get('code', '').strip().upper()
+        plan_name = data.get('plan_name', '')
+        user_id = data.get('user_id', 1)
+        
+        print(f"🔍 Cupom: '{code}'")
+        print(f"📦 Plano: '{plan_name}'")
+        print(f"👤 User ID: {user_id}")
+        
+        if not code:
+            print("❌ Código do cupom vazio")
+            return jsonify({'success': False, 'error': 'Código do cupom é obrigatório'}), 400
+        
+        print(f"🔄 Chamando validate_coupon_db...")
+        from database import validate_coupon as validate_coupon_db
+        result = validate_coupon_db(code, plan_name, user_id)
+        
+        print(f"📊 Resultado da validação: {result}")
+        
+        if result['valid']:
+            print("✅ Cupom válido!")
+            return jsonify({
+                'success': True,
+                'message': 'Cupom válido!',
+                'data': {
+                    'coupon_id': result['coupon_id'],
+                    'discount_percent': result['discount_percent'],
+                    'discount_type': result['discount_type'],
+                    'applicable_plans': result.get('applicable_plans', [])
+                }
+            })
+        else:
+            print(f"❌ Cupom inválido: {result['error']}")
+            return jsonify({
+                'success': False,
+                'error': result['error']
+            }), 400
+        
+    except Exception as e:
+        print(f"❌ ERRO na validação: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': f'Erro interno: {str(e)}'}), 500
 
 @app.route('/api/auth/login', methods=['POST'])
 def login():
@@ -1452,6 +1469,8 @@ def get_my_portfolios():
     except Exception as e:
         return jsonify({'success': False, 'error': f'Erro interno: {str(e)}'}), 500
 
+
+
 # ===== ROTAS DE AÇÕES (YFINANCE) =====
 
 @app.route('/api/stock/<symbol>')
@@ -1501,47 +1520,47 @@ def search_stocks():
     return jsonify(result)
 
 
-if __name__ == '__main__':
-    # FORÇAR MODO LOCAL
-    print("🏠 FORÇANDO MODO DESENVOLVIMENTO LOCAL...")
+# if __name__ == '__main__':
+#     # FORÇAR MODO LOCAL
+#     print("🏠 FORÇANDO MODO DESENVOLVIMENTO LOCAL...")
     
-    # Remover DATABASE_URL para forçar banco local
-    if 'DATABASE_URL' in os.environ:
-        del os.environ['DATABASE_URL']
-        print("✅ DATABASE_URL removida - usando banco local")
+#     # Remover DATABASE_URL para forçar banco local
+#     if 'DATABASE_URL' in os.environ:
+#         del os.environ['DATABASE_URL']
+#         print("✅ DATABASE_URL removida - usando banco local")
     
-    # Configurar ambiente local
-    os.environ['FLASK_ENV'] = 'development'
-    os.environ['DB_HOST'] = 'localhost'
-    os.environ['DB_NAME'] = 'postgres'
-    os.environ['DB_USER'] = 'postgres'
-    os.environ['DB_PASSWORD'] = '#geminii'
-    os.environ['DB_PORT'] = '5432'
+#     # Configurar ambiente local
+#     os.environ['FLASK_ENV'] = 'development'
+#     os.environ['DB_HOST'] = 'localhost'
+#     os.environ['DB_NAME'] = 'postgres'
+#     os.environ['DB_USER'] = 'postgres'
+#     os.environ['DB_PASSWORD'] = '#geminii'
+#     os.environ['DB_PORT'] = '5432'
 
     
-    port = int(os.environ.get('PORT', 5000))
+#     port = int(os.environ.get('PORT', 5000))
     
-    #Só mostrar diagnóstico uma vez
-    # if not os.environ.get('WERKZEUG_RUN_MAIN'):
-    #     print("🔍 DIAGNÓSTICO DE CONEXÃO:")
-    #     # print(f"DATABASE_URL existe: {'✅' if os.environ.get('DATABASE_URL') else '❌'}")
-    #     # print(f"Modo: {'RENDER' if os.environ.get('DATABASE_URL') else 'LOCAL'}")
-    #     # print("🏠 Configurações locais:")
-    #     # print(f"  Host: {os.environ.get('DB_HOST')}")
-    #     # print(f"  Database: {os.environ.get('DB_NAME')}")
-    #     # print(f"  User: {os.environ.get('DB_USER')}")
-    #     # print(f"  Password: ***")
-    #     # print(f"  Port: {os.environ.get('DB_PORT')}")
+#     #Só mostrar diagnóstico uma vez
+#     if not os.environ.get('WERKZEUG_RUN_MAIN'):
+#         print("🔍 DIAGNÓSTICO DE CONEXÃO:")
+#         # print(f"DATABASE_URL existe: {'✅' if os.environ.get('DATABASE_URL') else '❌'}")
+#         # print(f"Modo: {'RENDER' if os.environ.get('DATABASE_URL') else 'LOCAL'}")
+#         # print("🏠 Configurações locais:")
+#         # print(f"  Host: {os.environ.get('DB_HOST')}")
+#         # print(f"  Database: {os.environ.get('DB_NAME')}")
+#         # print(f"  User: {os.environ.get('DB_USER')}")
+#         # print(f"  Password: ***")
+#         # print(f"  Port: {os.environ.get('DB_PORT')}")
         
-    #     # print("🚀 Iniciando Geminii API (DESENVOLVIMENTO)...")
-    #     # print("📊 APIs disponíveis em http://localhost:5000")
-    #     # print(f"🛒 Mercado Pago: {'✅ ATIVO' if MP_AVAILABLE else '❌ INATIVO'}")
+#         # print("🚀 Iniciando Geminii API (DESENVOLVIMENTO)...")
+#         # print("📊 APIs disponíveis em http://localhost:5000")
+#         # print(f"🛒 Mercado Pago: {'✅ ATIVO' if MP_AVAILABLE else '❌ INATIVO'}")
     
-    # # Inicializar banco apenas uma vez
-    # if not os.environ.get('WERKZEUG_RUN_MAIN'):
-    #     initialize_database()
+#     # Inicializar banco apenas uma vez
+#     if not os.environ.get('WERKZEUG_RUN_MAIN'):
+#         initialize_database()
 
-    # app.run(host='0.0.0.0', port=port, debug=True)
+#     app.run(host='0.0.0.0', port=port, debug=True)
 
 
 def create_app():

@@ -946,31 +946,44 @@
           return;
         }
         
-        // Preparar dados para o checkout (incluindo cupom)
-        const checkoutData = {
-          plan: planData.name,
-          cycle: isAnnual ? 'annual' : 'monthly',
-          customer_email: null,
-          coupon_code: appliedCoupon || null // 🎫 ENVIAR CUPOM PARA O BACKEND
-        };
-        
-        console.log('🛒 Criando checkout no Flask:', checkoutData);
-        
-        // Calcular preço com desconto para log
+        // Calcular preços
         const originalPrice = isAnnual ? planData.price_annual : planData.price_monthly;
         let finalPrice = originalPrice;
         
+        // Preparar dados base para o checkout
+        let checkoutData = {
+          plan: planData.name,
+          cycle: isAnnual ? 'annual' : 'monthly',
+          customer_email: null
+        };
+        
+        // 🎫 ADICIONAR DADOS DO CUPOM SE APLICADO
         if (appliedCoupon && discountData) {
-          const discountAmount = (originalPrice * discountData.discount_percent) / 100;
-          finalPrice = originalPrice - discountAmount;
+          // Verificar se o cupom é aplicável a este plano
+          const isApplicable = !discountData.applicable_plans || 
+                             discountData.applicable_plans.length === 0 || 
+                             discountData.applicable_plans.includes(planName);
+          
+          if (isApplicable) {
+            const discountAmount = (originalPrice * discountData.discount_percent) / 100;
+            finalPrice = originalPrice - discountAmount;
+            
+            // Adicionar dados do cupom ao checkout
+            checkoutData.coupon_code = appliedCoupon;
+            checkoutData.discounted_price = finalPrice;
+            
+            console.log(`🎫 Cupom aplicado: ${appliedCoupon} (${discountData.discount_percent}% OFF)`);
+            console.log(`💰 Preço original: R$ ${originalPrice} → Final: R$ ${finalPrice}`);
+          } else {
+            console.log(`⚠️ Cupom ${appliedCoupon} não aplicável ao plano ${planName}`);
+          }
         }
         
-        console.log(`💰 Preço original: R$ ${originalPrice}`);
+        console.log('🛒 Criando checkout no Flask:', checkoutData);
         console.log(`💰 Preço final: R$ ${finalPrice} (${isAnnual ? 'anual' : 'mensal'})`);
-        if (appliedCoupon) console.log(`🎫 Cupom: ${appliedCoupon} (${discountData.discount_percent}% OFF)`);
         
         // Criar checkout no backend Flask
-        const response = await fetch(`${API_BASE}/checkout/create`, {
+        const response = await fetch(`${API_BASE}/mercadopago/checkout/create`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
@@ -989,18 +1002,21 @@
             plan: result.data.plan,
             cycle: result.data.cycle,
             price: result.data.price,
-            original_price: result.data.original_price,
-            discount_amount: result.data.discount_amount,
+            original_price: result.data.original_price || originalPrice,
             coupon_code: appliedCoupon,
+            discount_applied: appliedCoupon ? true : false,
             timestamp: Date.now()
           }));
           
           // Determinar URL baseado no ambiente
-          const isProduction = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
+          const isProduction = window.location.hostname !== 'localhost' && 
+                              window.location.hostname !== '127.0.0.1' &&
+                              !window.location.hostname.includes('railway');
+          
           const redirectUrl = isProduction ? result.data.checkout_url : result.data.sandbox_url;
           
           console.log(`🔗 Redirecionando para: ${redirectUrl}`);
-          console.log(`🌍 Ambiente: ${isProduction ? 'PRODUÇÃO' : 'DESENVOLVIMENTO'}`);
+          console.log(`🌍 Ambiente: ${isProduction ? 'PRODUÇÃO' : 'SANDBOX'}`);
           
           // Pequeno delay para o usuário ver o loading
           setTimeout(() => {
