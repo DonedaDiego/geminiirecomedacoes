@@ -51,17 +51,22 @@ app.config['MAIL_USERNAME'] = os.environ.get('EMAIL_USER', 'contato@geminii.com.
 app.config['MAIL_PASSWORD'] = os.environ.get('EMAIL_PASSWORD', '#Giminii#')
 
 # ===== CONFIGURAÇÃO MERCADO PAGO =====
+
 MP_AVAILABLE = False
 mercadopago_bp = None
 
 try:
+    # ✅ ADICIONE O IMPORT AQUI!
+    from mercadopago_routes import get_mercadopago_blueprint
     mercadopago_bp = get_mercadopago_blueprint()
     MP_AVAILABLE = True
     print("✅ Blueprint Mercado Pago carregado com sucesso!")
 except ImportError as e:
     print(f"⚠️ Mercado Pago não disponível: {e}")
+    MP_AVAILABLE = False
 except Exception as e:
     print(f"❌ Erro ao carregar Mercado Pago: {e}")
+    MP_AVAILABLE = False
 
 # ===== CONFIGURAÇÃO ADMIN BLUEPRINT - CORREÇÃO =====
 ADMIN_AVAILABLE = False
@@ -81,10 +86,7 @@ except Exception as e:
     print("📝 Continuando sem funcionalidades admin...")
     ADMIN_AVAILABLE = False
     
-    
-if MP_AVAILABLE:
-    from mercadopago_routes import get_mercadopago_blueprint
-    app.register_blueprint(get_mercadopago_blueprint())    
+
 
 # REGISTRAR BLUEPRINTS BÁSICOS
 app.register_blueprint(opcoes_bp)
@@ -99,10 +101,6 @@ app.register_blueprint(beta_regression_bp, url_prefix='/beta_regression')
 app.register_blueprint(chart_ativos_bp)
 register_atsmom_routes(app)
 
-# Registrar blueprint do Mercado Pago apenas se disponível
-if MP_AVAILABLE and mercadopago_bp:
-    app.register_blueprint(mercadopago_bp)
-    print("✅ Blueprint Mercado Pago registrado!")
 
 # ✅ REGISTRAR ADMIN BLUEPRINT APENAS SE DISPONÍVEL E SEM CONFLITOS
 if ADMIN_AVAILABLE and admin_bp:
@@ -729,9 +727,11 @@ def mercadopago_webhook():
         print(f"❌ Erro no webhook principal: {e}")
         return jsonify({"success": False, "error": str(e)}), 500
 
+# SUBSTITUA O /force/process/ NO MAIN.PY
+
 @app.route('/force/process/<payment_id>')
 def force_process_payment(payment_id):
-    """FORÇAR processamento de pagamento - EMERGÊNCIA"""
+    """FORÇAR processamento de pagamento - VERSÃO CORRIGIDA"""
     
     try:
         print(f"\n🔥 FORÇANDO PROCESSAMENTO: {payment_id}")
@@ -790,45 +790,62 @@ def force_process_payment(payment_id):
         existing = cursor.fetchone()
         
         if existing:
-            conn.close()
-            return jsonify({'message': 'Pagamento já processado', 'payment_id': payment_id}), 200
+            # Se já existe, só atualizar o usuário mesmo assim
+            print("⚠️ Pagamento já processado, mas vou atualizar o usuário mesmo assim")
         
-        # 5. DETERMINAR PLANO (MESMA LÓGICA DO ROUTES)
+        # 5. DETERMINAR PLANO - AGORA COM plan_id NUMÉRICO CORRETO
         plan_name = 'Pro'
-        plan_id = 'pro' 
+        plan_id_numeric = 2  # Pro = 2
+        plan_id_text = 'pro'
         
         if amount >= 140:  # Premium mensal (149)
             plan_name = 'Premium'
-            plan_id = 'premium'
+            plan_id_numeric = 3  # Premium = 3
+            plan_id_text = 'premium'
         elif amount >= 130:  # Premium anual (137)
             plan_name = 'Premium'
-            plan_id = 'premium'
+            plan_id_numeric = 3  # Premium = 3
+            plan_id_text = 'premium'
         elif amount >= 75:   # Pro mensal (79)
             plan_name = 'Pro'
-            plan_id = 'pro'
+            plan_id_numeric = 2  # Pro = 2
+            plan_id_text = 'pro'
         elif amount >= 70:   # Pro anual (72)
             plan_name = 'Pro'
-            plan_id = 'pro'
+            plan_id_numeric = 2  # Pro = 2
+            plan_id_text = 'pro'
         else:               # Valores com desconto - assumir Pro
             plan_name = 'Pro'
-            plan_id = 'pro'
+            plan_id_numeric = 2  # Pro = 2
+            plan_id_text = 'pro'
         
-        # 6. INSERIR NA TABELA PAYMENTS
-        cursor.execute("""
-            INSERT INTO payments (
-                user_id, payment_id, status, amount, plan_id, plan_name, 
-                external_reference, created_at, updated_at
-            ) VALUES (%s, %s, %s, %s, %s, %s, %s, NOW(), NOW())
-        """, (
-            user_id, str(payment_id), 'approved', amount, plan_id, plan_name, external_ref
-        ))
+        # 6. INSERIR NA TABELA PAYMENTS (só se não existir)
+        if not existing:
+            cursor.execute("""
+                INSERT INTO payments (
+                    user_id, payment_id, status, amount, plan_id, plan_name, 
+                    external_reference, created_at, updated_at
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, NOW(), NOW())
+            """, (
+                user_id, str(payment_id), 'approved', amount, plan_id_text, plan_name, external_ref
+            ))
         
-        # 7. ATUALIZAR USUÁRIO
+        # 7. ATUALIZAR USUÁRIO - AGORA COM OS CAMPOS CORRETOS!
         cursor.execute("""
             UPDATE users 
-            SET subscription_status = %s, subscription_plan = %s, updated_at = NOW()
+            SET plan_id = %s, 
+                plan_name = %s,
+                subscription_status = %s, 
+                subscription_plan = %s, 
+                updated_at = NOW()
             WHERE id = %s
-        """, ('active', plan_name, user_id))
+        """, (plan_id_numeric, plan_name, 'active', plan_name, user_id))
+        
+        print(f"🔄 ATUALIZANDO USUÁRIO:")
+        print(f"   plan_id = {plan_id_numeric}")
+        print(f"   plan_name = {plan_name}")
+        print(f"   subscription_status = active")
+        print(f"   subscription_plan = {plan_name}")
         
         conn.commit()
         conn.close()
@@ -842,8 +859,9 @@ def force_process_payment(payment_id):
             'user_email': user_email,
             'amount': amount,
             'plan': plan_name,
-            'plan_id': plan_id,
-            'message': f'Pagamento processado com sucesso! Usuário {user_email} ativado no plano {plan_name}'
+            'plan_id_numeric': plan_id_numeric,
+            'plan_id_text': plan_id_text,
+            'message': f'Pagamento processado! Usuário {user_email} ativado no plano {plan_name} (ID: {plan_id_numeric})'
         })
         
     except Exception as e:
