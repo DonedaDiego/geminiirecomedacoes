@@ -802,11 +802,44 @@ def webhook_test():
     })
 
 # 🔧 ENDPOINT PARA SIMULAR WEBHOOK
-@app.route('/webhook/simulate', methods=['POST'])
+@app.route('/webhook/simulate', methods=['POST', 'GET'])
 def simulate_webhook():
     """Simular chamada do Mercado Pago para teste"""
     
     print(f"\n🎭 SIMULANDO WEBHOOK DO MERCADO PAGO - {datetime.now()}")
+    print(f"   Método: {request.method}")
+    
+    # Se for GET, mostrar página de teste
+    if request.method == 'GET':
+        return '''
+        <html>
+        <head><title>Teste Webhook</title></head>
+        <body>
+            <h2>🧪 Teste do Webhook Mercado Pago</h2>
+            <button onclick="testarWebhook()">Testar Webhook</button>
+            <div id="resultado"></div>
+            
+            <script>
+            async function testarWebhook() {
+                try {
+                    const response = await fetch('/webhook/simulate', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({})
+                    });
+                    
+                    const result = await response.json();
+                    document.getElementById('resultado').innerHTML = 
+                        '<pre>' + JSON.stringify(result, null, 2) + '</pre>';
+                } catch (error) {
+                    document.getElementById('resultado').innerHTML = 
+                        '<div style="color: red;">Erro: ' + error + '</div>';
+                }
+            }
+            </script>
+        </body>
+        </html>
+        '''
     
     # Dados fake para simular o Mercado Pago
     fake_mp_data = {
@@ -817,27 +850,58 @@ def simulate_webhook():
     }
     
     try:
-        print(f"🔄 Simulando webhook com dados fake...")
+        print(f"🔄 Simulando webhook com dados fake: {fake_mp_data}")
         
         if MP_AVAILABLE:
+            print(f"✅ MP_AVAILABLE é True, importando webhook...")
+            
+            # Simular dados no request
+            from flask import g
+            g.fake_json_data = fake_mp_data
+            
+            # Chamar o webhook do mercadopago_routes
             from mercadopago_routes import webhook
-            
-            # Simular request.get_json() retornando dados fake
-            import json
-            from unittest.mock import patch
-            
-            with patch('flask.request.get_json', return_value=fake_mp_data):
-                result = webhook()
+            result = webhook()
             
             print(f"✅ SIMULAÇÃO CONCLUÍDA!")
             print(f"📤 RESULTADO: {result}")
             
             return result
         else:
+            print(f"❌ MP_AVAILABLE é False")
             return jsonify({"error": "MP não disponível"}), 500
             
     except Exception as e:
         print(f"❌ ERRO NA SIMULAÇÃO: {e}")
+        import traceback
+        traceback.print_exc()
+        
+        return jsonify({"error": str(e), "details": "Veja os logs para mais detalhes"}), 500
+
+# Também adicione este endpoint mais simples para teste
+@app.route('/webhook/test-simple', methods=['POST'])
+def test_simple_webhook():
+    """Teste simples do webhook"""
+    
+    print(f"\n🔥 TESTE SIMPLES DO WEBHOOK - {datetime.now()}")
+    
+    try:
+        # Testar se consegue importar e executar
+        from mercadopago_routes import process_payment
+        
+        # Usar um payment_id fake
+        result = process_payment("123456789")
+        
+        print(f"✅ TESTE SIMPLES CONCLUÍDO: {result}")
+        
+        return jsonify({
+            "success": True,
+            "test_result": result,
+            "message": "Teste simples executado"
+        })
+        
+    except Exception as e:
+        print(f"❌ ERRO NO TESTE SIMPLES: {e}")
         import traceback
         traceback.print_exc()
         
