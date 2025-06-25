@@ -855,27 +855,122 @@ def debug_payment_processing(payment_id):
         traceback.print_exc()
         return jsonify({'error': str(e), 'traceback': traceback.format_exc()}), 500
 
-@app.route('/debug/process/<payment_id>')
-def manual_process_payment(payment_id):
-    """Processar manualmente um payment_id específico"""
+# SUBSTITUA o endpoint debug no main.py por esta versão:
+
+@app.route('/debug/payment/<payment_id>')
+def debug_payment_processing(payment_id):
+    """Debug detalhado do processamento de pagamento"""
     
     try:
-        print(f"\n🔧 PROCESSAMENTO MANUAL: {payment_id}")
+        print(f"\n🔍 DEBUG PAYMENT: {payment_id}")
         
-        from mercadopago_routes import process_payment
-        result = process_payment(payment_id)
+        # 1. Verificar se pagamento existe no MP
+        mp_token = os.environ.get('MP_ACCESS_TOKEN')
+        headers = {
+            'Authorization': f'Bearer {mp_token}',
+            'Content-Type': 'application/json'
+        }
         
-        print(f"✅ PROCESSAMENTO MANUAL CONCLUÍDO: {result}")
+        response = requests.get(
+            f'https://api.mercadopago.com/v1/payments/{payment_id}',
+            headers=headers
+        )
+        
+        mp_data = {}
+        mp_status_code = response.status_code
+        
+        if response.status_code == 200:
+            mp_data = response.json()
+            print(f"✅ Pagamento encontrado no MP: {mp_data.get('status')}")
+        else:
+            print(f"❌ Erro MP: {response.status_code}")
+            mp_data = {'error': f'Status {response.status_code}'}
+            
+        # 2. Simular processamento
+        try:
+            from mercadopago_routes import process_payment
+            process_result = process_payment(payment_id)
+        except Exception as e:
+            process_result = {'error': f'Erro ao processar: {str(e)}'}
+        
+        # 3. Verificar tabelas
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # Verificar payment_history
+        cursor.execute("SELECT * FROM payment_history WHERE payment_id = %s", (payment_id,))
+        history_rows = cursor.fetchall()
+        history_columns = [desc[0] for desc in cursor.description] if history_rows else []
+        history_data = [dict(zip(history_columns, row)) for row in history_rows]
+        
+        # Verificar payments
+        cursor.execute("SELECT * FROM payments WHERE payment_id = %s", (payment_id,))
+        payments_rows = cursor.fetchall()
+        payments_columns = [desc[0] for desc in cursor.description] if payments_rows else []
+        payments_data = [dict(zip(payments_columns, row)) for row in payments_rows]
+        
+        # Verificar Martha - AGORA COM AS COLUNAS CORRETAS
+        cursor.execute("SELECT id, name, email, subscription_status, subscription_plan FROM users WHERE email = %s", ('martha@gmail.com',))
+        user_row = cursor.fetchone()
+        user_data = None
+        if user_row:
+            user_columns = ['id', 'name', 'email', 'subscription_status', 'subscription_plan']
+            user_data = dict(zip(user_columns, user_row))
+            
+        conn.close()
+        
+        # 4. Análise dos dados
+        analysis = []
+        
+        if mp_status_code != 200:
+            analysis.append(f"❌ Pagamento {payment_id} não encontrado no Mercado Pago")
+        elif mp_data.get('status') != 'approved':
+            analysis.append(f"⚠️ Status no MP: {mp_data.get('status')} (precisa ser 'approved')")
+        else:
+            analysis.append(f"✅ Pagamento aprovado no MP - Valor: R$ {mp_data.get('transaction_amount')}")
+            
+        if not user_data:
+            analysis.append("❌ Usuário martha@gmail.com não encontrado")
+        else:
+            analysis.append(f"✅ Usuário encontrado: ID {user_data.get('id')} - Status: {user_data.get('subscription_status')}")
+            
+        if len(history_data) == 0:
+            analysis.append("❌ Nenhum registro em payment_history")
+        else:
+            analysis.append(f"✅ {len(history_data)} registro(s) em payment_history")
+            
+        if len(payments_data) == 0:
+            analysis.append("❌ Nenhum registro em payments (ESTE É O PROBLEMA)")
+        else:
+            analysis.append(f"✅ {len(payments_data)} registro(s) em payments")
         
         return jsonify({
-            'success': True,
             'payment_id': payment_id,
-            'result': result,
-            'message': 'Processamento manual executado'
+            'mp_api': {
+                'status_code': mp_status_code,
+                'data': {
+                    'status': mp_data.get('status'),
+                    'external_reference': mp_data.get('external_reference'),
+                    'amount': mp_data.get('transaction_amount'),
+                    'payer_email': mp_data.get('payer', {}).get('email') if isinstance(mp_data.get('payer'), dict) else None
+                } if mp_status_code == 200 else mp_data
+            },
+            'process_result': process_result,
+            'database': {
+                'payment_history': history_data,
+                'payments': payments_data,
+                'user': user_data
+            },
+            'analysis': analysis,
+            'next_steps': [
+                "1. Execute os comandos SQL para adicionar colunas na tabela users",
+                "2. Teste o processamento manual com /debug/process/{payment_id}",
+                "3. Criar novo pagamento e verificar se webhook funciona"
+            ]
         })
         
     except Exception as e:
-        print(f"❌ ERRO NO PROCESSAMENTO MANUAL: {e}")
+        print(f"❌ ERRO DEBUG: {e}")
         import traceback
         traceback.print_exc()
         return jsonify({'error': str(e), 'traceback': traceback.format_exc()}), 500
