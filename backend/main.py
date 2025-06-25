@@ -949,13 +949,10 @@ def test_simple_webhook():
         
         return jsonify({"error": str(e)}), 500
 
-# Adicione este endpoint no seu main.py para criar um pagamento real de teste
-
-# Adicione este endpoint no seu main.py para criar um pagamento real de teste
 
 @app.route('/test/create-payment', methods=['POST', 'GET'])
 def create_test_payment():
-    """Criar um pagamento real no sandbox para teste"""
+    """Criar um pagamento real no sandbox usando Checkout Preferences"""
     
     if request.method == 'GET':
         return '''
@@ -969,15 +966,17 @@ def create_test_payment():
             <input type="email" id="email" placeholder="Email do cliente" value="joao@teste.com">
             <br><br>
             
-            <h3>Tipo de Pagamento:</h3>
-            <input type="radio" name="tipo" value="pix" checked> PIX (instantâneo)
-            <input type="radio" name="tipo" value="cartao"> Cartão de Crédito
+            <h3>Plano:</h3>
+            <select id="plano">
+                <option value="basic">Básico - R$ 19,50</option>
+                <option value="pro" selected>Pro - R$ 39,50</option>
+            </select>
             <br><br>
             
-            <input type="number" id="valor" placeholder="Valor (R$)" value="1.00" step="0.01" min="0.50">
+            <input type="text" id="cupom" placeholder="Código do cupom (opcional)" value="">
             <br><br>
             
-            <button onclick="criarPagamento()">🚀 Criar Pagamento Teste</button>
+            <button onclick="criarCheckout()">🚀 Criar Checkout</button>
             <button onclick="mostrarCartoesFake()">💳 Ver Cartões Fake</button>
             
             <div id="cartoes" style="display:none; background:#f0f0f0; padding:10px; margin:10px 0;">
@@ -998,61 +997,39 @@ def create_test_payment():
                 div.style.display = div.style.display === 'none' ? 'block' : 'none';
             }
             
-            async function criarPagamento() {
+            async function criarCheckout() {
                 try {
-                    document.getElementById('resultado').innerHTML = '🔄 Criando pagamento...';
+                    document.getElementById('resultado').innerHTML = '🔄 Criando checkout...';
                     
                     const nome = document.getElementById('nome').value;
                     const email = document.getElementById('email').value;
-                    const valor = parseFloat(document.getElementById('valor').value);
-                    const tipo = document.querySelector('input[name="tipo"]:checked').value;
+                    const plano = document.getElementById('plano').value;
+                    const cupom = document.getElementById('cupom').value;
                     
                     const response = await fetch('/test/create-payment', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
-                            amount: valor,
-                            email: email,
                             name: nome,
-                            payment_type: tipo
+                            email: email,
+                            plan: plano,
+                            coupon: cupom
                         })
                     });
                     
                     const result = await response.json();
                     document.getElementById('resultado').innerHTML = 
-                        '<h3>Pagamento Criado:</h3><pre>' + JSON.stringify(result, null, 2) + '</pre>';
+                        '<h3>Checkout Criado:</h3><pre>' + JSON.stringify(result, null, 2) + '</pre>';
                         
-                    if (result.payment_url) {
+                    if (result.init_point) {
                         document.getElementById('resultado').innerHTML += 
-                            '<br><a href="' + result.payment_url + '" target="_blank">🔗 Abrir Checkout</a>';
-                    }
-                    
-                    if (result.payment_id) {
+                            '<br><a href="' + result.init_point + '" target="_blank">🔗 Abrir Checkout no MP</a>';
                         document.getElementById('resultado').innerHTML += 
-                            '<br><br><button onclick="testarWebhook(' + result.payment_id + ')">🔔 Testar Webhook</button>';
+                            '<br><p><strong>Preference ID:</strong> ' + result.preference_id + '</p>';
                     }
                 } catch (error) {
                     document.getElementById('resultado').innerHTML = 
                         '<div style="color: red;">Erro: ' + error + '</div>';
-                }
-            }
-            
-            async function testarWebhook(paymentId) {
-                try {
-                    document.getElementById('resultado').innerHTML += '<br>🔄 Testando webhook...';
-                    
-                    const response = await fetch('/test/webhook-real', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({payment_id: paymentId})
-                    });
-                    
-                    const result = await response.json();
-                    document.getElementById('resultado').innerHTML += 
-                        '<h3>Resultado Webhook:</h3><pre>' + JSON.stringify(result, null, 2) + '</pre>';
-                } catch (error) {
-                    document.getElementById('resultado').innerHTML += 
-                        '<div style="color: red;">Erro webhook: ' + error + '</div>';
                 }
             }
             </script>
@@ -1061,7 +1038,7 @@ def create_test_payment():
         '''
     
     try:
-        print(f"\n💳 CRIANDO PAGAMENTO TESTE - {datetime.now()}")
+        print(f"\n💳 CRIANDO CHECKOUT PREFERENCE - {datetime.now()}")
         
         mp_token = os.environ.get('MP_ACCESS_TOKEN')
         if not mp_token:
@@ -1069,93 +1046,125 @@ def create_test_payment():
         
         # Dados do request
         data = request.get_json() or {}
-        amount = data.get('amount', 1.00)
-        email = data.get('email', 'contato@geminii.com.br')
-        name = data.get('name', 'Teste Webhook')
-        payment_type = data.get('payment_type', 'pix')
+        name = data.get('name', 'João Silva')
+        email = data.get('email', 'joao@teste.com')
+        plan = data.get('plan', 'pro')
+        coupon = data.get('coupon', '')
         
-        # Separar nome em primeiro e último
+        # Configurar plano
+        plans = {
+            'basic': {'price': 19.50, 'title': 'Plano Básico - Geminii'},
+            'pro': {'price': 39.50, 'title': 'Plano Pro - Geminii'}
+        }
+        
+        plan_info = plans.get(plan, plans['pro'])
+        price = plan_info['price']
+        
+        # Aplicar cupom
+        if coupon == '50OFF':
+            price = price * 0.5
+            plan_info['title'] += ' (50% OFF)'
+        
+        # Separar nome
         name_parts = name.split(' ', 1)
         first_name = name_parts[0]
         last_name = name_parts[1] if len(name_parts) > 1 else 'Silva'
         
-        # Dados base do pagamento
-        payment_data = {
-            "transaction_amount": amount,
-            "currency": "BRL",  # ← MUDOU: era "currency_id"
-            "description": f"Teste Webhook - Assinatura Pro ({payment_type.upper()})",
+        # Criar referência única
+        external_reference = f"{email}_{plan}_{int(datetime.now().timestamp())}"
+        
+        # Dados da preferência
+        preference_data = {
+            "items": [
+                {
+                    "id": f"geminii_{plan}",
+                    "title": plan_info['title'],
+                    "description": f"Assinatura mensal do plano {plan.title()} da Geminii",
+                    "category_id": "services",
+                    "quantity": 1,
+                    "currency_id": "BRL",  # ← CORRETO para preferences
+                    "unit_price": price
+                }
+            ],
             "payer": {
+                "name": first_name,
+                "surname": last_name,
                 "email": email,
-                "first_name": first_name,
-                "last_name": last_name
+                "phone": {
+                    "area_code": "11",
+                    "number": "999999999"
+                },
+                "identification": {
+                    "type": "CPF",
+                    "number": "12345678909"
+                }
             },
-            "external_reference": f"test_webhook_{payment_type}_{int(datetime.now().timestamp())}",
+            "back_urls": {
+                "success": "https://app.geminii.com.br/payment/success",
+                "pending": "https://app.geminii.com.br/payment/pending", 
+                "failure": "https://app.geminii.com.br/payment/failure"
+            },
             "notification_url": "https://app.geminii.com.br/webhook/mercadopago",
+            "external_reference": external_reference,
+            "auto_return": "approved",
+            "payment_methods": {
+                "excluded_payment_types": [
+                    {"id": "ticket"}  # Excluir boleto para testes mais rápidos
+                ],
+                "installments": 12,
+                "default_installments": 1
+            },
             "metadata": {
-                "plan": "pro",
-                "test": True,
-                "payment_type": payment_type
+                "plan": plan,
+                "coupon": coupon,
+                "user_email": email,
+                "test": True
             }
         }
         
-        # Configurar método de pagamento
-        if payment_type == 'pix':
-            payment_data["payment_method_id"] = "pix"
-        else:  # cartão
-            payment_data.update({
-                "payment_method_id": "visa",  # ou mastercard, amex
-                "token": "fake_card_token",  # token fake para teste
-                "installments": 1,
-                "issuer_id": 25,  # Banco fake para teste
-                "payer": {
-                    **payment_data["payer"],
-                    "identification": {
-                        "type": "CPF",
-                        "number": "12345678909"
-                    }
-                }
-            })
+        print(f"📦 Dados da preferência: {preference_data}")
         
-        print(f"📦 Dados do pagamento: {payment_data}")
-        
-        # Criar pagamento na API do MP
+        # Criar preferência na API do MP
         headers = {
             'Authorization': f'Bearer {mp_token}',
             'Content-Type': 'application/json'
         }
         
         response = requests.post(
-            'https://api.mercadopago.com/v1/payments',
+            'https://api.mercadopago.com/checkout/preferences',
             headers=headers,
-            json=payment_data
+            json=preference_data
         )
         
         print(f"📤 Resposta MP: {response.status_code}")
         print(f"📦 Dados resposta: {response.text}")
         
         if response.status_code == 201:
-            payment_result = response.json()
-            payment_id = payment_result.get('id')
+            preference_result = response.json()
+            preference_id = preference_result.get('id')
             
-            print(f"✅ PAGAMENTO CRIADO! ID: {payment_id}")
+            print(f"✅ PREFERÊNCIA CRIADA! ID: {preference_id}")
             
             return jsonify({
                 'success': True,
-                'payment_id': payment_id,
-                'status': payment_result.get('status'),
-                'payment_url': payment_result.get('point_of_interaction', {}).get('transaction_data', {}).get('qr_code_base64'),
-                'qr_code': payment_result.get('point_of_interaction', {}).get('transaction_data', {}).get('qr_code'),
-                'message': f'Pagamento criado! ID: {payment_id}',
-                'next_step': 'Agora teste o webhook com este payment_id real'
+                'preference_id': preference_id,
+                'init_point': preference_result.get('init_point'),
+                'sandbox_init_point': preference_result.get('sandbox_init_point'),
+                'external_reference': external_reference,
+                'plan': plan,
+                'price': price,
+                'coupon_applied': coupon,
+                'message': f'Checkout criado! Use o link para pagar.',
+                'instructions': 'Clique no link do checkout, faça o pagamento e monitore os logs!'
             })
         else:
             return jsonify({
-                'error': f'Erro ao criar pagamento: {response.status_code}',
+                'error': f'Erro ao criar preferência: {response.status_code}',
                 'details': response.text
             }), 400
             
     except Exception as e:
-        print(f"❌ ERRO AO CRIAR PAGAMENTO: {e}")
+        print(f"❌ ERRO AO CRIAR PREFERÊNCIA: {e}")
         import traceback
         traceback.print_exc()
         
@@ -1200,7 +1209,125 @@ def test_webhook_real():
         print(f"❌ ERRO NO TESTE: {e}")
         return jsonify({'error': str(e)}), 500
 
-
+def process_payment(payment_id):
+    """Processar pagamento aprovado do Checkout"""
+    
+    try:
+        print(f"\n💳 PROCESSANDO PAGAMENTO: {payment_id}")
+        
+        # 1. Buscar dados do pagamento no MP
+        mp_token = os.environ.get('MP_ACCESS_TOKEN')
+        if not mp_token:
+            return {'success': False, 'error': 'Token MP não configurado'}
+        
+        headers = {
+            'Authorization': f'Bearer {mp_token}',
+            'Content-Type': 'application/json'
+        }
+        
+        response = requests.get(
+            f'https://api.mercadopago.com/v1/payments/{payment_id}',
+            headers=headers
+        )
+        
+        if response.status_code != 200:
+            return {'success': False, 'error': f'Erro API MP: {response.status_code}'}
+        
+        payment_data = response.json()
+        print(f"📦 Dados MP: status={payment_data.get('status')}, amount={payment_data.get('transaction_amount')}")
+        
+        # 2. Verificar se pagamento foi aprovado
+        if payment_data.get('status') != 'approved':
+            print(f"⏳ Pagamento não aprovado ainda: {payment_data.get('status')}")
+            return {'success': True, 'message': f'Pagamento {payment_data.get("status")}, aguardando aprovação'}
+        
+        # 3. Extrair email do external_reference
+        external_ref = payment_data.get('external_reference', '')
+        
+        # external_reference formato: "email_plano_timestamp"
+        if external_ref and '_' in external_ref:
+            user_email = external_ref.split('_')[0]
+            plan = external_ref.split('_')[1]
+        else:
+            # Fallback para payer email
+            user_email = payment_data.get('payer', {}).get('email', '')
+            plan = 'pro'
+        
+        if not user_email:
+            print(f"❌ Email não encontrado. external_ref: {external_ref}")
+            return {'success': False, 'error': 'Email do usuário não encontrado'}
+        
+        print(f"👤 Buscando usuário: {user_email}")
+        print(f"📋 Plano: {plan}")
+        
+        # 4. Conectar ao banco
+        from app import get_db_connection
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # 5. Buscar ou criar usuário
+        cursor.execute("SELECT id, email, subscription_status FROM users WHERE email = %s", (user_email,))
+        user = cursor.fetchone()
+        
+        if not user:
+            print(f"❌ Usuário não encontrado: {user_email}")
+            conn.close()
+            return {'success': False, 'error': f'Usuário não encontrado: {user_email}'}
+        
+        user_id = user[0]
+        print(f"✅ Usuário encontrado: ID {user_id}")
+        
+        # 6. Verificar se pagamento já foi processado
+        cursor.execute("SELECT id FROM payments WHERE payment_id = %s", (payment_id,))
+        existing = cursor.fetchone()
+        
+        if existing:
+            print(f"⚠️ Pagamento já processado anteriormente")
+            conn.close()
+            return {'success': True, 'message': 'Pagamento já foi processado'}
+        
+        # 7. Inserir na tabela payments
+        cursor.execute("""
+            INSERT INTO payments (user_id, payment_id, status, amount, plan_id, plan_name, external_reference, created_at, updated_at)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, NOW(), NOW())
+        """, (
+            user_id,
+            payment_id,
+            'approved',
+            payment_data.get('transaction_amount'),
+            2 if plan == 'pro' else 1,  # plan_id
+            plan,
+            external_ref
+        ))
+        
+        # 8. Ativar usuário
+        cursor.execute("""
+            UPDATE users 
+            SET subscription_status = 'active', 
+                subscription_plan = %s,
+                updated_at = NOW()
+            WHERE id = %s
+        """, (plan, user_id))
+        
+        conn.commit()
+        conn.close()
+        
+        print(f"✅ PAGAMENTO PROCESSADO COM SUCESSO!")
+        
+        return {
+            'success': True,
+            'message': 'Pagamento processado e usuário ativado',
+            'user_id': user_id,
+            'payment_id': payment_id,
+            'plan': plan,
+            'amount': payment_data.get('transaction_amount')
+        }
+        
+    except Exception as e:
+        print(f"❌ ERRO NO PROCESSAMENTO: {e}")
+        import traceback
+        traceback.print_exc()
+        return {'success': False, 'error': str(e)}
 
 
 
