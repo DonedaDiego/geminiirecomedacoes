@@ -36,18 +36,25 @@
       backdrop-filter: blur(20px);
       box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
       z-index: 40;
-      /* Remover posição fixa se quiser que ele se mova com a página */
       position: relative;
-      margin-top: 40px; /* ou ajuste conforme seu layout */
+      margin-bottom: 30px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
       border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    /* ✅ CORRETO */
+    footer {
+      padding-top: 20px !important;
     }
     .carousel-container {
       width: 100%;
       overflow: hidden;
       white-space: nowrap;
       position: relative;
-      height: 90px;
+      height: 180px;
+      padding: 3px 0;
     }
+    
     .carousel-track {
       display: inline-flex;
       animation: scroll 60s linear infinite;
@@ -102,17 +109,10 @@
       border-color: rgba(156, 163, 175, 0.3);
     }
 
+    /* ===== ESCONDER MARKET SUMMARY ===== */
     .market-summary {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      padding: 4px 24px;
-      background: rgba(186, 57, 175, 0.1);
-      border-bottom: 1px solid rgba(186, 57, 175, 0.2);
-      font-size: 11px;
-      color: rgba(255, 255, 255, 0.8);
+      display: none !important;
     }
-
 
     .loading-carousel {
       display: flex;
@@ -182,10 +182,10 @@
       transition: all 0.3s ease;
     }
 
-    /* AJUSTAR NAVBAR PARA FICAR ABAIXO DO CARROSSEL */
+    /* ===== NAVBAR VOLTOU PARA POSIÇÃO ORIGINAL ===== */
     .main-navbar {
       position: fixed;
-      top: 85px;
+      top: 6px;
       left: 50%;
       transform: translateX(-50%);
       z-index: 45;
@@ -404,26 +404,31 @@
       transition: all 0.3s ease;
     }
 
+    
+
     .footer-link:hover {
       color: #ba39af;
       text-shadow: 0 0 8px rgba(186, 57, 175, 0.5);
     }
 
+    /* ===== HERO SECTION NORMAL ===== */
     .hero-section {
-      padding-top: 160px; /* Espaço para carrossel + navbar */
+      padding-top: 100px;
     }
 
     /* Mobile Responsive */
     @media (max-width: 768px) {
-      .market-summary {
-        padding: 3px 16px;
-        font-size: 10px;
-        gap: 12px;
+      .main-navbar {
+        top: 0px;
       }
       
+      .market-carousel {
+        margin-bottom: 50px;
+      }
       
-      .main-navbar {
-        top: 70px;
+      .carousel-container {
+        height: 120px;
+        padding: 5px 0;
       }
       
       .stock-item {
@@ -432,8 +437,11 @@
       }
       
       .market-summary {
-        padding: 6px 16px;
-        font-size: 11px;
+        display: none !important;
+      }
+      
+      .hero-section {
+        padding-top: 140px;
       }
       
       .hero-title {
@@ -452,7 +460,7 @@
         display: none !important;
       }
     }
-  </style>
+</style>
 </head>
 <body class="bg-black text-white font-sans">
   <div class="relative min-h-screen overflow-hidden">
@@ -542,6 +550,7 @@
         </p>
         
         <!-- Dynamic CTA Button -->
+        <!-- Dynamic CTA Button -->
         <div class="mt-12 pointer-events-auto">
           <div id="guestCTA">
             <a href="/register.html" class="auth-btn font-semibold rounded-full transition-all duration-300 transform hover:scale-105">
@@ -553,43 +562,20 @@
             <a href="/dashboard.html" class="dashboard-btn font-semibold rounded-full transition-all duration-300 transform hover:scale-105">
               Acessar Dashboard
             </a>
-
-            <!-- ===== CARROSSEL DE AÇÕES   Market Summary ===== -->
-    <div class="market-carousel">
-      
-      <div class="market-summary" id="marketSummary">
-        <div class="flex items-center gap-2">
-          <i class="fas fa-chart-line text-geminii"></i>
-          <span>Mercado:</span>
-          <span id="marketPositive">0 ↗️</span>
-          <span id="marketNegative">0 ↘️</span>
-          <span id="marketNeutral">0 ➡️</span>
-        </div>
-        <div class="flex items-center gap-2">
-          <i class="fas fa-clock"></i>
-          <span id="marketUpdate">Carregando...</span>
-        </div>
-        <div class="flex items-center gap-2">
-          <i class="fas fa-sync animate-spin" id="refreshIcon"></i>
-          <span>Tempo real</span>
+          </div>
         </div>
       </div>
-      
-      <!-- Carousel Container -->
-      <div class="carousel-container" style="height: 90px;">
+    </div>
+
+    <!-- Carrossel de Ações -->
+    <div class="market-carousel">
+      <div class="carousel-container" style="height: 80px;">
         <div id="carouselContent">
-          <!-- Loading State -->
           <div class="loading-carousel">
             <div class="loading-dot"></div>
             <div class="loading-dot"></div>
             <div class="loading-dot"></div>
             <span class="ml-3">Carregando cotações...</span>
-          </div>
-        </div>
-      </div>
-    </div>  
-
-
           </div>
         </div>
       </div>
@@ -667,7 +653,8 @@
         
         if (result.success && result.data) {
           updateCarouselDisplay(result.data);
-          updateMarketSummary(result.data.market_stats);
+          // ✅ COMENTAR esta linha:
+          // updateMarketSummary(result.data.market_stats);
           console.log(`✅ Carrossel: ${result.data.total_stocks} ações carregadas`);
         } else {
           showCarouselError(result.error || 'Erro ao carregar dados');
@@ -734,17 +721,15 @@
 
     function updateMarketSummary(stats) {
       if (!stats) return;
-      
+      /*
       document.getElementById('marketPositive').textContent = `${stats.positive} ↗️`;
       document.getElementById('marketNegative').textContent = `${stats.negative} ↘️`;
       document.getElementById('marketNeutral').textContent = `${stats.neutral} ➡️`;
-     
-      <!-- document.getElementById('marketUpdate').textContent = `Atualizado às ${new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`; -->
-      
-      // Parar animação do ícone de refresh
+      ocument.getElementById('marketUpdate').textContent = `Atualizado às ${new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`;
       const refreshIcon = document.getElementById('refreshIcon');
       refreshIcon.classList.remove('animate-spin');
       setTimeout(() => refreshIcon.classList.add('animate-spin'), 100);
+      */
     }
 
     function showCarouselError(error) {

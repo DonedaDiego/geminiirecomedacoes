@@ -535,7 +535,7 @@ def create_payments_table():
         cursor.close()
         conn.close()
         
-        print("✅ Tabela payments criada/verificada")
+        
         return True
         
     except Exception as e:
@@ -562,7 +562,7 @@ def add_plan_expires_field():
                 ALTER TABLE users 
                 ADD COLUMN plan_expires_at TIMESTAMP
             """)
-            print("✅ Campo plan_expires_at adicionado")
+            
         else:
             print("✅ Campo plan_expires_at já existe")
         

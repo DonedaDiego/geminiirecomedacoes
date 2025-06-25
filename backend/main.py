@@ -1159,7 +1159,7 @@ def force_admin():
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
 
-##===== FUNÇÃO CREATE_APP PARA RAILWAY =====
+# ##===== FUNÇÃO CREATE_APP PARA RAILWAY =====
 def create_app():
     """Factory para criar app - Railway"""
     if os.environ.get('RAILWAY_ENVIRONMENT'):
@@ -1170,7 +1170,7 @@ def create_app():
     initialize_database()
     return app
 
-# ===== SUBSTITUIR TODO O FINAL DO ARQUIVO POR ISSO =====
+###===== SUBSTITUIR TODO O FINAL DO ARQUIVO POR ISSO =====
 # if __name__ == '__main__':
 #     # CONFIGURAÇÃO PARA MODO LOCAL
 #     print("🏠 MODO DESENVOLVIMENTO LOCAL...")
@@ -1190,15 +1190,4 @@ def create_app():
     
 #     port = int(os.environ.get('PORT', 5000))
     
-#     # Só mostrar diagnóstico uma vez
-#     if not os.environ.get('WERKZEUG_RUN_MAIN'):
-#         print("🔍 DIAGNÓSTICO DE CONEXÃO:")
-#         print(f"🛒 Mercado Pago: {'✅ ATIVO' if MP_AVAILABLE else '❌ INATIVO'}")
-#         print(f"👑 Admin Panel: {'✅ ATIVO' if ADMIN_AVAILABLE else '❌ INATIVO'}")
-#         print("🚀 Iniciando Geminii API (DESENVOLVIMENTO)...")
-#         print("📊 APIs disponíveis em http://localhost:5000")
-        
-#         # Inicializar banco apenas uma vez
-#         initialize_database()
-
 #     app.run(host='0.0.0.0', port=port, debug=True)
