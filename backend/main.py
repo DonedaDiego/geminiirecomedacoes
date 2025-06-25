@@ -949,7 +949,167 @@ def test_simple_webhook():
         
         return jsonify({"error": str(e)}), 500
 
+# Adicione este endpoint no seu main.py para criar um pagamento real de teste
 
+@app.route('/test/create-payment', methods=['POST', 'GET'])
+def create_test_payment():
+    """Criar um pagamento real no sandbox para teste"""
+    
+    if request.method == 'GET':
+        return '''
+        <html>
+        <head><title>Criar Pagamento Teste</title></head>
+        <body>
+            <h2>🧪 Criar Pagamento Real no Sandbox</h2>
+            <button onclick="criarPagamento()">Criar Pagamento Teste R$ 1,00</button>
+            <div id="resultado"></div>
+            
+            <script>
+            async function criarPagamento() {
+                try {
+                    document.getElementById('resultado').innerHTML = '🔄 Criando pagamento...';
+                    
+                    const response = await fetch('/test/create-payment', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            amount: 1.00,
+                            email: 'contato@geminii.com.br'
+                        })
+                    });
+                    
+                    const result = await response.json();
+                    document.getElementById('resultado').innerHTML = 
+                        '<h3>Pagamento Criado:</h3><pre>' + JSON.stringify(result, null, 2) + '</pre>';
+                        
+                    if (result.payment_url) {
+                        document.getElementById('resultado').innerHTML += 
+                            '<br><a href="' + result.payment_url + '" target="_blank">🔗 Abrir Checkout</a>';
+                    }
+                } catch (error) {
+                    document.getElementById('resultado').innerHTML = 
+                        '<div style="color: red;">Erro: ' + error + '</div>';
+                }
+            }
+            </script>
+        </body>
+        </html>
+        '''
+    
+    try:
+        print(f"\n💳 CRIANDO PAGAMENTO TESTE - {datetime.now()}")
+        
+        mp_token = os.environ.get('MP_ACCESS_TOKEN')
+        if not mp_token:
+            return jsonify({'error': 'Token MP não configurado'}), 500
+        
+        # Dados do request
+        data = request.get_json() or {}
+        amount = data.get('amount', 1.00)
+        email = data.get('email', 'contato@geminii.com.br')
+        
+        # Dados do pagamento
+        payment_data = {
+            "transaction_amount": amount,
+            "currency_id": "BRL",
+            "description": "Teste Webhook - Assinatura Pro",
+            "payment_method_id": "pix",  # PIX para teste mais rápido
+            "payer": {
+                "email": email,
+                "first_name": "Teste",
+                "last_name": "Webhook"
+            },
+            "external_reference": "test_webhook_payment",
+            "notification_url": "https://app.geminii.com.br/webhook/mercadopago",
+            "metadata": {
+                "plan": "pro",
+                "test": True
+            }
+        }
+        
+        print(f"📦 Dados do pagamento: {payment_data}")
+        
+        # Criar pagamento na API do MP
+        headers = {
+            'Authorization': f'Bearer {mp_token}',
+            'Content-Type': 'application/json'
+        }
+        
+        response = requests.post(
+            'https://api.mercadopago.com/v1/payments',
+            headers=headers,
+            json=payment_data
+        )
+        
+        print(f"📤 Resposta MP: {response.status_code}")
+        print(f"📦 Dados resposta: {response.text}")
+        
+        if response.status_code == 201:
+            payment_result = response.json()
+            payment_id = payment_result.get('id')
+            
+            print(f"✅ PAGAMENTO CRIADO! ID: {payment_id}")
+            
+            return jsonify({
+                'success': True,
+                'payment_id': payment_id,
+                'status': payment_result.get('status'),
+                'payment_url': payment_result.get('point_of_interaction', {}).get('transaction_data', {}).get('qr_code_base64'),
+                'qr_code': payment_result.get('point_of_interaction', {}).get('transaction_data', {}).get('qr_code'),
+                'message': f'Pagamento criado! ID: {payment_id}',
+                'next_step': 'Agora teste o webhook com este payment_id real'
+            })
+        else:
+            return jsonify({
+                'error': f'Erro ao criar pagamento: {response.status_code}',
+                'details': response.text
+            }), 400
+            
+    except Exception as e:
+        print(f"❌ ERRO AO CRIAR PAGAMENTO: {e}")
+        import traceback
+        traceback.print_exc()
+        
+        return jsonify({'error': str(e)}), 500
+
+# Endpoint para testar webhook com payment_id real
+@app.route('/test/webhook-real', methods=['POST'])
+def test_webhook_real():
+    """Testar webhook com payment_id real"""
+    
+    try:
+        data = request.get_json()
+        payment_id = data.get('payment_id')
+        
+        if not payment_id:
+            return jsonify({'error': 'payment_id é obrigatório'}), 400
+        
+        print(f"\n🔔 TESTANDO WEBHOOK COM PAYMENT_ID REAL: {payment_id}")
+        
+        # Simular webhook do MP
+        webhook_data = {
+            "type": "payment",
+            "data": {
+                "id": payment_id
+            }
+        }
+        
+        # Processar como se fosse webhook real
+        from mercadopago_routes import process_payment
+        result = process_payment(payment_id)
+        
+        print(f"✅ TESTE CONCLUÍDO: {result}")
+        
+        return jsonify({
+            'success': True,
+            'payment_id': payment_id,
+            'webhook_result': result,
+            'message': 'Webhook testado com payment_id real'
+        })
+        
+    except Exception as e:
+        print(f"❌ ERRO NO TESTE: {e}")
+        return jsonify({'error': str(e)}), 500
 
 
 
