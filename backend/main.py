@@ -80,6 +80,11 @@ except Exception as e:
     print(f"❌ Erro ao carregar admin blueprint: {e}")
     print("📝 Continuando sem funcionalidades admin...")
     ADMIN_AVAILABLE = False
+    
+    
+if MP_AVAILABLE:
+    from mercadopago_routes import get_mercadopago_blueprint
+    app.register_blueprint(get_mercadopago_blueprint())    
 
 # REGISTRAR BLUEPRINTS BÁSICOS
 app.register_blueprint(opcoes_bp)

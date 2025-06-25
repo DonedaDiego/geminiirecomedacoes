@@ -108,15 +108,15 @@ def process_payment(payment_id):
         # Tentar por email do pagador primeiro
         cursor.execute("SELECT id, email FROM users WHERE email = %s", (payer_email,))
         user_row = cursor.fetchone()
-        
-        # Se não encontrar, usar martha@gmail.com
-        if not user_row:
-            cursor.execute("SELECT id, email FROM users WHERE email = %s", ('martha@gmail.com',))
-            user_row = cursor.fetchone()
-            
+
         if not user_row:
             conn.close()
-            raise Exception('Usuário não encontrado')
+            raise Exception(f'Usuário não encontrado para email: {payer_email}. Cadastre o usuário primeiro!')
+
+        user_id = user_row[0]
+        user_email = user_row[1]
+
+        print(f"✅ Usuário encontrado: {user_email} (ID: {user_id})")
             
         user_id = user_row[0]
         user_email = user_row[1]
