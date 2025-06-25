@@ -951,6 +951,8 @@ def test_simple_webhook():
 
 # Adicione este endpoint no seu main.py para criar um pagamento real de teste
 
+# Adicione este endpoint no seu main.py para criar um pagamento real de teste
+
 @app.route('/test/create-payment', methods=['POST', 'GET'])
 def create_test_payment():
     """Criar um pagamento real no sandbox para teste"""
@@ -961,20 +963,58 @@ def create_test_payment():
         <head><title>Criar Pagamento Teste</title></head>
         <body>
             <h2>🧪 Criar Pagamento Real no Sandbox</h2>
-            <button onclick="criarPagamento()">Criar Pagamento Teste R$ 1,00</button>
+            
+            <h3>Dados do Cliente:</h3>
+            <input type="text" id="nome" placeholder="Nome do cliente" value="João Silva">
+            <input type="email" id="email" placeholder="Email do cliente" value="joao@teste.com">
+            <br><br>
+            
+            <h3>Tipo de Pagamento:</h3>
+            <input type="radio" name="tipo" value="pix" checked> PIX (instantâneo)
+            <input type="radio" name="tipo" value="cartao"> Cartão de Crédito
+            <br><br>
+            
+            <input type="number" id="valor" placeholder="Valor (R$)" value="1.00" step="0.01" min="0.50">
+            <br><br>
+            
+            <button onclick="criarPagamento()">🚀 Criar Pagamento Teste</button>
+            <button onclick="mostrarCartoesFake()">💳 Ver Cartões Fake</button>
+            
+            <div id="cartoes" style="display:none; background:#f0f0f0; padding:10px; margin:10px 0;">
+                <h4>📋 Cartões de Teste do Mercado Pago:</h4>
+                <p><strong>VISA:</strong> 4013 5406 8274 6260 (CVV: 123)</p>
+                <p><strong>Mastercard:</strong> 5031 7557 3453 0604 (CVV: 123)</p>
+                <p><strong>American Express:</strong> 3711 803032 57522 (CVV: 1234)</p>
+                <p><strong>Titular:</strong> APRO (aprovado) ou CONT (contestado)</p>
+                <p><strong>Validade:</strong> 11/25 ou superior</p>
+                <p><strong>CPF:</strong> 12345678909</p>
+            </div>
+            
             <div id="resultado"></div>
             
             <script>
+            function mostrarCartoesFake() {
+                const div = document.getElementById('cartoes');
+                div.style.display = div.style.display === 'none' ? 'block' : 'none';
+            }
+            
             async function criarPagamento() {
                 try {
                     document.getElementById('resultado').innerHTML = '🔄 Criando pagamento...';
+                    
+                    const nome = document.getElementById('nome').value;
+                    const email = document.getElementById('email').value;
+                    const valor = parseFloat(document.getElementById('valor').value);
+                    const tipo = document.querySelector('input[name="tipo"]:checked').value;
                     
                     const response = await fetch('/test/create-payment', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
-                            amount: 1.00,
-                            email: 'contato@geminii.com.br'
+                            amount: valor,
+                            email: email,
+                            name: nome,
+                            payment_type: tipo
                         })
                     });
                     
@@ -986,9 +1026,33 @@ def create_test_payment():
                         document.getElementById('resultado').innerHTML += 
                             '<br><a href="' + result.payment_url + '" target="_blank">🔗 Abrir Checkout</a>';
                     }
+                    
+                    if (result.payment_id) {
+                        document.getElementById('resultado').innerHTML += 
+                            '<br><br><button onclick="testarWebhook(' + result.payment_id + ')">🔔 Testar Webhook</button>';
+                    }
                 } catch (error) {
                     document.getElementById('resultado').innerHTML = 
                         '<div style="color: red;">Erro: ' + error + '</div>';
+                }
+            }
+            
+            async function testarWebhook(paymentId) {
+                try {
+                    document.getElementById('resultado').innerHTML += '<br>🔄 Testando webhook...';
+                    
+                    const response = await fetch('/test/webhook-real', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({payment_id: paymentId})
+                    });
+                    
+                    const result = await response.json();
+                    document.getElementById('resultado').innerHTML += 
+                        '<h3>Resultado Webhook:</h3><pre>' + JSON.stringify(result, null, 2) + '</pre>';
+                } catch (error) {
+                    document.getElementById('resultado').innerHTML += 
+                        '<div style="color: red;">Erro webhook: ' + error + '</div>';
                 }
             }
             </script>
@@ -1007,25 +1071,50 @@ def create_test_payment():
         data = request.get_json() or {}
         amount = data.get('amount', 1.00)
         email = data.get('email', 'contato@geminii.com.br')
+        name = data.get('name', 'Teste Webhook')
+        payment_type = data.get('payment_type', 'pix')
         
-        # Dados do pagamento
+        # Separar nome em primeiro e último
+        name_parts = name.split(' ', 1)
+        first_name = name_parts[0]
+        last_name = name_parts[1] if len(name_parts) > 1 else 'Silva'
+        
+        # Dados base do pagamento
         payment_data = {
             "transaction_amount": amount,
-            "currency_id": "BRL",
-            "description": "Teste Webhook - Assinatura Pro",
-            "payment_method_id": "pix",  # PIX para teste mais rápido
+            "currency": "BRL",  # ← MUDOU: era "currency_id"
+            "description": f"Teste Webhook - Assinatura Pro ({payment_type.upper()})",
             "payer": {
                 "email": email,
-                "first_name": "Teste",
-                "last_name": "Webhook"
+                "first_name": first_name,
+                "last_name": last_name
             },
-            "external_reference": "test_webhook_payment",
+            "external_reference": f"test_webhook_{payment_type}_{int(datetime.now().timestamp())}",
             "notification_url": "https://app.geminii.com.br/webhook/mercadopago",
             "metadata": {
                 "plan": "pro",
-                "test": True
+                "test": True,
+                "payment_type": payment_type
             }
         }
+        
+        # Configurar método de pagamento
+        if payment_type == 'pix':
+            payment_data["payment_method_id"] = "pix"
+        else:  # cartão
+            payment_data.update({
+                "payment_method_id": "visa",  # ou mastercard, amex
+                "token": "fake_card_token",  # token fake para teste
+                "installments": 1,
+                "issuer_id": 25,  # Banco fake para teste
+                "payer": {
+                    **payment_data["payer"],
+                    "identification": {
+                        "type": "CPF",
+                        "number": "12345678909"
+                    }
+                }
+            })
         
         print(f"📦 Dados do pagamento: {payment_data}")
         
