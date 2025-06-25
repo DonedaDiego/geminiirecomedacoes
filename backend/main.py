@@ -27,6 +27,7 @@ from swing_trade_ml_routes import get_swing_trade_ml_blueprint
 from beta_regression_routes import beta_regression_bp
 from atsmom_routes import register_atsmom_routes
 from chart_ativos_routes import chart_ativos_bp
+from carrossel_yfinance_routes import get_carrossel_blueprint
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -107,6 +108,31 @@ if ADMIN_AVAILABLE and admin_bp:
         print(f"❌ Erro ao registrar admin blueprint: {e}")
         print("⚠️ Continuando sem painel admin...")
         ADMIN_AVAILABLE = False
+
+CARROSSEL_AVAILABLE = False
+carrossel_bp = None
+
+try:
+    carrossel_bp = get_carrossel_blueprint()
+    CARROSSEL_AVAILABLE = True
+    print("✅ Blueprint Carrossel YFinance carregado com sucesso!")
+except ImportError as e:
+    print(f"⚠️ Carrossel não disponível: {e}")
+    CARROSSEL_AVAILABLE = False
+except Exception as e:
+    print(f"❌ Erro ao carregar Carrossel: {e}")
+    CARROSSEL_AVAILABLE = False
+
+
+
+if CARROSSEL_AVAILABLE and carrossel_bp:
+    try:
+        app.register_blueprint(carrossel_bp)
+        print("✅ Blueprint Carrossel registrado com sucesso!")
+    except Exception as e:
+        print(f"❌ Erro ao registrar carrossel blueprint: {e}")
+        print("⚠️ Continuando sem carrossel...")
+        CARROSSEL_AVAILABLE = False
 
 # ===== RESTO DO CÓDIGO PERMANECE IGUAL =====
 
@@ -602,17 +628,20 @@ def payment_failure():
 
 @app.route('/api/status')
 def status():
-    """Status da API com info do Mercado Pago"""
+    """Status da API com info do Mercado Pago e Carrossel"""
     mp_status = {"success": MP_AVAILABLE, "message": "Blueprint carregado" if MP_AVAILABLE else "Não disponível"}
     admin_status = {"success": ADMIN_AVAILABLE, "message": "Blueprint carregado" if ADMIN_AVAILABLE else "Não disponível"}
+    carrossel_status = {"success": CARROSSEL_AVAILABLE, "message": "Blueprint carregado" if CARROSSEL_AVAILABLE else "Não disponível"}
     
     return jsonify({
         'message': 'API Flask Online!',
         'status': 'online',
         'database': 'Connected',
         'mercadopago': mp_status,
-        'admin': admin_status
+        'admin': admin_status,
+        'carrossel': carrossel_status  # ← NOVA LINHA
     })
+
 
 @app.route('/api/test-db')
 def test_db():
@@ -1130,7 +1159,7 @@ def force_admin():
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
 
-# ===== FUNÇÃO CREATE_APP PARA RAILWAY =====
+##===== FUNÇÃO CREATE_APP PARA RAILWAY =====
 def create_app():
     """Factory para criar app - Railway"""
     if os.environ.get('RAILWAY_ENVIRONMENT'):

@@ -3,7 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Análises - Geminii Tech</title>
+  <title>Análises & Carteiras - Geminii Tech</title>
+  
+  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -17,16 +19,21 @@
             warning: '#f59e0b',
             danger: '#ef4444',
             geminii: '#ba39af'
-          },
-          fontFamily: {
-            sans: ['Inter', 'system-ui', 'sans-serif']
           }
         }
       }
     }
   </script>
+  
+  <!-- Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Font Awesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Chart.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+  
   <style>
     * {
       scroll-behavior: smooth;
@@ -67,24 +74,15 @@
     .spinner {
       border: 3px solid rgba(255, 255, 255, 0.1);
       border-radius: 50%;
-      border-top: 3px solid #6366f1;
-      width: 40px;
-      height: 40px;
+      border-top: 3px solid #8b5cf6;
+      width: 32px;
+      height: 32px;
       animation: spin 1s linear infinite;
     }
     
     @keyframes spin {
       0% { transform: rotate(0deg); }
       100% { transform: rotate(360deg); }
-    }
-    
-    .portfolio-card {
-      transition: all 0.3s ease;
-    }
-    
-    .portfolio-card:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
     }
     
     .fade-in {
@@ -94,6 +92,25 @@
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(20px); }
       to { opacity: 1; transform: translateY(0); }
+    }
+    
+    /* Modal scrollbar */
+    #modalContent::-webkit-scrollbar {
+      width: 6px;
+    }
+    
+    #modalContent::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 3px;
+    }
+    
+    #modalContent::-webkit-scrollbar-thumb {
+      background: rgba(139, 92, 246, 0.5);
+      border-radius: 3px;
+    }
+    
+    #modalContent::-webkit-scrollbar-thumb:hover {
+      background: rgba(139, 92, 246, 0.7);
     }
   </style>
 </head>
@@ -110,6 +127,7 @@
         <div class="hidden md:flex items-center space-x-6">
           <a href="dashboard.html" class="text-gray-300 hover:text-primary transition-colors font-medium">Dashboard</a>
           <a href="analises.html" class="nav-active transition-colors font-medium">Smart Carteiras</a>
+          <a href="relatorios.html" class="text-gray-300 hover:text-primary transition-colors">Machine Learning</a>
         </div>
       </div>
       
@@ -132,16 +150,16 @@
       <!-- Page Header -->
       <div class="mb-8">
         <h1 class="text-4xl font-bold text-white mb-2">Análises & Carteiras</h1>
-        <p class="text-gray-300 text-lg">Suas recomendações personalizadas de investimento</p>
+        <p class="text-gray-300 text-lg">Suas recomendações personalizadas de investimento com analytics avançado</p>
       </div>
 
-      <!-- Container Principal das Recomendações -->
-      <div id="recommendationsContainer">
-        <!-- Estado inicial de loading -->
+      <!-- Container Principal das Carteiras -->
+      <div id="portfoliosContainer">
+        <!-- Loading inicial -->
         <div class="card rounded-2xl p-8 fade-in">
           <div class="text-center py-12">
             <div class="spinner mx-auto mb-4"></div>
-            <p class="text-gray-300">Carregando suas recomendações...</p>
+            <p class="text-gray-300">Carregando suas carteiras...</p>
           </div>
         </div>
       </div>
@@ -149,10 +167,43 @@
     </div>
   </main>
 
+  <!-- Modal de Analytics -->
+  <div id="analyticsModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-gray-900 rounded-2xl max-w-6xl w-full max-h-[90vh] overflow-hidden">
+      <!-- Header do Modal -->
+      <div class="flex items-center justify-between p-6 border-b border-gray-700">
+        <div class="flex items-center space-x-3">
+          <div class="w-8 h-8 bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg flex items-center justify-center">
+            <i class="fas fa-chart-area text-white text-sm"></i>
+          </div>
+          <div>
+            <h2 id="modalTitle" class="text-xl font-bold text-white">Analytics da Carteira</h2>
+            <p id="modalSubtitle" class="text-gray-400 text-sm">Análise de performance e métricas</p>
+          </div>
+        </div>
+        <div class="flex items-center space-x-2">
+          <!-- Botão de Refresh -->
+          <button id="refreshBtn" onclick="refreshCurrentPortfolio()" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-sm transition-colors">
+            <i class="fas fa-sync-alt"></i> Atualizar
+          </button>
+          <button onclick="closeAnalyticsModal()" class="text-gray-400 hover:text-white transition-colors">
+            <i class="fas fa-times text-xl"></i>
+          </button>
+        </div>
+      </div>
+      
+      <!-- Conteúdo do Modal -->
+      <div id="modalContent" class="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
+        <!-- Conteúdo será inserido aqui -->
+      </div>
+    </div>
+  </div>
+
   <script>
     // ===== VARIÁVEIS GLOBAIS =====
     let userToken = null;
     let currentUser = null;
+    let currentPortfolioName = null; // Para refresh no modal
 
     // ===== INICIALIZAÇÃO =====
     document.addEventListener('DOMContentLoaded', function() {
@@ -174,7 +225,6 @@
 
     // ===== AUTENTICAÇÃO =====
     function checkAuth() {
-      // Tentar ambos os formatos de token para compatibilidade
       userToken = localStorage.getItem('authToken') || localStorage.getItem('geminii_token');
       const userData = localStorage.getItem('geminii_user');
       
@@ -204,26 +254,46 @@
       }
     }
 
-    // ===== CARREGAR DADOS DAS CARTEIRAS =====
-    // ===== SUBSTITUIR TODO O JAVASCRIPT DO analises.html POR ESTE: =====
-
+    // ===== CARREGAR DADOS DAS CARTEIRAS - SISTEMA HÍBRIDO =====
     async function loadPortfolioData() {
-      const container = document.getElementById('recommendationsContainer');
+      const container = document.getElementById('portfoliosContainer');
       
       try {
         console.log('🔍 Buscando dados das carteiras...');
-        
-        // Mostrar loading
         showLoading();
         
-        const response = await fetch('/api/user/my-portfolios', {
+        // INTEGRAÇÃO 1: Tentar endpoint REAL primeiro
+        let response, data;
+        try {
+          response = await fetch('/chart_ativos/user/portfolios', {
+            headers: {
+              'Authorization': `Bearer ${userToken}`,
+              'Content-Type': 'application/json'
+            }
+          });
+          
+          if (response.ok) {
+            data = await response.json();
+            console.log('📊 Dados do sistema REAL:', data);
+            
+            if (data.success && data.portfolios && data.portfolios.length > 0) {
+              displayPortfolios(data.portfolios, 'REAL');
+              return;
+            }
+          }
+        } catch (realError) {
+          console.log('⚠️ Sistema real não disponível, tentando API antiga:', realError.message);
+        }
+        
+        // INTEGRAÇÃO 2: Fallback para API antiga
+        response = await fetch('/api/user/my-portfolios', {
           headers: {
             'Authorization': `Bearer ${userToken}`,
             'Content-Type': 'application/json'
           }
         });
         
-        console.log('📡 Response status:', response.status);
+        console.log('📡 Response status API antiga:', response.status);
         
         if (!response.ok) {
           if (response.status === 401) {
@@ -235,13 +305,13 @@
           throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
         
-        const data = await response.json();
-        console.log('📊 Dados recebidos:', data);
+        data = await response.json();
+        console.log('📊 Dados da API antiga:', data);
         
         if (data.success && data.portfolios) {
-          displayPortfolios(data.portfolios);
+          displayPortfolios(data.portfolios, 'API_ANTIGA');
         } else {
-          throw new Error(data.error || 'Nenhum dado encontrado');
+          throw new Error(data.error || 'Nenhuma carteira encontrada');
         }
         
       } catch (error) {
@@ -250,12 +320,12 @@
       }
     }
 
-    // ===== EXIBIR CARTEIRAS (NOVA FUNÇÃO SIMPLES) =====
-    function displayPortfolios(portfolios) {
-      const container = document.getElementById('recommendationsContainer');
+    // ===== EXIBIR CARTEIRAS - SISTEMA HÍBRIDO =====
+    function displayPortfolios(portfolios, source) {
+      const container = document.getElementById('portfoliosContainer');
       if (!container) return;
       
-      console.log(`📊 Exibindo ${portfolios.length} carteiras`);
+      console.log(`📊 Exibindo ${portfolios.length} carteiras (fonte: ${source})`);
       
       if (portfolios.length === 0) {
         showNoData();
@@ -265,34 +335,64 @@
       let html = '';
       
       portfolios.forEach(portfolio => {
+        // Adaptar estrutura conforme a fonte
+        const portfolioData = source === 'REAL' ? {
+          id: portfolio.id,
+          name: portfolio.name,
+          display_name: portfolio.display_name || portfolio.name,
+          description: portfolio.description,
+          asset_count: portfolio.asset_count,
+          granted_at: portfolio.granted_at
+        } : {
+          id: portfolio.name,
+          name: portfolio.display_name || portfolio.name,
+          display_name: portfolio.display_name || portfolio.name,
+          description: portfolio.description,
+          asset_count: null,
+          granted_at: portfolio.granted_at
+        };
+        
         html += `
           <div class="card rounded-2xl p-8 mb-6 fade-in">
             <div class="flex items-center justify-between mb-6">
               <div>
                 <h2 class="text-2xl font-bold text-white flex items-center">
                   <i class="fas fa-briefcase text-primary mr-3"></i>
-                  ${portfolio.display_name}
+                  ${portfolioData.display_name}
                 </h2>
-                <p class="text-gray-400">${portfolio.description}</p>
-                ${portfolio.granted_at ? `<p class="text-xs text-gray-500 mt-1">Acesso concedido em: ${formatDate(portfolio.granted_at)}</p>` : ''}
+                <p class="text-gray-400">${portfolioData.description || 'Carteira de investimentos'}</p>
+                <div class="flex items-center space-x-4 mt-2 text-sm text-gray-500">
+                  ${portfolioData.asset_count ? `<span>${portfolioData.asset_count} ativos</span>` : ''}
+                  ${portfolioData.granted_at ? `<span>Acesso: ${formatDate(portfolioData.granted_at)}</span>` : ''}
+                  <span class="px-2 py-1 rounded text-xs ${source === 'REAL' ? 'bg-green-900/30 text-green-400' : 'bg-blue-900/30 text-blue-400'}">
+                    ${source === 'REAL' ? '🔄 Sistema Real' : '📊 API Clássica'}
+                  </span>
+                </div>
               </div>
               <div class="flex space-x-2">
-                <button onclick="loadPortfolioAssets('${portfolio.name}')" class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg text-white text-sm">
+                <!-- BOTÃO 1: ATIVOS -->
+                <button onclick="loadPortfolioAssets('${portfolioData.id}')" class="bg-blue-600 hover:bg-blue-700 px-3 py-2 rounded-lg text-white text-sm transition-colors">
                   <i class="fas fa-list mr-1"></i>
                   Ativos
                 </button>
-                <button onclick="loadPortfolioRecommendations('${portfolio.name}')" class="bg-green-600 hover:bg-green-700 px-4 py-2 rounded-lg text-white text-sm">
+                <!-- BOTÃO 2: RECOMENDAÇÕES -->
+                <button onclick="loadPortfolioRecommendations('${portfolioData.id}')" class="bg-green-600 hover:bg-green-700 px-3 py-2 rounded-lg text-white text-sm transition-colors">
                   <i class="fas fa-lightbulb mr-1"></i>
                   Recomendações
+                </button>
+                <!-- BOTÃO 3: ANALYTICS REAIS -->
+                <button onclick="${source === 'REAL' ? `openRealAnalyticsModal('${portfolioData.id}', '${portfolioData.name}')` : `openAnalyticsModal('${portfolioData.id}', '${portfolioData.name}')`}" class="bg-purple-600 hover:bg-purple-700 px-3 py-2 rounded-lg text-white text-sm transition-colors">
+                  <i class="fas fa-chart-area mr-1"></i>
+                  ${source === 'REAL' ? 'Analytics Reais' : 'Analytics'}
                 </button>
               </div>
             </div>
             
-            <!-- Container para carregar ativos/recomendações -->
-            <div id="portfolio-${portfolio.name}-content" class="bg-gray-800 bg-opacity-30 rounded-lg p-6 min-h-24">
+            <!-- Container para carregar conteúdo -->
+            <div id="portfolio-${portfolioData.id}-content" class="bg-gray-800 bg-opacity-30 rounded-lg p-6 min-h-24">
               <p class="text-gray-300 text-center">
                 <i class="fas fa-chart-line text-primary mr-2"></i>
-                Selecione "Ativos" ou "Recomendações" para ver os detalhes da carteira ${portfolio.display_name}
+                Selecione uma opção acima para ver os detalhes da carteira ${portfolioData.display_name}
               </p>
             </div>
           </div>
@@ -302,7 +402,7 @@
       container.innerHTML = html;
     }
 
-    // ===== CARREGAR ATIVOS DE UMA CARTEIRA =====
+    // ===== CARREGAR ATIVOS =====
     async function loadPortfolioAssets(portfolioName) {
       const contentDiv = document.getElementById(`portfolio-${portfolioName}-content`);
       if (!contentDiv) return;
@@ -332,7 +432,7 @@
       }
     }
 
-    // ===== CARREGAR RECOMENDAÇÕES DE UMA CARTEIRA =====
+    // ===== CARREGAR RECOMENDAÇÕES =====
     async function loadPortfolioRecommendations(portfolioName) {
       const contentDiv = document.getElementById(`portfolio-${portfolioName}-content`);
       if (!contentDiv) return;
@@ -362,6 +462,605 @@
       }
     }
 
+    // ===== MODAL ANALYTICS REAIS =====
+    async function openRealAnalyticsModal(portfolioId, portfolioName) {
+      console.log(`📊 Abrindo analytics REAL para: ${portfolioId}`);
+      
+      currentPortfolioName = portfolioId; // Salvar para refresh
+      
+      const modal = document.getElementById('analyticsModal');
+      const modalTitle = document.getElementById('modalTitle');
+      const modalSubtitle = document.getElementById('modalSubtitle');
+      const modalContent = document.getElementById('modalContent');
+      
+      // Atualizar título
+      modalTitle.textContent = `Analytics Reais - ${portfolioName}`;
+      modalSubtitle.textContent = 'Coletando dados do Yahoo Finance...';
+      
+      // Mostrar modal com loading
+      modalContent.innerHTML = `
+        <div class="text-center py-12">
+          <div class="spinner mx-auto mb-4"></div>
+          <p class="text-gray-300">Coletando dados do Yahoo Finance...</p>
+          <p class="text-gray-500 text-sm mt-2">Atualizando preços e calculando métricas</p>
+        </div>
+      `;
+      
+      modal.classList.remove('hidden');
+      
+      try {
+        // Chamar endpoint REAL dos analytics
+        const response = await fetch(`/chart_ativos/portfolio/${portfolioId}/analytics`, {
+          headers: {
+            'Authorization': `Bearer ${userToken}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Erro ${response.status}: ${response.statusText}`);
+        }
+        
+        const result = await response.json();
+        console.log('📈 Analytics reais recebidos:', result);
+        
+        if (result.success && result.data) {
+          displayRealAnalytics(result.data);
+          modalSubtitle.textContent = `Última atualização: ${formatDateTime(result.data.analysis_date)}`;
+        } else {
+          throw new Error(result.error || 'Dados de analytics não encontrados');
+        }
+        
+      } catch (error) {
+        console.error('❌ Erro ao carregar analytics reais:', error);
+        showAnalyticsError(error.message);
+      }
+    }
+
+    // ===== MODAL ANALYTICS ANTIGO =====
+    async function openAnalyticsModal(portfolioName, displayName) {
+      console.log(`📊 Abrindo analytics ANTIGO para: ${portfolioName}`);
+      
+      const modal = document.getElementById('analyticsModal');
+      const modalTitle = document.getElementById('modalTitle');
+      const modalSubtitle = document.getElementById('modalSubtitle');
+      const modalContent = document.getElementById('modalContent');
+      
+      // Atualizar título
+      modalTitle.textContent = `Analytics - ${displayName}`;
+      modalSubtitle.textContent = 'Coletando dados do Yahoo Finance...';
+      
+      // Mostrar modal com loading
+      modalContent.innerHTML = `
+        <div class="text-center py-12">
+          <div class="spinner mx-auto mb-4"></div>
+          <p class="text-gray-300">Calculando métricas de performance...</p>
+          <p class="text-gray-500 text-sm mt-2">Analisando dados históricos e comparando com IBOVESPA</p>
+        </div>
+      `;
+      
+      modal.classList.remove('hidden');
+      
+      try {
+        const response = await fetch(`/chart_ativos/portfolio/${portfolioName}/analytics`, {
+          headers: {
+            'Authorization': `Bearer ${userToken}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Erro ${response.status}: ${response.statusText}`);
+        }
+        
+        const result = await response.json();
+        
+        if (result.success && result.analytics_data) {
+          displayAnalyticsInModal(result.analytics_data);
+          modalSubtitle.textContent = `Período: ${formatDate(result.analytics_data.analysis_period.start_date)} até ${formatDate(result.analytics_data.analysis_period.end_date)}`;
+        } else if (result.success && result.data) {
+          // Se retornar formato novo, usar função nova
+          displayRealAnalytics(result.data);
+        } else {
+          throw new Error(result.error || 'Dados de analytics não encontrados');
+        }
+        
+      } catch (error) {
+        console.error('❌ Erro ao carregar analytics:', error);
+        showAnalyticsError(error.message);
+      }
+    }
+
+    // ===== FUNÇÃO DE REFRESH =====
+    async function refreshCurrentPortfolio() {
+      if (!currentPortfolioName) return;
+      
+      const refreshBtn = document.getElementById('refreshBtn');
+      const originalText = refreshBtn.innerHTML;
+      
+      try {
+        // Atualizar botão
+        refreshBtn.disabled = true;
+        refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Atualizando...';
+        
+        console.log(`🔄 Fazendo refresh da carteira: ${currentPortfolioName}`);
+        
+        // Endpoint de refresh forçado
+        const response = await fetch(`/chart_ativos/portfolio/${currentPortfolioName}/refresh`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${userToken}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+          // Mostrar toast de sucesso
+          showToast(`✅ ${result.message}`, 'success');
+          
+          // Recarregar analytics
+          const portfolioName = document.getElementById('modalTitle').textContent.replace('Analytics Reais - ', '').replace('Analytics - ', '');
+          await openRealAnalyticsModal(currentPortfolioName, portfolioName);
+          
+        } else {
+          throw new Error(result.error);
+        }
+        
+      } catch (error) {
+        console.error('❌ Erro no refresh:', error);
+        showToast(`❌ Erro: ${error.message}`, 'error');
+      } finally {
+        // Restaurar botão
+        refreshBtn.disabled = false;
+        refreshBtn.innerHTML = originalText;
+      }
+    }
+
+    // ===== EXIBIR ANALYTICS REAIS =====
+    function displayRealAnalytics(data) {
+      const modalContent = document.getElementById('modalContent');
+      const metrics = data.metrics;
+      const updateInfo = data.update_info;
+      
+      modalContent.innerHTML = `
+        <div class="space-y-6">
+          
+          <!-- Info de Atualização -->
+          ${updateInfo ? `
+            <div class="p-4 rounded-lg ${updateInfo.prices_updated ? 'bg-green-900/30 border border-green-500/30' : updateInfo.needs_refresh ? 'bg-yellow-900/30 border border-yellow-500/30' : 'bg-blue-900/30 border border-blue-500/30'}">
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-white font-medium">
+                    ${updateInfo.prices_updated ? '✅ Preços atualizados!' : updateInfo.needs_refresh ? '⏰ Preços desatualizados' : '✅ Dados atuais'}
+                  </p>
+                  <p class="text-sm text-gray-400">${updateInfo.update_message}</p>
+                  ${updateInfo.last_update ? `<p class="text-xs text-gray-500">Última atualização: ${formatDateTime(updateInfo.last_update)}</p>` : ''}
+                </div>
+                ${updateInfo.needs_refresh ? `
+                  <button onclick="refreshCurrentPortfolio()" class="bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-2 rounded-lg text-sm">
+                    <i class="fas fa-sync-alt mr-1"></i> Atualizar Agora
+                  </button>
+                ` : ''}
+              </div>
+            </div>
+          ` : ''}
+          
+          <!-- Métricas Principais -->
+          <div class="bg-gradient-to-r from-purple-900/30 to-pink-900/30 rounded-xl p-6 border border-purple-500/20">
+            <h3 class="text-lg font-semibold text-white mb-4 flex items-center">
+              <i class="fas fa-trophy text-yellow-400 mr-2"></i>
+              Performance da Carteira
+            </h3>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div class="text-center">
+                <div class="text-2xl font-bold ${metrics.total_return >= 0 ? 'text-green-400' : 'text-red-400'}">
+                  ${metrics.total_return > 0 ? '+' : ''}${metrics.total_return}%
+                </div>
+                <div class="text-xs text-gray-400">Retorno Total</div>
+              </div>
+              <div class="text-center">
+                <div class="text-2xl font-bold text-blue-400">${metrics.number_of_assets}</div>
+                <div class="text-xs text-gray-400">Ativos</div>
+              </div>
+              <div class="text-center">
+                <div class="text-2xl font-bold text-purple-400">${data.assets_count}</div>
+                <div class="text-xs text-gray-400">Total Analisados</div>
+              </div>
+              <div class="text-center">
+                <div class="text-2xl font-bold text-cyan-400">
+                  ${data.has_historical_data ? 'Sim' : 'Não'}
+                </div>
+                <div class="text-xs text-gray-400">Dados Históricos</div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Performance dos Ativos -->
+          ${metrics.assets_performance ? `
+            <div class="bg-gray-800/50 rounded-xl p-6">
+              <h4 class="text-white font-semibold mb-4 flex items-center">
+                <i class="fas fa-chart-bar text-green-400 mr-2"></i>
+                Performance Individual dos Ativos
+              </h4>
+              <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                  <thead>
+                    <tr class="border-b border-gray-700">
+                      <th class="text-left py-2 text-gray-400">Ativo</th>
+                      <th class="text-left py-2 text-gray-400">Setor</th>
+                      <th class="text-right py-2 text-gray-400">Peso</th>
+                      <th class="text-right py-2 text-gray-400">Entrada</th>
+                      <th class="text-right py-2 text-gray-400">Atual</th>
+                      <th class="text-right py-2 text-gray-400">Retorno</th>
+                      <th class="text-right py-2 text-gray-400">P&L</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${Object.entries(metrics.assets_performance).map(([ticker, data]) => `
+                      <tr class="border-b border-gray-800">
+                        <td class="py-2 text-white font-medium">${ticker}</td>
+                        <td class="py-2 text-gray-400 text-xs">${data.sector}</td>
+                        <td class="py-2 text-right text-cyan-400">${data.weight}%</td>
+                        <td class="py-2 text-right text-gray-300">R$ ${data.entry_price.toFixed(2)}</td>
+                        <td class="py-2 text-right text-white">R$ ${data.current_price.toFixed(2)}</td>
+                        <td class="py-2 text-right ${data.return >= 0 ? 'text-green-400' : 'text-red-400'}">
+                          ${data.return >= 0 ? '+' : ''}${data.return}%
+                        </td>
+                        <td class="py-2 text-right ${data.profit_loss >= 0 ? 'text-green-400' : 'text-red-400'}">
+                          R$ ${data.profit_loss.toFixed(2)}
+                        </td>
+                      </tr>
+                    `).join('')}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          ` : ''}
+          
+          <!-- Informações Técnicas -->
+          <div class="bg-gray-800/30 rounded-xl p-6 border border-gray-600">
+            <h4 class="text-white font-semibold mb-4 flex items-center">
+              <i class="fas fa-info-circle text-blue-400 mr-2"></i>
+              Informações da Análise
+            </h4>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+              <div>
+                <p class="text-gray-300"><strong class="text-white">Carteira:</strong> ${data.portfolio_name}</p>
+                <p class="text-gray-300"><strong class="text-white">Análise:</strong> ${formatDateTime(data.analysis_date)}</p>
+                <p class="text-gray-300"><strong class="text-white">Período:</strong> ${data.period_analyzed}</p>
+              </div>
+              <div>
+                <p class="text-gray-300"><strong class="text-white">Dados Históricos:</strong> ${data.has_historical_data ? 'Disponíveis' : 'Não disponíveis'}</p>
+                <p class="text-gray-300"><strong class="text-white">Última atualização:</strong> ${updateInfo?.last_update ? formatDateTime(updateInfo.last_update) : 'N/A'}</p>
+                <p class="text-gray-300"><strong class="text-white">Status:</strong> 
+                  <span class="${updateInfo?.needs_refresh ? 'text-yellow-400' : 'text-green-400'}">
+                    ${updateInfo?.needs_refresh ? 'Necessita atualização' : 'Atualizado'}
+                  </span>
+                </p>
+              </div>
+            </div>
+          </div>
+          
+        </div>
+      `;
+    }
+
+    // ===== EXIBIR ANALYTICS ANTIGO =====
+    function displayAnalyticsInModal(analyticsData) {
+      const modalContent = document.getElementById('modalContent');
+      const metrics = analyticsData.performance_metrics;
+      const chartData = analyticsData.chart_data;
+      const assetsInfo = analyticsData.assets_analyzed;
+      
+      modalContent.innerHTML = `
+        <div class="space-y-6">
+          
+          <!-- Resumo Executivo -->
+          <div class="bg-gradient-to-r from-purple-900/30 to-pink-900/30 rounded-xl p-6 border border-purple-500/20">
+            <h3 class="text-lg font-semibold text-white mb-4 flex items-center">
+              <i class="fas fa-trophy text-yellow-400 mr-2"></i>
+              Resumo da Performance
+            </h3>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div class="text-center">
+                <div class="text-2xl font-bold ${metrics.total_return_portfolio >= 0 ? 'text-green-400' : 'text-red-400'}">
+                  ${metrics.total_return_portfolio > 0 ? '+' : ''}${metrics.total_return_portfolio}%
+                </div>
+                <div class="text-xs text-gray-400">Retorno Total</div>
+              </div>
+              <div class="text-center">
+                <div class="text-2xl font-bold text-yellow-400">${metrics.volatility_portfolio}%</div>
+                <div class="text-xs text-gray-400">Volatilidade</div>
+              </div>
+              <div class="text-center">
+                <div class="text-2xl font-bold text-blue-400">${metrics.sharpe_portfolio}</div>
+                <div class="text-xs text-gray-400">Sharpe Ratio</div>
+              </div>
+              <div class="text-center">
+                <div class="text-2xl font-bold text-purple-400">${metrics.max_drawdown_portfolio}%</div>
+                <div class="text-xs text-gray-400">Max Drawdown</div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Comparação com IBOVESPA -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            
+            <!-- Carteira vs Benchmark -->
+            <div class="bg-gray-800/50 rounded-xl p-6">
+              <h4 class="text-white font-semibold mb-4 flex items-center">
+                <i class="fas fa-balance-scale text-cyan-400 mr-2"></i>
+                Carteira vs IBOVESPA
+              </h4>
+              <div class="space-y-3">
+                <div class="flex justify-between items-center">
+                  <span class="text-gray-400">Retorno Carteira:</span>
+                  <span class="${metrics.total_return_portfolio >= 0 ? 'text-green-400' : 'text-red-400'} font-semibold">
+                    ${metrics.total_return_portfolio > 0 ? '+' : ''}${metrics.total_return_portfolio}%
+                  </span>
+                </div>
+                <div class="flex justify-between items-center">
+                  <span class="text-gray-400">Retorno IBOV:</span>
+                  <span class="${metrics.total_return_benchmark >= 0 ? 'text-green-400' : 'text-red-400'} font-semibold">
+                    ${metrics.total_return_benchmark > 0 ? '+' : ''}${metrics.total_return_benchmark}%
+                  </span>
+                </div>
+                <div class="flex justify-between items-center border-t border-gray-700 pt-2">
+                  <span class="text-gray-400">Alpha (Excesso):</span>
+                  <span class="text-geminii font-bold">
+                    ${(metrics.total_return_portfolio - metrics.total_return_benchmark) > 0 ? '+' : ''}${(metrics.total_return_portfolio - metrics.total_return_benchmark).toFixed(2)}%
+                  </span>
+                </div>
+                <div class="flex justify-between items-center">
+                  <span class="text-gray-400">Beta:</span>
+                  <span class="text-cyan-400 font-semibold">${metrics.beta_portfolio}</span>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Informações dos Ativos -->
+            <div class="bg-gray-800/50 rounded-xl p-6">
+              <h4 class="text-white font-semibold mb-4 flex items-center">
+                <i class="fas fa-pie-chart text-orange-400 mr-2"></i>
+                Composição da Carteira
+              </h4>
+              <div class="space-y-3">
+                <div class="flex justify-between">
+                  <span class="text-gray-400">Total de Ativos:</span>
+                  <span class="text-white font-semibold">${assetsInfo.total_assets}</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-gray-400">Com Dados:</span>
+                  <span class="text-green-400 font-semibold">${assetsInfo.assets_with_data}</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-gray-400">Período Analisado:</span>
+                  <span class="text-white">${analyticsData.analysis_period.days} dias</span>
+                </div>
+                
+                <!-- Lista de Ativos -->
+                <div class="mt-4 pt-3 border-t border-gray-700">
+                  <p class="text-gray-400 text-sm mb-2">Ativos na Carteira:</p>
+                  <div class="grid grid-cols-2 gap-2">
+                    ${assetsInfo.tickers.map((ticker, index) => `
+                      <div class="bg-gray-700/50 rounded px-2 py-1 text-xs">
+                        <span class="text-white font-medium">${ticker.replace('.SA', '')}</span>
+                        <span class="text-gray-400 ml-1">${(assetsInfo.weights[index] * 100).toFixed(1)}%</span>
+                      </div>
+                    `).join('')}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Gráfico de Performance -->
+          <div class="bg-gray-800/50 rounded-xl p-6">
+            <h4 class="text-white font-semibold mb-4 flex items-center">
+              <i class="fas fa-chart-line text-green-400 mr-2"></i>
+              Performance Histórica
+            </h4>
+            <div class="relative h-64">
+              <canvas id="performanceChart"></canvas>
+            </div>
+          </div>
+          
+          <!-- Interpretação das Métricas -->
+          <div class="bg-gray-800/30 rounded-xl p-6 border border-gray-600">
+            <h4 class="text-white font-semibold mb-4 flex items-center">
+              <i class="fas fa-lightbulb text-yellow-400 mr-2"></i>
+              Interpretação das Métricas
+            </h4>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+              <div>
+                <p class="text-gray-300"><strong class="text-white">Sharpe Ratio ${metrics.sharpe_portfolio}:</strong></p>
+                <p class="text-gray-400">${getSharpeInterpretation(metrics.sharpe_portfolio)}</p>
+              </div>
+              <div>
+                <p class="text-gray-300"><strong class="text-white">Beta ${metrics.beta_portfolio}:</strong></p>
+                <p class="text-gray-400">${getBetaInterpretation(metrics.beta_portfolio)}</p>
+              </div>
+              <div>
+                <p class="text-gray-300"><strong class="text-white">Volatilidade ${metrics.volatility_portfolio}%:</strong></p>
+                <p class="text-gray-400">${getVolatilityInterpretation(metrics.volatility_portfolio)}</p>
+              </div>
+              <div>
+                <p class="text-gray-300"><strong class="text-white">Alpha ${(metrics.total_return_portfolio - metrics.total_return_benchmark).toFixed(2)}%:</strong></p>
+                <p class="text-gray-400">${getAlphaInterpretation(metrics.total_return_portfolio - metrics.total_return_benchmark)}</p>
+              </div>
+            </div>
+          </div>
+          
+        </div>
+      `;
+      
+      // Aguardar DOM e criar gráfico
+      setTimeout(() => {
+        createPerformanceChart(chartData);
+      }, 100);
+    }
+
+    // ===== CRIAR GRÁFICO =====
+    function createPerformanceChart(chartData) {
+      const canvas = document.getElementById('performanceChart');
+      if (!canvas) return;
+      
+      const ctx = canvas.getContext('2d');
+      
+      if (typeof Chart === 'undefined') {
+        canvas.parentElement.innerHTML = `
+          <div class="text-center py-8 text-gray-400">
+            <i class="fas fa-exclamation-triangle text-2xl mb-2"></i>
+            <p>Chart.js não carregado</p>
+          </div>
+        `;
+        return;
+      }
+      
+      // Destruir gráfico anterior
+      if (window.performanceChartInstance) {
+        window.performanceChartInstance.destroy();
+      }
+      
+      const dates = chartData.dates || [];
+      const portfolioData = chartData.portfolio_normalized || [];
+      const benchmarkData = chartData.benchmark_normalized || [];
+      
+      if (dates.length === 0 || portfolioData.length === 0) {
+        canvas.parentElement.innerHTML = `
+          <div class="text-center py-8 text-gray-400">
+            <i class="fas fa-chart-line text-2xl mb-2"></i>
+            <p>Dados insuficientes para gráfico</p>
+          </div>
+        `;
+        return;
+      }
+      
+      // Converter para percentual
+      const portfolioPercent = portfolioData.map(val => (val - 1) * 100);
+      const benchmarkPercent = benchmarkData.length > 0 ? benchmarkData.map(val => (val - 1) * 100) : [];
+      
+      // Configuração do gráfico
+      const config = {
+        type: 'line',
+        data: {
+          labels: dates.map(date => {
+            const d = new Date(date);
+            return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+          }),
+          datasets: [
+            {
+              label: 'Carteira',
+              data: portfolioPercent,
+              borderColor: '#8b5cf6',
+              backgroundColor: 'rgba(139, 92, 246, 0.1)',
+              borderWidth: 2,
+              fill: false,
+              tension: 0.1
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              labels: {
+                color: '#ffffff',
+                font: { size: 12 }
+              }
+            },
+            tooltip: {
+              backgroundColor: 'rgba(0, 0, 0, 0.8)',
+              titleColor: '#ffffff',
+              bodyColor: '#ffffff',
+              borderColor: '#8b5cf6',
+              borderWidth: 1,
+              callbacks: {
+                label: function(context) {
+                  return `${context.dataset.label}: ${context.parsed.y.toFixed(2)}%`;
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              ticks: {
+                color: '#9ca3af',
+                maxTicksLimit: 8
+              },
+              grid: {
+                color: 'rgba(156, 163, 175, 0.1)'
+              }
+            },
+            y: {
+              ticks: {
+                color: '#9ca3af',
+                callback: function(value) {
+                  return value.toFixed(1) + '%';
+                }
+              },
+              grid: {
+                color: 'rgba(156, 163, 175, 0.1)'
+              }
+            }
+          },
+          interaction: {
+            intersect: false,
+            mode: 'index'
+          }
+        }
+      };
+      
+      // Adicionar IBOVESPA se temos dados
+      if (benchmarkPercent.length > 0) {
+        config.data.datasets.push({
+          label: 'IBOVESPA',
+          data: benchmarkPercent,
+          borderColor: '#ef4444',
+          backgroundColor: 'rgba(239, 68, 68, 0.1)',
+          borderWidth: 2,
+          borderDash: [5, 5],
+          fill: false,
+          tension: 0.1
+        });
+      }
+      
+      // Criar gráfico
+      window.performanceChartInstance = new Chart(ctx, config);
+    }
+
+    // ===== INTERPRETAÇÕES =====
+    function getSharpeInterpretation(sharpe) {
+      if (sharpe > 2) return "Excelente! Retorno muito bom ajustado ao risco.";
+      if (sharpe > 1) return "Bom. Retorno adequado para o risco assumido.";
+      if (sharpe > 0) return "Aceitável. Retorno positivo, mas pode melhorar.";
+      return "Abaixo do esperado. Risco alto para o retorno obtido.";
+    }
+
+    function getBetaInterpretation(beta) {
+      if (beta > 1.2) return "Alta correlação com mercado. Mais volátil que IBOV.";
+      if (beta > 0.8) return "Movimento similar ao mercado.";
+      if (beta > 0) return "Menos volátil que o mercado.";
+      return "Movimento contrário ao mercado.";
+    }
+
+    function getVolatilityInterpretation(vol) {
+      if (vol > 30) return "Alta volatilidade. Carteira de maior risco.";
+      if (vol > 20) return "Volatilidade moderada-alta.";
+      if (vol > 15) return "Volatilidade moderada.";
+      return "Baixa volatilidade. Carteira mais conservadora.";
+    }
+
+    function getAlphaInterpretation(alpha) {
+      if (alpha > 5) return "Excelente! Superou significativamente o benchmark.";
+      if (alpha > 0) return "Positivo. Superou o benchmark.";
+      if (alpha > -5) return "Próximo ao benchmark.";
+      return "Abaixo do benchmark. Revisar estratégia.";
+    }
+
     // ===== EXIBIR ATIVOS =====
     function displayAssets(assets, container, totalWeight) {
       if (!assets || assets.length === 0) {
@@ -381,7 +1080,6 @@
         const currentPrice = asset.current_price || 0;
         const targetPrice = asset.target_price || 0;
         
-        // Calcular performance
         const performance = currentPrice && entryPrice ? ((currentPrice - entryPrice) / entryPrice * 100) : 0;
         const performanceColor = performance >= 0 ? 'text-green-400' : 'text-red-400';
         
@@ -434,7 +1132,6 @@
         return;
       }
       
-      // Contar por tipo
       const buy = recommendations.filter(r => r.action_type === 'BUY').length;
       const sell = recommendations.filter(r => r.action_type === 'SELL').length;
       const hold = recommendations.filter(r => r.action_type === 'HOLD').length;
@@ -524,14 +1221,58 @@
     }
 
     // ===== HELPER FUNCTIONS =====
+    function formatDateTime(dateString) {
+      if (!dateString) return 'N/A';
+      return new Date(dateString).toLocaleString('pt-BR');
+    }
+
     function formatDate(dateString) {
       if (!dateString) return 'N/A';
       return new Date(dateString).toLocaleDateString('pt-BR');
     }
 
-    // ===== ESTADOS DA UI (MANTIDOS) =====
+    // ===== TOAST NOTIFICATIONS =====
+    function showToast(message, type = 'info') {
+      const colors = {
+        success: 'bg-green-500',
+        error: 'bg-red-500',
+        info: 'bg-blue-500',
+        warning: 'bg-yellow-500'
+      };
+      
+      const toast = document.createElement('div');
+      toast.className = `fixed top-4 right-4 ${colors[type]} text-white px-6 py-3 rounded-lg shadow-lg z-50 transition-all duration-300`;
+      toast.textContent = message;
+
+      document.body.appendChild(toast);
+
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        setTimeout(() => {
+          if (document.body.contains(toast)) {
+            document.body.removeChild(toast);
+          }
+        }, 300);
+      }, 3000);
+    }
+
+    // ===== FECHAR MODAL =====
+    function closeAnalyticsModal() {
+      const modal = document.getElementById('analyticsModal');
+      if (modal) {
+        modal.classList.add('hidden');
+        currentPortfolioName = null;
+        // Destruir gráfico ao fechar
+        if (window.performanceChartInstance) {
+          window.performanceChartInstance.destroy();
+          window.performanceChartInstance = null;
+        }
+      }
+    }
+
+    // ===== ESTADOS DA UI =====
     function showLoading() {
-      const container = document.getElementById('recommendationsContainer');
+      const container = document.getElementById('portfoliosContainer');
       if (container) {
         container.innerHTML = `
           <div class="card rounded-2xl p-8 fade-in">
@@ -545,7 +1286,7 @@
     }
 
     function showNoData() {
-      const container = document.getElementById('recommendationsContainer');
+      const container = document.getElementById('portfoliosContainer');
       if (container) {
         container.innerHTML = `
           <div class="card rounded-2xl p-8 fade-in">
@@ -570,7 +1311,7 @@
     }
 
     function showError(message) {
-      const container = document.getElementById('recommendationsContainer');
+      const container = document.getElementById('portfoliosContainer');
       if (container) {
         container.innerHTML = `
           <div class="card rounded-2xl p-8 fade-in">
@@ -588,269 +1329,46 @@
       }
     }
 
-    // ===== REFRESH GLOBAL =====
+    function showAnalyticsError(message) {
+      const modalContent = document.getElementById('modalContent');
+      modalContent.innerHTML = `
+        <div class="text-center py-12">
+          <i class="fas fa-exclamation-triangle text-5xl text-red-400 mb-4"></i>
+          <h3 class="text-xl font-bold mb-2 text-red-400">Erro ao Carregar Analytics</h3>
+          <p class="text-gray-400 mb-4">${message}</p>
+          <div class="space-x-4">
+            <button onclick="closeAnalyticsModal()" class="bg-red-600 hover:bg-red-700 px-6 py-2 rounded-lg text-white">
+              Fechar
+            </button>
+            <button onclick="refreshCurrentPortfolio()" class="bg-blue-600 hover:bg-blue-700 px-6 py-2 rounded-lg text-white">
+              <i class="fas fa-sync-alt mr-1"></i>
+              Tentar Novamente
+            </button>
+          </div>
+        </div>
+      `;
+    }
+
+    // ===== EVENT LISTENERS =====
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        closeAnalyticsModal();
+      }
+    });
+
+    // Fechar modal clicando fora
+    document.getElementById('analyticsModal').addEventListener('click', (e) => {
+      if (e.target.id === 'analyticsModal') {
+        closeAnalyticsModal();
+      }
+    });
+
+    // ===== FUNÇÃO GLOBAL PARA REFRESH =====
     window.refreshAnalyses = function() {
       console.log('🔄 Atualizando análises...');
       loadPortfolioData();
     };
-    // ===== ADICIONAR NO FINAL DO <script> do analises.html =====
 
-    // ===== SISTEMA DE PREÇOS EM TEMPO REAL =====
-    async function updatePricesRealTime(forceUpdate = false) {
-      try {
-          console.log('🔄 Atualizando preços...');
-          
-          // Mostrar indicador de loading
-          showPriceUpdateLoading();
-          
-          const response = await fetch('/api/prices/update', {
-              method: 'POST',
-              headers: {
-                  'Authorization': `Bearer ${userToken}`,
-                  'Content-Type': 'application/json'
-              },
-              body: JSON.stringify({ force_update: forceUpdate })
-          });
-          
-          const result = await response.json();
-          
-          if (result.success) {
-              console.log('✅ Preços atualizados:', result.data);
-              showPriceUpdateSuccess(result.data);
-              
-              // Recarregar dados
-              await loadPortfolioData();
-              
-          } else {
-              console.error('❌ Erro:', result.error);
-              showPriceUpdateError(result.error);
-          }
-          
-      } catch (error) {
-          console.error('❌ Erro na atualização:', error);
-          showPriceUpdateError('Erro de conexão');
-      } finally {
-          hidePriceUpdateLoading();
-      }
-    }
-
-    // Função para obter status dos preços
-    async function getPricesStatus() {
-      try {
-          const response = await fetch('/api/prices/status', {
-              headers: { 'Authorization': `Bearer ${userToken}` }
-          });
-          
-          const result = await response.json();
-          return result.success ? result.data : null;
-          
-      } catch (error) {
-          console.error('❌ Erro ao buscar status:', error);
-          return null;
-      }
-    }
-
-    // Mostrar/esconder loading
-    function showPriceUpdateLoading() {
-      let loadingEl = document.getElementById('priceUpdateLoading');
-      if (!loadingEl) {
-          loadingEl = document.createElement('div');
-          loadingEl.id = 'priceUpdateLoading';
-          loadingEl.className = 'fixed top-4 right-4 bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg z-50 flex items-center space-x-2';
-          loadingEl.innerHTML = `
-              <div class="spinner border-2 border-white border-t-transparent rounded-full w-4 h-4 animate-spin"></div>
-              <span>Atualizando preços...</span>
-          `;
-          document.body.appendChild(loadingEl);
-      }
-      loadingEl.style.display = 'flex';
-    }
-
-    function hidePriceUpdateLoading() {
-      const loadingEl = document.getElementById('priceUpdateLoading');
-      if (loadingEl) {
-          loadingEl.style.display = 'none';
-      }
-    }
-
-    // Notificações de sucesso/erro
-    function showPriceUpdateSuccess(data) {
-      const updated = data.updated || [];
-      const errors = data.errors || [];
-      
-      if (updated.length > 0) {
-          showNotification(
-              `✅ ${updated.length} preços atualizados`,
-              'success',
-              3000
-          );
-      }
-      
-      if (errors.length > 0) {
-          showNotification(
-              `⚠️ ${errors.length} erros na atualização`,
-              'warning',
-              4000
-          );
-      }
-    }
-
-    function showPriceUpdateError(message) {
-      showNotification(`❌ Erro: ${message}`, 'error', 5000);
-    }
-
-    function showNotification(message, type = 'info', duration = 3000) {
-      const colors = {
-          success: 'bg-green-600',
-          error: 'bg-red-600',
-          warning: 'bg-yellow-600',
-          info: 'bg-blue-600'
-      };
-      
-      const notification = document.createElement('div');
-      notification.className = `fixed top-4 right-4 ${colors[type]} text-white px-6 py-3 rounded-lg shadow-lg z-50 fade-in`;
-      notification.textContent = message;
-      
-      document.body.appendChild(notification);
-      
-      setTimeout(() => {
-          notification.remove();
-      }, duration);
-    }
-
-    // Botão flutuante de atualização
-    function addPriceUpdateButton() {
-      // Verificar se já existe
-      if (document.getElementById('priceUpdateButton')) return;
-      
-      const button = document.createElement('button');
-      button.id = 'priceUpdateButton';
-      button.className = 'fixed bottom-6 right-6 bg-primary hover:bg-secondary text-white p-4 rounded-full shadow-lg z-40 transition-all duration-300 hover:scale-110';
-      button.innerHTML = '<i class="fas fa-sync"></i>';
-      button.title = 'Atualizar preços em tempo real';
-      
-      button.addEventListener('click', async () => {
-          // Animação do botão
-          button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-          button.disabled = true;
-          
-          await updatePricesRealTime();
-          
-          // Restaurar botão
-          button.innerHTML = '<i class="fas fa-sync"></i>';
-          button.disabled = false;
-      });
-      
-      document.body.appendChild(button);
-      
-      // Animação de entrada
-      setTimeout(() => {
-          button.style.transform = 'scale(1.1)';
-          setTimeout(() => {
-              button.style.transform = 'scale(1)';
-          }, 200);
-      }, 100);
-    }
-
-    // Status de preços na interface
-    async function showPricesStatusInfo() {
-      const status = await getPricesStatus();
-      if (!status) return;
-      
-      const stats = status.statistics;
-      const statusText = `📊 ${stats.total} ativos • ${stats.recent} atualizados • ${stats.outdated + stats.very_old} desatualizados`;
-      
-      // Adicionar info no header se não existir
-      let statusEl = document.getElementById('pricesStatusInfo');
-      if (!statusEl) {
-          statusEl = document.createElement('div');
-          statusEl.id = 'pricesStatusInfo';
-          statusEl.className = 'text-sm text-gray-400 mt-1';
-          
-          const headerEl = document.querySelector('h1').parentNode;
-          headerEl.appendChild(statusEl);
-      }
-      
-      statusEl.textContent = statusText;
-      
-      // Colorir baseado no status
-      if (stats.very_old > stats.total * 0.5) {
-          statusEl.className = 'text-sm text-red-400 mt-1';
-      } else if (stats.outdated > stats.total * 0.3) {
-          statusEl.className = 'text-sm text-yellow-400 mt-1';
-      } else {
-          statusEl.className = 'text-sm text-green-400 mt-1';
-      }
-    }
-
-    // Auto-atualização inteligente
-    function startAutoUpdate() {
-      const now = new Date();
-      const hour = now.getHours();
-      const day = now.getDay(); // 0=domingo, 6=sábado
-      
-      // Verificar se é horário de mercado (9h-18h, segunda a sexta)
-      const isMarketHours = (day >= 1 && day <= 5) && (hour >= 9 && hour <= 18);
-      
-      if (isMarketHours) {
-          console.log('📈 Auto-atualização ativa (horário de mercado)');
-          
-          // Atualizar a cada 10 minutos durante o mercado
-          setInterval(async () => {
-              console.log('🔄 Auto-atualização...');
-              await updatePricesRealTime(false); // Sem forçar
-          }, 10 * 60 * 1000); // 10 minutos
-          
-      } else {
-          console.log('🏠 Fora do horário de mercado');
-          
-          // Atualizar uma vez a cada 30 minutos fora do mercado
-          setInterval(async () => {
-              console.log('🔄 Auto-atualização (fora do mercado)...');
-              await updatePricesRealTime(false);
-          }, 30 * 60 * 1000); // 30 minutos
-      }
-    }
-
-    // Inicializar sistema de preços
-    function initPriceSystem() {
-      console.log('💰 Inicializando sistema de preços...');
-      
-      // Adicionar botão de atualização
-      addPriceUpdateButton();
-      
-      // Mostrar status inicial
-      showPricesStatusInfo();
-      
-      // Iniciar auto-atualização
-      startAutoUpdate();
-      
-      // Atualizar status a cada 5 minutos
-      setInterval(() => {
-          showPricesStatusInfo();
-      }, 5 * 60 * 1000);
-      
-      console.log('✅ Sistema de preços inicializado!');
-    }
-
-    // ===== INTEGRAR NA INICIALIZAÇÃO =====
-    // Modificar a função initAnalises para incluir o sistema de preços
-    const originalInitAnalises = initAnalises;
-    initAnalises = async function() {
-      await originalInitAnalises();
-      
-      // Inicializar sistema de preços após carregar dados
-      setTimeout(() => {
-          initPriceSystem();
-      }, 2000);
-    };
-
-    // Função para forçar atualização completa (botão de admin)
-    window.forceUpdateAllPrices = async function() {
-      if (confirm('Deseja forçar a atualização de TODOS os preços? Isso pode demorar alguns minutos.')) {
-          await updatePricesRealTime(true); // Forçar atualização
-      }
-    };
   </script>
 </body>
 </html>

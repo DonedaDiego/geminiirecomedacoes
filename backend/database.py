@@ -99,7 +99,7 @@ def create_plans_table():
         return False
 
 def create_users_table():
-    """Criar tabela users"""
+    """Criar tabela users COM TODOS OS CAMPOS NECESSÁRIOS"""
     try:
         conn = get_db_connection()
         if not conn:
@@ -107,7 +107,7 @@ def create_users_table():
             
         cursor = conn.cursor()
         
-        # Criar tabela users
+        # ✅ CRIAR TABELA USERS COMPLETA
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS users (
                 id SERIAL PRIMARY KEY,
@@ -115,27 +115,170 @@ def create_users_table():
                 email VARCHAR(100) UNIQUE NOT NULL,
                 password VARCHAR(255) NOT NULL,
                 plan_id INTEGER DEFAULT 1,
-                plan_name VARCHAR(50) DEFAULT 'Básico',
+                plan_name VARCHAR(50) DEFAULT 'Pro',
+                user_type VARCHAR(20) DEFAULT 'regular',
+                registration_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
         """)
         
-        # Criar índice para email (busca mais rápida)
+        # ✅ CRIAR ÍNDICES PARA BUSCA RÁPIDA
         cursor.execute("""
             CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+        """)
+        
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_users_type ON users(user_type);
+        """)
+        
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_users_registration_date ON users(registration_date);
         """)
         
         conn.commit()
         cursor.close()
         conn.close()
         
-        print("✅ Tabela 'users' criada com sucesso!")
+        print("✅ Tabela 'users' criada com TODOS os campos necessários!")
         return True
         
     except Exception as e:
         print(f"❌ Erro ao criar tabela users: {e}")
         return False
+    
+def update_existing_users_table():
+    """Atualizar tabela users existente com campos que faltam"""
+    try:
+        conn = get_db_connection()
+        if not conn:
+            return False
+            
+        cursor = conn.cursor()
+        
+        print("🔧 Atualizando tabela users existente...")
+        
+        # ✅ ADICIONAR CAMPOS QUE FALTAM
+        
+        # 1. user_type
+        cursor.execute("""
+            ALTER TABLE users 
+            ADD COLUMN IF NOT EXISTS user_type VARCHAR(20) DEFAULT 'regular'
+        """)
+        print("✅ Campo user_type adicionado")
+        
+        # 2. registration_date
+        cursor.execute("""
+            ALTER TABLE users 
+            ADD COLUMN IF NOT EXISTS registration_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        """)
+        print("✅ Campo registration_date adicionado")
+        
+        # ✅ ATUALIZAR USUÁRIOS EXISTENTES
+        cursor.execute("""
+            UPDATE users 
+            SET registration_date = created_at 
+            WHERE registration_date IS NULL
+        """)
+        print(f"✅ {cursor.rowcount} usuários existentes atualizados")
+        
+        # ✅ ATUALIZAR PLANO PADRÃO DE 'Básico' PARA 'Pro'
+        cursor.execute("""
+            UPDATE users 
+            SET plan_name = 'Pro' 
+            WHERE plan_name = 'Básico'
+        """)
+        print(f"✅ {cursor.rowcount} usuários migrados de Básico para Pro")
+        
+        # ✅ CRIAR ÍNDICES
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_users_type ON users(user_type)
+        """)
+        
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_users_registration_date ON users(registration_date)
+        """)
+        
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        print("🎉 Tabela users atualizada com sucesso!")
+        return True
+        
+    except Exception as e:
+        print(f"❌ Erro ao atualizar tabela: {e}")
+        return False    
+
+
+def register_user_complete(name, email, password, plan_id=1, plan_name="Pro"):
+    """Registrar usuário com todos os campos"""
+    try:
+        conn = get_db_connection()
+        if not conn:
+            return {'success': False, 'error': 'Erro de conexão'}
+            
+        cursor = conn.cursor()
+        
+        # Verificar se email já existe
+        cursor.execute("SELECT id FROM users WHERE email = %s", (email.lower(),))
+        if cursor.fetchone():
+            cursor.close()
+            conn.close()
+            return {'success': False, 'error': 'Email já cadastrado'}
+        
+        # Hash da senha
+        import hashlib
+        password_hash = hashlib.sha256(password.encode()).hexdigest()
+        
+        # Data atual
+        now = datetime.now(timezone.utc)
+        
+        # ✅ INSERIR USUÁRIO COM TODOS OS CAMPOS
+        cursor.execute("""
+            INSERT INTO users (name, email, password, plan_id, plan_name, user_type, registration_date, created_at, updated_at) 
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+            RETURNING id
+        """, (
+            name,                    # name
+            email.lower(),           # email
+            password_hash,           # password
+            plan_id,                 # plan_id
+            plan_name,              # plan_name
+            'regular',              # user_type
+            now,                    # registration_date ✅
+            now,                    # created_at
+            now                     # updated_at
+        ))
+
+        user_id = cursor.fetchone()[0]
+        
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        print(f"✅ Usuário registrado: {name} ({email}) - ID: {user_id}")
+        print(f"📅 Data de registro salva: {now}")
+        
+        return {
+            'success': True, 
+            'user_id': user_id,
+            'message': 'Usuário registrado com sucesso',
+            'user': {
+                'id': user_id,
+                'name': name,
+                'email': email.lower(),
+                'plan_id': plan_id,
+                'plan_name': plan_name,
+                'user_type': 'regular'
+                # registration_date não é enviada para o frontend
+            }
+        }
+        
+    except Exception as e:
+        print(f"❌ Erro no registro: {e}")
+        return {'success': False, 'error': f'Erro interno: {str(e)}'}
+    
 
 def update_plans_to_pro_premium():
     """Atualizar planos existentes para Pro e Premium apenas"""
@@ -578,7 +721,7 @@ def create_payment_history():
         return False
 
 def create_initial_admin():
-    """Criar usuário admin inicial - VERSÃO PRODUÇÃO"""
+    """Criar usuário admin - VERSÃO AJUSTADA"""
     try:
         conn = get_db_connection()
         if not conn:
@@ -586,32 +729,30 @@ def create_initial_admin():
             
         cursor = conn.cursor()
         
-        # Verificar se já existe admin
-        cursor.execute("SELECT id FROM users WHERE user_type = 'admin'")
-        if cursor.fetchone():
-            print("👑 Usuário admin já existe!")
-            cursor.close()
-            conn.close()
-            return True
-        
-        # Importar função de hash
+        # Hash da senha
         import hashlib
-        def hash_password(password):
-            return hashlib.sha256(password.encode()).hexdigest()
-        
-        # Criar usuário admin com sua senha
         admin_email = "diego@geminii.com.br"
-        admin_password = hash_password("@Lice8127")  # Sua senha
+        admin_password = hashlib.sha256("@Lice8127".encode()).hexdigest()
+        now = datetime.now(timezone.utc)
         
+        # ✅ INSERIR ADMIN SÓ COM OS CAMPOS QUE EXISTEM
         cursor.execute("""
-            INSERT INTO users (name, email, password, plan_id, plan_name, user_type, created_at) 
+            INSERT INTO users (name, email, password, plan_id, plan_name, created_at, updated_at) 
             VALUES (%s, %s, %s, %s, %s, %s, %s)
             ON CONFLICT (email) DO UPDATE SET 
-                user_type = 'admin',
-                plan_id = 3,
-                plan_name = 'Estratégico'
+                plan_id = EXCLUDED.plan_id,
+                plan_name = EXCLUDED.plan_name,
+                updated_at = EXCLUDED.updated_at
             RETURNING id
-        """, ("Diego Doneda - Admin", admin_email, admin_password, 3, "Estratégico", "admin", datetime.now(timezone.utc)))
+        """, (
+            "Diego Doneda - Admin", 
+            admin_email, 
+            admin_password, 
+            1,  # plan_id
+            "Pro",  # plan_name
+            now,    # created_at
+            now     # updated_at
+        ))
         
         admin_id = cursor.fetchone()[0]
         
@@ -619,11 +760,15 @@ def create_initial_admin():
         cursor.close()
         conn.close()
         
+        print("👑 ADMIN CRIADO!")
+        print(f"📧 Email: {admin_email}")
+        print(f"🔑 Senha: @Lice8127")
+        print(f"🆔 ID: {admin_id}")
         
         return True
         
     except Exception as e:
-        print(f"❌ Erro ao criar admin: {e}")
+        print(f"❌ Erro: {e}")
         return False
 
 def create_user_portfolios_table():
@@ -674,7 +819,6 @@ def create_user_portfolios_table():
     except Exception as e:
         print(f"❌ Erro ao criar tabela user_portfolios: {e}")
         return False
-
 
 def setup_enhanced_database():
     """Configurar banco completo com novos recursos"""
@@ -1115,20 +1259,3 @@ if __name__ == "__main__":
      setup_enhanced_database()
     
     
-# if __name__ == "__main__":
-#     print("🔧 OPÇÕES DE SETUP:")
-#     print("1. Setup completo")
-#     print("2. Corrigir admin")
-#     print("3. Atualizar planos para Pro/Premium")  # 🆕 NOVA OPÇÃO
-#     print("4. Atualizar cupons para novos planos") # 🆕 NOVA OPÇÃO
-    
-#     choice = input("Escolha (1, 2, 3 ou 4): ")
-    
-#     if choice == "2":
-#         fix_admin_account()
-#     elif choice == "3":
-#         update_plans_to_pro_premium()
-#     elif choice == "4":
-#         update_cupons_for_new_plans()
-#     else:
-#         setup_enhanced_database()

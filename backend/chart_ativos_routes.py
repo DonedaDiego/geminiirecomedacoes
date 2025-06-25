@@ -1,382 +1,276 @@
-# chart_ativos_routes.py
-"""
-Rotas para o serviço Chart Ativos
-"""
-
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, current_app
 from chart_ativos_service import ChartAtivosService
 import logging
+import jwt
+from datetime import datetime
+from database import get_db_connection
 
-# Configurar logging
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Criar blueprint
 chart_ativos_bp = Blueprint('chart_ativos', __name__, url_prefix='/chart_ativos')
-
-# Instanciar serviço
 chart_service = ChartAtivosService()
+
+def verify_user_access(auth_header):
+    """Verificar se usuário tem acesso via JWT token"""
+    try:
+        if not auth_header or not auth_header.startswith('Bearer '):
+            return False
+        
+        token = auth_header.replace('Bearer ', '')
+        payload = jwt.decode(token, current_app.config['SECRET_KEY'], algorithms=['HS256'])
+        user_id = payload['user_id']
+        
+        return user_id
+        
+    except Exception as e:
+        logger.error(f"Erro na verificação do token: {e}")
+        return False
+
+@chart_ativos_bp.route('/portfolio/<portfolio_id>/analytics', methods=['GET'])
+def get_portfolio_analytics(portfolio_id):
+    """Endpoint principal para análise de carteiras com auto-atualização"""
+    try:
+        logger.info(f"📊 Analytics solicitado para: {portfolio_id}")
+        
+        # Verificar autenticação
+        auth_header = request.headers.get('Authorization')
+        current_user_id = verify_user_access(auth_header)
+        
+        if not current_user_id:
+            logger.error("❌ Usuário não autenticado")
+            return jsonify({
+                'success': False,
+                'error': 'Usuário não autenticado'
+            }), 401
+
+        # Verificar se usuário tem acesso à carteira
+        if not check_user_portfolio_access(current_user_id, portfolio_id):
+            logger.error(f"❌ Usuário {current_user_id} sem acesso à carteira {portfolio_id}")
+            return jsonify({
+                'success': False,
+                'error': 'Acesso negado à esta carteira'
+            }), 403
+
+        # Verificar parâmetro de refresh forçado
+        force_refresh = request.args.get('refresh', 'false').lower() == 'true'
+        
+        if force_refresh:
+            logger.info("🔄 Refresh forçado solicitado")
+
+        # Executar análise com auto-atualização
+        result = chart_service.analyze_portfolio(portfolio_id, force_refresh)
+        
+        if result['success']:
+            logger.info("✅ Análise concluída com sucesso!")
+            
+            return jsonify({
+                'success': True,
+                'data': {
+                    'portfolio_id': result['portfolio_id'],
+                    'portfolio_name': result['portfolio_name'],
+                    'analysis_date': result['analysis_date'],
+                    'metrics': result['metrics'],
+                    'assets_count': result['assets_count'],
+                    'update_info': result['update_info']
+                }
+            })
+        else:
+            logger.error(f"❌ Erro na análise: {result['error']}")
+            return jsonify({
+                'success': False,
+                'error': result['error']
+            }), 500
+
+    except Exception as e:
+        logger.error(f"❌ Erro interno: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        
+        return jsonify({
+            'success': False,
+            'error': f'Erro interno do servidor: {str(e)}'
+        }), 500
+
+@chart_ativos_bp.route('/portfolio/<portfolio_id>/refresh', methods=['POST'])
+def refresh_portfolio_prices(portfolio_id):
+    """Endpoint específico para forçar atualização de preços"""
+    try:
+        logger.info(f"🔄 Refresh forçado para carteira: {portfolio_id}")
+        
+        # Verificar autenticação
+        auth_header = request.headers.get('Authorization')
+        current_user_id = verify_user_access(auth_header)
+        
+        if not current_user_id:
+            return jsonify({
+                'success': False,
+                'error': 'Usuário não autenticado'
+            }), 401
+
+        # Verificar acesso
+        if not check_user_portfolio_access(current_user_id, portfolio_id):
+            return jsonify({
+                'success': False,
+                'error': 'Acesso negado à esta carteira'
+            }), 403
+
+        # Forçar atualização de preços
+        update_result = chart_service.update_portfolio_prices(portfolio_id, force_update=True)
+        
+        if update_result['success']:
+            return jsonify({
+                'success': True,
+                'message': update_result['message'],
+                'updated_count': update_result.get('updated_count', 0),
+                'prices': update_result.get('prices', {}),
+                'timestamp': datetime.now().isoformat()
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': update_result['error']
+            }), 500
+
+    except Exception as e:
+        logger.error(f"❌ Erro no refresh: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@chart_ativos_bp.route('/user/portfolios', methods=['GET'])
+def get_user_portfolios():
+    """Lista carteiras disponíveis para o usuário"""
+    try:
+        # Verificar autenticação
+        auth_header = request.headers.get('Authorization')
+        current_user_id = verify_user_access(auth_header)
+        
+        if not current_user_id:
+            return jsonify({
+                'success': False,
+                'error': 'Usuário não autenticado'
+            }), 401
+
+        # Buscar carteiras do usuário
+        portfolios = get_user_available_portfolios(current_user_id)
+
+        return jsonify({
+            'success': True,
+            'portfolios': portfolios,
+            'total': len(portfolios),
+            'user_id': current_user_id
+        })
+
+    except Exception as e:
+        logger.error(f"❌ Erro ao listar portfolios: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
 
 @chart_ativos_bp.route('/health', methods=['GET'])
 def health_check():
-    """Endpoint para verificar saúde do serviço"""
+    """Health check do serviço"""
     try:
-        # Teste básico do serviço
-        test_tickers = ['PETR4', 'VALE3']
-        prices = chart_service.get_current_prices(test_tickers)
+        # Testar conexão com banco
+        conn = get_db_connection()
+        if conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT COUNT(*) FROM portfolios")
+            portfolio_count = cursor.fetchone()[0]
+            cursor.close()
+            conn.close()
+            
+            db_status = f"{portfolio_count} carteiras disponíveis"
+        else:
+            db_status = "Erro de conexão"
         
-        return jsonify({
-            'status': 'OK',
-            'message': 'Serviço Chart Ativos funcionando corretamente',
-            'timestamp': None,
-            'test_prices': len(prices)
-        })
-    except Exception as e:
-        logger.error(f"Erro no health check: {e}")
-        return jsonify({
-            'status': 'ERROR',
-            'message': f'Erro no serviço: {str(e)}'
-        }), 500
-
-@chart_ativos_bp.route('/portfolio/<portfolio_name>/analytics', methods=['GET'])
-def get_portfolio_analytics(portfolio_name):
-    """
-    Analisa performance completa de uma carteira
-    
-    GET /chart_ativos/portfolio/{portfolio_name}/analytics
-    
-    Returns:
-        JSON com métricas de performance, dados para gráficos e comparação com benchmark
-    """
-    try:
-        logger.info(f"📊 Solicitação de analytics da carteira: {portfolio_name}")
-        
-        # TODO: Buscar carteira e ativos do seu banco de dados
-        # portfolio = sua_função_buscar_carteira(portfolio_name)
-        # assets = sua_função_buscar_ativos(portfolio_name)
-        
-        # Por enquanto, exemplo estático para testar
-        mock_assets = [
-            {'ticker': 'PETR4', 'weight': 25.0, 'created_at': '2024-01-01'},
-            {'ticker': 'VALE3', 'weight': 25.0, 'created_at': '2024-01-01'}
-        ]
-        
-        # Executar análise usando o serviço
-        analytics_data = chart_service.analyze_portfolio(mock_assets, portfolio_name)
-        
-        logger.info(f"✅ Analytics gerado para {portfolio_name}")
+        # Testar API do Yahoo Finance
+        test_price = chart_service.fetch_single_price('PETR4')
+        api_status = "Operacional" if test_price else "Com problemas"
         
         return jsonify({
             'success': True,
-            'analytics_data': analytics_data
+            'service': 'Chart Ativos Service',
+            'status': 'operational',
+            'database': db_status,
+            'yahoo_finance_api': api_status,
+            'timestamp': datetime.now().isoformat()
         })
-
     except Exception as e:
-        logger.error(f"❌ Erro geral no endpoint analytics: {e}")
         return jsonify({
             'success': False,
-            'error': 'Erro interno do servidor'
+            'service': 'Chart Ativos Service',
+            'status': 'error',
+            'error': str(e),
+            'timestamp': datetime.now().isoformat()
         }), 500
 
-@chart_ativos_bp.route('/portfolio/<portfolio_name>/prices', methods=['GET'])
-def get_portfolio_current_prices(portfolio_name):
-
+def check_user_portfolio_access(user_id: int, portfolio_name: str) -> bool:
+    """Verifica se usuário tem acesso à carteira"""
     try:
-        logger.info(f"💰 Solicitação de preços da carteira: {portfolio_name}")
+        conn = get_db_connection()
+        if not conn:
+            return False
+            
+        cursor = conn.cursor()
         
-        # TODO: Buscar ativos da carteira do seu banco
-        # assets = sua_função_buscar_ativos(portfolio_name)
+        # Verificar acesso na tabela user_portfolios
+        cursor.execute("""
+            SELECT 1 FROM user_portfolios 
+            WHERE user_id = %s AND portfolio_name = %s AND is_active = true
+        """, (user_id, portfolio_name))
         
-        # Mock para teste
-        mock_tickers = ['PETR4', 'VALE3', 'ITUB4']
+        has_access = cursor.fetchone() is not None
         
-        # Buscar preços atuais
-        current_prices = chart_service.get_current_prices(mock_tickers)
+        cursor.close()
+        conn.close()
         
-        # Montar resposta
-        assets_data = []
-        for ticker in mock_tickers:
-            current_price = current_prices.get(ticker, 0)
-            assets_data.append({
-                'ticker': ticker,
-                'current_price': current_price
+        return has_access
+        
+    except Exception as e:
+        logger.error(f"❌ Erro ao verificar acesso: {e}")
+        return False
+
+def get_user_available_portfolios(user_id: int) -> list:
+    """Busca carteiras disponíveis para o usuário"""
+    try:
+        conn = get_db_connection()
+        if not conn:
+            return []
+            
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            SELECT up.portfolio_name, p.display_name, p.description,
+                   (SELECT COUNT(*) FROM portfolio_assets pa 
+                    WHERE pa.portfolio_name = up.portfolio_name AND pa.is_active = true) as asset_count
+            FROM user_portfolios up
+            JOIN portfolios p ON up.portfolio_name = p.name
+            WHERE up.user_id = %s AND up.is_active = true
+            ORDER BY p.display_name
+        """, (user_id,))
+        
+        portfolios = []
+        for row in cursor.fetchall():
+            portfolios.append({
+                'id': row[0],
+                'name': row[1],
+                'description': row[2] or '',
+                'asset_count': row[3] or 0
             })
         
-        logger.info(f"✅ Preços atualizados para {len(assets_data)} ativos da carteira {portfolio_name}")
+        cursor.close()
+        conn.close()
         
-        return jsonify({
-            'success': True,
-            'prices_data': {
-                'portfolio_name': portfolio_name,
-                'assets': assets_data,
-                'total_assets': len(assets_data),
-                'updated_prices': len([p for p in current_prices.values() if p > 0])
-            }
-        })
+        return portfolios
         
     except Exception as e:
-        logger.error(f"❌ Erro ao buscar preços: {e}")
-        return jsonify({
-            'success': False,
-            'error': 'Erro ao buscar preços atuais'
-        }), 500
-
-@chart_ativos_bp.route('/ticker/<ticker>/price', methods=['GET'])
-def get_ticker_price(ticker):
-    """
-    Busca preço atual de um ticker específico
-    
-    GET /chart_ativos/ticker/{ticker}/price
-    
-    Returns:
-        JSON com preço atual do ticker
-    """
-    try:
-        logger.info(f"💰 Buscando preço do ticker: {ticker}")
-        
-        ticker = ticker.upper().strip()
-        
-        # Buscar preço atual
-        prices = chart_service.get_current_prices([ticker])
-        current_price = prices.get(ticker, 0)
-        
-        if current_price == 0:
-            return jsonify({
-                'success': False,
-                'error': f'Preço não encontrado para {ticker}'
-            }), 404
-        
-        return jsonify({
-            'success': True,
-            'price_data': {
-                'ticker': ticker,
-                'current_price': current_price,
-                'timestamp': None  # Pode adicionar timestamp se necessário
-            }
-        })
-        
-    except Exception as e:
-        logger.error(f"❌ Erro ao buscar preço do ticker {ticker}: {e}")
-        return jsonify({
-            'success': False,
-            'error': 'Erro ao buscar preço'
-        }), 500
-
-@chart_ativos_bp.route('/bulk_prices', methods=['POST'])
-def bulk_get_prices():
-    """
-    Busca preços de múltiplos tickers em lote
-    
-    POST /chart_ativos/bulk_prices
-    
-    Payload esperado:
-    {
-        "tickers": ["PETR4", "VALE3", "ITUB4"]
-    }
-    """
-    try:
-        data = request.get_json()
-        
-        if not data:
-            return jsonify({
-                'success': False,
-                'error': 'Dados não fornecidos'
-            }), 400
-        
-        tickers = data.get('tickers', [])
-        if not tickers or not isinstance(tickers, list):
-            return jsonify({
-                'success': False,
-                'error': 'Lista de tickers é obrigatória'
-            }), 400
-        
-        # Limpar e normalizar tickers
-        clean_tickers = [ticker.upper().strip() for ticker in tickers if ticker.strip()]
-        
-        if not clean_tickers:
-            return jsonify({
-                'success': False,
-                'error': 'Nenhum ticker válido fornecido'
-            }), 400
-        
-        logger.info(f"📊 Buscando preços em lote para {len(clean_tickers)} tickers")
-        
-        # Buscar preços
-        current_prices = chart_service.get_current_prices(clean_tickers)
-        
-        # Montar resposta
-        results = []
-        errors = []
-        
-        for ticker in clean_tickers:
-            price = current_prices.get(ticker, 0)
-            if price > 0:
-                results.append({
-                    'ticker': ticker,
-                    'current_price': price
-                })
-            else:
-                errors.append(f"Preço não encontrado para {ticker}")
-        
-        logger.info(f"✅ Preços em lote: {len(results)} sucessos, {len(errors)} erros")
-        
-        return jsonify({
-            'success': True,
-            'bulk_prices_data': {
-                'results': results,
-                'errors': errors,
-                'total_found': len(results),
-                'total_errors': len(errors),
-                'requested_tickers': len(clean_tickers)
-            }
-        })
-        
-    except Exception as e:
-        logger.error(f"❌ Erro na busca em lote: {e}")
-        return jsonify({
-            'success': False,
-            'error': f'Erro interno: {str(e)}'
-        }), 500
-
-@chart_ativos_bp.route('/benchmark/performance', methods=['GET'])
-def get_benchmark_performance():
-    """
-    Busca performance do benchmark (IBOVESPA)
-    
-    GET /chart_ativos/benchmark/performance?period=30d
-    
-    Query Parameters:
-        period: Período em dias (padrão: 30d)
-    
-    Returns:
-        JSON com dados de performance do IBOVESPA
-    """
-    try:
-        # Pegar período dos query parameters
-        period_str = request.args.get('period', '30d')
-        
-        # Converter período para dias
-        if period_str.endswith('d'):
-            days = int(period_str[:-1])
-        elif period_str.endswith('m'):
-            days = int(period_str[:-1]) * 30
-        elif period_str.endswith('y'):
-            days = int(period_str[:-1]) * 365
-        else:
-            days = 30
-        
-        # Limitar período máximo
-        days = min(days, 1095)  # Máximo 3 anos
-        
-        logger.info(f"📊 Buscando performance do IBOVESPA para {days} dias")
-        
-        from datetime import datetime, timedelta
-        
-        # Definir período
-        end_date = datetime.now()
-        start_date = end_date - timedelta(days=days)
-        
-        # Buscar dados do IBOVESPA
-        benchmark_data = chart_service._fetch_historical_data(
-            [chart_service.benchmark_ticker], 
-            start_date, 
-            end_date
-        )
-        
-        if benchmark_data.empty:
-            return jsonify({
-                'success': False,
-                'error': 'Dados do benchmark não encontrados'
-            }), 404
-        
-        # Normalizar e calcular performance
-        normalized = benchmark_data / benchmark_data.iloc[0]
-        total_return = (normalized.iloc[-1].iloc[0] - 1) * 100
-        
-        # Calcular volatilidade
-        daily_returns = benchmark_data.pct_change().dropna()
-        volatility = daily_returns.std().iloc[0] * np.sqrt(252) * 100
-        
-        # Preparar dados para gráfico (últimos 30 pontos)
-        chart_data = normalized.tail(30)
-        
-        return jsonify({
-            'success': True,
-            'benchmark_data': {
-                'benchmark_name': 'IBOVESPA',
-                'period_days': days,
-                'total_return': round(total_return, 2),
-                'volatility': round(volatility, 2),
-                'chart_data': {
-                    'dates': chart_data.index.strftime('%Y-%m-%d').tolist(),
-                    'values': chart_data.iloc[:, 0].tolist()
-                }
-            }
-        })
-        
-    except Exception as e:
-        logger.error(f"❌ Erro ao buscar performance do benchmark: {e}")
-        return jsonify({
-            'success': False,
-            'error': 'Erro ao buscar dados do benchmark'
-        }), 500
-
-@chart_ativos_bp.route('/compare_portfolios', methods=['POST'])
-def compare_portfolios():
-    """
-    Compara performance entre duas carteiras
-    
-    POST /chart_ativos/compare_portfolios
-    
-    Payload esperado:
-    {
-        "portfolio1": "bluechips",
-        "portfolio2": "growth"
-    }
-    """
-    try:
-        # TODO: Implementar seu sistema de autenticação aqui
-        data = request.get_json()
-        
-        if not data:
-            return jsonify({
-                'success': False,
-                'error': 'Dados não fornecidos'
-            }), 400
-        
-        portfolio1_name = data.get('portfolio1', '').strip()
-        portfolio2_name = data.get('portfolio2', '').strip()
-        
-        if not portfolio1_name or not portfolio2_name:
-            return jsonify({
-                'success': False,
-                'error': 'Ambas as carteiras são obrigatórias'
-            }), 400
-        
-        if portfolio1_name == portfolio2_name:
-            return jsonify({
-                'success': False,
-                'error': 'As carteiras devem ser diferentes'
-            }), 400
-        
-        logger.info(f"🔍 Comparando carteiras {portfolio1_name} vs {portfolio2_name}")
-        
-        # TODO: Integrar com seu banco de dados
-        # Por enquanto, retorna erro informativo
-        return jsonify({
-            'success': False,
-            'error': 'Funcionalidade em desenvolvimento - aguarde integração com banco de dados'
-        }), 501
-        
-    except Exception as e:
-        logger.error(f"❌ Erro na comparação de carteiras: {e}")
-        return jsonify({
-            'success': False,
-            'error': f'Erro interno: {str(e)}'
-        }), 500
+        logger.error(f"❌ Erro ao buscar portfolios: {e}")
+        return []
 
 # Função para registrar o blueprint
-def register_chart_ativos_routes(app):
-    """Registra as rotas Chart Ativos na aplicação Flask"""
-    app.register_blueprint(chart_ativos_bp)
-    logger.info("Rotas Chart Ativos registradas com sucesso")
+def get_chart_ativos_blueprint():
+    """Retorna o blueprint para registrar no Flask"""
+    return chart_ativos_bp
