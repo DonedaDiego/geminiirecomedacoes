@@ -710,19 +710,152 @@ def create_checkout_compat():
 
 # ===== WEBHOOK PRINCIPAL =====
 
+# @app.route('/webhook/mercadopago', methods=['POST'])
+# def mercadopago_webhook():
+#     """Webhook principal - redireciona para blueprint"""
+#     if not MP_AVAILABLE:
+#         return jsonify({"success": False, "error": "Mercado Pago não disponível"}), 500
+    
+#     try:
+#         from mercadopago_routes import webhook
+#         return webhook()
+        
+#     except Exception as e:
+#         print(f"❌ Erro no webhook principal: {e}")
+#         return jsonify({"success": False, "error": str(e)}), 500
+
+
+
 @app.route('/webhook/mercadopago', methods=['POST'])
 def mercadopago_webhook():
     """Webhook principal - redireciona para blueprint"""
+    
+    # 🔔 LOG INICIAL
+    print(f"\n{'='*60}")
+    print(f"🔔 WEBHOOK MERCADO PAGO CHAMADO! - {datetime.now()}")
+    print(f"{'='*60}")
+    
+    # 📊 LOG DOS HEADERS
+    print(f"📊 HEADERS RECEBIDOS:")
+    for key, value in request.headers:
+        print(f"   {key}: {value}")
+    
+    # 📦 LOG DOS DADOS
+    try:
+        data = request.get_json()
+        print(f"📦 DADOS JSON RECEBIDOS:")
+        print(f"   {data}")
+    except Exception as e:
+        print(f"❌ Erro ao ler JSON: {e}")
+        print(f"📦 RAW DATA: {request.data}")
+    
+    # ✅ VERIFICAR MP_AVAILABLE
+    print(f"🔧 MP_AVAILABLE: {MP_AVAILABLE}")
+    
     if not MP_AVAILABLE:
+        print(f"❌ Mercado Pago não disponível!")
         return jsonify({"success": False, "error": "Mercado Pago não disponível"}), 500
     
     try:
+        print(f"🔄 Importando webhook do mercadopago_routes...")
         from mercadopago_routes import webhook
-        return webhook()
+        
+        print(f"🔄 Executando função webhook...")
+        result = webhook()
+        
+        print(f"✅ WEBHOOK PROCESSADO COM SUCESSO!")
+        print(f"📤 RESPOSTA: {result}")
+        
+        return result
         
     except Exception as e:
-        print(f"❌ Erro no webhook principal: {e}")
+        print(f"❌ ERRO NO WEBHOOK PRINCIPAL: {e}")
+        
+        # 🔍 TRACEBACK COMPLETO
+        import traceback
+        print(f"🔍 TRACEBACK COMPLETO:")
+        traceback.print_exc()
+        
         return jsonify({"success": False, "error": str(e)}), 500
+
+# 🧪 ENDPOINT DE TESTE
+@app.route('/webhook/test', methods=['GET', 'POST'])
+def webhook_test():
+    """Endpoint para testar se webhook está acessível"""
+    
+    print(f"\n🧪 WEBHOOK TEST CHAMADO - {datetime.now()}")
+    print(f"   Método: {request.method}")
+    print(f"   Host: {request.host}")
+    print(f"   URL: {request.url}")
+    
+    if request.method == 'POST':
+        data = request.get_json()
+        print(f"   Dados POST: {data}")
+    
+    return jsonify({
+        'success': True,
+        'message': 'Webhook está funcionando!',
+        'method': request.method,
+        'timestamp': datetime.now().isoformat(),
+        'host': request.host,
+        'mp_available': MP_AVAILABLE
+    })
+
+# 🔧 ENDPOINT PARA SIMULAR WEBHOOK
+@app.route('/webhook/simulate', methods=['POST'])
+def simulate_webhook():
+    """Simular chamada do Mercado Pago para teste"""
+    
+    print(f"\n🎭 SIMULANDO WEBHOOK DO MERCADO PAGO - {datetime.now()}")
+    
+    # Dados fake para simular o Mercado Pago
+    fake_mp_data = {
+        "type": "payment",
+        "data": {
+            "id": "123456789"  # ID fake para teste
+        }
+    }
+    
+    try:
+        print(f"🔄 Simulando webhook com dados fake...")
+        
+        if MP_AVAILABLE:
+            from mercadopago_routes import webhook
+            
+            # Simular request.get_json() retornando dados fake
+            import json
+            from unittest.mock import patch
+            
+            with patch('flask.request.get_json', return_value=fake_mp_data):
+                result = webhook()
+            
+            print(f"✅ SIMULAÇÃO CONCLUÍDA!")
+            print(f"📤 RESULTADO: {result}")
+            
+            return result
+        else:
+            return jsonify({"error": "MP não disponível"}), 500
+            
+    except Exception as e:
+        print(f"❌ ERRO NA SIMULAÇÃO: {e}")
+        import traceback
+        traceback.print_exc()
+        
+        return jsonify({"error": str(e)}), 500
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 # ===== ROTAS DE AUTENTICAÇÃO =====
 

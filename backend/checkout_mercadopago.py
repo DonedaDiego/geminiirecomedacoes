@@ -320,7 +320,7 @@ def webhook():
             
             if payment_id:
                 print(f"💳 Processando pagamento: {payment_id}")
-                # Aqui você pode adicionar lógica para processar o pagamento
+                
             
         return jsonify({"success": True}), 200
         

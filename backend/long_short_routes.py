@@ -1,4 +1,5 @@
 from flask import Blueprint, jsonify, request
+
 from long_short_service import LongShortService
 import pandas as pd
 import json
