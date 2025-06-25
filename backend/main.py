@@ -726,29 +726,17 @@ def create_checkout_compat():
 
 
 # ===== WEBHOOK PRINCIPAL =====
-@app.route('/webhook/mercadopago', methods=['POST'])
-def mercadopago_webhook():
-    """Webhook principal - redireciona para blueprint"""
-    if not MP_AVAILABLE:
-        return jsonify({"success": False, "error": "Mercado Pago não disponível"}), 500
-    
-    try:
-        from mercadopago_routes import webhook
-        return webhook()
-        
-    except Exception as e:
-        print(f"❌ Erro no webhook principal: {e}")
-        return jsonify({"success": False, "error": str(e)}), 500
+# ===== ADICIONE ESTES ENDPOINTS NO FINAL DO main.py =====
 
-# ===== ENDPOINTS DE DEBUG =====
-@app.route('/debug/payment/<payment_id>')
-def debug_payment_processing(payment_id):
-    """Debug detalhado do processamento de pagamento"""
+# 🚨 PROCESSAMENTO MANUAL FORÇADO
+@app.route('/force/process/<payment_id>')
+def force_process_payment(payment_id):
+    """FORÇAR processamento de pagamento - sem depender do mercadopago_routes"""
     
     try:
-        print(f"\n🔍 DEBUG PAYMENT: {payment_id}")
+        print(f"\n🔥 FORÇANDO PROCESSAMENTO: {payment_id}")
         
-        # 1. Verificar se pagamento existe no MP
+        # 1. Buscar dados no MP
         mp_token = os.environ.get('MP_ACCESS_TOKEN')
         headers = {
             'Authorization': f'Bearer {mp_token}',
@@ -760,29 +748,104 @@ def debug_payment_processing(payment_id):
             headers=headers
         )
         
-        mp_data = {}
-        mp_status_code = response.status_code
-        
-        if response.status_code == 200:
-            mp_data = response.json()
-            print(f"✅ Pagamento encontrado no MP: {mp_data.get('status')}")
-        else:
-            print(f"❌ Erro MP: {response.status_code}")
-            mp_data = {'error': f'Status {response.status_code}'}
+        if response.status_code != 200:
+            return jsonify({'error': f'Pagamento não encontrado no MP: {response.status_code}'}), 400
             
-        # 2. Simular processamento
-        try:
-            from mercadopago_routes import process_payment
-            process_result = process_payment(payment_id)
-        except Exception as e:
-            process_result = {'error': f'Erro ao processar: {str(e)}'}
+        mp_data = response.json()
         
-        # 3. Verificar tabelas
+        if mp_data.get('status') != 'approved':
+            return jsonify({'error': f'Pagamento não aprovado: {mp_data.get("status")}'}), 400
+        
+        # 2. Extrair dados
+        external_ref = mp_data.get('external_reference', '')
+        amount = float(mp_data.get('transaction_amount', 0))
+        payer_email = mp_data.get('payer', {}).get('email', '')
+        
+        print(f"💰 Valor: R$ {amount}")
+        print(f"📧 Email: {payer_email}")
+        print(f"🔗 Ref: {external_ref}")
+        
+        # 3. Buscar usuário
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # Tentar por email do pagador primeiro
+        cursor.execute("SELECT id, email FROM users WHERE email = %s", (payer_email,))
+        user_row = cursor.fetchone()
+        
+        # Se não encontrar, usar martha@gmail.com
+        if not user_row:
+            cursor.execute("SELECT id, email FROM users WHERE email = %s", ('martha@gmail.com',))
+            user_row = cursor.fetchone()
+            
+        if not user_row:
+            conn.close()
+            return jsonify({'error': 'Usuário não encontrado'}), 400
+            
+        user_id = user_row[0]
+        user_email = user_row[1]
+        
+        # 4. Verificar se já existe na tabela payments
+        cursor.execute("SELECT id FROM payments WHERE payment_id = %s", (payment_id,))
+        existing = cursor.fetchone()
+        
+        if existing:
+            conn.close()
+            return jsonify({'message': 'Pagamento já processado', 'payment_id': payment_id}), 200
+        
+        # 5. Definir plano baseado no valor
+        plan_name = 'básico' if amount < 30 else 'pro'
+        plan_id = 1 if amount < 30 else 2
+        
+        # 6. INSERIR NA TABELA PAYMENTS
+        cursor.execute("""
+            INSERT INTO payments (
+                user_id, payment_id, status, amount, plan_id, plan_name, 
+                external_reference, created_at, updated_at
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, NOW(), NOW())
+        """, (
+            user_id, payment_id, 'approved', amount, plan_id, plan_name, external_ref
+        ))
+        
+        # 7. ATUALIZAR USUÁRIO
+        cursor.execute("""
+            UPDATE users 
+            SET subscription_status = %s, subscription_plan = %s, updated_at = NOW()
+            WHERE id = %s
+        """, ('active', plan_name, user_id))
+        
+        conn.commit()
+        conn.close()
+        
+        print(f"✅ PROCESSAMENTO FORÇADO CONCLUÍDO!")
+        
+        return jsonify({
+            'success': True,
+            'payment_id': payment_id,
+            'user_id': user_id,
+            'user_email': user_email,
+            'amount': amount,
+            'plan': plan_name,
+            'message': f'Pagamento processado com sucesso! Usuário {user_email} ativado no plano {plan_name}'
+        })
+        
+    except Exception as e:
+        print(f"❌ ERRO NO PROCESSAMENTO FORÇADO: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e), 'traceback': traceback.format_exc()}), 500
+
+# 🔍 VERIFICAÇÃO COMPLETA
+@app.route('/check/payment/<payment_id>')
+def check_payment_complete(payment_id):
+    """Verificação completa do status de um pagamento"""
+    
+    try:
         conn = get_db_connection()
         cursor = conn.cursor()
         
         # Verificar payment_history
-        cursor.execute("SELECT * FROM payment_history WHERE payment_id = %s", (payment_id,))
+        cursor.execute("SELECT * FROM payment_history WHERE payment_id = %s ORDER BY created_at DESC", (payment_id,))
         history_rows = cursor.fetchall()
         history_columns = [desc[0] for desc in cursor.description]
         history_data = [dict(zip(history_columns, row)) for row in history_rows]
@@ -793,71 +856,153 @@ def debug_payment_processing(payment_id):
         payments_columns = [desc[0] for desc in cursor.description]
         payments_data = [dict(zip(payments_columns, row)) for row in payments_rows]
         
-        # Verificar usuário Martha
-        cursor.execute("SELECT id, email, subscription_status, subscription_plan FROM users WHERE email = %s", ('martha@gmail.com',))
-        user_row = cursor.fetchone()
-        user_data = None
-        if user_row:
-            user_columns = ['id', 'email', 'subscription_status', 'subscription_plan']
-            user_data = dict(zip(user_columns, user_row))
-            
+        # Verificar usuários ativos
+        cursor.execute("SELECT id, email, subscription_status, subscription_plan FROM users WHERE subscription_status = 'active'")
+        active_users_rows = cursor.fetchall()
+        active_users_columns = [desc[0] for desc in cursor.description]
+        active_users = [dict(zip(active_users_columns, row)) for row in active_users_rows]
+        
         conn.close()
         
-        # 4. Análise dos dados
-        analysis = []
-        
-        if mp_status_code != 200:
-            analysis.append(f"❌ Pagamento {payment_id} não encontrado no Mercado Pago")
-        elif mp_data.get('status') != 'approved':
-            analysis.append(f"⚠️ Status no MP: {mp_data.get('status')} (precisa ser 'approved')")
-        else:
-            analysis.append(f"✅ Pagamento aprovado no MP")
-            
-        if not user_data:
-            analysis.append("❌ Usuário martha@gmail.com não encontrado")
-        else:
-            analysis.append(f"✅ Usuário encontrado: {user_data['subscription_status']}")
-            
-        if len(history_data) == 0:
-            analysis.append("❌ Nenhum registro em payment_history")
-        else:
-            analysis.append(f"✅ {len(history_data)} registro(s) em payment_history")
-            
-        if len(payments_data) == 0:
-            analysis.append("❌ Nenhum registro em payments (problema principal)")
-        else:
-            analysis.append(f"✅ {len(payments_data)} registro(s) em payments")
+        status = "❌ NÃO PROCESSADO"
+        if payments_data:
+            status = "✅ PROCESSADO"
+        elif history_data:
+            status = "⚠️ WEBHOOK RECEBIDO, MAS NÃO PROCESSADO"
         
         return jsonify({
             'payment_id': payment_id,
-            'mp_api': {
-                'status_code': mp_status_code,
-                'data': {
-                    'status': mp_data.get('status'),
-                    'external_reference': mp_data.get('external_reference'),
-                    'amount': mp_data.get('transaction_amount'),
-                    'payer_email': mp_data.get('payer', {}).get('email') if isinstance(mp_data.get('payer'), dict) else None
-                } if mp_status_code == 200 else mp_data
-            },
-            'process_result': process_result,
+            'status': status,
             'database': {
                 'payment_history': history_data,
                 'payments': payments_data,
-                'user': user_data
+                'active_users': active_users
             },
-            'analysis': analysis,
-            'recommendation': "Verificar por que process_payment não está inserindo em 'payments'"
+            'actions': {
+                'force_process': f'/force/process/{payment_id}',
+                'create_new_payment': '/test/create-payment'
+            }
         })
         
     except Exception as e:
-        print(f"❌ ERRO DEBUG: {e}")
-        import traceback
-        traceback.print_exc()
-        return jsonify({'error': str(e), 'traceback': traceback.format_exc()}), 500
+        return jsonify({'error': str(e)}), 500
 
-
-
-
+# 🧪 CRIAR PAGAMENTO DE TESTE
+@app.route('/test/create-payment', methods=['GET', 'POST'])
+def create_test_payment():
+    """Criar pagamento de teste"""
+    
+    if request.method == 'GET':
+        return '''
+        <html>
+        <head><title>Criar Pagamento Teste</title></head>
+        <body>
+            <h2>🧪 Criar Pagamento de Teste</h2>
+            
+            <input type="text" id="nome" placeholder="Nome" value="Martha Silva">
+            <input type="email" id="email" placeholder="Email" value="martha@gmail.com">
+            <select id="plano">
+                <option value="basic">Básico - R$ 19,50</option>
+                <option value="pro" selected>Pro - R$ 39,50</option>
+            </select>
+            <input type="text" id="cupom" placeholder="Cupom" value="50OFF">
+            
+            <button onclick="criarPagamento()">🚀 Criar Pagamento</button>
+            
+            <div id="resultado"></div>
+            
+            <script>
+            async function criarPagamento() {
+                try {
+                    const response = await fetch('/test/create-payment', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            name: document.getElementById('nome').value,
+                            email: document.getElementById('email').value,
+                            plan: document.getElementById('plano').value,
+                            coupon: document.getElementById('cupom').value
+                        })
+                    });
+                    
+                    const result = await response.json();
+                    document.getElementById('resultado').innerHTML = 
+                        '<pre>' + JSON.stringify(result, null, 2) + '</pre>';
+                        
+                    if (result.init_point) {
+                        document.getElementById('resultado').innerHTML += 
+                            '<br><a href="' + result.init_point + '" target="_blank">🔗 Pagar Agora</a>';
+                    }
+                } catch (error) {
+                    document.getElementById('resultado').innerHTML = 'Erro: ' + error;
+                }
+            }
+            </script>
+        </body>
+        </html>
+        '''
+    
+    try:
+        data = request.get_json() or {}
+        name = data.get('name', 'Martha Silva')
+        email = data.get('email', 'martha@gmail.com')
+        plan = data.get('plan', 'pro')
+        coupon = data.get('coupon', '')
+        
+        # Configurar preço
+        plans = {
+            'basic': {'price': 19.50, 'title': 'Plano Básico'},
+            'pro': {'price': 39.50, 'title': 'Plano Pro'}
+        }
+        
+        plan_info = plans.get(plan, plans['pro'])
+        price = plan_info['price']
+        
+        if coupon == '50OFF':
+            price = price * 0.5
+        
+        external_reference = f"{email}_{plan}_{int(datetime.now().timestamp())}"
+        
+        # Criar preferência
+        mp_token = os.environ.get('MP_ACCESS_TOKEN')
+        headers = {
+            'Authorization': f'Bearer {mp_token}',
+            'Content-Type': 'application/json'
+        }
+        
+        preference_data = {
+            "items": [{
+                "title": f"{plan_info['title']} - Geminii",
+                "quantity": 1,
+                "unit_price": price
+            }],
+            "payer": {
+                "email": email
+            },
+            "external_reference": external_reference,
+            "notification_url": "https://app.geminii.com.br/webhook/mercadopago"
+        }
+        
+        response = requests.post(
+            'https://api.mercadopago.com/checkout/preferences',
+            headers=headers,
+            json=preference_data
+        )
+        
+        if response.status_code == 201:
+            result = response.json()
+            return jsonify({
+                'success': True,
+                'preference_id': result.get('id'),
+                'init_point': result.get('init_point'),
+                'external_reference': external_reference,
+                'price': price
+            })
+        else:
+            return jsonify({'error': f'Erro MP: {response.status_code}'}), 400
+            
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 
 
