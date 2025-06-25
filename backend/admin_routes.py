@@ -879,6 +879,149 @@ def generate_rebalance_recommendations(admin_id):
         
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
+    
+    
+# ===== ADICIONAR ESTA ROTA NO SEU admin_routes.py =====
+
+@admin_bp.route('/user/<user_email>/portfolios', methods=['GET'])
+@require_admin()
+def get_user_portfolios_admin(admin_id, user_email):
+    """Buscar carteiras de um usuário específico (para admin)"""
+    try:
+        conn = get_db_connection()
+        if not conn:
+            return jsonify({'success': False, 'error': 'Erro de conexão'}), 500
+            
+        cursor = conn.cursor()
+        
+        # Buscar usuário primeiro
+        cursor.execute("SELECT id, name FROM users WHERE email = %s", (user_email,))
+        user = cursor.fetchone()
+        
+        if not user:
+            cursor.close()
+            conn.close()
+            return jsonify({'success': False, 'error': 'Usuário não encontrado'}), 404
+        
+        user_id, user_name = user
+        
+        # Buscar carteiras do usuário
+        cursor.execute("""
+            SELECT up.portfolio_name, p.display_name, up.granted_at
+            FROM user_portfolios up
+            JOIN portfolios p ON up.portfolio_name = p.name
+            WHERE up.user_id = %s AND up.is_active = true
+            ORDER BY p.display_name
+        """, (user_id,))
+        
+        portfolios = []
+        for row in cursor.fetchall():
+            portfolios.append({
+                'name': row[0],
+                'display_name': row[1],
+                'granted_at': row[2].isoformat() if row[2] else None
+            })
+        
+        cursor.close()
+        conn.close()
+        
+        return jsonify({
+            'success': True,
+            'user': {
+                'id': user_id,
+                'name': user_name,
+                'email': user_email
+            },
+            'portfolios': portfolios
+        })
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@admin_bp.route('/user-portfolios', methods=['POST'])
+@require_admin()
+def manage_user_portfolios(admin_id):
+    """Gerenciar carteiras de usuário (conceder/remover acesso)"""
+    try:
+        data = request.get_json()
+        action = data.get('action')  # 'grant' ou 'revoke'
+        user_email = data.get('user_email')
+        portfolio_name = data.get('portfolio_name')
+        
+        if not all([action, user_email, portfolio_name]):
+            return jsonify({'success': False, 'error': 'Dados obrigatórios faltando'}), 400
+        
+        if action not in ['grant', 'revoke']:
+            return jsonify({'success': False, 'error': 'Ação deve ser grant ou revoke'}), 400
+        
+        conn = get_db_connection()
+        if not conn:
+            return jsonify({'success': False, 'error': 'Erro de conexão'}), 500
+            
+        cursor = conn.cursor()
+        
+        # Buscar usuário
+        cursor.execute("SELECT id, name FROM users WHERE email = %s", (user_email,))
+        user = cursor.fetchone()
+        
+        if not user:
+            cursor.close()
+            conn.close()
+            return jsonify({'success': False, 'error': 'Usuário não encontrado'}), 404
+        
+        user_id, user_name = user
+        
+        # Verificar se carteira existe
+        cursor.execute("SELECT display_name FROM portfolios WHERE name = %s", (portfolio_name,))
+        portfolio = cursor.fetchone()
+        
+        if not portfolio:
+            cursor.close()
+            conn.close()
+            return jsonify({'success': False, 'error': 'Carteira não encontrada'}), 404
+        
+        portfolio_display_name = portfolio[0]
+        
+        if action == 'grant':
+            # Conceder acesso
+            cursor.execute("""
+                INSERT INTO user_portfolios (user_id, portfolio_name, granted_by, is_active)
+                VALUES (%s, %s, %s, true)
+                ON CONFLICT (user_id, portfolio_name) 
+                DO UPDATE SET 
+                    is_active = true,
+                    granted_by = EXCLUDED.granted_by,
+                    granted_at = CURRENT_TIMESTAMP
+            """, (user_id, portfolio_name, admin_id))
+            
+            message = f'Acesso à carteira {portfolio_display_name} concedido para {user_name}'
+            
+        elif action == 'revoke':
+            # Remover acesso
+            cursor.execute("""
+                UPDATE user_portfolios 
+                SET is_active = false 
+                WHERE user_id = %s AND portfolio_name = %s
+            """, (user_id, portfolio_name))
+            
+            if cursor.rowcount == 0:
+                cursor.close()
+                conn.close()
+                return jsonify({'success': False, 'error': 'Usuário não tem acesso a esta carteira'}), 404
+            
+            message = f'Acesso à carteira {portfolio_display_name} removido de {user_name}'
+        
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        return jsonify({
+            'success': True,
+            'message': message
+        })
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500    
 
 # ===== FUNÇÃO EXPORT =====
 def get_admin_blueprint():

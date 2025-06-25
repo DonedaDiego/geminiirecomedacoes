@@ -496,7 +496,7 @@ def create_portfolio_system():
             )
         """)
         
-        # Inserir carteiras padrão
+        # Inserir carteiras padrão (SEM ATIVOS)
         portfolios = [
             ('smart_bdr', 'Smart BDR', 'Carteira de BDRs com análise inteligente'),
             ('growth', 'Growth', 'Ações de empresas em crescimento'),
@@ -511,38 +511,13 @@ def create_portfolio_system():
                 ON CONFLICT (name) DO NOTHING
             """, portfolio)
         
-        # Inserir alguns ativos de exemplo para Smart BDR
-        cursor.execute("SELECT COUNT(*) FROM portfolio_assets WHERE portfolio_name = 'smart_bdr';")
-        count = cursor.fetchone()[0]
-        
-        if count == 0:
-            smart_bdr_assets = [
-                ('AAPL34', 15.0, 'Tecnologia'),
-                ('MSFT34', 12.0, 'Tecnologia'),
-                ('AMZO34', 10.0, 'E-commerce'),
-                ('TSLA34', 8.0, 'Automotivo'),
-                ('GOOGL34', 10.0, 'Tecnologia'),
-                ('META34', 7.0, 'Social Media'),
-                ('NVDC34', 12.0, 'Semicondutores'),
-                ('NFLX34', 6.0, 'Streaming'),
-                ('DISB34', 5.0, 'Entretenimento'),
-                ('COCA34', 5.0, 'Bebidas')
-            ]
-            
-            for asset in smart_bdr_assets:
-                cursor.execute("""
-                    INSERT INTO portfolio_assets (portfolio_name, ticker, weight, sector)
-                    VALUES ('smart_bdr', %s, %s, %s)
-                    ON CONFLICT (portfolio_name, ticker) DO NOTHING
-                """, asset)
-            
-            print("✅ Ativos de exemplo inseridos na carteira Smart BDR!")
+        # ✅ NÃO INSERIR ATIVOS - DEIXAR VAZIO
         
         conn.commit()
         cursor.close()
         conn.close()
         
-        print("✅ Sistema de carteiras criado com sucesso!")
+        print("✅ Sistema de carteiras criado (VAZIO)!")
         return True
         
     except Exception as e:
@@ -838,7 +813,7 @@ def get_user_portfolios(user_id):
 
 
 def create_recommendations_table():
-    """Criar tabela de recomendações das carteiras"""
+    """Criar tabela de recomendações (SEM DADOS DE EXEMPLO)"""
     try:
         conn = get_db_connection()
         if not conn:
@@ -871,58 +846,13 @@ def create_recommendations_table():
             ON portfolio_recommendations(portfolio_name);
         """)
         
-        cursor.execute("""
-            CREATE INDEX IF NOT EXISTS idx_portfolio_recommendations_date 
-            ON portfolio_recommendations(recommendation_date);
-        """)
-        
-        cursor.execute("""
-            CREATE INDEX IF NOT EXISTS idx_portfolio_recommendations_active 
-            ON portfolio_recommendations(is_active);
-        """)
-        
-        cursor.execute("""
-            CREATE INDEX IF NOT EXISTS idx_portfolio_recommendations_ticker 
-            ON portfolio_recommendations(ticker);
-        """)
-        
-        # Inserir algumas recomendações de exemplo para Smart BDR
-        cursor.execute("SELECT COUNT(*) FROM portfolio_recommendations WHERE portfolio_name = 'smart_bdr';")
-        count = cursor.fetchone()[0]
-        
-        if count == 0:
-            # Buscar ID do admin para associar as recomendações
-            cursor.execute("SELECT id FROM users WHERE user_type = 'admin' LIMIT 1;")
-            admin_result = cursor.fetchone()
-            admin_id = admin_result[0] if admin_result else None
-            
-            if admin_id:
-                # Recomendações de exemplo
-                sample_recommendations = [
-                    ('smart_bdr', 'AAPL34', 'BUY', 18.0, '2024-06-20', 'Apple apresentou resultados excepcionais no Q2. Recomendamos aumentar posição.', 165.00, 155.50),
-                    ('smart_bdr', 'TSLA34', 'HOLD', 8.0, '2024-06-19', 'Tesla mantém fundamentals sólidos. Aguardar próximos resultados.', 180.00, 175.20),
-                    ('smart_bdr', 'MSFT34', 'BUY', 15.0, '2024-06-18', 'Microsoft com forte crescimento em cloud computing. Aumentar exposição.', 420.00, 405.30),
-                    ('smart_bdr', 'GOOGL34', 'SELL', 5.0, '2024-06-17', 'Google enfrentando pressão regulatória. Reduzir posição temporariamente.', 135.00, 142.80),
-                    ('growth', 'NVDC34', 'BUY', 20.0, '2024-06-16', 'NVIDIA líder em IA. Forte potencial de crescimento no setor.', 450.00, 425.60)
-                ]
-                
-                for rec in sample_recommendations:
-                    cursor.execute("""
-                        INSERT INTO portfolio_recommendations 
-                        (portfolio_name, ticker, action_type, target_weight, recommendation_date, 
-                         reason, price_target, current_price, created_by)
-                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-                    """, (*rec, admin_id))
-                
-                print("✅ Recomendações de exemplo inseridas!")
-            else:
-                print("⚠️ Admin não encontrado, recomendações de exemplo não inseridas")
+        # ✅ NÃO INSERIR RECOMENDAÇÕES - DEIXAR VAZIO
         
         conn.commit()
         cursor.close()
         conn.close()
         
-        print("✅ Tabela 'portfolio_recommendations' criada com sucesso!")
+        print("✅ Tabela 'portfolio_recommendations' criada (VAZIA)!")
         return True
         
     except Exception as e:

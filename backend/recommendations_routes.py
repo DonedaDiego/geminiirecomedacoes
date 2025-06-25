@@ -803,14 +803,13 @@ def generate_rebalance_recommendations():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
-# ===== FUNÇÃO PARA REGISTRAR O BLUEPRINT =====
 
 # ===== ENDPOINTS PARA USUÁRIOS FINAIS =====
 
 @recommendations_bp.route('/user/my-portfolios', methods=['GET'])
 @require_token
 def get_user_portfolios():
-    """Buscar carteiras que o usuário tem acesso"""
+    """Buscar carteiras que o usuário tem acesso (ADMIN TEM ACESSO TOTAL)"""
     try:
         # Extrair user_id do token
         auth_header = request.headers.get('Authorization')
@@ -821,23 +820,46 @@ def get_user_portfolios():
         conn = get_db_connection()
         cursor = conn.cursor()
         
-        # Buscar carteiras do usuário
-        cursor.execute("""
-            SELECT up.portfolio_name, p.display_name, p.description, up.granted_at
-            FROM user_portfolios up
-            JOIN portfolios p ON up.portfolio_name = p.name
-            WHERE up.user_id = %s AND up.is_active = true
-            ORDER BY p.display_name
-        """, (user_id,))
+        # ✅ VERIFICAR SE É ADMIN PRIMEIRO
+        cursor.execute("SELECT user_type FROM users WHERE id = %s", (user_id,))
+        user_result = cursor.fetchone()
         
-        portfolios = []
-        for row in cursor.fetchall():
-            portfolios.append({
-                'name': row[0],
-                'display_name': row[1],
-                'description': row[2],
-                'granted_at': row[3].isoformat() if row[3] else None
-            })
+        if user_result and user_result[0] in ['admin', 'master']:
+            # 🔥 ADMIN TEM ACESSO TOTAL - TODAS AS CARTEIRAS
+            cursor.execute("""
+                SELECT name, display_name, description, created_at
+                FROM portfolios 
+                WHERE is_active = true
+                ORDER BY display_name
+            """)
+            
+            portfolios = []
+            for row in cursor.fetchall():
+                portfolios.append({
+                    'name': row[0],
+                    'display_name': row[1],
+                    'description': row[2],
+                    'granted_at': row[3].isoformat() if row[3] else None
+                })
+                
+        else:
+            # 👤 USUÁRIO NORMAL - APENAS CARTEIRAS LIBERADAS
+            cursor.execute("""
+                SELECT up.portfolio_name, p.display_name, p.description, up.granted_at
+                FROM user_portfolios up
+                JOIN portfolios p ON up.portfolio_name = p.name
+                WHERE up.user_id = %s AND up.is_active = true
+                ORDER BY p.display_name
+            """, (user_id,))
+            
+            portfolios = []
+            for row in cursor.fetchall():
+                portfolios.append({
+                    'name': row[0],
+                    'display_name': row[1],
+                    'description': row[2],
+                    'granted_at': row[3].isoformat() if row[3] else None
+                })
         
         cursor.close()
         conn.close()
@@ -855,7 +877,6 @@ def get_user_portfolios():
 def get_user_portfolio_recommendations_detailed(portfolio_name):
     """Buscar recomendações detalhadas de uma carteira para o usuário"""
     try:
-        # Extrair user_id do token
         auth_header = request.headers.get('Authorization')
         token = auth_header.replace('Bearer ', '')
         user_data = verify_token(token)
@@ -864,18 +885,24 @@ def get_user_portfolio_recommendations_detailed(portfolio_name):
         conn = get_db_connection()
         cursor = conn.cursor()
         
-        # Verificar se usuário tem acesso a esta carteira
-        cursor.execute("""
-            SELECT id FROM user_portfolios 
-            WHERE user_id = %s AND portfolio_name = %s AND is_active = true
-        """, (user_id, portfolio_name))
+        # ✅ VERIFICAR SE É ADMIN
+        cursor.execute("SELECT user_type FROM users WHERE id = %s", (user_id,))
+        user_result = cursor.fetchone()
+        is_admin = user_result and user_result[0] in ['admin', 'master']
         
-        if not cursor.fetchone():
-            cursor.close()
-            conn.close()
-            return jsonify({'success': False, 'error': 'Acesso negado a esta carteira'}), 403
+        if not is_admin:
+            # VERIFICAR ACESSO PARA USUÁRIOS NORMAIS
+            cursor.execute("""
+                SELECT id FROM user_portfolios 
+                WHERE user_id = %s AND portfolio_name = %s AND is_active = true
+            """, (user_id, portfolio_name))
+            
+            if not cursor.fetchone():
+                cursor.close()
+                conn.close()
+                return jsonify({'success': False, 'error': 'Acesso negado a esta carteira'}), 403
         
-        # Buscar recomendações ativas
+        # ADMIN OU USUÁRIO COM ACESSO - BUSCAR RECOMENDAÇÕES
         cursor.execute("""
             SELECT 
                 ticker, action_type, target_weight, 
@@ -921,7 +948,6 @@ def get_user_portfolio_recommendations_detailed(portfolio_name):
 def get_user_portfolio_assets(portfolio_name):
     """Buscar ativos de uma carteira para o usuário"""
     try:
-        # Extrair user_id do token
         auth_header = request.headers.get('Authorization')
         token = auth_header.replace('Bearer ', '')
         user_data = verify_token(token)
@@ -930,18 +956,24 @@ def get_user_portfolio_assets(portfolio_name):
         conn = get_db_connection()
         cursor = conn.cursor()
         
-        # Verificar acesso
-        cursor.execute("""
-            SELECT id FROM user_portfolios 
-            WHERE user_id = %s AND portfolio_name = %s AND is_active = true
-        """, (user_id, portfolio_name))
+        # ✅ VERIFICAR SE É ADMIN
+        cursor.execute("SELECT user_type FROM users WHERE id = %s", (user_id,))
+        user_result = cursor.fetchone()
+        is_admin = user_result and user_result[0] in ['admin', 'master']
         
-        if not cursor.fetchone():
-            cursor.close()
-            conn.close()
-            return jsonify({'success': False, 'error': 'Acesso negado a esta carteira'}), 403
+        if not is_admin:
+            # VERIFICAR ACESSO PARA USUÁRIOS NORMAIS
+            cursor.execute("""
+                SELECT id FROM user_portfolios 
+                WHERE user_id = %s AND portfolio_name = %s AND is_active = true
+            """, (user_id, portfolio_name))
+            
+            if not cursor.fetchone():
+                cursor.close()
+                conn.close()
+                return jsonify({'success': False, 'error': 'Acesso negado a esta carteira'}), 403
         
-        # Buscar ativos da carteira
+        # ADMIN OU USUÁRIO COM ACESSO - BUSCAR ATIVOS
         cursor.execute("""
             SELECT ticker, weight, sector, entry_price, current_price, target_price, entry_date
             FROM portfolio_assets 

@@ -110,7 +110,6 @@
         <div class="hidden md:flex items-center space-x-6">
           <a href="dashboard.html" class="text-gray-300 hover:text-primary transition-colors font-medium">Dashboard</a>
           <a href="analises.html" class="nav-active transition-colors font-medium">Smart Carteiras</a>
-          <a href="relatorios.html" class="text-gray-300 hover:text-primary transition-colors">Machine Learning</a>
         </div>
       </div>
       
@@ -206,6 +205,8 @@
     }
 
     // ===== CARREGAR DADOS DAS CARTEIRAS =====
+    // ===== SUBSTITUIR TODO O JAVASCRIPT DO analises.html POR ESTE: =====
+
     async function loadPortfolioData() {
       const container = document.getElementById('recommendationsContainer');
       
@@ -215,7 +216,7 @@
         // Mostrar loading
         showLoading();
         
-        const response = await fetch('/api/dashboard/recommendations?limit=50', {
+        const response = await fetch('/api/user/my-portfolios', {
           headers: {
             'Authorization': `Bearer ${userToken}`,
             'Content-Type': 'application/json'
@@ -237,8 +238,8 @@
         const data = await response.json();
         console.log('📊 Dados recebidos:', data);
         
-        if (data.success && data.data) {
-          displayRecommendations(data.data);
+        if (data.success && data.portfolios) {
+          displayPortfolios(data.portfolios);
         } else {
           throw new Error(data.error || 'Nenhum dado encontrado');
         }
@@ -249,125 +250,50 @@
       }
     }
 
-    // ===== EXIBIR RECOMENDAÇÕES =====
-    function displayRecommendations(data) {
+    // ===== EXIBIR CARTEIRAS (NOVA FUNÇÃO SIMPLES) =====
+    function displayPortfolios(portfolios) {
       const container = document.getElementById('recommendationsContainer');
       if (!container) return;
       
-      const recommendations = data.recommendations?.recommendations || [];
-      console.log(`📈 Exibindo ${recommendations.length} recomendações`);
+      console.log(`📊 Exibindo ${portfolios.length} carteiras`);
       
-      if (recommendations.length === 0) {
+      if (portfolios.length === 0) {
         showNoData();
         return;
       }
       
-      // Agrupar por carteira
-      const portfolioGroups = {};
-      recommendations.forEach(rec => {
-        const portfolio = rec.portfolio_display || rec.portfolio_name || 'Sem Portfolio';
-        if (!portfolioGroups[portfolio]) {
-          portfolioGroups[portfolio] = [];
-        }
-        portfolioGroups[portfolio].push(rec);
-      });
-      
       let html = '';
       
-      Object.entries(portfolioGroups).forEach(([portfolioName, recs]) => {
-        const totalStocks = recs.length;
-        const avgPerformance = recs.reduce((sum, r) => sum + (r.performance?.valor || 0), 0) / totalStocks;
-        
-        // Contar recomendações por tipo
-        const compras = recs.filter(r => r.recomendacao && r.recomendacao.includes('Compra')).length;
-        const vendas = recs.filter(r => r.recomendacao === 'Venda').length;
-        const manter = recs.filter(r => r.recomendacao === 'Manter').length;
-        
+      portfolios.forEach(portfolio => {
         html += `
           <div class="card rounded-2xl p-8 mb-6 fade-in">
             <div class="flex items-center justify-between mb-6">
               <div>
                 <h2 class="text-2xl font-bold text-white flex items-center">
                   <i class="fas fa-briefcase text-primary mr-3"></i>
-                  ${portfolioName}
+                  ${portfolio.display_name}
                 </h2>
-                <p class="text-gray-400">${totalStocks} ativos • Performance média: ${avgPerformance.toFixed(2)}%</p>
+                <p class="text-gray-400">${portfolio.description}</p>
+                ${portfolio.granted_at ? `<p class="text-xs text-gray-500 mt-1">Acesso concedido em: ${formatDate(portfolio.granted_at)}</p>` : ''}
               </div>
-              <button onclick="loadPortfolioData()" class="text-primary hover:text-secondary">
-                <i class="fas fa-sync mr-1"></i>
-                Atualizar
-              </button>
-            </div>
-            
-            <!-- Estatísticas rápidas -->
-            <div class="grid grid-cols-3 gap-4 mb-6">
-              <div class="bg-success bg-opacity-10 border border-success border-opacity-30 rounded-lg p-4 text-center">
-                <div class="text-2xl font-bold text-success">${compras}</div>
-                <div class="text-sm text-green-300">Comprar</div>
-              </div>
-              <div class="bg-danger bg-opacity-10 border border-danger border-opacity-30 rounded-lg p-4 text-center">
-                <div class="text-2xl font-bold text-danger">${vendas}</div>
-                <div class="text-sm text-red-300">Vender</div>
-              </div>
-              <div class="bg-warning bg-opacity-10 border border-warning border-opacity-30 rounded-lg p-4 text-center">
-                <div class="text-2xl font-bold text-warning">${manter}</div>
-                <div class="text-sm text-yellow-300">Manter</div>
+              <div class="flex space-x-2">
+                <button onclick="loadPortfolioAssets('${portfolio.name}')" class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg text-white text-sm">
+                  <i class="fas fa-list mr-1"></i>
+                  Ativos
+                </button>
+                <button onclick="loadPortfolioRecommendations('${portfolio.name}')" class="bg-green-600 hover:bg-green-700 px-4 py-2 rounded-lg text-white text-sm">
+                  <i class="fas fa-lightbulb mr-1"></i>
+                  Recomendações
+                </button>
               </div>
             </div>
             
-            <!-- Lista de recomendações -->
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-h-96 overflow-y-auto">
-        `;
-        
-        recs.forEach(rec => {
-          const performanceColor = (rec.performance?.valor || 0) >= 0 ? 'text-green-400' : 'text-red-400';
-          const recommendationColor = {
-            'Compra': 'bg-green-600',
-            'Compra Forte': 'bg-green-700', 
-            'Venda': 'bg-red-600',
-            'Manter': 'bg-yellow-600'
-          }[rec.recomendacao] || 'bg-gray-600';
-          
-          html += `
-            <div class="bg-gray-800 bg-opacity-50 rounded-lg p-4 border border-gray-700 hover:border-primary transition-colors">
-              <div class="flex items-center justify-between mb-3">
-                <div class="flex items-center space-x-2">
-                  <span class="text-2xl">${rec.icone || '📈'}</span>
-                  <div>
-                    <h4 class="font-bold text-white">${rec.ticker}</h4>
-                    <p class="text-sm text-gray-400">${rec.setor || 'N/A'}</p>
-                  </div>
-                </div>
-                <span class="${recommendationColor} text-white px-2 py-1 rounded-lg text-sm font-medium">
-                  ${rec.recomendacao || 'N/A'}
-                </span>
-              </div>
-              
-              <div class="space-y-2 text-sm">
-                <div class="flex justify-between">
-                  <span class="text-gray-400">Entrada:</span>
-                  <span class="text-white">R$ ${(rec.entrada?.preco || 0).toFixed(2)}</span>
-                </div>
-                <div class="flex justify-between">
-                  <span class="text-gray-400">Atual:</span>
-                  <span class="text-white">R$ ${(rec.atual?.preco || 0).toFixed(2)}</span>
-                </div>
-                <div class="flex justify-between">
-                  <span class="text-gray-400">Performance:</span>
-                  <span class="${performanceColor} font-medium">
-                    ${(rec.performance?.valor || 0) > 0 ? '+' : ''}${(rec.performance?.valor || 0).toFixed(2)}%
-                  </span>
-                </div>
-                <div class="flex justify-between">
-                  <span class="text-gray-400">Peso:</span>
-                  <span class="text-white">${(rec.entrada?.peso_percent || 0).toFixed(1)}%</span>
-                </div>
-              </div>
-            </div>
-          `;
-        });
-        
-        html += `
+            <!-- Container para carregar ativos/recomendações -->
+            <div id="portfolio-${portfolio.name}-content" class="bg-gray-800 bg-opacity-30 rounded-lg p-6 min-h-24">
+              <p class="text-gray-300 text-center">
+                <i class="fas fa-chart-line text-primary mr-2"></i>
+                Selecione "Ativos" ou "Recomendações" para ver os detalhes da carteira ${portfolio.display_name}
+              </p>
             </div>
           </div>
         `;
@@ -376,7 +302,234 @@
       container.innerHTML = html;
     }
 
-    // ===== ESTADOS DA UI =====
+    // ===== CARREGAR ATIVOS DE UMA CARTEIRA =====
+    async function loadPortfolioAssets(portfolioName) {
+      const contentDiv = document.getElementById(`portfolio-${portfolioName}-content`);
+      if (!contentDiv) return;
+      
+      try {
+        contentDiv.innerHTML = '<div class="text-center py-4"><div class="spinner mx-auto mb-2"></div><p class="text-gray-400">Carregando ativos...</p></div>';
+        
+        const response = await fetch(`/api/user/portfolio/${portfolioName}/assets`, {
+          headers: { 'Authorization': `Bearer ${userToken}` }
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Erro ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        if (data.success && data.assets) {
+          displayAssets(data.assets, contentDiv, data.total_weight);
+        } else {
+          contentDiv.innerHTML = '<p class="text-gray-400 text-center py-4">Nenhum ativo encontrado nesta carteira</p>';
+        }
+        
+      } catch (error) {
+        console.error('❌ Erro ao carregar ativos:', error);
+        contentDiv.innerHTML = '<p class="text-red-400 text-center py-4">Erro ao carregar ativos</p>';
+      }
+    }
+
+    // ===== CARREGAR RECOMENDAÇÕES DE UMA CARTEIRA =====
+    async function loadPortfolioRecommendations(portfolioName) {
+      const contentDiv = document.getElementById(`portfolio-${portfolioName}-content`);
+      if (!contentDiv) return;
+      
+      try {
+        contentDiv.innerHTML = '<div class="text-center py-4"><div class="spinner mx-auto mb-2"></div><p class="text-gray-400">Carregando recomendações...</p></div>';
+        
+        const response = await fetch(`/api/user/portfolio/${portfolioName}/recommendations`, {
+          headers: { 'Authorization': `Bearer ${userToken}` }
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Erro ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        if (data.success && data.recommendations) {
+          displayRecommendations(data.recommendations, contentDiv);
+        } else {
+          contentDiv.innerHTML = '<p class="text-gray-400 text-center py-4">Nenhuma recomendação encontrada nesta carteira</p>';
+        }
+        
+      } catch (error) {
+        console.error('❌ Erro ao carregar recomendações:', error);
+        contentDiv.innerHTML = '<p class="text-red-400 text-center py-4">Erro ao carregar recomendações</p>';
+      }
+    }
+
+    // ===== EXIBIR ATIVOS =====
+    function displayAssets(assets, container, totalWeight) {
+      if (!assets || assets.length === 0) {
+        container.innerHTML = '<p class="text-gray-400 text-center py-4">Carteira vazia - nenhum ativo cadastrado</p>';
+        return;
+      }
+      
+      let html = `
+        <div class="mb-4 text-center">
+          <p class="text-white font-semibold">📊 ${assets.length} ativos • Peso total: ${totalWeight || 0}%</p>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-h-80 overflow-y-auto">
+      `;
+      
+      assets.forEach(asset => {
+        const entryPrice = asset.entry_price || 0;
+        const currentPrice = asset.current_price || 0;
+        const targetPrice = asset.target_price || 0;
+        
+        // Calcular performance
+        const performance = currentPrice && entryPrice ? ((currentPrice - entryPrice) / entryPrice * 100) : 0;
+        const performanceColor = performance >= 0 ? 'text-green-400' : 'text-red-400';
+        
+        html += `
+          <div class="bg-gray-700 bg-opacity-50 rounded-lg p-4 border border-gray-600">
+            <div class="flex items-center justify-between mb-2">
+              <h4 class="font-bold text-white">${asset.ticker}</h4>
+              <span class="text-sm text-geminii font-semibold">${asset.weight}%</span>
+            </div>
+            <p class="text-xs text-gray-400 mb-3">${asset.sector}</p>
+            
+            <div class="space-y-2 text-sm">
+              <div class="flex justify-between">
+                <span class="text-gray-400">Entrada:</span>
+                <span class="text-white">R$ ${entryPrice.toFixed(2)}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-400">Atual:</span>
+                <span class="text-white">R$ ${currentPrice.toFixed(2)}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-400">Alvo:</span>
+                <span class="text-green-400">R$ ${targetPrice.toFixed(2)}</span>
+              </div>
+              ${performance !== 0 ? `
+                <div class="flex justify-between">
+                  <span class="text-gray-400">Performance:</span>
+                  <span class="${performanceColor} font-semibold">
+                    ${performance > 0 ? '+' : ''}${performance.toFixed(2)}%
+                  </span>
+                </div>
+              ` : ''}
+            </div>
+            
+            <div class="mt-3 text-xs text-gray-500">
+              ${asset.company_name ? asset.company_name : asset.ticker}
+            </div>
+          </div>
+        `;
+      });
+      
+      html += '</div>';
+      container.innerHTML = html;
+    }
+
+    // ===== EXIBIR RECOMENDAÇÕES =====
+    function displayRecommendations(recommendations, container) {
+      if (!recommendations || recommendations.length === 0) {
+        container.innerHTML = '<p class="text-gray-400 text-center py-4">Nenhuma recomendação ativa para esta carteira</p>';
+        return;
+      }
+      
+      // Contar por tipo
+      const buy = recommendations.filter(r => r.action_type === 'BUY').length;
+      const sell = recommendations.filter(r => r.action_type === 'SELL').length;
+      const hold = recommendations.filter(r => r.action_type === 'HOLD').length;
+      
+      let html = `
+        <div class="grid grid-cols-3 gap-3 mb-4">
+          <div class="bg-green-600 bg-opacity-20 border border-green-600 border-opacity-30 rounded-lg p-3 text-center">
+            <div class="text-xl font-bold text-green-400">${buy}</div>
+            <div class="text-xs text-green-300">Comprar</div>
+          </div>
+          <div class="bg-red-600 bg-opacity-20 border border-red-600 border-opacity-30 rounded-lg p-3 text-center">
+            <div class="text-xl font-bold text-red-400">${sell}</div>
+            <div class="text-xs text-red-300">Vender</div>
+          </div>
+          <div class="bg-yellow-600 bg-opacity-20 border border-yellow-600 border-opacity-30 rounded-lg p-3 text-center">
+            <div class="text-xl font-bold text-yellow-400">${hold}</div>
+            <div class="text-xs text-yellow-300">Manter</div>
+          </div>
+        </div>
+        
+        <div class="space-y-3 max-h-80 overflow-y-auto">
+      `;
+      
+      recommendations.forEach(rec => {
+        const actionColors = {
+          'BUY': 'bg-green-600 text-green-200',
+          'SELL': 'bg-red-600 text-red-200',
+          'HOLD': 'bg-yellow-600 text-yellow-200'
+        };
+        
+        const actionTexts = {
+          'BUY': 'Comprar',
+          'SELL': 'Vender',
+          'HOLD': 'Manter'
+        };
+        
+        html += `
+          <div class="bg-gray-700 bg-opacity-50 rounded-lg p-4 border border-gray-600">
+            <div class="flex items-center justify-between mb-2">
+              <div class="flex items-center space-x-2">
+                <h4 class="font-bold text-white">${rec.ticker}</h4>
+                ${rec.company_name ? `<span class="text-xs text-gray-400">${rec.company_name}</span>` : ''}
+              </div>
+              <span class="px-2 py-1 rounded text-xs font-medium ${actionColors[rec.action_type] || 'bg-gray-600 text-gray-200'}">
+                ${actionTexts[rec.action_type] || rec.action_type}
+              </span>
+            </div>
+            
+            <div class="space-y-1 text-sm">
+              ${rec.price_target ? `
+                <div class="flex justify-between">
+                  <span class="text-gray-400">Preço alvo:</span>
+                  <span class="text-green-400">R$ ${rec.price_target.toFixed(2)}</span>
+                </div>
+              ` : ''}
+              
+              ${rec.current_price ? `
+                <div class="flex justify-between">
+                  <span class="text-gray-400">Preço atual:</span>
+                  <span class="text-white">R$ ${rec.current_price.toFixed(2)}</span>
+                </div>
+              ` : ''}
+              
+              ${rec.target_weight ? `
+                <div class="flex justify-between">
+                  <span class="text-gray-400">Peso sugerido:</span>
+                  <span class="text-geminii">${rec.target_weight}%</span>
+                </div>
+              ` : ''}
+            </div>
+            
+            ${rec.reason ? `
+              <div class="mt-3 p-3 bg-gray-600 bg-opacity-30 rounded">
+                <p class="text-xs text-gray-300">${rec.reason}</p>
+              </div>
+            ` : ''}
+            
+            <div class="mt-2 text-xs text-gray-500">
+              Recomendação de ${formatDate(rec.recommendation_date)}
+            </div>
+          </div>
+        `;
+      });
+      
+      html += '</div>';
+      container.innerHTML = html;
+    }
+
+    // ===== HELPER FUNCTIONS =====
+    function formatDate(dateString) {
+      if (!dateString) return 'N/A';
+      return new Date(dateString).toLocaleDateString('pt-BR');
+    }
+
+    // ===== ESTADOS DA UI (MANTIDOS) =====
     function showLoading() {
       const container = document.getElementById('recommendationsContainer');
       if (container) {
@@ -384,7 +537,7 @@
           <div class="card rounded-2xl p-8 fade-in">
             <div class="text-center py-12">
               <div class="spinner mx-auto mb-4"></div>
-              <p class="text-gray-300">Carregando suas recomendações...</p>
+              <p class="text-gray-300">Carregando suas carteiras...</p>
             </div>
           </div>
         `;
@@ -398,10 +551,10 @@
           <div class="card rounded-2xl p-8 fade-in">
             <div class="text-center py-12">
               <i class="fas fa-inbox text-5xl text-gray-400 mb-4"></i>
-              <h3 class="text-xl font-bold mb-2 text-gray-300">Nenhuma recomendação encontrada</h3>
-              <p class="text-gray-400 mb-4">Verifique se você tem acesso às carteiras ou aguarde novas análises.</p>
+              <h3 class="text-xl font-bold mb-2 text-gray-300">Nenhuma carteira disponível</h3>
+              <p class="text-gray-400 mb-4">Você ainda não tem acesso a nenhuma carteira. Entre em contato com o administrador para solicitar acesso.</p>
               <div class="flex justify-center space-x-4">
-                <a href="/planos" class="bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90 px-6 py-2 rounded-lg text-white font-medium">
+                <a href="/planos.html" class="bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90 px-6 py-2 rounded-lg text-white font-medium">
                   <i class="fas fa-crown mr-2"></i>
                   Fazer Upgrade
                 </a>
@@ -415,8 +568,6 @@
         `;
       }
     }
-
-    
 
     function showError(message) {
       const container = document.getElementById('recommendationsContainer');
@@ -437,7 +588,7 @@
       }
     }
 
-    // Função global para refresh
+    // ===== REFRESH GLOBAL =====
     window.refreshAnalyses = function() {
       console.log('🔄 Atualizando análises...');
       loadPortfolioData();
