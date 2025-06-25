@@ -802,6 +802,8 @@ def webhook_test():
     })
 
 # 🔧 ENDPOINT PARA SIMULAR WEBHOOK
+# Substitua o endpoint /webhook/simulate no seu main.py por este código corrigido:
+
 @app.route('/webhook/simulate', methods=['POST', 'GET'])
 def simulate_webhook():
     """Simular chamada do Mercado Pago para teste"""
@@ -817,20 +819,45 @@ def simulate_webhook():
         <body>
             <h2>🧪 Teste do Webhook Mercado Pago</h2>
             <button onclick="testarWebhook()">Testar Webhook</button>
+            <br><br>
+            <button onclick="testarSimples()">Teste Simples</button>
             <div id="resultado"></div>
             
             <script>
             async function testarWebhook() {
                 try {
+                    document.getElementById('resultado').innerHTML = '🔄 Testando...';
+                    
                     const response = await fetch('/webhook/simulate', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({})
+                        body: JSON.stringify({
+                            "type": "payment",
+                            "data": {"id": "123456789"}
+                        })
                     });
                     
                     const result = await response.json();
                     document.getElementById('resultado').innerHTML = 
-                        '<pre>' + JSON.stringify(result, null, 2) + '</pre>';
+                        '<h3>Resultado:</h3><pre>' + JSON.stringify(result, null, 2) + '</pre>';
+                } catch (error) {
+                    document.getElementById('resultado').innerHTML = 
+                        '<div style="color: red;">Erro: ' + error + '</div>';
+                }
+            }
+            
+            async function testarSimples() {
+                try {
+                    document.getElementById('resultado').innerHTML = '🔄 Teste simples...';
+                    
+                    const response = await fetch('/webhook/test-simple', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' }
+                    });
+                    
+                    const result = await response.json();
+                    document.getElementById('resultado').innerHTML = 
+                        '<h3>Teste Simples:</h3><pre>' + JSON.stringify(result, null, 2) + '</pre>';
                 } catch (error) {
                     document.getElementById('resultado').innerHTML = 
                         '<div style="color: red;">Erro: ' + error + '</div>';
@@ -841,42 +868,57 @@ def simulate_webhook():
         </html>
         '''
     
-    # Dados fake para simular o Mercado Pago
-    fake_mp_data = {
-        "type": "payment",
-        "data": {
-            "id": "123456789"  # ID fake para teste
-        }
-    }
-    
+    # POST - Executar simulação
     try:
-        print(f"🔄 Simulando webhook com dados fake: {fake_mp_data}")
+        print(f"🔄 Iniciando simulação POST...")
         
-        if MP_AVAILABLE:
-            print(f"✅ MP_AVAILABLE é True, importando webhook...")
-            
-            # Simular dados no request
-            from flask import g
-            g.fake_json_data = fake_mp_data
-            
-            # Chamar o webhook do mercadopago_routes
-            from mercadopago_routes import webhook
-            result = webhook()
-            
-            print(f"✅ SIMULAÇÃO CONCLUÍDA!")
-            print(f"📤 RESULTADO: {result}")
-            
-            return result
-        else:
+        # Pegar dados do request ou usar dados fake
+        data = request.get_json() or {
+            "type": "payment",
+            "data": {"id": "123456789"}
+        }
+        
+        print(f"📦 Dados para simulação: {data}")
+        
+        if not MP_AVAILABLE:
             print(f"❌ MP_AVAILABLE é False")
             return jsonify({"error": "MP não disponível"}), 500
+        
+        print(f"✅ MP_AVAILABLE é True, processando...")
+        
+        # Verificar se é webhook de pagamento
+        if data.get("type") == "payment":
+            payment_id = data.get("data", {}).get("id")
+            
+            if payment_id:
+                print(f"💳 Processando payment_id: {payment_id}")
+                
+                # Importar e executar função de processamento
+                from mercadopago_routes import process_payment
+                result = process_payment(payment_id)
+                
+                print(f"✅ PROCESSAMENTO CONCLUÍDO: {result}")
+                
+                return jsonify({
+                    "success": True,
+                    "message": "Simulação executada com sucesso",
+                    "payment_id": payment_id,
+                    "result": result
+                })
+            else:
+                return jsonify({"error": "Payment ID não encontrado"}), 400
+        else:
+            return jsonify({"error": "Tipo de webhook não é payment"}), 400
             
     except Exception as e:
         print(f"❌ ERRO NA SIMULAÇÃO: {e}")
         import traceback
         traceback.print_exc()
         
-        return jsonify({"error": str(e), "details": "Veja os logs para mais detalhes"}), 500
+        return jsonify({
+            "error": str(e), 
+            "details": "Veja os logs do Railway para mais detalhes"
+        }), 500
 
 # Também adicione este endpoint mais simples para teste
 @app.route('/webhook/test-simple', methods=['POST'])
