@@ -725,231 +725,162 @@ def create_checkout_compat():
 #         return jsonify({"success": False, "error": str(e)}), 500
 
 
-
+# ===== WEBHOOK PRINCIPAL =====
 @app.route('/webhook/mercadopago', methods=['POST'])
 def mercadopago_webhook():
     """Webhook principal - redireciona para blueprint"""
-    
-    # 🔔 LOG INICIAL
-    print(f"\n{'='*60}")
-    print(f"🔔 WEBHOOK MERCADO PAGO CHAMADO! - {datetime.now()}")
-    print(f"{'='*60}")
-    
-    # 📊 LOG DOS HEADERS
-    print(f"📊 HEADERS RECEBIDOS:")
-    for key, value in request.headers:
-        print(f"   {key}: {value}")
-    
-    # 📦 LOG DOS DADOS
-    try:
-        data = request.get_json()
-        print(f"📦 DADOS JSON RECEBIDOS:")
-        print(f"   {data}")
-    except Exception as e:
-        print(f"❌ Erro ao ler JSON: {e}")
-        print(f"📦 RAW DATA: {request.data}")
-    
-    # ✅ VERIFICAR MP_AVAILABLE
-    print(f"🔧 MP_AVAILABLE: {MP_AVAILABLE}")
-    
     if not MP_AVAILABLE:
-        print(f"❌ Mercado Pago não disponível!")
         return jsonify({"success": False, "error": "Mercado Pago não disponível"}), 500
     
     try:
-        print(f"🔄 Importando webhook do mercadopago_routes...")
         from mercadopago_routes import webhook
-        
-        print(f"🔄 Executando função webhook...")
-        result = webhook()
-        
-        print(f"✅ WEBHOOK PROCESSADO COM SUCESSO!")
-        print(f"📤 RESPOSTA: {result}")
-        
-        return result
+        return webhook()
         
     except Exception as e:
-        print(f"❌ ERRO NO WEBHOOK PRINCIPAL: {e}")
-        
-        # 🔍 TRACEBACK COMPLETO
-        import traceback
-        print(f"🔍 TRACEBACK COMPLETO:")
-        traceback.print_exc()
-        
+        print(f"❌ Erro no webhook principal: {e}")
         return jsonify({"success": False, "error": str(e)}), 500
 
-# 🧪 ENDPOINT DE TESTE
-@app.route('/webhook/test', methods=['GET', 'POST'])
-def webhook_test():
-    """Endpoint para testar se webhook está acessível"""
+# ===== ENDPOINTS DE DEBUG =====
+@app.route('/debug/payment/<payment_id>')
+def debug_payment_processing(payment_id):
+    """Debug detalhado do processamento de pagamento"""
     
-    print(f"\n🧪 WEBHOOK TEST CHAMADO - {datetime.now()}")
-    print(f"   Método: {request.method}")
-    print(f"   Host: {request.host}")
-    print(f"   URL: {request.url}")
-    
-    if request.method == 'POST':
-        data = request.get_json()
-        print(f"   Dados POST: {data}")
-    
-    return jsonify({
-        'success': True,
-        'message': 'Webhook está funcionando!',
-        'method': request.method,
-        'timestamp': datetime.now().isoformat(),
-        'host': request.host,
-        'mp_available': MP_AVAILABLE
-    })
-
-# 🔧 ENDPOINT PARA SIMULAR WEBHOOK
-# Substitua o endpoint /webhook/simulate no seu main.py por este código corrigido:
-
-@app.route('/webhook/simulate', methods=['POST', 'GET'])
-def simulate_webhook():
-    """Simular chamada do Mercado Pago para teste"""
-    
-    print(f"\n🎭 SIMULANDO WEBHOOK DO MERCADO PAGO - {datetime.now()}")
-    print(f"   Método: {request.method}")
-    
-    # Se for GET, mostrar página de teste
-    if request.method == 'GET':
-        return '''
-        <html>
-        <head><title>Teste Webhook</title></head>
-        <body>
-            <h2>🧪 Teste do Webhook Mercado Pago</h2>
-            <button onclick="testarWebhook()">Testar Webhook</button>
-            <br><br>
-            <button onclick="testarSimples()">Teste Simples</button>
-            <div id="resultado"></div>
-            
-            <script>
-            async function testarWebhook() {
-                try {
-                    document.getElementById('resultado').innerHTML = '🔄 Testando...';
-                    
-                    const response = await fetch('/webhook/simulate', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            "type": "payment",
-                            "data": {"id": "123456789"}
-                        })
-                    });
-                    
-                    const result = await response.json();
-                    document.getElementById('resultado').innerHTML = 
-                        '<h3>Resultado:</h3><pre>' + JSON.stringify(result, null, 2) + '</pre>';
-                } catch (error) {
-                    document.getElementById('resultado').innerHTML = 
-                        '<div style="color: red;">Erro: ' + error + '</div>';
-                }
-            }
-            
-            async function testarSimples() {
-                try {
-                    document.getElementById('resultado').innerHTML = '🔄 Teste simples...';
-                    
-                    const response = await fetch('/webhook/test-simple', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' }
-                    });
-                    
-                    const result = await response.json();
-                    document.getElementById('resultado').innerHTML = 
-                        '<h3>Teste Simples:</h3><pre>' + JSON.stringify(result, null, 2) + '</pre>';
-                } catch (error) {
-                    document.getElementById('resultado').innerHTML = 
-                        '<div style="color: red;">Erro: ' + error + '</div>';
-                }
-            }
-            </script>
-        </body>
-        </html>
-        '''
-    
-    # POST - Executar simulação
     try:
-        print(f"🔄 Iniciando simulação POST...")
+        print(f"\n🔍 DEBUG PAYMENT: {payment_id}")
         
-        # Pegar dados do request ou usar dados fake
-        data = request.get_json() or {
-            "type": "payment",
-            "data": {"id": "123456789"}
+        # 1. Verificar se pagamento existe no MP
+        mp_token = os.environ.get('MP_ACCESS_TOKEN')
+        headers = {
+            'Authorization': f'Bearer {mp_token}',
+            'Content-Type': 'application/json'
         }
         
-        print(f"📦 Dados para simulação: {data}")
+        response = requests.get(
+            f'https://api.mercadopago.com/v1/payments/{payment_id}',
+            headers=headers
+        )
         
-        if not MP_AVAILABLE:
-            print(f"❌ MP_AVAILABLE é False")
-            return jsonify({"error": "MP não disponível"}), 500
+        mp_data = {}
+        mp_status_code = response.status_code
         
-        print(f"✅ MP_AVAILABLE é True, processando...")
-        
-        # Verificar se é webhook de pagamento
-        if data.get("type") == "payment":
-            payment_id = data.get("data", {}).get("id")
-            
-            if payment_id:
-                print(f"💳 Processando payment_id: {payment_id}")
-                
-                # Importar e executar função de processamento
-                from mercadopago_routes import process_payment
-                result = process_payment(payment_id)
-                
-                print(f"✅ PROCESSAMENTO CONCLUÍDO: {result}")
-                
-                return jsonify({
-                    "success": True,
-                    "message": "Simulação executada com sucesso",
-                    "payment_id": payment_id,
-                    "result": result
-                })
-            else:
-                return jsonify({"error": "Payment ID não encontrado"}), 400
+        if response.status_code == 200:
+            mp_data = response.json()
+            print(f"✅ Pagamento encontrado no MP: {mp_data.get('status')}")
         else:
-            return jsonify({"error": "Tipo de webhook não é payment"}), 400
+            print(f"❌ Erro MP: {response.status_code}")
+            mp_data = {'error': f'Status {response.status_code}'}
             
-    except Exception as e:
-        print(f"❌ ERRO NA SIMULAÇÃO: {e}")
-        import traceback
-        traceback.print_exc()
+        # 2. Simular processamento
+        try:
+            from mercadopago_routes import process_payment
+            process_result = process_payment(payment_id)
+        except Exception as e:
+            process_result = {'error': f'Erro ao processar: {str(e)}'}
+        
+        # 3. Verificar tabelas
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # Verificar payment_history
+        cursor.execute("SELECT * FROM payment_history WHERE payment_id = %s", (payment_id,))
+        history_rows = cursor.fetchall()
+        history_columns = [desc[0] for desc in cursor.description]
+        history_data = [dict(zip(history_columns, row)) for row in history_rows]
+        
+        # Verificar payments
+        cursor.execute("SELECT * FROM payments WHERE payment_id = %s", (payment_id,))
+        payments_rows = cursor.fetchall()
+        payments_columns = [desc[0] for desc in cursor.description]
+        payments_data = [dict(zip(payments_columns, row)) for row in payments_rows]
+        
+        # Verificar usuário Martha
+        cursor.execute("SELECT id, email, subscription_status, subscription_plan FROM users WHERE email = %s", ('martha@gmail.com',))
+        user_row = cursor.fetchone()
+        user_data = None
+        if user_row:
+            user_columns = ['id', 'email', 'subscription_status', 'subscription_plan']
+            user_data = dict(zip(user_columns, user_row))
+            
+        conn.close()
+        
+        # 4. Análise dos dados
+        analysis = []
+        
+        if mp_status_code != 200:
+            analysis.append(f"❌ Pagamento {payment_id} não encontrado no Mercado Pago")
+        elif mp_data.get('status') != 'approved':
+            analysis.append(f"⚠️ Status no MP: {mp_data.get('status')} (precisa ser 'approved')")
+        else:
+            analysis.append(f"✅ Pagamento aprovado no MP")
+            
+        if not user_data:
+            analysis.append("❌ Usuário martha@gmail.com não encontrado")
+        else:
+            analysis.append(f"✅ Usuário encontrado: {user_data['subscription_status']}")
+            
+        if len(history_data) == 0:
+            analysis.append("❌ Nenhum registro em payment_history")
+        else:
+            analysis.append(f"✅ {len(history_data)} registro(s) em payment_history")
+            
+        if len(payments_data) == 0:
+            analysis.append("❌ Nenhum registro em payments (problema principal)")
+        else:
+            analysis.append(f"✅ {len(payments_data)} registro(s) em payments")
         
         return jsonify({
-            "error": str(e), 
-            "details": "Veja os logs do Railway para mais detalhes"
-        }), 500
-
-# Também adicione este endpoint mais simples para teste
-@app.route('/webhook/test-simple', methods=['POST'])
-def test_simple_webhook():
-    """Teste simples do webhook"""
-    
-    print(f"\n🔥 TESTE SIMPLES DO WEBHOOK - {datetime.now()}")
-    
-    try:
-        # Testar se consegue importar e executar
-        from mercadopago_routes import process_payment
-        
-        # Usar um payment_id fake
-        result = process_payment("123456789")
-        
-        print(f"✅ TESTE SIMPLES CONCLUÍDO: {result}")
-        
-        return jsonify({
-            "success": True,
-            "test_result": result,
-            "message": "Teste simples executado"
+            'payment_id': payment_id,
+            'mp_api': {
+                'status_code': mp_status_code,
+                'data': {
+                    'status': mp_data.get('status'),
+                    'external_reference': mp_data.get('external_reference'),
+                    'amount': mp_data.get('transaction_amount'),
+                    'payer_email': mp_data.get('payer', {}).get('email') if isinstance(mp_data.get('payer'), dict) else None
+                } if mp_status_code == 200 else mp_data
+            },
+            'process_result': process_result,
+            'database': {
+                'payment_history': history_data,
+                'payments': payments_data,
+                'user': user_data
+            },
+            'analysis': analysis,
+            'recommendation': "Verificar por que process_payment não está inserindo em 'payments'"
         })
         
     except Exception as e:
-        print(f"❌ ERRO NO TESTE SIMPLES: {e}")
+        print(f"❌ ERRO DEBUG: {e}")
         import traceback
         traceback.print_exc()
+        return jsonify({'error': str(e), 'traceback': traceback.format_exc()}), 500
+
+@app.route('/debug/process/<payment_id>')
+def manual_process_payment(payment_id):
+    """Processar manualmente um payment_id específico"""
+    
+    try:
+        print(f"\n🔧 PROCESSAMENTO MANUAL: {payment_id}")
         
-        return jsonify({"error": str(e)}), 500
+        from mercadopago_routes import process_payment
+        result = process_payment(payment_id)
+        
+        print(f"✅ PROCESSAMENTO MANUAL CONCLUÍDO: {result}")
+        
+        return jsonify({
+            'success': True,
+            'payment_id': payment_id,
+            'result': result,
+            'message': 'Processamento manual executado'
+        })
+        
+    except Exception as e:
+        print(f"❌ ERRO NO PROCESSAMENTO MANUAL: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e), 'traceback': traceback.format_exc()}), 500
 
-
+# ===== ENDPOINTS DE TESTE =====
 @app.route('/test/create-payment', methods=['POST', 'GET'])
 def create_test_payment():
     """Criar um pagamento real no sandbox usando Checkout Preferences"""
@@ -962,8 +893,8 @@ def create_test_payment():
             <h2>🧪 Criar Pagamento Real no Sandbox</h2>
             
             <h3>Dados do Cliente:</h3>
-            <input type="text" id="nome" placeholder="Nome do cliente" value="João Silva">
-            <input type="email" id="email" placeholder="Email do cliente" value="joao@teste.com">
+            <input type="text" id="nome" placeholder="Nome do cliente" value="Martha Silva">
+            <input type="email" id="email" placeholder="Email do cliente" value="martha@gmail.com">
             <br><br>
             
             <h3>Plano:</h3>
@@ -973,7 +904,7 @@ def create_test_payment():
             </select>
             <br><br>
             
-            <input type="text" id="cupom" placeholder="Código do cupom (opcional)" value="">
+            <input type="text" id="cupom" placeholder="Código do cupom (opcional)" value="50OFF">
             <br><br>
             
             <button onclick="criarCheckout()">🚀 Criar Checkout</button>
@@ -1024,8 +955,6 @@ def create_test_payment():
                     if (result.init_point) {
                         document.getElementById('resultado').innerHTML += 
                             '<br><a href="' + result.init_point + '" target="_blank">🔗 Abrir Checkout no MP</a>';
-                        document.getElementById('resultado').innerHTML += 
-                            '<br><p><strong>Preference ID:</strong> ' + result.preference_id + '</p>';
                     }
                 } catch (error) {
                     document.getElementById('resultado').innerHTML = 
@@ -1046,8 +975,8 @@ def create_test_payment():
         
         # Dados do request
         data = request.get_json() or {}
-        name = data.get('name', 'João Silva')
-        email = data.get('email', 'joao@teste.com')
+        name = data.get('name', 'Martha Silva')
+        email = data.get('email', 'martha@gmail.com')
         plan = data.get('plan', 'pro')
         coupon = data.get('coupon', '')
         
@@ -1082,7 +1011,7 @@ def create_test_payment():
                     "description": f"Assinatura mensal do plano {plan.title()} da Geminii",
                     "category_id": "services",
                     "quantity": 1,
-                    "currency_id": "BRL",  # ← CORRETO para preferences
+                    "currency_id": "BRL",
                     "unit_price": price
                 }
             ],
@@ -1109,7 +1038,7 @@ def create_test_payment():
             "auto_return": "approved",
             "payment_methods": {
                 "excluded_payment_types": [
-                    {"id": "ticket"}  # Excluir boleto para testes mais rápidos
+                    {"id": "ticket"}
                 ],
                 "installments": 12,
                 "default_installments": 1
@@ -1121,8 +1050,6 @@ def create_test_payment():
                 "test": True
             }
         }
-        
-        print(f"📦 Dados da preferência: {preference_data}")
         
         # Criar preferência na API do MP
         headers = {
@@ -1136,26 +1063,18 @@ def create_test_payment():
             json=preference_data
         )
         
-        print(f"📤 Resposta MP: {response.status_code}")
-        print(f"📦 Dados resposta: {response.text}")
-        
         if response.status_code == 201:
             preference_result = response.json()
-            preference_id = preference_result.get('id')
-            
-            print(f"✅ PREFERÊNCIA CRIADA! ID: {preference_id}")
             
             return jsonify({
                 'success': True,
-                'preference_id': preference_id,
+                'preference_id': preference_result.get('id'),
                 'init_point': preference_result.get('init_point'),
-                'sandbox_init_point': preference_result.get('sandbox_init_point'),
                 'external_reference': external_reference,
                 'plan': plan,
                 'price': price,
                 'coupon_applied': coupon,
-                'message': f'Checkout criado! Use o link para pagar.',
-                'instructions': 'Clique no link do checkout, faça o pagamento e monitore os logs!'
+                'message': 'Checkout criado! Use o link para pagar.'
             })
         else:
             return jsonify({
@@ -1167,167 +1086,15 @@ def create_test_payment():
         print(f"❌ ERRO AO CRIAR PREFERÊNCIA: {e}")
         import traceback
         traceback.print_exc()
-        
         return jsonify({'error': str(e)}), 500
 
-# Endpoint para testar webhook com payment_id real
-@app.route('/test/webhook-real', methods=['POST'])
-def test_webhook_real():
-    """Testar webhook com payment_id real"""
-    
-    try:
-        data = request.get_json()
-        payment_id = data.get('payment_id')
-        
-        if not payment_id:
-            return jsonify({'error': 'payment_id é obrigatório'}), 400
-        
-        print(f"\n🔔 TESTANDO WEBHOOK COM PAYMENT_ID REAL: {payment_id}")
-        
-        # Simular webhook do MP
-        webhook_data = {
-            "type": "payment",
-            "data": {
-                "id": payment_id
-            }
-        }
-        
-        # Processar como se fosse webhook real
-        from mercadopago_routes import process_payment
-        result = process_payment(payment_id)
-        
-        print(f"✅ TESTE CONCLUÍDO: {result}")
-        
-        return jsonify({
-            'success': True,
-            'payment_id': payment_id,
-            'webhook_result': result,
-            'message': 'Webhook testado com payment_id real'
-        })
-        
-    except Exception as e:
-        print(f"❌ ERRO NO TESTE: {e}")
-        return jsonify({'error': str(e)}), 500
 
-def process_payment(payment_id):
-    """Processar pagamento aprovado do Checkout"""
-    
-    try:
-        print(f"\n💳 PROCESSANDO PAGAMENTO: {payment_id}")
-        
-        # 1. Buscar dados do pagamento no MP
-        mp_token = os.environ.get('MP_ACCESS_TOKEN')
-        if not mp_token:
-            return {'success': False, 'error': 'Token MP não configurado'}
-        
-        headers = {
-            'Authorization': f'Bearer {mp_token}',
-            'Content-Type': 'application/json'
-        }
-        
-        response = requests.get(
-            f'https://api.mercadopago.com/v1/payments/{payment_id}',
-            headers=headers
-        )
-        
-        if response.status_code != 200:
-            return {'success': False, 'error': f'Erro API MP: {response.status_code}'}
-        
-        payment_data = response.json()
-        print(f"📦 Dados MP: status={payment_data.get('status')}, amount={payment_data.get('transaction_amount')}")
-        
-        # 2. Verificar se pagamento foi aprovado
-        if payment_data.get('status') != 'approved':
-            print(f"⏳ Pagamento não aprovado ainda: {payment_data.get('status')}")
-            return {'success': True, 'message': f'Pagamento {payment_data.get("status")}, aguardando aprovação'}
-        
-        # 3. Extrair email do external_reference
-        external_ref = payment_data.get('external_reference', '')
-        
-        # external_reference formato: "email_plano_timestamp"
-        if external_ref and '_' in external_ref:
-            user_email = external_ref.split('_')[0]
-            plan = external_ref.split('_')[1]
-        else:
-            # Fallback para payer email
-            user_email = payment_data.get('payer', {}).get('email', '')
-            plan = 'pro'
-        
-        if not user_email:
-            print(f"❌ Email não encontrado. external_ref: {external_ref}")
-            return {'success': False, 'error': 'Email do usuário não encontrado'}
-        
-        print(f"👤 Buscando usuário: {user_email}")
-        print(f"📋 Plano: {plan}")
-        
-        # 4. Conectar ao banco
-        from app import get_db_connection
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        
-        # 5. Buscar ou criar usuário
-        cursor.execute("SELECT id, email, subscription_status FROM users WHERE email = %s", (user_email,))
-        user = cursor.fetchone()
-        
-        if not user:
-            print(f"❌ Usuário não encontrado: {user_email}")
-            conn.close()
-            return {'success': False, 'error': f'Usuário não encontrado: {user_email}'}
-        
-        user_id = user[0]
-        print(f"✅ Usuário encontrado: ID {user_id}")
-        
-        # 6. Verificar se pagamento já foi processado
-        cursor.execute("SELECT id FROM payments WHERE payment_id = %s", (payment_id,))
-        existing = cursor.fetchone()
-        
-        if existing:
-            print(f"⚠️ Pagamento já processado anteriormente")
-            conn.close()
-            return {'success': True, 'message': 'Pagamento já foi processado'}
-        
-        # 7. Inserir na tabela payments
-        cursor.execute("""
-            INSERT INTO payments (user_id, payment_id, status, amount, plan_id, plan_name, external_reference, created_at, updated_at)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, NOW(), NOW())
-        """, (
-            user_id,
-            payment_id,
-            'approved',
-            payment_data.get('transaction_amount'),
-            2 if plan == 'pro' else 1,  # plan_id
-            plan,
-            external_ref
-        ))
-        
-        # 8. Ativar usuário
-        cursor.execute("""
-            UPDATE users 
-            SET subscription_status = 'active', 
-                subscription_plan = %s,
-                updated_at = NOW()
-            WHERE id = %s
-        """, (plan, user_id))
-        
-        conn.commit()
-        conn.close()
-        
-        print(f"✅ PAGAMENTO PROCESSADO COM SUCESSO!")
-        
-        return {
-            'success': True,
-            'message': 'Pagamento processado e usuário ativado',
-            'user_id': user_id,
-            'payment_id': payment_id,
-            'plan': plan,
-            'amount': payment_data.get('transaction_amount')
-        }
-        
-    except Exception as e:
-        print(f"❌ ERRO NO PROCESSAMENTO: {e}")
-        import traceback
-        traceback.print_exc()
-        return {'success': False, 'error': str(e)}
+
+
+
+
+
+
 
 
 
