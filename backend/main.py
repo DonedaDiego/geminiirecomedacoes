@@ -1,28 +1,19 @@
-# main.py - CORREÇÃO PARA O ERRO DO ADMIN BLUEPRINT
+# main.py - VERSÃO LIMPA (sem duplicações)
 
 from flask import Flask, jsonify, send_from_directory, request
-from flask import send_from_directory
-import time
-import hashlib
 import jwt
 from datetime import datetime, timedelta, timezone
-import psycopg2
-import smtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
 import os
-import secrets
-from yfinance_service import YFinanceService
 from database import get_db_connection
-import requests
+import mercadopago_service
 
+# Imports dos blueprints
 from beta_routes import beta_bp
 from long_short_routes import long_short_bp
 from rsl_routes import get_rsl_blueprint
 from recommendations_routes import get_recommendations_blueprint
 from mercadopago_routes import get_mercadopago_blueprint
 from opcoes_routes import opcoes_bp
-from swing_trade_ml_routes import swing_trade_ml_bp
 from swing_trade_ml_routes import get_swing_trade_ml_blueprint
 from beta_regression_routes import beta_regression_bp
 from atsmom_routes import register_atsmom_routes
@@ -33,11 +24,6 @@ from dotenv import load_dotenv
 load_dotenv()
 if not os.getenv('JWT_SECRET'):
     os.environ['JWT_SECRET'] = 'geminii-jwt-secret-key-2024'
-    print("⚠️ JWT_SECRET forçado manualmente")
-
-# Debug
-print(f"JWT_SECRET final: {os.getenv('JWT_SECRET', 'AINDA NÃO ENCONTRADO')}")
-print(f"OPLAB_TOKEN: {os.getenv('OPLAB_TOKEN', 'NÃO ENCONTRADO')}")
 
 # ===== CONFIGURAÇÃO DO FLASK =====
 app = Flask(__name__)
@@ -63,7 +49,7 @@ except ImportError as e:
 except Exception as e:
     print(f"❌ Erro ao carregar Mercado Pago: {e}")
 
-# ===== CONFIGURAÇÃO ADMIN BLUEPRINT - CORREÇÃO =====
+# ===== CONFIGURAÇÃO ADMIN BLUEPRINT =====
 ADMIN_AVAILABLE = False
 admin_bp = None
 
@@ -74,41 +60,12 @@ try:
     print("✅ Blueprint Admin carregado com sucesso!")
 except ImportError as e:
     print(f"⚠️ Admin routes não disponível: {e}")
-    print("📝 Criando funções admin básicas...")
     ADMIN_AVAILABLE = False
 except Exception as e:
     print(f"❌ Erro ao carregar admin blueprint: {e}")
-    print("📝 Continuando sem funcionalidades admin...")
     ADMIN_AVAILABLE = False
 
-# REGISTRAR BLUEPRINTS BÁSICOS
-app.register_blueprint(opcoes_bp)
-app.register_blueprint(beta_bp)
-app.register_blueprint(long_short_bp)
-rsl_bp = get_rsl_blueprint()
-app.register_blueprint(rsl_bp)
-recommendations_bp = get_recommendations_blueprint()
-app.register_blueprint(recommendations_bp)
-app.register_blueprint(get_swing_trade_ml_blueprint())
-app.register_blueprint(beta_regression_bp, url_prefix='/beta_regression')
-app.register_blueprint(chart_ativos_bp)
-register_atsmom_routes(app)
-
-# Registrar blueprint do Mercado Pago apenas se disponível
-if MP_AVAILABLE and mercadopago_bp:
-    app.register_blueprint(mercadopago_bp)
-    print("✅ Blueprint Mercado Pago registrado!")
-
-# ✅ REGISTRAR ADMIN BLUEPRINT APENAS SE DISPONÍVEL E SEM CONFLITOS
-if ADMIN_AVAILABLE and admin_bp:
-    try:
-        app.register_blueprint(admin_bp)
-        print("✅ Blueprint Admin registrado com sucesso!")
-    except Exception as e:
-        print(f"❌ Erro ao registrar admin blueprint: {e}")
-        print("⚠️ Continuando sem painel admin...")
-        ADMIN_AVAILABLE = False
-
+# ===== CONFIGURAÇÃO CARROSSEL =====
 CARROSSEL_AVAILABLE = False
 carrossel_bp = None
 
@@ -123,226 +80,50 @@ except Exception as e:
     print(f"❌ Erro ao carregar Carrossel: {e}")
     CARROSSEL_AVAILABLE = False
 
+# ===== REGISTRAR BLUEPRINTS =====
+app.register_blueprint(opcoes_bp)
+app.register_blueprint(beta_bp)
+app.register_blueprint(long_short_bp)
+
+rsl_bp = get_rsl_blueprint()
+app.register_blueprint(rsl_bp)
+
+recommendations_bp = get_recommendations_blueprint()
+app.register_blueprint(recommendations_bp)
+
+app.register_blueprint(get_swing_trade_ml_blueprint())
+app.register_blueprint(beta_regression_bp, url_prefix='/beta_regression')
+app.register_blueprint(chart_ativos_bp)
+register_atsmom_routes(app)
+
+# Registrar blueprints condicionais
+if MP_AVAILABLE and mercadopago_bp:
+    app.register_blueprint(mercadopago_bp)
+    print("✅ Blueprint Mercado Pago registrado!")
+
+if ADMIN_AVAILABLE and admin_bp:
+    try:
+        app.register_blueprint(admin_bp)
+        print("✅ Blueprint Admin registrado com sucesso!")
+    except Exception as e:
+        print(f"❌ Erro ao registrar admin blueprint: {e}")
+        ADMIN_AVAILABLE = False
+
 if CARROSSEL_AVAILABLE and carrossel_bp:
     try:
         app.register_blueprint(carrossel_bp)
         print("✅ Blueprint Carrossel registrado com sucesso!")
     except Exception as e:
         print(f"❌ Erro ao registrar carrossel blueprint: {e}")
-        print("⚠️ Continuando sem carrossel...")
         CARROSSEL_AVAILABLE = False
 
-# ===== RESTO DO CÓDIGO PERMANECE IGUAL =====
-
-def hash_password(password):
-    """Criptografar senha"""
-    return hashlib.sha256(password.encode()).hexdigest()
-
-def generate_reset_token():
-    """Gerar token seguro para reset"""
-    return secrets.token_urlsafe(32)
-
-def send_reset_email(user_email, user_name, reset_token):
-    """Enviar email de reset de senha - SMTP nativo"""
-    try:
-        smtp_server = "smtp.titan.email"
-        smtp_port = 465
-        smtp_user = os.environ.get('EMAIL_USER')
-        smtp_password = os.environ.get('EMAIL_PASSWORD')
-        
-        if not smtp_user or not smtp_password:
-            print("Variáveis de email não configuradas")
-            return False
-        
-        reset_url = f"https://geminii-tech.onrender.com/reset-password?token={reset_token}"
-        
-        msg = MIMEMultipart('alternative')
-        msg['Subject'] = "Redefinir Senha - Geminii Tech"
-        msg['From'] = smtp_user
-        msg['To'] = user_email
-        
-        html_body = f"""
-        <div style="font-family: Inter, sans-serif; max-width: 600px; margin: 0 auto;">
-            <div style="background: linear-gradient(135deg, #ba39af, #d946ef); padding: 30px; text-align: center;">
-                <h1 style="color: white; margin: 0;">Geminii Tech</h1>
-                <p style="color: white; margin: 10px 0 0 0;">Trading Automatizado</p>
-            </div>
-            <div style="padding: 30px; background: #f8f9fa;">
-                <h2 style="color: #333;">Olá, {user_name}!</h2>
-                <p style="color: #666; line-height: 1.6;">
-                    Recebemos uma solicitação para redefinir a senha da sua conta Geminii Tech.
-                </p>
-                <div style="text-align: center; margin: 30px 0;">
-                    <a href="{reset_url}" 
-                       style="background: linear-gradient(135deg, #ba39af, #d946ef); 
-                              color: white; padding: 15px 30px; text-decoration: none; 
-                              border-radius: 8px; display: inline-block; font-weight: bold;">
-                        Redefinir Senha
-                    </a>
-                </div>
-                <p style="color: #666; font-size: 14px;">
-                    <strong>Este link expira em 1 hora.</strong><br>
-                    Se você não solicitou isso, ignore este email.
-                </p>
-            </div>
-            <div style="padding: 20px; text-align: center; background: #333; color: white;">
-                <p style="margin: 0;">© 2025 Geminii Research - Trading Automatizado</p>
-            </div>
-        </div>
-        """
-        
-        msg.attach(MIMEText(html_body, 'html'))
-        
-        with smtplib.SMTP_SSL(smtp_server, smtp_port) as server:
-            server.login(smtp_user, smtp_password)
-            server.send_message(msg)
-        
-        print(f"Email enviado para: {user_email}")
-        return True
-        
-    except Exception as e:
-        print(f"❌ Erro ao enviar email: {e}")
-        return False
-
-def generate_reset_token_db(email):
-    """Gerar token de reset e salvar no banco"""
-    try:
-        conn = get_db_connection()
-        if not conn:
-            return {'success': False, 'error': 'Erro de conexão com banco'}
-        
-        cursor = conn.cursor()
-        cursor.execute("SELECT id, name FROM users WHERE email = %s", (email,))
-        user = cursor.fetchone()
-        
-        if not user:
-            cursor.close()
-            conn.close()
-            return {'success': False, 'error': 'E-mail não encontrado'}
-        
-        user_id, user_name = user
-        token = generate_reset_token()
-        expires_at = datetime.now(timezone.utc) + timedelta(hours=1)
-        
-        cursor.execute("""
-            UPDATE password_reset_tokens 
-            SET used = TRUE 
-            WHERE user_id = %s AND used = FALSE
-        """, (user_id,))
-        
-        cursor.execute("""
-            INSERT INTO password_reset_tokens (user_id, token, expires_at) 
-            VALUES (%s, %s, %s)
-        """, (user_id, token, expires_at))
-        
-        conn.commit()
-        cursor.close()
-        conn.close()
-        
-        return {
-            'success': True,
-            'token': token,
-            'user_name': user_name,
-            'user_email': email,
-            'expires_in': '1 hora'
-        }
-        
-    except Exception as e:
-        return {'success': False, 'error': f'Erro interno: {str(e)}'}
-
-def validate_reset_token_db(token):
-    """Validar token de reset"""
-    try:
-        conn = get_db_connection()
-        if not conn:
-            return {'success': False, 'error': 'Erro de conexão com banco'}
-        
-        cursor = conn.cursor()
-        cursor.execute("""
-            SELECT rt.user_id, rt.expires_at, u.name, u.email 
-            FROM password_reset_tokens rt
-            JOIN users u ON rt.user_id = u.id
-            WHERE rt.token = %s AND rt.used = FALSE
-        """, (token,))
-        
-        result = cursor.fetchone()
-        cursor.close()
-        conn.close()
-        
-        if not result:
-            return {'success': False, 'error': 'Token inválido ou já utilizado'}
-        
-        user_id, expires_at, user_name, user_email = result
-        
-        if datetime.now(timezone.utc) > expires_at.replace(tzinfo=timezone.utc):
-            return {'success': False, 'error': 'Token expirado'}
-        
-        return {
-            'success': True,
-            'user_id': user_id,
-            'user_name': user_name,
-            'email': user_email,
-            'expires_at': expires_at.isoformat()
-        }
-        
-    except Exception as e:
-        return {'success': False, 'error': f'Erro interno: {str(e)}'}
-
-def reset_password_db(token, new_password):
-    """Redefinir senha com token"""
-    try:
-        validation = validate_reset_token_db(token)
-        if not validation['success']:
-            return validation
-        
-        user_id = validation['user_id']
-        user_name = validation['user_name']
-        
-        conn = get_db_connection()
-        if not conn:
-            return {'success': False, 'error': 'Erro de conexão com banco'}
-        
-        cursor = conn.cursor()
-        
-        hashed_password = hash_password(new_password)
-        cursor.execute("""
-            UPDATE users 
-            SET password = %s, updated_at = CURRENT_TIMESTAMP 
-            WHERE id = %s
-        """, (hashed_password, user_id))
-        
-        cursor.execute("""
-            UPDATE password_reset_tokens 
-            SET used = TRUE 
-            WHERE token = %s
-        """, (token,))
-        
-        conn.commit()
-        cursor.close()
-        conn.close()
-        
-        return {
-            'success': True,
-            'message': 'Senha redefinida com sucesso!',
-            'user_name': user_name
-        }
-        
-    except Exception as e:
-        return {'success': False, 'error': f'Erro interno: {str(e)}'}
-
+# ===== INICIALIZAÇÃO =====
 def initialize_database():
     """Inicializar banco se necessário"""
     try:
         from database import setup_enhanced_database
         setup_enhanced_database()
         print("✅ Banco enhanced verificado/criado com sucesso!")
-        
-        # Inicializar Mercado Pago se disponível
-        if MP_AVAILABLE:
-            from mercadopago_routes import create_payments_table, add_plan_expires_field
-            create_payments_table()
-            add_plan_expires_field()
-            
     except Exception as e:
         print(f"⚠️ Erro ao verificar banco: {e}")
 
@@ -405,7 +186,6 @@ def rsl_page():
 def long_short():
     return send_from_directory('../frontend', 'long-short.html')
 
-# Servir assets
 @app.route('/logo.png')
 def serve_logo():
     return send_from_directory('../frontend', 'logo.png')
@@ -470,8 +250,6 @@ def payment_success():
     status_param = request.args.get('status')
     external_reference = request.args.get('external_reference')
     
-    print(f"✅ Pagamento aprovado - ID: {payment_id}")
-    
     return f"""
     <!DOCTYPE html>
     <html lang="pt-BR">
@@ -513,56 +291,11 @@ def payment_success():
         </div>
         
         <script>
-            let checkCount = 0;
-            const maxChecks = 12;
-            
-            function updateProgress() {{
-                const progress = (checkCount / maxChecks) * 100;
-                document.getElementById('progress-bar').style.width = progress + '%';
-            }}
-            
-            function checkPaymentStatus() {{
-                if (checkCount >= maxChecks) {{
-                    document.getElementById('status-check').innerHTML = 
-                        '<div class="text-green-400">✅ Ativação concluída!</div>';
-                    return;
-                }}
-                
-                const paymentId = '{payment_id}';
-                if (!paymentId) return;
-                
-                fetch(`/api/mercadopago/payment/status/${{paymentId}}`)
-                    .then(response => response.json())
-                    .then(data => {{
-                        updateProgress();
-                        
-                        if (data.success && data.data.status === 'approved') {{
-                            document.getElementById('status-check').innerHTML = 
-                                '<div class="text-green-400">✅ Assinatura ativada com sucesso!</div>';
-                            return;
-                        }}
-                        
-                        checkCount++;
-                        if (checkCount < maxChecks) {{
-                            setTimeout(checkPaymentStatus, 5000);
-                        }}
-                    }})
-                    .catch(error => {{
-                        console.error('Erro:', error);
-                        checkCount++;
-                        if (checkCount < maxChecks) {{
-                            setTimeout(checkPaymentStatus, 5000);
-                        }}
-                    }});
-            }}
-            
             function checkAndRedirect() {{
                 setTimeout(() => {{
                     window.location.href = '/dashboard';
                 }}, 1000);
             }}
-            
-            setTimeout(checkPaymentStatus, 2000);
         </script>
     </body>
     </html>
@@ -626,7 +359,7 @@ def payment_failure():
 
 @app.route('/api/status')
 def status():
-    """Status da API com info do Mercado Pago e Carrossel"""
+    """Status da API"""
     mp_status = {"success": MP_AVAILABLE, "message": "Blueprint carregado" if MP_AVAILABLE else "Não disponível"}
     admin_status = {"success": ADMIN_AVAILABLE, "message": "Blueprint carregado" if ADMIN_AVAILABLE else "Não disponível"}
     carrossel_status = {"success": CARROSSEL_AVAILABLE, "message": "Blueprint carregado" if CARROSSEL_AVAILABLE else "Não disponível"}
@@ -637,9 +370,8 @@ def status():
         'database': 'Connected',
         'mercadopago': mp_status,
         'admin': admin_status,
-        'carrossel': carrossel_status  # ← NOVA LINHA
+        'carrossel': carrossel_status
     })
-
 
 @app.route('/api/test-db')
 def test_db():
@@ -667,554 +399,6 @@ def test_db():
             return jsonify({'success': False, 'error': 'Falha na conexão'}), 500
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
-
-# ===== ROTAS DE COMPATIBILIDADE =====
-
-@app.route('/api/plans')
-def get_plans_compat():
-    """Rota de compatibilidade para planos - redireciona para blueprint"""
-    if MP_AVAILABLE:
-        from mercadopago_routes import PLANS
-        
-        plans_list = []
-        for plan_id, plan_data in PLANS.items():
-            plans_list.append({
-                "id": plan_data["id"],
-                "name": plan_id,
-                "display_name": plan_data["name"],
-                "description": plan_data["description"],
-                "price_monthly": plan_data["monthly_price"],
-                "price_annual": plan_data["annual_price"],
-                "features": plan_data["features"]
-            })
-        
-        return jsonify({"success": True, "data": plans_list})
-    else:
-        return jsonify({"success": False, "error": "Mercado Pago não disponível"}), 500
-
-@app.route('/api/checkout/create', methods=['POST'])
-def create_checkout_compat():
-    """Rota de compatibilidade para checkout - redireciona para blueprint"""
-    if not MP_AVAILABLE:
-        return jsonify({"success": False, "error": "Mercado Pago não disponível"}), 500
-    
-    try:
-        from mercadopago_routes import create_checkout_function
-        return create_checkout_function()
-    except Exception as e:
-        import traceback
-        traceback.print_exc()
-        return jsonify({"success": False, "error": str(e)}), 500
-
-# ===== WEBHOOK PRINCIPAL =====
-
-# @app.route('/webhook/mercadopago', methods=['POST'])
-# def mercadopago_webhook():
-#     """Webhook principal - redireciona para blueprint"""
-#     if not MP_AVAILABLE:
-#         return jsonify({"success": False, "error": "Mercado Pago não disponível"}), 500
-    
-#     try:
-#         from mercadopago_routes import webhook
-#         return webhook()
-        
-#     except Exception as e:
-#         print(f"❌ Erro no webhook principal: {e}")
-#         return jsonify({"success": False, "error": str(e)}), 500
-
-
-# ===== WEBHOOK PRINCIPAL =====
-@app.route('/webhook/mercadopago', methods=['POST'])
-def mercadopago_webhook():
-    """Webhook principal - redireciona para blueprint"""
-    if not MP_AVAILABLE:
-        return jsonify({"success": False, "error": "Mercado Pago não disponível"}), 500
-    
-    try:
-        from mercadopago_routes import webhook
-        return webhook()
-        
-    except Exception as e:
-        print(f"❌ Erro no webhook principal: {e}")
-        return jsonify({"success": False, "error": str(e)}), 500
-
-
-@app.route('/debug/payment/<payment_id>')
-def debug_payment_processing(payment_id):
-    """Debug detalhado do processamento de pagamento"""
-    
-    try:
-        print(f"\n🔍 DEBUG PAYMENT: {payment_id}")
-        
-        # 1. Verificar se pagamento existe no MP
-        mp_token = os.environ.get('MP_ACCESS_TOKEN')
-        headers = {
-            'Authorization': f'Bearer {mp_token}',
-            'Content-Type': 'application/json'
-        }
-        
-        response = requests.get(
-            f'https://api.mercadopago.com/v1/payments/{payment_id}',
-            headers=headers
-        )
-        
-        mp_data = {}
-        mp_status_code = response.status_code
-        
-        if response.status_code == 200:
-            mp_data = response.json()
-            print(f"✅ Pagamento encontrado no MP: {mp_data.get('status')}")
-        else:
-            print(f"❌ Erro MP: {response.status_code}")
-            mp_data = {'error': f'Status {response.status_code}'}
-            
-        # 2. Simular processamento
-        try:
-            from mercadopago_routes import process_payment
-            process_result = process_payment(payment_id)
-        except Exception as e:
-            process_result = {'error': f'Erro ao processar: {str(e)}'}
-        
-        # 3. Verificar tabelas
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        
-        # Verificar payment_history
-        cursor.execute("SELECT * FROM payment_history WHERE payment_id = %s", (payment_id,))
-        history_rows = cursor.fetchall()
-        history_columns = [desc[0] for desc in cursor.description] if history_rows else []
-        history_data = [dict(zip(history_columns, row)) for row in history_rows]
-        
-        # Verificar payments
-        cursor.execute("SELECT * FROM payments WHERE payment_id = %s", (payment_id,))
-        payments_rows = cursor.fetchall()
-        payments_columns = [desc[0] for desc in cursor.description] if payments_rows else []
-        payments_data = [dict(zip(payments_columns, row)) for row in payments_rows]
-        
-        # Verificar Martha - AGORA COM AS COLUNAS CORRETAS
-        cursor.execute("SELECT id, name, email, subscription_status, subscription_plan FROM users WHERE email = %s", ('martha@gmail.com',))
-        user_row = cursor.fetchone()
-        user_data = None
-        if user_row:
-            user_columns = ['id', 'name', 'email', 'subscription_status', 'subscription_plan']
-            user_data = dict(zip(user_columns, user_row))
-            
-        conn.close()
-        
-        # 4. Análise dos dados
-        analysis = []
-        
-        if mp_status_code != 200:
-            analysis.append(f"❌ Pagamento {payment_id} não encontrado no Mercado Pago")
-        elif mp_data.get('status') != 'approved':
-            analysis.append(f"⚠️ Status no MP: {mp_data.get('status')} (precisa ser 'approved')")
-        else:
-            analysis.append(f"✅ Pagamento aprovado no MP - Valor: R$ {mp_data.get('transaction_amount')}")
-            
-        if not user_data:
-            analysis.append("❌ Usuário martha@gmail.com não encontrado")
-        else:
-            analysis.append(f"✅ Usuário encontrado: ID {user_data.get('id')} - Status: {user_data.get('subscription_status')}")
-            
-        if len(history_data) == 0:
-            analysis.append("❌ Nenhum registro em payment_history")
-        else:
-            analysis.append(f"✅ {len(history_data)} registro(s) em payment_history")
-            
-        if len(payments_data) == 0:
-            analysis.append("❌ Nenhum registro em payments (ESTE É O PROBLEMA)")
-        else:
-            analysis.append(f"✅ {len(payments_data)} registro(s) em payments")
-        
-        return jsonify({
-            'payment_id': payment_id,
-            'mp_api': {
-                'status_code': mp_status_code,
-                'data': {
-                    'status': mp_data.get('status'),
-                    'external_reference': mp_data.get('external_reference'),
-                    'amount': mp_data.get('transaction_amount'),
-                    'payer_email': mp_data.get('payer', {}).get('email') if isinstance(mp_data.get('payer'), dict) else None
-                } if mp_status_code == 200 else mp_data
-            },
-            'process_result': process_result,
-            'database': {
-                'payment_history': history_data,
-                'payments': payments_data,
-                'user': user_data
-            },
-            'analysis': analysis,
-            'next_steps': [
-                "1. Execute os comandos SQL para adicionar colunas na tabela users",
-                "2. Teste o processamento manual com /debug/process/{payment_id}",
-                "3. Criar novo pagamento e verificar se webhook funciona"
-            ]
-        })
-        
-    except Exception as e:
-        print(f"❌ ERRO DEBUG: {e}")
-        import traceback
-        traceback.print_exc()
-        return jsonify({'error': str(e), 'traceback': traceback.format_exc()}), 500
-
-# ===== ENDPOINTS DE TESTE =====
-@app.route('/test/create-payment', methods=['POST', 'GET'])
-def create_test_payment():
-    """Criar um pagamento real no sandbox usando Checkout Preferences"""
-    
-    if request.method == 'GET':
-        return '''
-        <html>
-        <head><title>Criar Pagamento Teste</title></head>
-        <body>
-            <h2>🧪 Criar Pagamento Real no Sandbox</h2>
-            
-            <h3>Dados do Cliente:</h3>
-            <input type="text" id="nome" placeholder="Nome do cliente" value="Martha Silva">
-            <input type="email" id="email" placeholder="Email do cliente" value="martha@gmail.com">
-            <br><br>
-            
-            <h3>Plano:</h3>
-            <select id="plano">
-                <option value="basic">Básico - R$ 19,50</option>
-                <option value="pro" selected>Pro - R$ 39,50</option>
-            </select>
-            <br><br>
-            
-            <input type="text" id="cupom" placeholder="Código do cupom (opcional)" value="50OFF">
-            <br><br>
-            
-            <button onclick="criarCheckout()">🚀 Criar Checkout</button>
-            <button onclick="mostrarCartoesFake()">💳 Ver Cartões Fake</button>
-            
-            <div id="cartoes" style="display:none; background:#f0f0f0; padding:10px; margin:10px 0;">
-                <h4>📋 Cartões de Teste do Mercado Pago:</h4>
-                <p><strong>VISA:</strong> 4013 5406 8274 6260 (CVV: 123)</p>
-                <p><strong>Mastercard:</strong> 5031 7557 3453 0604 (CVV: 123)</p>
-                <p><strong>American Express:</strong> 3711 803032 57522 (CVV: 1234)</p>
-                <p><strong>Titular:</strong> APRO (aprovado) ou CONT (contestado)</p>
-                <p><strong>Validade:</strong> 11/25 ou superior</p>
-                <p><strong>CPF:</strong> 12345678909</p>
-            </div>
-            
-            <div id="resultado"></div>
-            
-            <script>
-            function mostrarCartoesFake() {
-                const div = document.getElementById('cartoes');
-                div.style.display = div.style.display === 'none' ? 'block' : 'none';
-            }
-            
-            async function criarCheckout() {
-                try {
-                    document.getElementById('resultado').innerHTML = '🔄 Criando checkout...';
-                    
-                    const nome = document.getElementById('nome').value;
-                    const email = document.getElementById('email').value;
-                    const plano = document.getElementById('plano').value;
-                    const cupom = document.getElementById('cupom').value;
-                    
-                    const response = await fetch('/test/create-payment', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            name: nome,
-                            email: email,
-                            plan: plano,
-                            coupon: cupom
-                        })
-                    });
-                    
-                    const result = await response.json();
-                    document.getElementById('resultado').innerHTML = 
-                        '<h3>Checkout Criado:</h3><pre>' + JSON.stringify(result, null, 2) + '</pre>';
-                        
-                    if (result.init_point) {
-                        document.getElementById('resultado').innerHTML += 
-                            '<br><a href="' + result.init_point + '" target="_blank">🔗 Abrir Checkout no MP</a>';
-                    }
-                } catch (error) {
-                    document.getElementById('resultado').innerHTML = 
-                        '<div style="color: red;">Erro: ' + error + '</div>';
-                }
-            }
-            </script>
-        </body>
-        </html>
-        '''
-    
-    try:
-        print(f"\n💳 CRIANDO CHECKOUT PREFERENCE - {datetime.now()}")
-        
-        mp_token = os.environ.get('MP_ACCESS_TOKEN')
-        if not mp_token:
-            return jsonify({'error': 'Token MP não configurado'}), 500
-        
-        # Dados do request
-        data = request.get_json() or {}
-        name = data.get('name', 'Martha Silva')
-        email = data.get('email', 'martha@gmail.com')
-        plan = data.get('plan', 'pro')
-        coupon = data.get('coupon', '')
-        
-        # Configurar plano
-        plans = {
-            'basic': {'price': 19.50, 'title': 'Plano Básico - Geminii'},
-            'pro': {'price': 39.50, 'title': 'Plano Pro - Geminii'}
-        }
-        
-        plan_info = plans.get(plan, plans['pro'])
-        price = plan_info['price']
-        
-        # Aplicar cupom
-        if coupon == '50OFF':
-            price = price * 0.5
-            plan_info['title'] += ' (50% OFF)'
-        
-        # Separar nome
-        name_parts = name.split(' ', 1)
-        first_name = name_parts[0]
-        last_name = name_parts[1] if len(name_parts) > 1 else 'Silva'
-        
-        # Criar referência única
-        external_reference = f"{email}_{plan}_{int(datetime.now().timestamp())}"
-        
-        # Dados da preferência
-        preference_data = {
-            "items": [
-                {
-                    "id": f"geminii_{plan}",
-                    "title": plan_info['title'],
-                    "description": f"Assinatura mensal do plano {plan.title()} da Geminii",
-                    "category_id": "services",
-                    "quantity": 1,
-                    "currency_id": "BRL",
-                    "unit_price": price
-                }
-            ],
-            "payer": {
-                "name": first_name,
-                "surname": last_name,
-                "email": email,
-                "phone": {
-                    "area_code": "11",
-                    "number": "999999999"
-                },
-                "identification": {
-                    "type": "CPF",
-                    "number": "12345678909"
-                }
-            },
-            "back_urls": {
-                "success": "https://app.geminii.com.br/payment/success",
-                "pending": "https://app.geminii.com.br/payment/pending", 
-                "failure": "https://app.geminii.com.br/payment/failure"
-            },
-            "notification_url": "https://app.geminii.com.br/webhook/mercadopago",
-            "external_reference": external_reference,
-            "auto_return": "approved",
-            "payment_methods": {
-                "excluded_payment_types": [
-                    {"id": "ticket"}
-                ],
-                "installments": 12,
-                "default_installments": 1
-            },
-            "metadata": {
-                "plan": plan,
-                "coupon": coupon,
-                "user_email": email,
-                "test": True
-            }
-        }
-        
-        # Criar preferência na API do MP
-        headers = {
-            'Authorization': f'Bearer {mp_token}',
-            'Content-Type': 'application/json'
-        }
-        
-        response = requests.post(
-            'https://api.mercadopago.com/checkout/preferences',
-            headers=headers,
-            json=preference_data
-        )
-        
-        if response.status_code == 201:
-            preference_result = response.json()
-            
-            return jsonify({
-                'success': True,
-                'preference_id': preference_result.get('id'),
-                'init_point': preference_result.get('init_point'),
-                'external_reference': external_reference,
-                'plan': plan,
-                'price': price,
-                'coupon_applied': coupon,
-                'message': 'Checkout criado! Use o link para pagar.'
-            })
-        else:
-            return jsonify({
-                'error': f'Erro ao criar preferência: {response.status_code}',
-                'details': response.text
-            }), 400
-            
-    except Exception as e:
-        print(f"❌ ERRO AO CRIAR PREFERÊNCIA: {e}")
-        import traceback
-        traceback.print_exc()
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/force/process/<payment_id>')
-def force_process_payment(payment_id):
-    """FORÇAR processamento de pagamento - VERSÃO CORRIGIDA"""
-    
-    try:
-        print(f"\n🔥 FORÇANDO PROCESSAMENTO: {payment_id}")
-        
-        # 1. Buscar dados no MP
-        mp_token = os.environ.get('MP_ACCESS_TOKEN')
-        headers = {
-            'Authorization': f'Bearer {mp_token}',
-            'Content-Type': 'application/json'
-        }
-        
-        response = requests.get(
-            f'https://api.mercadopago.com/v1/payments/{payment_id}',
-            headers=headers
-        )
-        
-        if response.status_code != 200:
-            return jsonify({'error': f'Pagamento não encontrado no MP: {response.status_code}'}), 400
-            
-        mp_data = response.json()
-        
-        if mp_data.get('status') != 'approved':
-            return jsonify({'error': f'Pagamento não aprovado: {mp_data.get("status")}'}), 400
-        
-        # 2. Extrair dados
-        external_ref = mp_data.get('external_reference', '')
-        amount = float(mp_data.get('transaction_amount', 0))
-        payer_email = mp_data.get('payer', {}).get('email', '')
-        
-        print(f"💰 Valor: R$ {amount}")
-        print(f"📧 Email: {payer_email}")
-        print(f"🔗 Ref: {external_ref}")
-        
-        # 3. Buscar usuário
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        
-        # Tentar por email do pagador primeiro
-        cursor.execute("SELECT id, email FROM users WHERE email = %s", (payer_email,))
-        user_row = cursor.fetchone()
-        
-        # Se não encontrar, usar martha@gmail.com
-        if not user_row:
-            cursor.execute("SELECT id, email FROM users WHERE email = %s", ('martha@gmail.com',))
-            user_row = cursor.fetchone()
-            
-        if not user_row:
-            conn.close()
-            return jsonify({'error': 'Usuário não encontrado'}), 400
-            
-        user_id = user_row[0]
-        user_email = user_row[1]
-        
-        # 4. Verificar se já existe na tabela payments
-        cursor.execute("SELECT id FROM payments WHERE payment_id = %s", (str(payment_id),))
-        existing = cursor.fetchone()
-        
-        if existing:
-            # Se já existe, só atualizar o usuário mesmo assim
-            print("⚠️ Pagamento já processado, mas vou atualizar o usuário mesmo assim")
-        
-        # 5. DETERMINAR PLANO - AGORA COM plan_id NUMÉRICO CORRETO
-        plan_name = 'Pro'
-        plan_id_numeric = 2  # Pro = 2
-        plan_id_text = 'pro'
-        
-        if amount >= 140:  # Premium mensal (149)
-            plan_name = 'Premium'
-            plan_id_numeric = 3  # Premium = 3
-            plan_id_text = 'premium'
-        elif amount >= 130:  # Premium anual (137)
-            plan_name = 'Premium'
-            plan_id_numeric = 3  # Premium = 3
-            plan_id_text = 'premium'
-        elif amount >= 75:   # Pro mensal (79)
-            plan_name = 'Pro'
-            plan_id_numeric = 2  # Pro = 2
-            plan_id_text = 'pro'
-        elif amount >= 70:   # Pro anual (72)
-            plan_name = 'Pro'
-            plan_id_numeric = 2  # Pro = 2
-            plan_id_text = 'pro'
-        else:               # Valores com desconto - assumir Pro
-            plan_name = 'Pro'
-            plan_id_numeric = 2  # Pro = 2
-            plan_id_text = 'pro'
-        
-        # 6. INSERIR NA TABELA PAYMENTS (só se não existir)
-        if not existing:
-            cursor.execute("""
-                INSERT INTO payments (
-                    user_id, payment_id, status, amount, plan_id, plan_name, 
-                    external_reference, created_at, updated_at
-                ) VALUES (%s, %s, %s, %s, %s, %s, %s, NOW(), NOW())
-            """, (
-                user_id, str(payment_id), 'approved', amount, plan_id_text, plan_name, external_ref
-            ))
-        
-        # 7. ATUALIZAR USUÁRIO - AGORA COM OS CAMPOS CORRETOS!
-        cursor.execute("""
-            UPDATE users 
-            SET plan_id = %s, 
-                plan_name = %s,
-                subscription_status = %s, 
-                subscription_plan = %s, 
-                updated_at = NOW()
-            WHERE id = %s
-        """, (plan_id_numeric, plan_name, 'active', plan_name, user_id))
-        
-        print(f"🔄 ATUALIZANDO USUÁRIO:")
-        print(f"   plan_id = {plan_id_numeric}")
-        print(f"   plan_name = {plan_name}")
-        print(f"   subscription_status = active")
-        print(f"   subscription_plan = {plan_name}")
-        
-        conn.commit()
-        conn.close()
-        
-        print(f"✅ PROCESSAMENTO FORÇADO CONCLUÍDO!")
-        
-        return jsonify({
-            'success': True,
-            'payment_id': payment_id,
-            'user_id': user_id,
-            'user_email': user_email,
-            'amount': amount,
-            'plan': plan_name,
-            'plan_id_numeric': plan_id_numeric,
-            'plan_id_text': plan_id_text,
-            'message': f'Pagamento processado! Usuário {user_email} ativado no plano {plan_name} (ID: {plan_id_numeric})'
-        })
-        
-    except Exception as e:
-        print(f"❌ ERRO NO PROCESSAMENTO FORÇADO: {e}")
-        import traceback
-        traceback.print_exc()
-        return jsonify({'error': str(e), 'traceback': traceback.format_exc()}), 500
-
-
-
-
-
-
-
-
-
-
 
 # ===== ROTAS DE AUTENTICAÇÃO =====
 
@@ -1313,11 +497,11 @@ def register():
             conn.close()
             return jsonify({'success': False, 'error': 'E-mail já cadastrado'}), 400
         
-        hashed_password = hash_password(password)
+        hashed_password = mercadopago_service.hash_password(password)
         cursor.execute("""
             INSERT INTO users (name, email, password, plan_id, plan_name, created_at) 
             VALUES (%s, %s, %s, %s, %s, %s) RETURNING id
-        """, (name, email, hashed_password, 1, 'Básico', datetime.now(timezone.utc)))
+        """, (name, email, hashed_password, 1, 'Pro', datetime.now(timezone.utc)))
         
         user_id = cursor.fetchone()[0]
         conn.commit()
@@ -1331,7 +515,7 @@ def register():
                 'user_id': user_id,
                 'name': name,
                 'email': email,
-                'plan_name': 'Básico'
+                'plan_name': 'Pro'
             }
         }), 201
         
@@ -1342,36 +526,22 @@ def register():
 def validate_coupon():
     """Validar cupom de desconto"""
     try:
-        print(f"\n🎫 VALIDANDO CUPOM - {datetime.now()}")
-        print("=" * 40)
-        
         data = request.get_json()
-        print(f"📊 Dados recebidos: {data}")
         
         if not data:
-            print("❌ Nenhum dado JSON recebido")
             return jsonify({'success': False, 'error': 'Dados JSON necessários'}), 400
         
         code = data.get('code', '').strip().upper()
         plan_name = data.get('plan_name', '')
         user_id = data.get('user_id', 1)
         
-        print(f"🔍 Cupom: '{code}'")
-        print(f"📦 Plano: '{plan_name}'")
-        print(f"👤 User ID: {user_id}")
-        
         if not code:
-            print("❌ Código do cupom vazio")
             return jsonify({'success': False, 'error': 'Código do cupom é obrigatório'}), 400
         
-        print(f"🔄 Chamando validate_coupon_db...")
         from database import validate_coupon as validate_coupon_db
         result = validate_coupon_db(code, plan_name, user_id)
         
-        print(f"📊 Resultado da validação: {result}")
-        
         if result['valid']:
-            print("✅ Cupom válido!")
             return jsonify({
                 'success': True,
                 'message': 'Cupom válido!',
@@ -1383,16 +553,12 @@ def validate_coupon():
                 }
             })
         else:
-            print(f"❌ Cupom inválido: {result['error']}")
             return jsonify({
                 'success': False,
                 'error': result['error']
             }), 400
         
     except Exception as e:
-        print(f"❌ ERRO na validação: {e}")
-        import traceback
-        traceback.print_exc()
         return jsonify({'success': False, 'error': f'Erro interno: {str(e)}'}), 500
 
 @app.route('/api/auth/login', methods=['POST'])
@@ -1430,7 +596,7 @@ def login():
         
         user_id, name, email, stored_password, plan_id, plan_name, user_type = user
         
-        if hash_password(password) != stored_password:
+        if mercadopago_service.hash_password(password) != stored_password:
             return jsonify({'success': False, 'error': 'Senha incorreta'}), 401
         
         token_payload = {
@@ -1459,10 +625,6 @@ def login():
         
     except Exception as e:
         return jsonify({'success': False, 'error': f'Erro interno: {str(e)}'}), 500
-
-# ===== ROTAS DE AUTENTICAÇÃO NO MAIN.PY =====
-
-# ===== ADICIONAR ESTAS ROTAS APÓS A ROTA DE LOGIN E ANTES DO if __name__ =====
 
 @app.route('/api/auth/verify', methods=['GET'])
 def verify_token():
@@ -1539,10 +701,10 @@ def forgot_password():
         if not email or '@' not in email:
             return jsonify({'success': False, 'error': 'E-mail é obrigatório'}), 400
         
-        result = generate_reset_token_db(email)
+        result = mercadopago_service.generate_reset_token_service(email)
         
         if result['success']:
-            email_sent = send_reset_email(
+            email_sent = mercadopago_service.send_reset_email(
                 result['user_email'], 
                 result['user_name'], 
                 result['token']
@@ -1578,7 +740,7 @@ def validate_reset():
         if not token:
             return jsonify({'success': False, 'error': 'Token é obrigatório'}), 400
         
-        result = validate_reset_token_db(token)
+        result = mercadopago_service.validate_reset_token_service(token)
         
         if result['success']:
             return jsonify({
@@ -1614,7 +776,7 @@ def reset_password_api():
         if len(new_password) < 6:
             return jsonify({'success': False, 'error': 'Nova senha deve ter pelo menos 6 caracteres'}), 400
         
-        result = reset_password_db(token, new_password)
+        result = mercadopago_service.reset_password_service(token, new_password)
         
         if result['success']:
             return jsonify({
@@ -1630,28 +792,7 @@ def reset_password_api():
     except Exception as e:
         return jsonify({'success': False, 'error': f'Erro interno: {str(e)}'}), 500
 
-@app.route('/api/force-admin')
-def force_admin():
-    """Temporário - forçar admin"""
-    try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        
-        cursor.execute("""
-            UPDATE users 
-            SET user_type = 'admin', plan_id = 3, plan_name = 'Premium'
-            WHERE email = 'diego@geminii.com.br'
-        """)
-        
-        conn.commit()
-        cursor.close()
-        conn.close()
-        
-        return jsonify({'success': True, 'message': 'Admin forçado!'})
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
-
-# ##===== FUNÇÃO CREATE_APP PARA RAILWAY =====
+# ===== FUNÇÃO CREATE_APP PARA RAILWAY =====
 def create_app():
     """Factory para criar app - Railway"""
     if os.environ.get('RAILWAY_ENVIRONMENT'):
@@ -1662,24 +803,9 @@ def create_app():
     initialize_database()
     return app
 
-###===== SUBSTITUIR TODO O FINAL DO ARQUIVO POR ISSO =====
-# if __name__ == '__main__':
-#     # CONFIGURAÇÃO PARA MODO LOCAL
-#     print("🏠 MODO DESENVOLVIMENTO LOCAL...")
-    
-#     # Remover DATABASE_URL para forçar banco local
-#     if 'DATABASE_URL' in os.environ:
-#         del os.environ['DATABASE_URL']
-#         print("✅ DATABASE_URL removida - usando banco local")
-    
-#     # Configurar ambiente local
-#     os.environ['FLASK_ENV'] = 'development'
-#     os.environ['DB_HOST'] = 'localhost'
-#     os.environ['DB_NAME'] = 'postgres'
-#     os.environ['DB_USER'] = 'postgres'
-#     os.environ['DB_PASSWORD'] = '#geminii'
-#     os.environ['DB_PORT'] = '5432'
-    
-#     port = int(os.environ.get('PORT', 5000))
-    
-#     app.run(host='0.0.0.0', port=port, debug=True)
+# # Debug info
+# if __name__ == "__main__":
+#     print("🔧 Main.py LIMPO carregado!")
+#     print("📋 Arquitetura: routes → services")
+#     print("✅ Sem duplicações de código")
+#     initialize_database()
