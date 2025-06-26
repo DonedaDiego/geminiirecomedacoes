@@ -94,6 +94,10 @@ app.register_blueprint(beta_regression_bp, url_prefix='/beta_regression')
 app.register_blueprint(chart_ativos_bp)
 register_atsmom_routes(app)
 
+# Registrar blueprint do Mercado Pago apenas se disponível
+if MP_AVAILABLE and mercadopago_bp:
+    app.register_blueprint(mercadopago_bp)
+    print("✅ Blueprint Mercado Pago registrado!")
 
 # ✅ REGISTRAR ADMIN BLUEPRINT APENAS SE DISPONÍVEL E SEM CONFLITOS
 if ADMIN_AVAILABLE and admin_bp:
@@ -118,8 +122,6 @@ except ImportError as e:
 except Exception as e:
     print(f"❌ Erro ao carregar Carrossel: {e}")
     CARROSSEL_AVAILABLE = False
-
-
 
 if CARROSSEL_AVAILABLE and carrossel_bp:
     try:
@@ -736,122 +738,6 @@ def mercadopago_webhook():
         print(f"❌ Erro no webhook principal: {e}")
         return jsonify({"success": False, "error": str(e)}), 500
 
-# ===== ENDPOINTS DE DEBUG =====
-@app.route('/debug/payment/<payment_id>')
-def debug_payment_processing(payment_id):
-    """Debug detalhado do processamento de pagamento"""
-    
-    try:
-        print(f"\n🔍 DEBUG PAYMENT: {payment_id}")
-        
-        # 1. Verificar se pagamento existe no MP
-        mp_token = os.environ.get('MP_ACCESS_TOKEN')
-        headers = {
-            'Authorization': f'Bearer {mp_token}',
-            'Content-Type': 'application/json'
-        }
-        
-        response = requests.get(
-            f'https://api.mercadopago.com/v1/payments/{payment_id}',
-            headers=headers
-        )
-        
-        mp_data = {}
-        mp_status_code = response.status_code
-        
-        if response.status_code == 200:
-            mp_data = response.json()
-            print(f"✅ Pagamento encontrado no MP: {mp_data.get('status')}")
-        else:
-            print(f"❌ Erro MP: {response.status_code}")
-            mp_data = {'error': f'Status {response.status_code}'}
-            
-        # 2. Simular processamento
-        try:
-            from mercadopago_routes import process_payment
-            process_result = process_payment(payment_id)
-        except Exception as e:
-            process_result = {'error': f'Erro ao processar: {str(e)}'}
-        
-        # 3. Verificar tabelas
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        
-        # Verificar payment_history
-        cursor.execute("SELECT * FROM payment_history WHERE payment_id = %s", (payment_id,))
-        history_rows = cursor.fetchall()
-        history_columns = [desc[0] for desc in cursor.description]
-        history_data = [dict(zip(history_columns, row)) for row in history_rows]
-        
-        # Verificar payments
-        cursor.execute("SELECT * FROM payments WHERE payment_id = %s", (payment_id,))
-        payments_rows = cursor.fetchall()
-        payments_columns = [desc[0] for desc in cursor.description]
-        payments_data = [dict(zip(payments_columns, row)) for row in payments_rows]
-        
-        # Verificar usuário Martha
-        cursor.execute("SELECT id, email, subscription_status, subscription_plan FROM users WHERE email = %s", ('martha@gmail.com',))
-        user_row = cursor.fetchone()
-        user_data = None
-        if user_row:
-            user_columns = ['id', 'email', 'subscription_status', 'subscription_plan']
-            user_data = dict(zip(user_columns, user_row))
-            
-        conn.close()
-        
-        # 4. Análise dos dados
-        analysis = []
-        
-        if mp_status_code != 200:
-            analysis.append(f"❌ Pagamento {payment_id} não encontrado no Mercado Pago")
-        elif mp_data.get('status') != 'approved':
-            analysis.append(f"⚠️ Status no MP: {mp_data.get('status')} (precisa ser 'approved')")
-        else:
-            analysis.append(f"✅ Pagamento aprovado no MP")
-            
-        if not user_data:
-            analysis.append("❌ Usuário martha@gmail.com não encontrado")
-        else:
-            analysis.append(f"✅ Usuário encontrado: {user_data['subscription_status']}")
-            
-        if len(history_data) == 0:
-            analysis.append("❌ Nenhum registro em payment_history")
-        else:
-            analysis.append(f"✅ {len(history_data)} registro(s) em payment_history")
-            
-        if len(payments_data) == 0:
-            analysis.append("❌ Nenhum registro em payments (problema principal)")
-        else:
-            analysis.append(f"✅ {len(payments_data)} registro(s) em payments")
-        
-        return jsonify({
-            'payment_id': payment_id,
-            'mp_api': {
-                'status_code': mp_status_code,
-                'data': {
-                    'status': mp_data.get('status'),
-                    'external_reference': mp_data.get('external_reference'),
-                    'amount': mp_data.get('transaction_amount'),
-                    'payer_email': mp_data.get('payer', {}).get('email') if isinstance(mp_data.get('payer'), dict) else None
-                } if mp_status_code == 200 else mp_data
-            },
-            'process_result': process_result,
-            'database': {
-                'payment_history': history_data,
-                'payments': payments_data,
-                'user': user_data
-            },
-            'analysis': analysis,
-            'recommendation': "Verificar por que process_payment não está inserindo em 'payments'"
-        })
-        
-    except Exception as e:
-        print(f"❌ ERRO DEBUG: {e}")
-        import traceback
-        traceback.print_exc()
-        return jsonify({'error': str(e), 'traceback': traceback.format_exc()}), 500
-
-# SUBSTITUA o endpoint debug no main.py por esta versão:
 
 @app.route('/debug/payment/<payment_id>')
 def debug_payment_processing(payment_id):
@@ -1179,7 +1065,146 @@ def create_test_payment():
         traceback.print_exc()
         return jsonify({'error': str(e)}), 500
 
-
+@app.route('/force/process/<payment_id>')
+def force_process_payment(payment_id):
+    """FORÇAR processamento de pagamento - VERSÃO CORRIGIDA"""
+    
+    try:
+        print(f"\n🔥 FORÇANDO PROCESSAMENTO: {payment_id}")
+        
+        # 1. Buscar dados no MP
+        mp_token = os.environ.get('MP_ACCESS_TOKEN')
+        headers = {
+            'Authorization': f'Bearer {mp_token}',
+            'Content-Type': 'application/json'
+        }
+        
+        response = requests.get(
+            f'https://api.mercadopago.com/v1/payments/{payment_id}',
+            headers=headers
+        )
+        
+        if response.status_code != 200:
+            return jsonify({'error': f'Pagamento não encontrado no MP: {response.status_code}'}), 400
+            
+        mp_data = response.json()
+        
+        if mp_data.get('status') != 'approved':
+            return jsonify({'error': f'Pagamento não aprovado: {mp_data.get("status")}'}), 400
+        
+        # 2. Extrair dados
+        external_ref = mp_data.get('external_reference', '')
+        amount = float(mp_data.get('transaction_amount', 0))
+        payer_email = mp_data.get('payer', {}).get('email', '')
+        
+        print(f"💰 Valor: R$ {amount}")
+        print(f"📧 Email: {payer_email}")
+        print(f"🔗 Ref: {external_ref}")
+        
+        # 3. Buscar usuário
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # Tentar por email do pagador primeiro
+        cursor.execute("SELECT id, email FROM users WHERE email = %s", (payer_email,))
+        user_row = cursor.fetchone()
+        
+        # Se não encontrar, usar martha@gmail.com
+        if not user_row:
+            cursor.execute("SELECT id, email FROM users WHERE email = %s", ('martha@gmail.com',))
+            user_row = cursor.fetchone()
+            
+        if not user_row:
+            conn.close()
+            return jsonify({'error': 'Usuário não encontrado'}), 400
+            
+        user_id = user_row[0]
+        user_email = user_row[1]
+        
+        # 4. Verificar se já existe na tabela payments
+        cursor.execute("SELECT id FROM payments WHERE payment_id = %s", (str(payment_id),))
+        existing = cursor.fetchone()
+        
+        if existing:
+            # Se já existe, só atualizar o usuário mesmo assim
+            print("⚠️ Pagamento já processado, mas vou atualizar o usuário mesmo assim")
+        
+        # 5. DETERMINAR PLANO - AGORA COM plan_id NUMÉRICO CORRETO
+        plan_name = 'Pro'
+        plan_id_numeric = 2  # Pro = 2
+        plan_id_text = 'pro'
+        
+        if amount >= 140:  # Premium mensal (149)
+            plan_name = 'Premium'
+            plan_id_numeric = 3  # Premium = 3
+            plan_id_text = 'premium'
+        elif amount >= 130:  # Premium anual (137)
+            plan_name = 'Premium'
+            plan_id_numeric = 3  # Premium = 3
+            plan_id_text = 'premium'
+        elif amount >= 75:   # Pro mensal (79)
+            plan_name = 'Pro'
+            plan_id_numeric = 2  # Pro = 2
+            plan_id_text = 'pro'
+        elif amount >= 70:   # Pro anual (72)
+            plan_name = 'Pro'
+            plan_id_numeric = 2  # Pro = 2
+            plan_id_text = 'pro'
+        else:               # Valores com desconto - assumir Pro
+            plan_name = 'Pro'
+            plan_id_numeric = 2  # Pro = 2
+            plan_id_text = 'pro'
+        
+        # 6. INSERIR NA TABELA PAYMENTS (só se não existir)
+        if not existing:
+            cursor.execute("""
+                INSERT INTO payments (
+                    user_id, payment_id, status, amount, plan_id, plan_name, 
+                    external_reference, created_at, updated_at
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, NOW(), NOW())
+            """, (
+                user_id, str(payment_id), 'approved', amount, plan_id_text, plan_name, external_ref
+            ))
+        
+        # 7. ATUALIZAR USUÁRIO - AGORA COM OS CAMPOS CORRETOS!
+        cursor.execute("""
+            UPDATE users 
+            SET plan_id = %s, 
+                plan_name = %s,
+                subscription_status = %s, 
+                subscription_plan = %s, 
+                updated_at = NOW()
+            WHERE id = %s
+        """, (plan_id_numeric, plan_name, 'active', plan_name, user_id))
+        
+        print(f"🔄 ATUALIZANDO USUÁRIO:")
+        print(f"   plan_id = {plan_id_numeric}")
+        print(f"   plan_name = {plan_name}")
+        print(f"   subscription_status = active")
+        print(f"   subscription_plan = {plan_name}")
+        
+        conn.commit()
+        conn.close()
+        
+        print(f"✅ PROCESSAMENTO FORÇADO CONCLUÍDO!")
+        
+        return jsonify({
+            'success': True,
+            'payment_id': payment_id,
+            'user_id': user_id,
+            'user_email': user_email,
+            'amount': amount,
+            'plan': plan_name,
+            'plan_id_numeric': plan_id_numeric,
+            'plan_id_text': plan_id_text,
+            'message': f'Pagamento processado! Usuário {user_email} ativado no plano {plan_name} (ID: {plan_id_numeric})'
+        })
+        
+    except Exception as e:
+        print(f"❌ ERRO NO PROCESSAMENTO FORÇADO: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e), 'traceback': traceback.format_exc()}), 500
 
 
 
