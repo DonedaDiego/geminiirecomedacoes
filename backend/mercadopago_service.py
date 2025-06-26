@@ -35,6 +35,18 @@ except Exception as e:
 
 # ===== CONFIGURAÇÃO DOS PLANOS =====
 PLANS = {
+    "basico": {
+        "id": "basico",
+        "name": "Básico", 
+        "db_id": 3,
+        "monthly_price": 0,
+        "annual_price": 0,
+        "features": [
+            "Acesso básico ao sistema",
+            "Dados limitados",
+            "Funcionalidades essenciais"
+        ]
+    },
     "pro": {
         "id": "pro",
         "name": "Pro", 
@@ -70,9 +82,6 @@ PLANS = {
 # ===== FUNÇÃO PRINCIPAL DE PROCESSAMENTO =====
 
 def process_payment(payment_id):
-    """
-    Processar pagamento do Mercado Pago - VERSÃO SIMPLIFICADA E CORRIGIDA
-    """
     print("\n" + "="*60)
     print(f"🔥 INICIANDO PROCESSAMENTO DO PAGAMENTO: {payment_id}")
     print("="*60)
@@ -83,10 +92,13 @@ def process_payment(payment_id):
         mp_data = get_payment_from_mercadopago(payment_id)
         
         if not mp_data:
+            print("❌ Pagamento não encontrado no Mercado Pago")
             return {'status': 'error', 'error': 'Pagamento não encontrado no Mercado Pago'}
         
-        print(f"   Status MP: {mp_data.get('status')}")
-        print(f"   Valor: R$ {mp_data.get('transaction_amount')}")
+        print(f"   ✅ Status MP: {mp_data.get('status')}")
+        print(f"   ✅ Valor: R$ {mp_data.get('transaction_amount')}")
+        print(f"   ✅ Email Pagador: {mp_data.get('payer', {}).get('email')}")
+        print(f"   ✅ External Ref: {mp_data.get('external_reference')}")
         
         # 2. VERIFICAR SE ESTÁ APROVADO
         if mp_data.get('status') != 'approved':
@@ -96,14 +108,15 @@ def process_payment(payment_id):
         # 3. EXTRAIR DADOS BÁSICOS
         print("📋 2. Extraindo dados...")
         payment_data = extract_payment_data(mp_data)
-        print(f"   Email: {payment_data['user_email']}")
-        print(f"   Valor: R$ {payment_data['amount']}")
-        print(f"   Plano detectado: {payment_data['plan_name']}")
+        print(f"   ✅ Email Final: {payment_data['user_email']}")
+        print(f"   ✅ Plano: {payment_data['plan_name']}")
+        print(f"   ✅ Valor: R$ {payment_data['amount']}")
         
         # 4. CONECTAR BANCO E VERIFICAR DUPLICAÇÃO
         print("🗄️ 3. Conectando ao banco...")
         conn = get_db_connection()
         if not conn:
+            print("❌ Erro de conexão com banco")
             return {'status': 'error', 'error': 'Erro de conexão com banco'}
         
         cursor = conn.cursor()
@@ -121,11 +134,18 @@ def process_payment(payment_id):
         user_data = find_or_create_user(cursor, payment_data['user_email'])
         
         if not user_data:
+            print(f"❌ USUÁRIO NÃO ENCONTRADO: {payment_data['user_email']}")
+            
+            # Debug: mostrar usuários existentes
+            cursor.execute("SELECT id, name, email FROM users LIMIT 3")
+            existing_users = cursor.fetchall()
+            print(f"   Usuários no banco: {existing_users}")
+            
             cursor.close()
             conn.close()
             return {'status': 'error', 'error': f'Usuário não encontrado: {payment_data["user_email"]}'}
         
-        print(f"   Usuário: {user_data['name']} (ID: {user_data['id']})")
+        print(f"   ✅ Usuário encontrado: {user_data['name']} (ID: {user_data['id']})")
         
         # 6. PREPARAR TABELAS
         print("🔧 5. Preparando estrutura do banco...")
@@ -133,7 +153,7 @@ def process_payment(payment_id):
         
         # 7. CALCULAR EXPIRAÇÃO
         expires_at = calculate_expiration(payment_data['cycle'])
-        print(f"   Expira em: {expires_at.strftime('%d/%m/%Y')}")
+        print(f"   ✅ Expira em: {expires_at.strftime('%d/%m/%Y')}")
         
         # 8. INSERIR PAGAMENTO
         print("💾 6. Registrando pagamento...")
@@ -141,7 +161,9 @@ def process_payment(payment_id):
         
         # 9. ATUALIZAR USUÁRIO
         print("🔄 7. Atualizando plano do usuário...")
-        update_user_plan(cursor, user_data['id'], payment_data['plan_id'], payment_data['plan_name'], expires_at)
+        print(f"   Atualizando usuário {user_data['id']} para plano {payment_data['plan_name']}")
+        
+        update_user_plan(cursor, user_data['id'], payment_data['plan_db_id'], payment_data['plan_name'], expires_at)
         
         # 10. REGISTRAR HISTÓRICO
         print("📝 8. Registrando histórico...")
@@ -219,7 +241,7 @@ def extract_payment_data(mp_data):
     if external_ref and 'geminii_' in external_ref:
         try:
             parts = external_ref.split('_')
-            if len(parts) >= 4:
+            if len(parts) >= 5:
                 plan_id = parts[1]
                 cycle = parts[2]
                 user_email = parts[3]
@@ -253,21 +275,46 @@ def extract_payment_data(mp_data):
     }
 
 def find_or_create_user(cursor, email):
-    """Buscar usuário por email"""
-    cursor.execute("SELECT id, name, email FROM users WHERE email = %s", (email,))
+    print(f"🔍 Buscando usuário com email: '{email}'")
+    
+    # Buscar com email exato
+    cursor.execute("SELECT id, name, email FROM users WHERE email = %s", (email.lower(),))
     result = cursor.fetchone()
     
     if result:
+        print(f"✅ Usuário encontrado: {result[1]} (ID: {result[0]})")
         return {
             'id': result[0],
             'name': result[1],
             'email': result[2]
         }
+    
+    print(f"❌ Usuário não encontrado com email exato: '{email}'")
+    
+    # Tentar buscar ignorando maiúscula/minúscula
+    cursor.execute("SELECT id, name, email FROM users WHERE LOWER(email) = LOWER(%s)", (email,))
+    result = cursor.fetchone()
+    
+    if result:
+        print(f"✅ Usuário encontrado (case insensitive): {result[1]} (ID: {result[0]})")
+        return {
+            'id': result[0],
+            'name': result[1],
+            'email': result[2]
+        }
+    
+    print(f"❌ Usuário definitivamente não encontrado: '{email}'")
+    
+    # Debug: mostrar primeiros 3 emails do banco
+    cursor.execute("SELECT id, name, email FROM users LIMIT 3")
+    sample_users = cursor.fetchall()
+    print(f"📋 Emails no banco (amostra): {[user[2] for user in sample_users]}")
+    
     return None
 
 def ensure_tables_exist(cursor):
-    """Garantir que todas as tabelas necessárias existem"""
     try:
+        print("   🔧 Verificando tabela payments...")
         # Tabela payments
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS payments (
@@ -285,15 +332,32 @@ def ensure_tables_exist(cursor):
             )
         """)
         
+        print("   🔧 Adicionando campos necessários na tabela users...")
         # Colunas adicionais na tabela users
         cursor.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS subscription_status VARCHAR(20) DEFAULT 'inactive'")
-        cursor.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS subscription_plan VARCHAR(50)")
-        cursor.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS plan_expires_at TIMESTAMP")
+        print("     ✅ Campo subscription_status verificado")
         
-        print("   ✅ Estrutura do banco verificada")
+        cursor.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS subscription_plan VARCHAR(50)")
+        print("     ✅ Campo subscription_plan verificado")
+        
+        cursor.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS plan_expires_at TIMESTAMP")
+        print("     ✅ Campo plan_expires_at verificado")
+        
+        # Verificar se os campos realmente existem
+        cursor.execute("""
+            SELECT column_name 
+            FROM information_schema.columns 
+            WHERE table_name = 'users' 
+            AND column_name IN ('subscription_status', 'subscription_plan', 'plan_expires_at')
+        """)
+        existing_fields = [row[0] for row in cursor.fetchall()]
+        print(f"   ✅ Campos confirmados na tabela users: {existing_fields}")
+        
+        print("   ✅ Estrutura do banco verificada e atualizada")
         
     except Exception as e:
-        print(f"   ⚠️ Erro ao preparar tabelas: {e}")
+        print(f"   ❌ Erro ao preparar tabelas: {e}")
+        raise e
 
 def calculate_expiration(cycle):
     """Calcular data de expiração"""
@@ -323,6 +387,22 @@ def insert_payment_record(cursor, payment_id, user_id, payment_data):
 
 def update_user_plan(cursor, user_id, plan_db_id, plan_name, expires_at):
     """Atualizar plano do usuário"""
+    print(f"   🔄 Iniciando UPDATE do usuário...")
+    print(f"      User ID: {user_id}")
+    print(f"      Plan DB ID: {plan_db_id}")
+    print(f"      Plan Name: {plan_name}")
+    print(f"      Expires At: {expires_at}")
+    
+    # Verificar se usuário existe antes do UPDATE
+    cursor.execute("SELECT id, name, email, plan_name FROM users WHERE id = %s", (user_id,))
+    user_before = cursor.fetchone()
+    
+    if not user_before:
+        raise Exception(f"ERRO: Usuário ID {user_id} não existe na tabela!")
+    
+    print(f"   ✅ Usuário antes do UPDATE: {user_before[1]} - Plano atual: {user_before[3]}")
+    
+    # Fazer o UPDATE
     cursor.execute("""
         UPDATE users 
         SET plan_id = %s, 
@@ -335,10 +415,25 @@ def update_user_plan(cursor, user_id, plan_db_id, plan_name, expires_at):
     """, (plan_db_id, plan_name, plan_name, expires_at, user_id))
     
     rows_updated = cursor.rowcount
-    print(f"   ✅ Usuário atualizado ({rows_updated} linhas)")
+    print(f"   📊 Linhas afetadas pelo UPDATE: {rows_updated}")
     
     if rows_updated == 0:
-        raise Exception("ERRO CRÍTICO: Nenhuma linha foi atualizada na tabela users!")
+        print("   ❌ ERRO CRÍTICO: Nenhuma linha foi atualizada!")
+        
+        # Debug adicional
+        cursor.execute("SELECT id, name, plan_name FROM users WHERE id = %s", (user_id,))
+        user_check = cursor.fetchone()
+        print(f"   🔍 Usuário ainda existe? {user_check}")
+        
+        raise Exception("ERRO CRÍTICO: UPDATE não afetou nenhuma linha na tabela users!")
+    
+    # Verificar se realmente atualizou
+    cursor.execute("SELECT plan_name, subscription_status, plan_expires_at FROM users WHERE id = %s", (user_id,))
+    user_after = cursor.fetchone()
+    
+    if user_after:
+        print(f"   ✅ Usuário APÓS UPDATE:")
+        print(f"      Plano: {user_after[0]}")
 
 def insert_payment_history(cursor, user_id, payment_data, payment_id):
     """Inserir histórico de pagamento"""
@@ -932,10 +1027,6 @@ def get_mercadopago_blueprint():
     """Retornar blueprint"""
     return mercadopago_bp
 
-# Para compatibilidade - funções que o main.py ainda pode chamar
-def process_payment(payment_id):
-    """Wrapper para compatibilidade com main.py"""
-    return mercadopago_service.process_payment(payment_id)
 
 def create_payments_table():
     """Função vazia para compatibilidade"""
@@ -1033,7 +1124,3 @@ if __name__ == "__main__":
     print("   - GET  /api/mercadopago/test")
     print("   - POST /api/mercadopago/checkout/create")
     print("   - GET  /api/mercadopago/payment/status/<id>")
-    
-    # Executar testes se necessário
-    # debug_database_structure()
-    # test_webhook_locally()

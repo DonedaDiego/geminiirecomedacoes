@@ -27,7 +27,6 @@ def get_db_connection():
         return None
 
 def test_connection():
-    """Testar conexão com banco"""
     try:
         conn = get_db_connection()
         if conn:
