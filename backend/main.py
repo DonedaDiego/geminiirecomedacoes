@@ -1,19 +1,27 @@
-# main.py - VERSÃO LIMPA (sem duplicações)
 
 from flask import Flask, jsonify, send_from_directory, request
+from flask import send_from_directory
+import time
+import hashlib
 import jwt
 from datetime import datetime, timedelta, timezone
+import psycopg2
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 import os
+import secrets
+from yfinance_service import YFinanceService
 from database import get_db_connection
-import mercadopago_service
+import requests
 
-# Imports dos blueprints
 from beta_routes import beta_bp
 from long_short_routes import long_short_bp
 from rsl_routes import get_rsl_blueprint
 from recommendations_routes import get_recommendations_blueprint
 from mercadopago_routes import get_mercadopago_blueprint
 from opcoes_routes import opcoes_bp
+from swing_trade_ml_routes import swing_trade_ml_bp
 from swing_trade_ml_routes import get_swing_trade_ml_blueprint
 from beta_regression_routes import beta_regression_bp
 from atsmom_routes import register_atsmom_routes
@@ -24,6 +32,11 @@ from dotenv import load_dotenv
 load_dotenv()
 if not os.getenv('JWT_SECRET'):
     os.environ['JWT_SECRET'] = 'geminii-jwt-secret-key-2024'
+    print("⚠️ JWT_SECRET forçado manualmente")
+
+# Debug
+print(f"JWT_SECRET final: {os.getenv('JWT_SECRET', 'AINDA NÃO ENCONTRADO')}")
+print(f"OPLAB_TOKEN: {os.getenv('OPLAB_TOKEN', 'NÃO ENCONTRADO')}")
 
 # ===== CONFIGURAÇÃO DO FLASK =====
 app = Flask(__name__)
@@ -49,7 +62,7 @@ except ImportError as e:
 except Exception as e:
     print(f"❌ Erro ao carregar Mercado Pago: {e}")
 
-# ===== CONFIGURAÇÃO ADMIN BLUEPRINT =====
+# ===== CONFIGURAÇÃO ADMIN BLUEPRINT - CORREÇÃO =====
 ADMIN_AVAILABLE = False
 admin_bp = None
 
@@ -60,12 +73,41 @@ try:
     print("✅ Blueprint Admin carregado com sucesso!")
 except ImportError as e:
     print(f"⚠️ Admin routes não disponível: {e}")
+    print("📝 Criando funções admin básicas...")
     ADMIN_AVAILABLE = False
 except Exception as e:
     print(f"❌ Erro ao carregar admin blueprint: {e}")
+    print("📝 Continuando sem funcionalidades admin...")
     ADMIN_AVAILABLE = False
 
-# ===== CONFIGURAÇÃO CARROSSEL =====
+# REGISTRAR BLUEPRINTS BÁSICOS
+app.register_blueprint(opcoes_bp)
+app.register_blueprint(beta_bp)
+app.register_blueprint(long_short_bp)
+rsl_bp = get_rsl_blueprint()
+app.register_blueprint(rsl_bp)
+recommendations_bp = get_recommendations_blueprint()
+app.register_blueprint(recommendations_bp)
+app.register_blueprint(get_swing_trade_ml_blueprint())
+app.register_blueprint(beta_regression_bp, url_prefix='/beta_regression')
+app.register_blueprint(chart_ativos_bp)
+register_atsmom_routes(app)
+
+# Registrar blueprint do Mercado Pago apenas se disponível
+if MP_AVAILABLE and mercadopago_bp:
+    app.register_blueprint(mercadopago_bp)
+    print("✅ Blueprint Mercado Pago registrado!")
+
+# ✅ REGISTRAR ADMIN BLUEPRINT APENAS SE DISPONÍVEL E SEM CONFLITOS
+if ADMIN_AVAILABLE and admin_bp:
+    try:
+        app.register_blueprint(admin_bp)
+        print("✅ Blueprint Admin registrado com sucesso!")
+    except Exception as e:
+        print(f"❌ Erro ao registrar admin blueprint: {e}")
+        print("⚠️ Continuando sem painel admin...")
+        ADMIN_AVAILABLE = False
+
 CARROSSEL_AVAILABLE = False
 carrossel_bp = None
 
@@ -80,50 +122,219 @@ except Exception as e:
     print(f"❌ Erro ao carregar Carrossel: {e}")
     CARROSSEL_AVAILABLE = False
 
-# ===== REGISTRAR BLUEPRINTS =====
-app.register_blueprint(opcoes_bp)
-app.register_blueprint(beta_bp)
-app.register_blueprint(long_short_bp)
-
-rsl_bp = get_rsl_blueprint()
-app.register_blueprint(rsl_bp)
-
-recommendations_bp = get_recommendations_blueprint()
-app.register_blueprint(recommendations_bp)
-
-app.register_blueprint(get_swing_trade_ml_blueprint())
-app.register_blueprint(beta_regression_bp, url_prefix='/beta_regression')
-app.register_blueprint(chart_ativos_bp)
-register_atsmom_routes(app)
-
-# Registrar blueprints condicionais
-if MP_AVAILABLE and mercadopago_bp:
-    app.register_blueprint(mercadopago_bp)
-    print("✅ Blueprint Mercado Pago registrado!")
-
-if ADMIN_AVAILABLE and admin_bp:
-    try:
-        app.register_blueprint(admin_bp)
-        print("✅ Blueprint Admin registrado com sucesso!")
-    except Exception as e:
-        print(f"❌ Erro ao registrar admin blueprint: {e}")
-        ADMIN_AVAILABLE = False
-
 if CARROSSEL_AVAILABLE and carrossel_bp:
     try:
         app.register_blueprint(carrossel_bp)
         print("✅ Blueprint Carrossel registrado com sucesso!")
     except Exception as e:
         print(f"❌ Erro ao registrar carrossel blueprint: {e}")
+        print("⚠️ Continuando sem carrossel...")
         CARROSSEL_AVAILABLE = False
 
-# ===== INICIALIZAÇÃO =====
+# ===== RESTO DO CÓDIGO PERMANECE IGUAL =====
+
+def hash_password(password):
+    """Criptografar senha"""
+    return hashlib.sha256(password.encode()).hexdigest()
+
+def generate_reset_token():
+    """Gerar token seguro para reset"""
+    return secrets.token_urlsafe(32)
+
+def send_reset_email(user_email, user_name, reset_token):
+    """Enviar email de reset de senha - SMTP nativo"""
+    try:
+        smtp_server = "smtp.titan.email"
+        smtp_port = 465
+        smtp_user = os.environ.get('EMAIL_USER')
+        smtp_password = os.environ.get('EMAIL_PASSWORD')
+        
+        if not smtp_user or not smtp_password:
+            print("Variáveis de email não configuradas")
+            return False
+        
+        reset_url = f"https://geminii-tech.onrender.com/reset-password?token={reset_token}"
+        
+        msg = MIMEMultipart('alternative')
+        msg['Subject'] = "Redefinir Senha - Geminii Tech"
+        msg['From'] = smtp_user
+        msg['To'] = user_email
+        
+        html_body = f"""
+        <div style="font-family: Inter, sans-serif; max-width: 600px; margin: 0 auto;">
+            <div style="background: linear-gradient(135deg, #ba39af, #d946ef); padding: 30px; text-align: center;">
+                <h1 style="color: white; margin: 0;">Geminii Tech</h1>
+                <p style="color: white; margin: 10px 0 0 0;">Trading Automatizado</p>
+            </div>
+            <div style="padding: 30px; background: #f8f9fa;">
+                <h2 style="color: #333;">Olá, {user_name}!</h2>
+                <p style="color: #666; line-height: 1.6;">
+                    Recebemos uma solicitação para redefinir a senha da sua conta Geminii Tech.
+                </p>
+                <div style="text-align: center; margin: 30px 0;">
+                    <a href="{reset_url}" 
+                       style="background: linear-gradient(135deg, #ba39af, #d946ef); 
+                              color: white; padding: 15px 30px; text-decoration: none; 
+                              border-radius: 8px; display: inline-block; font-weight: bold;">
+                        Redefinir Senha
+                    </a>
+                </div>
+                <p style="color: #666; font-size: 14px;">
+                    <strong>Este link expira em 1 hora.</strong><br>
+                    Se você não solicitou isso, ignore este email.
+                </p>
+            </div>
+            <div style="padding: 20px; text-align: center; background: #333; color: white;">
+                <p style="margin: 0;">© 2025 Geminii Research - Trading Automatizado</p>
+            </div>
+        </div>
+        """
+        
+        msg.attach(MIMEText(html_body, 'html'))
+        
+        with smtplib.SMTP_SSL(smtp_server, smtp_port) as server:
+            server.login(smtp_user, smtp_password)
+            server.send_message(msg)
+        
+        print(f"Email enviado para: {user_email}")
+        return True
+        
+    except Exception as e:
+        print(f"❌ Erro ao enviar email: {e}")
+        return False
+
+def generate_reset_token_db(email):
+    """Gerar token de reset e salvar no banco"""
+    try:
+        conn = get_db_connection()
+        if not conn:
+            return {'success': False, 'error': 'Erro de conexão com banco'}
+        
+        cursor = conn.cursor()
+        cursor.execute("SELECT id, name FROM users WHERE email = %s", (email,))
+        user = cursor.fetchone()
+        
+        if not user:
+            cursor.close()
+            conn.close()
+            return {'success': False, 'error': 'E-mail não encontrado'}
+        
+        user_id, user_name = user
+        token = generate_reset_token()
+        expires_at = datetime.now(timezone.utc) + timedelta(hours=1)
+        
+        cursor.execute("""
+            UPDATE password_reset_tokens 
+            SET used = TRUE 
+            WHERE user_id = %s AND used = FALSE
+        """, (user_id,))
+        
+        cursor.execute("""
+            INSERT INTO password_reset_tokens (user_id, token, expires_at) 
+            VALUES (%s, %s, %s)
+        """, (user_id, token, expires_at))
+        
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        return {
+            'success': True,
+            'token': token,
+            'user_name': user_name,
+            'user_email': email,
+            'expires_in': '1 hora'
+        }
+        
+    except Exception as e:
+        return {'success': False, 'error': f'Erro interno: {str(e)}'}
+
+def validate_reset_token_db(token):
+    """Validar token de reset"""
+    try:
+        conn = get_db_connection()
+        if not conn:
+            return {'success': False, 'error': 'Erro de conexão com banco'}
+        
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT rt.user_id, rt.expires_at, u.name, u.email 
+            FROM password_reset_tokens rt
+            JOIN users u ON rt.user_id = u.id
+            WHERE rt.token = %s AND rt.used = FALSE
+        """, (token,))
+        
+        result = cursor.fetchone()
+        cursor.close()
+        conn.close()
+        
+        if not result:
+            return {'success': False, 'error': 'Token inválido ou já utilizado'}
+        
+        user_id, expires_at, user_name, user_email = result
+        
+        if datetime.now(timezone.utc) > expires_at.replace(tzinfo=timezone.utc):
+            return {'success': False, 'error': 'Token expirado'}
+        
+        return {
+            'success': True,
+            'user_id': user_id,
+            'user_name': user_name,
+            'email': user_email,
+            'expires_at': expires_at.isoformat()
+        }
+        
+    except Exception as e:
+        return {'success': False, 'error': f'Erro interno: {str(e)}'}
+
+def reset_password_db(token, new_password):
+    """Redefinir senha com token"""
+    try:
+        validation = validate_reset_token_db(token)
+        if not validation['success']:
+            return validation
+        
+        user_id = validation['user_id']
+        user_name = validation['user_name']
+        
+        conn = get_db_connection()
+        if not conn:
+            return {'success': False, 'error': 'Erro de conexão com banco'}
+        
+        cursor = conn.cursor()
+        
+        hashed_password = hash_password(new_password)
+        cursor.execute("""
+            UPDATE users 
+            SET password = %s, updated_at = CURRENT_TIMESTAMP 
+            WHERE id = %s
+        """, (hashed_password, user_id))
+        
+        cursor.execute("""
+            UPDATE password_reset_tokens 
+            SET used = TRUE 
+            WHERE token = %s
+        """, (token,))
+        
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        return {
+            'success': True,
+            'message': 'Senha redefinida com sucesso!',
+            'user_name': user_name
+        }
+        
+    except Exception as e:
+        return {'success': False, 'error': f'Erro interno: {str(e)}'}
+
 def initialize_database():
     """Inicializar banco se necessário"""
     try:
         from database import setup_enhanced_database
         setup_enhanced_database()
-        print("✅ Banco enhanced verificado/criado com sucesso!")
+        print("✅ Banco enhanced verificado/criado com sucesso!")           
     except Exception as e:
         print(f"⚠️ Erro ao verificar banco: {e}")
 
@@ -186,6 +397,7 @@ def rsl_page():
 def long_short():
     return send_from_directory('../frontend', 'long-short.html')
 
+# Servir assets
 @app.route('/logo.png')
 def serve_logo():
     return send_from_directory('../frontend', 'logo.png')
@@ -250,6 +462,8 @@ def payment_success():
     status_param = request.args.get('status')
     external_reference = request.args.get('external_reference')
     
+    print(f"✅ Pagamento aprovado - ID: {payment_id}")
+    
     return f"""
     <!DOCTYPE html>
     <html lang="pt-BR">
@@ -291,11 +505,56 @@ def payment_success():
         </div>
         
         <script>
+            let checkCount = 0;
+            const maxChecks = 12;
+            
+            function updateProgress() {{
+                const progress = (checkCount / maxChecks) * 100;
+                document.getElementById('progress-bar').style.width = progress + '%';
+            }}
+            
+            function checkPaymentStatus() {{
+                if (checkCount >= maxChecks) {{
+                    document.getElementById('status-check').innerHTML = 
+                        '<div class="text-green-400">✅ Ativação concluída!</div>';
+                    return;
+                }}
+                
+                const paymentId = '{payment_id}';
+                if (!paymentId) return;
+                
+                fetch(`/api/mercadopago/payment/status/${{paymentId}}`)
+                    .then(response => response.json())
+                    .then(data => {{
+                        updateProgress();
+                        
+                        if (data.success && data.data.status === 'approved') {{
+                            document.getElementById('status-check').innerHTML = 
+                                '<div class="text-green-400">✅ Assinatura ativada com sucesso!</div>';
+                            return;
+                        }}
+                        
+                        checkCount++;
+                        if (checkCount < maxChecks) {{
+                            setTimeout(checkPaymentStatus, 5000);
+                        }}
+                    }})
+                    .catch(error => {{
+                        console.error('Erro:', error);
+                        checkCount++;
+                        if (checkCount < maxChecks) {{
+                            setTimeout(checkPaymentStatus, 5000);
+                        }}
+                    }});
+            }}
+            
             function checkAndRedirect() {{
                 setTimeout(() => {{
                     window.location.href = '/dashboard';
                 }}, 1000);
             }}
+            
+            setTimeout(checkPaymentStatus, 2000);
         </script>
     </body>
     </html>
@@ -359,7 +618,7 @@ def payment_failure():
 
 @app.route('/api/status')
 def status():
-    """Status da API"""
+    """Status da API com info do Mercado Pago e Carrossel"""
     mp_status = {"success": MP_AVAILABLE, "message": "Blueprint carregado" if MP_AVAILABLE else "Não disponível"}
     admin_status = {"success": ADMIN_AVAILABLE, "message": "Blueprint carregado" if ADMIN_AVAILABLE else "Não disponível"}
     carrossel_status = {"success": CARROSSEL_AVAILABLE, "message": "Blueprint carregado" if CARROSSEL_AVAILABLE else "Não disponível"}
@@ -370,8 +629,9 @@ def status():
         'database': 'Connected',
         'mercadopago': mp_status,
         'admin': admin_status,
-        'carrossel': carrossel_status
+        'carrossel': carrossel_status  # ← NOVA LINHA
     })
+
 
 @app.route('/api/test-db')
 def test_db():
@@ -399,6 +659,7 @@ def test_db():
             return jsonify({'success': False, 'error': 'Falha na conexão'}), 500
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
+
 
 # ===== ROTAS DE AUTENTICAÇÃO =====
 
@@ -497,11 +758,11 @@ def register():
             conn.close()
             return jsonify({'success': False, 'error': 'E-mail já cadastrado'}), 400
         
-        hashed_password = mercadopago_service.hash_password(password)
+        hashed_password = hash_password(password)
         cursor.execute("""
             INSERT INTO users (name, email, password, plan_id, plan_name, created_at) 
             VALUES (%s, %s, %s, %s, %s, %s) RETURNING id
-        """, (name, email, hashed_password, 1, 'Pro', datetime.now(timezone.utc)))
+        """, (name, email, hashed_password, 1, 'Básico', datetime.now(timezone.utc)))
         
         user_id = cursor.fetchone()[0]
         conn.commit()
@@ -515,7 +776,7 @@ def register():
                 'user_id': user_id,
                 'name': name,
                 'email': email,
-                'plan_name': 'Pro'
+                'plan_name': 'Básico'
             }
         }), 201
         
@@ -526,22 +787,36 @@ def register():
 def validate_coupon():
     """Validar cupom de desconto"""
     try:
+        print(f"\n🎫 VALIDANDO CUPOM - {datetime.now()}")
+        print("=" * 40)
+        
         data = request.get_json()
+        print(f"📊 Dados recebidos: {data}")
         
         if not data:
+            print("❌ Nenhum dado JSON recebido")
             return jsonify({'success': False, 'error': 'Dados JSON necessários'}), 400
         
         code = data.get('code', '').strip().upper()
         plan_name = data.get('plan_name', '')
         user_id = data.get('user_id', 1)
         
+        print(f"🔍 Cupom: '{code}'")
+        print(f"📦 Plano: '{plan_name}'")
+        print(f"👤 User ID: {user_id}")
+        
         if not code:
+            print("❌ Código do cupom vazio")
             return jsonify({'success': False, 'error': 'Código do cupom é obrigatório'}), 400
         
+        print(f"🔄 Chamando validate_coupon_db...")
         from database import validate_coupon as validate_coupon_db
         result = validate_coupon_db(code, plan_name, user_id)
         
+        print(f"📊 Resultado da validação: {result}")
+        
         if result['valid']:
+            print("✅ Cupom válido!")
             return jsonify({
                 'success': True,
                 'message': 'Cupom válido!',
@@ -553,12 +828,16 @@ def validate_coupon():
                 }
             })
         else:
+            print(f"❌ Cupom inválido: {result['error']}")
             return jsonify({
                 'success': False,
                 'error': result['error']
             }), 400
         
     except Exception as e:
+        print(f"❌ ERRO na validação: {e}")
+        import traceback
+        traceback.print_exc()
         return jsonify({'success': False, 'error': f'Erro interno: {str(e)}'}), 500
 
 @app.route('/api/auth/login', methods=['POST'])
@@ -596,7 +875,7 @@ def login():
         
         user_id, name, email, stored_password, plan_id, plan_name, user_type = user
         
-        if mercadopago_service.hash_password(password) != stored_password:
+        if hash_password(password) != stored_password:
             return jsonify({'success': False, 'error': 'Senha incorreta'}), 401
         
         token_payload = {
@@ -625,6 +904,10 @@ def login():
         
     except Exception as e:
         return jsonify({'success': False, 'error': f'Erro interno: {str(e)}'}), 500
+
+# ===== ROTAS DE AUTENTICAÇÃO NO MAIN.PY =====
+
+# ===== ADICIONAR ESTAS ROTAS APÓS A ROTA DE LOGIN E ANTES DO if __name__ =====
 
 @app.route('/api/auth/verify', methods=['GET'])
 def verify_token():
@@ -701,10 +984,10 @@ def forgot_password():
         if not email or '@' not in email:
             return jsonify({'success': False, 'error': 'E-mail é obrigatório'}), 400
         
-        result = mercadopago_service.generate_reset_token_service(email)
+        result = generate_reset_token_db(email)
         
         if result['success']:
-            email_sent = mercadopago_service.send_reset_email(
+            email_sent = send_reset_email(
                 result['user_email'], 
                 result['user_name'], 
                 result['token']
@@ -740,7 +1023,7 @@ def validate_reset():
         if not token:
             return jsonify({'success': False, 'error': 'Token é obrigatório'}), 400
         
-        result = mercadopago_service.validate_reset_token_service(token)
+        result = validate_reset_token_db(token)
         
         if result['success']:
             return jsonify({
@@ -776,7 +1059,7 @@ def reset_password_api():
         if len(new_password) < 6:
             return jsonify({'success': False, 'error': 'Nova senha deve ter pelo menos 6 caracteres'}), 400
         
-        result = mercadopago_service.reset_password_service(token, new_password)
+        result = reset_password_db(token, new_password)
         
         if result['success']:
             return jsonify({
@@ -792,7 +1075,28 @@ def reset_password_api():
     except Exception as e:
         return jsonify({'success': False, 'error': f'Erro interno: {str(e)}'}), 500
 
-# ===== FUNÇÃO CREATE_APP PARA RAILWAY =====
+@app.route('/api/force-admin')
+def force_admin():
+    """Temporário - forçar admin"""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            UPDATE users 
+            SET user_type = 'admin', plan_id = 3, plan_name = 'Premium'
+            WHERE email = 'diego@geminii.com.br'
+        """)
+        
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        return jsonify({'success': True, 'message': 'Admin forçado!'})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+# ##===== FUNÇÃO CREATE_APP PARA RAILWAY =====
 def create_app():
     """Factory para criar app - Railway"""
     if os.environ.get('RAILWAY_ENVIRONMENT'):
@@ -803,9 +1107,24 @@ def create_app():
     initialize_database()
     return app
 
-# # Debug info
-# if __name__ == "__main__":
-#     print("🔧 Main.py LIMPO carregado!")
-#     print("📋 Arquitetura: routes → services")
-#     print("✅ Sem duplicações de código")
-#     initialize_database()
+###===== SUBSTITUIR TODO O FINAL DO ARQUIVO POR ISSO =====
+# if __name__ == '__main__':
+#     # CONFIGURAÇÃO PARA MODO LOCAL
+#     print("🏠 MODO DESENVOLVIMENTO LOCAL...")
+    
+#     # Remover DATABASE_URL para forçar banco local
+#     if 'DATABASE_URL' in os.environ:
+#         del os.environ['DATABASE_URL']
+#         print("✅ DATABASE_URL removida - usando banco local")
+    
+#     # Configurar ambiente local
+#     os.environ['FLASK_ENV'] = 'development'
+#     os.environ['DB_HOST'] = 'localhost'
+#     os.environ['DB_NAME'] = 'postgres'
+#     os.environ['DB_USER'] = 'postgres'
+#     os.environ['DB_PASSWORD'] = '#geminii'
+#     os.environ['DB_PORT'] = '5432'
+    
+#     port = int(os.environ.get('PORT', 5000))
+    
+#     app.run(host='0.0.0.0', port=port, debug=True)
