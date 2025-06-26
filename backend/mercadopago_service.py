@@ -32,6 +32,14 @@ except Exception as e:
 
 # ===== CONFIGURAÇÃO DOS PLANOS =====
 PLANS = {
+    "basico": {
+        "id": "basico",
+        "name": "Básico",
+        "db_id": 3,
+        "monthly_price": 0,
+        "annual_price": 0,
+        "features": ["Plano Gratuito"]
+    },
     "pro": {
         "id": "pro",
         "name": "Pro",
@@ -232,8 +240,214 @@ def create_checkout_service(plan, cycle, customer_email, discounted_price=None, 
             "details": str(e)
         }
 
+
 def process_payment(payment_id):
-    """Serviço para processar pagamento"""
+    """Processar pagamento - VERSÃO CORRIGIDA"""
+    try:
+        print(f"\nSERVICE: PROCESSANDO PAGAMENTO {payment_id}")
+        print("=" * 50)
+        
+        # 1. Consultar MP
+        mp_token = os.environ.get('MP_ACCESS_TOKEN')
+        headers = {
+            'Authorization': f'Bearer {mp_token}',
+            'Content-Type': 'application/json'
+        }
+        
+        response = requests.get(
+            f'https://api.mercadopago.com/v1/payments/{payment_id}',
+            headers=headers,
+            timeout=15
+        )
+        
+        if response.status_code != 200:
+            raise Exception(f'MP API erro: {response.status_code}')
+            
+        mp_data = response.json()
+        print(f"MP Status: {mp_data.get('status')} - R$ {mp_data.get('transaction_amount')}")
+        
+        # 2. Verificar se aprovado
+        if mp_data.get('status') != 'approved':
+            print(f"Pagamento nao aprovado: {mp_data.get('status')}")
+            return {'status': 'not_approved', 'mp_status': mp_data.get('status')}
+        
+        # 3. Extrair dados
+        external_ref = mp_data.get('external_reference', '')
+        amount = float(mp_data.get('transaction_amount', 0))
+        payer_email = mp_data.get('payer', {}).get('email', '')
+        
+        print(f"Valor: R$ {amount}")
+        print(f"Email: {payer_email}")
+        print(f"Referencia: {external_ref}")
+        
+        # 4. Determinar usuário
+        user_email = payer_email
+        plan_id = 'pro'
+        cycle = 'monthly'
+        
+        if external_ref and 'geminii_' in external_ref:
+            try:
+                parts = external_ref.split('_')
+                if len(parts) >= 4:
+                    plan_id = parts[1]
+                    cycle = parts[2]
+                    user_email = parts[3]
+                    print(f"Dados extraidos - Plano: {plan_id}, Email: {user_email}")
+            except:
+                print("Erro ao extrair dados da referencia")
+        
+        if not user_email:
+            raise Exception("Email do usuário não encontrado")
+        
+        # 5. Conectar banco
+        conn = get_db_connection()
+        if not conn:
+            raise Exception("Erro de conexão com banco")
+        
+        cursor = conn.cursor()
+        
+        # 6. Verificar duplicação
+        cursor.execute("SELECT id FROM payments WHERE payment_id = %s", (str(payment_id),))
+        if cursor.fetchone():
+            conn.close()
+            print("Pagamento ja processado")
+            return {'status': 'already_processed'}
+        
+        # 7. Buscar usuário
+        cursor.execute("SELECT id, name, email FROM users WHERE email = %s", (user_email,))
+        user_row = cursor.fetchone()
+        
+        if not user_row:
+            conn.close()
+            raise Exception(f"Usuario nao encontrado: {user_email}")
+        
+        user_id, user_name, user_email_db = user_row
+        print(f"Usuario encontrado: {user_name} (ID: {user_id})")
+        
+        # 8. Determinar plano
+        if amount >= 130:
+            new_plan_id = 2
+            new_plan_name = 'Premium'
+        else:
+            new_plan_id = 1
+            new_plan_name = 'Pro'
+        
+        print(f"Plano a ativar: {new_plan_name} (ID: {new_plan_id})")
+        
+        # 9. Calcular expiração
+        from datetime import timedelta, timezone
+        if cycle == 'annual':
+            expires_at = datetime.now(timezone.utc) + timedelta(days=365)
+        else:
+            expires_at = datetime.now(timezone.utc) + timedelta(days=30)
+        
+        print(f"Expira em: {expires_at.strftime('%d/%m/%Y')}")
+        
+        # 10. Criar tabela payments se não existir
+        try:
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS payments (
+                    id SERIAL PRIMARY KEY,
+                    user_id INTEGER REFERENCES users(id),
+                    payment_id VARCHAR(255) UNIQUE NOT NULL,
+                    status VARCHAR(50) DEFAULT 'approved',
+                    amount DECIMAL(10,2) DEFAULT 0,
+                    plan_id VARCHAR(50),
+                    plan_name VARCHAR(100),
+                    cycle VARCHAR(20) DEFAULT 'monthly',
+                    external_reference VARCHAR(255),
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+            print("Tabela payments verificada/criada")
+        except Exception as e:
+            print(f"Tabela payments ja existe: {e}")
+        
+        # 11. Inserir pagamento
+        cursor.execute("""
+            INSERT INTO payments (
+                user_id, payment_id, status, amount, plan_id, plan_name, 
+                cycle, external_reference, created_at, updated_at
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, NOW(), NOW())
+        """, (
+            user_id, str(payment_id), 'approved', amount, 
+            plan_id, new_plan_name, cycle, external_ref
+        ))
+        
+        print("Pagamento inserido na tabela payments")
+        
+        # 12. Adicionar colunas se não existirem
+        try:
+            cursor.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS subscription_status VARCHAR(20) DEFAULT 'inactive'")
+            cursor.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS subscription_plan VARCHAR(50)")
+            cursor.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS plan_expires_at TIMESTAMP")
+            print("Colunas da tabela users verificadas/adicionadas")
+        except Exception as e:
+            print(f"Colunas ja existem: {e}")
+        
+        # 13. *** CORREÇÃO PRINCIPAL *** - Atualizar usuário
+        print("ATUALIZANDO USUARIO...")
+        
+        cursor.execute("""
+            UPDATE users 
+            SET plan_id = %s, 
+                plan_name = %s,
+                subscription_status = 'active',
+                subscription_plan = %s,
+                plan_expires_at = %s,
+                updated_at = NOW()
+            WHERE id = %s
+        """, (new_plan_id, new_plan_name, new_plan_name, expires_at, user_id))
+        
+        rows_updated = cursor.rowcount
+        print(f"Linhas atualizadas: {rows_updated}")
+        
+        if rows_updated == 0:
+            # Tentar UPDATE mais simples
+            print("Tentando UPDATE mais simples...")
+            cursor.execute("""
+                UPDATE users 
+                SET plan_id = %s, plan_name = %s, updated_at = NOW()
+                WHERE id = %s
+            """, (new_plan_id, new_plan_name, user_id))
+            
+            rows_updated = cursor.rowcount
+            print(f"UPDATE simples - Linhas atualizadas: {rows_updated}")
+            
+            if rows_updated == 0:
+                raise Exception("ERRO CRITICO: Nenhuma linha foi atualizada!")
+        
+        # 14. Commit
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        print(f"SUCESSO! Plano {new_plan_name} ativado para {user_name}")
+        
+        return {
+            'status': 'success',
+            'payment_id': payment_id,
+            'user_id': user_id,
+            'user_name': user_name,
+            'user_email': user_email_db,
+            'plan_name': new_plan_name,
+            'amount': amount,
+            'expires_at': expires_at.isoformat(),
+            'message': f'Plano {new_plan_name} ativado com sucesso!'
+        }
+        
+    except Exception as e:
+        print(f"ERRO NO PROCESSAMENTO: {e}")
+        import traceback
+        traceback.print_exc()
+        
+        return {
+            'status': 'error',
+            'payment_id': payment_id,
+            'error': str(e)
+        }
+
     try:
         print(f"\n🔥 SERVICE: PROCESSANDO PAGAMENTO {payment_id}")
         print("=" * 50)

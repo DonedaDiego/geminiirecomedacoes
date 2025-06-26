@@ -501,7 +501,7 @@ def register():
         cursor.execute("""
             INSERT INTO users (name, email, password, plan_id, plan_name, created_at) 
             VALUES (%s, %s, %s, %s, %s, %s) RETURNING id
-        """, (name, email, hashed_password, 1, 'Pro', datetime.now(timezone.utc)))
+        """, (name, email, hashed_password, 3, 'Básico', datetime.now(timezone.utc)))
         
         user_id = cursor.fetchone()[0]
         conn.commit()
