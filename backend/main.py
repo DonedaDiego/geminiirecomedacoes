@@ -94,10 +94,6 @@ app.register_blueprint(beta_regression_bp, url_prefix='/beta_regression')
 app.register_blueprint(chart_ativos_bp)
 register_atsmom_routes(app)
 
-# Registrar blueprint do Mercado Pago apenas se disponível
-if MP_AVAILABLE and mercadopago_bp:
-    app.register_blueprint(mercadopago_bp)
-    print("✅ Blueprint Mercado Pago registrado!")
 
 # ✅ REGISTRAR ADMIN BLUEPRINT APENAS SE DISPONÍVEL E SEM CONFLITOS
 if ADMIN_AVAILABLE and admin_bp:
