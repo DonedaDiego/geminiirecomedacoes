@@ -669,16 +669,16 @@
 
       // Atualizar plano
       if (planBadgeEl) {
-        const planId = user.plan_id || 1;
+        const planId = user.plan_id || 3;
         
-        if (planId === 1) {
+        if (planId === 3) {
           planBadgeEl.textContent = 'Básico';
           planBadgeEl.className = 'px-3 py-1 rounded-full text-sm font-semibold bg-gray-600 text-gray-200';
-        } else if (planId === 2) {
-          planBadgeEl.textContent = 'Premium';
+        } else if (planId === 1) {
+          planBadgeEl.textContent = 'Pro';
           planBadgeEl.className = 'px-3 py-1 rounded-full text-sm font-semibold bg-warning text-white';
-        } else if (planId >= 3) {
-          planBadgeEl.textContent = 'Estratégico';
+        } else if (planId >=23) {
+          planBadgeEl.textContent = 'Premium';
           planBadgeEl.className = 'px-3 py-1 rounded-full text-sm font-semibold bg-secondary text-white';
         }
         
@@ -744,23 +744,22 @@
     }
 
     // Show premium feature dialog
-    // Show premium feature dialog
     function showPremiumFeature(featureName) {
       if (!currentUser) {
         console.log('⚠️ Usuário não disponível para verificar plano');
         return;
       }
 
-      const userPlanId = currentUser.plan_id || 1;
-      let requiredPlan = 2;
+      const userPlanId = currentUser.plan_id || 3;
+      let requiredPlan = 1;
       
       // MUDANÇA 1: Definir planos corretos
       if (featureName === 'Long & Short' || featureName === 'Hunter Walls') {
-        requiredPlan = 2; // Plano PRO
+        requiredPlan = 1; // Plano PRO
       }
       
       if (featureName === 'Smart Carteiras' || featureName === 'Machine Learning') {
-        requiredPlan = 3; // Plano PREMIUM (Estratégico)
+        requiredPlan = 2; // Plano PREMIUM (Estratégico)
       }
 
       // Verificar se tem acesso ao recurso
@@ -804,8 +803,8 @@
         
       } else {
         // Usuário não tem plano suficiente
-        const planNames = { 1: 'Básico', 2: 'Pro', 3: 'Premium' };
-        const planRequired = requiredPlan === 2 ? 'Pro' : 'Premium';
+        const planNames = { 3: 'Básico', 1: 'Pro', 2: 'Premium' };
+        const planRequired = requiredPlan === 1 ? 'Pro' : 'Premium';
         
         const message = `💎 Recurso ${planRequired}\n\n${featureName} está disponível apenas para planos ${planNames[requiredPlan]} ou superior.\n\nSeu plano atual: ${currentUser.plan_name || planNames[userPlanId]}\nPlano necessário: ${planNames[requiredPlan]}\n\nDeseja fazer upgrade agora?`;
         
