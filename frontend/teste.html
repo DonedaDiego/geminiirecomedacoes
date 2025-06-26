@@ -1,652 +1,287 @@
-<!-- # main.py - CORREÇÃO PARA O ERRO DO ADMIN BLUEPRINT
+<!-- check out mercado pago
 
-from flask import Flask, jsonify, send_from_directory, request
-from flask import send_from_directory
-import time
-import hashlib
-import jwt
-from datetime import datetime, timedelta, timezone
-import psycopg2
-import smtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
+# checkout_mercadopago.py - VERSÃO FINAL CORRIGIDA
+
+from flask import Blueprint, request, jsonify
 import os
-import secrets
-from yfinance_service import YFinanceService
-from database import get_db_connection
-import requests
+import time
+from datetime import datetime, timedelta
 
-from beta_routes import beta_bp
-from long_short_routes import long_short_bp
-from rsl_routes import get_rsl_blueprint
-from recommendations_routes import get_recommendations_blueprint
-from mercadopago_routes import get_mercadopago_blueprint
-from opcoes_routes import opcoes_bp
-from swing_trade_ml_routes import swing_trade_ml_bp
-from swing_trade_ml_routes import get_swing_trade_ml_blueprint
-from beta_regression_routes import beta_regression_bp
-from atsmom_routes import register_atsmom_routes
 from dotenv import load_dotenv
-
 load_dotenv()
-if not os.getenv('JWT_SECRET'):
-    os.environ['JWT_SECRET'] = 'geminii-jwt-secret-key-2024'
-    print("⚠️ JWT_SECRET forçado manualmente")
-
-# Debug
-print(f"JWT_SECRET final: {os.getenv('JWT_SECRET', 'AINDA NÃO ENCONTRADO')}")
-print(f"OPLAB_TOKEN: {os.getenv('OPLAB_TOKEN', 'NÃO ENCONTRADO')}")
-
-# ===== CONFIGURAÇÃO DO FLASK =====
-app = Flask(__name__)
-app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'geminii-secret-2024')
-
-# Configuração de Email
-app.config['MAIL_SERVER'] = 'smtp.titan.email'
-app.config['MAIL_PORT'] = 465
-app.config['MAIL_USE_SSL'] = True
-app.config['MAIL_USERNAME'] = os.environ.get('EMAIL_USER', 'contato@geminii.com.br')
-app.config['MAIL_PASSWORD'] = os.environ.get('EMAIL_PASSWORD', '#Giminii#')
 
 # ===== CONFIGURAÇÃO MERCADO PAGO =====
-MP_AVAILABLE = False
-mercadopago_bp = None
+mp_token = os.environ.get('MP_ACCESS_TOKEN', 'TEST-8540613393237089-091618-106d38d51fc598ab9762456309594429-1968398743')
+
+
+# Importar SDK do Mercado Pago
+mp_sdk = None
+preference_client = None
 
 try:
-    mercadopago_bp = get_mercadopago_blueprint()
-    MP_AVAILABLE = True
-    print("✅ Blueprint Mercado Pago carregado com sucesso!")
-except ImportError as e:
-    print(f"⚠️ Mercado Pago não disponível: {e}")
+    import mercadopago
+    
+    # ✅ MÉTODO CORRETO BASEADO NO SEU TESTE
+    mp_sdk = mercadopago.SDK(mp_token)
+    preference_client = mp_sdk.preference()  # Seu teste mostrou que isso funciona
+
+    
+except ImportError:
+    print("❌ Módulo mercadopago não encontrado. Instale com: pip install mercadopago")
 except Exception as e:
-    print(f"❌ Erro ao carregar Mercado Pago: {e}")
+    print(f"❌ Erro ao carregar SDK: {e}")
 
-# ===== CONFIGURAÇÃO ADMIN BLUEPRINT - CORREÇÃO =====
-ADMIN_AVAILABLE = False
-admin_bp = None
+# Blueprint
+mercadopago_bp = Blueprint('mercadopago', __name__, url_prefix='/api/mercadopago')
 
-try:
-    from admin_routes import get_admin_blueprint
-    admin_bp = get_admin_blueprint()
-    ADMIN_AVAILABLE = True
-    print("✅ Blueprint Admin carregado com sucesso!")
-except ImportError as e:
-    print(f"⚠️ Admin routes não disponível: {e}")
-    print("📝 Criando funções admin básicas...")
-    ADMIN_AVAILABLE = False
-except Exception as e:
-    print(f"❌ Erro ao carregar admin blueprint: {e}")
-    print("📝 Continuando sem funcionalidades admin...")
-    ADMIN_AVAILABLE = False
+# ===== CONFIGURAÇÃO DOS PLANOS =====
+PLANS = {
+    "pro": {
+        "id": "pro",
+        "name": "Pro",
+        "description": "Para quem já investe e quer se posicionar melhor",
+        "monthly_price": 79,
+        "annual_price": 72,
+        "features": [
+            "Monitor avançado de ações",
+            "RSL e análise técnica avançada", 
+            "Backtests automáticos",
+            "Alertas via WhatsApp",
+            "Dados históricos ilimitados",
+            "API para desenvolvedores"
+        ]
+    },
+    "premium": {
+        "id": "premium", 
+        "name": "Premium",
+        "description": "Para investidores experientes que querem diferenciais",
+        "monthly_price": 149,
+        "annual_price": 137,
+        "features": [
+            "Tudo do Pro +",
+            "Long & Short strategies",
+            "IA para recomendações", 
+            "Consultoria personalizada",
+            "Acesso prioritário",
+            "Relatórios exclusivos"
+        ]
+    }
+}
 
-# REGISTRAR BLUEPRINTS BÁSICOS
-app.register_blueprint(opcoes_bp)
-app.register_blueprint(beta_bp)
-app.register_blueprint(long_short_bp)
-rsl_bp = get_rsl_blueprint()
-app.register_blueprint(rsl_bp)
-recommendations_bp = get_recommendations_blueprint()
-app.register_blueprint(recommendations_bp)
-app.register_blueprint(get_swing_trade_ml_blueprint())
-app.register_blueprint(beta_regression_bp, url_prefix='/beta_regression')
-register_atsmom_routes(app)
+# ===== FUNÇÕES AUXILIARES =====
 
-# Registrar blueprint do Mercado Pago apenas se disponível
-if MP_AVAILABLE and mercadopago_bp:
-    app.register_blueprint(mercadopago_bp)
-    print("✅ Blueprint Mercado Pago registrado!")
-
-# ✅ REGISTRAR ADMIN BLUEPRINT APENAS SE DISPONÍVEL E SEM CONFLITOS
-if ADMIN_AVAILABLE and admin_bp:
-    try:
-        app.register_blueprint(admin_bp)
-        print("✅ Blueprint Admin registrado com sucesso!")
-    except Exception as e:
-        print(f"❌ Erro ao registrar admin blueprint: {e}")
-        print("⚠️ Continuando sem painel admin...")
-        ADMIN_AVAILABLE = False
-
-# ===== RESTO DO CÓDIGO PERMANECE IGUAL =====
-
-def hash_password(password):
-    """Criptografar senha"""
-    return hashlib.sha256(password.encode()).hexdigest()
-
-def generate_reset_token():
-    """Gerar token seguro para reset"""
-    return secrets.token_urlsafe(32)
-
-def send_reset_email(user_email, user_name, reset_token):
-    """Enviar email de reset de senha - SMTP nativo"""
-    try:
-        smtp_server = "smtp.titan.email"
-        smtp_port = 465
-        smtp_user = os.environ.get('EMAIL_USER')
-        smtp_password = os.environ.get('EMAIL_PASSWORD')
-
-        if not smtp_user or not smtp_password:
-            print("Variáveis de email não configuradas")
-            return False
-
-        reset_url = f"https://geminii-tech.onrender.com/reset-password?token={reset_token}"
-
-        msg = MIMEMultipart('alternative')
-        msg['Subject'] = "Redefinir Senha - Geminii Tech"
-        msg['From'] = smtp_user
-        msg['To'] = user_email
-
-        html_body = f"""
-        <div style="font-family: Inter, sans-serif; max-width: 600px; margin: 0 auto;">
-            <div style="background: linear-gradient(135deg, #ba39af, #d946ef); padding: 30px; text-align: center;">
-                <h1 style="color: white; margin: 0;">Geminii Tech</h1>
-                <p style="color: white; margin: 10px 0 0 0;">Trading Automatizado</p>
-            </div>
-            <div style="padding: 30px; background: #f8f9fa;">
-                <h2 style="color: #333;">Olá, {user_name}!</h2>
-                <p style="color: #666; line-height: 1.6;">
-                    Recebemos uma solicitação para redefinir a senha da sua conta Geminii Tech.
-                </p>
-                <div style="text-align: center; margin: 30px 0;">
-                    <a href="{reset_url}"
-                       style="background: linear-gradient(135deg, #ba39af, #d946ef);
-                              color: white; padding: 15px 30px; text-decoration: none;
-                              border-radius: 8px; display: inline-block; font-weight: bold;">
-                        Redefinir Senha
-                    </a>
-                </div>
-                <p style="color: #666; font-size: 14px;">
-                    <strong>Este link expira em 1 hora.</strong><br>
-                    Se você não solicitou isso, ignore este email.
-                </p>
-            </div>
-            <div style="padding: 20px; text-align: center; background: #333; color: white;">
-                <p style="margin: 0;">© 2025 Geminii Research - Trading Automatizado</p>
-            </div>
-        </div>
-        """
-
-        msg.attach(MIMEText(html_body, 'html'))
-
-        with smtplib.SMTP_SSL(smtp_server, smtp_port) as server:
-            server.login(smtp_user, smtp_password)
-            server.send_message(msg)
-
-        print(f"Email enviado para: {user_email}")
-        return True
-
-    except Exception as e:
-        print(f"❌ Erro ao enviar email: {e}")
-        return False
-
-def generate_reset_token_db(email):
-    """Gerar token de reset e salvar no banco"""
-    try:
-        conn = get_db_connection()
-        if not conn:
-            return {'success': False, 'error': 'Erro de conexão com banco'}
-
-        cursor = conn.cursor()
-        cursor.execute("SELECT id, name FROM users WHERE email = %s", (email,))
-        user = cursor.fetchone()
-
-        if not user:
-            cursor.close()
-            conn.close()
-            return {'success': False, 'error': 'E-mail não encontrado'}
-
-        user_id, user_name = user
-        token = generate_reset_token()
-        expires_at = datetime.now(timezone.utc) + timedelta(hours=1)
-
-        cursor.execute("""
-            UPDATE password_reset_tokens
-            SET used = TRUE
-            WHERE user_id = %s AND used = FALSE
-        """, (user_id,))
-
-        cursor.execute("""
-            INSERT INTO password_reset_tokens (user_id, token, expires_at)
-            VALUES (%s, %s, %s)
-        """, (user_id, token, expires_at))
-
-        conn.commit()
-        cursor.close()
-        conn.close()
-
+def test_mercadopago_connection():
+    """Testar conexão com Mercado Pago"""
+    if not mp_sdk or not preference_client:
         return {
-            'success': True,
-            'token': token,
-            'user_name': user_name,
-            'user_email': email,
-            'expires_in': '1 hora'
+            "success": False,
+            "error": "SDK Mercado Pago não carregado"
+        }
+    
+    try:
+        # Verificar token
+        token = os.environ.get('MP_ACCESS_TOKEN', '')
+        
+        if not token:
+            return {
+                "success": False,
+                "error": "Token MP_ACCESS_TOKEN não configurado"
+            }
+        
+        # ✅ ESTRUTURA CORRETA BASEADA NO SEU TESTE QUE FUNCIONOU
+        test_preference = {
+            "items": [
+                {
+                    "id": "test",
+                    "title": "Teste de Conexão",
+                    "quantity": 1,
+                    "currency_id": "BRL",
+                    "unit_price": 1.0
+                }
+            ]
+        }
+        
+        print("🧪 Testando conexão com MP...")
+        
+        # ✅ USAR O MÉTODO QUE FUNCIONOU NO SEU TESTE
+        result = preference_client.create(test_preference)
+        
+        if result.get("status") == 201:
+            preference_id = result["response"]["id"]
+            
+            return {
+                "success": True,
+                "message": "Mercado Pago conectado com sucesso!",
+                "environment": "sandbox" if "TEST" in token else "production",
+                "preference_test_id": preference_id,
+                "sdk_method": "preference.create()"
+            }
+        else:
+            return {
+                "success": False, 
+                "error": f"Erro na resposta do MP: {result.get('response', 'Sem detalhes')}"
+            }
+            
+    except Exception as e:
+        return {
+            "success": False,
+            "error": f"Erro ao conectar com MP: {str(e)}"
         }
 
-    except Exception as e:
-        return {'success': False, 'error': f'Erro interno: {str(e)}'}
-
-def validate_reset_token_db(token):
-    """Validar token de reset"""
+def create_checkout_function():
+    """Função principal para criar checkout"""
+    if not mp_sdk or not preference_client:
+        return jsonify({
+            "success": False,
+            "error": "SDK Mercado Pago não disponível"
+        }), 500
+    
     try:
-        conn = get_db_connection()
-        if not conn:
-            return {'success': False, 'error': 'Erro de conexão com banco'}
-
-        cursor = conn.cursor()
-        cursor.execute("""
-            SELECT rt.user_id, rt.expires_at, u.name, u.email
-            FROM password_reset_tokens rt
-            JOIN users u ON rt.user_id = u.id
-            WHERE rt.token = %s AND rt.used = FALSE
-        """, (token,))
-
-        result = cursor.fetchone()
-        cursor.close()
-        conn.close()
-
-        if not result:
-            return {'success': False, 'error': 'Token inválido ou já utilizado'}
-
-        user_id, expires_at, user_name, user_email = result
-
-        if datetime.now(timezone.utc) > expires_at.replace(tzinfo=timezone.utc):
-            return {'success': False, 'error': 'Token expirado'}
-
-        return {
-            'success': True,
-            'user_id': user_id,
-            'user_name': user_name,
-            'email': user_email,
-            'expires_at': expires_at.isoformat()
-        }
-
-    except Exception as e:
-        return {'success': False, 'error': f'Erro interno: {str(e)}'}
-
-def reset_password_db(token, new_password):
-    """Redefinir senha com token"""
-    try:
-        validation = validate_reset_token_db(token)
-        if not validation['success']:
-            return validation
-
-        user_id = validation['user_id']
-        user_name = validation['user_name']
-
-        conn = get_db_connection()
-        if not conn:
-            return {'success': False, 'error': 'Erro de conexão com banco'}
-
-        cursor = conn.cursor()
-
-        hashed_password = hash_password(new_password)
-        cursor.execute("""
-            UPDATE users
-            SET password = %s, updated_at = CURRENT_TIMESTAMP
-            WHERE id = %s
-        """, (hashed_password, user_id))
-
-        cursor.execute("""
-            UPDATE password_reset_tokens
-            SET used = TRUE
-            WHERE token = %s
-        """, (token,))
-
-        conn.commit()
-        cursor.close()
-        conn.close()
-
-        return {
-            'success': True,
-            'message': 'Senha redefinida com sucesso!',
-            'user_name': user_name
-        }
-
-    except Exception as e:
-        return {'success': False, 'error': f'Erro interno: {str(e)}'}
-
-def initialize_database():
-    """Inicializar banco se necessário"""
-    try:
-        from database import setup_enhanced_database
-        setup_enhanced_database()
-        print("✅ Banco enhanced verificado/criado com sucesso!")
-
-        # Inicializar Mercado Pago se disponível
-        if MP_AVAILABLE:
-            from mercadopago_routes import create_payments_table, add_plan_expires_field
-            create_payments_table()
-            add_plan_expires_field()
-
-    except Exception as e:
-        print(f"⚠️ Erro ao verificar banco: {e}")
-
-# ===== ROTAS HTML =====
-
-@app.route('/')
-def home():
-    return send_from_directory('../frontend', 'index.html')
-
-@app.route('/dashboard')
-@app.route('/dashboard.html')
-def dashboard():
-    return send_from_directory('../frontend', 'dashboard.html')
-
-@app.route('/login')
-@app.route('/login.html')
-def login_page():
-    return send_from_directory('../frontend', 'login.html')
-
-@app.route('/register')
-@app.route('/register.html')
-def register_page():
-    return send_from_directory('../frontend', 'register.html')
-
-@app.route('/forgot-password')
-@app.route('/forgot-password.html')
-def forgot_password_page():
-    return send_from_directory('../frontend', 'forgot-password.html')
-
-@app.route('/reset-password')
-@app.route('/reset-password.html')
-def reset_password_page():
-    return send_from_directory('../frontend', 'reset-password.html')
-
-@app.route('/planos')
-@app.route('/planos.html')
-def planos():
-    return send_from_directory('../frontend', 'planos.html')
-
-@app.route('/sobre')
-@app.route('/sobre.html')
-def sobre():
-    return send_from_directory('../frontend', 'sobre.html')
-
-@app.route('/monitor-basico')
-@app.route('/monitor-basico.html')
-def monitor_basico():
-    try:
-        return send_from_directory('../frontend', 'monitor-basico.html')
-    except:
-        return "<h1>Monitor Básico - Em construção</h1>"
-
-@app.route('/rsl')
-@app.route('/rsl.html')
-def rsl_page():
-    return send_from_directory('../frontend', 'rsl.html')
-
-@app.route('/Long-Short')
-@app.route('/long-short.html')
-def long_short():
-    return send_from_directory('../frontend', 'long-short.html')
-
-# Servir assets
-@app.route('/logo.png')
-def serve_logo():
-    return send_from_directory('../frontend', 'logo.png')
-
-@app.route('/assets/logo.png')
-def serve_logo_assets():
-    return send_from_directory('../frontend', 'logo.png')
-
-@app.route('/admin-dashboard')
-@app.route('/admin-dashboard.html')
-def admin_dashboard():
-    return send_from_directory('../frontend', 'admin-dashboard.html')
-
-@app.route('/politica-de-privacidade')
-@app.route('/politica-de-privacidade.html')
-def politica_privacidade():
-    return send_from_directory('../frontend', 'politica-de-privacidade.html')
-
-@app.route('/termos-de-uso')
-@app.route('/termos-de-uso.html')
-def termos_uso():
-    return send_from_directory('../frontend', 'termos-de-uso.html')
-
-@app.route('/analises')
-@app.route('/analises.html')
-def analises():
-    return send_from_directory('../frontend', 'analises.html')
-
-@app.route('/relatorios')
-@app.route('/relatorios.html')
-def relatorios():
-    try:
-        return send_from_directory('../frontend', 'relatorios.html')
-    except:
-        return "<h1>Relatórios - Em construção</h1>"
-
-@app.route('/opcoes')
-@app.route('/opcoes.html')
-def opcoes_page():
-    return send_from_directory('../frontend', 'opcoes.html')
-
-@app.route('/swing-trade-machine-learning')
-@app.route('/swing-trade-machine-learning.html')
-def swing_trade_ml_page():
-    return send_from_directory('../frontend', 'swing-trade-machine-learning.html')
-
-@app.route('/beta-regression')
-@app.route('/beta-regression.html')
-def beta_regression_page():
-    return send_from_directory('../frontend', 'beta-regression.html')
-
-@app.route('/atsmom.html')
-def atsmom_page():
-    return send_from_directory('../frontend', 'atsmom.html')
-
-# ===== PÁGINAS DE RETORNO DO PAGAMENTO =====
-
-@app.route('/payment/success')
-def payment_success():
-    """Página de sucesso do pagamento"""
-    payment_id = request.args.get('payment_id')
-    status_param = request.args.get('status')
-    external_reference = request.args.get('external_reference')
-
-    print(f"✅ Pagamento aprovado - ID: {payment_id}")
-
-    return f"""
-    <!DOCTYPE html>
-    <html lang="pt-BR">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Pagamento Aprovado - Geminii</title>
-        <script src="https://cdn.tailwindcss.com"></script>
-        <style>body {{ font-family: 'Inter', sans-serif; }}</style>
-    </head>
-    <body class="bg-gray-900 text-white min-h-screen">
-        <div class="min-h-screen flex items-center justify-center p-4">
-            <div class="text-center p-8 bg-gray-800 rounded-lg max-w-md w-full border border-gray-700">
-                <div class="text-6xl mb-6">✅</div>
-                <h1 class="text-3xl font-bold mb-4 text-green-400">Pagamento Aprovado!</h1>
-
-                <div id="status-check" class="mb-6">
-                    <div class="text-yellow-400 mb-2">🔄 Ativando sua assinatura...</div>
-                    <div class="w-full bg-gray-700 rounded-full h-2">
-                        <div id="progress-bar" class="bg-green-600 h-2 rounded-full transition-all duration-1000" style="width: 0%"></div>
-                    </div>
-                </div>
-
-                <p class="text-gray-300 mb-6 leading-relaxed">
-                    Parabéns! Sua assinatura está sendo ativada.
-                </p>
-
-                <div class="space-y-3">
-                    <button onclick="checkAndRedirect()"
-                            class="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 px-6 py-3 rounded-lg font-medium transition-colors">
-                        Ir para Dashboard
-                    </button>
-                    <button onclick="window.location.href='/'"
-                            class="w-full bg-gray-600 hover:bg-gray-700 px-6 py-3 rounded-lg font-medium transition-colors">
-                        Voltar ao Início
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <script>
-            let checkCount = 0;
-            const maxChecks = 12;
-
-            function updateProgress() {{
-                const progress = (checkCount / maxChecks) * 100;
-                document.getElementById('progress-bar').style.width = progress + '%';
-            }}
-
-            function checkPaymentStatus() {{
-                if (checkCount >= maxChecks) {{
-                    document.getElementById('status-check').innerHTML =
-                        '<div class="text-green-400">✅ Ativação concluída!</div>';
-                    return;
-                }}
-
-                const paymentId = '{payment_id}';
-                if (!paymentId) return;
-
-                fetch(`/api/mercadopago/payment/status/${{paymentId}}`)
-                    .then(response => response.json())
-                    .then(data => {{
-                        updateProgress();
-
-                        if (data.success && data.data.status === 'approved') {{
-                            document.getElementById('status-check').innerHTML =
-                                '<div class="text-green-400">✅ Assinatura ativada com sucesso!</div>';
-                            return;
-                        }}
-
-                        checkCount++;
-                        if (checkCount < maxChecks) {{
-                            setTimeout(checkPaymentStatus, 5000);
-                        }}
-                    }})
-                    .catch(error => {{
-                        console.error('Erro:', error);
-                        checkCount++;
-                        if (checkCount < maxChecks) {{
-                            setTimeout(checkPaymentStatus, 5000);
-                        }}
-                    }});
-            }}
-
-            function checkAndRedirect() {{
-                setTimeout(() => {{
-                    window.location.href = '/dashboard';
-                }}, 1000);
-            }}
-
-            setTimeout(checkPaymentStatus, 2000);
-        </script>
-    </body>
-    </html>
-    """
-
-@app.route('/payment/pending')
-def payment_pending():
-    """Página de pagamento pendente"""
-    return """
-    <!DOCTYPE html>
-    <html lang="pt-BR">
-    <head>
-        <meta charset="UTF-8">
-        <title>Pagamento Pendente - Geminii</title>
-        <script src="https://cdn.tailwindcss.com"></script>
-    </head>
-    <body class="bg-gray-900 text-white min-h-screen">
-        <div class="min-h-screen flex items-center justify-center p-4">
-            <div class="text-center p-8 bg-gray-800 rounded-lg max-w-md w-full border border-gray-700">
-                <div class="text-6xl mb-6">⏳</div>
-                <h1 class="text-3xl font-bold mb-4 text-yellow-400">Pagamento Pendente</h1>
-                <p class="text-gray-300 mb-6">Seu pagamento está sendo processado.</p>
-                <button onclick="window.location.href='/'"
-                        class="w-full bg-gray-600 hover:bg-gray-700 px-6 py-3 rounded-lg">
-                    Voltar ao Início
-                </button>
-            </div>
-        </div>
-    </body>
-    </html>
-    """
-
-@app.route('/payment/failure')
-def payment_failure():
-    """Página de falha no pagamento"""
-    return """
-    <!DOCTYPE html>
-    <html lang="pt-BR">
-    <head>
-        <meta charset="UTF-8">
-        <title>Pagamento Falhou - Geminii</title>
-        <script src="https://cdn.tailwindcss.com"></script>
-    </head>
-    <body class="bg-gray-900 text-white min-h-screen">
-        <div class="min-h-screen flex items-center justify-center p-4">
-            <div class="text-center p-8 bg-gray-800 rounded-lg max-w-md w-full border border-gray-700">
-                <div class="text-6xl mb-6">❌</div>
-                <h1 class="text-3xl font-bold mb-4 text-red-400">Pagamento Falhou</h1>
-                <p class="text-gray-300 mb-6">Houve um problema. Tente novamente.</p>
-                <button onclick="window.location.href='/planos'"
-                        class="w-full bg-gradient-to-r from-purple-600 to-pink-600 px-6 py-3 rounded-lg">
-                    Tentar Novamente
-                </button>
-            </div>
-        </div>
-    </body>
-    </html>
-    """
-
-# ===== ROTAS API BÁSICAS =====
-
-@app.route('/api/status')
-def status():
-    """Status da API com info do Mercado Pago"""
-    mp_status = {"success": MP_AVAILABLE, "message": "Blueprint carregado" if MP_AVAILABLE else "Não disponível"}
-    admin_status = {"success": ADMIN_AVAILABLE, "message": "Blueprint carregado" if ADMIN_AVAILABLE else "Não disponível"}
-
-    return jsonify({
-        'message': 'API Flask Online!',
-        'status': 'online',
-        'database': 'Connected',
-        'mercadopago': mp_status,
-        'admin': admin_status
-    })
-
-@app.route('/api/test-db')
-def test_db():
-    """Testar conexão com banco"""
-    try:
-        conn = get_db_connection()
-        if conn:
-            cursor = conn.cursor()
-            cursor.execute("SELECT COUNT(*) FROM plans")
-            plans_count = cursor.fetchone()[0]
-            cursor.execute("SELECT COUNT(*) FROM users")
-            users_count = cursor.fetchone()[0]
-            cursor.close()
-            conn.close()
-
+        # Dados recebidos do frontend
+        data = request.get_json()
+        
+        if not data:
             return jsonify({
-                'success': True,
-                'message': 'Banco conectado!',
-                'data': {
-                    'plans': plans_count,
-                    'users': users_count
+                "success": False,
+                "error": "Dados JSON são obrigatórios"
+            }), 400
+        
+        plan = data.get('plan', 'pro')
+        cycle = data.get('cycle', 'monthly')
+        customer_email = data.get('customer_email', 'cliente@geminii.com.br')  # Email padrão se não fornecido
+        discounted_price = data.get('discounted_price')  
+        coupon_code = data.get('coupon_code')
+    
+        
+        # Validar plano
+        if plan not in PLANS:
+            return jsonify({
+                "success": False,
+                "error": f"Plano '{plan}' não encontrado"
+            }), 400
+        
+        plan_data = PLANS[plan]
+        plan_id = plan_data["id"]
+        plan_name = plan_data["name"]
+        
+        # Determinar preço baseado no ciclo
+        if cycle == 'annual':
+            original_price = plan_data["annual_price"]
+            cycle_display = "Anual"
+        else:
+            original_price = plan_data["monthly_price"]
+            cycle_display = "Mensal"
+
+        # ✅ USAR PREÇO COM DESCONTO SE FORNECIDO
+        if discounted_price is not None:
+            price = float(discounted_price)
+            print(f"🎫 Cupom aplicado: {coupon_code}")
+            print(f"💰 Preço original: R$ {original_price}")
+            print(f"💰 Preço com desconto: R$ {price}")
+        else:
+            price = original_price
+        
+        # Determinar URLs de retorno baseado no ambiente
+        if os.environ.get('DATABASE_URL'):
+            base_url = "https://app.geminii.com.br"
+        else:
+            base_url = "http://localhost:5000"
+        
+        if coupon_code:
+            item_title = f"Geminii {plan_name} - {cycle_display} (Cupom: {coupon_code})"
+        else:
+            item_title = f"Geminii {plan_name} - {cycle_display}"    
+            
+        
+        # ✅ ESTRUTURA CORRETA BASEADA NO SEU TESTE QUE FUNCIONOU
+        preference_data = {
+            "items": [
+                {
+                    "id": plan_id,
+                    "title": item_title,
+                    "quantity": 1,
+                    "currency_id": "BRL",
+                    "unit_price": float(price)
+                }
+            ],
+            "back_urls": {
+                "success": f"{base_url}/payment/success",
+                "pending": f"{base_url}/payment/pending", 
+                "failure": f"{base_url}/payment/failure"
+            },
+            "external_reference": f"geminii_{plan_id}_{cycle}_{int(time.time())}"
+        }
+        
+        # Adicionar informações do pagador se email fornecido
+        if customer_email and customer_email != 'cliente@geminii.com.br':
+            preference_data["payer"] = {
+                "email": customer_email
+            }
+        
+        # ✅ USAR EXATAMENTE O MÉTODO QUE FUNCIONOU NO TESTE
+        preference_response = preference_client.create(preference_data)
+        
+        print(f"📊 Resposta do MP: {preference_response}")
+        
+        if preference_response.get("status") == 201:
+            preference = preference_response["response"]
+            preference_id = preference["id"]
+            
+            print(f"✅ Preferência criada com sucesso: {preference_id}")
+            
+            # URLs de checkout
+            checkout_url = preference.get("init_point", "")
+            sandbox_url = preference.get("sandbox_init_point", "")
+            
+            print(f"🔗 Checkout URL (Produção): {checkout_url}")
+            print(f"🔗 Sandbox URL (Desenvolvimento): {sandbox_url}")
+            
+            return jsonify({
+                "success": True,
+                "data": {
+                    "preference_id": preference_id,
+                    "checkout_url": checkout_url,
+                    "sandbox_url": sandbox_url,
+                    "plan": plan,
+                    "cycle": cycle,
+                    "price": price,
+                    "currency": "BRL",
+                    "external_reference": preference_data["external_reference"]
                 }
             })
         else:
-            return jsonify({'success': False, 'error': 'Falha na conexão'}), 500
+            error_info = preference_response.get("response", {})
+            print(f"❌ Erro MP: {error_info}")
+            
+            return jsonify({
+                "success": False,
+                "error": "Erro ao criar checkout no Mercado Pago",
+                "details": error_info
+            }), 500
+            
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
+        print(f"❌ Erro inesperado: {e}")
+        import traceback
+        traceback.print_exc()
+        
+        return jsonify({
+            "success": False,
+            "error": "Erro interno do servidor",
+            "details": str(e)
+        }), 500
 
-# ===== ROTAS DE COMPATIBILIDADE =====
+# ===== ROTAS DO MERCADO PAGO =====
 
-@app.route('/api/plans')
-def get_plans_compat():
-    """Rota de compatibilidade para planos - redireciona para blueprint"""
-    if MP_AVAILABLE:
-        from mercadopago_routes import PLANS
+@mercadopago_bp.route('/test', methods=['GET'])
+def test_connection():
+    """Testar conexão com Mercado Pago"""
+    result = test_mercadopago_connection()
+    return jsonify(result)
 
+@mercadopago_bp.route('/plans', methods=['GET'])
+def get_plans():
+    """Retornar planos disponíveis"""
+    try:
         plans_list = []
         for plan_id, plan_data in PLANS.items():
             plans_list.append({
@@ -658,1094 +293,55 @@ def get_plans_compat():
                 "price_annual": plan_data["annual_price"],
                 "features": plan_data["features"]
             })
-
+        
         return jsonify({"success": True, "data": plans_list})
-    else:
-        return jsonify({"success": False, "error": "Mercado Pago não disponível"}), 500
-
-@app.route('/api/checkout/create', methods=['POST'])
-def create_checkout_compat():
-    """Rota de compatibilidade para checkout - redireciona para blueprint"""
-    if not MP_AVAILABLE:
-        return jsonify({"success": False, "error": "Mercado Pago não disponível"}), 500
-
-    try:
-        from mercadopago_routes import create_checkout_function
-        return create_checkout_function()
+        
     except Exception as e:
-        import traceback
-        traceback.print_exc()
         return jsonify({"success": False, "error": str(e)}), 500
 
-# ===== WEBHOOK PRINCIPAL =====
+@mercadopago_bp.route('/checkout/create', methods=['POST'])
+def create_checkout():
+    """Criar checkout do Mercado Pago"""
+    return create_checkout_function()
 
-@app.route('/webhook/mercadopago', methods=['POST'])
-def mercadopago_webhook():
-    """Webhook principal - redireciona para blueprint"""
-    if not MP_AVAILABLE:
-        return jsonify({"success": False, "error": "Mercado Pago não disponível"}), 500
-
+@mercadopago_bp.route('/webhook', methods=['POST'])
+def webhook():
+    """Webhook para receber notificações do Mercado Pago"""
     try:
-        from mercadopago_routes import webhook
-        return webhook()
-
+        data = request.get_json()
+        
+        if not data:
+            return jsonify({"success": False, "error": "Dados não fornecidos"}), 400
+        
+        print(f"🔔 Webhook recebido: {data}")
+        
+        webhook_type = data.get("type")
+        
+        if webhook_type == "payment":
+            payment_id = data.get("data", {}).get("id")
+            
+            if payment_id:
+                print(f"💳 Processando pagamento: {payment_id}")
+                
+            
+        return jsonify({"success": True}), 200
+        
     except Exception as e:
-        print(f"❌ Erro no webhook principal: {e}")
+        print(f"❌ Erro no webhook: {e}")
         return jsonify({"success": False, "error": str(e)}), 500
 
-# ===== ROTAS DE AUTENTICAÇÃO =====
-
-@app.route('/api/dashboard')
-def dashboard_api():
-    """API para dados do dashboard"""
-    try:
-        auth_header = request.headers.get('Authorization')
-
-        if not auth_header or not auth_header.startswith('Bearer '):
-            return jsonify({'success': False, 'error': 'Token não fornecido'}), 401
-
-        token = auth_header.replace('Bearer ', '')
-
-        try:
-            payload = jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
-            user_id = payload['user_id']
-
-            conn = get_db_connection()
-            if not conn:
-                return jsonify({'success': False, 'error': 'Erro de conexão com banco'}), 500
-
-            cursor = conn.cursor()
-            cursor.execute("""
-                SELECT id, name, email, plan_id, plan_name, created_at
-                FROM users WHERE id = %s
-            """, (user_id,))
-
-            user = cursor.fetchone()
-            cursor.close()
-            conn.close()
-
-            if not user:
-                return jsonify({'success': False, 'error': 'Usuário não encontrado'}), 401
-
-            user_id, name, email, plan_id, plan_name, created_at = user
-
-            return jsonify({
-                'success': True,
-                'data': {
-                    'user': {
-                        'id': user_id,
-                        'name': name,
-                        'email': email,
-                        'plan_id': plan_id,
-                        'plan_name': plan_name,
-                        'member_since': created_at.strftime('%d/%m/%Y') if created_at else 'Hoje'
-                    },
-                    'stats': {
-                        'total_analysis': 0,
-                        'active_alerts': 0,
-                        'watchlist_items': 3
-                    }
-                }
-            })
-
-        except jwt.ExpiredSignatureError:
-            return jsonify({'success': False, 'error': 'Token expirado'}), 401
-        except jwt.InvalidTokenError:
-            return jsonify({'success': False, 'error': 'Token inválido'}), 401
-
-    except Exception as e:
-        return jsonify({'success': False, 'error': f'Erro interno: {str(e)}'}), 500
-
-@app.route('/api/auth/register', methods=['POST'])
-def register():
-    """Registrar novo usuário"""
-    try:
-        data = request.get_json()
-
-        if not data:
-            return jsonify({'success': False, 'error': 'Dados JSON necessários'}), 400
-
-        name = data.get('name', '').strip()
-        email = data.get('email', '').strip()
-        password = data.get('password', '')
-
-        if not name or not email or not password:
-            return jsonify({'success': False, 'error': 'Nome, e-mail e senha são obrigatórios'}), 400
-
-        if len(password) < 6:
-            return jsonify({'success': False, 'error': 'Senha deve ter pelo menos 6 caracteres'}), 400
-
-        if '@' not in email:
-            return jsonify({'success': False, 'error': 'E-mail inválido'}), 400
-
-        conn = get_db_connection()
-        if not conn:
-            return jsonify({'success': False, 'error': 'Erro de conexão com banco'}), 500
-
-        cursor = conn.cursor()
-
-        cursor.execute("SELECT id FROM users WHERE email = %s", (email,))
-        if cursor.fetchone():
-            cursor.close()
-            conn.close()
-            return jsonify({'success': False, 'error': 'E-mail já cadastrado'}), 400
-
-        hashed_password = hash_password(password)
-        cursor.execute("""
-            INSERT INTO users (name, email, password, plan_id, plan_name, created_at)
-            VALUES (%s, %s, %s, %s, %s, %s) RETURNING id
-        """, (name, email, hashed_password, 1, 'Básico', datetime.now(timezone.utc)))
-
-        user_id = cursor.fetchone()[0]
-        conn.commit()
-        cursor.close()
-        conn.close()
-
-        return jsonify({
-            'success': True,
-            'message': 'Usuário criado com sucesso!',
-            'data': {
-                'user_id': user_id,
-                'name': name,
-                'email': email,
-                'plan_name': 'Básico'
-            }
-        }), 201
-
-    except Exception as e:
-        return jsonify({'success': False, 'error': f'Erro interno: {str(e)}'}), 500
-
-@app.route('/api/validate-coupon', methods=['POST'])
-def validate_coupon():
-    """Validar cupom de desconto"""
-    try:
-        print(f"\n🎫 VALIDANDO CUPOM - {datetime.now()}")
-        print("=" * 40)
-
-        data = request.get_json()
-        print(f"📊 Dados recebidos: {data}")
-
-        if not data:
-            print("❌ Nenhum dado JSON recebido")
-            return jsonify({'success': False, 'error': 'Dados JSON necessários'}), 400
-
-        code = data.get('code', '').strip().upper()
-        plan_name = data.get('plan_name', '')
-        user_id = data.get('user_id', 1)
-
-        print(f"🔍 Cupom: '{code}'")
-        print(f"📦 Plano: '{plan_name}'")
-        print(f"👤 User ID: {user_id}")
-
-        if not code:
-            print("❌ Código do cupom vazio")
-            return jsonify({'success': False, 'error': 'Código do cupom é obrigatório'}), 400
-
-        print(f"🔄 Chamando validate_coupon_db...")
-        from database import validate_coupon as validate_coupon_db
-        result = validate_coupon_db(code, plan_name, user_id)
-
-        print(f"📊 Resultado da validação: {result}")
-
-        if result['valid']:
-            print("✅ Cupom válido!")
-            return jsonify({
-                'success': True,
-                'message': 'Cupom válido!',
-                'data': {
-                    'coupon_id': result['coupon_id'],
-                    'discount_percent': result['discount_percent'],
-                    'discount_type': result['discount_type'],
-                    'applicable_plans': result.get('applicable_plans', [])
-                }
-            })
-        else:
-            print(f"❌ Cupom inválido: {result['error']}")
-            return jsonify({
-                'success': False,
-                'error': result['error']
-            }), 400
-
-    except Exception as e:
-        print(f"❌ ERRO na validação: {e}")
-        import traceback
-        traceback.print_exc()
-        return jsonify({'success': False, 'error': f'Erro interno: {str(e)}'}), 500
-
-@app.route('/api/auth/login', methods=['POST'])
-def login():
-    """Login do usuário"""
-    try:
-        data = request.get_json()
-
-        if not data:
-            return jsonify({'success': False, 'error': 'Dados JSON necessários'}), 400
-
-        email = data.get('email', '').strip()
-        password = data.get('password', '')
-
-        if not email or not password:
-            return jsonify({'success': False, 'error': 'E-mail e senha são obrigatórios'}), 400
-
-        conn = get_db_connection()
-        if not conn:
-            return jsonify({'success': False, 'error': 'Erro de conexão com banco'}), 500
-
-        cursor = conn.cursor()
-
-        cursor.execute("""
-            SELECT id, name, email, password, plan_id, plan_name, user_type
-            FROM users WHERE email = %s
-        """, (email,))
-
-        user = cursor.fetchone()
-        cursor.close()
-        conn.close()
-
-        if not user:
-            return jsonify({'success': False, 'error': 'E-mail não encontrado'}), 401
-
-        user_id, name, email, stored_password, plan_id, plan_name, user_type = user
-
-        if hash_password(password) != stored_password:
-            return jsonify({'success': False, 'error': 'Senha incorreta'}), 401
-
-        token_payload = {
-            'user_id': user_id,
-            'email': email,
-            'exp': datetime.now(timezone.utc) + timedelta(days=7)
-        }
-
-        token = jwt.encode(token_payload, app.config['SECRET_KEY'], algorithm='HS256')
-
-        return jsonify({
-            'success': True,
-            'message': 'Login realizado com sucesso!',
-            'data': {
-                'user': {
-                    'id': user_id,
-                    'name': name,
-                    'email': email,
-                    'plan_id': plan_id,
-                    'plan_name': plan_name,
-                    'user_type': user_type
-                },
-                'token': token
-            }
-        }), 200
-
-    except Exception as e:
-        return jsonify({'success': False, 'error': f'Erro interno: {str(e)}'}), 500
-
-
-# # ===== FUNÇÃO CREATE_APP PARA RAILWAY =====
-# def create_app():
-#     """Factory para criar app - Railway"""
-#     if os.environ.get('RAILWAY_ENVIRONMENT'):
-#         print("🚄 Executando no Railway...")
-#         app.config['ENV'] = 'production'
-#         app.config['DEBUG'] = False
-
-#     initialize_database()
-#     return app
-
-# ===== EXECUÇÃO LOCAL (OPCIONAL) =====
-if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
-
-    # Só mostrar diagnóstico uma vez
-    if not os.environ.get('WERKZEUG_RUN_MAIN'):
-        print("🔍 DIAGNÓSTICO DE CONEXÃO:")
-        print(f"🛒 Mercado Pago: {'✅ ATIVO' if MP_AVAILABLE else '❌ INATIVO'}")
-        print(f"👑 Admin Panel: {'✅ ATIVO' if ADMIN_AVAILABLE else '❌ INATIVO'}")
-        print("🚀 Iniciando Geminii API...")
-
-    # Inicializar banco apenas
-
-
-if __name__ == '__main__':
-    # FORÇAR MODO LOCAL
-    print("🏠 FORÇANDO MODO DESENVOLVIMENTO LOCAL...")
-
-    # Remover DATABASE_URL para forçar banco local
-    if 'DATABASE_URL' in os.environ:
-        del os.environ['DATABASE_URL']
-        print("✅ DATABASE_URL removida - usando banco local")
-
-    # Configurar ambiente local
-    os.environ['FLASK_ENV'] = 'development'
-    os.environ['DB_HOST'] = 'localhost'
-    os.environ['DB_NAME'] = 'postgres'
-    os.environ['DB_USER'] = 'postgres'
-    os.environ['DB_PASSWORD'] = '#geminii'
-    os.environ['DB_PORT'] = '5432'
-
-
-    port = int(os.environ.get('PORT', 5000))
-
-    #Só mostrar diagnóstico uma vez
-    if not os.environ.get('WERKZEUG_RUN_MAIN'):
-        print("🔍 DIAGNÓSTICO DE CONEXÃO:")
-        # print(f"DATABASE_URL existe: {'✅' if os.environ.get('DATABASE_URL') else '❌'}")
-        # print(f"Modo: {'RENDER' if os.environ.get('DATABASE_URL') else 'LOCAL'}")
-        # print("🏠 Configurações locais:")
-        # print(f"  Host: {os.environ.get('DB_HOST')}")
-        # print(f"  Database: {os.environ.get('DB_NAME')}")
-        # print(f"  User: {os.environ.get('DB_USER')}")
-        # print(f"  Password: ***")
-        # print(f"  Port: {os.environ.get('DB_PORT')}")
-
-        # print("🚀 Iniciando Geminii API (DESENVOLVIMENTO)...")
-        # print("📊 APIs disponíveis em http://localhost:5000")
-        # print(f"🛒 Mercado Pago: {'✅ ATIVO' if MP_AVAILABLE else '❌ INATIVO'}")
-
-    # Inicializar banco apenas uma vez
-    if not os.environ.get('WERKZEUG_RUN_MAIN'):
-        initialize_database()
-
-    app.run(host='0.0.0.0', port=port, debug=True)
-
-
-# def create_app():
-#     """Factory para criar app - Railway"""
-#     if os.environ.get('RAILWAY_ENVIRONMENT'):
-#         print("🚄 Executando no Railway...")
-#         app.config['ENV'] = 'production'
-#         app.config['DEBUG'] = False
-
-#     initialize_database()
-#     return app -->
-
-
-<!-- pegar daquiii para baixo admin_routes
-from flask import Blueprint, request, jsonify
-import jwt
-from datetime import datetime, timedelta
-from database import get_db_connection
-
-# Criar blueprint admin
-admin_bp = Blueprint('admin', __name__, url_prefix='/api/admin')
-
-def verify_admin_access(auth_header):
-    """Verificar se usuário tem acesso admin"""
-    try:
-        if not auth_header or not auth_header.startswith('Bearer '):
-            return False
-
-        token = auth_header.replace('Bearer ', '')
-
-        # Importar SECRET_KEY do app principal
-        from flask import current_app
-        payload = jwt.decode(token, current_app.config['SECRET_KEY'], algorithms=['HS256'])
-        user_id = payload['user_id']
-
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        cursor.execute("SELECT user_type FROM users WHERE id = %s", (user_id,))
-        result = cursor.fetchone()
-        cursor.close()
-        conn.close()
-
-        return result and result[0] in ['admin', 'master']
-
-    except:
-        return False
-
-# ===== ROTAS ADMIN DE ESTATÍSTICAS =====
-
-@admin_bp.route('/stats')
-def admin_stats():
-    """Estatísticas para dashboard admin"""
-    try:
-        auth_header = request.headers.get('Authorization')
-        if not verify_admin_access(auth_header):
-            return jsonify({'success': False, 'error': 'Acesso negado'}), 403
-
-        conn = get_db_connection()
-        if not conn:
-            return jsonify({'success': False, 'error': 'Erro de conexão'}), 500
-
-        cursor = conn.cursor()
-
-        # Total de usuários
-        cursor.execute("SELECT COUNT(*) FROM users")
-        total_users = cursor.fetchone()[0]
-
-        # Usuários premium (plano_id > 1)
-        cursor.execute("SELECT COUNT(*) FROM users WHERE plan_id > 1")
-        premium_users = cursor.fetchone()[0]
-
-        # Cupons ativos
-        cursor.execute("SELECT COUNT(*) FROM coupons WHERE is_active = true")
-        active_coupons = cursor.fetchone()[0]
-
-        # Receita mensal estimada
-        monthly_revenue = premium_users * 49.90
-
-        cursor.close()
-        conn.close()
-
-        return jsonify({
-            'success': True,
-            'data': {
-                'total_users': total_users,
-                'premium_users': premium_users,
-                'active_coupons': active_coupons,
-                'monthly_revenue': f"{monthly_revenue:.2f}"
-            }
-        })
-
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
-
-
-# ===== CORRIGIR A ROTA toggle_coupon NO admin_routes.py =====
-
-@admin_bp.route('/toggle-coupon', methods=['PATCH'])  # ✅ CORRIGIR URL
-def toggle_coupon():
-    """Ativar/desativar cupom"""
-    try:
-        auth_header = request.headers.get('Authorization')
-        if not verify_admin_access(auth_header):
-            return jsonify({'success': False, 'error': 'Acesso negado'}), 403
-
-        data = request.get_json()
-        code = data.get('code', '').upper()
-        is_active = data.get('is_active', True)
-
-        if not code:
-            return jsonify({'success': False, 'error': 'Código do cupom é obrigatório'}), 400
-
-        conn = get_db_connection()
-        cursor = conn.cursor()
-
-        cursor.execute("""
-            UPDATE coupons
-            SET is_active = %s, updated_at = CURRENT_TIMESTAMP
-            WHERE code = %s
-        """, (is_active, code))
-
-        if cursor.rowcount == 0:
-            cursor.close()
-            conn.close()
-            return jsonify({'success': False, 'error': 'Cupom não encontrado'}), 404
-
-        conn.commit()
-        cursor.close()
-        conn.close()
-
-        status = 'ativado' if is_active else 'desativado'
-        return jsonify({
-            'success': True,
-            'message': f'Cupom {code} {status} com sucesso!'
-        })
-
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
-
-# ===== ROTAS ADMIN DE USUÁRIOS =====
-
-@admin_bp.route('/list-users')
-def list_all_users():
-    """Listar todos os usuários - ADMIN ONLY"""
-    try:
-        auth_header = request.headers.get('Authorization')
-        if not verify_admin_access(auth_header):
-            return jsonify({'success': False, 'error': 'Acesso negado'}), 403
-
-        conn = get_db_connection()
-        cursor = conn.cursor()
-
-        # ✅ QUERY SIMPLES - SEM FORMATAÇÃO NO SQL
-        cursor.execute("""
-            SELECT id, name, email, plan_name, user_type, created_at, updated_at
-            FROM users
-            ORDER BY created_at ASC
-        """)
-
-        users = []
-        for row in cursor.fetchall():
-            # ✅ FORMATAÇÃO NO PYTHON (mais compatível)
-            created_date = row[5]
-            formatted_date = 'N/A'
-            days_old = 0
-
-            if created_date:
-                try:
-                    formatted_date = created_date.strftime('%d/%m/%Y')
-                    from datetime import datetime
-                    days_old = (datetime.now() - created_date).days
-                except:
-                    formatted_date = 'N/A'
-                    days_old = 0
-
-            users.append({
-                'id': row[0],
-                'name': row[1],
-                'email': row[2],
-                'plan': row[3],
-                'type': row[4] or 'regular',
-                'created_at': row[5].isoformat() if row[5] else None,
-                'updated_at': row[6].isoformat() if row[6] else None,
-                'formatted_date': formatted_date,  # ✅ Data formatada
-                'days_old': max(0, days_old)       # ✅ Dias desde criação
-            })
-
-        cursor.close()
-        conn.close()
-
-        return jsonify({
-            'success': True,
-            'users': users,
-            'total': len(users)
-        })
-
-    except Exception as e:
-        print(f"Erro em list_all_users: {e}")  # ✅ Debug
-        return jsonify({'success': False, 'error': str(e)}), 500
-
-@admin_bp.route('/manage-subscription', methods=['POST'])
-def manage_subscription():
-    """Dar ou remover assinatura manualmente"""
-    try:
-        auth_header = request.headers.get('Authorization')
-        if not verify_admin_access(auth_header):
-            return jsonify({'success': False, 'error': 'Acesso negado'}), 403
-
-        data = request.get_json()
-        user_email = data.get('user_email')
-        action = data.get('action')  # 'grant' ou 'revoke'
-        plan_id = data.get('plan_id', 2)
-
-        if not user_email or action not in ['grant', 'revoke']:
-            return jsonify({'success': False, 'error': 'Dados inválidos'}), 400
-
-        conn = get_db_connection()
-        cursor = conn.cursor()
-
-        # Buscar usuário
-        cursor.execute("SELECT id, name, plan_name FROM users WHERE email = %s", (user_email,))
-        user = cursor.fetchone()
-
-        if not user:
-            return jsonify({'success': False, 'error': 'Usuário não encontrado'}), 404
-
-        user_id, user_name, current_plan = user
-
-        if action == 'grant':
-            # Dar assinatura
-            cursor.execute("SELECT name FROM plans WHERE id = %s", (plan_id,))
-            plan_result = cursor.fetchone()
-
-            if not plan_result:
-                return jsonify({'success': False, 'error': 'Plano não encontrado'}), 404
-
-            plan_name = plan_result[0]
-
-            cursor.execute("""
-                UPDATE users
-                SET plan_id = %s, plan_name = %s, updated_at = CURRENT_TIMESTAMP
-                WHERE id = %s
-            """, (plan_id, plan_name, user_id))
-
-            message = f"Assinatura {plan_name} concedida para {user_name}"
-
-        else:  # revoke
-            # Remover assinatura (voltar para básico)
-            cursor.execute("""
-                UPDATE users
-                SET plan_id = 1, plan_name = 'Básico', updated_at = CURRENT_TIMESTAMP
-                WHERE id = %s
-            """, (user_id,))
-
-            message = f"Assinatura removida de {user_name} - voltou ao plano Básico"
-            plan_name = 'Básico'
-
-        conn.commit()
-        cursor.close()
-        conn.close()
-
-        return jsonify({
-            'success': True,
-            'message': message,
-            'user': {
-                'name': user_name,
-                'email': user_email,
-                'old_plan': current_plan,
-                'new_plan': plan_name
-            }
-        })
-
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
-
-@admin_bp.route('/promote-user', methods=['POST'])
-def promote_user():
-    """Promover usuário a admin"""
-    try:
-        auth_header = request.headers.get('Authorization')
-        if not verify_admin_access(auth_header):
-            return jsonify({'success': False, 'error': 'Acesso negado'}), 403
-
-        data = request.get_json()
-        user_email = data.get('user_email')
-        user_type = data.get('user_type', 'admin')
-
-        if not user_email:
-            return jsonify({'success': False, 'error': 'Email obrigatório'}), 400
-
-        conn = get_db_connection()
-        cursor = conn.cursor()
-
-        # Verificar se usuário existe
-        cursor.execute("SELECT id, name FROM users WHERE email = %s", (user_email,))
-        user = cursor.fetchone()
-
-        if not user:
-            cursor.close()
-            conn.close()
-            return jsonify({'success': False, 'error': 'Usuário não encontrado'}), 404
-
-        user_id, user_name = user
-
-        # Promover usuário
-        cursor.execute("""
-            UPDATE users
-            SET user_type = %s, plan_id = 3, plan_name = 'Estratégico', updated_at = CURRENT_TIMESTAMP
-            WHERE id = %s
-        """, (user_type, user_id))
-
-        conn.commit()
-        cursor.close()
-        conn.close()
-
-        return jsonify({
-            'success': True,
-            'message': f'{user_name} promovido a {user_type} com sucesso!'
-        })
-
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
-
-# ===== ROTAS DE CUPONS =====
-
-@admin_bp.route('/coupons', methods=['GET'])
-def list_coupons():
-    """Listar todos os cupons"""
-    try:
-        auth_header = request.headers.get('Authorization')
-        if not verify_admin_access(auth_header):
-            return jsonify({'success': False, 'error': 'Acesso negado'}), 403
-
-        conn = get_db_connection()
-        cursor = conn.cursor()
-
-        cursor.execute("""
-            SELECT id, code, discount_percent, discount_type, discount_value,
-                   applicable_plans, max_uses, used_count, valid_until, is_active,
-                   created_at
-            FROM coupons
-            ORDER BY created_at DESC
-        """)
-
-        coupons = []
-        for row in cursor.fetchall():
-            coupons.append({
-                'id': row[0],
-                'code': row[1],
-                'discount_percent': float(row[2]),
-                'discount_type': row[3],
-                'discount_value': float(row[4]) if row[4] else 0,
-                'applicable_plans': row[5] or [],
-                'max_uses': row[6],
-                'used_count': row[7],
-                'valid_until': row[8].isoformat() if row[8] else None,
-                'is_active': row[9],
-                'created_at': row[10].isoformat() if row[10] else None
-            })
-
-        cursor.close()
-        conn.close()
-
-        return jsonify({
-            'success': True,
-            'coupons': coupons
-        })
-
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
-
-@admin_bp.route('/coupons', methods=['POST'])
-def create_coupon():
-    """Criar novo cupom"""
-    try:
-        auth_header = request.headers.get('Authorization')
-        if not verify_admin_access(auth_header):
-            return jsonify({'success': False, 'error': 'Acesso negado'}), 403
-
-        data = request.get_json()
-        code = data.get('code', '').upper().strip()
-        discount_percent = data.get('discount_percent')
-        applicable_plans = data.get('applicable_plans', [])
-        max_uses = data.get('max_uses')
-        valid_until = data.get('valid_until')
-
-        if not code or not discount_percent:
-            return jsonify({'success': False, 'error': 'Código e desconto são obrigatórios'}), 400
-
-        if discount_percent <= 0 or discount_percent > 100:
-            return jsonify({'success': False, 'error': 'Desconto deve estar entre 1% e 100%'}), 400
-
-        # Extrair user_id do token
-        token = request.headers.get('Authorization').replace('Bearer ', '')
-        from flask import current_app
-        payload = jwt.decode(token, current_app.config['SECRET_KEY'], algorithms=['HS256'])
-        admin_user_id = payload['user_id']
-
-        conn = get_db_connection()
-        cursor = conn.cursor()
-
-        # Verificar se código já existe
-        cursor.execute("SELECT id FROM coupons WHERE code = %s", (code,))
-        if cursor.fetchone():
-            cursor.close()
-            conn.close()
-            return jsonify({'success': False, 'error': 'Código já existe'}), 400
-
-        # Inserir cupom
-        cursor.execute("""
-            INSERT INTO coupons (code, discount_percent, applicable_plans, max_uses, valid_until, created_by)
-            VALUES (%s, %s, %s, %s, %s, %s)
-        """, (code, discount_percent, applicable_plans, max_uses, valid_until, admin_user_id))
-
-        conn.commit()
-        cursor.close()
-        conn.close()
-
-        return jsonify({
-            'success': True,
-            'message': f'Cupom {code} criado com sucesso!'
-        })
-
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
-
-@admin_bp.route('/coupons/<coupon_code>/toggle', methods=['PATCH'])
-def toggle_coupon(coupon_code):
-    """Ativar/desativar cupom"""
-    try:
-        auth_header = request.headers.get('Authorization')
-        if not verify_admin_access(auth_header):
-            return jsonify({'success': False, 'error': 'Acesso negado'}), 403
-
-        data = request.get_json()
-        is_active = data.get('is_active', True)
-
-        conn = get_db_connection()
-        cursor = conn.cursor()
-
-        cursor.execute("""
-            UPDATE coupons
-            SET is_active = %s, updated_at = CURRENT_TIMESTAMP
-            WHERE code = %s
-        """, (is_active, coupon_code.upper()))
-
-        if cursor.rowcount == 0:
-            cursor.close()
-            conn.close()
-            return jsonify({'success': False, 'error': 'Cupom não encontrado'}), 404
-
-        conn.commit()
-        cursor.close()
-        conn.close()
-
-        status = 'ativado' if is_active else 'desativado'
-        return jsonify({
-            'success': True,
-            'message': f'Cupom {coupon_code} {status} com sucesso!'
-        })
-
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
-
-# ===== ROTAS DE CARTEIRAS =====
-
-@admin_bp.route('/portfolio/<portfolio_name>/assets')
-def get_portfolio_assets_api(portfolio_name):
-    """Buscar ativos de uma carteira"""
-    try:
-        auth_header = request.headers.get('Authorization')
-        if not verify_admin_access(auth_header):
-            return jsonify({'success': False, 'error': 'Acesso negado'}), 403
-
-        from database import get_portfolio_assets
-        assets = get_portfolio_assets(portfolio_name)
-
-        return jsonify({
-            'success': True,
-            'assets': assets,
-            'portfolio': portfolio_name
-        })
-
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
-
-@admin_bp.route('/portfolio/add-asset', methods=['POST'])
-def add_portfolio_asset_api():
-    """Adicionar ativo a carteira"""
-    try:
-        auth_header = request.headers.get('Authorization')
-        if not verify_admin_access(auth_header):
-            return jsonify({'success': False, 'error': 'Acesso negado'}), 403
-
-        data = request.get_json()
-        portfolio = data.get('portfolio')
-        ticker = data.get('ticker', '').upper()
-        weight = data.get('weight')
-        sector = data.get('sector', '').strip()
-
-        if not all([portfolio, ticker, weight, sector]):
-            return jsonify({'success': False, 'error': 'Todos os campos são obrigatórios'}), 400
-
-        if weight < 0 or weight > 100:
-            return jsonify({'success': False, 'error': 'Peso deve estar entre 0 e 100'}), 400
-
-        # Extrair user_id do token
-        token = request.headers.get('Authorization').replace('Bearer ', '')
-        from flask import current_app
-        payload = jwt.decode(token, current_app.config['SECRET_KEY'], algorithms=['HS256'])
-        admin_user_id = payload['user_id']
-
-        from database import add_portfolio_asset
-        result = add_portfolio_asset(portfolio, ticker, weight, sector, admin_user_id)
-
-        if result['success']:
-            return jsonify(result)
-        else:
-            return jsonify(result), 400
-
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
-
-@admin_bp.route('/portfolio/remove-asset', methods=['DELETE'])
-def remove_portfolio_asset_api():
-    """Remover ativo da carteira"""
-    try:
-        auth_header = request.headers.get('Authorization')
-        if not verify_admin_access(auth_header):
-            return jsonify({'success': False, 'error': 'Acesso negado'}), 403
-
-        data = request.get_json()
-        portfolio = data.get('portfolio')
-        ticker = data.get('ticker', '').upper()
-
-        if not portfolio or not ticker:
-            return jsonify({'success': False, 'error': 'Portfolio e ticker são obrigatórios'}), 400
-
-        from database import remove_portfolio_asset
-        result = remove_portfolio_asset(portfolio, ticker)
-
-        if result['success']:
-            return jsonify(result)
-        else:
-            return jsonify(result), 400
-
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
-
-# ✅ NOVA ROTA: LIMPAR TODOS OS ATIVOS
-@admin_bp.route('/portfolio/clear-assets', methods=['DELETE'])
-def clear_portfolio_assets():
-    """Limpar todos os ativos de uma carteira"""
-    try:
-        auth_header = request.headers.get('Authorization')
-        if not verify_admin_access(auth_header):
-            return jsonify({'success': False, 'error': 'Acesso negado'}), 403
-
-        data = request.get_json()
-        portfolio = data.get('portfolio')
-
-        if not portfolio:
-            return jsonify({'success': False, 'error': 'Nome da carteira é obrigatório'}), 400
-
-        conn = get_db_connection()
-        cursor = conn.cursor()
-
-        # Contar quantos ativos serão removidos
-        cursor.execute("SELECT COUNT(*) FROM portfolio_assets WHERE portfolio_name = %s", (portfolio,))
-        count = cursor.fetchone()[0]
-
-        # Remover todos os ativos da carteira
-        cursor.execute("DELETE FROM portfolio_assets WHERE portfolio_name = %s", (portfolio,))
-
-        conn.commit()
-        cursor.close()
-        conn.close()
-
-        return jsonify({
-            'success': True,
-            'message': f'{count} ativos removidos da carteira {portfolio.upper()}!'
-        })
-
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
-
-# ✅ NOVA ROTA: GERAR REBALANCEAMENTO AUTOMÁTICO
-@admin_bp.route('/portfolio/generate-rebalance', methods=['POST'])
-def generate_rebalance_recommendations():
-    """Gerar recomendações de VENDA automáticas para rebalanceamento"""
-    try:
-        auth_header = request.headers.get('Authorization')
-        if not verify_admin_access(auth_header):
-            return jsonify({'success': False, 'error': 'Acesso negado'}), 403
-
-        data = request.get_json()
-        portfolio = data.get('portfolio')
-        reason = data.get('reason', 'Rebalanceamento automático - Ajuste de portfólio conforme nova estratégia')
-
-        if not portfolio:
-            return jsonify({'success': False, 'error': 'Nome da carteira é obrigatório'}), 400
-
-        # Extrair user_id do token
-        token = request.headers.get('Authorization').replace('Bearer ', '')
-        from flask import current_app
-        payload = jwt.decode(token, current_app.config['SECRET_KEY'], algorithms=['HS256'])
-        admin_user_id = payload['user_id']
-
-        conn = get_db_connection()
-        cursor = conn.cursor()
-
-        # Buscar todos os ativos atuais da carteira
-        cursor.execute("""
-            SELECT ticker, current_price, target_price, weight
-            FROM portfolio_assets
-            WHERE portfolio_name = %s
-        """, (portfolio,))
-
-        assets = cursor.fetchall()
-
-        if not assets:
-            cursor.close()
-            conn.close()
-            return jsonify({'success': False, 'error': f'Nenhum ativo encontrado na carteira {portfolio}'}), 404
-
-        recommendations_created = 0
-        today = datetime.now().date()
-
-        # Criar recomendação de VENDA para cada ativo existente
-        for asset in assets:
-            ticker, current_price, target_price, weight = asset
-
-            # Usar preço atual como preço de entrada/mercado
-            entry_price = current_price if current_price and current_price > 0 else target_price
-            market_price = current_price if current_price and current_price > 0 else target_price
-
-            # Verificar se já existe recomendação de SELL recente para este ticker
-            cursor.execute("""
-                SELECT id FROM portfolio_recommendations
-                WHERE portfolio_name = %s AND ticker = %s AND action_type = 'SELL'
-                AND recommendation_date >= %s
-            """, (portfolio, ticker, today))
-
-            existing_rec = cursor.fetchone()
-
-            if not existing_rec:
-                # Inserir nova recomendação de VENDA
-                cursor.execute("""
-                    INSERT INTO portfolio_recommendations
-                    (portfolio_name, ticker, action_type, entry_price, market_price, target_weight,
-                     recommendation_date, price_target, reason, created_by)
-                    VALUES (%s, %s, 'SELL', %s, %s, 0, %s, %s, %s, %s)
-                """, (portfolio, ticker, entry_price, market_price, today, target_price, reason, admin_user_id))
-
-                recommendations_created += 1
-
-        conn.commit()
-        cursor.close()
-        conn.close()
-
-        return jsonify({
-            'success': True,
-            'message': f'Rebalanceamento criado com sucesso!',
-            'recommendations_created': recommendations_created,
-            'portfolio': portfolio
-        })
-
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
-
-@admin_bp.route('/users/delete', methods=['DELETE'])
-def delete_user():
-    """Remover usuário (soft delete)"""
-    try:
-        auth_header = request.headers.get('Authorization')
-        if not verify_admin_access(auth_header):
-            return jsonify({'success': False, 'error': 'Acesso negado'}), 403
-
-        data = request.get_json()
-
-        if not data or 'email' not in data:
-            return jsonify({'success': False, 'error': 'E-mail é obrigatório'}), 400
-
-        email = data['email']
-
-        # Não permitir remover admin
-        if email == 'diego@geminii.com.br':
-            return jsonify({'success': False, 'error': 'Não é possível remover este usuário'}), 400
-
-        conn = get_db_connection()
-        if not conn:
-            return jsonify({'success': False, 'error': 'Erro de conexão'}), 500
-
-        cursor = conn.cursor()
-
-        # Verificar se usuário existe e não está já removido
-        cursor.execute("""
-            SELECT id, name, user_type
-            FROM users
-            WHERE email = %s AND user_type != 'removed'
-        """, (email,))
-        user = cursor.fetchone()
-
-        if not user:
-            cursor.close()
-            conn.close()
-            return jsonify({'success': False, 'error': 'Usuário não encontrado ou já removido'}), 404
-
-        user_id, user_name, user_type = user
-
-        # ✅ CORREÇÃO: Usar plan_id = 1 (Básico) ao invés de 0
-        cursor.execute("""
-            UPDATE users
-            SET user_type = 'removed',
-                plan_id = 1,
-                plan_name = 'Removido',
-                updated_at = CURRENT_TIMESTAMP
-            WHERE email = %s
-        """, (email,))
-
-        # ✅ OPCIONAL: Remover também das carteiras
-        cursor.execute("""
-            UPDATE user_portfolios
-            SET is_active = false
-            WHERE user_id = %s
-        """, (user_id,))
-
-        conn.commit()
-        cursor.close()
-        conn.close()
-
-        return jsonify({
-            'success': True,
-            'message': f'Usuário {user_name} removido com sucesso!'
-        })
-
-    except Exception as e:
-        print(f"Error deleting user: {e}")
-        return jsonify({'success': False, 'error': str(e)}), 500
-
-# ===== FUNÇÃO PARA EXPORTAR O BLUEPRINT =====
-
-def get_admin_blueprint():
-    """Retornar blueprint admin para registrar no Flask"""
-    return admin_bp -->
+# ===== FUNÇÕES DE EXPORT =====
+
+def get_mercadopago_blueprint():
+    """Retornar blueprint para registrar no Flask"""
+    return mercadopago_bp
+
+# Para debug
+if __name__ == "__main__":
+    print("🔧 Módulo Mercado Pago carregado!")
+    print(f"📋 Planos disponíveis: {list(PLANS.keys())}")
+    print(f"🔐 Token: {mp_token[:20]}...")
+    
+    # Testar conexão
+    result = test_mercadopago_connection()
+    print(f"🌐 Status da conexão: {result}") -->
