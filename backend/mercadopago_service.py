@@ -1,4 +1,7 @@
-# mercadopago_service.py - SERVIÇOS DO MERCADO PAGO
+# ============================================
+# MERCADOPAGO_SERVICE.PY - VERSÃO CORRIGIDA
+# ============================================
+
 import os
 import time
 import requests
@@ -32,17 +35,9 @@ except Exception as e:
 
 # ===== CONFIGURAÇÃO DOS PLANOS =====
 PLANS = {
-    "basico": {
-        "id": "basico",
-        "name": "Básico",
-        "db_id": 3,
-        "monthly_price": 0,
-        "annual_price": 0,
-        "features": ["Plano Gratuito"]
-    },
     "pro": {
         "id": "pro",
-        "name": "Pro",
+        "name": "Pro", 
         "db_id": 1,
         "monthly_price": 79,
         "annual_price": 72,
@@ -72,42 +67,326 @@ PLANS = {
     }
 }
 
-# ===== SERVIÇOS MERCADO PAGO =====
+# ===== FUNÇÃO PRINCIPAL DE PROCESSAMENTO =====
+
+def process_payment(payment_id):
+    """
+    Processar pagamento do Mercado Pago - VERSÃO SIMPLIFICADA E CORRIGIDA
+    """
+    print("\n" + "="*60)
+    print(f"🔥 INICIANDO PROCESSAMENTO DO PAGAMENTO: {payment_id}")
+    print("="*60)
+    
+    try:
+        # 1. CONSULTAR MERCADO PAGO
+        print("📡 1. Consultando Mercado Pago...")
+        mp_data = get_payment_from_mercadopago(payment_id)
+        
+        if not mp_data:
+            return {'status': 'error', 'error': 'Pagamento não encontrado no Mercado Pago'}
+        
+        print(f"   Status MP: {mp_data.get('status')}")
+        print(f"   Valor: R$ {mp_data.get('transaction_amount')}")
+        
+        # 2. VERIFICAR SE ESTÁ APROVADO
+        if mp_data.get('status') != 'approved':
+            print(f"⚠️ Pagamento não aprovado: {mp_data.get('status')}")
+            return {'status': 'not_approved', 'mp_status': mp_data.get('status')}
+        
+        # 3. EXTRAIR DADOS BÁSICOS
+        print("📋 2. Extraindo dados...")
+        payment_data = extract_payment_data(mp_data)
+        print(f"   Email: {payment_data['user_email']}")
+        print(f"   Valor: R$ {payment_data['amount']}")
+        print(f"   Plano detectado: {payment_data['plan_name']}")
+        
+        # 4. CONECTAR BANCO E VERIFICAR DUPLICAÇÃO
+        print("🗄️ 3. Conectando ao banco...")
+        conn = get_db_connection()
+        if not conn:
+            return {'status': 'error', 'error': 'Erro de conexão com banco'}
+        
+        cursor = conn.cursor()
+        
+        # Verificar se já foi processado
+        cursor.execute("SELECT id FROM payments WHERE payment_id = %s", (str(payment_id),))
+        if cursor.fetchone():
+            cursor.close()
+            conn.close()
+            print("⚠️ Pagamento já processado anteriormente")
+            return {'status': 'already_processed'}
+        
+        # 5. BUSCAR USUÁRIO
+        print("👤 4. Buscando usuário...")
+        user_data = find_or_create_user(cursor, payment_data['user_email'])
+        
+        if not user_data:
+            cursor.close()
+            conn.close()
+            return {'status': 'error', 'error': f'Usuário não encontrado: {payment_data["user_email"]}'}
+        
+        print(f"   Usuário: {user_data['name']} (ID: {user_data['id']})")
+        
+        # 6. PREPARAR TABELAS
+        print("🔧 5. Preparando estrutura do banco...")
+        ensure_tables_exist(cursor)
+        
+        # 7. CALCULAR EXPIRAÇÃO
+        expires_at = calculate_expiration(payment_data['cycle'])
+        print(f"   Expira em: {expires_at.strftime('%d/%m/%Y')}")
+        
+        # 8. INSERIR PAGAMENTO
+        print("💾 6. Registrando pagamento...")
+        insert_payment_record(cursor, payment_id, user_data['id'], payment_data)
+        
+        # 9. ATUALIZAR USUÁRIO
+        print("🔄 7. Atualizando plano do usuário...")
+        update_user_plan(cursor, user_data['id'], payment_data['plan_id'], payment_data['plan_name'], expires_at)
+        
+        # 10. REGISTRAR HISTÓRICO
+        print("📝 8. Registrando histórico...")
+        insert_payment_history(cursor, user_data['id'], payment_data, payment_id)
+        
+        # 11. COMMIT
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        print("✅ PROCESSAMENTO CONCLUÍDO COM SUCESSO!")
+        print(f"   Plano {payment_data['plan_name']} ativado para {user_data['name']}")
+        
+        return {
+            'status': 'success',
+            'payment_id': payment_id,
+            'user_id': user_data['id'],
+            'user_name': user_data['name'],
+            'user_email': user_data['email'],
+            'plan_name': payment_data['plan_name'],
+            'amount': payment_data['amount'],
+            'expires_at': expires_at.isoformat(),
+            'message': f'Plano {payment_data["plan_name"]} ativado com sucesso!'
+        }
+        
+    except Exception as e:
+        print(f"❌ ERRO CRÍTICO: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        
+        return {
+            'status': 'error',
+            'payment_id': payment_id,
+            'error': str(e)
+        }
+
+# ===== FUNÇÕES AUXILIARES =====
+
+def get_payment_from_mercadopago(payment_id):
+    """Consultar pagamento no Mercado Pago"""
+    try:
+        mp_token = os.environ.get('MP_ACCESS_TOKEN')
+        headers = {
+            'Authorization': f'Bearer {mp_token}',
+            'Content-Type': 'application/json'
+        }
+        
+        response = requests.get(
+            f'https://api.mercadopago.com/v1/payments/{payment_id}',
+            headers=headers,
+            timeout=30
+        )
+        
+        if response.status_code == 200:
+            return response.json()
+        else:
+            print(f"❌ Erro MP API: Status {response.status_code}")
+            return None
+            
+    except Exception as e:
+        print(f"❌ Erro ao consultar MP: {e}")
+        return None
+
+def extract_payment_data(mp_data):
+    """Extrair dados relevantes do pagamento"""
+    amount = float(mp_data.get('transaction_amount', 0))
+    external_ref = mp_data.get('external_reference', '')
+    payer_email = mp_data.get('payer', {}).get('email', '')
+    
+    # Extrair dados da referência externa
+    user_email = payer_email
+    plan_id = 'pro'
+    cycle = 'monthly'
+    
+    if external_ref and 'geminii_' in external_ref:
+        try:
+            parts = external_ref.split('_')
+            if len(parts) >= 4:
+                plan_id = parts[1]
+                cycle = parts[2]
+                user_email = parts[3]
+        except:
+            pass
+    
+    # Determinar plano baseado no valor se não conseguiu extrair
+    if amount >= 130:
+        plan_id = 'premium'
+        plan_name = 'Premium'
+        plan_db_id = 2
+    else:
+        plan_id = 'pro'
+        plan_name = 'Pro'
+        plan_db_id = 1
+    
+    # Se conseguiu extrair da referência, usar os dados dos PLANS
+    if plan_id in PLANS:
+        plan_data = PLANS[plan_id]
+        plan_name = plan_data['name']
+        plan_db_id = plan_data['db_id']
+    
+    return {
+        'amount': amount,
+        'user_email': user_email,
+        'plan_id': plan_id,
+        'plan_name': plan_name,
+        'plan_db_id': plan_db_id,
+        'cycle': cycle,
+        'external_reference': external_ref
+    }
+
+def find_or_create_user(cursor, email):
+    """Buscar usuário por email"""
+    cursor.execute("SELECT id, name, email FROM users WHERE email = %s", (email,))
+    result = cursor.fetchone()
+    
+    if result:
+        return {
+            'id': result[0],
+            'name': result[1],
+            'email': result[2]
+        }
+    return None
+
+def ensure_tables_exist(cursor):
+    """Garantir que todas as tabelas necessárias existem"""
+    try:
+        # Tabela payments
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS payments (
+                id SERIAL PRIMARY KEY,
+                user_id INTEGER REFERENCES users(id),
+                payment_id VARCHAR(255) UNIQUE NOT NULL,
+                status VARCHAR(50) DEFAULT 'approved',
+                amount DECIMAL(10,2) DEFAULT 0,
+                plan_id VARCHAR(50),
+                plan_name VARCHAR(100),
+                cycle VARCHAR(20) DEFAULT 'monthly',
+                external_reference VARCHAR(255),
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        
+        # Colunas adicionais na tabela users
+        cursor.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS subscription_status VARCHAR(20) DEFAULT 'inactive'")
+        cursor.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS subscription_plan VARCHAR(50)")
+        cursor.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS plan_expires_at TIMESTAMP")
+        
+        print("   ✅ Estrutura do banco verificada")
+        
+    except Exception as e:
+        print(f"   ⚠️ Erro ao preparar tabelas: {e}")
+
+def calculate_expiration(cycle):
+    """Calcular data de expiração"""
+    if cycle == 'annual':
+        return datetime.now(timezone.utc) + timedelta(days=365)
+    else:
+        return datetime.now(timezone.utc) + timedelta(days=30)
+
+def insert_payment_record(cursor, payment_id, user_id, payment_data):
+    """Inserir registro na tabela payments"""
+    cursor.execute("""
+        INSERT INTO payments (
+            user_id, payment_id, status, amount, plan_id, plan_name, 
+            cycle, external_reference, created_at, updated_at
+        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, NOW(), NOW())
+    """, (
+        user_id, 
+        str(payment_id), 
+        'approved', 
+        payment_data['amount'],
+        payment_data['plan_id'], 
+        payment_data['plan_name'], 
+        payment_data['cycle'], 
+        payment_data['external_reference']
+    ))
+    print("   ✅ Pagamento inserido na tabela payments")
+
+def update_user_plan(cursor, user_id, plan_db_id, plan_name, expires_at):
+    """Atualizar plano do usuário"""
+    cursor.execute("""
+        UPDATE users 
+        SET plan_id = %s, 
+            plan_name = %s,
+            subscription_status = 'active',
+            subscription_plan = %s,
+            plan_expires_at = %s,
+            updated_at = NOW()
+        WHERE id = %s
+    """, (plan_db_id, plan_name, plan_name, expires_at, user_id))
+    
+    rows_updated = cursor.rowcount
+    print(f"   ✅ Usuário atualizado ({rows_updated} linhas)")
+    
+    if rows_updated == 0:
+        raise Exception("ERRO CRÍTICO: Nenhuma linha foi atualizada na tabela users!")
+
+def insert_payment_history(cursor, user_id, payment_data, payment_id):
+    """Inserir histórico de pagamento"""
+    try:
+        cursor.execute("""
+            INSERT INTO payment_history (
+                user_id, plan_id, payment_id, amount, status, 
+                currency, created_at, updated_at
+            ) VALUES (%s, %s, %s, %s, %s, %s, NOW(), NOW())
+            ON CONFLICT (payment_id) DO NOTHING
+        """, (
+            user_id, 
+            payment_data['plan_db_id'], 
+            str(payment_id), 
+            payment_data['amount'], 
+            'approved', 
+            'BRL'
+        ))
+        print("   ✅ Histórico registrado")
+    except Exception as e:
+        print(f"   ⚠️ Erro no histórico (não crítico): {e}")
+
+# ===== OUTRAS FUNÇÕES (mantidas como estavam) =====
 
 def test_mercadopago_connection():
     """Testar conexão com Mercado Pago"""
     if not mp_sdk or not preference_client:
-        return {
-            "success": False,
-            "error": "SDK Mercado Pago não carregado"
-        }
+        return {"success": False, "error": "SDK Mercado Pago não carregado"}
     
     try:
         token = os.environ.get('MP_ACCESS_TOKEN', '')
-        
         if not token:
-            return {
-                "success": False,
-                "error": "Token MP_ACCESS_TOKEN não configurado"
-            }
+            return {"success": False, "error": "Token MP_ACCESS_TOKEN não configurado"}
         
         test_preference = {
-            "items": [
-                {
-                    "id": "test",
-                    "title": "Teste de Conexão",
-                    "quantity": 1,
-                    "currency_id": "BRL",
-                    "unit_price": 1.0
-                }
-            ]
+            "items": [{
+                "id": "test",
+                "title": "Teste de Conexão",
+                "quantity": 1,
+                "currency_id": "BRL",
+                "unit_price": 1.0
+            }]
         }
         
         result = preference_client.create(test_preference)
         
         if result.get("status") == 201:
             preference_id = result["response"]["id"]
-            
             return {
                 "success": True,
                 "message": "Mercado Pago conectado com sucesso!",
@@ -115,32 +394,20 @@ def test_mercadopago_connection():
                 "preference_test_id": preference_id
             }
         else:
-            return {
-                "success": False, 
-                "error": f"Erro na resposta do MP: {result.get('response', 'Sem detalhes')}"
-            }
+            return {"success": False, "error": f"Erro na resposta do MP: {result.get('response', 'Sem detalhes')}"}
             
     except Exception as e:
-        return {
-            "success": False,
-            "error": f"Erro ao conectar com MP: {str(e)}"
-        }
+        return {"success": False, "error": f"Erro ao conectar com MP: {str(e)}"}
 
 def create_checkout_service(plan, cycle, customer_email, discounted_price=None, coupon_code=None):
     """Serviço para criar checkout"""
     if not mp_sdk or not preference_client:
-        return {
-            "success": False,
-            "error": "SDK Mercado Pago não disponível"
-        }
+        return {"success": False, "error": "SDK Mercado Pago não disponível"}
     
     try:
         # Validar plano
         if plan not in PLANS:
-            return {
-                "success": False,
-                "error": f"Plano '{plan}' não encontrado"
-            }
+            return {"success": False, "error": f"Plano '{plan}' não encontrado"}
         
         plan_data = PLANS[plan]
         
@@ -169,15 +436,13 @@ def create_checkout_service(plan, cycle, customer_email, discounted_price=None, 
         
         # Dados da preferência
         preference_data = {
-            "items": [
-                {
-                    "id": plan,
-                    "title": item_title,
-                    "quantity": 1,
-                    "currency_id": "BRL",
-                    "unit_price": float(price)
-                }
-            ],
+            "items": [{
+                "id": plan,
+                "title": item_title,
+                "quantity": 1,
+                "currency_id": "BRL",
+                "unit_price": float(price)
+            }],
             "back_urls": {
                 "success": f"{base_url}/payment/success",
                 "pending": f"{base_url}/payment/pending", 
@@ -189,9 +454,7 @@ def create_checkout_service(plan, cycle, customer_email, discounted_price=None, 
         
         # Adicionar dados do pagador
         if customer_email and customer_email != 'cliente@geminii.com.br':
-            preference_data["payer"] = {
-                "email": customer_email
-            }
+            preference_data["payer"] = {"email": customer_email}
         
         print(f"🔄 Service: Criando checkout para {customer_email} - {plan_data['name']} - R$ {price}")
         
@@ -233,416 +496,16 @@ def create_checkout_service(plan, cycle, customer_email, discounted_price=None, 
             
     except Exception as e:
         print(f"❌ Service: Erro no checkout - {e}")
-        
-        return {
-            "success": False,
-            "error": "Erro interno do servidor",
-            "details": str(e)
-        }
-
-
-def process_payment(payment_id):
-    """Processar pagamento - VERSÃO CORRIGIDA"""
-    try:
-        print(f"\nSERVICE: PROCESSANDO PAGAMENTO {payment_id}")
-        print("=" * 50)
-        
-        # 1. Consultar MP
-        mp_token = os.environ.get('MP_ACCESS_TOKEN')
-        headers = {
-            'Authorization': f'Bearer {mp_token}',
-            'Content-Type': 'application/json'
-        }
-        
-        response = requests.get(
-            f'https://api.mercadopago.com/v1/payments/{payment_id}',
-            headers=headers,
-            timeout=15
-        )
-        
-        if response.status_code != 200:
-            raise Exception(f'MP API erro: {response.status_code}')
-            
-        mp_data = response.json()
-        print(f"MP Status: {mp_data.get('status')} - R$ {mp_data.get('transaction_amount')}")
-        
-        # 2. Verificar se aprovado
-        if mp_data.get('status') != 'approved':
-            print(f"Pagamento nao aprovado: {mp_data.get('status')}")
-            return {'status': 'not_approved', 'mp_status': mp_data.get('status')}
-        
-        # 3. Extrair dados
-        external_ref = mp_data.get('external_reference', '')
-        amount = float(mp_data.get('transaction_amount', 0))
-        payer_email = mp_data.get('payer', {}).get('email', '')
-        
-        print(f"Valor: R$ {amount}")
-        print(f"Email: {payer_email}")
-        print(f"Referencia: {external_ref}")
-        
-        # 4. Determinar usuário
-        user_email = payer_email
-        plan_id = 'pro'
-        cycle = 'monthly'
-        
-        if external_ref and 'geminii_' in external_ref:
-            try:
-                parts = external_ref.split('_')
-                if len(parts) >= 4:
-                    plan_id = parts[1]
-                    cycle = parts[2]
-                    user_email = parts[3]
-                    print(f"Dados extraidos - Plano: {plan_id}, Email: {user_email}")
-            except:
-                print("Erro ao extrair dados da referencia")
-        
-        if not user_email:
-            raise Exception("Email do usuário não encontrado")
-        
-        # 5. Conectar banco
-        conn = get_db_connection()
-        if not conn:
-            raise Exception("Erro de conexão com banco")
-        
-        cursor = conn.cursor()
-        
-        # 6. Verificar duplicação
-        cursor.execute("SELECT id FROM payments WHERE payment_id = %s", (str(payment_id),))
-        if cursor.fetchone():
-            conn.close()
-            print("Pagamento ja processado")
-            return {'status': 'already_processed'}
-        
-        # 7. Buscar usuário
-        cursor.execute("SELECT id, name, email FROM users WHERE email = %s", (user_email,))
-        user_row = cursor.fetchone()
-        
-        if not user_row:
-            conn.close()
-            raise Exception(f"Usuario nao encontrado: {user_email}")
-        
-        user_id, user_name, user_email_db = user_row
-        print(f"Usuario encontrado: {user_name} (ID: {user_id})")
-        
-        # 8. Determinar plano
-        if amount >= 130:
-            new_plan_id = 2
-            new_plan_name = 'Premium'
-        else:
-            new_plan_id = 1
-            new_plan_name = 'Pro'
-        
-        print(f"Plano a ativar: {new_plan_name} (ID: {new_plan_id})")
-        
-        # 9. Calcular expiração
-        from datetime import timedelta, timezone
-        if cycle == 'annual':
-            expires_at = datetime.now(timezone.utc) + timedelta(days=365)
-        else:
-            expires_at = datetime.now(timezone.utc) + timedelta(days=30)
-        
-        print(f"Expira em: {expires_at.strftime('%d/%m/%Y')}")
-        
-        # 10. Criar tabela payments se não existir
-        try:
-            cursor.execute("""
-                CREATE TABLE IF NOT EXISTS payments (
-                    id SERIAL PRIMARY KEY,
-                    user_id INTEGER REFERENCES users(id),
-                    payment_id VARCHAR(255) UNIQUE NOT NULL,
-                    status VARCHAR(50) DEFAULT 'approved',
-                    amount DECIMAL(10,2) DEFAULT 0,
-                    plan_id VARCHAR(50),
-                    plan_name VARCHAR(100),
-                    cycle VARCHAR(20) DEFAULT 'monthly',
-                    external_reference VARCHAR(255),
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                )
-            """)
-            print("Tabela payments verificada/criada")
-        except Exception as e:
-            print(f"Tabela payments ja existe: {e}")
-        
-        # 11. Inserir pagamento
-        cursor.execute("""
-            INSERT INTO payments (
-                user_id, payment_id, status, amount, plan_id, plan_name, 
-                cycle, external_reference, created_at, updated_at
-            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, NOW(), NOW())
-        """, (
-            user_id, str(payment_id), 'approved', amount, 
-            plan_id, new_plan_name, cycle, external_ref
-        ))
-        
-        print("Pagamento inserido na tabela payments")
-        
-        # 12. Adicionar colunas se não existirem
-        try:
-            cursor.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS subscription_status VARCHAR(20) DEFAULT 'inactive'")
-            cursor.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS subscription_plan VARCHAR(50)")
-            cursor.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS plan_expires_at TIMESTAMP")
-            print("Colunas da tabela users verificadas/adicionadas")
-        except Exception as e:
-            print(f"Colunas ja existem: {e}")
-        
-        # 13. *** CORREÇÃO PRINCIPAL *** - Atualizar usuário
-        print("ATUALIZANDO USUARIO...")
-        
-        cursor.execute("""
-            UPDATE users 
-            SET plan_id = %s, 
-                plan_name = %s,
-                subscription_status = 'active',
-                subscription_plan = %s,
-                plan_expires_at = %s,
-                updated_at = NOW()
-            WHERE id = %s
-        """, (new_plan_id, new_plan_name, new_plan_name, expires_at, user_id))
-        
-        rows_updated = cursor.rowcount
-        print(f"Linhas atualizadas: {rows_updated}")
-        
-        if rows_updated == 0:
-            # Tentar UPDATE mais simples
-            print("Tentando UPDATE mais simples...")
-            cursor.execute("""
-                UPDATE users 
-                SET plan_id = %s, plan_name = %s, updated_at = NOW()
-                WHERE id = %s
-            """, (new_plan_id, new_plan_name, user_id))
-            
-            rows_updated = cursor.rowcount
-            print(f"UPDATE simples - Linhas atualizadas: {rows_updated}")
-            
-            if rows_updated == 0:
-                raise Exception("ERRO CRITICO: Nenhuma linha foi atualizada!")
-        
-        # 14. Commit
-        conn.commit()
-        cursor.close()
-        conn.close()
-        
-        print(f"SUCESSO! Plano {new_plan_name} ativado para {user_name}")
-        
-        return {
-            'status': 'success',
-            'payment_id': payment_id,
-            'user_id': user_id,
-            'user_name': user_name,
-            'user_email': user_email_db,
-            'plan_name': new_plan_name,
-            'amount': amount,
-            'expires_at': expires_at.isoformat(),
-            'message': f'Plano {new_plan_name} ativado com sucesso!'
-        }
-        
-    except Exception as e:
-        print(f"ERRO NO PROCESSAMENTO: {e}")
-        import traceback
-        traceback.print_exc()
-        
-        return {
-            'status': 'error',
-            'payment_id': payment_id,
-            'error': str(e)
-        }
-
-    try:
-        print(f"\n🔥 SERVICE: PROCESSANDO PAGAMENTO {payment_id}")
-        print("=" * 50)
-        
-        # 1. Buscar dados do pagamento no MP
-        mp_token = os.environ.get('MP_ACCESS_TOKEN')
-        headers = {
-            'Authorization': f'Bearer {mp_token}',
-            'Content-Type': 'application/json'
-        }
-        
-        response = requests.get(
-            f'https://api.mercadopago.com/v1/payments/{payment_id}',
-            headers=headers
-        )
-        
-        if response.status_code != 200:
-            raise Exception(f'Pagamento não encontrado no MP: Status {response.status_code}')
-            
-        mp_data = response.json()
-        print(f"📊 Service: Status MP - {mp_data.get('status')} - R$ {mp_data.get('transaction_amount')}")
-        
-        # 2. Verificar se está aprovado
-        if mp_data.get('status') != 'approved':
-            print(f"⚠️ Service: Pagamento não aprovado - {mp_data.get('status')}")
-            return {'status': 'not_approved', 'mp_status': mp_data.get('status')}
-        
-        # 3. Extrair informações
-        external_ref = mp_data.get('external_reference', '')
-        amount = float(mp_data.get('transaction_amount', 0))
-        payer_email = mp_data.get('payer', {}).get('email', '')
-        
-        print(f"💰 Service: Valor R$ {amount}")
-        print(f"📧 Service: Email {payer_email}")
-        print(f"🔗 Service: Referência {external_ref}")
-        
-        # 4. Extrair dados da referência externa
-        user_email = None
-        plan_id = 'pro'
-        cycle = 'monthly'
-        
-        if external_ref and 'geminii_' in external_ref:
-            try:
-                parts = external_ref.split('_')
-                if len(parts) >= 4:
-                    plan_id = parts[1]
-                    cycle = parts[2]
-                    user_email = parts[3]
-                    print(f"📦 Service: Dados extraídos - Plano={plan_id}, Ciclo={cycle}, Email={user_email}")
-            except:
-                print("⚠️ Service: Erro ao extrair dados da referência")
-        
-        # Usar email do pagador se não conseguiu extrair
-        if not user_email:
-            user_email = payer_email
-        
-        if not user_email:
-            raise Exception("Email do usuário não encontrado")
-        
-        # 5. Conectar ao banco
-        conn = get_db_connection()
-        if not conn:
-            raise Exception("Erro de conexão com banco")
-        
-        cursor = conn.cursor()
-        
-        # 6. Verificar se já foi processado
-        cursor.execute("SELECT id FROM payments WHERE payment_id = %s", (str(payment_id),))
-        if cursor.fetchone():
-            conn.close()
-            print(f"⚠️ Service: Pagamento {payment_id} já processado")
-            return {'status': 'already_processed'}
-        
-        # 7. Buscar usuário
-        cursor.execute("SELECT id, name, email FROM users WHERE email = %s", (user_email,))
-        user_row = cursor.fetchone()
-        
-        if not user_row:
-            conn.close()
-            raise Exception(f"Usuário não encontrado: {user_email}")
-        
-        user_id, user_name, user_email = user_row
-        print(f"👤 Service: Usuário {user_name} (ID: {user_id})")
-        
-        # 8. Determinar plano
-        if plan_id in PLANS:
-            plan_data = PLANS[plan_id]
-            plan_name = plan_data['name']
-            plan_db_id = plan_data['db_id']
-        else:
-            # Fallback baseado no valor
-            if amount >= 130:
-                plan_id = 'premium'
-                plan_name = 'Premium'
-                plan_db_id = 2
-            else:
-                plan_id = 'pro'
-                plan_name = 'Pro'
-                plan_db_id = 1
-        
-        print(f"📦 Service: Plano {plan_name} (DB ID: {plan_db_id})")
-        
-        # 9. Calcular expiração
-        if cycle == 'annual':
-            expires_at = datetime.now(timezone.utc) + timedelta(days=365)
-        else:
-            expires_at = datetime.now(timezone.utc) + timedelta(days=30)
-        
-        print(f"📅 Service: Expira {expires_at.strftime('%d/%m/%Y')}")
-        
-        # 10. Inserir na tabela payments
-        cursor.execute("""
-            INSERT INTO payments (
-                user_id, payment_id, status, amount, plan_id, plan_name, 
-                cycle, external_reference, created_at, updated_at
-            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, NOW(), NOW())
-        """, (
-            user_id, str(payment_id), 'approved', amount, plan_id, plan_name, 
-            cycle, external_ref
-        ))
-        
-        print("✅ Service: Pagamento inserido na tabela payments")
-        
-        # 11. Atualizar usuário
-        cursor.execute("""
-            UPDATE users 
-            SET plan_id = %s, 
-                plan_name = %s,
-                subscription_status = %s,
-                subscription_plan = %s,
-                plan_expires_at = %s,
-                updated_at = NOW()
-            WHERE id = %s
-        """, (plan_db_id, plan_name, 'active', plan_name, expires_at, user_id))
-        
-        rows_updated = cursor.rowcount
-        print(f"✅ Service: Usuário atualizado ({rows_updated} linhas)")
-        
-        # 12. Registrar no histórico
-        cursor.execute("""
-            INSERT INTO payment_history (
-                user_id, plan_id, payment_id, amount, status, 
-                currency, created_at, updated_at
-            ) VALUES (%s, %s, %s, %s, %s, %s, NOW(), NOW())
-        """, (user_id, plan_db_id, str(payment_id), amount, 'approved', 'BRL'))
-        
-        print("✅ Service: Histórico registrado")
-        
-        # 13. Commit
-        conn.commit()
-        conn.close()
-        
-        print(f"\n🎉 SERVICE: SUCESSO! Plano {plan_name} ativado para {user_name}")
-        
-        return {
-            'status': 'success',
-            'payment_id': payment_id,
-            'user_id': user_id,
-            'user_name': user_name,
-            'user_email': user_email,
-            'plan_name': plan_name,
-            'amount': amount,
-            'expires_at': expires_at.isoformat(),
-            'message': f'Plano {plan_name} ativado com sucesso!'
-        }
-        
-    except Exception as e:
-        print(f"❌ SERVICE: ERRO NO PROCESSAMENTO - {e}")
-        import traceback
-        traceback.print_exc()
-        
-        return {
-            'status': 'error',
-            'payment_id': payment_id,
-            'error': str(e)
-        }
+        return {"success": False, "error": "Erro interno do servidor", "details": str(e)}
 
 def check_payment_status_service(payment_id):
     """Serviço para verificar status de pagamento"""
     try:
         # Verificar no MP
-        mp_token = os.environ.get('MP_ACCESS_TOKEN')
-        headers = {
-            'Authorization': f'Bearer {mp_token}',
-            'Content-Type': 'application/json'
-        }
-        
-        response = requests.get(
-            f'https://api.mercadopago.com/v1/payments/{payment_id}',
-            headers=headers
-        )
+        mp_data = get_payment_from_mercadopago(payment_id)
         
         mp_status = None
-        if response.status_code == 200:
-            mp_data = response.json()
+        if mp_data:
             mp_status = {
                 'status': mp_data.get('status'),
                 'amount': mp_data.get('transaction_amount'),
@@ -696,7 +559,7 @@ def get_plans_service():
     except Exception as e:
         return {"success": False, "error": str(e)}
 
-# ===== SERVIÇOS DE AUTENTICAÇÃO (MOVIDOS DO MAIN) =====
+# ===== FUNÇÕES DE AUTENTICAÇÃO =====
 
 def hash_password(password):
     """Criptografar senha"""
@@ -707,7 +570,7 @@ def generate_reset_token():
     return secrets.token_urlsafe(32)
 
 def send_reset_email(user_email, user_name, reset_token):
-    """Enviar email de reset de senha - SMTP nativo"""
+    """Enviar email de reset de senha"""
     try:
         smtp_server = "smtp.titan.email"
         smtp_port = 465
@@ -896,6 +759,281 @@ def reset_password_service(token, new_password):
 
 # Debug info
 if __name__ == "__main__":
-    print("🔧 Mercado Pago Service carregado!")
+    print("🔧 Mercado Pago Service CORRIGIDO carregado!")
     print(f"📋 Planos: {list(PLANS.keys())}")
-    print(f"🔐 Token: {mp_token[:20]}...")
+
+# ============================================
+# MERCADOPAGO_ROUTES.PY - VERSÃO CORRIGIDA
+# ============================================
+
+from flask import Blueprint, request, jsonify
+from datetime import datetime
+import mercadopago_service
+
+# ===== CONFIGURAÇÃO DO BLUEPRINT =====
+mercadopago_bp = Blueprint('mercadopago', __name__, url_prefix='/api/mercadopago')
+
+# ===== ROTAS =====
+
+@mercadopago_bp.route('/test', methods=['GET'])
+def test_connection():
+    """Testar conexão com Mercado Pago"""
+    result = mercadopago_service.test_mercadopago_connection()
+    return jsonify(result)
+
+@mercadopago_bp.route('/plans', methods=['GET'])
+def get_plans():
+    """Retornar planos disponíveis"""
+    result = mercadopago_service.get_plans_service()
+    return jsonify(result)
+
+@mercadopago_bp.route('/checkout/create', methods=['POST'])
+def create_checkout():
+    """Criar checkout do Mercado Pago"""
+    try:
+        data = request.get_json()
+        
+        if not data:
+            return jsonify({
+                "success": False,
+                "error": "Dados JSON são obrigatórios"
+            }), 400
+        
+        # Extrair dados
+        plan = data.get('plan', 'pro')
+        cycle = data.get('cycle', 'monthly')
+        customer_email = data.get('customer_email', 'cliente@geminii.com.br')
+        discounted_price = data.get('discounted_price')
+        coupon_code = data.get('coupon_code')
+        
+        # Chamar serviço
+        result = mercadopago_service.create_checkout_service(
+            plan, cycle, customer_email, discounted_price, coupon_code
+        )
+        
+        if result['success']:
+            return jsonify(result)
+        else:
+            return jsonify(result), 500
+            
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": "Erro interno do servidor",
+            "details": str(e)
+        }), 500
+
+@mercadopago_bp.route('/webhook', methods=['POST', 'GET'])
+def webhook():
+    """WEBHOOK PRINCIPAL - VERSÃO SIMPLIFICADA"""
+    
+    if request.method == 'GET':
+        return jsonify({
+            'status': 'webhook_active',
+            'service': 'mercadopago',
+            'timestamp': datetime.now().isoformat()
+        })
+    
+    print("\n" + "🔔" + "="*50)
+    print(f"WEBHOOK RECEBIDO - {datetime.now()}")
+    print("="*51)
+    
+    try:
+        # 1. OBTER DADOS DO WEBHOOK
+        data = request.get_json()
+        if not data:
+            print("❌ Webhook sem dados JSON")
+            return jsonify({"error": "No data"}), 400
+        
+        print(f"📋 Tipo: {data.get('type')}")
+        print(f"📋 Dados: {data}")
+        
+        # 2. VERIFICAR SE É PAGAMENTO
+        webhook_type = data.get("type")
+        
+        if webhook_type != "payment":
+            print(f"⚠️ Webhook ignorado: {webhook_type}")
+            return jsonify({
+                "success": True, 
+                "message": f"Webhook '{webhook_type}' ignorado"
+            }), 200
+        
+        # 3. EXTRAIR ID DO PAGAMENTO
+        payment_data = data.get("data", {})
+        payment_id = payment_data.get("id")
+        
+        if not payment_id:
+            print("❌ Payment ID ausente")
+            return jsonify({"error": "Payment ID missing"}), 400
+        
+        print(f"💳 Payment ID: {payment_id}")
+        
+        # 4. PROCESSAR PAGAMENTO
+        print("🔄 Iniciando processamento...")
+        result = mercadopago_service.process_payment(payment_id)
+        
+        # 5. RETORNAR RESPOSTA BASEADA NO RESULTADO
+        if result['status'] == 'success':
+            print("✅ WEBHOOK: Processamento bem-sucedido!")
+            return jsonify({
+                "success": True,
+                "message": "Pagamento processado e plano ativado!",
+                "payment_id": payment_id,
+                "user_plan": result.get('plan_name'),
+                "user_name": result.get('user_name')
+            }), 200
+        
+        elif result['status'] == 'already_processed':
+            print("⚠️ WEBHOOK: Pagamento já processado")
+            return jsonify({
+                "success": True,
+                "message": "Pagamento já processado",
+                "payment_id": payment_id
+            }), 200
+        
+        elif result['status'] == 'not_approved':
+            print(f"⚠️ WEBHOOK: Pagamento não aprovado: {result.get('mp_status')}")
+            return jsonify({
+                "success": True,
+                "message": f"Pagamento não aprovado: {result.get('mp_status')}",
+                "payment_id": payment_id
+            }), 200
+        
+        else:
+            print(f"❌ WEBHOOK: Erro no processamento: {result.get('error')}")
+            return jsonify({
+                "success": False,
+                "error": result.get('error', 'Erro no processamento'),
+                "payment_id": payment_id
+            }), 500
+        
+    except Exception as e:
+        print(f"❌ WEBHOOK: ERRO CRÍTICO - {e}")
+        import traceback
+        traceback.print_exc()
+        
+        return jsonify({
+            "success": False,
+            "error": f"Erro interno: {str(e)}"
+        }), 500
+
+@mercadopago_bp.route('/payment/status/<payment_id>')
+def check_payment_status(payment_id):
+    """Verificar status de pagamento"""
+    try:
+        result = mercadopago_service.check_payment_status_service(payment_id)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# ===== FUNÇÃO DE EXPORT =====
+
+def get_mercadopago_blueprint():
+    """Retornar blueprint"""
+    return mercadopago_bp
+
+# Para compatibilidade - funções que o main.py ainda pode chamar
+def process_payment(payment_id):
+    """Wrapper para compatibilidade com main.py"""
+    return mercadopago_service.process_payment(payment_id)
+
+def create_payments_table():
+    """Função vazia para compatibilidade"""
+    print("✅ create_payments_table: Tabela já existe via database.py")
+    return True
+
+def add_plan_expires_field():
+    """Função vazia para compatibilidade"""
+    print("✅ add_plan_expires_field: Campo já existe via database.py")
+    return True
+
+# ============================================
+# SCRIPT DE TESTE PARA DEBUGGING
+# ============================================
+
+def test_webhook_locally():
+    """Função para testar o webhook localmente"""
+    print("\n🧪 TESTANDO WEBHOOK LOCALMENTE")
+    print("="*40)
+    
+    # Simular dados do webhook
+    test_payment_id = "123456789"
+    
+    print(f"🔄 Testando com Payment ID: {test_payment_id}")
+    
+    result = mercadopago_service.process_payment(test_payment_id)
+    
+    print(f"📊 Resultado: {result}")
+    
+    return result
+
+def debug_database_structure():
+    """Verificar estrutura do banco"""
+    print("\n🗄️ VERIFICANDO ESTRUTURA DO BANCO")
+    print("="*40)
+    
+    try:
+        from database import get_db_connection
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # Verificar tabela users
+        cursor.execute("""
+            SELECT column_name, data_type 
+            FROM information_schema.columns 
+            WHERE table_name = 'users'
+            ORDER BY ordinal_position
+        """)
+        
+        print("📋 Colunas da tabela users:")
+        for row in cursor.fetchall():
+            print(f"   - {row[0]} ({row[1]})")
+        
+        # Verificar tabela payments
+        cursor.execute("""
+            SELECT column_name, data_type 
+            FROM information_schema.columns 
+            WHERE table_name = 'payments'
+            ORDER BY ordinal_position
+        """)
+        
+        payments_columns = cursor.fetchall()
+        print(f"\n📋 Tabela payments existe: {len(payments_columns) > 0}")
+        if payments_columns:
+            for row in payments_columns:
+                print(f"   - {row[0]} ({row[1]})")
+        
+        # Verificar tabela payment_history
+        cursor.execute("""
+            SELECT column_name, data_type 
+            FROM information_schema.columns 
+            WHERE table_name = 'payment_history'
+            ORDER BY ordinal_position
+        """)
+        
+        history_columns = cursor.fetchall()
+        print(f"\n📋 Tabela payment_history existe: {len(history_columns) > 0}")
+        if history_columns:
+            for row in history_columns:
+                print(f"   - {row[0]} ({row[1]})")
+        
+        cursor.close()
+        conn.close()
+        
+        print("\n✅ Verificação concluída!")
+        
+    except Exception as e:
+        print(f"❌ Erro na verificação: {e}")
+
+# Debug info
+if __name__ == "__main__":
+    print("🔧 Mercado Pago Routes CORRIGIDO carregado!")
+    print("📋 Rotas disponíveis:")
+    print("   - POST /api/mercadopago/webhook")
+    print("   - GET  /api/mercadopago/test")
+    print("   - POST /api/mercadopago/checkout/create")
+    print("   - GET  /api/mercadopago/payment/status/<id>")
+    
+    # Executar testes se necessário
+    # debug_database_structure()
+    # test_webhook_locally()
