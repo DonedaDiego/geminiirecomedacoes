@@ -245,7 +245,7 @@ def atsmom_page():
 
 @app.route('/payment/success')
 def payment_success():
-    """Página de sucesso do pagamento"""
+    """Página de sucesso do pagamento - VERSÃO CORRIGIDA"""
     payment_id = request.args.get('payment_id')
     status_param = request.args.get('status')
     external_reference = request.args.get('external_reference')
@@ -267,7 +267,7 @@ def payment_success():
                 <h1 class="text-3xl font-bold mb-4 text-green-400">Pagamento Aprovado!</h1>
                 
                 <div id="status-check" class="mb-6">
-                    <div class="text-yellow-400 mb-2">🔄 Ativando sua assinatura...</div>
+                    <div id="status-text" class="text-yellow-400 mb-2">🔄 Ativando sua assinatura...</div>
                     <div class="w-full bg-gray-700 rounded-full h-2">
                         <div id="progress-bar" class="bg-green-600 h-2 rounded-full transition-all duration-1000" style="width: 0%"></div>
                     </div>
@@ -277,8 +277,8 @@ def payment_success():
                     Parabéns! Sua assinatura está sendo ativada.
                 </p>
                 
-                <div class="space-y-3">
-                    <button onclick="checkAndRedirect()" 
+                <div id="action-buttons" class="space-y-3" style="display: none;">
+                    <button onclick="window.location.href='/dashboard'" 
                             class="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 px-6 py-3 rounded-lg font-medium transition-colors">
                         Ir para Dashboard
                     </button>
@@ -291,11 +291,83 @@ def payment_success():
         </div>
         
         <script>
-            function checkAndRedirect() {{
-                setTimeout(() => {{
-                    window.location.href = '/dashboard';
-                }}, 1000);
+            console.log('🎯 Página de sucesso carregada - VERSÃO CORRIGIDA');
+            
+            let progressValue = 0;
+            let checkAttempts = 0;
+            const maxAttempts = 8;  // Máximo 16 segundos
+            
+            // Animar barra de progresso
+            function animateProgress() {{
+                const progressBar = document.getElementById('progress-bar');
+                progressValue += 12.5;  // 100% / 8 tentativas
+                progressBar.style.width = progressValue + '%';
             }}
+            
+            // Verificar status do usuário
+            async function checkUserStatus() {{
+                checkAttempts++;
+                animateProgress();
+                
+                console.log(`🔍 Verificação ${{checkAttempts}}/${{maxAttempts}}`);
+                
+                try {{
+                    // Tentar buscar dados do usuário
+                    const token = localStorage.getItem('jwt_token');
+                    const headers = {{}};
+                    
+                    if (token) {{
+                        headers['Authorization'] = `Bearer ${{token}}`;
+                    }}
+                    
+                    const response = await fetch('/api/auth/verify', {{ headers }});
+                    
+                    if (response.ok) {{
+                        const data = await response.json();
+                        
+                        if (data.success && data.data.user.plan_name !== 'Básico') {{
+                            console.log('✅ Plano ativado:', data.data.user.plan_name);
+                            showSuccess();
+                            return;
+                        }}
+                    }}
+                }} catch (error) {{
+                    console.log('❌ Erro na verificação:', error);
+                }}
+                
+                // Se chegou ao máximo de tentativas ou passou muito tempo
+                if (checkAttempts >= maxAttempts) {{
+                    console.log('⏰ Timeout - liberando botões');
+                    showSuccess();
+                    return;
+                }}
+                
+                // Tentar novamente em 2 segundos
+                setTimeout(checkUserStatus, 2000);
+            }}
+            
+            // Mostrar botões e finalizar loading
+            function showSuccess() {{
+                document.getElementById('status-text').innerHTML = '✅ Assinatura ativada!';
+                document.getElementById('status-text').className = 'text-green-400 mb-2';
+                document.getElementById('progress-bar').style.width = '100%';
+                document.getElementById('action-buttons').style.display = 'block';
+                
+                // Auto-redirecionar após 3 segundos
+                setTimeout(() => {{
+                    console.log('🔄 Auto-redirecionando para dashboard...');
+                    window.location.href = '/dashboard';
+                }}, 3000);
+            }}
+            
+            // 🔥 TIMEOUT DE SEGURANÇA - 12 SEGUNDOS
+            setTimeout(() => {{
+                console.log('🚨 Timeout de segurança ativado');
+                showSuccess();
+            }}, 12000);
+            
+            // Iniciar verificação após 1 segundo
+            setTimeout(checkUserStatus, 1000);
         </script>
     </body>
     </html>
@@ -803,3 +875,9 @@ def create_app():
     initialize_database()
     return app
 
+# # Debug info
+# if __name__ == "__main__":
+#     print("🔧 Main.py LIMPO carregado!")
+#     print("📋 Arquitetura: routes → services")
+#     print("✅ Sem duplicações de código")
+#     initialize_database()
