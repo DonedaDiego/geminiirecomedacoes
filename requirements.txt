@@ -1,15 +1,29 @@
+# Web Framework
 Flask
 Flask-CORS
+
+# WSGI Server
 gunicorn
+
+# Database
 psycopg2-binary
+
+# Data Analysis & Finance
 pandas
 numpy
 yfinance
-scikit-learn
+scikit-learn==1.3.2
 xgboost
 imbalanced-learn
+
+# Visualization
 plotly
+
+# Authentication & Security
 PyJWT
+
+# Payment Processing
 mercadopago
+
+# Environment Variables
 python-dotenv
-secrets
