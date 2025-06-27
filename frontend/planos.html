@@ -678,6 +678,9 @@
     // Configuração MercadoPago
     let mp;
     let deviceId;
+    let currentUserId = null;  // ← NOVO: ID real do usuário
+    let currentUserEmail = null; // ← NOVO: Email real
+    let currentUserName = null;  // ← NOVO: Nome real
     const API_BASE = window.location.origin + '/api';
     
     // Estado da aplicação
@@ -847,7 +850,21 @@
 
         // Simular user_id (em produção, pegar do token ou sessão)
         const userData = localStorage.getItem('jwt_token');
-        const userId = userData ? 1 : 1; // Ajustar conforme sua autenticação
+        if (!currentUserId) {
+          const token = localStorage.getItem('geminii_token');
+          if (token) {
+              const response = await fetch(`${API_BASE}/auth/verify`, {
+                  headers: { 'Authorization': `Bearer ${token}` }
+              });
+              const result = await response.json();
+              if (result.success) {
+                  currentUserId = result.data.user.id;
+                  currentUserEmail = result.data.user.email;
+              }
+          }
+      }
+      
+      const userId = currentUserId || 1;
 
         const response = await fetch(`${API_BASE}/validate-coupon`, {
           method: 'POST',
