@@ -5,10 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Planos - Geminii Tech</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  
-  <!-- SDK MERCADO PAGO V2 -->
   <script src="https://sdk.mercadopago.com/js/v2"></script>
-  
   <script>
     tailwind.config = {
       theme: {
@@ -26,145 +23,180 @@
       }
     }
   </script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
-    body { 
-      font-family: 'Inter', sans-serif; 
+    body {
       overflow-x: hidden;
     }
-    
-    .plan-card {
-      background: rgba(255, 255, 255, 0.08);
-      backdrop-filter: blur(10px);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      border-radius: 16px;
-      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
-      position: relative;
+
+    /* Neon Logo Effect */
+    .neon-logo {
+      transition: all 0.3s ease;
+      border-radius: 4px;
       cursor: pointer;
     }
     
-    .plan-card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 20px 40px rgba(186, 57, 175, 0.15);
+    .neon-logo:hover {
+      filter: 
+        drop-shadow(0 0 5px #ba39af)
+        drop-shadow(0 0 10px #ba39af)
+        drop-shadow(0 0 15px #ba39af)
+        drop-shadow(0 0 20px #ba39af)
+        brightness(1.2);
+      transform: scale(1.1);
     }
-    
+
+    /* Navbar Effects */
+    nav:hover {
+      background: rgba(186, 57, 175, 0.05);
+      border-color: rgba(186, 57, 175, 0.3);
+      box-shadow: 
+        0 25px 50px -12px rgba(0, 0, 0, 0.25),
+        0 0 20px rgba(186, 57, 175, 0.2),
+        0 0 40px rgba(186, 57, 175, 0.1);
+      transition: all 0.3s ease;
+    }
+
+    nav a:hover {
+      color: #ba39af;
+      text-shadow: 
+        0 0 5px #ba39af,
+        0 0 10px #ba39af,
+        0 0 15px #ba39af;
+      transition: all 0.3s ease;
+    }
+
+    /* Plan Cards */
+    .plan-card {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 20px;
+      padding: 2rem;
+      transition: all 0.3s ease;
+      position: relative;
+    }
+
+    .plan-card:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(186, 57, 175, 0.3);
+      transform: translateY(-5px);
+      box-shadow: 0 20px 40px rgba(186, 57, 175, 0.1);
+    }
+
     .plan-card.featured {
       border: 2px solid #ba39af;
-      box-shadow: 0 0 20px rgba(186, 57, 175, 0.2);
+      background: rgba(186, 57, 175, 0.05);
     }
-    
+
+    .plan-card.featured::before {
+      content: 'MAIS POPULAR';
+      position: absolute;
+      top: -10px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: linear-gradient(135deg, #ba39af, #d946ef);
+      color: white;
+      padding: 4px 16px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: bold;
+      text-transform: uppercase;
+    }
+
     .plan-card.selected {
       border: 2px solid #ba39af !important;
       box-shadow: 0 0 25px rgba(186, 57, 175, 0.3) !important;
-      background: rgba(186, 57, 175, 0.05);
+      background: rgba(186, 57, 175, 0.08);
     }
-    
-    .plan-card.featured::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 3px;
-      background: linear-gradient(90deg, #ba39af, #d946ef);
-    }
-    
-    .feature-icon {
-      width: 18px;
-      height: 18px;
-      background: linear-gradient(135deg, #ba39af, #d946ef);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-right: 10px;
-      flex-shrink: 0;
-    }
-    
-    .price-gradient {
+
+    /* Section Headers */
+    .section-header {
       background: linear-gradient(135deg, #ba39af, #d946ef);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
+      font-weight: 800;
     }
-    
-    .btn-primary {
+
+    /* Price styling */
+    .price-main {
       background: linear-gradient(135deg, #ba39af, #d946ef);
-      transition: transform 0.2s ease;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      font-weight: 800;
     }
-    
-    .btn-primary:hover {
-      transform: translateY(-1px);
+
+    .price-discount {
+      color: #22c55e;
+      font-weight: 600;
     }
-    
-    .btn-secondary {
-      border: 2px solid rgba(186, 57, 175, 0.5);
-      background: rgba(186, 57, 175, 0.1);
-      transition: all 0.2s ease;
+
+    /* Button styling */
+    .btn-plan {
+      background: linear-gradient(135deg, #ba39af, #d946ef);
+      border: none;
+      border-radius: 12px;
+      padding: 12px 24px;
+      color: white;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-decoration: none;
+      display: inline-block;
+      text-align: center;
+      width: 100%;
     }
-    
-    .btn-secondary:hover {
-      background: rgba(186, 57, 175, 0.2);
-      border-color: rgba(186, 57, 175, 0.8);
+
+    .btn-plan:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px rgba(186, 57, 175, 0.3);
+      filter: brightness(1.1);
     }
-    
-    .comparison-table {
-      background: rgba(255, 255, 255, 0.05);
-      backdrop-filter: blur(10px);
-      border-radius: 16px;
-      border: 1px solid rgba(255, 255, 255, 0.1);
+
+    .btn-plan:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
     }
-    
-    .check-icon {
-      color: #10b981;
+
+    /* Feature list styling */
+    .feature-list {
+      list-style: none;
+      padding: 0;
+      margin: 1.5rem 0;
     }
-    
-    .cross-icon {
-      color: #ef4444;
-    }
-    
-    .faq-item {
+
+    .feature-list li {
+      padding: 8px 0;
       border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-      transition: background-color 0.2s ease;
-    }
-    
-    .faq-item:hover {
-      background: rgba(186, 57, 175, 0.05);
-    }
-    
-    .faq-content {
-      max-height: 0;
-      overflow: hidden;
-      transition: max-height 0.3s ease;
-    }
-    
-    .faq-item.active .faq-content {
-      max-height: 200px;
-    }
-    
-    .faq-item.active .faq-icon {
-      transform: rotate(180deg);
-    }
-    
-    .faq-icon {
-      transition: transform 0.2s ease;
-    }
-    
-    /* Toggle Animation */
-    #annual-toggle:checked + label .toggle-slider {
-      transform: translateX(100%);
+      display: flex;
+      align-items: center;
+      color: #e5e7eb;
     }
 
-    #annual-toggle:not(:checked) + label .toggle-slider {
-      transform: translateX(0%);
+    .feature-list li:last-child {
+      border-bottom: none;
     }
 
+    .feature-list li i {
+      color: #22c55e;
+      margin-right: 8px;
+      width: 16px;
+    }
+
+    /* Toggle styling */
     .toggle-slider {
       transition: transform 0.3s ease;
     }
 
-    /* Estilos do cupom */
+    #annual-toggle:checked + label .toggle-slider {
+      transform: translateX(100%);
+    }
+
+    /* Coupon styling */
     .coupon-input {
       background: rgba(255, 255, 255, 0.1);
       border: 1px solid rgba(255, 255, 255, 0.2);
@@ -200,55 +232,113 @@
       50% { transform: scale(1.05); }
     }
 
-    /* Neon Logo Effect */
-    .neon-logo {
-      transition: all 0.3s ease;
-      border-radius: 4px;
-      cursor: pointer;
+    /* User Menu */
+    .user-menu {
+      position: relative;
+      display: inline-block;
     }
 
-    .neon-logo:hover {
-      filter: 
-        drop-shadow(0 0 5px #ba39af)
-        drop-shadow(0 0 10px #ba39af)
-        drop-shadow(0 0 15px #ba39af)
-        drop-shadow(0 0 20px #ba39af)
-        brightness(1.2);
-      transform: scale(1.1);
+    .user-menu-dropdown {
+      display: none;
+      position: absolute;
+      right: 0;
+      top: 100%;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 12px;
+      min-width: 200px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+      z-index: 1000;
+      margin-top: 8px;
+      padding: 8px;
     }
 
-    /* Navbar Effects */
-    nav:hover {
-      background: rgba(186, 57, 175, 0.05);
-      border-color: rgba(186, 57, 175, 0.3);
-      box-shadow: 
-        0 25px 50px -12px rgba(0, 0, 0, 0.25),
-        0 0 20px rgba(186, 57, 175, 0.2),
-        0 0 40px rgba(186, 57, 175, 0.1);
-      transition: all 0.3s ease;
+    .user-menu.active .user-menu-dropdown {
+      display: block;
     }
 
-    nav a:hover {
+    .user-menu-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      color: #333;
+      text-decoration: none;
+      border-radius: 8px;
+      transition: all 0.2s ease;
+      font-size: 14px;
+    }
+
+    .user-menu-item:hover {
+      background: rgba(186, 57, 175, 0.1);
       color: #ba39af;
-      text-shadow: 
-        0 0 5px #ba39af,
-        0 0 10px #ba39af,
-        0 0 15px #ba39af;
+    }
+
+    .user-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #ba39af, #d946ef);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 600;
+      font-size: 12px;
+      cursor: pointer;
       transition: all 0.3s ease;
     }
 
-    /* Otimizações para scroll suave */
-    * {
-      scroll-behavior: smooth;
+    .user-avatar:hover {
+      transform: scale(1.1);
+      box-shadow: 0 0 20px rgba(186, 57, 175, 0.5);
     }
-    
-    /* Remover animações pesadas em dispositivos lentos */
-    @media (prefers-reduced-motion: reduce) {
-      * {
-        animation-duration: 0.01ms !important;
-        animation-iteration-count: 1 !important;
-        transition-duration: 0.01ms !important;
-      }
+
+    .plan-badge {
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: white;
+      padding: 2px 6px;
+      border-radius: 6px;
+      font-size: 9px;
+      font-weight: 600;
+      text-transform: uppercase;
+      margin-left: 4px;
+    }
+
+    .plan-badge.premium {
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+    }
+
+    .plan-badge.strategic {
+      background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+    }
+
+    /* Loading and status */
+    .status-message {
+      padding: 12px 20px;
+      border-radius: 8px;
+      margin: 16px 0;
+      text-align: center;
+      font-weight: 500;
+    }
+
+    .status-loading {
+      background: rgba(59, 130, 246, 0.1);
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      color: #3b82f6;
+    }
+
+    .status-success {
+      background: rgba(34, 197, 94, 0.1);
+      border: 1px solid rgba(34, 197, 94, 0.3);
+      color: #22c55e;
+    }
+
+    .status-error {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      color: #ef4444;
     }
 
     /* Loading overlay */
@@ -257,46 +347,123 @@
       backdrop-filter: blur(5px);
     }
 
+    /* FAQ styling */
+    .faq-item {
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      transition: background-color 0.2s ease;
+    }
+
+    .faq-item:hover {
+      background: rgba(186, 57, 175, 0.05);
+    }
+
+    .faq-content {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease;
+    }
+
+    .faq-item.active .faq-content {
+      max-height: 200px;
+    }
+
+    .faq-item.active .faq-icon {
+      transform: rotate(180deg);
+    }
+
+    .faq-icon {
+      transition: transform 0.2s ease;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .plan-card {
+        padding: 1.5rem;
+      }
+    }
   </style>
 </head>
-<body class="bg-black text-white">
+<body class="bg-black text-white font-sans">
   <div class="relative min-h-screen">
-    <!-- Background -->
-    <div class="fixed inset-0 z-0 bg-gradient-to-br from-black via-gray-900 to-black"></div>
+    <!-- Background Pattern -->
+    <div class="fixed inset-0 z-0">
+      <div class="absolute inset-0 bg-gradient-to-br from-purple-900/20 via-black to-pink-900/20"></div>
+      <div class="absolute top-0 left-0 w-full h-full opacity-10">
+        <div class="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-500 rounded-full blur-3xl"></div>
+        <div class="absolute bottom-1/4 right-1/4 w-96 h-96 bg-pink-500 rounded-full blur-3xl"></div>
+      </div>
+    </div>
     
-    <!-- Glass floating navbar -->
+    <!-- Navbar -->
     <nav class="fixed top-6 left-1/2 transform -translate-x-1/2 z-50 bg-opacity-5 border-opacity-10 bg-white border-white border rounded-full pt-4 pr-4 pb-4 pl-4 shadow-xl backdrop-blur-md">
       <div class="flex items-center justify-between">
         <div class="flex items-center">
           <img src="assets/logo.png" alt="Geminii Logo" class="w-6 h-6 neon-logo" onclick="navigateHome()" onerror="this.src='/assets/logo.png'; this.onerror=null;">
         </div>
+        
         <div class="hidden md:flex items-center space-x-6 text-xs text-gray-300 ml-8">
           <a href="/dashboard.html" class="hover:text-white transition-colors">Dashboard</a>
-          <a href="/planos" class="hover:text-white transition-colors">Planos</a>
-          <a href="/sobre" class="hover:text-white transition-colors text-geminii">Sobre</a>
+          <a href="/planos" class="hover:text-white transition-colors text-geminii">Planos</a>
+          <a href="/sobre" class="hover:text-white transition-colors">Sobre</a>
         </div>
+        
+        <!-- Auth Section -->
         <div class="flex items-center space-x-3 ml-8">
           <div id="apiStatus" class="w-8 h-8 bg-green-500 bg-opacity-10 border border-green-500 border-opacity-30 rounded-full flex items-center justify-center relative">
             <i class="fas fa-shield-alt text-green-500 text-xs"></i>
             <div class="absolute -top-1 -right-1 w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
           </div>
-          <a href="/dashboard.html" class="hover:bg-gray-200 transition-colors text-xs font-medium text-black bg-white rounded-full pt-1.5 pr-3 pb-1.5 pl-3">Começar</a>
+          
+          <!-- Guest View -->
+          <div id="guestView" class="flex items-center space-x-2">
+            <button onclick="showLoginModal()" class="hover:bg-gray-200 transition-colors text-xs font-medium text-black bg-white rounded-full pt-1.5 pr-3 pb-1.5 pl-3">Login</button>
+          </div>
+          
+          <!-- User View -->
+          <div id="userView" class="user-menu hidden">
+            <div class="user-avatar" onclick="toggleUserMenu()">
+              <span id="userInitials">GU</span>
+            </div>
+            <div class="user-menu-dropdown" id="userMenuDropdown">
+              <div class="px-3 py-2 border-b border-gray-200">
+                <p class="text-sm font-medium text-gray-900" id="userName">Usuário</p>
+                <p class="text-xs text-gray-500" id="userEmail">email@example.com</p>
+                <p class="text-xs text-gray-500">
+                  Plano: <span id="userPlan" class="font-medium">Básico</span>
+                  <span id="planBadge" class="plan-badge">Free</span>
+                </p>
+              </div>
+              <a href="/dashboard.html" class="user-menu-item">
+                <i class="fas fa-tachometer-alt"></i>
+                Dashboard
+              </a>
+              <a href="/planos.html" class="user-menu-item">
+                <i class="fas fa-crown"></i>
+                Planos & Assinatura
+              </a>
+              <div class="border-t border-gray-200 mt-1 pt-1">
+                <a href="#" onclick="logout()" class="user-menu-item">
+                  <i class="fas fa-sign-out-alt"></i>
+                  Sair
+                </a>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </nav>
     
-    <!-- Content -->
-    <div class="relative z-10 pt-32 pb-16">
+    <!-- Main Content -->
+    <div class="relative z-10 pt-32 pb-20">
       <div class="max-w-6xl mx-auto px-6">
         
-        <!-- Header -->
+        <!-- Header Section -->
         <div class="text-center mb-16">
-          <h1 class="text-4xl md:text-5xl font-bold mb-6">
-            <span class="text-white font-light">Escolha seu</span>
-            <span style="color: #ba39af; font-weight: 900;">Plano</span>
+          <h1 class="text-4xl md:text-6xl font-bold mb-6">
+            Escolha seu <span class="section-header">Plano</span>
           </h1>
-          <p class="text-neutral-300 text-lg max-w-2xl mx-auto leading-relaxed">
-            Análises profissionais, dados em tempo real e estratégias exclusivas para maximizar seus investimentos na B3.
+          <p class="text-xl text-gray-300 max-w-3xl mx-auto leading-relaxed">
+            Análises profissionais, dados em tempo real e estratégias exclusivas para maximizar seus investimentos.
           </p>
           
           <!-- Toggle Anual/Mensal -->
@@ -317,7 +484,7 @@
           </div>
         </div>
 
-        <!-- Seção de cupom de desconto -->
+        <!-- Cupom Section -->
         <div class="plan-card p-6 mb-8 max-w-2xl mx-auto">
           <div class="text-center mb-4">
             <h3 class="text-lg font-semibold text-white mb-2">
@@ -332,7 +499,7 @@
               <input 
                 type="text" 
                 id="coupon-input"
-                placeholder="Digite seu cupom (ex: CURSO50)"
+                placeholder="Digite seu cupom"
                 class="w-full px-4 py-3 coupon-input text-white placeholder-gray-400 text-sm font-medium uppercase"
                 maxlength="20"
               >
@@ -353,17 +520,9 @@
         <!-- Plans Grid -->
         <div class="grid md:grid-cols-2 gap-8 mb-16 max-w-4xl mx-auto">
           
-          <!-- Plano Pro (Featured) -->
-          <div class="plan-card featured p-6" id="plan-pro" onclick="selectPlan('pro')">
-            
-            <!-- Badge Popular -->
-            <div class="absolute -top-3 left-1/2 transform -translate-x-1/2">
-              <span class="bg-gradient-to-r from-pink-500 to-purple-600 text-white text-xs font-bold px-3 py-1 rounded-full">
-                MAIS POPULAR
-              </span>
-            </div>
-            
-            <!-- Badge de desconto (aparece quando cupom aplicado) -->
+          <!-- Plano Pro -->
+          <div class="plan-card featured" id="plan-pro">
+            <!-- Badge de desconto -->
             <div id="discount-badge-pro" class="absolute -top-3 -right-3 hidden">
               <span class="discount-badge text-white text-xs font-bold px-3 py-1 rounded-full">
                 <i class="fas fa-percentage mr-1"></i>
@@ -373,7 +532,7 @@
             
             <div class="text-center mb-6 mt-3">
               <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                <i class="fas fa-crosshairs text-white text-lg"></i>
+                <i class="fas fa-rocket text-white text-lg"></i>
               </div>
               <h3 class="text-xl font-bold text-white mb-2">Pro</h3>
               <p class="text-gray-400 text-sm">Para quem já investe e quer se posicionar melhor</p>
@@ -386,7 +545,7 @@
               </div>
               
               <!-- Preço atual -->
-              <div class="text-3xl font-bold price-gradient mb-1">
+              <div class="text-3xl font-bold price-main mb-1">
                 <span id="price-pro">R$ 79</span>
               </div>
               <div class="text-gray-400 text-sm">
@@ -399,54 +558,23 @@
               </div>
             </div>
             
-            <div class="space-y-3 mb-6">
-              <div class="flex items-center">
-                <div class="feature-icon">
-                  <i class="fas fa-check text-white text-xs"></i>
-                </div>
-                <span class="text-gray-300 text-sm">Monitor avançado de ações</span>
-              </div>
-              <div class="flex items-center">
-                <div class="feature-icon">
-                  <i class="fas fa-check text-white text-xs"></i>
-                </div>
-                <span class="text-gray-300 text-sm">RSL e análise técnica avançada</span>
-              </div>
-              <div class="flex items-center">
-                <div class="feature-icon">
-                  <i class="fas fa-check text-white text-xs"></i>
-                </div>
-                <span class="text-gray-300 text-sm">Backtests automáticos</span>
-              </div>
-              <div class="flex items-center">
-                <div class="feature-icon">
-                  <i class="fas fa-check text-white text-xs"></i>
-                </div>
-                <span class="text-gray-300 text-sm">Alertas via WhatsApp</span>
-              </div>
-              <div class="flex items-center">
-                <div class="feature-icon">
-                  <i class="fas fa-check text-white text-xs"></i>
-                </div>
-                <span class="text-gray-300 text-sm">Dados históricos ilimitados</span>
-              </div>
-              <div class="flex items-center">
-                <div class="feature-icon">
-                  <i class="fas fa-check text-white text-xs"></i>
-                </div>
-                <span class="text-gray-300 text-sm">API para desenvolvedores</span>
-              </div>
-            </div>
+            <ul class="feature-list mb-6">
+              <li><i class="fas fa-check"></i> Monitor avançado de ações</li>
+              <li><i class="fas fa-check"></i> RSL e análise técnica avançada</li>
+              <li><i class="fas fa-check"></i> Backtests automáticos</li>
+              <li><i class="fas fa-check"></i> Alertas via WhatsApp</li>
+              <li><i class="fas fa-check"></i> Dados históricos ilimitados</li>
+              <li><i class="fas fa-check"></i> API para desenvolvedores</li>
+            </ul>
             
-            <button class="w-full py-3 btn-primary text-white font-medium rounded-lg text-sm" onclick="selectPlan('pro')">
+            <button id="btn-pro" onclick="createCheckout('pro')" class="btn-plan">
               Escolher Pro
             </button>
           </div>
 
           <!-- Plano Premium -->
-          <div class="plan-card p-6" id="plan-premium" onclick="selectPlan('premium')">
-            
-            <!-- Badge de desconto (aparece quando cupom aplicado) -->
+          <div class="plan-card" id="plan-premium">
+            <!-- Badge de desconto -->
             <div id="discount-badge-premium" class="absolute -top-3 -right-3 hidden">
               <span class="discount-badge text-white text-xs font-bold px-3 py-1 rounded-full">
                 <i class="fas fa-percentage mr-1"></i>
@@ -469,7 +597,7 @@
               </div>
               
               <!-- Preço atual -->
-              <div class="text-3xl font-bold price-gradient mb-1">
+              <div class="text-3xl font-bold price-main mb-1">
                 <span id="price-premium">R$ 149</span>
               </div>
               <div class="text-gray-400 text-sm">
@@ -482,102 +610,18 @@
               </div>
             </div>
             
-            <div class="space-y-3 mb-6">
-              <div class="flex items-center">
-                <div class="feature-icon">
-                  <i class="fas fa-check text-white text-xs"></i>
-                </div>
-                <span class="text-gray-300 text-sm"><strong>Tudo do Pro +</strong></span>
-              </div>
-              <div class="flex items-center">
-                <div class="feature-icon">
-                  <i class="fas fa-check text-white text-xs"></i>
-                </div>
-                <span class="text-gray-300 text-sm">Long & Short strategies</span>
-              </div>
-              <div class="flex items-center">
-                <div class="feature-icon">
-                  <i class="fas fa-check text-white text-xs"></i>
-                </div>
-                <span class="text-gray-300 text-sm">IA para recomendações</span>
-              </div>
-              <div class="flex items-center">
-                <div class="feature-icon">
-                  <i class="fas fa-check text-white text-xs"></i>
-                </div>
-                <span class="text-gray-300 text-sm">Consultoria personalizada</span>
-              </div>
-              <div class="flex items-center">
-                <div class="feature-icon">
-                  <i class="fas fa-check text-white text-xs"></i>
-                </div>
-                <span class="text-gray-300 text-sm">Acesso prioritário</span>
-              </div>
-              <div class="flex items-center">
-                <div class="feature-icon">
-                  <i class="fas fa-check text-white text-xs"></i>
-                </div>
-                <span class="text-gray-300 text-sm">Relatórios exclusivos</span>
-              </div>
-            </div>
+            <ul class="feature-list mb-6">
+              <li><i class="fas fa-check"></i> <strong>Tudo do Pro +</strong></li>
+              <li><i class="fas fa-check"></i> Long & Short strategies</li>
+              <li><i class="fas fa-check"></i> IA para recomendações</li>
+              <li><i class="fas fa-check"></i> Consultoria personalizada</li>
+              <li><i class="fas fa-check"></i> Acesso prioritário</li>
+              <li><i class="fas fa-check"></i> Relatórios exclusivos</li>
+            </ul>
             
-            <button class="w-full py-3 btn-primary text-white font-medium rounded-lg text-sm" onclick="selectPlan('premium')">
+            <button id="btn-premium" onclick="createCheckout('premium')" class="btn-plan">
               Escolher Premium
             </button>
-          </div>
-        </div>
-
-        <!-- Comparison Table -->
-        <div class="comparison-table p-6 mb-16">
-          <h3 class="text-xl font-bold text-white text-center mb-6">Compare os planos</h3>
-          
-          <div class="overflow-x-auto">
-            <table class="w-full text-sm">
-              <thead>
-                <tr class="border-b border-white border-opacity-10">
-                  <th class="text-left py-3 text-gray-400 font-medium">Recursos</th>
-                  <th class="text-center py-3 text-white font-medium">Pro</th>
-                  <th class="text-center py-3 text-white font-medium">Premium</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr class="border-b border-white border-opacity-5">
-                  <td class="py-3 text-gray-300">Monitor de ações</td>
-                  <td class="text-center py-3"><i class="fas fa-check check-icon"></i></td>
-                  <td class="text-center py-3"><i class="fas fa-check check-icon"></i></td>
-                </tr>
-                <tr class="border-b border-white border-opacity-5">
-                  <td class="py-3 text-gray-300">Radar de setores</td>
-                  <td class="text-center py-3"><i class="fas fa-check check-icon"></i></td>
-                  <td class="text-center py-3"><i class="fas fa-check check-icon"></i></td>
-                </tr>
-                <tr class="border-b border-white border-opacity-5">
-                  <td class="py-3 text-gray-300">RSL e análise técnica</td>
-                  <td class="text-center py-3"><i class="fas fa-check check-icon"></i></td>
-                  <td class="text-center py-3"><i class="fas fa-check check-icon"></i></td>
-                </tr>
-                <tr class="border-b border-white border-opacity-5">
-                  <td class="py-3 text-gray-300">Backtests automáticos</td>
-                  <td class="text-center py-3"><i class="fas fa-check check-icon"></i></td>
-                  <td class="text-center py-3"><i class="fas fa-check check-icon"></i></td>
-                </tr>
-                <tr class="border-b border-white border-opacity-5">
-                  <td class="py-3 text-gray-300">Long & Short strategies</td>
-                  <td class="text-center py-3"><i class="fas fa-times cross-icon"></i></td>
-                  <td class="text-center py-3"><i class="fas fa-check check-icon"></i></td>
-                </tr>
-                <tr class="border-b border-white border-opacity-5">
-                  <td class="py-3 text-gray-300">IA para recomendações</td>
-                  <td class="text-center py-3"><i class="fas fa-times cross-icon"></i></td>
-                  <td class="text-center py-3"><i class="fas fa-check check-icon"></i></td>
-                </tr>
-                <tr class="border-b border-white border-opacity-5">
-                  <td class="py-3 text-gray-300">Consultoria personalizada</td>
-                  <td class="text-center py-3"><i class="fas fa-times cross-icon"></i></td>
-                  <td class="text-center py-3"><i class="fas fa-check check-icon"></i></td>
-                </tr>
-              </tbody>
-            </table>
           </div>
         </div>
 
@@ -608,16 +652,6 @@
 
             <div class="faq-item p-3 rounded-lg cursor-pointer" onclick="toggleFAQ(2)">
               <div class="flex items-center justify-between">
-                <h4 class="text-white font-medium text-sm">Posso trocar de plano depois?</h4>
-                <i class="fas fa-chevron-down text-gray-400 faq-icon text-sm"></i>
-              </div>
-              <div class="faq-content">
-                <p class="text-gray-400 mt-3 text-sm">Claro! Você pode fazer upgrade ou downgrade do seu plano a qualquer momento. As mudanças são aplicadas no próximo ciclo de cobrança.</p>
-              </div>
-            </div>
-
-            <div class="faq-item p-3 rounded-lg cursor-pointer" onclick="toggleFAQ(3)">
-              <div class="flex items-center justify-between">
                 <h4 class="text-white font-medium text-sm">Os dados são em tempo real?</h4>
                 <i class="fas fa-chevron-down text-gray-400 faq-icon text-sm"></i>
               </div>
@@ -626,13 +660,13 @@
               </div>
             </div>
 
-            <div class="faq-item p-3 rounded-lg cursor-pointer" onclick="toggleFAQ(4)">
+            <div class="faq-item p-3 rounded-lg cursor-pointer" onclick="toggleFAQ(3)">
               <div class="flex items-center justify-between">
                 <h4 class="text-white font-medium text-sm">Como funcionam os cupons de desconto?</h4>
                 <i class="fas fa-chevron-down text-gray-400 faq-icon text-sm"></i>
               </div>
               <div class="faq-content">
-                <p class="text-gray-400 mt-3 text-sm">Nossos cupons oferecem descontos exclusivos nos planos. Cada cupom pode ser usado apenas uma vez por usuário e tem prazo de validade. Digite o código antes de finalizar a compra.</p>
+                <p class="text-gray-400 mt-3 text-sm">Nossos cupons oferecem descontos exclusivos nos planos. Cada cupom pode ser usado apenas uma vez por usuário e tem prazo de validade.</p>
               </div>
             </div>
           </div>
@@ -646,12 +680,12 @@
           </p>
           
           <div class="flex flex-col sm:flex-row gap-4 justify-center">
-            <button class="px-6 py-3 btn-primary text-white font-medium rounded-lg text-sm" onclick="redirectToCheckout(selectedPlan)">
+            <button onclick="createCheckout('pro')" class="px-6 py-3 btn-plan text-white font-medium rounded-lg text-sm">
               Começar teste grátis
             </button>
-            <button class="px-6 py-3 btn-secondary text-white font-medium rounded-lg text-sm">
+            <a href="mailto:contato@geminii.com.br" class="px-6 py-3 bg-transparent border border-geminii text-geminii hover:bg-geminii hover:text-white font-medium rounded-lg text-sm transition-all">
               Falar com consultor
-            </button>
+            </a>
           </div>
           
           <p class="text-xs text-gray-500 mt-4">
@@ -672,31 +706,131 @@
         </div>
       </div>
     </div>
+
+    <!-- Status Messages -->
+    <div id="status-messages" class="fixed top-20 right-4 z-50 space-y-2"></div>
   </div>
 
   <script>
-    // Configuração MercadoPago
-    let mp;
-    let deviceId;
-    let currentUserId = null;  // ← NOVO: ID real do usuário
-    let currentUserEmail = null; // ← NOVO: Email real
-    let currentUserName = null;  // ← NOVO: Nome real
-    const API_BASE = window.location.origin + '/api';
+    // ===== CONFIGURAÇÃO GLOBAL =====
+    let mp = null;
+    let deviceId = null;
+    let currentUser = null;
+    let userToken = null;
+    const API_BASE = '/api';
     
     // Estado da aplicação
-    let selectedPlan = 'pro';
     let plansData = [];
     let isAnnual = true;
     let appliedCoupon = null;
     let discountData = null;
 
-    // Elementos DOM
-    const toggle = document.getElementById('annual-toggle');
-    const couponInput = document.getElementById('coupon-input');
-    const couponFeedback = document.getElementById('coupon-feedback');
-    const applyCouponBtn = document.getElementById('apply-coupon-btn');
+    // ===== INICIALIZAÇÃO =====
+    document.addEventListener('DOMContentLoaded', function() {
+      console.log('🚀 Geminii Planos - Versão Integrada carregada!');
+      
+      // Inicializar componentes
+      initializeMercadoPago();
+      checkAuthStatus();
+      loadPlans();
+      setupEventListeners();
+      checkApiStatus();
+      
+      console.log('✅ Sistema iniciado com sucesso!');
+    });
 
-    // Inicializar MercadoPago
+    // ===== AUTENTICAÇÃO =====
+    async function checkAuthStatus() {
+      const token = localStorage.getItem('geminii_token');
+      
+      if (!token) {
+        showGuestView();
+        return;
+      }
+
+      try {
+        const response = await fetch(`${API_BASE}/auth/verify`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          userToken = token;
+          currentUser = result.data.user;
+          showUserView(currentUser);
+        } else {
+          localStorage.removeItem('geminii_token');
+          localStorage.removeItem('geminii_user');
+          showGuestView();
+        }
+
+      } catch (error) {
+        console.error('Erro na verificação de auth:', error);
+        showGuestView();
+      }
+    }
+
+    function showGuestView() {
+      document.getElementById('guestView').classList.remove('hidden');
+      document.getElementById('userView').classList.add('hidden');
+      currentUser = null;
+      userToken = null;
+    }
+
+    function showUserView(user) {
+      document.getElementById('guestView').classList.add('hidden');
+      document.getElementById('userView').classList.remove('hidden');
+
+      const initials = user.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+      document.getElementById('userInitials').textContent = initials;
+      document.getElementById('userName').textContent = user.name;
+      document.getElementById('userEmail').textContent = user.email;
+      document.getElementById('userPlan').textContent = user.plan_name || 'Básico';
+
+      const planBadge = document.getElementById('planBadge');
+      const planId = user.plan_id || 3;
+      
+      if (planId === 3) {
+        planBadge.textContent = 'Grátis';
+        planBadge.className = 'plan-badge';
+      } else if (planId === 1) {
+        planBadge.textContent = 'Pro';
+        planBadge.className = 'plan-badge premium';  
+      } else if (planId === 2) {
+        planBadge.textContent = 'Premium';
+        planBadge.className = 'plan-badge strategic';
+      }
+    }
+
+    function toggleUserMenu() {
+      const userMenu = document.querySelector('.user-menu');
+      userMenu.classList.toggle('active');
+    }
+
+    async function logout() {
+      try {
+        if (userToken) {
+          await fetch(`${API_BASE}/auth/logout`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${userToken}` }
+          });
+        }
+      } catch (error) {
+        console.error('Logout error:', error);
+      } finally {
+        localStorage.removeItem('geminii_token');
+        localStorage.removeItem('geminii_user');
+        showGuestView();
+        document.querySelector('.user-menu').classList.remove('active');
+      }
+    }
+
+    function showLoginModal() {
+      window.location.href = '/login.html';
+    }
+
+    // ===== MERCADO PAGO =====
     async function initializeMercadoPago() {
       try {
         const publicKey = 'TEST-a5bcc6b2-29d6-4c1e-ad6c-31ce73d0d377';
@@ -707,13 +841,17 @@
 
         deviceId = mp.getDeviceId();
         
+        console.log('✅ MercadoPago inicializado');
+        console.log('📱 Device ID:', deviceId);
+        
       } catch (error) {
-        console.error('Erro ao inicializar MercadoPago:', error);
+        console.error('❌ Erro ao inicializar MP:', error);
+        showMessage('Erro ao carregar sistema de pagamento', 'error');
       }
     }
 
-    // Carregar planos do backend
-    async function loadPlansFromDatabase() {
+    // ===== CARREGAMENTO DE PLANOS =====
+    async function loadPlans() {
       try {
         const response = await fetch(`${API_BASE}/mercadopago/plans`);
         const data = await response.json();
@@ -721,13 +859,13 @@
         if (data.success && data.data) {
           plansData = data.data;
           updatePlansInterface();
-          selectPlan('pro');
-          updatePlanButtons();
         } else {
+          console.warn('Usando planos fallback');
           useFallbackPlans();
         }
         
       } catch (error) {
+        console.error('Erro ao carregar planos:', error);
         useFallbackPlans();
       }
     }
@@ -755,18 +893,15 @@
       ];
       
       updatePlansInterface();
-      selectPlan('pro');
-      updatePlanButtons();
     }
 
     function updatePlansInterface() {
       plansData.forEach(plan => {
         updatePlanPricing(plan.name);
       });
-      updatePlanButtons();
     }
 
-    // Atualizar preços com desconto
+    // ===== ATUALIZAÇÃO DE PREÇOS =====
     function updatePlanPricing(planName) {
       const plan = plansData.find(p => p.name === planName);
       if (!plan) return;
@@ -828,16 +963,23 @@
         if (savingsElement) savingsElement.classList.add('hidden');
         if (discountBadge) discountBadge.classList.add('hidden');
       }
+
+      // Atualizar botão
+      const button = document.getElementById(`btn-${planName}`);
+      if (button) {
+        const cycle = isAnnual ? 'Anual' : 'Mensal';
+        button.textContent = `Escolher ${plan.display_name} ${cycle} - R$ ${Math.round(finalPrice)}`;
+      }
     }
 
     function updatePrices() {
-      isAnnual = toggle.checked;
+      isAnnual = document.getElementById('annual-toggle').checked;
       updatePlansInterface();
     }
 
-    // Sistema de cupom
+    // ===== SISTEMA DE CUPOM =====
     async function applyCoupon() {
-      const couponCode = couponInput.value.trim().toUpperCase();
+      const couponCode = document.getElementById('coupon-input').value.trim().upper();
       
       if (!couponCode) {
         showCouponFeedback('Digite um código de cupom', 'error');
@@ -845,26 +987,11 @@
       }
 
       try {
+        const applyCouponBtn = document.getElementById('apply-coupon-btn');
         applyCouponBtn.disabled = true;
         applyCouponBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Validando...';
 
-        // Simular user_id (em produção, pegar do token ou sessão)
-        const userData = localStorage.getItem('jwt_token');
-        if (!currentUserId) {
-          const token = localStorage.getItem('geminii_token');
-          if (token) {
-              const response = await fetch(`${API_BASE}/auth/verify`, {
-                  headers: { 'Authorization': `Bearer ${token}` }
-              });
-              const result = await response.json();
-              if (result.success) {
-                  currentUserId = result.data.user.id;
-                  currentUserEmail = result.data.user.email;
-              }
-          }
-      }
-      
-      const userId = currentUserId || 1;
+        const userId = currentUser ? currentUser.id : 1;
 
         const response = await fetch(`${API_BASE}/validate-coupon`, {
           method: 'POST',
@@ -873,7 +1000,7 @@
           },
           body: JSON.stringify({
             code: couponCode,
-            plan_name: selectedPlan,
+            plan_name: 'pro', // Pode ser validado para qualquer plano
             user_id: userId
           })
         });
@@ -885,26 +1012,28 @@
           discountData = result.data;
           
           showCouponFeedback(`Cupom aplicado! ${result.data.discount_percent}% de desconto`, 'success');
-          couponInput.classList.add('coupon-success');
-          couponInput.classList.remove('coupon-error');
+          document.getElementById('coupon-input').classList.add('coupon-success');
+          document.getElementById('coupon-input').classList.remove('coupon-error');
           
           updatePlansInterface();
 
         } else {
           showCouponFeedback(result.error || 'Cupom inválido', 'error');
-          couponInput.classList.add('coupon-error');
-          couponInput.classList.remove('coupon-success');
+          document.getElementById('coupon-input').classList.add('coupon-error');
+          document.getElementById('coupon-input').classList.remove('coupon-success');
         }
 
       } catch (error) {
         showCouponFeedback('Erro ao validar cupom. Tente novamente.', 'error');
       } finally {
+        const applyCouponBtn = document.getElementById('apply-coupon-btn');
         applyCouponBtn.disabled = false;
         applyCouponBtn.innerHTML = '<i class="fas fa-check mr-1"></i> Aplicar';
       }
     }
 
     function showCouponFeedback(message, type) {
+      const couponFeedback = document.getElementById('coupon-feedback');
       couponFeedback.textContent = message;
       couponFeedback.className = `mt-2 text-xs ${type === 'success' ? 'text-green-400' : type === 'error' ? 'text-red-400' : 'text-yellow-400'}`;
       couponFeedback.classList.remove('hidden');
@@ -914,26 +1043,8 @@
       }, 5000);
     }
 
-    async function selectPlan(planName) {
-      try {
-        document.querySelectorAll('.plan-card').forEach(card => {
-          card.classList.remove('selected');
-        });
-        
-        const planCard = document.getElementById(`plan-${planName}`);
-        if (planCard) {
-          planCard.classList.add('selected');
-        }
-        
-        selectedPlan = planName;
-        
-      } catch (error) {
-        console.error('Erro ao selecionar plano:', error);
-      }
-    }
-
-    // Redirecionar para checkout
-    async function redirectToCheckout(planName) {
+    // ===== CHECKOUT =====
+    async function createCheckout(planName) {
       try {
         showLoading(true);
         
@@ -949,24 +1060,6 @@
         const originalPrice = isAnnual ? planData.price_annual : planData.price_monthly;
         let finalPrice = originalPrice;
         
-        // Dados do usuário (pegar da autenticação real em produção)
-        const token = localStorage.getItem('jwt_token');
-        let userData = null;
-        
-        if (token) {
-          try {
-            const response = await fetch(`${API_BASE}/auth/verify`, {
-              headers: { 'Authorization': `Bearer ${token}` }
-            });
-            const data = await response.json();
-            if (data.success) {
-              userData = data.data.user;
-            }
-          } catch (error) {
-            console.error('Erro ao verificar token:', error);
-          }
-        }
-        
         // Preparar dados para o checkout
         let checkoutData = {
           plan: planData.name,
@@ -975,10 +1068,10 @@
         };
         
         // Adicionar dados do usuário se autenticado
-        if (userData) {
-          checkoutData.user_id = userData.id;
-          checkoutData.user_email = userData.email;
-          checkoutData.user_name = userData.name;
+        if (currentUser) {
+          checkoutData.user_id = currentUser.id;
+          checkoutData.user_email = currentUser.email;
+          checkoutData.user_name = currentUser.name;
         }
         
         // Adicionar dados do cupom se aplicado
@@ -1038,70 +1131,13 @@
         }
         
       } catch (error) {
+        console.error('Erro no checkout:', error);
         showMessage('Erro de conexão. Verifique sua internet e tente novamente.', 'error');
         showLoading(false);
       }
     }
 
-    // Configurar botões baseado na escolha do usuário
-    function updatePlanButtons() {
-      // Botão Pro
-      const proButton = document.querySelector('#plan-pro button');
-      if (proButton) {
-        const proData = plansData.find(p => p.name === 'pro');
-        if (proData) {
-          const originalPrice = isAnnual ? proData.price_annual : proData.price_monthly;
-          let finalPrice = originalPrice;
-          
-          if (appliedCoupon && discountData) {
-            const isApplicable = !discountData.applicable_plans || 
-                               discountData.applicable_plans.length === 0 || 
-                               discountData.applicable_plans.includes('pro');
-            if (isApplicable) {
-              const discountAmount = (originalPrice * discountData.discount_percent) / 100;
-              finalPrice = originalPrice - discountAmount;
-            }
-          }
-          
-          const cycle = isAnnual ? 'Anual' : 'Mensal';
-          proButton.innerHTML = `Escolher Pro ${cycle} - R$ ${Math.round(finalPrice)}`;
-        }
-        
-        proButton.onclick = (e) => {
-          e.stopPropagation();
-          redirectToCheckout('pro');
-        };
-      }
-      
-      // Botão Premium
-      const premiumButton = document.querySelector('#plan-premium button');
-      if (premiumButton) {
-        const premiumData = plansData.find(p => p.name === 'premium');
-        if (premiumData) {
-          const originalPrice = isAnnual ? premiumData.price_annual : premiumData.price_monthly;
-          let finalPrice = originalPrice;
-          
-          if (appliedCoupon && discountData) {
-            const isApplicable = !discountData.applicable_plans || 
-                               discountData.applicable_plans.length === 0 || 
-                               discountData.applicable_plans.includes('premium');
-            if (isApplicable) {
-              const discountAmount = (originalPrice * discountData.discount_percent) / 100;
-              finalPrice = originalPrice - discountAmount;
-            }
-          }
-          
-          const cycle = isAnnual ? 'Anual' : 'Mensal';
-          premiumButton.innerHTML = `Escolher Premium ${cycle} - R$ ${Math.round(finalPrice)}`;
-        }
-        
-        premiumButton.onclick = (e) => {
-          e.stopPropagation();
-          redirectToCheckout('premium');
-        };
-      }
-    }
-
+    // ===== UTILITÁRIOS =====
     function showLoading(show) {
       const loadingOverlay = document.getElementById('loading-overlay');
       const couponInfo = document.getElementById('loading-coupon-info');
@@ -1119,7 +1155,7 @@
       }
     }
 
-    function showMessage(message, type) {
+    function showMessage(message, type = 'info') {
       const colors = {
         success: 'bg-green-600 border-green-500',
         warning: 'bg-yellow-600 border-yellow-500', 
@@ -1135,7 +1171,7 @@
       };
       
       const messageDiv = document.createElement('div');
-      messageDiv.className = `fixed top-4 right-4 ${colors[type]} text-white px-6 py-4 rounded-lg shadow-lg z-50 max-w-sm border`;
+      messageDiv.className = `${colors[type]} text-white px-6 py-4 rounded-lg shadow-lg border mb-2 max-w-sm`;
       messageDiv.innerHTML = `
         <div class="flex items-center">
           <span class="text-xl mr-3">${icons[type]}</span>
@@ -1143,7 +1179,8 @@
         </div>
       `;
       
-      document.body.appendChild(messageDiv);
+      const container = document.getElementById('status-messages');
+      container.appendChild(messageDiv);
       
       setTimeout(() => {
         messageDiv.remove();
@@ -1163,24 +1200,43 @@
     }
 
     function navigateHome() {
-      window.location.href = '/';
+      window.location.href = '/dashboard.html';
     }
 
-    // Inicialização
-    document.addEventListener('DOMContentLoaded', () => {
-      initializeMercadoPago();
-      loadPlansFromDatabase();
+    async function checkApiStatus() {
+      try {
+        const response = await fetch(`${API_BASE}/status`);
+        const data = await response.json();
+        
+        if (data.status === 'online') {
+          document.getElementById('apiStatus').innerHTML = `
+            <i class="fas fa-shield-alt text-green-500 text-xs"></i>
+            <div class="absolute -top-1 -right-1 w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+          `;
+        }
+      } catch (error) {
+        document.getElementById('apiStatus').innerHTML = `
+          <i class="fas fa-shield-alt text-red-500 text-xs"></i>
+          <div class="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+        `;
+      }
+    }
+
+    function setupEventListeners() {
+      // Toggle anual/mensal
+      const toggle = document.getElementById('annual-toggle');
+      toggle.addEventListener('change', updatePrices);
       
-      toggle.addEventListener('change', () => {
-        updatePrices();
-      });
+      // Input do cupom
+      const couponInput = document.getElementById('coupon-input');
+      const applyCouponBtn = document.getElementById('apply-coupon-btn');
       
       couponInput.addEventListener('input', (e) => {
         const value = e.target.value.trim();
         applyCouponBtn.disabled = !value;
         
         if (value) {
-          couponFeedback.classList.add('hidden');
+          document.getElementById('coupon-feedback').classList.add('hidden');
           couponInput.classList.remove('coupon-success', 'coupon-error');
         }
       });
@@ -1190,17 +1246,27 @@
           applyCoupon();
         }
       });
-      
-      updatePrices();
-    });
 
-    // Funções globais
-    window.selectPlan = selectPlan;
-    window.redirectToCheckout = redirectToCheckout;
+      // Fechar menu do usuário ao clicar fora
+      document.addEventListener('click', (e) => {
+        const userMenu = document.querySelector('.user-menu');
+        if (userMenu && !userMenu.contains(e.target)) {
+          userMenu.classList.remove('active');
+        }
+      });
+    }
+
+    // ===== FUNÇÕES GLOBAIS =====
+    window.createCheckout = createCheckout;
     window.toggleFAQ = toggleFAQ;
     window.applyCoupon = applyCoupon;
     window.navigateHome = navigateHome;
+    window.toggleUserMenu = toggleUserMenu;
+    window.logout = logout;
+    window.showLoginModal = showLoginModal;
 
+    // Auto-verificar API status a cada 30 segundos
+    setInterval(checkApiStatus, 30000);
   </script>
 </body>
 </html>
