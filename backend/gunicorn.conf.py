@@ -37,7 +37,3 @@ else:
     except:
         workers = 2
 
-print(f"🚀 Gunicorn configurado:")
-print(f"   Workers: {workers}")
-print(f"   Bind: {bind}")
-print(f"   Environment: {os.environ.get('FLASK_ENV', 'production')}")

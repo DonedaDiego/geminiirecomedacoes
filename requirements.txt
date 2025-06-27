@@ -1,1 +1,15 @@
-
+Flask
+Flask-CORS
+gunicorn
+psycopg2-binary
+pandas
+numpy
+yfinance
+scikit-learn
+xgboost
+imbalanced-learn
+plotly
+PyJWT
+mercadopago
+python-dotenv
+secrets
