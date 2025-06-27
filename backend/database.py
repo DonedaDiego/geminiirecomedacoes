@@ -548,7 +548,7 @@ def cleanup_expired_tokens():
 # ===== FUNÇÕES AUXILIARES PARA COMPATIBILIDADE =====
 
 def validate_coupon(code, plan_name, user_id):
-    """🔥 Validar cupom - EXATAMENTE como o service espera"""
+    """🔥 Validar cupom - CORRIGIDO para usar campos corretos"""
     try:
         conn = get_db_connection()
         if not conn:
@@ -556,12 +556,12 @@ def validate_coupon(code, plan_name, user_id):
         
         cursor = conn.cursor()
         
-        # Buscar cupom - usando campos corretos
+        # 🔧 CORREÇÃO 1: usar is_active e used_count (não active e current_uses)
         cursor.execute("""
-            SELECT id, discount_percent, discount_type, max_uses, current_uses, 
-                   expires_at, applicable_plans, min_amount
+            SELECT id, discount_percent, discount_type, max_uses, used_count, 
+                   valid_until, applicable_plans, discount_value
             FROM coupons 
-            WHERE code = %s AND active = TRUE
+            WHERE code = %s AND is_active = TRUE
         """, (code.upper(),))
         
         coupon = cursor.fetchone()
@@ -571,16 +571,17 @@ def validate_coupon(code, plan_name, user_id):
             conn.close()
             return {'valid': False, 'error': 'Cupom não encontrado ou inativo'}
         
-        coupon_id, discount_percent, discount_type, max_uses, current_uses, expires_at, applicable_plans, min_amount = coupon
+        # 🔧 CORREÇÃO 2: usar nomes corretos das variáveis
+        coupon_id, discount_percent, discount_type, max_uses, used_count, valid_until, applicable_plans, discount_value = coupon
         
-        # Verificar expiração
-        if expires_at and datetime.now(timezone.utc) > expires_at.replace(tzinfo=timezone.utc):
+        # 🔧 CORREÇÃO 3: verificar valid_until (não expires_at)
+        if valid_until and datetime.now(timezone.utc) > valid_until.replace(tzinfo=timezone.utc):
             cursor.close()
             conn.close()
             return {'valid': False, 'error': 'Cupom expirado'}
         
-        # Verificar limite de uso
-        if max_uses and current_uses >= max_uses:
+        # 🔧 CORREÇÃO 4: usar used_count (não current_uses)
+        if max_uses and used_count >= max_uses:
             cursor.close()
             conn.close()
             return {'valid': False, 'error': 'Cupom esgotado'}
