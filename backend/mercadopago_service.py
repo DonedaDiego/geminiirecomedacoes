@@ -166,8 +166,8 @@ def get_plans_service():
     except Exception as e:
         return {"success": False, "error": str(e)}
 
-def create_checkout_service(plan, cycle, customer_email, discounted_price=None, coupon_code=None, device_id=None):
-    """Criar checkout com melhorias para aprovação"""
+def create_checkout_service(plan, cycle, customer_email=None, user_id=None, user_email=None, user_name=None, discounted_price=None, coupon_code=None, device_id=None):
+    """Criar checkout com melhorias para aprovação - VERSÃO CORRIGIDA"""
     if not mp_sdk or not preference_client:
         return {"success": False, "error": "SDK Mercado Pago não disponível"}
     
@@ -193,7 +193,17 @@ def create_checkout_service(plan, cycle, customer_email, discounted_price=None, 
             item_title += f" (Cupom: {coupon_code})"
         
         timestamp = int(time.time())
-        external_reference = f"geminii_{plan}_{cycle}_{customer_email}_{timestamp}"
+        
+        # 🔥 CORREÇÃO PRINCIPAL: USAR USER_ID EM VEZ DE EMAIL
+        if user_id:
+            external_reference = f"geminii_{plan}_{cycle}_user{user_id}_{timestamp}"
+            payer_email = user_email or customer_email or "cliente@geminii.com.br"
+            payer_name = user_name or "Cliente Geminii"
+        else:
+            # Fallback para compatibilidade
+            external_reference = f"geminii_{plan}_{cycle}_{customer_email or 'cliente@geminii.com.br'}_{timestamp}"
+            payer_email = customer_email or "cliente@geminii.com.br"
+            payer_name = "Cliente Geminii"
         
         preference_data = {
             "items": [{
@@ -224,10 +234,11 @@ def create_checkout_service(plan, cycle, customer_email, discounted_price=None, 
             }
         }
         
-        if customer_email and customer_email != 'cliente@geminii.com.br':
+        # 🔥 CORREÇÃO: USAR DADOS REAIS DO USUÁRIO
+        if payer_email and payer_email != 'cliente@geminii.com.br':
             preference_data["payer"] = {
-                "email": customer_email,
-                "name": "Cliente Geminii"
+                "email": payer_email,
+                "name": payer_name
             }
         
         if device_id and validate_device_id(device_id):
@@ -238,7 +249,9 @@ def create_checkout_service(plan, cycle, customer_email, discounted_price=None, 
         
         print(f"🔄 Criando checkout otimizado para aprovação...")
         print(f"💰 Valor: R$ {price} ({cycle_display})")
-        print(f"📧 Email: {customer_email}")
+        print(f"📧 Email: {payer_email}")
+        print(f"👤 User ID: {user_id}")
+        print(f"🔗 External Ref: {external_reference}")
         
         preference_response = None
         for attempt in range(3):
@@ -273,6 +286,8 @@ def create_checkout_service(plan, cycle, customer_email, discounted_price=None, 
                     "coupon_code": coupon_code,
                     "external_reference": external_reference,
                     "device_id": device_id,
+                    "user_id": user_id,
+                    "user_email": payer_email,
                     "expires_in": "24 horas"
                 }
             }
@@ -355,26 +370,39 @@ def get_payment_from_mercadopago(payment_id):
         print(f"❌ Erro ao consultar MP: {e}")
         return None
 
+def extract_user_id_from_reference(external_ref):
+    """Extrair user_id do external_reference"""
+    try:
+        # "geminii_premium_annual_user52_1751041790" → 52
+        import re
+        match = re.search(r'user(\d+)', external_ref)
+        return int(match.group(1)) if match else None
+    except:
+        return None
+
 def extract_payment_data(mp_data):
-    """Extrair dados relevantes do pagamento"""
+    """Extrair dados relevantes do pagamento - VERSÃO CORRIGIDA"""
     amount = float(mp_data.get('transaction_amount', 0))
     external_ref = mp_data.get('external_reference', '')
     payer_email = mp_data.get('payer', {}).get('email', '')
     
-    user_email = payer_email
+    # 🔥 CORREÇÃO PRINCIPAL: PRIORIZAR USER_ID DO EXTERNAL_REFERENCE
+    user_id = extract_user_id_from_reference(external_ref)
+    
+    # Extrair dados do external_reference
     plan_id = 'pro'
     cycle = 'monthly'
     
     if external_ref and 'geminii_' in external_ref:
         try:
             parts = external_ref.split('_')
-            if len(parts) >= 5:
-                plan_id = parts[1]
-                cycle = parts[2]
-                user_email = parts[3]
+            if len(parts) >= 3:
+                plan_id = parts[1]  # premium, pro
+                cycle = parts[2]    # annual, monthly
         except:
             pass
     
+    # Determinar plano baseado no valor
     if amount >= 130:
         plan_id = 'premium'
         plan_name = 'Premium'
@@ -384,6 +412,7 @@ def extract_payment_data(mp_data):
         plan_name = 'Pro'
         plan_db_id = 1
     
+    # Usar dados do PLANS se disponível
     if plan_id in PLANS:
         plan_data = PLANS[plan_id]
         plan_name = plan_data['name']
@@ -391,26 +420,68 @@ def extract_payment_data(mp_data):
     
     return {
         'amount': amount,
-        'user_email': user_email,
+        'user_id': user_id,           # 🔥 NOVO: Priorizar user_id
+        'user_email': payer_email,    # Backup por email
         'plan_id': plan_id,
         'plan_name': plan_name,
         'plan_db_id': plan_db_id,
         'cycle': cycle,
-        'external_reference': external_ref
+        'external_reference': external_ref,
+        'search_strategy': 'user_id' if user_id else 'email'  # Para debug
     }
 
-def find_or_create_user(cursor, email):
-    """Buscar usuário por email"""
-    print(f"🔍 Buscando usuário: {email}")
+def find_or_create_user(cursor, payment_data):
+    """Buscar usuário por ID ou email - VERSÃO CORRIGIDA"""
+    user_id = payment_data.get('user_id')
+    user_email = payment_data.get('user_email')
     
-    cursor.execute("SELECT id, name, email FROM users WHERE LOWER(email) = LOWER(%s)", (email,))
-    result = cursor.fetchone()
+    print(f"🔍 Buscando usuário...")
+    print(f"   Strategy: {payment_data.get('search_strategy', 'unknown')}")
+    print(f"   User ID: {user_id}")
+    print(f"   Email: {user_email}")
     
-    if result:
-        print(f"✅ Usuário encontrado: {result[1]} (ID: {result[0]})")
-        return {'id': result[0], 'name': result[1], 'email': result[2]}
+    # 🔥 ESTRATÉGIA 1: BUSCAR POR USER_ID (PRIORIDADE)
+    if user_id:
+        cursor.execute("SELECT id, name, email FROM users WHERE id = %s", (user_id,))
+        result = cursor.fetchone()
+        
+        if result:
+            print(f"✅ Usuário encontrado por ID: {result[1]} (ID: {result[0]})")
+            return {'id': result[0], 'name': result[1], 'email': result[2]}
+        else:
+            print(f"❌ Usuário ID {user_id} não encontrado")
     
-    print(f"❌ Usuário não encontrado: {email}")
+    # 🔥 ESTRATÉGIA 2: BUSCAR POR EMAIL (FALLBACK)
+    if user_email:
+        cursor.execute("SELECT id, name, email FROM users WHERE LOWER(email) = LOWER(%s)", (user_email,))
+        result = cursor.fetchone()
+        
+        if result:
+            print(f"✅ Usuário encontrado por email: {result[1]} (ID: {result[0]})")
+            return {'id': result[0], 'name': result[1], 'email': result[2]}
+        else:
+            print(f"❌ Usuário email {user_email} não encontrado")
+    
+    # 🔥 ESTRATÉGIA 3: BUSCAR USUÁRIOS RECENTES (ÚLTIMO RECURSO)
+    print("🔍 Tentando encontrar usuário recente...")
+    cursor.execute("""
+        SELECT id, name, email FROM users 
+        WHERE created_at > NOW() - INTERVAL '7 days'
+        AND plan_name = 'Básico'
+        ORDER BY created_at DESC 
+        LIMIT 5
+    """)
+    
+    recent_users = cursor.fetchall()
+    if recent_users:
+        print(f"📋 Usuários recentes encontrados: {len(recent_users)}")
+        for user in recent_users:
+            print(f"   - {user[1]} ({user[2]}) - ID: {user[0]}")
+        
+        # Por enquanto, não auto-selecionar
+        # return {'id': recent_users[0][0], 'name': recent_users[0][1], 'email': recent_users[0][2]}
+    
+    print(f"❌ Nenhum usuário encontrado - ID: {user_id}, Email: {user_email}")
     return None
 
 def calculate_expiration(cycle):
@@ -516,11 +587,22 @@ def process_payment(payment_id):
             return {'status': 'already_processed'}
         
         # 5. Buscar usuário
-        user_data = find_or_create_user(cursor, payment_data['user_email'])
+        user_data = find_or_create_user(cursor, payment_data)
+        # LINHAS 46-49 (CORRIGIDAS):
         if not user_data:
             cursor.close()
             conn.close()
-            return {'status': 'error', 'error': f'Usuário não encontrado: {payment_data["user_email"]}'}
+            
+            # Mensagem de erro mais informativa
+            user_id = payment_data.get('user_id')
+            user_email = payment_data.get('user_email')
+            
+            if user_id:
+                error_msg = f'Usuário não encontrado - ID: {user_id}, Email: {user_email}'
+            else:
+                error_msg = f'Usuário não encontrado - Email: {user_email}'
+            
+            return {'status': 'error', 'error': error_msg, 'payment_data': payment_data}
         
         # 6. Processar
         ensure_tables_exist(cursor)

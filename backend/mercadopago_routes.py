@@ -22,9 +22,10 @@ def get_plans():
     result = mercadopago_service.get_plans_service()
     return jsonify(result)
 
+# mercadopago_routes.py - LINHA 47-55 (CORREÇÃO)
 @mercadopago_bp.route('/checkout/create', methods=['POST'])
 def create_checkout():
-    """🔥 Criar checkout com Device ID para aprovação"""
+    """🔥 Criar checkout com Device ID para aprovação - VERSÃO CORRIGIDA"""
     try:
         data = request.get_json()
         
@@ -34,31 +35,42 @@ def create_checkout():
                 "error": "Dados JSON são obrigatórios"
             }), 400
         
-        # Extrair dados
+        # 🔥 EXTRAIR DADOS CORRETOS DO FRONTEND
         plan = data.get('plan', 'pro')
         cycle = data.get('cycle', 'monthly')
-        customer_email = data.get('customer_email', 'cliente@geminii.com.br')
+        user_id = data.get('user_id')           # ← NOVO
+        user_email = data.get('user_email')     # ← NOVO  
+        user_name = data.get('user_name')       # ← NOVO
+        device_id = data.get('device_id')
         discounted_price = data.get('discounted_price')
         coupon_code = data.get('coupon_code')
-        device_id = data.get('device_id')  # 🔥 DEVICE ID PARA APROVAÇÃO
         
-        print(f"🔥 ROUTE: Criando checkout com Device ID")
+        # Compatibilidade com versão antiga
+        customer_email = data.get('customer_email', user_email)
+        
+        print(f"🔥 ROUTE: Criando checkout CORRIGIDO")
         print(f"   Plan: {plan} | Cycle: {cycle}")
-        print(f"   Email: {customer_email}")
+        print(f"   User ID: {user_id}")
+        print(f"   User Email: {user_email}")
+        print(f"   User Name: {user_name}")
         print(f"   Device ID: {device_id[:20] + '...' if device_id else 'NÃO FORNECIDO'}")
         
-        # Chamar serviço COM device_id
+        # 🔥 CHAMAR SERVIÇO COM PARÂMETROS CORRETOS
         result = mercadopago_service.create_checkout_service(
             plan=plan, 
             cycle=cycle, 
-            customer_email=customer_email, 
+            customer_email=customer_email,      # Compatibilidade
+            user_id=user_id,                    # ← NOVO
+            user_email=user_email,              # ← NOVO
+            user_name=user_name,                # ← NOVO
             discounted_price=discounted_price, 
             coupon_code=coupon_code,
-            device_id=device_id  # 🔥 PASSAR DEVICE ID
+            device_id=device_id
         )
         
         if result['success']:
             print(f"✅ ROUTE: Checkout criado com sucesso - {result['data']['preference_id']}")
+            print(f"🔗 External Ref: {result['data']['external_reference']}")
             return jsonify(result), 200
         else:
             print(f"❌ ROUTE: Erro no checkout - {result['error']}")
