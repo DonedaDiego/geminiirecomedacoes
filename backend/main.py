@@ -803,9 +803,3 @@ def create_app():
     initialize_database()
     return app
 
-# # Debug info
-# if __name__ == "__main__":
-#     print("🔧 Main.py LIMPO carregado!")
-#     print("📋 Arquitetura: routes → services")
-#     print("✅ Sem duplicações de código")
-#     initialize_database()

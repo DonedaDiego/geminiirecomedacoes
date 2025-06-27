@@ -846,17 +846,17 @@
       const planId = user.plan_id || 1;
       
       if (planId === 1) {
-        planBadge.textContent = 'Free';
-        planBadge.className = 'plan-badge';
+        planBadge.textContent = 'Pro';
+        planBadge.className = 'plan-badge Premium';
       } else if (planId === 2) {
         planBadge.textContent = 'Premium';
-        planBadge.className = 'plan-badge premium';
-      } else if (planId >= 3) {
-        planBadge.textContent = 'Strategic';
         planBadge.className = 'plan-badge strategic';
+      } else if (planId >= 3) {
+        planBadge.textContent = 'Grátis';
+        planBadge.className = 'plan-badge';
       }
     }
-
+    
     function toggleUserMenu() {
       const userMenu = document.querySelector('.user-menu');
       userMenu.classList.toggle('active');

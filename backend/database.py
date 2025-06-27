@@ -1,19 +1,19 @@
+# database.py - VERSÃO CORRIGIDA E SINCRONIZADA
+# ==================================================
+
 import os
 import psycopg2
 from psycopg2.extras import RealDictCursor
 from datetime import datetime, timezone
 
 def get_db_connection():
-    """Conectar com PostgreSQL (local ou Render)"""
+    """Conectar com PostgreSQL (local ou Railway)"""
     try:
-        # Se estiver no Render, usar DATABASE_URL
         database_url = os.environ.get("DATABASE_URL")
         
         if database_url:
-            # Produção (Render) - usa a URL completa
             conn = psycopg2.connect(database_url, sslmode='require')
         else:
-            # Desenvolvimento local
             conn = psycopg2.connect(
                 host=os.environ.get("DB_HOST", "localhost"),
                 database=os.environ.get("DB_NAME", "postgres"),
@@ -45,7 +45,7 @@ def test_connection():
         return False
 
 def create_plans_table():
-    """Criar tabela de planos"""
+    """🔥 Criar tabela de planos SINCRONIZADA com o service"""
     try:
         conn = get_db_connection()
         if not conn:
@@ -53,7 +53,6 @@ def create_plans_table():
             
         cursor = conn.cursor()
         
-        # Criar tabela plans
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS plans (
                 id SERIAL PRIMARY KEY,
@@ -68,37 +67,35 @@ def create_plans_table():
             );
         """)
         
-        # 🔧 ATUALIZAR PLANOS PARA PRO E PREMIUM
-        cursor.execute("SELECT COUNT(*) FROM plans;")
-        count = cursor.fetchone()[0]
+        # 🔥 LIMPAR E RECRIAR PLANOS EXATAMENTE COMO NO SERVICE
+        cursor.execute("DELETE FROM plans")
         
-        if count == 0:
-            # Inserir apenas Pro e Premium
-            cursor.execute("""
-                INSERT INTO plans (name, display_name, price_monthly, price_annual, description, features) VALUES
-                ('pro', 'Pro', 79.00, 72.00, 'Para quem já investe e quer se posicionar melhor', 
-                 ARRAY['Monitor avançado de ações', 'RSL e análise técnica avançada', 'Backtests automáticos', 'Alertas via WhatsApp', 'Dados históricos ilimitados', 'API para desenvolvedores']),
-                ('premium', 'Premium', 149.00, 137.00, 'Para investidores experientes que querem diferenciais', 
-                 ARRAY['Tudo do Pro +', 'Long & Short strategies', 'IA para recomendações', 'Consultoria personalizada', 'Acesso prioritário', 'Relatórios exclusivos']);
-            """)
-            print("✅ Planos Pro e Premium inseridos!")
-        else:
-            # Se já existem planos, vamos atualizar
-            print("⚠️ Planos já existem. Execute o script de atualização separadamente.")
+        cursor.execute("""
+            INSERT INTO plans (id, name, display_name, price_monthly, price_annual, description, features) VALUES
+            (1, 'pro', 'Pro', 79.00, 72.00, 'Para quem já investe e quer se posicionar melhor', 
+             ARRAY['Monitor avançado de ações', 'RSL e análise técnica avançada', 'Backtests automáticos', 'Alertas via WhatsApp', 'Dados históricos ilimitados', 'API para desenvolvedores']),
+            (2, 'premium', 'Premium', 149.00, 137.00, 'Para investidores experientes que querem diferenciais', 
+             ARRAY['Tudo do Pro +', 'Long & Short strategies', 'IA para recomendações', 'Consultoria personalizada', 'Acesso prioritário', 'Relatórios exclusivos']),
+            (3, 'basico', 'Básico', 0.00, 0.00, 'Acesso básico ao sistema', 
+             ARRAY['Acesso básico ao sistema', 'Dados limitados', 'Funcionalidades essenciais']);
+        """)
+        
+        # Resetar sequence
+        cursor.execute("SELECT setval('plans_id_seq', 3, true)")
         
         conn.commit()
         cursor.close()
         conn.close()
         
-        print("✅ Tabela 'plans' criada com sucesso!")
+        print("✅ Planos sincronizados: Pro (id=1), Premium (id=2), Básico (id=3)")
         return True
         
     except Exception as e:
-        print(f"❌ Erro ao criar tabela plans: {e}")
+        print(f"❌ Erro ao criar planos: {e}")
         return False
 
 def create_users_table():
-    """Criar tabela users COM TODOS OS CAMPOS NECESSÁRIOS"""
+    """🔥 Criar tabela users COM TODOS OS CAMPOS NECESSÁRIOS PARA O SERVICE"""
     try:
         conn = get_db_connection()
         if not conn:
@@ -106,7 +103,6 @@ def create_users_table():
             
         cursor = conn.cursor()
         
-        # ✅ CRIAR TABELA USERS COMPLETA
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS users (
                 id SERIAL PRIMARY KEY,
@@ -116,24 +112,21 @@ def create_users_table():
                 plan_id INTEGER DEFAULT 1,
                 plan_name VARCHAR(50) DEFAULT 'Pro',
                 user_type VARCHAR(20) DEFAULT 'regular',
+                
+                -- 🔥 CAMPOS NECESSÁRIOS PARA O MERCADO PAGO SERVICE
+                subscription_status VARCHAR(20) DEFAULT 'inactive',
+                subscription_plan VARCHAR(50),
+                plan_expires_at TIMESTAMP,
+                
                 registration_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
         """)
         
-        # ✅ CRIAR ÍNDICES PARA BUSCA RÁPIDA
-        cursor.execute("""
-            CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
-        """)
-        
-        cursor.execute("""
-            CREATE INDEX IF NOT EXISTS idx_users_type ON users(user_type);
-        """)
-        
-        cursor.execute("""
-            CREATE INDEX IF NOT EXISTS idx_users_registration_date ON users(registration_date);
-        """)
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_users_type ON users(user_type);")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_users_subscription ON users(subscription_status);")
         
         conn.commit()
         cursor.close()
@@ -145,9 +138,9 @@ def create_users_table():
     except Exception as e:
         print(f"❌ Erro ao criar tabela users: {e}")
         return False
-    
-def update_existing_users_table():
-    """Atualizar tabela users existente com campos que faltam"""
+
+def update_users_table_for_service():
+    """🔥 Atualizar tabela users existente para compatibilidade com o service"""
     try:
         conn = get_db_connection()
         if not conn:
@@ -155,132 +148,40 @@ def update_existing_users_table():
             
         cursor = conn.cursor()
         
-        print("🔧 Atualizando tabela users existente...")
+        print("🔧 Atualizando tabela users para compatibilidade com MercadoPago service...")
         
-        # ✅ ADICIONAR CAMPOS QUE FALTAM
+        # Adicionar campos necessários para o service
+        cursor.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS subscription_status VARCHAR(20) DEFAULT 'inactive'")
+        cursor.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS subscription_plan VARCHAR(50)")
+        cursor.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS plan_expires_at TIMESTAMP")
+        cursor.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS user_type VARCHAR(20) DEFAULT 'regular'")
+        cursor.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS registration_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
         
-        # 1. user_type
-        cursor.execute("""
-            ALTER TABLE users 
-            ADD COLUMN IF NOT EXISTS user_type VARCHAR(20) DEFAULT 'regular'
-        """)
-        print("✅ Campo user_type adicionado")
-        
-        # 2. registration_date
-        cursor.execute("""
-            ALTER TABLE users 
-            ADD COLUMN IF NOT EXISTS registration_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        """)
-        print("✅ Campo registration_date adicionado")
-        
-        # ✅ ATUALIZAR USUÁRIOS EXISTENTES
+        # Atualizar dados existentes
         cursor.execute("""
             UPDATE users 
-            SET registration_date = created_at 
-            WHERE registration_date IS NULL
-        """)
-        print(f"✅ {cursor.rowcount} usuários existentes atualizados")
-        
-        # ✅ ATUALIZAR PLANO PADRÃO DE 'Básico' PARA 'Pro'
-        cursor.execute("""
-            UPDATE users 
-            SET plan_name = 'Pro' 
-            WHERE plan_name = 'Básico'
-        """)
-        print(f"✅ {cursor.rowcount} usuários migrados de Básico para Pro")
-        
-        # ✅ CRIAR ÍNDICES
-        cursor.execute("""
-            CREATE INDEX IF NOT EXISTS idx_users_type ON users(user_type)
+            SET subscription_plan = plan_name,
+                registration_date = COALESCE(registration_date, created_at)
+            WHERE subscription_plan IS NULL OR registration_date IS NULL
         """)
         
-        cursor.execute("""
-            CREATE INDEX IF NOT EXISTS idx_users_registration_date ON users(registration_date)
-        """)
+        # Criar índices
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_users_subscription ON users(subscription_status)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_users_type ON users(user_type)")
         
         conn.commit()
         cursor.close()
         conn.close()
         
-        print("🎉 Tabela users atualizada com sucesso!")
+        print("✅ Tabela users atualizada para compatibilidade com o service!")
         return True
         
     except Exception as e:
-        print(f"❌ Erro ao atualizar tabela: {e}")
-        return False    
+        print(f"❌ Erro ao atualizar tabela users: {e}")
+        return False
 
-
-def register_user_complete(name, email, password, plan_id=1, plan_name="Pro"):
-    """Registrar usuário com todos os campos"""
-    try:
-        conn = get_db_connection()
-        if not conn:
-            return {'success': False, 'error': 'Erro de conexão'}
-            
-        cursor = conn.cursor()
-        
-        # Verificar se email já existe
-        cursor.execute("SELECT id FROM users WHERE email = %s", (email.lower(),))
-        if cursor.fetchone():
-            cursor.close()
-            conn.close()
-            return {'success': False, 'error': 'Email já cadastrado'}
-        
-        # Hash da senha
-        import hashlib
-        password_hash = hashlib.sha256(password.encode()).hexdigest()
-        
-        # Data atual
-        now = datetime.now(timezone.utc)
-        
-        # ✅ INSERIR USUÁRIO COM TODOS OS CAMPOS
-        cursor.execute("""
-            INSERT INTO users (name, email, password, plan_id, plan_name, user_type, registration_date, created_at, updated_at) 
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-            RETURNING id
-        """, (
-            name,                    # name
-            email.lower(),           # email
-            password_hash,           # password
-            plan_id,                 # plan_id
-            plan_name,              # plan_name
-            'regular',              # user_type
-            now,                    # registration_date ✅
-            now,                    # created_at
-            now                     # updated_at
-        ))
-
-        user_id = cursor.fetchone()[0]
-        
-        conn.commit()
-        cursor.close()
-        conn.close()
-        
-        print(f"✅ Usuário registrado: {name} ({email}) - ID: {user_id}")
-        print(f"📅 Data de registro salva: {now}")
-        
-        return {
-            'success': True, 
-            'user_id': user_id,
-            'message': 'Usuário registrado com sucesso',
-            'user': {
-                'id': user_id,
-                'name': name,
-                'email': email.lower(),
-                'plan_id': plan_id,
-                'plan_name': plan_name,
-                'user_type': 'regular'
-                # registration_date não é enviada para o frontend
-            }
-        }
-        
-    except Exception as e:
-        print(f"❌ Erro no registro: {e}")
-        return {'success': False, 'error': f'Erro interno: {str(e)}'}
-    
-
-def update_plans_to_pro_premium():
-    """Atualizar planos existentes para Pro e Premium apenas"""
+def create_payments_table():
+    """🔥 Criar tabela payments EXATAMENTE como o service espera"""
     try:
         conn = get_db_connection()
         if not conn:
@@ -288,35 +189,40 @@ def update_plans_to_pro_premium():
             
         cursor = conn.cursor()
         
-        # Limpar planos existentes
-        cursor.execute("DELETE FROM plans")
-        print("🗑️ Planos antigos removidos")
-        
-        # Inserir novos planos Pro e Premium
         cursor.execute("""
-            INSERT INTO plans (id, name, display_name, price_monthly, price_annual, description, features) VALUES
-            (1, 'pro', 'Pro', 79.00, 72.00, 'Para quem já investe e quer se posicionar melhor', 
-             ARRAY['Monitor avançado de ações', 'RSL e análise técnica avançada', 'Backtests automáticos', 'Alertas via WhatsApp', 'Dados históricos ilimitados', 'API para desenvolvedores']),
-            (2, 'premium', 'Premium', 149.00, 137.00, 'Para investidores experientes que querem diferenciais', 
-             ARRAY['Tudo do Pro +', 'Long & Short strategies', 'IA para recomendações', 'Consultoria personalizada', 'Acesso prioritário', 'Relatórios exclusivos']);
+            CREATE TABLE IF NOT EXISTS payments (
+                id SERIAL PRIMARY KEY,
+                user_id INTEGER REFERENCES users(id),
+                payment_id VARCHAR(255) UNIQUE NOT NULL,
+                status VARCHAR(50) DEFAULT 'approved',
+                amount DECIMAL(10,2) DEFAULT 0,
+                plan_id VARCHAR(50),
+                plan_name VARCHAR(100),
+                cycle VARCHAR(20) DEFAULT 'monthly',
+                external_reference VARCHAR(255),
+                device_id VARCHAR(255),
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
         """)
         
-        # Resetar sequence para começar do 3
-        cursor.execute("SELECT setval('plans_id_seq', 2, true)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_payments_user_id ON payments(user_id)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_payments_payment_id ON payments(payment_id)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_payments_status ON payments(status)")
         
         conn.commit()
         cursor.close()
         conn.close()
         
-        print("✅ Planos atualizados para Pro (id=1) e Premium (id=2)!")
+        print("✅ Tabela 'payments' criada exatamente como o service espera!")
         return True
         
     except Exception as e:
-        print(f"❌ Erro ao atualizar planos: {e}")
+        print(f"❌ Erro ao criar tabela payments: {e}")
         return False
 
-def update_cupons_for_new_plans():
-    """Atualizar cupons para trabalhar com pro e premium"""
+def create_payment_history():
+    """🔥 Criar tabela payment_history com CONFLICT handling correto"""
     try:
         conn = get_db_connection()
         if not conn:
@@ -324,32 +230,98 @@ def update_cupons_for_new_plans():
             
         cursor = conn.cursor()
         
-        # Atualizar cupons existentes para aceitar pro e premium
         cursor.execute("""
-            UPDATE coupons 
-            SET applicable_plans = ARRAY['pro', 'premium']
-            WHERE applicable_plans IS NOT NULL
+            CREATE TABLE IF NOT EXISTS payment_history (
+                id SERIAL PRIMARY KEY,
+                user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+                plan_id INTEGER,
+                payment_id VARCHAR(255) UNIQUE,
+                amount DECIMAL(10,2) NOT NULL,
+                currency VARCHAR(3) DEFAULT 'BRL',
+                status VARCHAR(50) NOT NULL,
+                payment_method VARCHAR(50),
+                coupon_code VARCHAR(50),
+                discount_amount DECIMAL(10,2) DEFAULT 0,
+                subscription_id VARCHAR(255),
+                is_recurring BOOLEAN DEFAULT false,
+                next_billing_date DATE,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
         """)
         
-        print(f"✅ {cursor.rowcount} cupons atualizados para pro/premium")
-        
-        # Verificar se tem cupons
-        cursor.execute("SELECT code, applicable_plans FROM coupons WHERE is_active = true")
-        cupons = cursor.fetchall()
-        
-        for cupom in cupons:
-            print(f"🎫 Cupom: {cupom[0]} | Planos: {cupom[1]}")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_payment_user ON payment_history(user_id)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_payment_status ON payment_history(status)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_payment_payment_id ON payment_history(payment_id)")
         
         conn.commit()
         cursor.close()
         conn.close()
         
+        print("✅ Tabela 'payment_history' criada!")
         return True
         
     except Exception as e:
-        print(f"❌ Erro ao atualizar cupons: {e}")
+        print(f"❌ Erro ao criar payment_history: {e}")
         return False
 
+def create_coupons_table():
+    """🔥 Criar sistema de cupons SINCRONIZADO com o service"""
+    try:
+        conn = get_db_connection()
+        if not conn:
+            return False
+            
+        cursor = conn.cursor()
+        
+        # Tabela de cupons
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS coupons (
+                id SERIAL PRIMARY KEY,
+                code VARCHAR(50) UNIQUE NOT NULL,
+                discount_percent DECIMAL(5,2) NOT NULL CHECK (discount_percent > 0 AND discount_percent <= 100),
+                discount_type VARCHAR(20) DEFAULT 'percent',
+                max_uses INTEGER DEFAULT NULL,
+                current_uses INTEGER DEFAULT 0,
+                expires_at TIMESTAMP,
+                applicable_plans VARCHAR(255),
+                min_amount DECIMAL(10,2) DEFAULT 0,
+                active BOOLEAN DEFAULT true,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        
+        # 🔥 TABELA coupon_uses (não coupon_usage) - como o service espera
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS coupon_uses (
+                id SERIAL PRIMARY KEY,
+                coupon_id INTEGER REFERENCES coupons(id) ON DELETE CASCADE,
+                user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+                plan_name VARCHAR(50) NOT NULL,
+                original_price DECIMAL(10,2) NOT NULL,
+                discount_amount DECIMAL(10,2) NOT NULL,
+                final_price DECIMAL(10,2) NOT NULL,
+                payment_id VARCHAR(255),
+                used_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(coupon_id, user_id)
+            )
+        """)
+        
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_coupons_code ON coupons(code)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_coupons_active ON coupons(active)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_coupon_uses_user ON coupon_uses(user_id)")
+        
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        print("✅ Sistema de cupons criado (sincronizado com service)!")
+        return True
+        
+    except Exception as e:
+        print(f"❌ Erro ao criar sistema de cupons: {e}")
+        return False
 
 def create_password_reset_table():
     """Criar tabela para tokens de reset de senha"""
@@ -360,7 +332,6 @@ def create_password_reset_table():
             
         cursor = conn.cursor()
         
-        # Criar tabela password_reset_tokens
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS password_reset_tokens (
                 id SERIAL PRIMARY KEY,
@@ -372,32 +343,22 @@ def create_password_reset_table():
             );
         """)
         
-        # Criar índices para busca rápida
-        cursor.execute("""
-            CREATE INDEX IF NOT EXISTS idx_reset_tokens_token ON password_reset_tokens(token);
-        """)
-        
-        cursor.execute("""
-            CREATE INDEX IF NOT EXISTS idx_reset_tokens_expires ON password_reset_tokens(expires_at);
-        """)
-        
-        cursor.execute("""
-            CREATE INDEX IF NOT EXISTS idx_reset_tokens_user_id ON password_reset_tokens(user_id);
-        """)
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_reset_tokens_token ON password_reset_tokens(token)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_reset_tokens_expires ON password_reset_tokens(expires_at)")
         
         conn.commit()
         cursor.close()
         conn.close()
         
-        print("✅ Tabela 'password_reset_tokens' criada com sucesso!")
+        print("✅ Tabela 'password_reset_tokens' criada!")
         return True
         
     except Exception as e:
-        print(f"❌ Erro ao criar tabela de reset de senha: {e}")
+        print(f"❌ Erro ao criar tabela de reset: {e}")
         return False
 
-def cleanup_expired_tokens():
-    """Limpar tokens de reset expirados"""
+def create_initial_admin():
+    """🔥 Criar admin com dados corretos"""
     try:
         conn = get_db_connection()
         if not conn:
@@ -405,7 +366,166 @@ def cleanup_expired_tokens():
             
         cursor = conn.cursor()
         
-        # Deletar tokens expirados
+        import hashlib
+        admin_email = "diego@geminii.com.br"
+        admin_password = hashlib.sha256("@Lice8127".encode()).hexdigest()
+        now = datetime.now(timezone.utc)
+        
+        cursor.execute("""
+            INSERT INTO users (name, email, password, plan_id, plan_name, user_type, subscription_status, created_at, updated_at) 
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+            ON CONFLICT (email) DO UPDATE SET 
+                plan_id = EXCLUDED.plan_id,
+                plan_name = EXCLUDED.plan_name,
+                user_type = EXCLUDED.user_type,
+                updated_at = EXCLUDED.updated_at
+            RETURNING id
+        """, (
+            "Diego Doneda - Admin", 
+            admin_email, 
+            admin_password, 
+            1,  # Pro
+            "Pro", 
+            "admin",
+            "active",
+            now, 
+            now
+        ))
+        
+        admin_id = cursor.fetchone()[0]
+        
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        print("👑 ADMIN CRIADO!")
+        print(f"📧 Email: {admin_email}")
+        print(f"🔑 Senha: @Lice8127")
+        print(f"🆔 ID: {admin_id}")
+        
+        return True
+        
+    except Exception as e:
+        print(f"❌ Erro ao criar admin: {e}")
+        return False
+
+def setup_enhanced_database():
+    """🔥 Configurar banco SINCRONIZADO com MercadoPago Service"""
+    print("🚀 Configurando banco sincronizado com MercadoPago Service...")
+    
+    if test_connection():
+        print("\n📋 Criando estrutura base...")
+        create_plans_table()
+        create_users_table()
+        update_users_table_for_service()  # Para compatibilidade com users existentes
+        
+        print("\n💳 Criando estrutura de pagamentos...")
+        create_payments_table()
+        create_payment_history()
+        
+        print("\n🔐 Criando sistema de autenticação...")
+        create_password_reset_table()
+        
+        print("\n🎫 Criando sistema de cupons...")
+        create_coupons_table()
+        
+        print("\n👑 Criando admin...")
+        create_initial_admin()
+        
+        print("\n✅ Banco SINCRONIZADO configurado com sucesso!")
+        print("🎯 Compatível com MercadoPago Service!")
+        return True
+    else:
+        print("❌ Falha na configuração do banco")
+        return False
+
+def verify_service_compatibility():
+    """🔍 Verificar se o banco está compatível com o service"""
+    try:
+        conn = get_db_connection()
+        if not conn:
+            return False
+            
+        cursor = conn.cursor()
+        
+        print("🔍 VERIFICANDO COMPATIBILIDADE COM MERCADOPAGO SERVICE...")
+        
+        # 1. Verificar planos
+        cursor.execute("SELECT id, name FROM plans ORDER BY id")
+        plans = cursor.fetchall()
+        print(f"\n📋 Planos encontrados:")
+        for plan in plans:
+            print(f"   - ID {plan[0]}: {plan[1]}")
+        
+        # 2. Verificar campos da tabela users
+        cursor.execute("""
+            SELECT column_name 
+            FROM information_schema.columns 
+            WHERE table_name = 'users' 
+            AND column_name IN ('subscription_status', 'subscription_plan', 'plan_expires_at')
+        """)
+        user_fields = [row[0] for row in cursor.fetchall()]
+        print(f"\n👤 Campos necessários na tabela users:")
+        required_fields = ['subscription_status', 'subscription_plan', 'plan_expires_at']
+        for field in required_fields:
+            status = "✅" if field in user_fields else "❌"
+            print(f"   {status} {field}")
+        
+        # 3. Verificar tabela payments
+        cursor.execute("""
+            SELECT column_name 
+            FROM information_schema.columns 
+            WHERE table_name = 'payments'
+            AND column_name = 'device_id'
+        """)
+        has_device_id = cursor.fetchone() is not None
+        print(f"\n💳 Tabela payments:")
+        print(f"   {'✅' if has_device_id else '❌'} device_id")
+        
+        # 4. Verificar tabela coupon_uses (não coupon_usage)
+        cursor.execute("""
+            SELECT table_name 
+            FROM information_schema.tables 
+            WHERE table_name IN ('coupon_uses', 'coupon_usage')
+        """)
+        coupon_tables = [row[0] for row in cursor.fetchall()]
+        print(f"\n🎫 Tabelas de cupons:")
+        print(f"   {'✅' if 'coupon_uses' in coupon_tables else '❌'} coupon_uses (necessária)")
+        print(f"   {'⚠️' if 'coupon_usage' in coupon_tables else ''} coupon_usage (desnecessária)")
+        
+        # 5. Verificar usuários de teste
+        cursor.execute("SELECT COUNT(*) FROM users")
+        user_count = cursor.fetchone()[0]
+        print(f"\n👥 Total de usuários: {user_count}")
+        
+        cursor.close()
+        conn.close()
+        
+        # Resultado final
+        all_good = (
+            len(plans) >= 2 and 
+            len(user_fields) == 3 and 
+            has_device_id and 
+            'coupon_uses' in coupon_tables
+        )
+        
+        print(f"\n🎯 STATUS GERAL: {'✅ COMPATÍVEL' if all_good else '❌ NECESSITA CORREÇÕES'}")
+        
+        return all_good
+        
+    except Exception as e:
+        print(f"❌ Erro na verificação: {e}")
+        return False
+
+def cleanup_expired_tokens():
+    """Limpar tokens expirados"""
+    try:
+        conn = get_db_connection()
+        if not conn:
+            return False
+            
+        cursor = conn.cursor()
+        
         cursor.execute("""
             DELETE FROM password_reset_tokens 
             WHERE expires_at < NOW() OR used = TRUE;
@@ -425,601 +545,23 @@ def cleanup_expired_tokens():
         print(f"❌ Erro ao limpar tokens: {e}")
         return False
 
-def setup_database():
-    """Configurar banco completo"""
-    print("🚀 Configurando banco de dados...")
-    
-    if test_connection():
-        # Criar tabelas na ordem correta (planos primeiro, depois users, depois tokens)
-        create_plans_table()
-        create_users_table()
-        create_password_reset_table()
-        
-        # Limpar tokens expirados
-        cleanup_expired_tokens()
-        
-        print("✅ Banco configurado com sucesso!")
-        return True
-    else:
-        print("❌ Falha na configuração do banco")
-        return False
-
-def get_user_by_email(email):
-    """Buscar usuário por email - função auxiliar"""
-    try:
-        conn = get_db_connection()
-        if not conn:
-            return None
-            
-        cursor = conn.cursor()
-        cursor.execute("""
-            SELECT id, name, email, password, plan_id, plan_name 
-            FROM users WHERE email = %s
-        """, (email,))
-        
-        user = cursor.fetchone()
-        cursor.close()
-        conn.close()
-        
-        return user
-        
-    except Exception as e:
-        print(f"❌ Erro ao buscar usuário: {e}")
-        return None
-
-def update_user_password(user_id, new_password_hash):
-    """Atualizar senha do usuário - função auxiliar"""
-    try:
-        conn = get_db_connection()
-        if not conn:
-            return False
-            
-        cursor = conn.cursor()
-        cursor.execute("""
-            UPDATE users 
-            SET password = %s, updated_at = CURRENT_TIMESTAMP 
-            WHERE id = %s
-        """, (new_password_hash, user_id))
-        
-        success = cursor.rowcount > 0
-        conn.commit()
-        cursor.close()
-        conn.close()
-        
-        return success
-        
-    except Exception as e:
-        print(f"❌ Erro ao atualizar senha: {e}")
-        return False
-
-# ===== NOVAS FUNCIONALIDADES ENHANCED =====
-
-def create_admin_system():
-    """Criar sistema de administração"""
-    try:
-        conn = get_db_connection()
-        if not conn:
-            return False
-            
-        cursor = conn.cursor()
-        
-        # Adicionar coluna user_type se não existir
-        cursor.execute("""
-            ALTER TABLE users 
-            ADD COLUMN IF NOT EXISTS user_type VARCHAR(20) DEFAULT 'regular'
-        """)
-        
-        # Criar índice para busca rápida por tipo
-        cursor.execute("""
-            CREATE INDEX IF NOT EXISTS idx_users_type ON users(user_type);
-        """)
-        
-        conn.commit()
-        cursor.close()
-        conn.close()
-        
-        print("✅ Sistema de administração criado!")
-        return True
-        
-    except Exception as e:
-        print(f"❌ Erro ao criar sistema admin: {e}")
-        return False
-
-def create_coupons_table():
-    """Criar tabela de cupons de desconto"""
-    try:
-        conn = get_db_connection()
-        if not conn:
-            return False
-            
-        cursor = conn.cursor()
-        
-        # Criar tabela de cupons
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS coupons (
-                id SERIAL PRIMARY KEY,
-                code VARCHAR(50) UNIQUE NOT NULL,
-                discount_percent DECIMAL(5,2) NOT NULL CHECK (discount_percent > 0 AND discount_percent <= 100),
-                discount_type VARCHAR(20) DEFAULT 'percent' CHECK (discount_type IN ('percent', 'fixed')),
-                discount_value DECIMAL(10,2) DEFAULT 0,
-                applicable_plans TEXT[] DEFAULT ARRAY['premium', 'estrategico'],
-                max_uses INTEGER DEFAULT NULL,
-                used_count INTEGER DEFAULT 0,
-                valid_from TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                valid_until TIMESTAMP,
-                is_active BOOLEAN DEFAULT true,
-                created_by INTEGER REFERENCES users(id),
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        """)
-        
-        # Criar tabela de uso de cupons
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS coupon_usage (
-                id SERIAL PRIMARY KEY,
-                coupon_id INTEGER REFERENCES coupons(id) ON DELETE CASCADE,
-                user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
-                plan_name VARCHAR(50) NOT NULL,
-                original_price DECIMAL(10,2) NOT NULL,
-                discount_amount DECIMAL(10,2) NOT NULL,
-                final_price DECIMAL(10,2) NOT NULL,
-                payment_id VARCHAR(255),
-                used_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                UNIQUE(coupon_id, user_id)
-            )
-        """)
-        
-        # Cupons serão inseridos depois que o admin for criado
-        print("✅ Tabela de cupons criada! (cupons serão inseridos após criação do admin)")
-        
-        # Criar índices para performance
-        cursor.execute("""
-            CREATE INDEX IF NOT EXISTS idx_coupons_code ON coupons(code);
-        """)
-        
-        cursor.execute("""
-            CREATE INDEX IF NOT EXISTS idx_coupons_active ON coupons(is_active);
-        """)
-        
-        cursor.execute("""
-            CREATE INDEX IF NOT EXISTS idx_coupon_usage_user ON coupon_usage(user_id);
-        """)
-        
-        conn.commit()
-        cursor.close()
-        conn.close()
-        
-        print("✅ Sistema de cupons criado com sucesso!")
-        return True
-        
-    except Exception as e:
-        print(f"❌ Erro ao criar sistema de cupons: {e}")
-        return False
-
-def create_portfolio_system():
-    """Criar sistema de carteiras"""
-    try:
-        conn = get_db_connection()
-        if not conn:
-            return False
-            
-        cursor = conn.cursor()
-        
-        # Tabela de carteiras
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS portfolios (
-                id SERIAL PRIMARY KEY,
-                name VARCHAR(50) UNIQUE NOT NULL,
-                display_name VARCHAR(100) NOT NULL,
-                description TEXT,
-                is_active BOOLEAN DEFAULT true,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        """)
-        
-        # Tabela de ativos das carteiras
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS portfolio_assets (
-                id SERIAL PRIMARY KEY,
-                portfolio_name VARCHAR(50) REFERENCES portfolios(name) ON DELETE CASCADE,
-                ticker VARCHAR(20) NOT NULL,
-                weight DECIMAL(5,2) NOT NULL CHECK (weight >= 0 AND weight <= 100),
-                sector VARCHAR(100),
-                entry_price DECIMAL(10,2),
-                current_price DECIMAL(10,2),      
-                target_price DECIMAL(10,2),       
-                entry_date DATE DEFAULT CURRENT_DATE,
-                is_active BOOLEAN DEFAULT true,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                UNIQUE(portfolio_name, ticker)
-            )
-        """)
-        
-        # Inserir carteiras padrão (SEM ATIVOS)
-        portfolios = [
-            ('smart_bdr', 'Smart BDR', 'Carteira de BDRs com análise inteligente'),
-            ('growth', 'Growth', 'Ações de empresas em crescimento'),
-            ('smallcaps', 'Small Caps', 'Ações de pequenas empresas com potencial'),
-            ('bluechips', 'Blue Chips', 'Ações de grandes empresas consolidadas')
-        ]
-        
-        for portfolio in portfolios:
-            cursor.execute("""
-                INSERT INTO portfolios (name, display_name, description) 
-                VALUES (%s, %s, %s) 
-                ON CONFLICT (name) DO NOTHING
-            """, portfolio)
-        
-        # ✅ NÃO INSERIR ATIVOS - DEIXAR VAZIO
-        
-        conn.commit()
-        cursor.close()
-        conn.close()
-        
-        print("✅ Sistema de carteiras criado (VAZIO)!")
-        return True
-        
-    except Exception as e:
-        print(f"❌ Erro ao criar sistema de carteiras: {e}")
-        return False
-
-def create_payment_history():
-    """Criar tabela de histórico de pagamentos"""
-    try:
-        conn = get_db_connection()
-        if not conn:
-            return False
-            
-        cursor = conn.cursor()
-        
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS payment_history (
-                id SERIAL PRIMARY KEY,
-                user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
-                plan_id INTEGER REFERENCES plans(id),
-                payment_id VARCHAR(255) UNIQUE,
-                amount DECIMAL(10,2) NOT NULL,
-                currency VARCHAR(3) DEFAULT 'BRL',
-                status VARCHAR(50) NOT NULL,
-                payment_method VARCHAR(50),
-                coupon_code VARCHAR(50),
-                discount_amount DECIMAL(10,2) DEFAULT 0,
-                subscription_id VARCHAR(255),
-                is_recurring BOOLEAN DEFAULT false,
-                next_billing_date DATE,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        """)
-        
-        # Criar índices
-        cursor.execute("""
-            CREATE INDEX IF NOT EXISTS idx_payment_user ON payment_history(user_id);
-        """)
-        
-        cursor.execute("""
-            CREATE INDEX IF NOT EXISTS idx_payment_status ON payment_history(status);
-        """)
-        
-        cursor.execute("""
-            CREATE INDEX IF NOT EXISTS idx_payment_subscription ON payment_history(subscription_id);
-        """)
-        
-        conn.commit()
-        cursor.close()
-        conn.close()
-        
-        print("✅ Histórico de pagamentos criado!")
-        return True
-        
-    except Exception as e:
-        print(f"❌ Erro ao criar histórico de pagamentos: {e}")
-        return False
-
-def create_initial_admin():
-    """Criar usuário admin - VERSÃO AJUSTADA"""
-    try:
-        conn = get_db_connection()
-        if not conn:
-            return False
-            
-        cursor = conn.cursor()
-        
-        # Hash da senha
-        import hashlib
-        admin_email = "diego@geminii.com.br"
-        admin_password = hashlib.sha256("@Lice8127".encode()).hexdigest()
-        now = datetime.now(timezone.utc)
-        
-        # ✅ INSERIR ADMIN SÓ COM OS CAMPOS QUE EXISTEM
-        cursor.execute("""
-            INSERT INTO users (name, email, password, plan_id, plan_name, created_at, updated_at) 
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
-            ON CONFLICT (email) DO UPDATE SET 
-                plan_id = EXCLUDED.plan_id,
-                plan_name = EXCLUDED.plan_name,
-                updated_at = EXCLUDED.updated_at
-            RETURNING id
-        """, (
-            "Diego Doneda - Admin", 
-            admin_email, 
-            admin_password, 
-            1,  # plan_id
-            "Pro",  # plan_name
-            now,    # created_at
-            now     # updated_at
-        ))
-        
-        admin_id = cursor.fetchone()[0]
-        
-        conn.commit()
-        cursor.close()
-        conn.close()
-        
-        print("👑 ADMIN CRIADO!")
-        print(f"📧 Email: {admin_email}")
-        print(f"🔑 Senha: @Lice8127")
-        print(f"🆔 ID: {admin_id}")
-        
-        return True
-        
-    except Exception as e:
-        print(f"❌ Erro: {e}")
-        return False
-
-def create_user_portfolios_table():
-    """Criar tabela de portfolios por usuário"""
-    try:
-        conn = get_db_connection()
-        if not conn:
-            return False
-            
-        cursor = conn.cursor()
-        
-        # Tabela de portfolios que cada usuário pode acessar
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS user_portfolios (
-                id SERIAL PRIMARY KEY,
-                user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
-                portfolio_name VARCHAR(50) REFERENCES portfolios(name) ON DELETE CASCADE,
-                granted_by INTEGER REFERENCES users(id),
-                granted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                is_active BOOLEAN DEFAULT true,
-                UNIQUE(user_id, portfolio_name)
-            )
-        """)
-        
-        # Criar índices para performance
-        cursor.execute("""
-            CREATE INDEX IF NOT EXISTS idx_user_portfolios_user 
-            ON user_portfolios(user_id);
-        """)
-        
-        cursor.execute("""
-            CREATE INDEX IF NOT EXISTS idx_user_portfolios_portfolio 
-            ON user_portfolios(portfolio_name);
-        """)
-        
-        cursor.execute("""
-            CREATE INDEX IF NOT EXISTS idx_user_portfolios_active 
-            ON user_portfolios(is_active);
-        """)
-        
-        conn.commit()
-        cursor.close()
-        conn.close()
-        
-        print("✅ Tabela 'user_portfolios' criada com sucesso!")
-        return True
-        
-    except Exception as e:
-        print(f"❌ Erro ao criar tabela user_portfolios: {e}")
-        return False
-
-def setup_enhanced_database():
-    """Configurar banco completo com novos recursos"""
-    print("🚀 Configurando banco de dados ENHANCED...")
-    
-    if test_connection():
-        create_plans_table()
-        create_users_table()
-        create_password_reset_table()
-        create_admin_system()
-        create_initial_admin()
-        create_coupons_table()
-        create_portfolio_system()
-        create_recommendations_table()
-        create_payment_history()
-        create_user_portfolios_table()  # ✅ ADICIONAR ESTA LINHA
-        
-        cleanup_expired_tokens()
-        
-        print("✅ Banco ENHANCED configurado com sucesso!")
-        return True
-    else:
-        print("❌ Falha na configuração do banco")
-        return False
-
-def grant_portfolio_access(user_id, portfolio_name, granted_by_admin_id):
-    """Dar acesso a uma carteira para um usuário"""
-    try:
-        conn = get_db_connection()
-        if not conn:
-            return {'success': False, 'error': 'Erro de conexão'}
-            
-        cursor = conn.cursor()
-        
-        # Verificar se usuário existe
-        cursor.execute("SELECT name, email FROM users WHERE id = %s", (user_id,))
-        user = cursor.fetchone()
-        if not user:
-            cursor.close()
-            conn.close()
-            return {'success': False, 'error': 'Usuário não encontrado'}
-        
-        # Verificar se portfolio existe
-        cursor.execute("SELECT display_name FROM portfolios WHERE name = %s", (portfolio_name,))
-        portfolio = cursor.fetchone()
-        if not portfolio:
-            cursor.close()
-            conn.close()
-            return {'success': False, 'error': 'Carteira não encontrada'}
-        
-        # Inserir ou ativar acesso
-        cursor.execute("""
-            INSERT INTO user_portfolios (user_id, portfolio_name, granted_by, is_active)
-            VALUES (%s, %s, %s, true)
-            ON CONFLICT (user_id, portfolio_name) 
-            DO UPDATE SET 
-                is_active = true,
-                granted_by = EXCLUDED.granted_by,
-                granted_at = CURRENT_TIMESTAMP
-        """, (user_id, portfolio_name, granted_by_admin_id))
-        
-        conn.commit()
-        cursor.close()
-        conn.close()
-        
-        return {
-            'success': True,
-            'message': f'Acesso à carteira {portfolio[0]} concedido para {user[0]}'
-        }
-        
-    except Exception as e:
-        return {'success': False, 'error': f'Erro interno: {str(e)}'}
-
-def revoke_portfolio_access(user_id, portfolio_name):
-    """Remover acesso a uma carteira"""
-    try:
-        conn = get_db_connection()
-        if not conn:
-            return {'success': False, 'error': 'Erro de conexão'}
-            
-        cursor = conn.cursor()
-        
-        cursor.execute("""
-            UPDATE user_portfolios 
-            SET is_active = false 
-            WHERE user_id = %s AND portfolio_name = %s
-        """, (user_id, portfolio_name))
-        
-        if cursor.rowcount == 0:
-            cursor.close()
-            conn.close()
-            return {'success': False, 'error': 'Acesso não encontrado'}
-        
-        conn.commit()
-        cursor.close()
-        conn.close()
-        
-        return {'success': True, 'message': 'Acesso removido com sucesso'}
-        
-    except Exception as e:
-        return {'success': False, 'error': f'Erro interno: {str(e)}'}
-
-def get_user_portfolios(user_id):
-    """Buscar carteiras que um usuário pode acessar"""
-    try:
-        conn = get_db_connection()
-        if not conn:
-            return []
-            
-        cursor = conn.cursor()
-        
-        cursor.execute("""
-            SELECT up.portfolio_name, p.display_name, up.granted_at
-            FROM user_portfolios up
-            JOIN portfolios p ON up.portfolio_name = p.name
-            WHERE up.user_id = %s AND up.is_active = true
-            ORDER BY p.display_name
-        """, (user_id,))
-        
-        portfolios = []
-        for row in cursor.fetchall():
-            portfolios.append({
-                'name': row[0],
-                'display_name': row[1],
-                'granted_at': row[2].isoformat() if row[2] else None
-            })
-        
-        cursor.close()
-        conn.close()
-        
-        return portfolios
-        
-    except Exception as e:
-        print(f"❌ Erro ao buscar portfolios do usuário: {e}")
-        return []
-
-
-def create_recommendations_table():
-    """Criar tabela de recomendações (SEM DADOS DE EXEMPLO)"""
-    try:
-        conn = get_db_connection()
-        if not conn:
-            return False
-            
-        cursor = conn.cursor()
-        
-        # Criar tabela de recomendações
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS portfolio_recommendations (
-                id SERIAL PRIMARY KEY,
-                portfolio_name VARCHAR(50) NOT NULL,
-                ticker VARCHAR(20) NOT NULL,
-                action_type VARCHAR(10) NOT NULL CHECK (action_type IN ('BUY', 'SELL', 'HOLD')),
-                target_weight DECIMAL(5,2) CHECK (target_weight >= 0 AND target_weight <= 100),
-                recommendation_date DATE NOT NULL,
-                reason TEXT,
-                price_target DECIMAL(10,2),
-                current_price DECIMAL(10,2),
-                is_active BOOLEAN DEFAULT true,
-                created_by INTEGER REFERENCES users(id),
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        """)
-        
-        # Criar índices para performance
-        cursor.execute("""
-            CREATE INDEX IF NOT EXISTS idx_portfolio_recommendations_portfolio 
-            ON portfolio_recommendations(portfolio_name);
-        """)
-        
-        # ✅ NÃO INSERIR RECOMENDAÇÕES - DEIXAR VAZIO
-        
-        conn.commit()
-        cursor.close()
-        conn.close()
-        
-        print("✅ Tabela 'portfolio_recommendations' criada (VAZIA)!")
-        return True
-        
-    except Exception as e:
-        print(f"❌ Erro ao criar tabela de recomendações: {e}")
-        return False
-
-
-# ===== FUNÇÕES AUXILIARES PARA O SISTEMA =====
+# ===== FUNÇÕES AUXILIARES PARA COMPATIBILIDADE =====
 
 def validate_coupon(code, plan_name, user_id):
-    """Validar cupom de desconto"""
+    """🔥 Validar cupom - EXATAMENTE como o service espera"""
     try:
         conn = get_db_connection()
         if not conn:
-            return {'valid': False, 'error': 'Erro de conexão'}
-            
+            return {'valid': False, 'error': 'Erro de conexão com banco'}
+        
         cursor = conn.cursor()
         
-        # Buscar cupom ativo
+        # Buscar cupom - usando campos corretos
         cursor.execute("""
-            SELECT id, discount_percent, discount_type, discount_value, 
-                   applicable_plans, max_uses, used_count, valid_until
+            SELECT id, discount_percent, discount_type, max_uses, current_uses, 
+                   expires_at, applicable_plans, min_amount
             FROM coupons 
-            WHERE code = %s AND is_active = true
+            WHERE code = %s AND active = TRUE
         """, (code.upper(),))
         
         coupon = cursor.fetchone()
@@ -1029,36 +571,30 @@ def validate_coupon(code, plan_name, user_id):
             conn.close()
             return {'valid': False, 'error': 'Cupom não encontrado ou inativo'}
         
-        coupon_id, discount_percent, discount_type, discount_value, applicable_plans, max_uses, used_count, valid_until = coupon
+        coupon_id, discount_percent, discount_type, max_uses, current_uses, expires_at, applicable_plans, min_amount = coupon
         
-        # Verificar validade temporal
-        if valid_until and valid_until < datetime.now():
+        # Verificar expiração
+        if expires_at and datetime.now(timezone.utc) > expires_at.replace(tzinfo=timezone.utc):
             cursor.close()
             conn.close()
             return {'valid': False, 'error': 'Cupom expirado'}
         
         # Verificar limite de uso
-        if max_uses and used_count >= max_uses:
+        if max_uses and current_uses >= max_uses:
             cursor.close()
             conn.close()
             return {'valid': False, 'error': 'Cupom esgotado'}
         
-        # Verificar se plano é aplicável
-        if applicable_plans and plan_name not in applicable_plans:
-            cursor.close()
-            conn.close()
-            return {'valid': False, 'error': f'Cupom não válido para o plano {plan_name}'}
-        
-        # Verificar se usuário já usou este cupom
+        # Verificar se já foi usado pelo usuário - usando tabela correta
         cursor.execute("""
-            SELECT id FROM coupon_usage 
+            SELECT id FROM coupon_uses 
             WHERE coupon_id = %s AND user_id = %s
         """, (coupon_id, user_id))
         
         if cursor.fetchone():
             cursor.close()
             conn.close()
-            return {'valid': False, 'error': 'Cupom já utilizado por este usuário'}
+            return {'valid': False, 'error': 'Cupom já utilizado'}
         
         cursor.close()
         conn.close()
@@ -1068,193 +604,24 @@ def validate_coupon(code, plan_name, user_id):
             'coupon_id': coupon_id,
             'discount_percent': discount_percent,
             'discount_type': discount_type,
-            'discount_value': discount_value
+            'applicable_plans': applicable_plans.split(',') if applicable_plans else []
         }
         
     except Exception as e:
         return {'valid': False, 'error': f'Erro interno: {str(e)}'}
 
-def apply_coupon_discount(original_price, coupon_data):
-    """Aplicar desconto do cupom"""
-    try:
-        if coupon_data['discount_type'] == 'percent':
-            discount_amount = original_price * (coupon_data['discount_percent'] / 100)
-        else:  # fixed
-            discount_amount = coupon_data['discount_value']
-        
-        # Não permitir desconto maior que o preço original
-        discount_amount = min(discount_amount, original_price)
-        final_price = original_price - discount_amount
-        
-        return {
-            'original_price': original_price,
-            'discount_amount': discount_amount,
-            'final_price': final_price,
-            'discount_percent': (discount_amount / original_price * 100) if original_price > 0 else 0
-        }
-        
-    except Exception as e:
-        return None
-
-def get_portfolio_assets(portfolio_name):
-    """Buscar ativos de uma carteira"""
-    try:
-        conn = get_db_connection()
-        if not conn:
-            return []
-                     
-        cursor = conn.cursor()
-        
-        # ✅ QUERY CORRIGIDA - incluindo todas as colunas necessárias
-        cursor.execute("""
-            SELECT id, ticker, weight, sector, entry_price, current_price, target_price, entry_date, is_active
-            FROM portfolio_assets 
-            WHERE portfolio_name = %s AND is_active = true
-            ORDER BY weight DESC
-        """, (portfolio_name,))
-                 
-        assets = []
-        for row in cursor.fetchall():
-            assets.append({
-                'id': row[0],                                                    # ✅ ID do ativo
-                'ticker': row[1],                                               # ✅ Ticker
-                'weight': float(row[2]),                                        # ✅ Peso
-                'sector': row[3],                                               # ✅ Setor
-                'entry_price': float(row[4]) if row[4] else 0,                  # ✅ Preço entrada
-                'current_price': float(row[5]) if row[5] else 0,               # ✅ Preço atual
-                'target_price': float(row[6]) if row[6] else 0,                # ✅ Preço alvo
-                'entry_date': row[7].isoformat() if row[7] else None,          # ✅ Data entrada
-                'is_active': row[8]                                            # ✅ Ativo
-            })
-                 
-        cursor.close()
-        conn.close()
-                 
-        return assets
-             
-    except Exception as e:
-        print(f"❌ Erro ao buscar ativos: {e}")
-        return []
-
-def add_portfolio_asset(portfolio_name, ticker, weight, sector, admin_user_id):
-    """Adicionar ativo a carteira"""
-    try:
-        conn = get_db_connection()
-        if not conn:
-            return {'success': False, 'error': 'Erro de conexão'}
-            
-        cursor = conn.cursor()
-        
-        # Verificar se carteira existe
-        cursor.execute("SELECT name FROM portfolios WHERE name = %s", (portfolio_name,))
-        if not cursor.fetchone():
-            cursor.close()
-            conn.close()
-            return {'success': False, 'error': 'Carteira não encontrada'}
-        
-        # Inserir ou atualizar ativo
-        cursor.execute("""
-            INSERT INTO portfolio_assets (portfolio_name, ticker, weight, sector)
-            VALUES (%s, %s, %s, %s)
-            ON CONFLICT (portfolio_name, ticker) 
-            DO UPDATE SET 
-                weight = EXCLUDED.weight,
-                sector = EXCLUDED.sector,
-                updated_at = CURRENT_TIMESTAMP
-        """, (portfolio_name, ticker.upper(), weight, sector))
-        
-        conn.commit()
-        cursor.close()
-        conn.close()
-        
-        return {'success': True, 'message': f'Ativo {ticker} adicionado à carteira {portfolio_name}'}
-        
-    except Exception as e:
-        return {'success': False, 'error': f'Erro interno: {str(e)}'}
-
-def remove_portfolio_asset(portfolio_name, ticker):
-    """Remover ativo da carteira"""
-    try:
-        conn = get_db_connection()
-        if not conn:
-            return {'success': False, 'error': 'Erro de conexão'}
-            
-        cursor = conn.cursor()
-        
-        cursor.execute("""
-            DELETE FROM portfolio_assets 
-            WHERE portfolio_name = %s AND ticker = %s
-        """, (portfolio_name, ticker.upper()))
-        
-        if cursor.rowcount == 0:
-            cursor.close()
-            conn.close()
-            return {'success': False, 'error': 'Ativo não encontrado'}
-        
-        conn.commit()
-        cursor.close()
-        conn.close()
-        
-        return {'success': True, 'message': f'Ativo {ticker} removido da carteira {portfolio_name}'}
-        
-    except Exception as e:
-        return {'success': False, 'error': f'Erro interno: {str(e)}'}
-
-def fix_admin_account():
-    """Corrigir conta do admin completamente"""
-    try:
-        import hashlib
-        from datetime import datetime, timezone
-        
-        conn = get_db_connection()
-        if not conn:
-            return False
-            
-        cursor = conn.cursor()
-        
-        # Deletar admin antigo
-        cursor.execute("DELETE FROM users WHERE user_type = 'admin'")
-        print(f"🗑️ {cursor.rowcount} admin(s) antigo(s) deletado(s)")
-        
-        # Criar admin novo com dados corretos
-        admin_email = "diego@geminii.com.br"
-        admin_password = "@Lice8127"
-        password_hash = hashlib.sha256(admin_password.encode()).hexdigest()
-        
-        cursor.execute("""
-            INSERT INTO users (name, email, password, plan_id, plan_name, user_type, created_at) 
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
-            RETURNING id
-        """, (
-            "Diego Doneda - Admin", 
-            admin_email, 
-            password_hash, 
-            3, 
-            "Estratégico", 
-            "admin", 
-            datetime.now(timezone.utc)
-        ))
-        
-        admin_id = cursor.fetchone()[0]
-        
-        conn.commit()
-        cursor.close()
-        conn.close()
-        
-        print("👑 ADMIN CRIADO COM SUCESSO!")
-        print(f"📧 Email: {admin_email}")
-        print(f"🔑 Senha: {admin_password}")
-        print(f"🆔 ID: {admin_id}")
-        print(f"🔐 Hash: {password_hash}")
-        
-        return True
-        
-    except Exception as e:
-        print(f"❌ Erro ao corrigir admin: {e}")
-        return False
-
-
 if __name__ == "__main__":
-     setup_enhanced_database()
+    print("🔥 CONFIGURANDO BANCO SINCRONIZADO COM MERCADOPAGO SERVICE")
+    print("=" * 60)
     
+    # Configurar banco completo
+    setup_enhanced_database()
     
+    print("\n🔍 VERIFICANDO COMPATIBILIDADE...")
+    verify_service_compatibility()
+    
+    print("\n🧹 LIMPANDO DADOS ANTIGOS...")
+    cleanup_expired_tokens()
+    
+    print("\n✅ CONFIGURAÇÃO CONCLUÍDA!")
+    print("🎯 Banco pronto para MercadoPago Service!")
