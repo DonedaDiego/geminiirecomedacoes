@@ -556,12 +556,12 @@ def validate_coupon(code, plan_name, user_id):
         
         cursor = conn.cursor()
         
-        # 🔧 CORREÇÃO 1: usar is_active e used_count (não active e current_uses)
+        # ✅ CORREÇÃO: usar 'active' (não 'is_active') e 'current_uses' (não 'used_count')
         cursor.execute("""
-            SELECT id, discount_percent, discount_type, max_uses, used_count, 
-                   valid_until, applicable_plans, discount_value
+            SELECT id, discount_percent, discount_type, max_uses, current_uses, 
+                   expires_at, applicable_plans, min_amount
             FROM coupons 
-            WHERE code = %s AND is_active = TRUE
+            WHERE code = %s AND active = TRUE
         """, (code.upper(),))
         
         coupon = cursor.fetchone()
@@ -571,22 +571,22 @@ def validate_coupon(code, plan_name, user_id):
             conn.close()
             return {'valid': False, 'error': 'Cupom não encontrado ou inativo'}
         
-        # 🔧 CORREÇÃO 2: usar nomes corretos das variáveis
-        coupon_id, discount_percent, discount_type, max_uses, used_count, valid_until, applicable_plans, discount_value = coupon
+        # ✅ USAR OS NOMES CORRETOS DAS COLUNAS
+        coupon_id, discount_percent, discount_type, max_uses, current_uses, expires_at, applicable_plans, min_amount = coupon
         
-        # 🔧 CORREÇÃO 3: verificar valid_until (não expires_at)
-        if valid_until and datetime.now(timezone.utc) > valid_until.replace(tzinfo=timezone.utc):
+        # ✅ VERIFICAR expires_at (não valid_until)
+        if expires_at and datetime.now(timezone.utc) > expires_at.replace(tzinfo=timezone.utc):
             cursor.close()
             conn.close()
             return {'valid': False, 'error': 'Cupom expirado'}
         
-        # 🔧 CORREÇÃO 4: usar used_count (não current_uses)
-        if max_uses and used_count >= max_uses:
+        # ✅ USAR current_uses (não used_count)
+        if max_uses and current_uses >= max_uses:
             cursor.close()
             conn.close()
             return {'valid': False, 'error': 'Cupom esgotado'}
         
-        # Verificar se já foi usado pelo usuário - usando tabela correta
+        # Resto da função permanece igual...
         cursor.execute("""
             SELECT id FROM coupon_uses 
             WHERE coupon_id = %s AND user_id = %s

@@ -599,6 +599,7 @@ def validate_coupon():
     """Validar cupom de desconto"""
     try:
         data = request.get_json()
+        print(f"🎫 CUPOM REQUEST: {data}")  # ✅ ADICIONAR ESTA LINHA
         
         if not data:
             return jsonify({'success': False, 'error': 'Dados JSON necessários'}), 400
@@ -610,8 +611,10 @@ def validate_coupon():
         if not code:
             return jsonify({'success': False, 'error': 'Código do cupom é obrigatório'}), 400
         
+        print("🔍 Chamando validate_coupon_db...")  # ✅ ADICIONAR
         from database import validate_coupon as validate_coupon_db
         result = validate_coupon_db(code, plan_name, user_id)
+        print(f"📋 Resultado validate_coupon_db: {result}") 
         
         if result['valid']:
             return jsonify({
@@ -875,9 +878,22 @@ def create_app():
     initialize_database()
     return app
 
-# # Debug info
-# if __name__ == "__main__":
-#     print("🔧 Main.py LIMPO carregado!")
-#     print("📋 Arquitetura: routes → services")
-#     print("✅ Sem duplicações de código")
-#     initialize_database()
+if __name__ == "__main__":
+    print("🔧 Main.py LIMPO carregado!")
+    print("📋 Arquitetura: routes → services")
+    print("✅ Sem duplicações de código")
+    
+    # Inicializar banco
+    initialize_database()
+    
+    # Configurar para desenvolvimento
+    app.config['ENV'] = 'development'
+    app.config['DEBUG'] = True
+    
+    # Executar Flask
+    print("🚀 Iniciando servidor Flask local...")
+    app.run(
+        host='0.0.0.0',
+        port=5000,
+        debug=True
+    )

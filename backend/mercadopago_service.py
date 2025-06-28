@@ -186,7 +186,12 @@ def create_checkout_service(plan, cycle, customer_email=None, user_id=None, user
         
         price = float(discounted_price) if discounted_price is not None else original_price
         
+        
+        ## descomentar par ao deploy
         base_url = "https://app.geminii.com.br" if os.environ.get('DATABASE_URL') else "http://localhost:5000"
+        
+        # Usar temporariamente para testes:
+        #base_url = "https://geminii-tech.up.railway.app"
         
         item_title = f"Geminii {plan_data['name']} - {cycle_display}"
         if coupon_code:
