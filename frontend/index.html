@@ -460,6 +460,37 @@
         display: none !important;
       }
     }
+
+    @keyframes modal {
+      from {
+        opacity: 0;
+        transform: scale(0.9) translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+      }
+    }
+    
+    .animate-modal {
+      animation: modal 0.3s ease-out;
+    }
+    
+    /* Custom select arrow */
+    select {
+      background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+      background-position: right 12px center;
+      background-repeat: no-repeat;
+      background-size: 16px;
+      appearance: none;
+    }
+    
+    select option {
+      background-color: #1f2937;
+      color: white;
+    }
+
+
 </style>
 </head>
 <body class="bg-black text-white font-sans">
@@ -590,31 +621,133 @@
           <p class="text-neutral-300 mb-6 max-w-xl mx-auto">
             Receba análises exclusivas e insights sobre as melhores oportunidades na bolsa brasileira.
           </p>
-          <div class="flex flex-col sm:flex-row gap-4 justify-center max-w-md mx-auto">
-            <input 
-              id="newsletterEmail"
-              type="email" 
-              placeholder="Seu melhor e-mail" 
-              class="newsletter-input flex-1 px-4 py-3 bg-white bg-opacity-5 border border-white border-opacity-20 rounded-full text-white placeholder-gray-400 focus:outline-none focus:border-geminii focus:bg-opacity-10 transition-all duration-300"
-            >
-            <button id="newsletterBtn" class="newsletter-btn px-6 py-3 bg-white text-black font-medium rounded-full hover:bg-gray-200 transition-all duration-300 shadow-lg hover:shadow-xl">
-              Inscrever-se
+          
+          <!-- APENAS O BOTÃO -->
+          <button id="newsletterBtn" class="newsletter-btn px-8 py-4 bg-white text-black font-medium rounded-full hover:bg-gray-200 transition-all duration-300 shadow-lg hover:shadow-xl text-lg">
+            📧 Receber Análises Gratuitas
+          </button>
+        </div>
+
+        <!-- Modal Newsletter -->
+        <div id="newsletterModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-4">
+          <div class="bg-gray-900 rounded-2xl max-w-md w-full p-6 border border-gray-700 relative animate-modal">
+            <!-- Close Button -->
+            <button onclick="closeNewsletterModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors">
+              <i class="fas fa-times text-xl"></i>
             </button>
+            
+            <!-- Header -->
+            <div class="text-center mb-6">
+              <div class="w-16 h-16 bg-gradient-to-r from-geminii to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-chart-line text-white text-2xl"></i>
+              </div>
+              <h3 class="text-2xl font-bold text-white mb-2">Análises Exclusivas</h3>
+              <p class="text-gray-300 text-sm">Receba insights sobre as melhores oportunidades do mercado financeiro</p>
+            </div>
+
+            <!-- Form -->
+            <form id="newsletterForm" onsubmit="submitNewsletterForm(event)">
+              <!-- Nome Completo -->
+              <div class="mb-4">
+                <label class="block text-white text-sm font-medium mb-2">
+                  Nome Completo <span class="text-red-500">*</span>
+                </label>
+                <input 
+                  type="text" 
+                  id="modalName"
+                  name="name"
+                  required
+                  class="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-geminii focus:bg-gray-750 transition-all"
+                  placeholder="Seu nome completo"
+                >
+              </div>
+
+              <!-- E-mail -->
+              <div class="mb-4">
+                <label class="block text-white text-sm font-medium mb-2">
+                  E-mail <span class="text-red-500">*</span>
+                </label>
+                <input 
+                  type="email" 
+                  id="modalEmail"
+                  name="email"
+                  required
+                  class="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-geminii focus:bg-gray-750 transition-all"
+                  placeholder="seu@email.com"
+                >
+              </div>
+
+              <!-- Onde nos conheceu -->
+              <div class="mb-6">
+                <label class="block text-white text-sm font-medium mb-2">
+                  Onde nos conheceu? <span class="text-red-500">*</span>
+                </label>
+                <select 
+                  id="modalSource"
+                  name="source"
+                  required
+                  class="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-geminii transition-all"
+                >
+                  <option value="">Selecione uma opção</option>
+                  <option value="Google">Google</option>
+                  <option value="Instagram">Instagram</option>
+                  <option value="Facebook">Facebook</option>
+                  <option value="YouTube">YouTube</option>
+                  <option value="LinkedIn">LinkedIn</option>
+                  <option value="Indicação de amigo">Indicação de amigo</option>
+                  <option value="Outro">Outro</option>
+                </select>
+              </div>
+
+              <!-- Submit Button -->
+              <button 
+                type="submit" 
+                id="modalSubmitBtn"
+                class="w-full bg-gradient-to-r from-geminii to-purple-600 hover:from-purple-700 hover:to-pink-700 text-white font-semibold py-3 rounded-lg transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <i class="fas fa-envelope mr-2"></i>
+                Receber Análises Exclusivas
+              </button>
+            </form>
+
+            <!-- Benefits -->
+            <div class="mt-6 pt-4 border-t border-gray-700">
+              <p class="text-gray-400 text-xs text-center mb-3">Você receberá:</p>
+              <div class="grid grid-cols-2 gap-2 text-xs">
+                <div class="flex items-center gap-2 text-gray-300">
+                  <i class="fas fa-check text-green-500"></i>
+                  <span>Análises semanais</span>
+                </div>
+                <div class="flex items-center gap-2 text-gray-300">
+                  <i class="fas fa-check text-green-500"></i>
+                  <span>Oportunidades em primeira mão</span>
+                </div>
+                <div class="flex items-center gap-2 text-gray-300">
+                  <i class="fas fa-check text-green-500"></i>
+                  <span>Insights de mercado</span>
+                </div>
+                <div class="flex items-center gap-2 text-gray-300">
+                  <i class="fas fa-check text-green-500"></i>
+                  <span>100% gratuito</span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
+
         <!-- Social Media -->
         <div class="flex justify-center gap-6 mb-8">
-          <a href="#" class="social-icon" title="YouTube">
+          <a href="https://youtube.com/@geminiiresearch?si=SKM462RGWl0aYs18?sub_confirmation=1" class="social-icon" title="YouTube">
             <i class="fab fa-youtube"></i>
           </a>
-          <a href="#" class="social-icon" title="Instagram">
+          <a href="https://www.instagram.com/geminiiresearch" class="social-icon" title="Instagram">
             <i class="fab fa-instagram"></i>
           </a>
-          <a href="#" class="social-icon" title="LinkedIn">
+          <a href="https://www.linkedin.com/company/geminii-research/" class="social-icon" title="LinkedIn">
             <i class="fab fa-linkedin"></i>
           </a>
-          <a href="#" class="social-icon" title="Telegram">
+          <a href="https://t.me/geminiireserach" class="social-icon" title="Telegram">
             <i class="fab fa-telegram"></i>
           </a>
         </div>
@@ -886,38 +1019,130 @@
       }
     }
 
-    // Newsletter subscription
     async function subscribeNewsletter() {
-      const emailInput = document.getElementById('newsletterEmail');
-      const newsletterBtn = document.getElementById('newsletterBtn');
-      const email = emailInput.value.trim();
+      openNewsletterModal();
+    }
+    // Abrir modal newsletter
+    function openNewsletterModal() {
+      document.getElementById('newsletterModal').classList.remove('hidden');
+      // Pre-fill email se já digitou no footer
+      const footerEmail = document.getElementById('newsletterEmail').value;
+      if (footerEmail) {
+        document.getElementById('modalEmail').value = footerEmail;
+      }
+    }
 
-      if (!email || !email.includes('@')) {
-        alert('❌ Por favor, insira um e-mail válido.');
+    // Fechar modal newsletter  
+    function closeNewsletterModal() {
+      document.getElementById('newsletterModal').classList.add('hidden');
+      document.getElementById('newsletterForm').reset();
+    }
+
+    // Submit do formulário completo
+    async function submitNewsletterForm(event) {
+      event.preventDefault();
+      
+      const submitBtn = document.getElementById('modalSubmitBtn');
+      const originalText = submitBtn.innerHTML;
+      
+      // Dados do formulário
+      const formData = new FormData(event.target);
+      const data = {
+        name: formData.get('name').trim(),
+        email: formData.get('email').trim().toLowerCase(),
+        source: formData.get('source')
+      };
+      
+      // Validações
+      if (!data.name || data.name.length < 2) {
+        alert('❌ Nome deve ter pelo menos 2 caracteres');
         return;
       }
-
-      newsletterBtn.innerHTML = 'Inscrevendo...';
-
+      
+      if (!data.email || !data.email.includes('@')) {
+        alert('❌ E-mail inválido');
+        return;
+      }
+      
+      if (!data.source) {
+        alert('❌ Selecione onde nos conheceu');
+        return;
+      }
+      
+      // Loading state
+      submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Inscrevendo...';
+      submitBtn.disabled = true;
+      
       try {
         const response = await fetch('/api/newsletter', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email })
+          body: JSON.stringify(data)
         });
-
+        
         const result = await response.json();
-
+        
         if (result.success) {
-          alert(`✅ ${result.message}\n\nVocê receberá nossas análises exclusivas em breve!`);
-          emailInput.value = '';
+          // Sucesso
+          submitBtn.innerHTML = '<i class="fas fa-check mr-2"></i>Inscrito!';
+          submitBtn.classList.remove('from-geminii', 'to-purple-600');
+          submitBtn.classList.add('bg-green-600');
+          
+          setTimeout(() => {
+            closeNewsletterModal();
+            showSuccessMessage(result.message);
+          }, 1500);
+          
+        } else {
+          // Erro
+          alert(`❌ ${result.error}`);
+          submitBtn.innerHTML = originalText;
+          submitBtn.disabled = false;
         }
+        
       } catch (error) {
-        alert('❌ Erro ao inscrever na newsletter. Tente novamente.');
-      } finally {
-        newsletterBtn.innerHTML = 'Inscrever-se';
+        console.error('Erro newsletter:', error);
+        alert('❌ Erro de conexão. Tente novamente.');
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
       }
     }
+
+    // Mostrar mensagem de sucesso
+    function showSuccessMessage(message) {
+      const successDiv = document.createElement('div');
+      successDiv.className = 'fixed top-4 right-4 bg-green-600 text-white px-6 py-4 rounded-lg shadow-lg z-50 max-w-sm';
+      successDiv.innerHTML = `
+        <div class="flex items-start gap-3">
+          <i class="fas fa-check-circle text-xl"></i>
+          <div>
+            <p class="font-semibold">Inscrição realizada!</p>
+            <p class="text-sm opacity-90">${message}</p>
+          </div>
+        </div>
+      `;
+      
+      document.body.appendChild(successDiv);
+      
+      setTimeout(() => {
+        successDiv.remove();
+      }, 5000);
+    }
+
+    // Fechar modal ao clicar fora
+    document.addEventListener('click', function(event) {
+      const modal = document.getElementById('newsletterModal');
+      if (event.target === modal) {
+        closeNewsletterModal();
+      }
+    });
+
+    // Fechar modal com ESC
+    document.addEventListener('keydown', function(event) {
+      if (event.key === 'Escape') {
+        closeNewsletterModal();
+      }
+    });
 
     // API Status check
     async function checkApiStatus() {

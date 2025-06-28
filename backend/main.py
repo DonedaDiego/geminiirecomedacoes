@@ -117,6 +117,14 @@ if CARROSSEL_AVAILABLE and carrossel_bp:
         print(f"❌ Erro ao registrar carrossel blueprint: {e}")
         CARROSSEL_AVAILABLE = False
 
+try:
+    from newsletter_routes import get_newsletter_blueprint
+    newsletter_bp = get_newsletter_blueprint()
+    app.register_blueprint(newsletter_bp)
+    print("✅ Newsletter blueprint registrado!")
+except Exception as e:
+    print(f"❌ Erro newsletter: {e}")
+
 # ===== INICIALIZAÇÃO =====
 def initialize_database():
     """Inicializar banco se necessário"""
