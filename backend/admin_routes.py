@@ -186,7 +186,7 @@ def manage_subscription(admin_id):
         
         if action == 'grant':
             # Mapear plan_id para plan_name
-            plan_names = {1: 'Básico', 2: 'Pro', 3: 'Premium'}
+            plan_names = {3: 'Básico', 1: 'Pro', 2: 'Premium'}
             plan_name = plan_names.get(plan_id, 'Pro')
             
             # Calcular expiração (30 dias para teste)
@@ -203,7 +203,7 @@ def manage_subscription(admin_id):
         elif action == 'revoke':
             cursor.execute("""
                 UPDATE users 
-                SET plan_id = 1, plan_name = 'Básico', plan_expires_at = NULL, updated_at = CURRENT_TIMESTAMP
+                SET plan_id = 3, plan_name = 'Básico', plan_expires_at = NULL, updated_at = CURRENT_TIMESTAMP
                 WHERE email = %s
             """, (user_email,))
             
