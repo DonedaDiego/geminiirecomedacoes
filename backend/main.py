@@ -878,22 +878,22 @@ def create_app():
     initialize_database()
     return app
 
-if __name__ == "__main__":
-    print("🔧 Main.py LIMPO carregado!")
-    print("📋 Arquitetura: routes → services")
-    print("✅ Sem duplicações de código")
+# if __name__ == "__main__":
+#     print("🔧 Main.py LIMPO carregado!")
+#     print("📋 Arquitetura: routes → services")
+#     print("✅ Sem duplicações de código")
     
-    # Inicializar banco
-    initialize_database()
+#     # Inicializar banco
+#     initialize_database()
     
-    # Configurar para desenvolvimento
-    app.config['ENV'] = 'development'
-    app.config['DEBUG'] = True
+#     # Configurar para desenvolvimento
+#     app.config['ENV'] = 'development'
+#     app.config['DEBUG'] = True
     
-    # Executar Flask
-    print("🚀 Iniciando servidor Flask local...")
-    app.run(
-        host='0.0.0.0',
-        port=5000,
-        debug=True
-    )
+#     # Executar Flask
+#     print("🚀 Iniciando servidor Flask local...")
+#     app.run(
+#         host='0.0.0.0',
+#         port=5000,
+#         debug=True
+#     )

@@ -1023,6 +1023,261 @@ def manage_user_portfolios(admin_id):
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500    
 
+
+
+
+# ===== ADICIONAR ESTAS ROTAS NO FINAL DO admin_routes.py =====
+
+@admin_bp.route('/payments', methods=['GET'])
+@require_admin()
+def get_payments_history(admin_id):
+    """Listar histórico de pagamentos para o admin"""
+    try:
+        # Parâmetros de filtro
+        page = int(request.args.get('page', 1))
+        limit = int(request.args.get('limit', 50))
+        status_filter = request.args.get('status', 'all')
+        user_email = request.args.get('user_email', '').strip()
+        
+        offset = (page - 1) * limit
+        
+        conn = get_db_connection()
+        if not conn:
+            return jsonify({'success': False, 'error': 'Erro de conexão'}), 500
+            
+        cursor = conn.cursor()
+        
+        # Query base
+        base_query = """
+            SELECT p.id, p.payment_id, p.status, p.amount, p.plan_id, p.plan_name,
+                   p.cycle, p.external_reference, p.created_at, p.updated_at,
+                   u.name as user_name, u.email as user_email
+            FROM payments p
+            LEFT JOIN users u ON p.user_id = u.id
+        """
+        
+        # Filtros
+        where_conditions = []
+        params = []
+        
+        if status_filter != 'all':
+            where_conditions.append("p.status = %s")
+            params.append(status_filter)
+        
+        if user_email:
+            where_conditions.append("u.email ILIKE %s")
+            params.append(f"%{user_email}%")
+        
+        # Montar query final
+        if where_conditions:
+            base_query += " WHERE " + " AND ".join(where_conditions)
+        
+        base_query += " ORDER BY p.created_at DESC"
+        
+        # Buscar total de registros (para paginação)
+        count_query = f"SELECT COUNT(*) FROM ({base_query}) as total"
+        cursor.execute(count_query, params)
+        total_records = cursor.fetchone()[0]
+        
+        # Buscar registros paginados
+        paginated_query = base_query + f" LIMIT %s OFFSET %s"
+        cursor.execute(paginated_query, params + [limit, offset])
+        
+        payments = []
+        for row in cursor.fetchall():
+            payment_id, mp_payment_id, status, amount, plan_id, plan_name, cycle, external_ref, created_at, updated_at, user_name, user_email = row
+            
+            payments.append({
+                'id': payment_id,
+                'payment_id': mp_payment_id,
+                'status': status,
+                'amount': float(amount) if amount else 0.0,
+                'plan_id': plan_id,
+                'plan_name': plan_name,
+                'cycle': cycle,
+                'external_reference': external_ref,
+                'created_at': created_at.isoformat() if created_at else None,
+                'updated_at': updated_at.isoformat() if updated_at else None,
+                'user_name': user_name,
+                'user_email': user_email,
+                'formatted_date': created_at.strftime('%d/%m/%Y %H:%M') if created_at else 'N/A',
+                'formatted_amount': f"R$ {float(amount):,.2f}" if amount else "R$ 0,00"
+            })
+        
+        cursor.close()
+        conn.close()
+        
+        # Calcular estatísticas
+        total_pages = (total_records + limit - 1) // limit
+        
+        return jsonify({
+            'success': True,
+            'payments': payments,
+            'pagination': {
+                'current_page': page,
+                'total_pages': total_pages,
+                'total_records': total_records,
+                'limit': limit
+            }
+        })
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@admin_bp.route('/payments/stats', methods=['GET'])
+@require_admin()
+def get_payments_stats(admin_id):
+    """Estatísticas de pagamentos para o dashboard admin"""
+    try:
+        conn = get_db_connection()
+        if not conn:
+            return jsonify({'success': False, 'error': 'Erro de conexão'}), 500
+            
+        cursor = conn.cursor()
+        
+        # Total de pagamentos
+        cursor.execute("SELECT COUNT(*) FROM payments")
+        total_payments = cursor.fetchone()[0]
+        
+        # Pagamentos aprovados
+        cursor.execute("SELECT COUNT(*) FROM payments WHERE status = 'approved'")
+        approved_payments = cursor.fetchone()[0]
+        
+        # Pagamentos pendentes
+        cursor.execute("SELECT COUNT(*) FROM payments WHERE status = 'pending'")
+        pending_payments = cursor.fetchone()[0]
+        
+        # Receita total (apenas approved)
+        cursor.execute("SELECT COALESCE(SUM(amount), 0) FROM payments WHERE status = 'approved'")
+        total_revenue = cursor.fetchone()[0]
+        
+        # Receita do mês atual
+        cursor.execute("""
+            SELECT COALESCE(SUM(amount), 0) 
+            FROM payments 
+            WHERE status = 'approved' 
+            AND EXTRACT(MONTH FROM created_at) = EXTRACT(MONTH FROM CURRENT_DATE)
+            AND EXTRACT(YEAR FROM created_at) = EXTRACT(YEAR FROM CURRENT_DATE)
+        """)
+        monthly_revenue = cursor.fetchone()[0]
+        
+        # Últimos pagamentos (5 mais recentes)
+        cursor.execute("""
+            SELECT p.payment_id, p.amount, p.status, p.plan_name, p.created_at,
+                   u.name as user_name, u.email as user_email
+            FROM payments p
+            LEFT JOIN users u ON p.user_id = u.id
+            ORDER BY p.created_at DESC
+            LIMIT 5
+        """)
+        
+        recent_payments = []
+        for row in cursor.fetchall():
+            payment_id, amount, status, plan_name, created_at, user_name, user_email = row
+            
+            recent_payments.append({
+                'payment_id': payment_id,
+                'amount': float(amount) if amount else 0.0,
+                'formatted_amount': f"R$ {float(amount):,.2f}" if amount else "R$ 0,00",
+                'status': status,
+                'plan_name': plan_name,
+                'user_name': user_name,
+                'user_email': user_email,
+                'created_at': created_at.isoformat() if created_at else None,
+                'formatted_date': created_at.strftime('%d/%m/%Y %H:%M') if created_at else 'N/A'
+            })
+        
+        cursor.close()
+        conn.close()
+        
+        return jsonify({
+            'success': True,
+            'stats': {
+                'total_payments': total_payments,
+                'approved_payments': approved_payments,
+                'pending_payments': pending_payments,
+                'failed_payments': total_payments - approved_payments - pending_payments,
+                'total_revenue': float(total_revenue),
+                'monthly_revenue': float(monthly_revenue),
+                'formatted_total_revenue': f"R$ {float(total_revenue):,.2f}",
+                'formatted_monthly_revenue': f"R$ {float(monthly_revenue):,.2f}"
+            },
+            'recent_payments': recent_payments
+        })
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@admin_bp.route('/payments/<payment_id>/details', methods=['GET'])
+@require_admin()
+def get_payment_details(admin_id, payment_id):
+    """Detalhes específicos de um pagamento"""
+    try:
+        conn = get_db_connection()
+        if not conn:
+            return jsonify({'success': False, 'error': 'Erro de conexão'}), 500
+            
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            SELECT p.id, p.payment_id, p.status, p.amount, p.plan_id, p.plan_name,
+                   p.cycle, p.external_reference, p.device_id, p.created_at, p.updated_at,
+                   u.id as user_id, u.name as user_name, u.email as user_email,
+                   u.plan_id as current_plan_id, u.plan_name as current_plan_name
+            FROM payments p
+            LEFT JOIN users u ON p.user_id = u.id
+            WHERE p.payment_id = %s
+        """, (payment_id,))
+        
+        payment = cursor.fetchone()
+        
+        if not payment:
+            cursor.close()
+            conn.close()
+            return jsonify({'success': False, 'error': 'Pagamento não encontrado'}), 404
+        
+        # Extrair dados
+        p_id, mp_payment_id, status, amount, plan_id, plan_name, cycle, external_ref, device_id, created_at, updated_at, user_id, user_name, user_email, current_plan_id, current_plan_name = payment
+        
+        payment_details = {
+            'id': p_id,
+            'payment_id': mp_payment_id,
+            'status': status,
+            'amount': float(amount) if amount else 0.0,
+            'formatted_amount': f"R$ {float(amount):,.2f}" if amount else "R$ 0,00",
+            'plan_id': plan_id,
+            'plan_name': plan_name,
+            'cycle': cycle,
+            'external_reference': external_ref,
+            'device_id': device_id,
+            'created_at': created_at.isoformat() if created_at else None,
+            'updated_at': updated_at.isoformat() if updated_at else None,
+            'formatted_created': created_at.strftime('%d/%m/%Y %H:%M:%S') if created_at else 'N/A',
+            'formatted_updated': updated_at.strftime('%d/%m/%Y %H:%M:%S') if updated_at else 'N/A',
+            'user': {
+                'id': user_id,
+                'name': user_name,
+                'email': user_email,
+                'current_plan_id': current_plan_id,
+                'current_plan_name': current_plan_name
+            }
+        }
+        
+        cursor.close()
+        conn.close()
+        
+        return jsonify({
+            'success': True,
+            'payment': payment_details
+        })
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+#======= rotas usuarios=============
+
+
 # ===== FUNÇÃO EXPORT =====
 def get_admin_blueprint():
     """Retornar blueprint para registrar no Flask"""

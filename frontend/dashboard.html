@@ -749,23 +749,30 @@
         console.log('⚠️ Usuário não disponível para verificar plano');
         return;
       }
-
+    
       const userPlanId = currentUser.plan_id || 3;
-      let requiredPlan = 1;
       
-      // MUDANÇA 1: Definir planos corretos
+      // ✅ NOVA LÓGICA: Verificação correta por plano específico
+      let hasAccess = false;
+      let requiredPlanName = '';
+      
+      // Definir acesso baseado no recurso
       if (featureName === 'Long & Short' || featureName === 'Hunter Walls') {
-        requiredPlan = 1; // Plano PRO
+        // Recursos PRO - precisam de plano 1 (Pro) ou 2 (Premium)
+        hasAccess = (userPlanId === 1 || userPlanId === 2);
+        requiredPlanName = 'Pro';
       }
       
       if (featureName === 'Smart Carteiras' || featureName === 'Machine Learning') {
-        requiredPlan = 2; // Plano PREMIUM (Estratégico)
+        // Recursos PREMIUM - precisam apenas de plano 2 (Premium)
+        hasAccess = (userPlanId === 2);
+        requiredPlanName = 'Premium';
       }
-
-      // Verificar se tem acesso ao recurso
-      if (userPlanId >= requiredPlan) {
+    
+      // Se tem acesso, permitir
+      if (hasAccess) {
         
-        // MUDANÇA 2: Redirecionamentos corretos
+        // REDIRECIONAMENTOS CORRETOS
         if (featureName === 'Long & Short') {
           window.location.href = 'long-short.html';
           return;
@@ -775,24 +782,24 @@
           window.location.href = 'opcoes.html';
           return;
         }
-
+    
         if (featureName === 'Smart Carteiras') {
           window.location.href = 'analises.html';
           return;
         }
-
-        // MUDANÇA 3: Machine Learning abre dropdown
+    
+        // Machine Learning abre dropdown
         if (featureName === 'Machine Learning') {
           toggleMLDropdown();
           return;
         }
-
-        // MUDANÇA 4: Recursos EM BREVE
+    
+        // Recursos EM BREVE
         if (featureName === 'Pattern Recognition') {
           alert(`👁️ Pattern Recognition\n\nReconhecimento de Padrões Avançado!\n\nEm breve será implementado.`);
           return;
         }
-
+    
         if (featureName === 'AutoML') {
           alert(`🪄 AutoML\n\nMachine Learning Automatizado!\n\nEm breve será implementado.`);
           return;
@@ -802,11 +809,11 @@
         alert(`🎉 ${featureName}\n\nFuncionalidade disponível em seu plano!\nEm breve será implementada.`);
         
       } else {
-        // Usuário não tem plano suficiente
+        // ✅ USUÁRIO NÃO TEM ACESSO - Mostrar upgrade
         const planNames = { 3: 'Básico', 1: 'Pro', 2: 'Premium' };
-        const planRequired = requiredPlan === 1 ? 'Pro' : 'Premium';
+        const currentPlanName = currentUser.plan_name || planNames[userPlanId] || 'Básico';
         
-        const message = `💎 Recurso ${planRequired}\n\n${featureName} está disponível apenas para planos ${planNames[requiredPlan]} ou superior.\n\nSeu plano atual: ${currentUser.plan_name || planNames[userPlanId]}\nPlano necessário: ${planNames[requiredPlan]}\n\nDeseja fazer upgrade agora?`;
+        const message = `💎 Recurso ${requiredPlanName}\n\n${featureName} está disponível apenas para planos ${requiredPlanName} ou superior.\n\nSeu plano atual: ${currentPlanName}\nPlano necessário: ${requiredPlanName}\n\nDeseja fazer upgrade agora?`;
         
         if (confirm(message)) {
           window.location.href = '/planos.html';

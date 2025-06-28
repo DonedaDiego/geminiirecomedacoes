@@ -514,11 +514,7 @@
           </div>
         </div>
       </div>
-
-
-      
-      
-      
+            
       <!-- Coupons Section -->
       <div id="couponsSection" class="section hidden">
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -852,22 +848,207 @@
           </div>
         </div>
       </div>
-      
+    
       <!-- Payments Section -->
-      <div id="paymentsSection" class="section hidden">
-        <div class="admin-card p-6">
-          <h3 class="text-xl font-bold text-white mb-4">
-            <i class="fas fa-credit-card mr-2"></i>
-            Histórico de Pagamentos
-          </h3>
-          <div class="text-gray-400 text-center py-8">
-            <i class="fas fa-construction text-4xl mb-4"></i>
-            <p>Em desenvolvimento...</p>
-            <p class="text-sm">Histórico de pagamentos e assinaturas recorrentes</p>
+      <div id="paymentsSection" class="hidden">
+        <div class="flex items-center justify-between mb-8">
+          <div>
+            <h2 class="text-3xl font-bold text-gray-900">Pagamentos</h2>
+            <p class="text-gray-600 mt-2">Histórico completo de transações e estatísticas</p>
+          </div>
+          <div class="flex gap-3">
+            <button onclick="exportPayments()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+              <i class="fas fa-download mr-2"></i>Exportar CSV
+            </button>
+            <button onclick="loadPaymentsList(currentPaymentsPage)" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+              <i class="fas fa-sync-alt mr-2"></i>Atualizar
+            </button>
+          </div>
+        </div>
+      
+        <!-- Estatísticas de Pagamentos -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
+          <div class="bg-white rounded-xl shadow-sm border p-6">
+            <div class="flex items-center">
+              <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                <i class="fas fa-credit-card text-blue-600 text-xl"></i>
+              </div>
+              <div class="ml-4">
+                <p class="text-sm font-medium text-gray-600">Total de Pagamentos</p>
+                <p id="totalPayments" class="text-2xl font-bold text-gray-900">0</p>
+              </div>
+            </div>
+          </div>
+      
+          <div class="bg-white rounded-xl shadow-sm border p-6">
+            <div class="flex items-center">
+              <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                <i class="fas fa-check-circle text-green-600 text-xl"></i>
+              </div>
+              <div class="ml-4">
+                <p class="text-sm font-medium text-gray-600">Aprovados</p>
+                <p id="approvedPayments" class="text-2xl font-bold text-green-600">0</p>
+              </div>
+            </div>
+          </div>
+      
+          <div class="bg-white rounded-xl shadow-sm border p-6">
+            <div class="flex items-center">
+              <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
+                <i class="fas fa-clock text-yellow-600 text-xl"></i>
+              </div>
+              <div class="ml-4">
+                <p class="text-sm font-medium text-gray-600">Pendentes</p>
+                <p id="pendingPayments" class="text-2xl font-bold text-yellow-600">0</p>
+              </div>
+            </div>
+          </div>
+      
+          <div class="bg-white rounded-xl shadow-sm border p-6">
+            <div class="flex items-center">
+              <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                <i class="fas fa-dollar-sign text-purple-600 text-xl"></i>
+              </div>
+              <div class="ml-4">
+                <p class="text-sm font-medium text-gray-600">Receita Total</p>
+                <p id="totalRevenue" class="text-2xl font-bold text-purple-600">R$ 0,00</p>
+              </div>
+            </div>
+          </div>
+      
+          <div class="bg-white rounded-xl shadow-sm border p-6">
+            <div class="flex items-center">
+              <div class="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center">
+                <i class="fas fa-calendar-month text-indigo-600 text-xl"></i>
+              </div>
+              <div class="ml-4">
+                <p class="text-sm font-medium text-gray-600">Receita Mensal</p>
+                <p id="monthlyRevenue" class="text-2xl font-bold text-indigo-600">R$ 0,00</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      
+        <!-- Layout de 2 Colunas -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          
+          <!-- Coluna Principal - Lista de Pagamentos -->
+          <div class="lg:col-span-2">
+            <div class="bg-white rounded-xl shadow-sm border">
+              <!-- Header da Tabela -->
+              <div class="p-6 border-b border-gray-200">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                  <h3 class="text-lg font-semibold text-gray-900">Histórico de Pagamentos</h3>
+                  
+                  <!-- Filtros -->
+                  <div class="flex flex-col sm:flex-row gap-3">
+                    <select id="statusFilter" onchange="filterPayments()" class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                      <option value="all">Todos os Status</option>
+                      <option value="approved">Aprovados</option>
+                      <option value="pending">Pendentes</option>
+                      <option value="cancelled">Cancelados</option>
+                      <option value="rejected">Rejeitados</option>
+                    </select>
+                    
+                    <input 
+                      type="text" 
+                      id="userEmailFilter" 
+                      placeholder="Filtrar por email..." 
+                      onkeyup="if(event.key==='Enter') filterPayments()"
+                      class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    >
+                    
+                    <button onclick="clearPaymentsFilters()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded-lg text-sm transition-colors">
+                      Limpar
+                    </button>
+                  </div>
+                </div>
+              </div>
+      
+              <!-- Tabela de Pagamentos -->
+              <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                  <thead class="bg-gray-50">
+                    <tr>
+                      <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        ID do Pagamento
+                      </th>
+                      <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Usuário
+                      </th>
+                      <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Valor
+                      </th>
+                      <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Plano
+                      </th>
+                      <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Status
+                      </th>
+                      <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Data
+                      </th>
+                      <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Ações
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody id="paymentsTableBody" class="bg-white divide-y divide-gray-200">
+                    <!-- Pagamentos serão carregados aqui -->
+                  </tbody>
+                </table>
+              </div>
+      
+              <!-- Paginação -->
+              <div id="paymentsPagination" class="px-6 py-3 border-t border-gray-200">
+                <!-- Paginação será carregada aqui -->
+              </div>
+            </div>
+          </div>
+      
+          <!-- Coluna Lateral - Pagamentos Recentes -->
+          <div class="lg:col-span-1">
+            <div class="bg-white rounded-xl shadow-sm border">
+              <div class="p-6 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-900">Pagamentos Recentes</h3>
+                <p class="text-sm text-gray-500 mt-1">Últimas 5 transações</p>
+              </div>
+              
+              <div class="p-6">
+                <div id="recentPaymentsList" class="space-y-4">
+                  <!-- Pagamentos recentes serão carregados aqui -->
+                </div>
+              </div>
+            </div>
+      
+            <!-- Card de Ações Rápidas -->
+            <div class="bg-white rounded-xl shadow-sm border mt-6">
+              <div class="p-6 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-900">Ações Rápidas</h3>
+              </div>
+              
+              <div class="p-6 space-y-3">
+                <button onclick="loadPaymentsList(1, {status: 'pending'})" class="w-full bg-yellow-50 border border-yellow-200 text-yellow-800 py-2 px-4 rounded-lg hover:bg-yellow-100 transition-colors text-sm">
+                  <i class="fas fa-clock mr-2"></i>Ver Pendentes
+                </button>
+                
+                <button onclick="loadPaymentsList(1, {status: 'approved'})" class="w-full bg-green-50 border border-green-200 text-green-800 py-2 px-4 rounded-lg hover:bg-green-100 transition-colors text-sm">
+                  <i class="fas fa-check mr-2"></i>Ver Aprovados
+                </button>
+                
+                <button onclick="exportPayments()" class="w-full bg-blue-50 border border-blue-200 text-blue-800 py-2 px-4 rounded-lg hover:bg-blue-100 transition-colors text-sm">
+                  <i class="fas fa-download mr-2"></i>Exportar Dados
+                </button>
+                
+                <button onclick="loadPaymentsStats(); loadPaymentsList(currentPaymentsPage)" class="w-full bg-gray-50 border border-gray-200 text-gray-800 py-2 px-4 rounded-lg hover:bg-gray-100 transition-colors text-sm">
+                  <i class="fas fa-sync-alt mr-2"></i>Atualizar Tudo
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
-      
+
       <!-- Settings Section -->
       <div id="settingsSection" class="section hidden">
         <div class="admin-card p-6">
@@ -884,6 +1065,9 @@
       </div>
     </div>
   </div>
+
+
+  
 
   <script>
     let adminToken = null;
@@ -954,10 +1138,31 @@
     // Load dashboard statistics
     async function loadDashboardStats() {
       try {
+        // Tentar carregar estatísticas aprimoradas primeiro
+        const enhancedResponse = await fetch('/api/admin/enhanced-stats', {
+          headers: { 'Authorization': `Bearer ${adminToken}` }
+        });
+    
+        if (enhancedResponse.ok) {
+          const enhancedResult = await enhancedResponse.json();
+          if (enhancedResult.success) {
+            const stats = enhancedResult.data;
+            
+            document.getElementById('totalUsers').textContent = stats.total_users || 0;
+            document.getElementById('premiumUsers').textContent = stats.premium_users || 0;
+            document.getElementById('activeCoupons').textContent = stats.active_coupons || 0;
+            document.getElementById('monthlyRevenue').textContent = `R$ ${stats.estimated_monthly_revenue || 0}`;
+            
+            console.log('📊 Estatísticas reais carregadas:', stats);
+            return;
+          }
+        }
+    
+        // Fallback para API original se enhanced não funcionar
         const response = await fetch('/api/admin/stats', {
           headers: { 'Authorization': `Bearer ${adminToken}` }
         });
-
+    
         if (response.ok) {
           const result = await response.json();
           if (result.success) {
@@ -967,115 +1172,133 @@
             document.getElementById('premiumUsers').textContent = stats.premium_users || 0;
             document.getElementById('activeCoupons').textContent = stats.active_coupons || 0;
             document.getElementById('monthlyRevenue').textContent = `R$ ${stats.monthly_revenue || 0}`;
+            
+            console.log('📊 Estatísticas básicas carregadas:', stats);
           }
         }
       } catch (error) {
         console.error('Error loading stats:', error);
+        // Manter valores padrão se der erro
       }
     }
     
-    // ===== FUNÇÕES DE PORTFOLIO ASSETS (ATUALIZADAS) =====
-    async function loadPortfolioAssets() {
-      if (!selectedPortfolio) return;
-      
-      try {
-        const response = await fetch(`/api/admin/portfolio/${selectedPortfolio}/assets`, {
-          headers: { 'Authorization': `Bearer ${adminToken}` }
-        });
-    
-        if (response.ok) {
-          const result = await response.json();
-          if (result.success) {
-            displayPortfolioAssets(result.assets || [], result.total_weight || 0);
-          } else {
-            // Portfolio vazio - isso é normal
-            displayPortfolioAssets([], 0);
-          }
-        } else {
-          // Erro ou portfolio não encontrado - mostrar vazio
-          displayPortfolioAssets([], 0);
-        }
-      } catch (error) {
-        console.error('Error loading portfolio assets:', error);
-        displayPortfolioAssets([], 0);
-      }
-    }
-    
-    // ===== FUNÇÃO PARA CARREGAR ATIVIDADE RECENTE =====
+    // ===== FUNÇÃO PARA CARREGAR ATIVIDADE RECENTE - VERSÃO ATUALIZADA =====
     async function loadRecentActivity() {
       try {
+        console.log('🔄 Carregando atividade recente real...');
+        
         const response = await fetch('/api/admin/recent-activity', {
           headers: { 'Authorization': `Bearer ${adminToken}` }
         });
-
+    
         if (response.ok) {
           const result = await response.json();
           if (result.success) {
+            console.log('✅ Atividades reais carregadas:', result.activities.length);
             displayRecentActivity(result.activities);
-          } else {
-            // Se não tiver endpoint, mostrar atividades simuladas
-            displayMockActivity();
+            return;
           }
-        } else {
-          // Mostrar atividades simuladas se API não existir
-          displayMockActivity();
         }
+    
+        // Se API não funcionar, mostrar atividades simuladas
+        console.log('⚠️ API de atividades não disponível, usando dados simulados');
+        displayMockActivity();
+        
       } catch (error) {
-        console.log('Usando atividades simuladas...');
+        console.log('⚠️ Erro ao carregar atividades, usando dados simulados:', error);
         displayMockActivity();
       }
     }
-
-    // ===== MOSTRAR ATIVIDADES SIMULADAS =====
+    
+    // ===== MOSTRAR ATIVIDADES SIMULADAS (MELHORADAS) =====
     function displayMockActivity() {
       const activities = [
         {
-          type: 'user_registered',
-          message: 'Novo usuário cadastrado: gau@gmail.com',
-          time: '2 horas atrás',
-          icon: 'fas fa-user-plus',
+          type: 'system_info',
+          message: 'Sistema ativo e funcionando normalmente',
+          time: 'Agora',
+          icon: 'fas fa-check-circle',
           color: 'text-green-400'
         },
         {
-          type: 'subscription_granted',
-          message: 'Assinatura Premium concedida para alice@gmail.com',
-          time: '4 horas atrás',
-          icon: 'fas fa-crown',
-          color: 'text-yellow-400'
-        },
-        {
-          type: 'portfolio_updated',
-          message: 'Carteira Smart BDR atualizada com 3 novos ativos',
-          time: '6 horas atrás',
-          icon: 'fas fa-briefcase',
+          type: 'admin_login',
+          message: 'Admin dashboard acessado com sucesso',
+          time: '1 minuto atrás',
+          icon: 'fas fa-sign-in-alt',
           color: 'text-blue-400'
         },
         {
-          type: 'coupon_created',
-          message: 'Novo cupom criado: PROMO50',
-          time: '8 horas atrás',
-          icon: 'fas fa-tags',
+          type: 'database_ready',
+          message: 'Banco de dados conectado e operacional',
+          time: '2 minutos atrás',
+          icon: 'fas fa-database',
           color: 'text-purple-400'
         },
         {
-          type: 'user_promoted',
-          message: 'alice@gmail.com promovido a administrador',
-          time: '1 dia atrás',
-          icon: 'fas fa-shield-alt',
-          color: 'text-red-400'
+          type: 'api_ready',
+          message: 'APIs de administração carregadas',
+          time: '3 minutos atrás',
+          icon: 'fas fa-code',
+          color: 'text-cyan-400'
         },
         {
-          type: 'payment_received',
-          message: 'Pagamento recebido: R$ 49,90 (Premium)',
-          time: '1 dia atrás',
-          icon: 'fas fa-dollar-sign',
-          color: 'text-green-400'
+          type: 'security_check',
+          message: 'Verificação de segurança realizada',
+          time: '5 minutos atrás',
+          icon: 'fas fa-shield-alt',
+          color: 'text-orange-400'
         }
       ];
-
+    
       displayRecentActivity(activities);
     }
+    
+    // ===== EXIBIR ATIVIDADES (MELHORADA) =====
+    
+    function displayRecentActivity(activities) {
+      const container = document.getElementById('recentActivity');
+      
+      if (!activities || activities.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-6 text-gray-400">
+            <i class="fas fa-clock text-2xl mb-2"></i>
+            <p>Nenhuma atividade recente</p>
+            <button onclick="loadRecentActivity()" class="mt-2 text-geminii hover:text-purple-400 text-sm underline">
+              Recarregar
+            </button>
+          </div>
+        `;
+        return;
+      }
 
+      container.innerHTML = activities.map(activity => `
+        <div class="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-800 hover:bg-opacity-30 transition-colors cursor-pointer group">
+          <div class="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center group-hover:scale-110 transition-transform">
+            <i class="${activity.icon} text-sm ${activity.color}"></i>
+          </div>
+          <div class="flex-1">
+            <p class="text-sm text-white leading-relaxed">${activity.message}</p>
+            <p class="text-xs text-gray-400 flex items-center mt-1">
+              <i class="fas fa-clock mr-1"></i>
+              ${activity.time}
+            </p>
+          </div>
+          <div class="opacity-0 group-hover:opacity-100 transition-opacity">
+            <i class="fas fa-chevron-right text-gray-400 text-xs"></i>
+          </div>
+        </div>
+      `).join('');
+
+      // Adicionar botão de refresh no final
+      container.insertAdjacentHTML('beforeend', `
+        <div class="text-center mt-4 pt-4 border-t border-gray-700">
+          <button onclick="loadRecentActivity()" class="text-geminii hover:text-purple-400 text-sm font-medium transition-colors">
+            <i class="fas fa-sync-alt mr-1"></i>
+            Atualizar Atividades
+          </button>
+        </div>
+      `);
+    }
     // ===== EXIBIR ATIVIDADES =====
     function displayRecentActivity(activities) {
       const container = document.getElementById('recentActivity');
@@ -1825,6 +2048,10 @@
         section.classList.add('hidden');
       });
       
+      if (sectionName === 'payments') {
+        initPaymentsSection();
+      }
+
       // Show selected section
       document.getElementById(sectionName + 'Section').classList.remove('hidden');
       
@@ -1851,7 +2078,483 @@
       // Load section data
       if (sectionName === 'users') loadUsers();
       if (sectionName === 'coupons') loadCoupons();
+      if (sectionName === 'payments') initPaymentsSection();
       
+      // ===== ADICIONAR ESTAS FUNÇÕES NO admin-dashboard.html =====
+
+      // Variáveis para pagamentos
+      let currentPaymentsPage = 1;
+      let paymentsStats = null;
+
+      // Carregar estatísticas de pagamentos
+      async function loadPaymentsStats() {
+          try {
+              const response = await fetch('/api/admin/payments/stats', {
+                  headers: { 'Authorization': `Bearer ${adminToken}` }
+              });
+
+              const result = await response.json();
+              
+              if (result.success) {
+                  paymentsStats = result.stats;
+                  updatePaymentsStatsDisplay(result.stats);
+                  updateRecentPaymentsDisplay(result.recent_payments);
+              } else {
+                  console.error('Erro ao carregar estatísticas de pagamentos:', result.error);
+              }
+          } catch (error) {
+              console.error('Erro na requisição de estatísticas:', error);
+          }
+      }
+
+      // Atualizar display das estatísticas
+      function updatePaymentsStatsDisplay(stats) {
+          // Atualizar cards de estatísticas
+          const totalPaymentsEl = document.getElementById('totalPayments');
+          const approvedPaymentsEl = document.getElementById('approvedPayments');
+          const pendingPaymentsEl = document.getElementById('pendingPayments');
+          const totalRevenueEl = document.getElementById('totalRevenue');
+          const monthlyRevenueEl = document.getElementById('monthlyRevenue');
+
+          if (totalPaymentsEl) totalPaymentsEl.textContent = stats.total_payments;
+          if (approvedPaymentsEl) approvedPaymentsEl.textContent = stats.approved_payments;
+          if (pendingPaymentsEl) pendingPaymentsEl.textContent = stats.pending_payments;
+          if (totalRevenueEl) totalRevenueEl.textContent = stats.formatted_total_revenue;
+          if (monthlyRevenueEl) monthlyRevenueEl.textContent = stats.formatted_monthly_revenue;
+      }
+
+      // Atualizar display dos pagamentos recentes
+      function updateRecentPaymentsDisplay(recentPayments) {
+          const container = document.getElementById('recentPaymentsList');
+          
+          if (!container) return;
+
+          if (!recentPayments || recentPayments.length === 0) {
+              container.innerHTML = `
+                  <div class="text-center py-8 text-gray-400">
+                      <i class="fas fa-credit-card text-4xl mb-4"></i>
+                      <p>Nenhum pagamento encontrado</p>
+                  </div>
+              `;
+              return;
+          }
+
+          const paymentsHTML = recentPayments.map(payment => `
+              <div class="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors cursor-pointer" onclick="showPaymentDetails('${payment.payment_id}')">
+                  <div class="flex items-center justify-between mb-2">
+                      <div class="flex items-center gap-3">
+                          <div class="w-10 h-10 rounded-full ${getPaymentStatusColor(payment.status)} flex items-center justify-center">
+                              <i class="fas ${getPaymentStatusIcon(payment.status)} text-white"></i>
+                          </div>
+                          <div>
+                              <p class="font-medium text-gray-900">${payment.user_name || 'N/A'}</p>
+                              <p class="text-sm text-gray-500">${payment.user_email || 'N/A'}</p>
+                          </div>
+                      </div>
+                      <div class="text-right">
+                          <p class="font-bold text-gray-900">${payment.formatted_amount}</p>
+                          <p class="text-sm text-gray-500">${payment.plan_name || 'N/A'}</p>
+                      </div>
+                  </div>
+                  <div class="flex items-center justify-between text-sm">
+                      <span class="px-2 py-1 rounded-full text-xs font-medium ${getPaymentStatusBadge(payment.status)}">
+                          ${getPaymentStatusText(payment.status)}
+                      </span>
+                      <span class="text-gray-500">${payment.formatted_date}</span>
+                  </div>
+              </div>
+          `).join('');
+
+          container.innerHTML = paymentsHTML;
+      }
+
+      // Carregar lista completa de pagamentos
+      async function loadPaymentsList(page = 1, filters = {}) {
+          try {
+              showPaymentsLoading();
+              
+              const queryParams = new URLSearchParams({
+                  page: page,
+                  limit: 50,
+                  ...filters
+              });
+
+              const response = await fetch(`/api/admin/payments?${queryParams}`, {
+                  headers: { 'Authorization': `Bearer ${adminToken}` }
+              });
+
+              const result = await response.json();
+              
+              if (result.success) {
+                  currentPaymentsPage = page;
+                  updatePaymentsListDisplay(result.payments);
+                  updatePaymentsPagination(result.pagination);
+              } else {
+                  showPaymentsError(result.error);
+              }
+          } catch (error) {
+              console.error('Erro ao carregar pagamentos:', error);
+              showPaymentsError('Erro de conexão');
+          }
+      }
+
+      // Atualizar display da lista de pagamentos
+      function updatePaymentsListDisplay(payments) {
+          const container = document.getElementById('paymentsTableBody');
+          
+          if (!container) return;
+
+          if (!payments || payments.length === 0) {
+              container.innerHTML = `
+                  <tr>
+                      <td colspan="8" class="text-center py-8 text-gray-400">
+                          <i class="fas fa-search text-3xl mb-4"></i>
+                          <p>Nenhum pagamento encontrado</p>
+                      </td>
+                  </tr>
+              `;
+              return;
+          }
+
+          const paymentsHTML = payments.map(payment => `
+              <tr class="hover:bg-gray-50 cursor-pointer" onclick="showPaymentDetails('${payment.payment_id}')">
+                  <td class="px-6 py-4 whitespace-nowrap">
+                      <div class="text-sm font-medium text-gray-900">${payment.payment_id}</div>
+                      <div class="text-sm text-gray-500">${payment.external_reference || 'N/A'}</div>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                      <div class="text-sm text-gray-900">${payment.user_name || 'N/A'}</div>
+                      <div class="text-sm text-gray-500">${payment.user_email || 'N/A'}</div>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                      <div class="text-sm font-medium text-gray-900">${payment.formatted_amount}</div>
+                      <div class="text-sm text-gray-500">${payment.cycle || 'N/A'}</div>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                      <div class="text-sm text-gray-900">${payment.plan_name || 'N/A'}</div>
+                      <div class="text-sm text-gray-500">ID: ${payment.plan_id || 'N/A'}</div>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                      <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getPaymentStatusBadge(payment.status)}">
+                          ${getPaymentStatusText(payment.status)}
+                      </span>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      ${payment.formatted_date}
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <button onclick="event.stopPropagation(); showPaymentDetails('${payment.payment_id}')" class="text-indigo-600 hover:text-indigo-900">
+                          <i class="fas fa-eye"></i>
+                      </button>
+                  </td>
+              </tr>
+          `).join('');
+
+          container.innerHTML = paymentsHTML;
+      }
+
+      // Mostrar detalhes de um pagamento específico
+      async function showPaymentDetails(paymentId) {
+          try {
+              const response = await fetch(`/api/admin/payments/${paymentId}/details`, {
+                  headers: { 'Authorization': `Bearer ${adminToken}` }
+              });
+
+              const result = await response.json();
+              
+              if (result.success) {
+                  displayPaymentModal(result.payment);
+              } else {
+                  alert('Erro ao carregar detalhes: ' + result.error);
+              }
+          } catch (error) {
+              console.error('Erro ao carregar detalhes do pagamento:', error);
+              alert('Erro de conexão ao carregar detalhes');
+          }
+      }
+
+      // Exibir modal com detalhes do pagamento
+      function displayPaymentModal(payment) {
+          const modalHTML = `
+              <div id="paymentModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onclick="closePaymentModal()">
+                  <div class="bg-white rounded-lg max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto" onclick="event.stopPropagation()">
+                      <div class="p-6">
+                          <div class="flex items-center justify-between mb-6">
+                              <h3 class="text-xl font-semibold text-gray-900">Detalhes do Pagamento</h3>
+                              <button onclick="closePaymentModal()" class="text-gray-400 hover:text-gray-600">
+                                  <i class="fas fa-times text-xl"></i>
+                              </button>
+                          </div>
+                          
+                          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                              <!-- Informações do Pagamento -->
+                              <div>
+                                  <h4 class="font-medium text-gray-900 mb-3">Informações do Pagamento</h4>
+                                  <div class="space-y-2 text-sm">
+                                      <div><span class="font-medium">ID do Pagamento:</span> ${payment.payment_id}</div>
+                                      <div><span class="font-medium">Status:</span> 
+                                          <span class="px-2 py-1 rounded text-xs ${getPaymentStatusBadge(payment.status)}">
+                                              ${getPaymentStatusText(payment.status)}
+                                          </span>
+                                      </div>
+                                      <div><span class="font-medium">Valor:</span> ${payment.formatted_amount}</div>
+                                      <div><span class="font-medium">Plano:</span> ${payment.plan_name} (ID: ${payment.plan_id})</div>
+                                      <div><span class="font-medium">Ciclo:</span> ${payment.cycle || 'N/A'}</div>
+                                      <div><span class="font-medium">Referência Externa:</span> ${payment.external_reference || 'N/A'}</div>
+                                      <div><span class="font-medium">Device ID:</span> ${payment.device_id || 'N/A'}</div>
+                                  </div>
+                              </div>
+                              
+                              <!-- Informações do Usuário -->
+                              <div>
+                                  <h4 class="font-medium text-gray-900 mb-3">Informações do Usuário</h4>
+                                  <div class="space-y-2 text-sm">
+                                      <div><span class="font-medium">Nome:</span> ${payment.user.name || 'N/A'}</div>
+                                      <div><span class="font-medium">Email:</span> ${payment.user.email || 'N/A'}</div>
+                                      <div><span class="font-medium">Plano Atual:</span> ${payment.user.current_plan_name || 'N/A'}</div>
+                                      <div><span class="font-medium">ID do Usuário:</span> ${payment.user.id || 'N/A'}</div>
+                                  </div>
+                              </div>
+                              
+                              <!-- Datas -->
+                              <div class="md:col-span-2">
+                                  <h4 class="font-medium text-gray-900 mb-3">Timestamps</h4>
+                                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                                      <div><span class="font-medium">Criado em:</span> ${payment.formatted_created}</div>
+                                      <div><span class="font-medium">Atualizado em:</span> ${payment.formatted_updated}</div>
+                                  </div>
+                              </div>
+                          </div>
+                          
+                          <div class="mt-6 flex justify-end">
+                              <button onclick="closePaymentModal()" class="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 transition-colors">
+                                  Fechar
+                              </button>
+                          </div>
+                      </div>
+                  </div>
+              </div>
+          `;
+
+          document.body.insertAdjacentHTML('beforeend', modalHTML);
+      }
+
+      // Fechar modal de detalhes
+      function closePaymentModal() {
+          const modal = document.getElementById('paymentModal');
+          if (modal) {
+              modal.remove();
+          }
+      }
+
+      // Funções utilitárias para status de pagamento
+      function getPaymentStatusColor(status) {
+          switch (status) {
+              case 'approved': return 'bg-green-500';
+              case 'pending': return 'bg-yellow-500';
+              case 'cancelled': return 'bg-red-500';
+              case 'rejected': return 'bg-red-600';
+              default: return 'bg-gray-500';
+          }
+      }
+
+      function getPaymentStatusIcon(status) {
+          switch (status) {
+              case 'approved': return 'fa-check';
+              case 'pending': return 'fa-clock';
+              case 'cancelled': return 'fa-times';
+              case 'rejected': return 'fa-ban';
+              default: return 'fa-question';
+          }
+      }
+
+      function getPaymentStatusBadge(status) {
+          switch (status) {
+              case 'approved': return 'bg-green-100 text-green-800';
+              case 'pending': return 'bg-yellow-100 text-yellow-800';
+              case 'cancelled': return 'bg-red-100 text-red-800';
+              case 'rejected': return 'bg-red-100 text-red-800';
+              default: return 'bg-gray-100 text-gray-800';
+          }
+      }
+
+      function getPaymentStatusText(status) {
+          switch (status) {
+              case 'approved': return 'Aprovado';
+              case 'pending': return 'Pendente';
+              case 'cancelled': return 'Cancelado';
+              case 'rejected': return 'Rejeitado';
+              default: return status || 'Desconhecido';
+          }
+      }
+
+      // Filtrar pagamentos
+      function filterPayments() {
+          const statusFilter = document.getElementById('statusFilter')?.value || 'all';
+          const userEmailFilter = document.getElementById('userEmailFilter')?.value || '';
+          
+          const filters = {};
+          if (statusFilter !== 'all') filters.status = statusFilter;
+          if (userEmailFilter.trim()) filters.user_email = userEmailFilter.trim();
+          
+          loadPaymentsList(1, filters);
+      }
+
+      // Limpar filtros
+      function clearPaymentsFilters() {
+          const statusFilter = document.getElementById('statusFilter');
+          const userEmailFilter = document.getElementById('userEmailFilter');
+          
+          if (statusFilter) statusFilter.value = 'all';
+          if (userEmailFilter) userEmailFilter.value = '';
+          
+          loadPaymentsList(1);
+      }
+
+      // Atualizar paginação
+      function updatePaymentsPagination(pagination) {
+          const container = document.getElementById('paymentsPagination');
+          
+          if (!container) return;
+
+          let paginationHTML = '';
+          
+          if (pagination.total_pages > 1) {
+              paginationHTML = `
+                  <div class="flex items-center justify-between">
+                      <div class="text-sm text-gray-700">
+                          Mostrando ${((pagination.current_page - 1) * pagination.limit) + 1} a 
+                          ${Math.min(pagination.current_page * pagination.limit, pagination.total_records)} 
+                          de ${pagination.total_records} registros
+                      </div>
+                      <div class="flex gap-2">
+                          ${pagination.current_page > 1 ? 
+                              `<button onclick="loadPaymentsList(${pagination.current_page - 1})" class="px-3 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300">Anterior</button>` : ''
+                          }
+                          ${pagination.current_page < pagination.total_pages ? 
+                              `<button onclick="loadPaymentsList(${pagination.current_page + 1})" class="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600">Próximo</button>` : ''
+                          }
+                      </div>
+                  </div>
+              `;
+          }
+          
+          container.innerHTML = paginationHTML;
+      }
+
+      // Loading states
+      function showPaymentsLoading() {
+          const container = document.getElementById('paymentsTableBody');
+          if (container) {
+              container.innerHTML = `
+                  <tr>
+                      <td colspan="8" class="text-center py-8">
+                          <i class="fas fa-spinner fa-spin text-2xl text-gray-400"></i>
+                          <p class="mt-2 text-gray-400">Carregando pagamentos...</p>
+                      </td>
+                  </tr>
+              `;
+          }
+      }
+
+      function showPaymentsError(error) {
+          const container = document.getElementById('paymentsTableBody');
+          if (container) {
+              container.innerHTML = `
+                  <tr>
+                      <td colspan="8" class="text-center py-8 text-red-400">
+                          <i class="fas fa-exclamation-triangle text-2xl mb-2"></i>
+                          <p>Erro: ${error}</p>
+                          <button onclick="loadPaymentsList()" class="mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
+                              Tentar Novamente
+                          </button>
+                      </td>
+                  </tr>
+              `;
+          }
+      }
+
+      // Exportar dados de pagamentos
+      async function exportPayments() {
+          try {
+              const response = await fetch('/api/admin/payments?limit=10000', {
+                  headers: { 'Authorization': `Bearer ${adminToken}` }
+              });
+
+              const result = await response.json();
+              
+              if (result.success && result.payments) {
+                  downloadPaymentsCSV(result.payments);
+              } else {
+                  alert('Erro ao exportar dados: ' + (result.error || 'Dados não disponíveis'));
+              }
+          } catch (error) {
+              console.error('Erro na exportação:', error);
+              alert('Erro de conexão ao exportar dados');
+          }
+      }
+
+      // Download CSV
+      function downloadPaymentsCSV(payments) {
+          const headers = [
+              'ID do Pagamento',
+              'Nome do Usuário',
+              'Email do Usuário',
+              'Valor',
+              'Plano',
+              'Ciclo',
+              'Status',
+              'Referência Externa',
+              'Data de Criação'
+          ];
+
+          const csvContent = [
+              headers.join(','),
+              ...payments.map(payment => [
+                  payment.payment_id,
+                  `"${payment.user_name || 'N/A'}"`,
+                  payment.user_email || 'N/A',
+                  payment.amount,
+                  `"${payment.plan_name || 'N/A'}"`,
+                  payment.cycle || 'N/A',
+                  payment.status,
+                  payment.external_reference || 'N/A',
+                  payment.formatted_date
+              ].join(','))
+          ].join('\n');
+
+          const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+          const link = document.createElement('a');
+          const url = URL.createObjectURL(blob);
+          
+          link.setAttribute('href', url);
+          link.setAttribute('download', `pagamentos_${new Date().toISOString().split('T')[0]}.csv`);
+          link.style.visibility = 'hidden';
+          
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+      }
+
+      // Inicializar seção de pagamentos quando a aba for ativada
+      function initPaymentsSection() {
+          console.log('🏦 Inicializando seção de pagamentos...');
+          loadPaymentsStats();
+          loadPaymentsList(1);
+      }
+
+      // Fazer essas funções globais
+      window.loadPaymentsStats = loadPaymentsStats;
+      window.loadPaymentsList = loadPaymentsList;
+      window.showPaymentDetails = showPaymentDetails;
+      window.closePaymentModal = closePaymentModal;
+      window.filterPayments = filterPayments;
+      window.clearPaymentsFilters = clearPaymentsFilters;
+      window.exportPayments = exportPayments;
+      window.initPaymentsSection = initPaymentsSection;
+
+
+
       // ✅ RESET PORTFOLIO SELECTION quando trocar de seção
       if (sectionName === 'portfolios') {
         selectedPortfolio = null;
@@ -2190,6 +2893,9 @@ function displayUsers(users) {
         alert('❌ Erro de conexão');
       }
     }
+
+    
+
 
     // ===== COUPON MANAGEMENT FUNCTIONS =====
 

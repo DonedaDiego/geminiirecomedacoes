@@ -835,25 +835,29 @@
       document.getElementById('userView').classList.remove('hidden');
       document.getElementById('guestCTA').classList.add('hidden');
       document.getElementById('userCTA').classList.remove('hidden');
-
+    
       const initials = user.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
       document.getElementById('userInitials').textContent = initials;
       document.getElementById('userName').textContent = user.name;
       document.getElementById('userEmail').textContent = user.email;
       document.getElementById('userPlan').textContent = user.plan_name || 'Básico';
-
+    
       const planBadge = document.getElementById('planBadge');
-      const planId = user.plan_id || 1;
+      const planId = user.plan_id || 3;
       
-      if (planId === 1) {
-        planBadge.textContent = 'Pro';
-        planBadge.className = 'plan-badge Premium';
+      // ✅ CORREÇÃO: Lógica correta dos planos
+      if (planId === 3) {
+        // Plano Básico = ID 3
+        planBadge.textContent = 'GRÁTIS';
+        planBadge.className = 'plan-badge'; // Verde básico
+      } else if (planId === 1) {
+        // Plano Pro = ID 1  
+        planBadge.textContent = 'PRO';
+        planBadge.className = 'plan-badge premium'; // Laranja
       } else if (planId === 2) {
-        planBadge.textContent = 'Premium';
-        planBadge.className = 'plan-badge strategic';
-      } else if (planId >= 3) {
-        planBadge.textContent = 'Grátis';
-        planBadge.className = 'plan-badge';
+        // Plano Premium = ID 2
+        planBadge.textContent = 'PREMIUM';
+        planBadge.className = 'plan-badge strategic'; // Roxo
       }
     }
     

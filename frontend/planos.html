@@ -838,7 +838,7 @@
         mp = new MercadoPago(publicKey, {
           locale: 'pt-BR'
         });
-
+    
         deviceId = mp.getDeviceId();
         
         console.log('✅ MercadoPago inicializado');
@@ -846,7 +846,9 @@
         
       } catch (error) {
         console.error('❌ Erro ao inicializar MP:', error);
-        showMessage('Erro ao carregar sistema de pagamento', 'error');
+         
+        console.log('⚠️ MercadoPago indisponível - usando modo degradado');
+        deviceId = 'fallback-device-' + Date.now(); // Device ID backup
       }
     }
 
@@ -979,7 +981,7 @@
 
     // ===== SISTEMA DE CUPOM =====
     async function applyCoupon() {
-      const couponCode = document.getElementById('coupon-input').value.trim().upper();
+      const couponCode = document.getElementById('coupon-input').value.trim().toUpperCase(); // ✅ CORRIGIDO
       
       if (!couponCode) {
         showCouponFeedback('Digite um código de cupom', 'error');
@@ -987,6 +989,8 @@
       }
 
       try {
+        console.log('🎫 Validando cupom:', couponCode); // ✅ ADICIONAR LOG
+        
         const applyCouponBtn = document.getElementById('apply-coupon-btn');
         applyCouponBtn.disabled = true;
         applyCouponBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Validando...';
@@ -1000,12 +1004,13 @@
           },
           body: JSON.stringify({
             code: couponCode,
-            plan_name: 'pro', // Pode ser validado para qualquer plano
+            plan_name: 'pro',
             user_id: userId
           })
         });
 
         const result = await response.json();
+        console.log('📋 Resultado cupom:', result); // ✅ ADICIONAR LOG
 
         if (result.success) {
           appliedCoupon = couponCode;
@@ -1024,23 +1029,13 @@
         }
 
       } catch (error) {
+        console.error('❌ Erro cupom:', error); // ✅ ADICIONAR LOG
         showCouponFeedback('Erro ao validar cupom. Tente novamente.', 'error');
       } finally {
         const applyCouponBtn = document.getElementById('apply-coupon-btn');
         applyCouponBtn.disabled = false;
         applyCouponBtn.innerHTML = '<i class="fas fa-check mr-1"></i> Aplicar';
       }
-    }
-
-    function showCouponFeedback(message, type) {
-      const couponFeedback = document.getElementById('coupon-feedback');
-      couponFeedback.textContent = message;
-      couponFeedback.className = `mt-2 text-xs ${type === 'success' ? 'text-green-400' : type === 'error' ? 'text-red-400' : 'text-yellow-400'}`;
-      couponFeedback.classList.remove('hidden');
-
-      setTimeout(() => {
-        couponFeedback.classList.add('hidden');
-      }, 5000);
     }
 
     // ===== CHECKOUT =====
