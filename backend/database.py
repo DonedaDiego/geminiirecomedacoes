@@ -35,7 +35,6 @@ def test_connection():
             version = cursor.fetchone()
             cursor.close()
             conn.close()
-            print(f"✅ Conectado no PostgreSQL: {version[0]}")
             return True
         else:
             print("❌ Falha na conexão")
@@ -132,7 +131,7 @@ def create_users_table():
         cursor.close()
         conn.close()
         
-        print("✅ Tabela 'users' criada com TODOS os campos necessários!")
+        
         return True
         
     except Exception as e:
@@ -173,7 +172,7 @@ def update_users_table_for_service():
         cursor.close()
         conn.close()
         
-        print("✅ Tabela users atualizada para compatibilidade com o service!")
+        
         return True
         
     except Exception as e:
@@ -214,7 +213,7 @@ def create_payments_table():
         cursor.close()
         conn.close()
         
-        print("✅ Tabela 'payments' criada exatamente como o service espera!")
+        
         return True
         
     except Exception as e:
@@ -258,7 +257,7 @@ def create_payment_history():
         cursor.close()
         conn.close()
         
-        print("✅ Tabela 'payment_history' criada!")
+        
         return True
         
     except Exception as e:
@@ -350,7 +349,7 @@ def create_password_reset_table():
         cursor.close()
         conn.close()
         
-        print("✅ Tabela 'password_reset_tokens' criada!")
+        
         return True
         
     except Exception as e:
@@ -397,12 +396,7 @@ def create_initial_admin():
         conn.commit()
         cursor.close()
         conn.close()
-        
-        print("👑 ADMIN CRIADO!")
-        print(f"📧 Email: {admin_email}")
-        print(f"🔑 Senha: @Lice8127")
-        print(f"🆔 ID: {admin_id}")
-        
+           
         return True
         
     except Exception as e:
@@ -414,26 +408,21 @@ def setup_enhanced_database():
     print("🚀 Configurando banco sincronizado com MercadoPago Service...")
     
     if test_connection():
-        print("\n📋 Criando estrutura base...")
+        
         create_plans_table()
         create_users_table()
         update_users_table_for_service()  # Para compatibilidade com users existentes
         
-        print("\n💳 Criando estrutura de pagamentos...")
         create_payments_table()
         create_payment_history()
         
-        print("\n🔐 Criando sistema de autenticação...")
         create_password_reset_table()
         
-        print("\n🎫 Criando sistema de cupons...")
         create_coupons_table()
         
-        print("\n👑 Criando admin...")
+        
         create_initial_admin()
         
-        print("\n✅ Banco SINCRONIZADO configurado com sucesso!")
-        print("🎯 Compatível com MercadoPago Service!")
         return True
     else:
         print("❌ Falha na configuração do banco")

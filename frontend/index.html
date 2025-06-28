@@ -29,122 +29,6 @@
       overflow-x: hidden;
     }
 
-    /* ===== CARROSSEL STYLES ===== */
-    .market-carousel {
-      width: 100%;
-      background: rgba(0, 0, 0, 0.85);
-      backdrop-filter: blur(20px);
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-      z-index: 40;
-      position: relative;
-      margin-bottom: 30px;
-      border-top: 1px solid rgba(255, 255, 255, 0.1);
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    }
-    
-    /* ✅ CORRETO */
-    footer {
-      padding-top: 20px !important;
-    }
-    .carousel-container {
-      width: 100%;
-      overflow: hidden;
-      white-space: nowrap;
-      position: relative;
-      height: 180px;
-      padding: 3px 0;
-    }
-    
-    .carousel-track {
-      display: inline-flex;
-      animation: scroll 60s linear infinite;
-      gap: 24px;
-      padding: 0 24px;
-    }
-
-    .carousel-track:hover {
-      animation-play-state: paused;
-    }
-
-    @keyframes scroll {
-      0% {
-        transform: translateX(0);
-      }
-      100% {
-        transform: translateX(-50%);
-      }
-    }
-
-    .stock-item {
-      flex-shrink: 0;
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 12px;
-      padding: 12px 16px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      min-width: 200px;
-      transition: all 0.3s ease;
-      cursor: pointer;
-      backdrop-filter: blur(10px);
-    }
-
-    .stock-item:hover {
-      background: rgba(255, 255, 255, 0.1);
-      border-color: rgba(186, 57, 175, 0.5);
-      transform: translateY(-2px);
-      box-shadow: 0 8px 25px rgba(186, 57, 175, 0.2);
-    }
-
-    .stock-positive {
-      border-color: rgba(16, 185, 129, 0.3);
-    }
-
-    .stock-negative {
-      border-color: rgba(239, 68, 68, 0.3);
-    }
-
-    .stock-neutral {
-      border-color: rgba(156, 163, 175, 0.3);
-    }
-
-    /* ===== ESCONDER MARKET SUMMARY ===== */
-    .market-summary {
-      display: none !important;
-    }
-
-    .loading-carousel {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      height: 60px;
-      gap: 8px;
-      color: rgba(255, 255, 255, 0.6);
-    }
-
-    .loading-dot {
-      width: 6px;
-      height: 6px;
-      background: #ba39af;
-      border-radius: 50%;
-      animation: loading-pulse 1.5s ease-in-out infinite;
-    }
-
-    .loading-dot:nth-child(2) { animation-delay: 0.2s; }
-    .loading-dot:nth-child(3) { animation-delay: 0.4s; }
-
-    @keyframes loading-pulse {
-      0%, 80%, 100% {
-        opacity: 0.3;
-        transform: scale(0.8);
-      }
-      40% {
-        opacity: 1;
-        transform: scale(1);
-      }
-    }
-
     /* Neon Logo Effect */
     .neon-logo {
       transition: all 0.3s ease;
@@ -182,7 +66,6 @@
       transition: all 0.3s ease;
     }
 
-    /* ===== NAVBAR VOLTOU PARA POSIÇÃO ORIGINAL ===== */
     .main-navbar {
       position: fixed;
       top: 6px;
@@ -404,14 +287,11 @@
       transition: all 0.3s ease;
     }
 
-    
-
     .footer-link:hover {
       color: #ba39af;
       text-shadow: 0 0 8px rgba(186, 57, 175, 0.5);
     }
 
-    /* ===== HERO SECTION NORMAL ===== */
     .hero-section {
       padding-top: 100px;
     }
@@ -420,24 +300,6 @@
     @media (max-width: 768px) {
       .main-navbar {
         top: 0px;
-      }
-      
-      .market-carousel {
-        margin-bottom: 50px;
-      }
-      
-      .carousel-container {
-        height: 120px;
-        padding: 5px 0;
-      }
-      
-      .stock-item {
-        min-width: 160px;
-        padding: 8px 12px;
-      }
-      
-      .market-summary {
-        display: none !important;
       }
       
       .hero-section {
@@ -490,13 +352,10 @@
       color: white;
     }
 
-
-</style>
+  </style>
 </head>
 <body class="bg-black text-white font-sans">
   <div class="relative min-h-screen overflow-hidden">
-    
-    
 
     <!-- Spline 3D background -->
     <div class="fixed inset-0 z-0">
@@ -581,7 +440,6 @@
         </p>
         
         <!-- Dynamic CTA Button -->
-        <!-- Dynamic CTA Button -->
         <div class="mt-12 pointer-events-auto">
           <div id="guestCTA">
             <a href="/register.html" class="auth-btn font-semibold rounded-full transition-all duration-300 transform hover:scale-105">
@@ -598,20 +456,6 @@
       </div>
     </div>
 
-    <!-- Carrossel de Ações -->
-    <div class="market-carousel">
-      <div class="carousel-container" style="height: 80px;">
-        <div id="carouselContent">
-          <div class="loading-carousel">
-            <div class="loading-dot"></div>
-            <div class="loading-dot"></div>
-            <div class="loading-dot"></div>
-            <span class="ml-3">Carregando cotações...</span>
-          </div>
-        </div>
-      </div>
-    </div>
-
     <!-- Footer Simples -->
     <footer class="relative z-10 bg-black bg-opacity-60 backdrop-blur-md border-t border-white border-opacity-10">
       <div class="max-w-6xl mx-auto px-6 py-12">
@@ -622,7 +466,6 @@
             Receba análises exclusivas e insights sobre as melhores oportunidades na bolsa brasileira.
           </p>
           
-          <!-- APENAS O BOTÃO -->
           <button id="newsletterBtn" class="newsletter-btn px-8 py-4 bg-white text-black font-medium rounded-full hover:bg-gray-200 transition-all duration-300 shadow-lg hover:shadow-xl text-lg">
             📧 Receber Análises Gratuitas
           </button>
@@ -735,7 +578,6 @@
           </div>
         </div>
 
-
         <!-- Social Media -->
         <div class="flex justify-center gap-6 mb-8">
           <a href="https://youtube.com/@geminiiresearch?si=SKM462RGWl0aYs18?sub_confirmation=1" class="social-icon" title="YouTube">
@@ -773,151 +615,13 @@
   <script>
     let currentUser = null;
     let userToken = null;
-    let carouselUpdateInterval = null;
 
-    // ===== CARROSSEL FUNCTIONS =====
-    
-    async function loadCarouselData() {
-      try {
-        console.log('🎠 Carregando dados do carrossel...');
-        
-        const response = await fetch('/api/carrossel/stocks');
-        const result = await response.json();
-        
-        if (result.success && result.data) {
-          updateCarouselDisplay(result.data);
-          // ✅ COMENTAR esta linha:
-          // updateMarketSummary(result.data.market_stats);
-          console.log(`✅ Carrossel: ${result.data.total_stocks} ações carregadas`);
-        } else {
-          showCarouselError(result.error || 'Erro ao carregar dados');
-        }
-        
-      } catch (error) {
-        console.error('❌ Erro no carrossel:', error);
-        showCarouselError('Conexão indisponível');
-      }
-    }
+    // ===== AUTH FUNCTIONS =====
 
-    function updateCarouselDisplay(data) {
-      const container = document.getElementById('carouselContent');
-      
-      if (!data.stocks || data.stocks.length === 0) {
-        container.innerHTML = `
-          <div class="loading-carousel">
-            <i class="fas fa-exclamation-triangle text-yellow-500"></i>
-            <span class="ml-2">Nenhuma cotação disponível</span>
-          </div>
-        `;
-        return;
-      }
-
-      // Duplicar array para efeito de loop infinito
-      const stocks = [...data.stocks, ...data.stocks];
-      
-      const carouselHTML = `
-        <div class="carousel-track">
-          ${stocks.map(stock => `
-            <div class="stock-item ${getStockClass(stock.change_percent)}" 
-                 onclick="showStockDetails('${stock.symbol}')" 
-                 title="Clique para mais detalhes">
-              <div class="flex items-center gap-3">
-                <div class="w-8 h-8 rounded-full bg-gradient-to-r from-geminii to-purple-600 flex items-center justify-center text-white text-xs font-bold">
-                  ${stock.symbol.substring(0, 2)}
-                </div>
-                <div class="flex-1">
-                  <div class="flex items-center gap-2 mb-1">
-                    <span class="font-semibold text-white text-sm">${stock.symbol}</span>
-                    <span class="text-xs text-gray-400 truncate max-w-[80px]" title="${stock.name}">
-                      ${stock.name.length > 12 ? stock.name.substring(0, 12) + '...' : stock.name}
-                    </span>
-                  </div>
-                  <div class="flex items-center gap-2">
-                    <span class="font-bold text-white">R$ ${stock.price}</span>
-                    <span class="text-xs ${getChangeColor(stock.change_percent)} font-medium">
-                      ${stock.change_percent >= 0 ? '+' : ''}${stock.change_percent.toFixed(2)}%
-                    </span>
-                  </div>
-                </div>
-                <div class="text-right">
-                  <div class="text-xs text-gray-400">Vol</div>
-                  <div class="text-xs text-white">${formatVolume(stock.volume)}</div>
-                </div>
-              </div>
-            </div>
-          `).join('')}
-        </div>
-      `;
-      
-      container.innerHTML = carouselHTML;
-    }
-
-    function updateMarketSummary(stats) {
-      if (!stats) return;
-      /*
-      document.getElementById('marketPositive').textContent = `${stats.positive} ↗️`;
-      document.getElementById('marketNegative').textContent = `${stats.negative} ↘️`;
-      document.getElementById('marketNeutral').textContent = `${stats.neutral} ➡️`;
-      ocument.getElementById('marketUpdate').textContent = `Atualizado às ${new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`;
-      const refreshIcon = document.getElementById('refreshIcon');
-      refreshIcon.classList.remove('animate-spin');
-      setTimeout(() => refreshIcon.classList.add('animate-spin'), 100);
-      */
-    }
-
-    function showCarouselError(error) {
-      const container = document.getElementById('carouselContent');
-      container.innerHTML = `
-        <div class="loading-carousel">
-          <i class="fas fa-exclamation-triangle text-red-500"></i>
-          <span class="ml-2 text-red-400">${error}</span>
-          <button onclick="loadCarouselData()" class="ml-3 text-geminii hover:text-purple-400 underline">
-            Tentar novamente
-          </button>
-        </div>
-      `;
-    }
-
-    function getStockClass(changePercent) {
-      if (changePercent > 0.1) return 'stock-positive';
-      if (changePercent < -0.1) return 'stock-negative';
-      return 'stock-neutral';
-    }
-
-    function getChangeColor(changePercent) {
-      if (changePercent > 0.1) return 'text-green-400';
-      if (changePercent < -0.1) return 'text-red-400';
-      return 'text-gray-400';
-    }
-
-    function formatVolume(volume) {
-      if (volume >= 1000000) {
-        return (volume / 1000000).toFixed(1) + 'M';
-      } else if (volume >= 1000) {
-        return (volume / 1000).toFixed(0) + 'K';
-      }
-      return volume.toString();
-    }
-
-    function showStockDetails(symbol) {
-      // Implementar modal ou redirecionamento para detalhes da ação
-      alert(`📊 ${symbol}\n\nDetalhes da ação em desenvolvimento...\n\nEm breve você poderá ver:\n• Gráficos avançados\n• Análise técnica\n• Recomendações IA`);
-    }
-
-    async function refreshCarousel() {
-      const refreshIcon = document.getElementById('refreshIcon');
-      refreshIcon.classList.add('animate-spin');
-      await loadCarouselData();
-    }
-
-    // ===== ORIGINAL FUNCTIONS =====
-
-    // Navigation
     function navigateHome() {
       window.location.href = '/';
     }
 
-    // Auth functions
     async function checkAuthStatus() {
       const token = localStorage.getItem('geminii_token');
       const userData = localStorage.getItem('geminii_user');
@@ -978,19 +682,15 @@
       const planBadge = document.getElementById('planBadge');
       const planId = user.plan_id || 3;
       
-      // ✅ CORREÇÃO: Lógica correta dos planos
       if (planId === 3) {
-        // Plano Básico = ID 3
         planBadge.textContent = 'GRÁTIS';
-        planBadge.className = 'plan-badge'; // Verde básico
+        planBadge.className = 'plan-badge';
       } else if (planId === 1) {
-        // Plano Pro = ID 1  
         planBadge.textContent = 'PRO';
-        planBadge.className = 'plan-badge premium'; // Laranja
+        planBadge.className = 'plan-badge premium';
       } else if (planId === 2) {
-        // Plano Premium = ID 2
         planBadge.textContent = 'PREMIUM';
-        planBadge.className = 'plan-badge strategic'; // Roxo
+        planBadge.className = 'plan-badge strategic';
       }
     }
     
@@ -1019,33 +719,27 @@
       }
     }
 
-    async function subscribeNewsletter() {
+    // ===== NEWSLETTER FUNCTIONS =====
+
+    function subscribeNewsletter() {
       openNewsletterModal();
     }
-    // Abrir modal newsletter
+
     function openNewsletterModal() {
       document.getElementById('newsletterModal').classList.remove('hidden');
-      // Pre-fill email se já digitou no footer
-      const footerEmail = document.getElementById('newsletterEmail').value;
-      if (footerEmail) {
-        document.getElementById('modalEmail').value = footerEmail;
-      }
     }
 
-    // Fechar modal newsletter  
     function closeNewsletterModal() {
       document.getElementById('newsletterModal').classList.add('hidden');
       document.getElementById('newsletterForm').reset();
     }
 
-    // Submit do formulário completo
     async function submitNewsletterForm(event) {
       event.preventDefault();
       
       const submitBtn = document.getElementById('modalSubmitBtn');
       const originalText = submitBtn.innerHTML;
       
-      // Dados do formulário
       const formData = new FormData(event.target);
       const data = {
         name: formData.get('name').trim(),
@@ -1053,7 +747,6 @@
         source: formData.get('source')
       };
       
-      // Validações
       if (!data.name || data.name.length < 2) {
         alert('❌ Nome deve ter pelo menos 2 caracteres');
         return;
@@ -1069,7 +762,6 @@
         return;
       }
       
-      // Loading state
       submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Inscrevendo...';
       submitBtn.disabled = true;
       
@@ -1083,7 +775,6 @@
         const result = await response.json();
         
         if (result.success) {
-          // Sucesso
           submitBtn.innerHTML = '<i class="fas fa-check mr-2"></i>Inscrito!';
           submitBtn.classList.remove('from-geminii', 'to-purple-600');
           submitBtn.classList.add('bg-green-600');
@@ -1094,7 +785,6 @@
           }, 1500);
           
         } else {
-          // Erro
           alert(`❌ ${result.error}`);
           submitBtn.innerHTML = originalText;
           submitBtn.disabled = false;
@@ -1108,7 +798,6 @@
       }
     }
 
-    // Mostrar mensagem de sucesso
     function showSuccessMessage(message) {
       const successDiv = document.createElement('div');
       successDiv.className = 'fixed top-4 right-4 bg-green-600 text-white px-6 py-4 rounded-lg shadow-lg z-50 max-w-sm';
@@ -1129,22 +818,8 @@
       }, 5000);
     }
 
-    // Fechar modal ao clicar fora
-    document.addEventListener('click', function(event) {
-      const modal = document.getElementById('newsletterModal');
-      if (event.target === modal) {
-        closeNewsletterModal();
-      }
-    });
+    // ===== API STATUS =====
 
-    // Fechar modal com ESC
-    document.addEventListener('keydown', function(event) {
-      if (event.key === 'Escape') {
-        closeNewsletterModal();
-      }
-    });
-
-    // API Status check
     async function checkApiStatus() {
       try {
         const response = await fetch('/api/status');
@@ -1164,45 +839,41 @@
       }
     }
 
-    // Initialize
+    // ===== EVENT LISTENERS =====
+
+    document.addEventListener('click', function(event) {
+      const modal = document.getElementById('newsletterModal');
+      if (event.target === modal) {
+        closeNewsletterModal();
+      }
+    });
+
+    document.addEventListener('keydown', function(event) {
+      if (event.key === 'Escape') {
+        closeNewsletterModal();
+      }
+    });
+
+    // ===== INITIALIZE =====
+
     document.addEventListener('DOMContentLoaded', function() {
-      console.log('🚀 Geminii Tech - Index com Carrossel carregado!');
+      console.log('🚀 Geminii Tech - Index Original (Sem Carrossel)');
       
-      // Newsletter subscription
+      // Newsletter
       document.getElementById('newsletterBtn').addEventListener('click', subscribeNewsletter);
       
-      document.getElementById('newsletterEmail').addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
-          subscribeNewsletter();
-        }
-      });
-
-      // Initialize carrossel
-      loadCarouselData();
-      
-      // Auto-refresh carrossel a cada 60 segundos
-      carouselUpdateInterval = setInterval(loadCarouselData, 60000);
-      
-      // Initialize outros componentes
+      // Initialize componentes
       checkApiStatus();
       setInterval(checkApiStatus, 30000);
       checkAuthStatus();
     });
 
-    // Global function exposure
+    // Global functions
     window.toggleUserMenu = toggleUserMenu;
     window.logout = logout;
     window.navigateHome = navigateHome;
-    window.showStockDetails = showStockDetails;
-    window.refreshCarousel = refreshCarousel;
-    window.loadCarouselData = loadCarouselData;
-
-    // Cleanup on page unload
-    window.addEventListener('beforeunload', function() {
-      if (carouselUpdateInterval) {
-        clearInterval(carouselUpdateInterval);
-      }
-    });
+    window.closeNewsletterModal = closeNewsletterModal;
+    window.submitNewsletterForm = submitNewsletterForm;
   </script>
 </body>
 </html>

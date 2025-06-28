@@ -23,6 +23,13 @@ def subscribe_newsletter():
         if not email or '@' not in email:
             return jsonify({'success': False, 'error': 'Email inválido'}), 400
         
+        # Validação adicional para nome e source (obrigatórios no modal)
+        if not name or len(name) < 2:
+            return jsonify({'success': False, 'error': 'Nome deve ter pelo menos 2 caracteres'}), 400
+            
+        if not source:
+            return jsonify({'success': False, 'error': 'Selecione onde nos conheceu'}), 400
+        
         result = newsletter_service.subscribe_email(email, name, source)
         print(f"📤 Resultado do service: {result}")
         
@@ -39,6 +46,8 @@ def subscribe_newsletter():
         
     except Exception as e:
         print(f"❌ Erro na rota newsletter: {e}")
+        import traceback
+        traceback.print_exc()
         return jsonify({'success': False, 'error': 'Erro interno'}), 500
 
 def get_newsletter_blueprint():

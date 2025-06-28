@@ -131,7 +131,7 @@ def initialize_database():
     try:
         from database import setup_enhanced_database
         setup_enhanced_database()
-        print("✅ Banco enhanced verificado/criado com sucesso!")
+        
     except Exception as e:
         print(f"⚠️ Erro ao verificar banco: {e}")
 
@@ -887,10 +887,7 @@ def create_app():
     return app
 
 # if __name__ == "__main__":
-#     print("🔧 Main.py LIMPO carregado!")
-#     print("📋 Arquitetura: routes → services")
-#     print("✅ Sem duplicações de código")
-    
+   
 #     # Inicializar banco
 #     initialize_database()
     

@@ -1,6 +1,3 @@
-
-
-
 import requests
 import logging
 import re
@@ -26,23 +23,21 @@ class NewsletterService:
             if not self._validate_email(email):
                 return {'success': False, 'error': 'Email inválido'}
             
+            # 🔥 FORMATO IGUAL AO DOS EBOOKS
             subscriber_data = {
                 "email": email,
-                "groups": [self.group_id],
-                "status": "active"
+                "fields": {}
             }
             
-            fields = {}
+            # Adicionar campos se fornecidos
             if name:
-                fields["name"] = name
+                subscriber_data["fields"]["name"] = name
             if source:
-                fields["source"] = source
-                
-            if fields:
-                subscriber_data["fields"] = fields
+                subscriber_data["fields"]["company"] = source  # ← Mesmo campo dos ebooks
             
             print(f"📡 Enviando para Mailerlite: {subscriber_data}")
             
+            # PASSO 1: Criar/atualizar subscriber
             url = f"{self.base_url}/subscribers"
             response = requests.post(url, json=subscriber_data, headers=self.headers, timeout=10)
             
@@ -50,11 +45,29 @@ class NewsletterService:
             print(f"📋 Conteúdo: {response.text}")
             
             if response.status_code in [200, 201]:
+                # PASSO 2: Adicionar ao grupo (como no código dos ebooks)
+                result_data = response.json()
+                subscriber_id = result_data.get('data', {}).get('id')
+                
+                if subscriber_id:
+                    self._add_to_group(subscriber_id)
+                
                 return {
                     'success': True,
                     'message': 'Inscrição realizada! Você receberá nossas análises exclusivas.'
                 }
             elif response.status_code == 422:
+                # Email já existe - ainda assim tenta adicionar ao grupo
+                try:
+                    error_data = response.json()
+                    if 'already exists' in str(error_data).lower():
+                        # Buscar o subscriber existente e adicionar ao grupo
+                        existing_subscriber = self._get_subscriber_by_email(email)
+                        if existing_subscriber:
+                            self._add_to_group(existing_subscriber.get('id'))
+                except:
+                    pass
+                
                 return {
                     'success': True,
                     'message': 'Você já está inscrito! Continue recebendo nossas análises.'
@@ -65,6 +78,41 @@ class NewsletterService:
         except Exception as e:
             print(f"❌ Erro newsletter: {e}")
             return {'success': False, 'error': 'Erro interno. Tente novamente.'}
+
+    def _add_to_group(self, subscriber_id):
+        """Adicionar subscriber ao grupo (como no código dos ebooks)"""
+        try:
+            url = f"{self.base_url}/subscribers/{subscriber_id}/groups/{self.group_id}"
+            response = requests.post(url, headers=self.headers, timeout=10)
+            
+            print(f"📊 Adicionar ao grupo: {response.status_code}")
+            
+            if response.status_code in [200, 201]:
+                print("✅ Adicionado ao grupo com sucesso!")
+            else:
+                print(f"⚠️ Erro ao adicionar ao grupo: {response.text}")
+                
+        except Exception as e:
+            print(f"❌ Erro ao adicionar ao grupo: {e}")
+
+    def _get_subscriber_by_email(self, email):
+        """Buscar subscriber existente por email"""
+        try:
+            url = f"{self.base_url}/subscribers"
+            params = {"filter[email]": email}
+            response = requests.get(url, headers=self.headers, params=params, timeout=10)
+            
+            if response.status_code == 200:
+                data = response.json()
+                subscribers = data.get('data', [])
+                if subscribers:
+                    return subscribers[0]
+            
+            return None
+            
+        except Exception as e:
+            print(f"❌ Erro ao buscar subscriber: {e}")
+            return None
 
     def _validate_email(self, email: str) -> bool:
         pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'

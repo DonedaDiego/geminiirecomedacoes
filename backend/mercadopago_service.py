@@ -898,16 +898,7 @@ def validate_coupon(code, plan_name, user_id):
 
 # ===== DEBUG E INFORMAÇÕES =====
 
-if __name__ == "__main__":
-    print("🔥 MercadoPago Service LIMPO E ORGANIZADO!")
-    print(f"📋 Planos: {list(PLANS.keys())}")
-    print("✅ Device ID validation: Implementado")
-    print("✅ SDK optimizations: Configurado") 
-    print("✅ Retry logic: Ativo")
-    print("✅ Tables management: Automático")
-    print("✅ Password reset: Implementado")
-    print("✅ Coupon system: Implementado")
-    
+if __name__ == "__main__":   
     if mp_sdk:
         test_result = test_mercadopago_connection()
         if test_result['success']:

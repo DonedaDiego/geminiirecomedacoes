@@ -49,7 +49,7 @@ def create_password_reset_table():
         cursor.close()
         conn.close()
         
-        print("✅ Tabela 'password_reset_tokens' criada!")
+        
         return True
         
     except Exception as e:
