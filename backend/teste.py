@@ -1,27 +1,12 @@
-# # teste_ml.py
-# from swing_trade_ml_service import SwingTradeMachineLearningService
+# atsmom antigo 
 
-# # Testar
-# service = SwingTradeMachineLearningService()
-# result = service.run_analysis('PETR4', 5)
 
-# if result['success']:
-#     print("✅ FUNCIONOU!")
-#     print(f"Preço atual: {result['analysis_data']['preco_atual']}")
-#     print(f"Direção: {result['analysis_data']['direcao']}")
-# else:
-#     print("❌ ERRO:", result['error'])
-    
-    
-    
-#     html adm-dashboard
-    
-#     <!DOCTYPE html>
+# <!DOCTYPE html>
 # <html lang="pt-BR">
 # <head>
 #   <meta charset="UTF-8">
 #   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-#   <title>Admin Dashboard - Geminii Tech</title>
+#   <title>ATSMOM - Geminii Tech</title>
 #   <script src="https://cdn.tailwindcss.com"></script>
 #   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 #   <script>
@@ -29,7 +14,13 @@
 #       theme: {
 #         extend: {
 #           colors: {
+#             dark: '#000000',
+#             light: '#ffffff',
+#             subtle: 'rgba(255,255,255,0.1)',
 #             geminii: '#ba39af'
+#           },
+#           fontFamily: {
+#             sans: ['Inter', 'sans-serif']
 #           }
 #         }
 #       }
@@ -40,82 +31,27 @@
 #   <style>
 #     body { 
 #       font-family: 'Inter', sans-serif; 
-#       background: linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 100%);
+#       background: linear-gradient(135deg, #0c0c0c 0%, #1a1a1a 100%);
+#       min-height: 100vh;
 #     }
     
-#     .admin-card {
+#     .beta-card {
 #       background: rgba(255, 255, 255, 0.08);
 #       backdrop-filter: blur(20px);
 #       border: 1px solid rgba(255, 255, 255, 0.2);
 #       border-radius: 16px;
 #       transition: all 0.3s ease;
-#       min-height: fit-content !important; 
-#       height: auto !important; 
-#     }
-
-#     .space-y-6 {
-#       min-height: 100vh; /* ✅ Garantir altura suficiente */
 #     }
     
-    
-#     .admin-card:hover {
+#     .beta-card:hover {
 #       transform: translateY(-2px);
 #       box-shadow: 0 20px 40px rgba(186, 57, 175, 0.15);
 #       border-color: rgba(186, 57, 175, 0.3);
 #     }
     
-#     .stat-card {
-#       background: linear-gradient(135deg, rgba(186, 57, 175, 0.1), rgba(217, 70, 239, 0.05));
-#       border: 1px solid rgba(186, 57, 175, 0.2);
-#       position: relative;
-#       overflow: hidden;
-#     }
-    
-#     .stat-card::before {
-#       content: '';
-#       position: absolute;
-#       top: 0;
-#       left: 0;
-#       right: 0;
-#       height: 2px;
-#       background: linear-gradient(90deg, #ba39af, #d946ef);
-#     }
-    
-#     .action-btn {
-#       transition: all 0.3s ease;
-#       position: relative;
-#       overflow: hidden;
-#     }
-    
-#     .action-btn:hover {
-#       transform: translateY(-1px);
-#       box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
-#     }
-    
-#     .sidebar {
-#       background: rgba(0, 0, 0, 0.9);
-#       backdrop-filter: blur(20px);
-#       border-right: 1px solid rgba(255, 255, 255, 0.1);
-#     }
-    
-#     .nav-item {
-#       transition: all 0.3s ease;
-#       border-radius: 8px;
-#       margin: 4px 0;
-#     }
-    
-#     .nav-item:hover, .nav-item.active {
-#       background: rgba(186, 57, 175, 0.2);
-#       border-color: rgba(186, 57, 175, 0.3);
-#     }
-    
-#     .table-row {
-#       border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-#       transition: all 0.3s ease;
-#     }
-    
-#     .table-row:hover {
-#       background: rgba(255, 255, 255, 0.05);
+#     .loading {
+#       opacity: 0.6;
+#       pointer-events: none;
 #     }
     
 #     .spinner {
@@ -132,2214 +68,1215 @@
 #       0% { transform: rotate(0deg); }
 #       100% { transform: rotate(360deg); }
 #     }
-
-#     /* Improved form styles */
-#     select option {
-#       background-color: #1f2937 !important;
-#       color: white !important;
-#       border: none !important;
-#     }
     
-#     select option:hover {
-#       background-color: #374151 !important;
-#       color: white !important;
-#     }
-    
-#     select option:checked {
-#       background-color: #ba39af !important;
-#       color: white !important;
-#     }
-    
-#     select {
-#       background-color: rgba(255, 255, 255, 0.1) !important;
-#       color: white !important;
-#       border: 1px solid #4b5563 !important;
-#     }
-    
-#     select:focus {
-#       border-color: #ba39af !important;
-#       outline: none !important;
-#       box-shadow: 0 0 0 1px #ba39af !important;
-#     }
-    
-#     select[multiple] option {
-#       background-color: #1f2937 !important;
-#       color: white !important;
-#       padding: 8px !important;
-#     }
-    
-#     select[multiple] option:checked {
-#       background-color: #ba39af !important;
-#       color: white !important;
-#     }
-
-#     /* Price indicators */
-#     .price-positive {
-#       color: #10b981;
-#     }
-    
-#     .price-negative {
-#       color: #ef4444;
-#     }
-    
-#     .price-neutral {
-#       color: #6b7280;
-#     }
-
-#     /* Enhanced asset cards */
-#     .asset-card {
-#       background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
-#       border: 1px solid rgba(255, 255, 255, 0.2);
+#     .signal-card {
+#       background: rgba(255, 255, 255, 0.05);
+#       border: 1px solid rgba(255, 255, 255, 0.1);
 #       border-radius: 12px;
+#       padding: 16px;
 #       transition: all 0.3s ease;
 #     }
+    
+#     .signal-card:hover {
+#       background: rgba(255, 255, 255, 0.08);
+#       border-color: rgba(186, 57, 175, 0.3);
+#     }
+    
+#     .signal-compra { border-left: 4px solid #10b981; }
+#     .signal-venda { border-left: 4px solid #ef4444; }
+#     .signal-neutro { border-left: 4px solid #6b7280; }
 
-#     .asset-card:hover {
-#       border-color: rgba(186, 57, 175, 0.5);
-#       transform: translateY(-1px);
+#     /* Estilos escuros para select */
+#     .dark-select {
+#       background-color: rgba(30, 30, 30, 0.9);
+#       border: 1px solid rgba(255, 255, 255, 0.2);
+#       color: white;
+#       backdrop-filter: blur(10px);
 #     }
 
-#     /* Performance indicators */
-#     .performance-badge {
-#       font-size: 0.75rem;
-#       font-weight: 600;
-#       padding: 0.25rem 0.5rem;
-#       border-radius: 0.375rem;
+#     .dark-select option {
+#       background-color: #1a1a1a;
+#       color: white;
+#       padding: 8px;
 #     }
 
-#     .performance-positive {
-#       background-color: rgba(16, 185, 129, 0.2);
-#       color: #10b981;
-#       border: 1px solid rgba(16, 185, 129, 0.3);
+#     .dark-select:focus {
+#       outline: none;
+#       border-color: #ba39af;
+#       box-shadow: 0 0 0 2px rgba(186, 57, 175, 0.2);
 #     }
 
-#     .performance-negative {
-#       background-color: rgba(239, 68, 68, 0.2);
-#       color: #ef4444;
-#       border: 1px solid rgba(239, 68, 68, 0.3);
+#     /* Tabs */
+#     .tab-button {
+#       padding: 12px 24px;
+#       border-radius: 8px;
+#       border: 1px solid rgba(255, 255, 255, 0.1);
+#       background: rgba(255, 255, 255, 0.05);
+#       color: #94a3b8;
+#       cursor: pointer;
+#       transition: all 0.3s ease;
+#       font-weight: 500;
 #     }
 
-#     .loading-skeleton {
-#       background: linear-gradient(90deg, #f0f0f0 25%, transparent 37%, #f0f0f0 63%);
-#       background-size: 400% 100%;
-#       animation: skeleton-loading 1.4s ease-in-out infinite;
+#     .tab-button.active {
+#       background: linear-gradient(135deg, #ba39af, #8b5cf6);
+#       color: white;
+#       border-color: rgba(186, 57, 175, 0.3);
 #     }
 
-#     @keyframes skeleton-loading {
-#       0% {
-#         background-position: 100% 50%;
-#       }
-#       100% {
-#         background-position: 0 50%;
-#       }
+#     .tab-button:not(.active):hover {
+#       background: rgba(255, 255, 255, 0.08);
+#       color: #e2e8f0;
+#       border-color: rgba(255, 255, 255, 0.2);
 #     }
 
-#     /* Portfolio selection active state */
-#     .portfolio-btn.selected {
-#       border-color: #ba39af !important;
-#       background: rgba(186, 57, 175, 0.1);
+#     .tab-content {
+#       display: none;
 #     }
 
-#     /* Loading state */
-#     .loading {
-#         opacity: 0.6;
-#         pointer-events: none;
-#       }
+#     .tab-content.active {
+#       display: block;
+#       animation: fadeIn 0.3s ease-in-out;
+#     }
 
+#     @keyframes fadeIn {
+#       from { opacity: 0; transform: translateY(10px); }
+#       to { opacity: 1; transform: translateY(0); }
+#     }
+
+#     /* Plotly Container */
+#     .plotly-container {
+#       background: rgba(255, 255, 255, 0.02);
+#       border-radius: 12px;
+#       padding: 20px;
+#       min-height: 600px;
+#     }
 #   </style>
 # </head>
-# <body class="bg-black text-white min-h-screen">
+# <body class="text-white">
   
-#   <div class="flex min-h-screen">
-#     <!-- Sidebar -->
-#     <div class="sidebar w-64 p-6">
-#       <div class="mb-8">
-#         <h1 class="text-2xl font-bold text-geminii">
-#           <i class="fas fa-crown mr-2"></i>
-#           Admin Panel
-#         </h1>
-#         <p class="text-gray-400 text-sm">Geminii Tech</p>
+#   <!-- Navbar -->
+#   <nav class="fixed top-6 left-1/2 transform -translate-x-1/2 z-50 bg-opacity-5 border-opacity-10 bg-white border-white border rounded-full px-4 py-3 shadow-xl backdrop-blur-md">
+#     <div class="flex items-center justify-between">
+#       <div class="flex items-center">
+#         <img src="/assets/logo.png" alt="Geminii Logo" class="w-6 h-6 cursor-pointer" onclick="window.location.href='/dashboard'">
 #       </div>
-      
-#       <nav class="space-y-2">
-#         <a href="#dashboard" class="nav-item active flex items-center p-3 text-white border border-transparent" onclick="showSection('dashboard')">
-#           <i class="fas fa-tachometer-alt mr-3"></i>
-#           Dashboard
-#         </a>
-#         <a href="#users" class="nav-item flex items-center p-3 text-gray-300 border border-transparent" onclick="showSection('users')">
-#           <i class="fas fa-users mr-3"></i>
-#           Usuários
-#         </a>
-#         <a href="#coupons" class="nav-item flex items-center p-3 text-gray-300 border border-transparent" onclick="showSection('coupons')">
-#           <i class="fas fa-tags mr-3"></i>
-#           Cupons
-#         </a>
-#         <a href="#portfolios" class="nav-item flex items-center p-3 text-gray-300 border border-transparent" onclick="showSection('portfolios')">
-#           <i class="fas fa-briefcase mr-3"></i>
-#           Carteiras
-#         </a>
-#         <a href="#payments" class="nav-item flex items-center p-3 text-gray-300 border border-transparent" onclick="showSection('payments')">
-#           <i class="fas fa-credit-card mr-3"></i>
-#           Pagamentos
-#         </a>
-#         <a href="#settings" class="nav-item flex items-center p-3 text-gray-300 border border-transparent" onclick="showSection('settings')">
-#           <i class="fas fa-cog mr-3"></i>
-#           Configurações
-#         </a>
-#       </nav>
-      
-#       <div class="mt-auto pt-8">
-#         <button onclick="logout()" class="w-full bg-red-600 hover:bg-red-700 py-2 px-4 rounded-lg text-sm font-medium">
-#           <i class="fas fa-sign-out-alt mr-2"></i>
-#           Sair
-#         </button>
+#       <div class="hidden md:flex items-center space-x-6 text-xs text-gray-300 ml-8">
+#         <a href="/dashboard" class="hover:text-white transition-colors">Dashboard</a>
+#         <span class="text-white font-medium">ATSMOM</span>
+#         <a href="/beta-regression" class="hover:text-white transition-colors">Beta Regression</a>
+#         <a href="/swing-trade-machine-learning" class="hover:text-white transition-colors">ML Trading</a>
+#       </div>
+#       <div class="flex items-center space-x-3 ml-8">
+#         <div id="apiStatus" class="w-8 h-8 bg-green-500 bg-opacity-10 border border-green-500 border-opacity-30 rounded-full flex items-center justify-center relative">
+#           <i class="fas fa-chart-line text-green-500 text-xs"></i>
+#           <div class="absolute -top-1 -right-1 w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+#         </div>
 #       </div>
 #     </div>
-    
-#     <!-- Main Content -->
-#     <div class="flex-1 p-6">
+#   </nav>
+
+#   <!-- Content -->
+#   <div class="pt-32 pb-16">
+#     <div class="max-w-7xl mx-auto px-6">
       
 #       <!-- Header -->
-#       <div class="flex items-center justify-between mb-8">
-#         <div>
-#           <h2 class="text-3xl font-bold text-white" id="sectionTitle">Dashboard</h2>
-#           <p class="text-gray-400" id="sectionSubtitle">Visão geral do sistema</p>
+#       <div class="text-center mb-12">
+#         <h1 class="text-4xl md:text-5xl font-bold mb-4">
+#           <span style="color: #ba39af; font-weight: 900;">ATSMOM</span>
+#           <span class="text-white font-light">Analytics</span>
+#         </h1>
+#         <p class="text-neutral-300 text-lg max-w-2xl mx-auto">
+#           Adaptive Time Series Momentum - Análise Avançada de Sinais de Trading
+#         </p>
+#       </div>
+
+#       <!-- Tabs -->
+#       <div class="beta-card p-6 mb-8">
+#         <div class="flex flex-wrap gap-2 mb-6 justify-center">
+#           <button class="tab-button active" data-tab="individual">
+#             <i class="fas fa-chart-line mr-2"></i>Análise Individual
+#           </button>
+#           <button class="tab-button" data-tab="bulk">
+#             <i class="fas fa-list mr-2"></i>Análise em Lote
+#           </button>
+#           <button class="tab-button" data-tab="compare">
+#             <i class="fas fa-balance-scale mr-2"></i>Comparar Ativos
+#           </button>
+#           <button class="tab-button" data-tab="overview">
+#             <i class="fas fa-globe mr-2"></i>Visão Geral
+#           </button>
 #         </div>
-#         <div class="flex items-center space-x-4">
-#           <div class="text-sm text-gray-400">
-#             <i class="fas fa-user-shield mr-1"></i>
-#             <span id="adminName">Admin</span>
+
+#         <!-- Tab Content: Individual -->
+#         <div id="individual-content" class="tab-content active">
+#           <div class="flex flex-col md:flex-row gap-4 items-center justify-center">
+#             <div class="flex gap-3 flex-wrap items-center">
+#               <input 
+#                 id="individual-symbol" 
+#                 type="text" 
+#                 placeholder="Digite o código da ação (ex: PETR4)" 
+#                 class="px-4 py-2 bg-white bg-opacity-10 border border-white border-opacity-20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-geminii backdrop-blur-sm"
+#               >
+#               <select id="individual-period" class="dark-select px-4 py-2 rounded-lg">
+#                 <option value="1y">1 Ano</option>
+#                 <option value="2y" selected>2 Anos</option>
+#                 <option value="5y">5 Anos</option>
+#                 <option value="max">Máximo</option>
+#               </select>
+#               <input 
+#                 id="individual-strike" 
+#                 type="number" 
+#                 placeholder="Strike (opcional)" 
+#                 step="0.01"
+#                 class="px-4 py-2 bg-white bg-opacity-10 border border-white border-opacity-20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-geminii backdrop-blur-sm"
+#               >
+#               <button id="analyzeIndividualBtn" class="px-6 py-2 bg-gradient-to-r from-pink-500 to-purple-600 hover:shadow-lg rounded-lg transition-all font-medium">
+#                 <i class="fas fa-rocket mr-2"></i>Analisar ATSMOM
+#               </button>
+#             </div>
 #           </div>
-#           <div id="apiStatus" class="w-8 h-8 bg-green-500 bg-opacity-10 border border-green-500 border-opacity-30 rounded-full flex items-center justify-center">
-#             <i class="fas fa-shield-alt text-green-500 text-xs"></i>
+#         </div>
+
+#         <!-- Tab Content: Bulk -->
+#         <div id="bulk-content" class="tab-content">
+#           <div class="flex flex-col md:flex-row gap-4 items-center justify-center">
+#             <div class="flex gap-3 flex-wrap items-center">
+#               <select id="bulk-period" class="dark-select px-4 py-2 rounded-lg">
+#                 <option value="1y">1 Ano</option>
+#                 <option value="2y" selected>2 Anos</option>
+#                 <option value="5y">5 Anos</option>
+#                 <option value="max">Máximo</option>
+#               </select>
+#               <input 
+#                 id="bulk-symbols" 
+#                 type="text" 
+#                 placeholder="Símbolos separados por vírgula (opcional)" 
+#                 class="px-4 py-2 bg-white bg-opacity-10 border border-white border-opacity-20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-geminii backdrop-blur-sm w-80"
+#               >
+#               <button id="analyzeBulkBtn" class="px-6 py-2 bg-gradient-to-r from-orange-500 to-red-600 hover:shadow-lg rounded-lg transition-all font-medium">
+#                 <i class="fas fa-list mr-2"></i>Analisar Carteira
+#               </button>
+#             </div>
+#           </div>
+#         </div>
+
+#         <!-- Tab Content: Compare -->
+#         <div id="compare-content" class="tab-content">
+#           <div class="flex flex-col md:flex-row gap-4 items-center justify-center">
+#             <div class="flex gap-3 flex-wrap items-center">
+#               <input 
+#                 id="compare-symbol1" 
+#                 type="text" 
+#                 placeholder="Primeiro ativo (ex: PETR4)" 
+#                 class="px-4 py-2 bg-white bg-opacity-10 border border-white border-opacity-20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-geminii backdrop-blur-sm"
+#               >
+#               <input 
+#                 id="compare-symbol2" 
+#                 type="text" 
+#                 placeholder="Segundo ativo (ex: VALE3)" 
+#                 class="px-4 py-2 bg-white bg-opacity-10 border border-white border-opacity-20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-geminii backdrop-blur-sm"
+#               >
+#               <select id="compare-period" class="dark-select px-4 py-2 rounded-lg">
+#                 <option value="1y">1 Ano</option>
+#                 <option value="2y" selected>2 Anos</option>
+#                 <option value="5y">5 Anos</option>
+#                 <option value="max">Máximo</option>
+#               </select>
+#               <button id="compareBtn" class="px-6 py-2 bg-gradient-to-r from-purple-500 to-blue-600 hover:shadow-lg rounded-lg transition-all font-medium">
+#                 <i class="fas fa-balance-scale mr-2"></i>Comparar
+#               </button>
+#             </div>
+#           </div>
+#         </div>
+
+#         <!-- Tab Content: Overview -->
+#         <div id="overview-content" class="tab-content">
+#           <div class="flex flex-col md:flex-row gap-4 items-center justify-center">
+#             <div class="flex gap-3 flex-wrap items-center">
+#               <select id="overview-period" class="dark-select px-4 py-2 rounded-lg">
+#                 <option value="1y">1 Ano</option>
+#                 <option value="2y" selected>2 Anos</option>
+#                 <option value="5y">5 Anos</option>
+#                 <option value="max">Máximo</option>
+#               </select>
+#               <button id="overviewBtn" class="px-6 py-2 bg-gradient-to-r from-green-500 to-teal-600 hover:shadow-lg rounded-lg transition-all font-medium">
+#                 <i class="fas fa-globe mr-2"></i>Visão Geral
+#               </button>
+#             </div>
 #           </div>
 #         </div>
 #       </div>
-      
-#       <!-- Dashboard Section -->
-#       <div id="dashboardSection" class="section">
-#         <!-- Stats Grid -->
-#         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-#           <div class="admin-card stat-card p-6">
-#             <div class="flex items-center justify-between">
-#               <div>
-#                 <p class="text-sm text-gray-400">Total Usuários</p>
-#                 <p class="text-2xl font-bold text-white" id="totalUsers">0</p>
-#               </div>
-#               <div class="w-12 h-12 bg-blue-500 bg-opacity-20 rounded-lg flex items-center justify-center">
-#                 <i class="fas fa-users text-blue-500"></i>
-#               </div>
+
+#       <!-- Status -->
+#       <div id="statusMsg" class="mb-6 p-4 rounded-lg hidden backdrop-blur-sm"></div>
+
+#       <!-- Análise Individual - Resultados -->
+#       <div id="individual-results" class="mb-8 hidden">
+#         <div class="beta-card p-6">
+#           <div class="flex justify-between items-center mb-6">
+#             <h3 id="individual-title" class="text-2xl font-bold"></h3>
+#             <div id="individual-timestamp" class="text-sm text-gray-400"></div>
+#           </div>
+          
+#           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+#             <div class="bg-white bg-opacity-5 p-4 rounded-lg">
+#               <div class="text-sm text-gray-400">Sinal Atual</div>
+#               <div id="individual-signal" class="text-xl font-bold"></div>
+#             </div>
+            
+#             <div class="bg-white bg-opacity-5 p-4 rounded-lg">
+#               <div class="text-sm text-gray-400">Preço Atual</div>
+#               <div id="individual-price" class="text-xl font-bold"></div>
+#             </div>
+            
+#             <div class="bg-white bg-opacity-5 p-4 rounded-lg">
+#               <div class="text-sm text-gray-400">Força do Sinal</div>
+#               <div id="individual-strength" class="text-xl font-bold"></div>
+#             </div>
+            
+#             <div class="bg-white bg-opacity-5 p-4 rounded-lg">
+#               <div class="text-sm text-gray-400">Volatilidade</div>
+#               <div id="individual-volatility" class="text-xl font-bold"></div>
 #             </div>
 #           </div>
           
-#           <div class="admin-card stat-card p-6">
-#             <div class="flex items-center justify-between">
-#               <div>
-#                 <p class="text-sm text-gray-400">Assinantes Premium</p>
-#                 <p class="text-2xl font-bold text-green-400" id="premiumUsers">0</p>
+#           <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+#             <div>
+#               <h4 class="text-lg font-semibold mb-4">Métricas ATSMOM</h4>
+#               <div class="space-y-3">
+#                 <div class="bg-white bg-opacity-5 p-3 rounded-lg flex justify-between">
+#                   <span class="text-gray-400">Tendência:</span>
+#                   <span id="individual-trend" class="font-semibold">0</span>
+#                 </div>
+#                 <div class="bg-white bg-opacity-5 p-3 rounded-lg flex justify-between">
+#                   <span class="text-gray-400">Beta:</span>
+#                   <span id="individual-beta" class="font-semibold">0</span>
+#                 </div>
+#                 <div class="bg-white bg-opacity-5 p-3 rounded-lg flex justify-between">
+#                   <span class="text-gray-400">Última Atualização:</span>
+#                   <span id="individual-update" class="font-semibold text-xs">--</span>
+#                 </div>
 #               </div>
-#               <div class="w-12 h-12 bg-green-500 bg-opacity-20 rounded-lg flex items-center justify-center">
-#                 <i class="fas fa-crown text-green-500"></i>
+#             </div>
+            
+#             <div id="individual-strike-analysis" class="hidden">
+#               <h4 class="text-lg font-semibold mb-4">Análise de Strike</h4>
+#               <div class="space-y-3">
+#                 <div class="bg-white bg-opacity-5 p-3 rounded-lg flex justify-between">
+#                   <span class="text-gray-400">Strike:</span>
+#                   <span id="strike-price" class="font-semibold">R$ 0,00</span>
+#                 </div>
+#                 <div class="bg-white bg-opacity-5 p-3 rounded-lg flex justify-between">
+#                   <span class="text-gray-400">Distância:</span>
+#                   <span id="strike-distance" class="font-semibold">0%</span>
+#                 </div>
+#                 <div class="bg-white bg-opacity-5 p-3 rounded">
+#                   <div class="text-gray-400 text-sm mb-2">Análise:</div>
+#                   <div id="strike-analysis-text" class="text-xs leading-relaxed">--</div>
+#                 </div>
 #               </div>
 #             </div>
 #           </div>
+#         </div>
+#       </div>
+
+#       <!-- Gráfico ATSMOM Principal -->
+#       <div id="plotly-chart-container" class="mb-8 hidden">
+#         <div class="beta-card p-6">
+#           <h3 class="text-xl font-bold mb-4">
+#             <i class="fas fa-chart-area text-purple-400 mr-2"></i>
+#             Análise ATSMOM Completa
+#           </h3>
+#           <div class="plotly-container">
+#             <div id="plotly-chart" style="width: 100%; height: 600px;"></div>
+#           </div>
+#         </div>
+#       </div>
+
+#       <!-- Análise em Lote - Resultados -->
+#       <div id="bulk-results" class="mb-8 hidden">
+#         <div class="beta-card p-6">
+#           <h3 class="text-xl font-bold mb-6">Resumo da Carteira ATSMOM</h3>
           
-#           <div class="admin-card stat-card p-6">
-#             <div class="flex items-center justify-between">
-#               <div>
-#                 <p class="text-sm text-gray-400">Cupons Ativos</p>
-#                 <p class="text-2xl font-bold text-yellow-400" id="activeCoupons">0</p>
-#               </div>
-#               <div class="w-12 h-12 bg-yellow-500 bg-opacity-20 rounded-lg flex items-center justify-center">
-#                 <i class="fas fa-tags text-yellow-500"></i>
-#               </div>
-#             </div>
-#           </div>
+#           <!-- Resumo Cards -->
+#           <div id="bulk-summary" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6"></div>
           
-#           <div class="admin-card stat-card p-6">
-#             <div class="flex items-center justify-between">
-#               <div>
-#                 <p class="text-sm text-gray-400">Receita Mensal</p>
-#                 <p class="text-2xl font-bold text-purple-400" id="monthlyRevenue">R$ 0</p>
-#               </div>
-#               <div class="w-12 h-12 bg-purple-500 bg-opacity-20 rounded-lg flex items-center justify-center">
-#                 <i class="fas fa-dollar-sign text-purple-500"></i>
-#               </div>
-#             </div>
+#           <!-- Tabela -->
+#           <div class="overflow-x-auto">
+#             <table class="w-full">
+#               <thead>
+#                 <tr class="border-b border-white border-opacity-10">
+#                   <th class="text-left py-3 px-4">Ativo</th>
+#                   <th class="text-left py-3 px-4">Preço</th>
+#                   <th class="text-left py-3 px-4">Sinal</th>
+#                   <th class="text-left py-3 px-4">Força</th>
+#                   <th class="text-left py-3 px-4">Tendência</th>
+#                   <th class="text-left py-3 px-4">Volatilidade</th>
+#                   <th class="text-left py-3 px-4">Beta</th>
+#                 </tr>
+#               </thead>
+#               <tbody id="bulk-table-body">
+#                 <!-- Resultados serão inseridos aqui -->
+#               </tbody>
+#             </table>
 #           </div>
+#         </div>
+#       </div>
+
+#       <!-- Comparação - Resultados -->
+#       <div id="compare-results" class="mb-8 hidden">
+#         <div class="beta-card p-6 mb-6">
+#           <h3 class="text-xl font-bold mb-4">Resumo da Comparação</h3>
+#           <div id="comparison-summary" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
 #         </div>
         
-#         <!-- Recent Activity -->
-#         <div class="admin-card p-6">
-#           <h3 class="text-xl font-bold text-white mb-4">
-#             <i class="fas fa-clock mr-2"></i>
-#             Atividade Recente
-#           </h3>
-#           <div id="recentActivity" class="space-y-3">
-#             <!-- Activity items will be loaded here -->
+#         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+#           <div id="compare-asset1" class="beta-card p-6">
+#             <!-- Primeiro ativo -->
 #           </div>
-#         </div>
-#       </div>
-      
-#       <!-- Users Section -->
-#       <div id="usersSection" class="section hidden">
-#         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          
-#           <!-- Lista de Usuários -->
-#           <div class="lg:col-span-2">
-#             <div class="admin-card p-6 mb-6">
-#               <div class="flex items-center justify-between mb-4">
-#                 <h3 class="text-xl font-bold text-white">
-#                   <i class="fas fa-users mr-2"></i>
-#                   Lista de Usuários
-#                 </h3>
-#                 <button onclick="loadUsers()" class="bg-blue-600 hover:bg-blue-700 py-2 px-4 rounded-lg text-sm">
-#                   <i class="fas fa-sync mr-1"></i>
-#                   Atualizar
-#                 </button>
-#               </div>
-
-#               <div class="overflow-x-auto">
-#                 <table class="w-full">
-#                   <thead>
-#                     <tr class="text-left border-b border-gray-600">
-#                       <th class="py-3 px-2 text-gray-400">Nome</th>
-#                       <th class="py-3 px-2 text-gray-400">Email</th>
-#                       <th class="py-3 px-2 text-gray-400">Plano</th>
-#                       <th class="py-3 px-2 text-gray-400">Tipo</th>
-#                       <th class="py-3 px-2 text-gray-400">Carteiras</th>
-#                       <th class="py-3 px-2 text-gray-400">Ações</th>
-#                     </tr>
-#                   </thead>
-#                   <tbody id="usersTable">
-#                     <tr>
-#                       <td colspan="5" class="text-center py-8">
-#                         <div class="spinner mx-auto mb-2"></div>
-#                         <p class="text-gray-400">Carregando usuários...</p>
-#                       </td>
-#                     </tr>
-#                   </tbody>
-#                 </table>
-#               </div>
-#             </div>
-#           </div>
-
-#           <!-- Coluna lateral direita -->
-#           <div class="space-y-6" style="height: auto; min-height: fit-content;">
-#             <!-- Gerenciar Usuário -->
-#             <div class="admin-card p-6">
-#               <h3 class="text-lg font-bold text-white mb-4">
-#                 <i class="fas fa-user-cog mr-2"></i>
-#                 Gerenciar Usuário
-#               </h3>
-            
-#               <div class="space-y-4">
-#                 <div>
-#                   <label class="block text-sm text-gray-300 mb-1">E-mail do Usuário</label>
-#                   <input type="email" id="manageUserEmail" 
-#                         class="w-full px-3 py-2 bg-white bg-opacity-10 border border-gray-600 rounded-lg text-white text-sm"
-#                         placeholder="usuario@email.com">
-#                 </div>
-            
-#                 <div>
-#                   <label class="block text-sm text-gray-300 mb-1">Novo Plano</label>
-#                   <select id="newPlanId" class="w-full px-3 py-2 bg-white bg-opacity-10 border border-gray-600 rounded-lg text-white text-sm">
-#                     <option value="3">Básico (Grátis)</option>
-#                     <option value="1">Pro</option>
-#                     <option value="2">Premium</option>
-#                   </select>
-#                 </div>
-            
-#                 <!-- ✅ BOTÕES ATUALIZADOS COM REMOVER USUÁRIO -->
-#                 <div class="flex flex-col gap-2">
-#                   <button onclick="grantSubscription()" class="action-btn bg-green-600 hover:bg-green-700 py-2 px-4 rounded-lg text-sm font-medium">
-#                     <i class="fas fa-plus mr-1"></i>
-#                     Dar Assinatura
-#                   </button>
-#                   <button onclick="removeUserPlan()" class="action-btn bg-orange-600 hover:bg-orange-700 py-2 px-4 rounded-lg text-sm font-medium">
-#                     <i class="fas fa-minus mr-1"></i>
-#                     Remover Assinatura
-#                   </button>
-#                   <button onclick="promoteToAdmin()" class="action-btn bg-purple-600 hover:bg-purple-700 py-2 px-4 rounded-lg text-sm font-medium">
-#                     <i class="fas fa-crown mr-1"></i>
-#                     Promover a Admin
-#                   </button>
-                  
-#                   <!-- ✅ NOVO BOTÃO: REMOVER USUÁRIO -->
-#                   <button onclick="deleteUser()" class="action-btn bg-red-600 hover:bg-red-700 py-2 px-4 rounded-lg text-sm font-medium">
-#                     <i class="fas fa-trash mr-1"></i>
-#                     Remover Usuário
-#                   </button>
-#                 </div>
-#               </div>
-#             </div>
-
-#             <!-- Carteiras do Usuário -->
-#             <div class="admin-card p-6 mb-6">
-#               <h3 class="text-lg font-bold text-white mb-4">
-#                 <i class="fas fa-briefcase mr-2"></i>
-#                 Carteiras do Usuário
-#               </h3>
-
-#               <div class="space-y-4">
-#                 <div>
-#                   <label class="block text-sm text-gray-300 mb-1">E-mail do Usuário</label>
-#                   <input type="email" id="portfolioUserEmail" 
-#                         class="w-full px-3 py-2 bg-white bg-opacity-10 border border-gray-600 rounded-lg text-white text-sm"
-#                         placeholder="usuario@email.com">
-#                 </div>
-
-#                 <button onclick="loadUserPortfolios()" class="w-full bg-blue-600 hover:bg-blue-700 py-2 px-4 rounded-lg text-sm font-medium">
-#                   <i class="fas fa-search mr-1"></i>
-#                   Buscar Carteiras
-#                 </button>
-
-#                 <!-- User Portfolios Display -->
-#                 <div id="userPortfoliosDisplay" class="hidden">
-#                   <div class="bg-gray-800 bg-opacity-30 rounded-lg p-4 mb-4">
-#                     <h4 class="text-sm font-medium text-white mb-2">Carteiras Ativas:</h4>
-#                     <div id="userPortfoliosList" class="space-y-2">
-#                       <!-- Portfolios will be loaded here -->
-#                     </div>
-#                   </div>
-
-#                   <div class="space-y-3">
-#                     <div>
-#                       <label class="block text-sm text-gray-300 mb-1">Conceder Acesso à Carteira</label>
-#                       <select id="portfolioToGrant" class="w-full px-3 py-2 bg-white bg-opacity-10 border border-gray-600 rounded-lg text-white text-sm">
-#                         <option value="">Selecione uma carteira...</option>
-#                         <option value="smart_bdr">Smart BDR</option>
-#                         <option value="growth">Growth</option>
-#                         <option value="smallcaps">Small Caps</option>
-#                         <option value="bluechips">Blue Chips</option>
-#                       </select>
-#                     </div>
-
-#                     <div class="flex gap-2">
-#                       <button onclick="grantPortfolioAccess()" class="flex-1 bg-green-600 hover:bg-green-700 py-2 px-4 rounded-lg text-sm font-medium">
-#                         <i class="fas fa-plus mr-1"></i>
-#                         Conceder Acesso
-#                       </button>
-#                       <button onclick="revokePortfolioAccess()" class="flex-1 bg-red-600 hover:bg-red-700 py-2 px-4 rounded-lg text-sm font-medium">
-#                         <i class="fas fa-minus mr-1"></i>
-#                         Remover Acesso
-#                       </button>
-#                     </div>
-#                   </div>
-#                 </div>
-#               </div>
-#             </div> <!-- Fim carteiras -->
+#           <div id="compare-asset2" class="beta-card p-6">
+#             <!-- Segundo ativo -->
 #           </div>
 #         </div>
 #       </div>
 
-
-      
-      
-      
-#       <!-- Coupons Section -->
-#       <div id="couponsSection" class="section hidden">
-#         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+#       <!-- Visão Geral - Resultados -->
+#       <div id="overview-results" class="mb-8 hidden">
+#         <div class="beta-card p-6">
+#           <h3 class="text-xl font-bold mb-6">Visão Geral do Mercado</h3>
           
-#           <!-- Coupons List -->
-#           <div class="lg:col-span-2">
-#             <div class="admin-card p-6">
-#               <div class="flex items-center justify-between mb-4">
-#                 <h3 class="text-xl font-bold text-white">
-#                   <i class="fas fa-tags mr-2"></i>
-#                   Cupons de Desconto
-#                 </h3>
-#                 <button onclick="loadCoupons()" class="bg-blue-600 hover:bg-blue-700 py-2 px-4 rounded-lg text-sm">
-#                   <i class="fas fa-sync mr-1"></i>
-#                   Atualizar
-#                 </button>
-#               </div>
-              
-#               <div id="couponsList" class="space-y-3">
-#                 <div class="text-center py-4 text-gray-400">
-#                   <div class="spinner mx-auto mb-2"></div>
-#                   <p class="text-sm">Carregando cupons...</p>
-#                 </div>
-#               </div>
-#             </div>
-#           </div>
+#           <!-- Stats Cards -->
+#           <div id="overview-stats" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4 mb-6"></div>
           
-#           <!-- Create Coupon -->
-#           <div>
-#             <div class="admin-card p-6">
-#               <h3 class="text-lg font-bold text-white mb-4">
-#                 <i class="fas fa-plus mr-2"></i>
-#                 Criar Cupom
-#               </h3>
-              
-#               <form id="couponForm" class="space-y-4">
-#                 <div>
-#                   <label class="block text-sm text-gray-300 mb-1">Código do Cupom</label>
-#                   <input type="text" id="couponCode" required
-#                          class="w-full px-3 py-2 bg-white bg-opacity-10 border border-gray-600 rounded-lg text-white text-sm"
-#                          placeholder="CURSO50">
-#                 </div>
-                
-#                 <div>
-#                   <label class="block text-sm text-gray-300 mb-1">Desconto (%)</label>
-#                   <input type="number" id="couponDiscount" required min="1" max="100"
-#                          class="w-full px-3 py-2 bg-white bg-opacity-10 border border-gray-600 rounded-lg text-white text-sm"
-#                          placeholder="50">
-#                 </div>
-                
-#                 <div>
-#                   <label class="block text-sm text-gray-300 mb-1">Planos Aplicáveis</label>
-#                   <select id="couponPlans" multiple class="w-full px-3 py-2 bg-white bg-opacity-10 border border-gray-600 rounded-lg text-white text-sm">
-#                     <option value="pro">Pro</option>         
-#                     <option value="premium">Premium</option>
-#                   </select>
-#                 </div>
-                
-#                 <div>
-#                   <label class="block text-sm text-gray-300 mb-1">Limite de Uso</label>
-#                   <input type="number" id="couponMaxUses" min="1"
-#                          class="w-full px-3 py-2 bg-white bg-opacity-10 border border-gray-600 rounded-lg text-white text-sm"
-#                          placeholder="100">
-#                 </div>
-                
-#                 <div>
-#                   <label class="block text-sm text-gray-300 mb-1">Valido Até</label>
-#                   <input type="date" id="couponValidUntil"
-#                          class="w-full px-3 py-2 bg-white bg-opacity-10 border border-gray-600 rounded-lg text-white text-sm">
-#                 </div>
-                
-#                 <button type="submit" class="action-btn w-full bg-geminii hover:bg-purple-700 py-2 px-4 rounded-lg text-sm font-medium">
-#                   <i class="fas fa-plus mr-1"></i>
-#                   Criar Cupom
-#                 </button>
-#               </form>
-#             </div>
+#           <!-- Tabela -->
+#           <div class="overflow-x-auto">
+#             <table class="w-full">
+#               <thead>
+#                 <tr class="border-b border-white border-opacity-10">
+#                   <th class="text-left py-3 px-4">Ativo</th>
+#                   <th class="text-left py-3 px-4">Preço</th>
+#                   <th class="text-left py-3 px-4">Sinal</th>
+#                   <th class="text-left py-3 px-4">Força</th>
+#                   <th class="text-left py-3 px-4">Volatilidade</th>
+#                   <th class="text-left py-3 px-4">Beta</th>
+#                 </tr>
+#               </thead>
+#               <tbody id="overview-table-body">
+#                 <!-- Resultados serão inseridos aqui -->
+#               </tbody>
+#             </table>
 #           </div>
 #         </div>
 #       </div>
-      
-#       <!-- Portfolios Section -->
-#       <div id="portfoliosSection" class="section hidden">
-#         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          
-#           <!-- Portfolio Selector -->
-#           <div class="lg:col-span-3 mb-6">
-#             <div class="admin-card p-6">
-#               <h3 class="text-xl font-bold text-white mb-4">
-#                 <i class="fas fa-briefcase mr-2"></i>
-#                 Selecionar Carteira
-#               </h3>
-              
-#               <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-#                 <button onclick="selectPortfolio('smart_bdr')" class="portfolio-btn p-4 border border-gray-600 rounded-lg hover:border-geminii transition-colors" id="smart_bdr_btn">
-#                   <div class="text-center">
-#                     <i class="fas fa-chart-line text-2xl text-blue-500 mb-2"></i>
-#                     <div class="text-sm font-medium text-white">Smart BDR</div>
-#                     <div class="text-xs text-gray-400">BDRs Inteligentes</div>
-#                   </div>
-#                 </button>
-                
-#                 <button onclick="selectPortfolio('growth')" class="portfolio-btn p-4 border border-gray-600 rounded-lg hover:border-geminii transition-colors" id="growth_btn">
-#                   <div class="text-center">
-#                     <i class="fas fa-rocket text-2xl text-green-500 mb-2"></i>
-#                     <div class="text-sm font-medium text-white">Growth</div>
-#                     <div class="text-xs text-gray-400">Crescimento</div>
-#                   </div>
-#                 </button>
-                
-#                 <button onclick="selectPortfolio('smallcaps')" class="portfolio-btn p-4 border border-gray-600 rounded-lg hover:border-geminii transition-colors" id="smallcaps_btn">
-#                   <div class="text-center">
-#                     <i class="fas fa-seedling text-2xl text-yellow-500 mb-2"></i>
-#                     <div class="text-sm font-medium text-white">Small Caps</div>
-#                     <div class="text-xs text-gray-400">Pequenas</div>
-#                   </div>
-#                 </button>
-                
-#                 <button onclick="selectPortfolio('bluechips')" class="portfolio-btn p-4 border border-gray-600 rounded-lg hover:border-geminii transition-colors" id="bluechips_btn">
-#                   <div class="text-center">
-#                     <i class="fas fa-building text-2xl text-purple-500 mb-2"></i>
-#                     <div class="text-sm font-medium text-white">Blue Chips</div>
-#                     <div class="text-xs text-gray-400">Grandes</div>
-#                   </div>
-#                 </button>
-#               </div>
-#             </div>
-#           </div>
-          
-#           <!-- Portfolio Assets -->
-#           <div class="lg:col-span-2">
-#             <!-- Assets Card -->
-#             <div class="admin-card p-6 mb-6" id="portfolioAssetsCard" style="display: none;">
-#               <div class="flex items-center justify-between mb-4">
-#                 <h3 class="text-lg font-bold text-white">
-#                   <i class="fas fa-list mr-2"></i>
-#                   Ativos da Carteira: <span id="selectedPortfolioName" class="text-geminii"></span>
-#                 </h3>
-#                 <div class="flex space-x-2">
-#                   <button onclick="loadPortfolioAssets()" class="bg-blue-600 hover:bg-blue-700 py-1 px-3 rounded text-sm">
-#                     <i class="fas fa-sync mr-1"></i>
-#                     Atualizar
-#                   </button>
-#                   <button onclick="clearAllAssets()" class="bg-red-600 hover:bg-red-700 py-1 px-3 rounded text-sm">
-#                     <i class="fas fa-trash mr-1"></i>
-#                     Limpar Todos
-#                   </button>
-#                 </div>
-#               </div>
-              
-#               <div id="portfolioAssetsList" class="space-y-3 max-h-96 overflow-y-auto">
-#                 <!-- Assets will be loaded here -->
-#               </div>
-              
-#               <div class="mt-4 p-3 bg-gray-800 bg-opacity-50 rounded-lg">
-#                 <div class="text-sm text-gray-400 mb-2">Total de Ativos: <span id="totalAssets" class="text-white">0</span></div>
-#                 <div class="text-sm text-gray-400">Peso Total: <span id="totalWeight" class="text-white">0%</span></div>
-#               </div>
-#             </div>
 
-#             <!-- Recommendations Card -->
-#             <div class="admin-card p-6" id="portfolioRecommendationsCard" style="display: none;">
-#               <div class="flex items-center justify-between mb-4">
-#                 <h3 class="text-lg font-bold text-white">
-#                   <i class="fas fa-lightbulb mr-2"></i>
-#                   Recomendações: <span id="selectedPortfolioNameRec" class="text-geminii"></span>
-#                 </h3>
-#                 <button onclick="loadPortfolioRecommendations()" class="bg-blue-600 hover:bg-blue-700 py-1 px-3 rounded text-sm">
-#                   <i class="fas fa-sync mr-1"></i>
-#                   Atualizar
-#                 </button>
-#               </div>
-              
-#               <!-- ✅ NOVO: Botão de Rebalanceamento -->
-#               <div class="mb-4 p-3 bg-yellow-600 bg-opacity-20 border border-yellow-600 rounded-lg">
-#                 <div class="flex items-center justify-between">
-#                   <div>
-#                     <h4 class="text-sm font-medium text-yellow-200">Rebalanceamento</h4>
-#                     <p class="text-xs text-yellow-300">Criar recomendações de VENDA para ativos existentes</p>
-#                   </div>
-#                   <button onclick="generateRebalanceRecommendations()" class="bg-yellow-600 hover:bg-yellow-700 py-2 px-4 rounded text-sm font-medium">
-#                     <i class="fas fa-balance-scale mr-1"></i>
-#                     Rebalancear
-#                   </button>
-#                 </div>
-#               </div>
-              
-#               <div id="portfolioRecommendationsList" class="space-y-3 max-h-96 overflow-y-auto">
-#                 <!-- Recommendations will be loaded here -->
-#               </div>
-#             </div>
-#           </div>
-          
-#           <!-- Actions Column -->
-#           <div>
-#             <!-- Add Asset Card -->
-#             <div class="admin-card p-6 mb-6" id="addAssetCard" style="display: none;">
-#               <h3 class="text-lg font-bold text-white mb-4">
-#                 <i class="fas fa-plus mr-2"></i>
-#                 Adicionar Ativo
-#               </h3>
-              
-#               <form id="assetForm" class="space-y-4">
-#                 <div>
-#                   <label class="block text-sm text-gray-300 mb-1">Ticker</label>
-#                   <input type="text" id="assetTicker" required
-#                          class="w-full px-3 py-2 bg-white bg-opacity-10 border border-gray-600 rounded-lg text-white text-sm"
-#                          placeholder="WEGE3">
-#                 </div>
-                
-#                 <div>
-#                   <label class="block text-sm text-gray-300 mb-1">Peso (%)</label>
-#                   <input type="number" id="assetWeight" required min="0" max="100" step="0.1"
-#                          class="w-full px-3 py-2 bg-white bg-opacity-10 border border-gray-600 rounded-lg text-white text-sm"
-#                          placeholder="25.0">
-#                 </div>
-                
-#                 <div>
-#                   <label class="block text-sm text-gray-300 mb-1">Setor</label>
-#                   <input type="text" id="assetSector" required
-#                          class="w-full px-3 py-2 bg-white bg-opacity-10 border border-gray-600 rounded-lg text-white text-sm"
-#                          placeholder="Industrial">
-#                 </div>
-
-#                 <div>
-#                   <label class="block text-sm text-gray-300 mb-1">Preço de Entrada (R$)</label>
-#                   <input type="number" id="assetEntryPrice" required min="0" step="0.01"
-#                          class="w-full px-3 py-2 bg-white bg-opacity-10 border border-gray-600 rounded-lg text-white text-sm"
-#                          placeholder="35.50">
-#                 </div>
-
-#                 <div>
-#                   <label class="block text-sm text-gray-300 mb-1">Preço Atual (R$)</label>
-#                   <input type="number" id="assetCurrentPrice" min="0" step="0.01"
-#                          class="w-full px-3 py-2 bg-white bg-opacity-10 border border-gray-600 rounded-lg text-white text-sm"
-#                          placeholder="42.30">
-#                 </div>
-
-#                 <div>
-#                   <label class="block text-sm text-gray-300 mb-1">Preço Alvo (R$)</label>
-#                   <input type="number" id="assetTargetPrice" required min="0" step="0.01"
-#                          class="w-full px-3 py-2 bg-white bg-opacity-10 border border-gray-600 rounded-lg text-white text-sm"
-#                          placeholder="50.00">
-#                 </div>
-
-#                 <div>
-#                   <label class="block text-sm text-gray-300 mb-1">Data de Entrada</label>
-#                   <input type="date" id="assetEntryDate" required
-#                          class="w-full px-3 py-2 bg-white bg-opacity-10 border border-gray-600 rounded-lg text-white text-sm">
-#                 </div>
-                
-#                 <button type="submit" class="action-btn w-full bg-green-600 hover:bg-green-700 py-2 px-4 rounded-lg text-sm font-medium">
-#                   <i class="fas fa-plus mr-1"></i>
-#                   Adicionar Ativo
-#                 </button>
-#               </form>
-#             </div>
-
-#             <!-- Add Recommendation Card -->
-#             <div class="admin-card p-6" id="addRecommendationCard" style="display: none;">
-#               <h3 class="text-lg font-bold text-white mb-4">
-#                 <i class="fas fa-lightbulb mr-2"></i>
-#                 Nova Recomendação
-#               </h3>
-              
-#               <form id="recommendationForm" class="space-y-4">
-#                 <div>
-#                   <label class="block text-sm text-gray-300 mb-1">Ticker</label>
-#                   <input type="text" id="recTicker" required
-#                          class="w-full px-3 py-2 bg-white bg-opacity-10 border border-gray-600 rounded-lg text-white text-sm"
-#                          placeholder="PETR4">
-#                 </div>
-                
-#                 <div>
-#                   <label class="block text-sm text-gray-300 mb-1">Ação</label>
-#                   <select id="recAction" required class="w-full px-3 py-2 bg-white bg-opacity-10 border border-gray-600 rounded-lg text-white text-sm">
-#                     <option value="">Selecione...</option>
-#                     <option value="BUY">Comprar</option>
-#                     <option value="SELL">Vender</option>
-#                     <option value="HOLD">Manter</option>
-#                   </select>
-#                 </div>
-
-#                 <div>
-#                   <label class="block text-sm text-gray-300 mb-1">Preço de Entrada (R$)</label>
-#                   <input type="number" id="recEntryPrice" required min="0" step="0.01"
-#                          class="w-full px-3 py-2 bg-white bg-opacity-10 border border-gray-600 rounded-lg text-white text-sm"
-#                          placeholder="25.80">
-#                 </div>
-
-#                 <div>
-#                   <label class="block text-sm text-gray-300 mb-1">Preço de Mercado (R$)</label>
-#                   <input type="number" id="recMarketPrice" min="0" step="0.01"
-#                          class="w-full px-3 py-2 bg-white bg-opacity-10 border border-gray-600 rounded-lg text-white text-sm"
-#                          placeholder="26.50">
-#                 </div>
-                
-#                 <div>
-#                   <label class="block text-sm text-gray-300 mb-1">Peso Alvo (%)</label>
-#                   <input type="number" id="recWeight" min="0" max="100" step="0.1"
-#                          class="w-full px-3 py-2 bg-white bg-opacity-10 border border-gray-600 rounded-lg text-white text-sm"
-#                          placeholder="15.0">
-#                 </div>
-                
-#                 <div>
-#                   <label class="block text-sm text-gray-300 mb-1">Data da Recomendação</label>
-#                   <input type="date" id="recDate" required
-#                          class="w-full px-3 py-2 bg-white bg-opacity-10 border border-gray-600 rounded-lg text-white text-sm">
-#                 </div>
-                
-#                 <div>
-#                   <label class="block text-sm text-gray-300 mb-1">Preço Alvo (R$)</label>
-#                   <input type="number" id="recPriceTarget" min="0" step="0.01"
-#                          class="w-full px-3 py-2 bg-white bg-opacity-10 border border-gray-600 rounded-lg text-white text-sm"
-#                          placeholder="32.00">
-#                 </div>
-                
-#                 <div>
-#                   <label class="block text-sm text-gray-300 mb-1">Justificativa</label>
-#                   <textarea id="recReason" rows="3"
-#                             class="w-full px-3 py-2 bg-white bg-opacity-10 border border-gray-600 rounded-lg text-white text-sm"
-#                             placeholder="Motivo da recomendação..."></textarea>
-#                 </div>
-                
-#                 <button type="submit" class="action-btn w-full bg-purple-600 hover:bg-purple-700 py-2 px-4 rounded-lg text-sm font-medium">
-#                   <i class="fas fa-lightbulb mr-1"></i>
-#                   Criar Recomendação
-#                 </button>
-#               </form>
-#             </div>
-#           </div>
-#         </div>
-#       </div>
-      
-#       <!-- Payments Section -->
-#       <div id="paymentsSection" class="section hidden">
-#         <div class="admin-card p-6">
-#           <h3 class="text-xl font-bold text-white mb-4">
-#             <i class="fas fa-credit-card mr-2"></i>
-#             Histórico de Pagamentos
-#           </h3>
-#           <div class="text-gray-400 text-center py-8">
-#             <i class="fas fa-construction text-4xl mb-4"></i>
-#             <p>Em desenvolvimento...</p>
-#             <p class="text-sm">Histórico de pagamentos e assinaturas recorrentes</p>
-#           </div>
-#         </div>
-#       </div>
-      
-#       <!-- Settings Section -->
-#       <div id="settingsSection" class="section hidden">
-#         <div class="admin-card p-6">
-#           <h3 class="text-xl font-bold text-white mb-4">
-#             <i class="fas fa-cog mr-2"></i>
-#             Configurações do Sistema
-#           </h3>
-#           <div class="text-gray-400 text-center py-8">
-#             <i class="fas fa-construction text-4xl mb-4"></i>
-#             <p>Em desenvolvimento...</p>
-#             <p class="text-sm">Configurações gerais e parâmetros do sistema</p>
-#           </div>
-#         </div>
-#       </div>
 #     </div>
 #   </div>
 
 #   <script>
-#     let adminToken = null;
-#     let currentUser = null;
-#     let selectedPortfolio = null;
-
-#     // Initialize admin dashboard
-#     async function initAdminDashboard() {
-#       console.log('🔐 Inicializando Admin Dashboard...');
+#     // Configurações
+#     const API_BASE = window.location.origin + '/atsmom';
+    
+#     // Elements
+#     const statusMsg = document.getElementById('statusMsg');
+    
+#     // Funções utilitárias
+#     function showStatus(message, type = 'info') {
+#       const bgClass = type === 'success' ? 'bg-green-600 bg-opacity-20 border-green-500 border-opacity-30' : 
+#                      type === 'error' ? 'bg-red-600 bg-opacity-20 border-red-500 border-opacity-30' : 
+#                      'bg-blue-600 bg-opacity-20 border-blue-500 border-opacity-30';
       
-#       await checkAdminAuth();
-#       await loadDashboardStats();
-#       loadRecentActivity();
-      
-#       // Set default dates
-#       const today = new Date().toISOString().split('T')[0];
-#       document.getElementById('recDate').value = today;
-#       document.getElementById('assetEntryDate').value = today;
-      
-#       console.log('✅ Admin Dashboard carregado!');
-#     }
-
-#     // Check admin authentication
-#     async function checkAdminAuth() {
-#       const token = localStorage.getItem('geminii_token');
-#       const userData = localStorage.getItem('geminii_user');
-
-#       if (!token || !userData) {
-#         window.location.href = '/login.html';
-#         return;
-#       }
-
-#       try {
-#         const response = await fetch('/api/auth/verify', {
-#           headers: { 'Authorization': `Bearer ${token}` }
-#         });
-
-#         const result = await response.json();
-
-#         if (result.success) {
-#           currentUser = result.data.user;
-#           adminToken = token;
-          
-#           // Check if user is admin
-#           const isAdmin = currentUser.user_type === 'admin' || currentUser.user_type === 'master';
-          
-#           if (!isAdmin) {
-#             alert('❌ Acesso negado! Você não tem privilégios de administrador.');
-#             window.location.href = '/dashboard.html';
-#             return;
-#           }
-          
-#           // Update UI with admin info
-#           document.getElementById('adminName').textContent = currentUser.name;
-          
-#         } else {
-#           localStorage.removeItem('geminii_token');
-#           localStorage.removeItem('geminii_user');
-#           window.location.href = '/login.html';
-#         }
-
-#       } catch (error) {
-#         console.error('Auth check failed:', error);
-#         window.location.href = '/login.html';
-#       }
-#     }
-
-#     // Load dashboard statistics
-#     async function loadDashboardStats() {
-#       try {
-#         const response = await fetch('/api/admin/stats', {
-#           headers: { 'Authorization': `Bearer ${adminToken}` }
-#         });
-
-#         if (response.ok) {
-#           const result = await response.json();
-#           if (result.success) {
-#             const stats = result.data;
-            
-#             document.getElementById('totalUsers').textContent = stats.total_users || 0;
-#             document.getElementById('premiumUsers').textContent = stats.premium_users || 0;
-#             document.getElementById('activeCoupons').textContent = stats.active_coupons || 0;
-#             document.getElementById('monthlyRevenue').textContent = `R$ ${stats.monthly_revenue || 0}`;
-#           }
-#         }
-#       } catch (error) {
-#         console.error('Error loading stats:', error);
-#       }
+#       statusMsg.className = `mb-6 p-4 rounded-lg border backdrop-blur-sm ${bgClass}`;
+#       statusMsg.textContent = message;
+#       statusMsg.classList.remove('hidden');
+#       setTimeout(() => statusMsg.classList.add('hidden'), 5000);
 #     }
     
-#     // ===== FUNÇÕES DE PORTFOLIO ASSETS (ATUALIZADAS) =====
-#     async function loadPortfolioAssets() {
-#       if (!selectedPortfolio) return;
-      
-#       try {
-#         const response = await fetch(`/api/admin/portfolio/${selectedPortfolio}/assets`, {
-#           headers: { 'Authorization': `Bearer ${adminToken}` }
-#         });
-    
-#         if (response.ok) {
-#           const result = await response.json();
-#           if (result.success) {
-#             displayPortfolioAssets(result.assets || [], result.total_weight || 0);
-#           } else {
-#             // Portfolio vazio - isso é normal
-#             displayPortfolioAssets([], 0);
-#           }
-#         } else {
-#           // Erro ou portfolio não encontrado - mostrar vazio
-#           displayPortfolioAssets([], 0);
-#         }
-#       } catch (error) {
-#         console.error('Error loading portfolio assets:', error);
-#         displayPortfolioAssets([], 0);
-#       }
+#     function formatCurrency(value) {
+#       return new Intl.NumberFormat('pt-BR', {
+#         style: 'currency',
+#         currency: 'BRL'
+#       }).format(value);
 #     }
     
-#     // ===== FUNÇÃO PARA CARREGAR ATIVIDADE RECENTE =====
-#     async function loadRecentActivity() {
-#       try {
-#         const response = await fetch('/api/admin/recent-activity', {
-#           headers: { 'Authorization': `Bearer ${adminToken}` }
-#         });
-
-#         if (response.ok) {
-#           const result = await response.json();
-#           if (result.success) {
-#             displayRecentActivity(result.activities);
-#           } else {
-#             // Se não tiver endpoint, mostrar atividades simuladas
-#             displayMockActivity();
-#           }
-#         } else {
-#           // Mostrar atividades simuladas se API não existir
-#           displayMockActivity();
-#         }
-#       } catch (error) {
-#         console.log('Usando atividades simuladas...');
-#         displayMockActivity();
-#       }
-#     }
-
-#     // ===== MOSTRAR ATIVIDADES SIMULADAS =====
-#     function displayMockActivity() {
-#       const activities = [
-#         {
-#           type: 'user_registered',
-#           message: 'Novo usuário cadastrado: gau@gmail.com',
-#           time: '2 horas atrás',
-#           icon: 'fas fa-user-plus',
-#           color: 'text-green-400'
-#         },
-#         {
-#           type: 'subscription_granted',
-#           message: 'Assinatura Premium concedida para alice@gmail.com',
-#           time: '4 horas atrás',
-#           icon: 'fas fa-crown',
-#           color: 'text-yellow-400'
-#         },
-#         {
-#           type: 'portfolio_updated',
-#           message: 'Carteira Smart BDR atualizada com 3 novos ativos',
-#           time: '6 horas atrás',
-#           icon: 'fas fa-briefcase',
-#           color: 'text-blue-400'
-#         },
-#         {
-#           type: 'coupon_created',
-#           message: 'Novo cupom criado: PROMO50',
-#           time: '8 horas atrás',
-#           icon: 'fas fa-tags',
-#           color: 'text-purple-400'
-#         },
-#         {
-#           type: 'user_promoted',
-#           message: 'alice@gmail.com promovido a administrador',
-#           time: '1 dia atrás',
-#           icon: 'fas fa-shield-alt',
-#           color: 'text-red-400'
-#         },
-#         {
-#           type: 'payment_received',
-#           message: 'Pagamento recebido: R$ 49,90 (Premium)',
-#           time: '1 dia atrás',
-#           icon: 'fas fa-dollar-sign',
-#           color: 'text-green-400'
-#         }
-#       ];
-
-#       displayRecentActivity(activities);
-#     }
-
-#     // ===== EXIBIR ATIVIDADES =====
-#     function displayRecentActivity(activities) {
-#       const container = document.getElementById('recentActivity');
-      
-#       if (!activities || activities.length === 0) {
-#         container.innerHTML = `
-#           <div class="text-center py-6 text-gray-400">
-#             <i class="fas fa-clock text-2xl mb-2"></i>
-#             <p>Nenhuma atividade recente</p>
-#           </div>
-#         `;
-#         return;
-#       }
-
-#       container.innerHTML = activities.map(activity => `
-#         <div class="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-800 hover:bg-opacity-30 transition-colors">
-#           <div class="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center">
-#             <i class="${activity.icon} text-sm ${activity.color}"></i>
-#           </div>
-#           <div class="flex-1">
-#             <p class="text-sm text-white">${activity.message}</p>
-#             <p class="text-xs text-gray-400">${activity.time}</p>
-#           </div>
-#         </div>
-#       `).join('');
-#     }
-
-#     // ===== ADICIONAR NO INÍCIO DO DASHBOARD =====
-#     // Encontre a função initAdminDashboard() e adicione esta linha:
-
-#     async function initAdminDashboard() {
-#       console.log('🔐 Inicializando Admin Dashboard...');
-      
-#       await checkAdminAuth();
-#       await loadDashboardStats();
-
-#       loadRecentActivity(); 
-      
-#       // Set default dates
-#       const today = new Date().toISOString().split('T')[0];
-#       document.getElementById('recDate').value = today;
-#       document.getElementById('assetEntryDate').value = today;
-      
-#       console.log('✅ Admin Dashboard carregado!');
-#     }
-        
-#     // Load user portfolios
-#     async function loadUserPortfolios() {
-#       const email = document.getElementById('portfolioUserEmail').value.trim();
-      
-#       if (!email) {
-#         alert('Digite o e-mail do usuário');
-#         return;
-#       }
-      
-#       try {
-#         const response = await fetch(`/api/admin/user/${email}/portfolios`, {
-#           headers: { 'Authorization': `Bearer ${adminToken}` }
-#         });
-        
-#         const result = await response.json();
-        
-#         if (result.success) {
-#           displayUserPortfolios(result.user, result.portfolios);
-#           document.getElementById('userPortfoliosDisplay').classList.remove('hidden');
-#         } else {
-#           alert('❌ ' + result.error);
-#           document.getElementById('userPortfoliosDisplay').classList.add('hidden');
-#         }
-        
-#       } catch (error) {
-#         console.error('Error loading user portfolios:', error);
-#         alert('❌ Erro de conexão');
-#       }
-#     }
-
-#     // Display user portfolios
-#     function displayUserPortfolios(user, portfolios) {
-#       const container = document.getElementById('userPortfoliosList');
-      
-#       if (!portfolios || portfolios.length === 0) {
-#         container.innerHTML = '<p class="text-gray-400 text-sm">Usuário não tem acesso a nenhuma carteira</p>';
-#         return;
-#       }
-      
-#       const portfolioNames = {
-#         'smart_bdr': 'Smart BDR',
-#         'growth': 'Growth',
-#         'smallcaps': 'Small Caps',
-#         'bluechips': 'Blue Chips'
-#       };
-      
-#       container.innerHTML = portfolios.map(portfolio => `
-#         <div class="flex items-center justify-between bg-gray-700 bg-opacity-50 rounded-lg p-3">
-#           <div>
-#             <div class="font-medium text-white">${portfolioNames[portfolio.name] || portfolio.display_name}</div>
-#             <div class="text-xs text-gray-400">Concedido em: ${formatDate(portfolio.granted_at)}</div>
-#           </div>
-#           <button onclick="revokeSpecificPortfolio('${portfolio.name}')" class="text-red-400 hover:text-red-300 text-sm">
-#             <i class="fas fa-times"></i>
-#           </button>
-#         </div>
-#       `).join('');
-#     }
-
-#     // Grant portfolio access
-#     async function grantPortfolioAccess() {
-#       const email = document.getElementById('portfolioUserEmail').value.trim();
-#       const portfolio = document.getElementById('portfolioToGrant').value;
-      
-#       if (!email || !portfolio) {
-#         alert('Preencha o e-mail e selecione uma carteira');
-#         return;
-#       }
-      
-#       try {
-#         const response = await fetch('/api/admin/user-portfolios', {
-#           method: 'POST',
-#           headers: {
-#             'Content-Type': 'application/json',
-#             'Authorization': `Bearer ${adminToken}`
-#           },
-#           body: JSON.stringify({
-#             action: 'grant',
-#             user_email: email,
-#             portfolio_name: portfolio
-#           })
-#         });
-        
-#         const result = await response.json();
-        
-#         if (result.success) {
-#           alert('✅ ' + result.message);
-#           loadUserPortfolios(); // Refresh
-#           document.getElementById('portfolioToGrant').value = '';
-#         } else {
-#           alert('❌ ' + result.error);
-#         }
-        
-#       } catch (error) {
-#         console.error('Error granting portfolio access:', error);
-#         alert('❌ Erro de conexão');
-#       }
-#     }
-
-#     // Revoke portfolio access (from selector)
-#     async function revokePortfolioAccess() {
-#       const email = document.getElementById('portfolioUserEmail').value.trim();
-#       const portfolio = document.getElementById('portfolioToGrant').value;
-      
-#       if (!email || !portfolio) {
-#         alert('Preencha o e-mail e selecione uma carteira');
-#         return;
-#       }
-      
-#       if (!confirm(`Remover acesso à carteira ${portfolio} para ${email}?`)) return;
-      
-#       try {
-#         const response = await fetch('/api/admin/user-portfolios', {
-#           method: 'POST',
-#           headers: {
-#             'Content-Type': 'application/json',
-#             'Authorization': `Bearer ${adminToken}`
-#           },
-#           body: JSON.stringify({
-#             action: 'revoke',
-#             user_email: email,
-#             portfolio_name: portfolio
-#           })
-#         });
-        
-#         const result = await response.json();
-        
-#         if (result.success) {
-#           alert('✅ ' + result.message);
-#           loadUserPortfolios(); // Refresh
-#           document.getElementById('portfolioToGrant').value = '';
-#         } else {
-#           alert('❌ ' + result.error);
-#         }
-        
-#       } catch (error) {
-#         console.error('Error revoking portfolio access:', error);
-#         alert('❌ Erro de conexão');
-#       }
-#     }
-
-#     // Revoke specific portfolio (from list)
-#     async function revokeSpecificPortfolio(portfolioName) {
-#       const email = document.getElementById('portfolioUserEmail').value.trim();
-      
-#       if (!confirm(`Remover acesso à carteira ${portfolioName}?`)) return;
-      
-#       try {
-#         const response = await fetch('/api/admin/user-portfolios', {
-#           method: 'POST',
-#           headers: {
-#             'Content-Type': 'application/json',
-#             'Authorization': `Bearer ${adminToken}`
-#           },
-#           body: JSON.stringify({
-#             action: 'revoke',
-#             user_email: email,
-#             portfolio_name: portfolioName
-#           })
-#         });
-        
-#         const result = await response.json();
-        
-#         if (result.success) {
-#           alert('✅ ' + result.message);
-#           loadUserPortfolios(); // Refresh
-#         } else {
-#           alert('❌ ' + result.error);
-#         }
-        
-#       } catch (error) {
-#         console.error('Error revoking portfolio access:', error);
-#         alert('❌ Erro de conexão');
-#       }
-#     }
-    
-#     function displayPortfolioAssets(assets, totalWeight) {
-#       const container = document.getElementById('portfolioAssetsList');
-      
-#       if (!assets || assets.length === 0) {
-#         container.innerHTML = `
-#           <div class="text-center py-8">
-#             <i class="fas fa-briefcase text-4xl text-gray-600 mb-4"></i>
-#             <p class="text-gray-400 text-lg mb-2">Carteira Vazia</p>
-#             <p class="text-gray-500 text-sm">Adicione ativos para começar a montar esta carteira</p>
-#           </div>
-#         `;
-#         document.getElementById('totalAssets').textContent = '0';
-#         document.getElementById('totalWeight').textContent = '0%';
-#         return;
-#       }
-      
-#       container.innerHTML = assets.map(asset => {
-#         const entryPrice = asset.entry_price || 0;
-#         const currentPrice = asset.current_price || 0;
-#         const targetPrice = asset.target_price || 0;
-        
-#         // Calcular performance
-#         const entryToCurrent = currentPrice && entryPrice ? ((currentPrice - entryPrice) / entryPrice * 100) : 0;
-#         const currentToTarget = targetPrice && currentPrice ? ((targetPrice - currentPrice) / currentPrice * 100) : 0;
-        
-#         return `
-#           <div class="asset-card p-4">
-#             <!-- Header do Ativo -->
-#             <div class="flex items-center justify-between mb-3">
-#               <div class="flex-1">
-#                 <h4 class="font-bold text-white text-lg">${asset.ticker}</h4>
-#                 <p class="text-sm text-gray-400">${asset.sector}</p>
-#               </div>
-#               <div class="text-right mr-3">
-#                 <div class="font-semibold text-geminii text-lg">${asset.weight}%</div>
-#                 <div class="text-xs text-gray-400">peso</div>
-#               </div>
-#               <button onclick="removeAsset(${asset.id})" class="text-red-400 hover:text-red-300 p-2" title="Remover ativo">
-#                 <i class="fas fa-trash text-sm"></i>
-#               </button>
-#             </div>
-
-#             <!-- Grid de Preços -->
-#             <div class="grid grid-cols-3 gap-3 text-sm mb-3">
-#               <div class="text-center">
-#                 <div class="text-xs text-gray-400 mb-1">Entrada</div>
-#                 <div class="font-medium text-blue-400">R$ ${entryPrice.toFixed(2)}</div>
-#                 ${asset.entry_date ? `<div class="text-xs text-gray-500">${formatDate(asset.entry_date)}</div>` : ''}
-#               </div>
-              
-#               <div class="text-center">
-#                 <div class="text-xs text-gray-400 mb-1">Atual</div>
-#                 <div class="font-medium text-white">R$ ${currentPrice.toFixed(2)}</div>
-#                 ${entryToCurrent !== 0 ? `
-#                   <div class="text-xs ${entryToCurrent >= 0 ? 'text-green-400' : 'text-red-400'}">
-#                     ${entryToCurrent >= 0 ? '+' : ''}${entryToCurrent.toFixed(1)}%
-#                   </div>
-#                 ` : ''}
-#               </div>
-              
-#               <div class="text-center">
-#                 <div class="text-xs text-gray-400 mb-1">Alvo</div>
-#                 <div class="font-medium text-green-400">R$ ${targetPrice.toFixed(2)}</div>
-#                 ${currentToTarget !== 0 ? `
-#                   <div class="text-xs ${currentToTarget >= 0 ? 'text-green-400' : 'text-red-400'}">
-#                     ${currentToTarget >= 0 ? '+' : ''}${currentToTarget.toFixed(1)}%
-#                   </div>
-#                 ` : ''}
-#               </div>
-#             </div>
-
-#             <!-- Performance Total -->
-#             ${entryPrice && targetPrice ? `
-#               <div class="bg-gray-800 bg-opacity-30 rounded-lg p-2">
-#                 <div class="flex justify-between items-center">
-#                   <span class="text-xs text-gray-400">Potencial Total:</span>
-#                   <span class="performance-badge ${((targetPrice - entryPrice) / entryPrice * 100) >= 0 ? 'performance-positive' : 'performance-negative'}">
-#                     ${((targetPrice - entryPrice) / entryPrice * 100).toFixed(1)}%
-#                   </span>
-#                 </div>
-#               </div>
-#             ` : ''}
-#           </div>
-#         `;
-#       }).join('');
-      
-#       document.getElementById('totalAssets').textContent = assets.length;
-#       document.getElementById('totalWeight').textContent = totalWeight.toFixed(1) + '%';
-#     }
-
-#     // ✅ NOVA FUNÇÃO: Limpar todos os ativos da carteira
-#     async function clearAllAssets() {
-#       if (!selectedPortfolio) {
-#         alert('Selecione uma carteira primeiro');
-#         return;
-#       }
-      
-#       if (!confirm(`Tem certeza que deseja LIMPAR TODOS os ativos da carteira ${selectedPortfolio.toUpperCase()}?\n\nEsta ação não pode ser desfeita!`)) {
-#         return;
-#       }
-      
-#       try {
-#         const response = await fetch('/api/admin/portfolio/clear-assets', {
-#           method: 'DELETE',
-#           headers: {
-#             'Content-Type': 'application/json',
-#             'Authorization': `Bearer ${adminToken}`
-#           },
-#           body: JSON.stringify({ portfolio: selectedPortfolio })
-#         });
-        
-#         const result = await response.json();
-        
-#         if (result.success) {
-#           alert(`✅ Todos os ativos da carteira ${selectedPortfolio.toUpperCase()} foram removidos!`);
-#           loadPortfolioAssets();
-#         } else {
-#           alert('❌ ' + result.error);
-#         }
-        
-#       } catch (error) {
-#         console.error('Error clearing assets:', error);
-#         alert('❌ Erro de conexão');
-#       }
-#     }
-
-#     // ✅ NOVA FUNÇÃO: Gerar recomendações de rebalanceamento automático
-#     async function generateRebalanceRecommendations() {
-#       if (!selectedPortfolio) {
-#         alert('Selecione uma carteira primeiro');
-#         return;
-#       }
-      
-#       if (!confirm(`Gerar recomendações de VENDA para todos os ativos atuais da carteira ${selectedPortfolio.toUpperCase()}?\n\nIsso criará automaticamente recomendações de SELL para rebalanceamento.`)) {
-#         return;
-#       }
-      
-#       try {
-#         const response = await fetch('/api/admin/portfolio/generate-rebalance', {
-#           method: 'POST',
-#           headers: {
-#             'Content-Type': 'application/json',
-#             'Authorization': `Bearer ${adminToken}`
-#           },
-#           body: JSON.stringify({ 
-#             portfolio: selectedPortfolio,
-#             reason: 'Rebalanceamento automático - Ajuste de portfólio conforme nova estratégia'
-#           })
-#         });
-        
-#         const result = await response.json();
-        
-#         if (result.success) {
-#           alert(`✅ ${result.recommendations_created} recomendações de rebalanceamento criadas!`);
-#           loadPortfolioRecommendations();
-#         } else {
-#           alert('❌ ' + result.error);
-#         }
-        
-#       } catch (error) {
-#         console.error('Error generating rebalance:', error);
-#         alert('❌ Erro de conexão');
-#       }
-#     }
-
-#     // ===== FORMULÁRIO DE ATIVO ATUALIZADO =====
-#     document.getElementById('assetForm').addEventListener('submit', async function(e) {
-#       e.preventDefault();
-      
-#       if (!selectedPortfolio) {
-#         alert('Selecione uma carteira primeiro');
-#         return;
-#       }
-      
-#       const formData = {
-#         portfolio: selectedPortfolio,
-#         ticker: document.getElementById('assetTicker').value.toUpperCase(),
-#         weight: parseFloat(document.getElementById('assetWeight').value),
-#         sector: document.getElementById('assetSector').value,
-#         entry_price: parseFloat(document.getElementById('assetEntryPrice').value),
-#         current_price: document.getElementById('assetCurrentPrice').value ? parseFloat(document.getElementById('assetCurrentPrice').value) : null,
-#         target_price: parseFloat(document.getElementById('assetTargetPrice').value),
-#         entry_date: document.getElementById('assetEntryDate').value
-#       };
-      
-#       try {
-#         const response = await fetch('/api/admin/portfolio/add-asset', {
-#           method: 'POST',
-#           headers: {
-#             'Content-Type': 'application/json',
-#             'Authorization': `Bearer ${adminToken}`
-#           },
-#           body: JSON.stringify(formData)
-#         });
-        
-#         const result = await response.json();
-        
-#         if (result.success) {
-#           alert('✅ Ativo adicionado com sucesso!');
-#           this.reset();
-#           // Reset date to today
-#           document.getElementById('assetEntryDate').value = new Date().toISOString().split('T')[0];
-#           loadPortfolioAssets();
-#         } else {
-#           alert('❌ ' + result.error);
-#         }
-        
-#       } catch (error) {
-#         alert('❌ Erro de conexão');
-#       }
-#     });
-    
-#     // Remove asset - FUNÇÃO HABILITADA
-#     async function removeAsset(assetId) {
-#       if (!confirm('Tem certeza que deseja remover este ativo?')) return;
-      
-#       try {
-#         const response = await fetch('/api/admin/portfolio/remove-asset', {
-#           method: 'DELETE',
-#           headers: {
-#             'Content-Type': 'application/json',
-#             'Authorization': `Bearer ${adminToken}`
-#           },
-#           body: JSON.stringify({ id: assetId })
-#         });
-        
-#         const result = await response.json();
-        
-#         if (result.success) {
-#           alert('✅ Ativo removido!');
-#           loadPortfolioAssets();
-#         } else {
-#           alert('❌ ' + result.error);
-#         }
-        
-#       } catch (error) {
-#         console.error('Error removing asset:', error);
-#         alert('❌ Erro de conexão');
-#       }
-#     }
-
-#     // ===== FUNÇÕES DE RECOMENDAÇÕES (ATUALIZADAS) =====
-    
-#     // Load portfolio recommendations
-#     async function loadPortfolioRecommendations() {
-#       if (!selectedPortfolio) return;
-      
-#       try {
-#         const response = await fetch(`/api/admin/portfolio/${selectedPortfolio}/recommendations`, {
-#           headers: { 'Authorization': `Bearer ${adminToken}` }
-#         });
-
-#         if (response.ok) {
-#           const result = await response.json();
-#           if (result.success) {
-#             displayPortfolioRecommendations(result.recommendations || []);
-#           } else {
-#             displayPortfolioRecommendations([]);
-#           }
-#         } else {
-#           displayPortfolioRecommendations([]);
-#         }
-#       } catch (error) {
-#         console.error('Error loading portfolio recommendations:', error);
-#         displayPortfolioRecommendations([]);
-#       }
-#     }
-
-#     function displayPortfolioRecommendations(recommendations) {
-#       const container = document.getElementById('portfolioRecommendationsList');
-      
-#       if (!recommendations || recommendations.length === 0) {
-#         container.innerHTML = `
-#           <div class="text-center py-6">
-#             <i class="fas fa-lightbulb text-3xl text-gray-600 mb-3"></i>
-#             <p class="text-gray-400">Nenhuma recomendação cadastrada</p>
-#             <p class="text-gray-500 text-sm">Crie novas recomendações ou use o rebalanceamento automático</p>
-#           </div>
-#         `;
-#         return;
-#       }
-
-#       container.innerHTML = recommendations.map(rec => {
-#         const entryPrice = rec.entry_price || 0;
-#         const marketPrice = rec.market_price || rec.current_price || 0;
-#         const targetPrice = rec.price_target || rec.target_price || 0;
-        
-#         // Calcular potenciais
-#         const entryToTarget = targetPrice && entryPrice ? ((targetPrice - entryPrice) / entryPrice * 100) : 0;
-#         const marketToTarget = targetPrice && marketPrice ? ((targetPrice - marketPrice) / marketPrice * 100) : 0;
-        
-#         return `
-#           <div class="border border-gray-700 rounded-lg p-4 hover:border-geminii transition-colors">
-#             <!-- Header Principal -->
-#             <div class="flex items-center justify-between mb-3">
-#               <div class="flex items-center space-x-3">
-#                 <div>
-#                   <h4 class="font-bold text-white text-lg">${rec.ticker}</h4>
-#                   ${rec.company_name ? `<p class="text-sm text-gray-400">${rec.company_name}</p>` : ''}
-#                 </div>
-#                 <span class="px-2 py-1 rounded text-xs font-medium ${getActionBadgeClass(rec.action_type)}">
-#                   ${getActionText(rec.action_type)}
-#                 </span>
-#               </div>
-#               <div class="flex items-center space-x-2">
-#                 <span class="text-xs text-gray-400">${formatDate(rec.recommendation_date)}</span>
-#                 <button onclick="removeRecommendation(${rec.id})" class="text-red-400 hover:text-red-300" title="Remover recomendação">
-#                   <i class="fas fa-trash text-sm"></i>
-#                 </button>
-#               </div>
-#             </div>
-
-#             <!-- Grid de Preços Atualizado -->
-#             <div class="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm mb-3">
-#               <div class="text-center">
-#                 <div class="text-xs text-gray-400 mb-1">Entrada Rec.</div>
-#                 <div class="font-medium text-blue-400">R$ ${entryPrice.toFixed(2)}</div>
-#               </div>
-              
-#               ${marketPrice ? `
-#                 <div class="text-center">
-#                   <div class="text-xs text-gray-400 mb-1">Mercado</div>
-#                   <div class="font-medium text-white">R$ ${marketPrice.toFixed(2)}</div>
-#                 </div>
-#               ` : ''}
-              
-#               <div class="text-center">
-#                 <div class="text-xs text-gray-400 mb-1">Alvo</div>
-#                 <div class="font-medium text-green-400">R$ ${targetPrice.toFixed(2)}</div>
-#               </div>
-              
-#               ${rec.target_weight ? `
-#                 <div class="text-center md:col-span-3">
-#                   <div class="text-xs text-gray-400 mb-1">Peso Alvo</div>
-#                   <div class="font-medium text-geminii">${rec.target_weight}%</div>
-#                 </div>
-#               ` : ''}
-#             </div>
-
-#             <!-- Cálculo de Performance -->
-#             <div class="grid grid-cols-1 md:grid-cols-2 gap-2 mb-3">
-#               ${entryToTarget !== 0 ? `
-#                 <div class="bg-gray-800 bg-opacity-30 rounded-lg p-2">
-#                   <div class="flex justify-between items-center">
-#                     <span class="text-xs text-gray-400">Potencial (Entrada):</span>
-#                     <span class="text-xs font-medium ${entryToTarget >= 0 ? 'text-green-400' : 'text-red-400'}">
-#                       ${entryToTarget >= 0 ? '+' : ''}${entryToTarget.toFixed(1)}%
-#                     </span>
-#                   </div>
-#                 </div>
-#               ` : ''}
-              
-#               ${marketToTarget !== 0 ? `
-#                 <div class="bg-gray-800 bg-opacity-30 rounded-lg p-2">
-#                   <div class="flex justify-between items-center">
-#                     <span class="text-xs text-gray-400">Potencial (Mercado):</span>
-#                     <span class="text-xs font-medium ${marketToTarget >= 0 ? 'text-green-400' : 'text-red-400'}">
-#                       ${marketToTarget >= 0 ? '+' : ''}${marketToTarget.toFixed(1)}%
-#                     </span>
-#                   </div>
-#                 </div>
-#               ` : ''}
-#             </div>
-
-#             <!-- Justificativa -->
-#             ${rec.reason ? `
-#               <div class="bg-gray-800 bg-opacity-50 rounded-lg p-3">
-#                 <p class="text-xs text-gray-400 mb-1">Justificativa:</p>
-#                 <p class="text-sm text-gray-300 leading-relaxed">${rec.reason}</p>
-#               </div>
-#             ` : ''}
-#           </div>
-#         `;
-#       }).join('');
-#     }
-
-#     // ===== FORMULÁRIO DE RECOMENDAÇÃO ATUALIZADO =====
-#     document.getElementById('recommendationForm').addEventListener('submit', async function(e) {
-#       e.preventDefault();
-      
-#       if (!selectedPortfolio) {
-#         alert('Selecione uma carteira primeiro');
-#         return;
-#       }
-      
-#       const formData = {
-#         portfolio: selectedPortfolio,
-#         ticker: document.getElementById('recTicker').value.toUpperCase(),
-#         action_type: document.getElementById('recAction').value,
-#         entry_price: parseFloat(document.getElementById('recEntryPrice').value),
-#         market_price: document.getElementById('recMarketPrice').value ? parseFloat(document.getElementById('recMarketPrice').value) : null,
-#         target_weight: document.getElementById('recWeight').value ? parseFloat(document.getElementById('recWeight').value) : null,
-#         recommendation_date: document.getElementById('recDate').value,
-#         price_target: document.getElementById('recPriceTarget').value ? parseFloat(document.getElementById('recPriceTarget').value) : null,
-#         reason: document.getElementById('recReason').value
-#       };
-      
-#       try {
-#         const response = await fetch('/api/admin/portfolio/add-recommendation', {
-#           method: 'POST',
-#           headers: {
-#             'Content-Type': 'application/json',
-#             'Authorization': `Bearer ${adminToken}`
-#           },
-#           body: JSON.stringify(formData)
-#         });
-        
-#         const result = await response.json();
-        
-#         if (result.success) {
-#           alert('✅ Recomendação criada com sucesso!');
-#           this.reset();
-#           // Reset date to today
-#           document.getElementById('recDate').value = new Date().toISOString().split('T')[0];
-#           loadPortfolioRecommendations();
-#         } else {
-#           alert('❌ ' + result.error);
-#         }
-        
-#       } catch (error) {
-#         alert('❌ Erro de conexão');
-#       }
-#     });
-
-#     // Remove recommendation - FUNÇÃO HABILITADA
-#     async function removeRecommendation(recId) {
-#       if (!confirm('Remover esta recomendação?')) return;
-      
-#       try {
-#         const response = await fetch('/api/admin/portfolio/delete-recommendation', {
-#           method: 'DELETE',
-#           headers: {
-#             'Content-Type': 'application/json',
-#             'Authorization': `Bearer ${adminToken}`
-#           },
-#           body: JSON.stringify({ id: recId })
-#         });
-        
-#         const result = await response.json();
-        
-#         if (result.success) {
-#           alert('✅ Recomendação removida!');
-#           loadPortfolioRecommendations();
-#         } else {
-#           alert('❌ ' + result.error);
-#         }
-        
-#       } catch (error) {
-#         console.error('Error removing recommendation:', error);
-#         alert('❌ Erro de conexão');
-#       }
-#     }
-
-#     // ===== HELPER FUNCTIONS =====
-    
-#     function getActionBadgeClass(action) {
-#       const classes = {
-#         'BUY': 'bg-green-600 text-green-200',
-#         'SELL': 'bg-red-600 text-red-200',
-#         'HOLD': 'bg-yellow-600 text-yellow-200'
-#       };
-#       return classes[action] || 'bg-gray-600 text-gray-200';
-#     }
-
-#     function getActionText(action) {
-#       const texts = {
-#         'BUY': 'Comprar',
-#         'SELL': 'Vender', 
-#         'HOLD': 'Manter'
-#       };
-#       return texts[action] || action;
-#     }
-
-#     function formatDate(dateString) {
-#       return new Date(dateString).toLocaleDateString('pt-BR');
-#     }
-
-#     function selectPortfolio(portfolioId) {
-#       selectedPortfolio = portfolioId;
-      
-#       // Update button styles - RESET ALL FIRST
-#       document.querySelectorAll('.portfolio-btn').forEach(btn => {
-#         btn.classList.remove('selected');
-#         btn.style.borderColor = '#4b5563';
-#         btn.style.background = '';
-#       });
-      
-#       // HIGHLIGHT SELECTED
-#       const selectedBtn = document.getElementById(portfolioId + '_btn');
-#       selectedBtn.classList.add('selected');
-#       selectedBtn.style.borderColor = '#ba39af';
-#       selectedBtn.style.background = 'rgba(186, 57, 175, 0.1)';
-      
-#       // Update portfolio name
-#       const names = {
-#         'smart_bdr': 'Smart BDR',
-#         'growth': 'Growth', 
-#         'smallcaps': 'Small Caps',
-#         'bluechips': 'Blue Chips'
-#       };
-      
-#       document.getElementById('selectedPortfolioName').textContent = names[portfolioId];
-#       document.getElementById('selectedPortfolioNameRec').textContent = names[portfolioId];
-      
-#       // Show cards
-#       document.getElementById('portfolioAssetsCard').style.display = 'block';
-#       document.getElementById('portfolioRecommendationsCard').style.display = 'block';
-#       document.getElementById('addAssetCard').style.display = 'block';
-#       document.getElementById('addRecommendationCard').style.display = 'block';
-      
-#       // Set today's date as default
-#       const today = new Date().toISOString().split('T')[0];
-#       document.getElementById('recDate').value = today;
-#       document.getElementById('assetEntryDate').value = today;
-      
-#       // ✅ CARREGAR DADOS - SEM PULAR VAZIOS
-#       loadPortfolioAssets();
-#       loadPortfolioRecommendations();
-#     }
-
-#     // Show section
-#     function showSection(sectionName) {
-#       // Hide all sections
-#       document.querySelectorAll('.section').forEach(section => {
-#         section.classList.add('hidden');
-#       });
-      
-#       // Show selected section
-#       document.getElementById(sectionName + 'Section').classList.remove('hidden');
-      
-#       // Update navigation
-#       document.querySelectorAll('.nav-item').forEach(item => {
-#         item.classList.remove('active');
-#       });
-      
-#       event.target.closest('.nav-item').classList.add('active');
-      
-#       // Update title
-#       const titles = {
-#         dashboard: { title: 'Dashboard', subtitle: 'Visão geral do sistema' },
-#         users: { title: 'Usuários', subtitle: 'Gerenciar usuários e assinaturas' },
-#         coupons: { title: 'Cupons', subtitle: 'Gerenciar cupons de desconto' },
-#         portfolios: { title: 'Carteiras', subtitle: 'Gerenciar carteiras de investimento' },
-#         payments: { title: 'Pagamentos', subtitle: 'Histórico de transações' },
-#         settings: { title: 'Configurações', subtitle: 'Configurações do sistema' }
-#       };
-      
-#       document.getElementById('sectionTitle').textContent = titles[sectionName].title;
-#       document.getElementById('sectionSubtitle').textContent = titles[sectionName].subtitle;
-      
-#       // Load section data
-#       if (sectionName === 'users') loadUsers();
-#       if (sectionName === 'coupons') loadCoupons();
-      
-#       // ✅ RESET PORTFOLIO SELECTION quando trocar de seção
-#       if (sectionName === 'portfolios') {
-#         selectedPortfolio = null;
-#         document.querySelectorAll('.portfolio-btn').forEach(btn => {
-#           btn.classList.remove('selected');
-#           btn.style.borderColor = '#4b5563';
-#           btn.style.background = '';
-#         });
-        
-#         // Hide cards until portfolio is selected
-#         document.getElementById('portfolioAssetsCard').style.display = 'none';
-#         document.getElementById('portfolioRecommendationsCard').style.display = 'none';
-#         document.getElementById('addAssetCard').style.display = 'none';
-#         document.getElementById('addRecommendationCard').style.display = 'none';
-#       }
-#     }
-
-#     // ===== USER MANAGEMENT FUNCTIONS =====
-
-#     // Load users
-#     async function loadUsers() {
-#       try {
-#         const response = await fetch('/api/admin/list-users', {
-#           headers: { 'Authorization': `Bearer ${adminToken}` }
-#         });
-    
-#         if (response.ok) {
-#           const result = await response.json();
-#           if (result.success) {
-            
-#             // ✅ NOVA PARTE: Carregar carteiras para cada usuário
-#             const usersWithPortfolios = await Promise.all(
-#               result.users.map(async (user) => {
-#                 try {
-#                   const portfoliosResponse = await fetch(`/api/admin/user/${user.email}/portfolios`, {
-#                     headers: { 'Authorization': `Bearer ${adminToken}` }
-#                   });
-                  
-#                   if (portfoliosResponse.ok) {
-#                     const portfoliosResult = await portfoliosResponse.json();
-#                     user.portfolios = portfoliosResult.success ? portfoliosResult.portfolios : [];
-#                   } else {
-#                     user.portfolios = [];
-#                   }
-#                 } catch (error) {
-#                   user.portfolios = [];
-#                 }
-#                 return user;
-#               })
-#             );
-            
-#             displayUsers(usersWithPortfolios);
-#           }
-#         }
-#       } catch (error) {
-#         console.error('Error loading users:', error);
-#       }
-#     }
-
-#     // Display users
-#     // ===== ATUALIZAR A FUNÇÃO displayUsers() =====
-
-# function displayUsers(users) {
-#   const tbody = document.getElementById('usersTable');
-  
-#   if (!users || users.length === 0) {
-#     tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-gray-400">Nenhum usuário encontrado</td></tr>';
-#     return;
-#   }
-
-#   const portfolioNames = {
-#     'smart_bdr': 'Smart BDR',
-#     'growth': 'Growth',
-#     'smallcaps': 'Small Caps',
-#     'bluechips': 'Blue Chips'
-#   };
-
-#   tbody.innerHTML = users.map(user => {
-#     // ✅ FORMATAR CARTEIRAS DO USUÁRIO
-#     let portfoliosHTML = '';
-#     if (user.portfolios && user.portfolios.length > 0) {
-#       const portfoliosList = user.portfolios.map(p => 
-#         portfolioNames[p.name] || p.display_name || p.name
-#       );
-      
-#       if (portfoliosList.length <= 2) {
-#         portfoliosHTML = portfoliosList.join(', ');
+#     function setLoading(element, loading) {
+#       if (loading) {
+#         element.classList.add('loading');
+#         const icon = element.querySelector('i');
+#         if (icon) icon.className = 'fas fa-spinner fa-spin mr-2';
 #       } else {
-#         portfoliosHTML = `${portfoliosList.slice(0, 2).join(', ')} +${portfoliosList.length - 2}`;
-#       }
-      
-#       portfoliosHTML = `<span class="text-blue-400 text-sm">${portfoliosHTML}</span>`;
-#     } else {
-#       portfoliosHTML = '<span class="text-gray-500 text-sm">Nenhuma</span>';
-#     }
-
-#     // ✅ FORMATAR DATA E IDADE DO USUÁRIO
-#     const userAge = user.days_old || 0;
-#     let ageText = '';
-#     if (userAge === 0) {
-#       ageText = 'Hoje';
-#     } else if (userAge === 1) {
-#       ageText = '1 dia';
-#     } else if (userAge < 30) {
-#       ageText = `${userAge} dias`;
-#     } else if (userAge < 365) {
-#       const months = Math.floor(userAge / 30);
-#       ageText = `${months} mês${months > 1 ? 'es' : ''}`;
-#     } else {
-#       const years = Math.floor(userAge / 365);
-#       ageText = `${years} ano${years > 1 ? 's' : ''}`;
-#     }
-
-#     return `
-#       <tr class="table-row">
-#         <td class="py-3 px-2">
-#           <div class="font-medium text-white">${user.name}</div>
-#           <div class="text-xs text-gray-400">
-#             <i class="fas fa-calendar mr-1"></i>
-#             ${user.formatted_date || 'N/A'} (${ageText})
-#           </div>
-#         </td>
-#         <td class="py-3 px-2 text-gray-300">${user.email}</td>
-#         <td class="py-3 px-2">
-#           <span class="px-2 py-1 rounded text-xs font-medium ${getPlanBadgeClass(user.plan)}">
-#             ${user.plan}
-#           </span>
-#         </td>
-#         <td class="py-3 px-2">
-#           <span class="px-2 py-1 rounded text-xs font-medium ${getTypeBadgeClass(user.type)}">
-#             ${user.type || 'regular'}
-#           </span>
-#         </td>
-#         <td class="py-3 px-2">
-#           ${portfoliosHTML}
-#         </td>
-#         <td class="py-3 px-2">
-#           <button onclick="fillUserEmail('${user.email}')" class="text-blue-400 hover:text-blue-300 text-sm">
-#             <i class="fas fa-edit mr-1"></i>Editar
-#           </button>
-#         </td>
-#       </tr>
-#     `;
-#   }).join('');
-# }
-
-#     // Helper functions for badges
-#     function getPlanBadgeClass(plan) {
-#       const classes = {
-#         'Básico': 'bg-gray-600 text-gray-200',
-#         'Pro': 'bg-yellow-600 text-yellow-200',
-#         'Premium': 'bg-purple-600 text-purple-200'
-#       };
-#       return classes[plan] || 'bg-gray-600 text-gray-200';
-#     }
-
-#     function getTypeBadgeClass(type) {
-#       const classes = {
-#         'admin': 'bg-red-600 text-red-200',
-#         'master': 'bg-orange-600 text-orange-200',
-#         'regular': 'bg-gray-600 text-gray-200'
-#       };
-#       return classes[type] || 'bg-gray-600 text-gray-200';
-#     }
-
-#     // Fill user email in form
-#     function fillUserEmail(email) {
-#       document.getElementById('manageUserEmail').value = email;
-#       showSection('users');
-#     }
-
-#     // Grant subscription
-#     async function grantSubscription() {
-#       const email = document.getElementById('manageUserEmail').value;
-#       const planId = document.getElementById('newPlanId').value;
-      
-#       if (!email) {
-#         alert('Digite o e-mail do usuário');
-#         return;
-#       }
-      
-#       try {
-#         const response = await fetch('/api/admin/manage-subscription', {
-#           method: 'POST',
-#           headers: {
-#             'Content-Type': 'application/json',
-#             'Authorization': `Bearer ${adminToken}`
-#           },
-#           body: JSON.stringify({
-#             user_email: email,
-#             action: 'grant',
-#             plan_id: parseInt(planId)
-#           })
-#         });
-        
-#         const result = await response.json();
-        
-#         if (result.success) {
-#           alert('✅ ' + result.message);
-#           document.getElementById('manageUserEmail').value = '';
-#           loadUsers(); // Refresh users list
-#           loadDashboardStats(); // Refresh stats
-#         } else {
-#           alert('❌ ' + result.error);
-#         }
-        
-#       } catch (error) {
-#         alert('❌ Erro de conexão');
+#         element.classList.remove('loading');
+#         const icon = element.querySelector('i');
+#         if (icon && element.id === 'analyzeIndividualBtn') icon.className = 'fas fa-rocket mr-2';
+#         if (icon && element.id === 'analyzeBulkBtn') icon.className = 'fas fa-list mr-2';
+#         if (icon && element.id === 'compareBtn') icon.className = 'fas fa-balance-scale mr-2';
+#         if (icon && element.id === 'overviewBtn') icon.className = 'fas fa-globe mr-2';
 #       }
 #     }
-
-#     // Remove user plan
-#     async function removeUserPlan() {
-#       const email = document.getElementById('manageUserEmail').value;
-      
-#       if (!email) {
-#         alert('Digite o e-mail do usuário');
-#         return;
-#       }
-      
-#       if (!confirm(`Remover assinatura de ${email}?`)) return;
-      
-#       try {
-#         const response = await fetch('/api/admin/manage-subscription', {
-#           method: 'POST',
-#           headers: {
-#             'Content-Type': 'application/json',
-#             'Authorization': `Bearer ${adminToken}`
-#           },
-#           body: JSON.stringify({
-#             user_email: email,
-#             action: 'revoke'
-#           })
-#         });
-        
-#         const result = await response.json();
-        
-#         if (result.success) {
-#           alert('✅ ' + result.message);
-#           document.getElementById('manageUserEmail').value = '';
-#           loadUsers();
-#           loadDashboardStats();
-#         } else {
-#           alert('❌ ' + result.error);
-#         }
-        
-#       } catch (error) {
-#         alert('❌ Erro de conexão');
+    
+#     function getStatusColor(status) {
+#       switch(status) {
+#         case 'COMPRA': return 'text-green-400';
+#         case 'VENDA': return 'text-red-400';
+#         default: return 'text-gray-400';
 #       }
 #     }
-
-#     // Promote to admin
-#     async function promoteToAdmin() {
-#       const email = document.getElementById('manageUserEmail').value;
-      
-#       if (!email) {
-#         alert('Digite o e-mail do usuário');
-#         return;
-#       }
-      
-#       if (!confirm(`Promover ${email} a administrador?`)) return;
-      
-#       try {
-#         const response = await fetch('/api/admin/promote-user', {
-#           method: 'POST',
-#           headers: {
-#             'Content-Type': 'application/json',
-#             'Authorization': `Bearer ${adminToken}`
-#           },
-#           body: JSON.stringify({
-#             user_email: email,
-#             user_type: 'admin'
-#           })
-#         });
-        
-#         const result = await response.json();
-        
-#         if (result.success) {
-#           alert('✅ ' + result.message);
-#           document.getElementById('manageUserEmail').value = '';
-#           loadUsers();
-#         } else {
-#           alert('❌ ' + result.error);
-#         }
-        
-#       } catch (error) {
-#         alert('❌ Erro de conexão');
-#       }
+    
+#     function hideAllResults() {
+#       document.getElementById('individual-results').classList.add('hidden');
+#       document.getElementById('plotly-chart-container').classList.add('hidden');
+#       document.getElementById('bulk-results').classList.add('hidden');
+#       document.getElementById('compare-results').classList.add('hidden');
+#       document.getElementById('overview-results').classList.add('hidden');
 #     }
 
-#     // Delete user
-#     // ===== ADICIONAR ESTA FUNÇÃO NO JAVASCRIPT =====
-
-#     // Delete user
-#     async function deleteUser() {
-#       const email = document.getElementById('manageUserEmail').value;
-      
-#       if (!email) {
-#         alert('Digite o e-mail do usuário');
-#         return;
-#       }
-      
-#       // Proteção extra para admin
-#       if (email === 'diego@geminii.com.br') {
-#         alert('❌ Não é possível remover este usuário!');
-#         return;
-#       }
-      
-#       if (!confirm(`⚠️ ATENÇÃO: Remover usuário ${email}?\n\nEsta ação marcará o usuário como removido.\nDeseja continuar?`)) {
-#         return;
-#       }
-      
-#       try {
-#         const response = await fetch('/api/admin/users/delete', {
-#           method: 'DELETE',
-#           headers: {
-#             'Content-Type': 'application/json',
-#             'Authorization': `Bearer ${adminToken}`
-#           },
-#           body: JSON.stringify({ email: email })
-#         });
+#     // Tab Navigation
+#     document.querySelectorAll('.tab-button').forEach(button => {
+#       button.addEventListener('click', () => {
+#         // Remove active from all tabs
+#         document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+#         document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
         
-#         const result = await response.json();
+#         // Add active to clicked tab
+#         button.classList.add('active');
+#         const tabId = button.getAttribute('data-tab');
+#         document.getElementById(`${tabId}-content`).classList.add('active');
         
-#         if (result.success) {
-#           alert('✅ ' + result.message);
-#           document.getElementById('manageUserEmail').value = '';
-#           loadUsers(); // Refresh users list
-#           loadDashboardStats(); // Refresh stats
-#         } else {
-#           alert('❌ ' + result.error);
-#         }
-        
-#       } catch (error) {
-#         console.error('Error deleting user:', error);
-#         alert('❌ Erro de conexão');
-#       }
-#     }
-
-#     // ===== COUPON MANAGEMENT FUNCTIONS =====
-
-#     // Load coupons
-#     async function loadCoupons() {
-#       try {
-#         const response = await fetch('/api/admin/coupons', {
-#           headers: { 'Authorization': `Bearer ${adminToken}` }
-#         });
-
-#         if (response.ok) {
-#           const result = await response.json();
-#           if (result.success) {
-#             displayCoupons(result.coupons);
-#           }
-#         }
-#       } catch (error) {
-#         console.error('Error loading coupons:', error);
-#       }
-#     }
-
-#     // Display coupons
-#     function displayCoupons(coupons) {
-#       const container = document.getElementById('couponsList');
-      
-#       if (!coupons || coupons.length === 0) {
-#         container.innerHTML = '<p class="text-gray-400 text-center py-4">Nenhum cupom encontrado</p>';
-#         return;
-#       }
-
-#       container.innerHTML = coupons.map(coupon => `
-#         <div class="border border-gray-600 rounded-lg p-4">
-#           <div class="flex items-center justify-between mb-2">
-#             <h4 class="text-lg font-bold text-white">${coupon.code}</h4>
-#             <div class="flex items-center space-x-2">
-#               <span class="px-2 py-1 rounded text-xs font-medium ${coupon.is_active ? 'bg-green-600 text-green-200' : 'bg-red-600 text-red-200'}">
-#                 ${coupon.is_active ? 'Ativo' : 'Inativo'}
-#               </span>
-#               <button onclick="toggleCoupon('${coupon.code}', ${!coupon.is_active})" class="text-sm text-blue-400 hover:text-blue-300">
-#                 ${coupon.is_active ? 'Desativar' : 'Ativar'}
-#               </button>
-#             </div>
-#           </div>
-#           <div class="text-sm text-gray-300 space-y-1">
-#             <div>Desconto: <span class="text-white">${coupon.discount_percent}%</span></div>
-#             <div>Usado: <span class="text-white">${coupon.used_count}/${coupon.max_uses || '∞'}</span></div>
-#             <div>Planos: <span class="text-white">${coupon.applicable_plans.join(', ')}</span></div>
-#             ${coupon.valid_until ? `<div>Válido até: <span class="text-white">${new Date(coupon.valid_until).toLocaleDateString()}</span></div>` : ''}
-#           </div>
-#         </div>
-#       `).join('');
-#     }
-
-#     // Create coupon
-#     document.getElementById('couponForm').addEventListener('submit', async function(e) {
-#       e.preventDefault();
-      
-#       const formData = {
-#         code: document.getElementById('couponCode').value.toUpperCase(),
-#         discount_percent: parseFloat(document.getElementById('couponDiscount').value),
-#         applicable_plans: Array.from(document.getElementById('couponPlans').selectedOptions).map(opt => opt.value),
-#         max_uses: document.getElementById('couponMaxUses').value ? parseInt(document.getElementById('couponMaxUses').value) : null,
-#         valid_until: document.getElementById('couponValidUntil').value || null
-#       };
-      
-#       try {
-#         const response = await fetch('/api/admin/coupons', {
-#           method: 'POST',
-#           headers: {
-#             'Content-Type': 'application/json',
-#             'Authorization': `Bearer ${adminToken}`
-#           },
-#           body: JSON.stringify(formData)
-#         });
-        
-#         const result = await response.json();
-        
-#         if (result.success) {
-#           alert('✅ Cupom criado com sucesso!');
-#           this.reset();
-#           loadCoupons();
-#           loadDashboardStats();
-#         } else {
-#           alert('❌ ' + result.error);
-#         }
-        
-#       } catch (error) {
-#         alert('❌ Erro de conexão');
-#       }
+#         // Hide results
+#         hideAllResults();
+#       });
 #     });
 
-#     // Toggle coupon status
-#     async function toggleCoupon(code, newStatus) {
+#     // Análise Individual
+#     async function analyzeIndividual() {
+#       const symbol = document.getElementById('individual-symbol').value.trim().toUpperCase();
+#       const period = document.getElementById('individual-period').value;
+#       const strike = document.getElementById('individual-strike').value;
+#       const btn = document.getElementById('analyzeIndividualBtn');
+
+#       if (!symbol) {
+#         showStatus('Digite o código de uma ação', 'error');
+#         return;
+#       }
+
+#       setLoading(btn, true);
+#       hideAllResults();
+#       showStatus('Executando análise ATSMOM... Isso pode levar alguns segundos', 'info');
+
 #       try {
-#         const response = await fetch(`/api/admin/coupons/${code}/toggle`, {  // ✅ URL CORRETA
-#           method: 'PATCH',
+#         const payload = {
+#           symbol: symbol,
+#           period: period
+#         };
+
+#         if (strike && strike.trim() !== '') {
+#           payload.strike = parseFloat(strike);
+#         }
+
+#         const response = await fetch(`${API_BASE}/analyze`, {
+#           method: 'POST',
 #           headers: {
 #             'Content-Type': 'application/json',
-#             'Authorization': `Bearer ${adminToken}`
 #           },
-#           body: JSON.stringify({
-            
-#             is_active: newStatus
-#           })
+#           body: JSON.stringify(payload)
 #         });
-        
-#         const result = await response.json();
-        
-#         if (result.success) {
-#           alert(`✅ Cupom ${newStatus ? 'ativado' : 'desativado'}!`);
-#           loadCoupons();
-#           loadDashboardStats();
+
+#         const data = await response.json();
+#         console.log('=== DADOS RECEBIDOS DO BACKEND ===');
+#         console.log('Success:', data.success);
+#         console.log('Dados completos:', data);
+
+#         if (data.success) {
+#           displayIndividualResults(data);
+#           showStatus(`Análise ATSMOM de ${symbol} concluída com sucesso!`, 'success');
 #         } else {
-#           alert('❌ ' + result.error);
+#           showStatus(data.error || 'Erro na análise', 'error');
+#         }
+#       } catch (error) {
+#         showStatus('Erro ao executar análise', 'error');
+#         console.error(error);
+#       }
+
+#       setLoading(btn, false);
+#     }
+
+#     // Display Individual Results - CORRIGIDO IGUAL AO BETA REGRESSION
+#     function displayIndividualResults(data) {
+#       console.log('=== DISPLAY INDIVIDUAL RESULTS ===');
+#       console.log('Data recebida:', data);
+      
+#       const analysis = data.analysis_data;
+      
+#       // Header
+#       document.getElementById('individual-title').textContent = `${analysis.symbol} - ATSMOM`;
+#       document.getElementById('individual-timestamp').textContent = analysis.last_update;
+      
+#       // Main metrics
+#       document.getElementById('individual-signal').textContent = analysis.signal_status;
+#       document.getElementById('individual-signal').className = `text-xl font-bold ${getStatusColor(analysis.signal_status)}`;
+      
+#       document.getElementById('individual-price').textContent = formatCurrency(analysis.current_price);
+#       document.getElementById('individual-strength').textContent = analysis.current_signal.toFixed(4);
+#       document.getElementById('individual-volatility').textContent = `${analysis.current_volatility.toFixed(1)}%`;
+      
+#       // Additional metrics
+#       document.getElementById('individual-trend').textContent = analysis.current_trend.toFixed(4);
+#       document.getElementById('individual-beta').textContent = analysis.beta;
+#       document.getElementById('individual-update').textContent = analysis.last_update;
+      
+#       // Strike analysis if available
+#       if (analysis.strike !== undefined) {
+#         document.getElementById('strike-price').textContent = formatCurrency(analysis.strike);
+#         document.getElementById('strike-distance').textContent = `${analysis.distance_to_strike}%`;
+#         document.getElementById('strike-analysis-text').textContent = analysis.strike_analysis || 'Análise não disponível';
+#         document.getElementById('individual-strike-analysis').classList.remove('hidden');
+#       } else {
+#         document.getElementById('individual-strike-analysis').classList.add('hidden');
+#       }
+      
+#       // Show results
+#       document.getElementById('individual-results').classList.remove('hidden');
+      
+#       // NOVO: Criar gráfico com Chart.js baseado nos dados do ATSMOM
+#       createATSMOMChart(data);
+#       document.getElementById('plotly-chart-container').classList.remove('hidden');
+#     }
+
+#     // NOVA FUNÇÃO: Criar gráfico ATSMOM com Chart.js (igual ao Beta Regression)
+#     function createATSMOMChart(data) {
+#       try {
+#         console.log('Criando gráfico ATSMOM com Chart.js');
+        
+#         const analysis = data.analysis_data;
+        
+#         // Preparar dados para Chart.js
+#         let chartData;
+        
+#         if (data.raw_data && data.raw_data.dates && data.raw_data.prices) {
+#           // Usar dados reais
+#           chartData = {
+#             labels: data.raw_data.dates,
+#             prices: data.raw_data.prices,
+#             signals: data.raw_data.signals || [],
+#             trends: data.raw_data.trends || []
+#           };
+#         } else {
+#           // Gerar dados de exemplo
+#           const numPoints = 60;
+#           const dates = [];
+#           const prices = [];
+#           const signals = [];
+#           const trends = [];
+          
+#           const today = new Date();
+#           let basePrice = analysis.current_price || 50;
+          
+#           for (let i = numPoints; i >= 0; i--) {
+#             const date = new Date(today);
+#             date.setDate(date.getDate() - i);
+#             dates.push(date.toLocaleDateString('pt-BR'));
+            
+#             // Preço com movimento realista
+#             const movement = Math.sin(i * 0.02) * 2 + (Math.random() - 0.5) * 1;
+#             basePrice += movement * 0.3;
+#             prices.push(Math.max(basePrice * 0.8, basePrice));
+            
+#             // Sinal ATSMOM (-3 a +3)
+#             const signal = Math.sin(i * 0.03) * 2.5 + (Math.random() - 0.5) * 1;
+#             signals.push(Math.max(-3, Math.min(3, signal)));
+            
+#             // Tendência
+#             const trend = Math.sin(i * 0.025) * 1.8 + (Math.random() - 0.5) * 0.4;
+#             trends.push(trend);
+#           }
+          
+#           // Definir valores atuais
+#           prices[prices.length - 1] = analysis.current_price;
+#           signals[signals.length - 1] = analysis.current_signal;
+#           trends[trends.length - 1] = analysis.current_trend;
+          
+#           chartData = { labels: dates, prices, signals, trends };
 #         }
         
+#         // Simular IBOV normalizado
+#         const ibovPrices = chartData.prices.map((p, i) => p * (0.95 + Math.sin(i * 0.02) * 0.05));
+#         const ibovSignals = chartData.signals.map(s => s * 0.8);
+#         const ibovTrends = chartData.trends.map(t => t * 0.7);
+        
+#         // Limpar container e criar HTML igual ao Beta Regression
+#         const chartContainer = document.getElementById('plotly-chart');
+#         chartContainer.innerHTML = `
+#           <!-- Gráfico Principal - Preços vs IBOV -->
+#           <div class="mb-8">
+#             <div class="beta-card p-6">
+#               <h3 class="text-xl font-bold mb-4" style="color: #00FFAA;">
+#                 <i class="fas fa-chart-line mr-2"></i>
+#                 ${analysis.symbol} vs IBOV - Preços Normalizados
+#               </h3>
+#               <div class="mb-4 flex flex-wrap gap-4 text-sm">
+#                 <div class="flex items-center gap-2">
+#                   <div class="w-3 h-3 rounded-full" style="background-color: #00FFAA;"></div>
+#                   <span>${analysis.symbol}</span>
+#                 </div>
+#                 <div class="flex items-center gap-2">
+#                   <div class="w-3 h-3 rounded-full" style="background-color: #ffffff;"></div>
+#                   <span>IBOV (normalizado)</span>
+#                 </div>
+#               </div>
+#               <div style="position: relative; height: 300px; width: 100%;">
+#                 <canvas id="atsmomPriceChart"></canvas>
+#               </div>
+#             </div>
+#           </div>
+
+#           <!-- Gráficos de Sinais -->
+#           <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+#             <div class="beta-card p-6">
+#               <h3 class="text-xl font-bold mb-4" style="color: #00BFFF;">
+#                 <i class="fas fa-wave-square mr-2"></i>
+#                 Força da Tendência (ATSMOM)
+#               </h3>
+#               <div class="mb-4 flex flex-wrap gap-4 text-sm">
+#                 <div class="flex items-center gap-2">
+#                   <div class="w-3 h-3 rounded-full" style="background-color: #00FFAA;"></div>
+#                   <span>Tendência ${analysis.symbol}</span>
+#                 </div>
+#                 <div class="flex items-center gap-2">
+#                   <div class="w-3 h-3 rounded-full" style="background-color: #ffffff;"></div>
+#                   <span>Tendência IBOV</span>
+#                 </div>
+#               </div>
+#               <div style="position: relative; height: 250px; width: 100%;">
+#                 <canvas id="atsmomTrendChart"></canvas>
+#               </div>
+#             </div>
+            
+#             <div class="beta-card p-6">
+#               <h3 class="text-xl font-bold mb-4" style="color: #9400D3;">
+#                 <i class="fas fa-chart-area mr-2"></i>
+#                 Sinal Ajustado pela Volatilidade
+#               </h3>
+#               <div class="mb-4 flex flex-wrap gap-4 text-sm">
+#                 <div class="flex items-center gap-2">
+#                   <div class="w-3 h-3 rounded-full" style="background-color: #00FFAA;"></div>
+#                   <span>Sinal ${analysis.symbol}</span>
+#                 </div>
+#                 <div class="flex items-center gap-2">
+#                   <div class="w-3 h-3 rounded-full" style="background-color: #ffffff;"></div>
+#                   <span>Sinal IBOV</span>
+#                 </div>
+#               </div>
+#               <div style="position: relative; height: 250px; width: 100%;">
+#                 <canvas id="atsmomSignalChart"></canvas>
+#               </div>
+#             </div>
+#           </div>
+#         `;
+        
+#         // Configuração base para Chart.js (cyberpunk style)
+#         const baseChartConfig = {
+#           responsive: true,
+#           maintainAspectRatio: false,
+#           plugins: {
+#             legend: {
+#               labels: {
+#                 color: '#ffffff',
+#                 font: { size: 12 },
+#                 usePointStyle: true
+#               }
+#             },
+#             tooltip: {
+#               backgroundColor: 'rgba(17, 17, 58, 0.9)',
+#               titleColor: '#00FFAA',
+#               bodyColor: '#ffffff',
+#               borderColor: '#00FFAA',
+#               borderWidth: 1
+#             }
+#           },
+#           scales: {
+#             x: {
+#               ticks: { 
+#                 color: '#ffffff',
+#                 maxTicksLimit: 8
+#               },
+#               grid: { color: 'rgba(255, 255, 255, 0.1)' }
+#             },
+#             y: {
+#               ticks: { color: '#ffffff' },
+#               grid: { color: 'rgba(255, 255, 255, 0.1)' }
+#             }
+#           },
+#           elements: {
+#             point: { radius: 0 }
+#           }
+#         };
+        
+#         // 1. Gráfico de Preços
+#         const priceCtx = document.getElementById('atsmomPriceChart').getContext('2d');
+#         new Chart(priceCtx, {
+#           type: 'line',
+#           data: {
+#             labels: chartData.labels,
+#             datasets: [
+#               {
+#                 label: analysis.symbol,
+#                 data: chartData.prices,
+#                 borderColor: '#00FFAA',
+#                 backgroundColor: 'rgba(0, 255, 170, 0.1)',
+#                 borderWidth: 3,
+#                 fill: false,
+#                 tension: 0.1
+#               },
+#               {
+#                 label: 'IBOV (normalizado)',
+#                 data: ibovPrices,
+#                 borderColor: '#ffffff',
+#                 backgroundColor: 'rgba(255, 255, 255, 0.1)',
+#                 borderWidth: 2,
+#                 fill: false,
+#                 tension: 0.1,
+#                 borderDash: [5, 5]
+#               }
+#             ]
+#           },
+#           options: {
+#             ...baseChartConfig,
+#             scales: {
+#               ...baseChartConfig.scales,
+#               y: {
+#                 ...baseChartConfig.scales.y,
+#                 ticks: {
+#                   color: '#ffffff',
+#                   callback: function(value) {
+#                     return 'R$ ' + value.toFixed(2);
+#                   }
+#                 }
+#               }
+#             }
+#           }
+#         });
+        
+#         // 2. Gráfico de Tendência
+#         const trendCtx = document.getElementById('atsmomTrendChart').getContext('2d');
+#         new Chart(trendCtx, {
+#           type: 'line',
+#           data: {
+#             labels: chartData.labels,
+#             datasets: [
+#               {
+#                 label: `Tendência ${analysis.symbol}`,
+#                 data: chartData.trends,
+#                 borderColor: '#00FFAA',
+#                 backgroundColor: 'rgba(0, 255, 170, 0.1)',
+#                 borderWidth: 2,
+#                 fill: true,
+#                 tension: 0.1
+#               },
+#               {
+#                 label: 'Tendência IBOV',
+#                 data: ibovTrends,
+#                 borderColor: '#ffffff',
+#                 backgroundColor: 'rgba(255, 255, 255, 0.05)',
+#                 borderWidth: 2,
+#                 fill: false,
+#                 tension: 0.1,
+#                 borderDash: [3, 3]
+#               }
+#             ]
+#           },
+#           options: baseChartConfig
+#         });
+        
+#         // 3. Gráfico de Sinais
+#         const signalCtx = document.getElementById('atsmomSignalChart').getContext('2d');
+#         new Chart(signalCtx, {
+#           type: 'line',
+#           data: {
+#             labels: chartData.labels,
+#             datasets: [
+#               {
+#                 label: `Sinal ${analysis.symbol}`,
+#                 data: chartData.signals,
+#                 borderColor: '#00FFAA',
+#                 backgroundColor: 'rgba(0, 255, 170, 0.1)',
+#                 borderWidth: 2,
+#                 fill: true,
+#                 tension: 0.1
+#               },
+#               {
+#                 label: 'Sinal IBOV',
+#                 data: ibovSignals,
+#                 borderColor: '#ffffff',
+#                 backgroundColor: 'rgba(255, 255, 255, 0.05)',
+#                 borderWidth: 1,
+#                 fill: false,
+#                 tension: 0.1,
+#                 borderDash: [2, 2]
+#               }
+#             ]
+#           },
+#           options: {
+#             ...baseChartConfig,
+#             scales: {
+#               ...baseChartConfig.scales,
+#               y: {
+#                 ...baseChartConfig.scales.y,
+#                 min: -3,
+#                 max: 3,
+#                 ticks: {
+#                   color: '#ffffff',
+#                   stepSize: 0.5
+#                 }
+#               }
+#             }
+#           }
+#         });
+        
+#         console.log('✅ Gráficos ATSMOM criados com sucesso usando Chart.js');
+        
 #       } catch (error) {
-#         alert('❌ Erro de conexão');
+#         console.error('❌ Erro ao criar gráficos ATSMOM:', error);
+#         document.getElementById('plotly-chart').innerHTML = `
+#           <div style="color: white; text-align: center; padding: 50px;">
+#             <i class="fas fa-exclamation-triangle" style="font-size: 48px; color: #ef4444; margin-bottom: 20px;"></i>
+#             <h3>Erro ao carregar gráficos</h3>
+#             <p>${error.message}</p>
+#           </div>
+#         `;
 #       }
 #     }
 
-#     // Logout
-#     function logout() {
-#       if (confirm('Deseja realmente sair do painel administrativo?')) {
-#         localStorage.removeItem('geminii_token');
-#         localStorage.removeItem('geminii_user');
-#         window.location.href = '/';
+#     // Análise em Lote
+#     async function analyzeBulk() {
+#       const period = document.getElementById('bulk-period').value;
+#       const symbolsInput = document.getElementById('bulk-symbols').value.trim();
+#       const btn = document.getElementById('analyzeBulkBtn');
+
+#       setLoading(btn, true);
+#       hideAllResults();
+#       showStatus('Executando análise em lote... Isso pode levar alguns minutos', 'info');
+
+#       try {
+#         const payload = { period: period };
+#         if (symbolsInput) {
+#           payload.symbols = symbolsInput.split(',').map(s => s.trim().toUpperCase());
+#         }
+
+#         const response = await fetch(`${API_BASE}/bulk_analyze`, {
+#           method: 'POST',
+#           headers: {
+#             'Content-Type': 'application/json',
+#           },
+#           body: JSON.stringify(payload)
+#         });
+
+#         const data = await response.json();
+
+#         if (data.success) {
+#           displayBulkResults(data);
+#           showStatus(`Análise em lote concluída! ${data.total_analyzed} ativos processados.`, 'success');
+#         } else {
+#           showStatus(data.error || 'Erro na análise em lote', 'error');
+#         }
+#       } catch (error) {
+#         showStatus('Erro ao executar análise em lote', 'error');
+#         console.error(error);
+#       }
+
+#       setLoading(btn, false);
+#     }
+
+#     // Display Bulk Results
+#     function displayBulkResults(data) {
+#       const compras = data.results.filter(r => r.signal_status === 'COMPRA').length;
+#       const vendas = data.results.filter(r => r.signal_status === 'VENDA').length;
+#       const neutros = data.results.filter(r => r.signal_status === 'NEUTRO').length;
+      
+#       const summaryHtml = `
+#         <div class="bg-white bg-opacity-5 p-4 rounded-lg text-center">
+#           <div class="text-2xl font-bold">${data.total_analyzed}</div>
+#           <div class="text-sm text-gray-400">Total Analisado</div>
+#         </div>
+#         <div class="bg-white bg-opacity-5 p-4 rounded-lg text-center">
+#           <div class="text-2xl font-bold text-green-400">${compras}</div>
+#           <div class="text-sm text-gray-400">Sinais de Compra</div>
+#         </div>
+#         <div class="bg-white bg-opacity-5 p-4 rounded-lg text-center">
+#           <div class="text-2xl font-bold text-red-400">${vendas}</div>
+#           <div class="text-sm text-gray-400">Sinais de Venda</div>
+#         </div>
+#         <div class="bg-white bg-opacity-5 p-4 rounded-lg text-center">
+#           <div class="text-2xl font-bold text-gray-400">${neutros}</div>
+#           <div class="text-sm text-gray-400">Sinais Neutros</div>
+#         </div>
+#         <div class="bg-white bg-opacity-5 p-4 rounded-lg text-center">
+#           <div class="text-2xl font-bold text-red-400">${data.total_errors}</div>
+#           <div class="text-sm text-gray-400">Erros</div>
+#         </div>
+#       `;
+      
+#       document.getElementById('bulk-summary').innerHTML = summaryHtml;
+      
+#       const tbody = document.getElementById('bulk-table-body');
+#       tbody.innerHTML = data.results.map(result => `
+#         <tr class="border-b border-white border-opacity-10 hover:bg-white hover:bg-opacity-5 cursor-pointer" onclick="analyzeFromTable('${result.symbol}')">
+#           <td class="py-3 px-4 font-bold">${result.symbol}</td>
+#           <td class="py-3 px-4">${formatCurrency(result.current_price)}</td>
+#           <td class="py-3 px-4">
+#             <span class="px-2 py-1 rounded-full text-xs ${getStatusBadgeClass(result.signal_status)}">
+#               ${result.signal_status}
+#             </span>
+#           </td>
+#           <td class="py-3 px-4">${result.current_signal.toFixed(4)}</td>
+#           <td class="py-3 px-4">${result.current_trend.toFixed(4)}</td>
+#           <td class="py-3 px-4">${result.current_volatility.toFixed(1)}%</td>
+#           <td class="py-3 px-4">${result.beta}</td>
+#         </tr>
+#       `).join('');
+      
+#       document.getElementById('bulk-results').classList.remove('hidden');
+#     }
+
+#     // Comparar Ativos
+#     async function compareAssets() {
+#       const symbol1 = document.getElementById('compare-symbol1').value.trim().toUpperCase();
+#       const symbol2 = document.getElementById('compare-symbol2').value.trim().toUpperCase();
+#       const period = document.getElementById('compare-period').value;
+#       const btn = document.getElementById('compareBtn');
+
+#       if (!symbol1 || !symbol2) {
+#         showStatus('Digite ambos os códigos das ações', 'error');
+#         return;
+#       }
+
+#       if (symbol1 === symbol2) {
+#         showStatus('Os ativos devem ser diferentes', 'error');
+#         return;
+#       }
+
+#       setLoading(btn, true);
+#       hideAllResults();
+#       showStatus('Comparando ativos... Isso pode levar alguns segundos', 'info');
+
+#       try {
+#         const response = await fetch(`${API_BASE}/compare`, {
+#           method: 'POST',
+#           headers: {
+#             'Content-Type': 'application/json',
+#           },
+#           body: JSON.stringify({
+#             symbol1: symbol1,
+#             symbol2: symbol2,
+#             period: period
+#           })
+#         });
+
+#         const data = await response.json();
+
+#         if (data.success) {
+#           displayComparisonResults(data);
+#           showStatus('Comparação concluída com sucesso!', 'success');
+#         } else {
+#           showStatus(data.error || 'Erro na comparação', 'error');
+#         }
+#       } catch (error) {
+#         showStatus('Erro ao executar comparação', 'error');
+#         console.error(error);
+#       }
+
+#       setLoading(btn, false);
+#     }
+
+#     // Display Comparison Results
+#     function displayComparisonResults(data) {
+#       const comparison = data.comparison;
+#       const summary = comparison.comparison_summary;
+      
+#       const summaryHtml = `
+#         <div class="bg-white bg-opacity-5 p-4 rounded-lg text-center">
+#           <div class="text-lg font-bold text-purple-400">${summary.stronger_signal}</div>
+#           <div class="text-sm text-gray-400">Sinal Mais Forte</div>
+#         </div>
+#         <div class="bg-white bg-opacity-5 p-4 rounded-lg text-center">
+#           <div class="text-lg font-bold text-orange-400">${summary.higher_volatility}</div>
+#           <div class="text-sm text-gray-400">Maior Volatilidade</div>
+#         </div>
+#         <div class="bg-white bg-opacity-5 p-4 rounded-lg text-center">
+#           <div class="text-lg font-bold text-blue-400">${summary.higher_beta}</div>
+#           <div class="text-sm text-gray-400">Maior Beta</div>
+#         </div>
+#       `;
+      
+#       document.getElementById('comparison-summary').innerHTML = summaryHtml;
+#       document.getElementById('compare-asset1').innerHTML = createAssetCard(comparison.symbol1);
+#       document.getElementById('compare-asset2').innerHTML = createAssetCard(comparison.symbol2);
+#       document.getElementById('compare-results').classList.remove('hidden');
+#     }
+
+#     function createAssetCard(assetData) {
+#       const data = assetData.data;
+#       return `
+#         <h3 class="text-xl font-bold mb-4 text-center">${assetData.symbol}</h3>
+#         <div class="space-y-3">
+#           <div class="bg-white bg-opacity-5 p-3 rounded-lg flex justify-between">
+#             <span class="text-gray-400">Preço:</span>
+#             <span class="font-semibold">${formatCurrency(data.current_price)}</span>
+#           </div>
+#           <div class="bg-white bg-opacity-5 p-3 rounded-lg flex justify-between">
+#             <span class="text-gray-400">Sinal:</span>
+#             <span class="font-semibold ${getStatusColor(data.signal_status)}">${data.signal_status}</span>
+#           </div>
+#           <div class="bg-white bg-opacity-5 p-3 rounded-lg flex justify-between">
+#             <span class="text-gray-400">Força:</span>
+#             <span class="font-semibold">${data.current_signal.toFixed(4)}</span>
+#           </div>
+#           <div class="bg-white bg-opacity-5 p-3 rounded-lg flex justify-between">
+#             <span class="text-gray-400">Tendência:</span>
+#             <span class="font-semibold">${data.current_trend.toFixed(4)}</span>
+#           </div>
+#           <div class="bg-white bg-opacity-5 p-3 rounded-lg flex justify-between">
+#             <span class="text-gray-400">Volatilidade:</span>
+#             <span class="font-semibold">${data.current_volatility.toFixed(1)}%</span>
+#           </div>
+#           <div class="bg-white bg-opacity-5 p-3 rounded-lg flex justify-between">
+#             <span class="text-gray-400">Beta:</span>
+#             <span class="font-semibold">${data.beta}</span>
+#           </div>
+#         </div>
+#       `;
+#     }
+
+#     // Visão Geral do Mercado
+#     async function getMarketOverview() {
+#       const period = document.getElementById('overview-period').value;
+#       const btn = document.getElementById('overviewBtn');
+
+#       setLoading(btn, true);
+#       hideAllResults();
+#       showStatus('Carregando visão geral do mercado...', 'info');
+
+#       try {
+#         const response = await fetch(`${API_BASE}/market_overview?period=${period}`);
+#         const data = await response.json();
+
+#         if (data.success) {
+#           displayOverviewResults(data);
+#           showStatus('Visão geral carregada com sucesso!', 'success');
+#         } else {
+#           showStatus(data.error || 'Erro ao carregar visão geral', 'error');
+#         }
+#       } catch (error) {
+#         showStatus('Erro ao carregar visão geral', 'error');
+#         console.error(error);
+#       }
+
+#       setLoading(btn, false);
+#     }
+
+#     function displayOverviewResults(data) {
+#       const overview = data.overview;
+      
+#       const statsHtml = `
+#         <div class="bg-white bg-opacity-5 p-4 rounded-lg text-center">
+#           <div class="text-xl font-bold">${overview.total_assets}</div>
+#           <div class="text-xs text-gray-400">Total</div>
+#         </div>
+#         <div class="bg-white bg-opacity-5 p-4 rounded-lg text-center">
+#           <div class="text-xl font-bold text-green-400">${overview.buy_signals}</div>
+#           <div class="text-xs text-gray-400">Compra</div>
+#         </div>
+#         <div class="bg-white bg-opacity-5 p-4 rounded-lg text-center">
+#           <div class="text-xl font-bold text-red-400">${overview.sell_signals}</div>
+#           <div class="text-xs text-gray-400">Venda</div>
+#         </div>
+#         <div class="bg-white bg-opacity-5 p-4 rounded-lg text-center">
+#           <div class="text-xl font-bold text-gray-400">${overview.neutral_signals}</div>
+#           <div class="text-xs text-gray-400">Neutro</div>
+#         </div>
+#         <div class="bg-white bg-opacity-5 p-4 rounded-lg text-center">
+#           <div class="text-xl font-bold">${overview.average_volatility}%</div>
+#           <div class="text-xs text-gray-400">Vol. Média</div>
+#         </div>
+#         <div class="bg-white bg-opacity-5 p-4 rounded-lg text-center">
+#           <div class="text-xl font-bold ${getStatusColor(overview.market_sentiment)}">${overview.market_sentiment}</div>
+#           <div class="text-xs text-gray-400">Sentimento</div>
+#         </div>
+#       `;
+      
+#       document.getElementById('overview-stats').innerHTML = statsHtml;
+      
+#       const tbody = document.getElementById('overview-table-body');
+#       tbody.innerHTML = data.assets.map(asset => `
+#         <tr class="border-b border-white border-opacity-10 hover:bg-white hover:bg-opacity-5 cursor-pointer" onclick="analyzeFromTable('${asset.symbol}')">
+#           <td class="py-3 px-4 font-bold">${asset.symbol}</td>
+#           <td class="py-3 px-4">${formatCurrency(asset.price)}</td>
+#           <td class="py-3 px-4">
+#             <span class="px-2 py-1 rounded-full text-xs ${getStatusBadgeClass(asset.signal)}">
+#               ${asset.signal}
+#             </span>
+#           </td>
+#           <td class="py-3 px-4">${asset.signal_strength.toFixed(4)}</td>
+#           <td class="py-3 px-4">${asset.volatility.toFixed(1)}%</td>
+#           <td class="py-3 px-4">${asset.beta}</td>
+#         </tr>
+#       `).join('');
+      
+#       document.getElementById('overview-results').classList.remove('hidden');
+#     }
+
+#     function getStatusBadgeClass(status) {
+#       switch(status) {
+#         case 'COMPRA': return 'bg-green-600 bg-opacity-20 text-green-400 border border-green-500 border-opacity-30';
+#         case 'VENDA': return 'bg-red-600 bg-opacity-20 text-red-400 border border-red-500 border-opacity-30';
+#         default: return 'bg-gray-600 bg-opacity-20 text-gray-400 border border-gray-500 border-opacity-30';
+#       }
+#     }
+
+#     function analyzeFromTable(symbol) {
+#       document.querySelector('[data-tab="individual"]').click();
+#       document.getElementById('individual-symbol').value = symbol;
+#       analyzeIndividual();
+#     }
+
+#     // Event Listeners
+#     document.getElementById('analyzeIndividualBtn').addEventListener('click', analyzeIndividual);
+#     document.getElementById('analyzeBulkBtn').addEventListener('click', analyzeBulk);
+#     document.getElementById('compareBtn').addEventListener('click', compareAssets);
+#     document.getElementById('overviewBtn').addEventListener('click', getMarketOverview);
+
+#     document.getElementById('individual-symbol').addEventListener('keypress', (e) => {
+#       if (e.key === 'Enter') analyzeIndividual();
+#     });
+
+#     document.getElementById('compare-symbol1').addEventListener('keypress', (e) => {
+#       if (e.key === 'Enter') compareAssets();
+#     });
+
+#     document.getElementById('compare-symbol2').addEventListener('keypress', (e) => {
+#       if (e.key === 'Enter') compareAssets();
+#     });
+
+#     // Health Check
+#     async function checkHealth() {
+#       try {
+#         const response = await fetch(`${API_BASE}/health`);
+#         const data = await response.json();
+        
+#         if (data.status === 'OK') {
+#           console.log('✅ Serviço ATSMOM funcionando:', data.message);
+#         } else {
+#           console.warn('⚠️ Serviço com problemas:', data.message);
+#         }
+#       } catch (error) {
+#         console.error('❌ Erro ao verificar saúde do serviço:', error);
 #       }
 #     }
 
 #     // Initialize
-#     document.addEventListener('DOMContentLoaded', initAdminDashboard);
+#     document.addEventListener('DOMContentLoaded', function() {
+#       checkHealth();
+#       showStatus('ATSMOM Analytics carregado! Selecione uma opção de análise para começar.', 'info');
+#     });
 #   </script>
 # </body>
 # </html>
