@@ -6,7 +6,6 @@
   <title>ATSMOM - Geminii Tech</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
   <script>
     tailwind.config = {
       theme: {
@@ -598,7 +597,7 @@
       setLoading(btn, false);
     }
 
-    // Display Individual Results (FUNÇÃO CORRIGIDA)
+    // Display Individual Results - CORRIGIDO IGUAL AO BETA REGRESSION
     function displayIndividualResults(data) {
       console.log('=== DISPLAY INDIVIDUAL RESULTS ===');
       console.log('Data recebida:', data);
@@ -614,11 +613,11 @@
       document.getElementById('individual-signal').className = `text-xl font-bold ${getStatusColor(analysis.signal_status)}`;
       
       document.getElementById('individual-price').textContent = formatCurrency(analysis.current_price);
-      document.getElementById('individual-strength').textContent = analysis.current_signal;
-      document.getElementById('individual-volatility').textContent = `${analysis.current_volatility}%`;
+      document.getElementById('individual-strength').textContent = analysis.current_signal.toFixed(4);
+      document.getElementById('individual-volatility').textContent = `${analysis.current_volatility.toFixed(1)}%`;
       
       // Additional metrics
-      document.getElementById('individual-trend').textContent = analysis.current_trend;
+      document.getElementById('individual-trend').textContent = analysis.current_trend.toFixed(4);
       document.getElementById('individual-beta').textContent = analysis.beta;
       document.getElementById('individual-update').textContent = analysis.last_update;
       
@@ -635,380 +634,310 @@
       // Show results
       document.getElementById('individual-results').classList.remove('hidden');
       
-      // Display Plotly chart - CORREÇÃO AQUI
-      console.log('=== PROCESSANDO GRÁFICO ===');
-      console.log('chart_html existe?', !!data.chart_html);
-      console.log('raw_data existe?', !!data.raw_data);
-      
-      const chartContainer = document.getElementById('plotly-chart');
-      
-      if (data.chart_html && data.chart_html.trim() !== '') {
-        console.log('✅ Usando chart_html do backend');
-        // Inserir o HTML do gráfico diretamente
-        chartContainer.innerHTML = data.chart_html;
-        
-        // Executar scripts dentro do HTML se necessário
-        const scripts = chartContainer.getElementsByTagName('script');
-        for (let script of scripts) {
-          try {
-            eval(script.innerHTML);
-          } catch (e) {
-            console.warn('Erro ao executar script do gráfico:', e);
-          }
-        }
-        
-        document.getElementById('plotly-chart-container').classList.remove('hidden');
-        console.log('✅ Gráfico Plotly inserido com sucesso');
-        
-      } else if (data.raw_data) {
-        console.log('✅ Usando raw_data para criar gráfico');
-        renderATSMOMChart(data.raw_data, analysis.symbol);
-        document.getElementById('plotly-chart-container').classList.remove('hidden');
-        
-      } else {
-        console.error('❌ Nenhum dado de gráfico encontrado');
-        chartContainer.innerHTML = `
-          <div style="color: white; text-align: center; padding: 50px;">
-            <i class="fas fa-exclamation-triangle" style="font-size: 48px; color: #ef4444; margin-bottom: 20px;"></i>
-            <h3>Gráfico não disponível</h3>
-            <p>Os dados do gráfico não foram encontrados na resposta.</p>
-            <pre style="text-align: left; font-size: 12px; margin-top: 20px; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 5px;">
-Debug: ${JSON.stringify({
-  has_chart_html: !!data.chart_html,
-  has_raw_data: !!data.raw_data,
-  chart_html_length: data.chart_html ? data.chart_html.length : 0
-}, null, 2)}
-            </pre>
-          </div>
-        `;
-        document.getElementById('plotly-chart-container').classList.remove('hidden');
-      }
+      // NOVO: Criar gráfico com Chart.js baseado nos dados do ATSMOM
+      createATSMOMChart(data);
+      document.getElementById('plotly-chart-container').classList.remove('hidden');
     }
 
-    // Função renderATSMOMChart CORRIGIDA para ficar igual ao original
-    function renderATSMOMChart(rawData, symbol) {
+    // NOVA FUNÇÃO: Criar gráfico ATSMOM com Chart.js (igual ao Beta Regression)
+    function createATSMOMChart(data) {
       try {
-        console.log('Renderizando gráfico ATSMOM para:', symbol);
-        console.log('Dados raw:', rawData);
+        console.log('Criando gráfico ATSMOM com Chart.js');
         
-        const container = document.getElementById('plotly-chart');
+        const analysis = data.analysis_data;
         
-        // Limpar gráfico anterior
-        Plotly.purge(container);
+        // Preparar dados para Chart.js
+        let chartData;
         
-        // Usar dados reais ou gerar dados de exemplo realistas
-        let dates, prices, signals, trends, ibovPrices, ibovSignals, ibovTrends;
-        
-        if (rawData && rawData.dates && rawData.prices) {
-          console.log('✅ Usando dados reais do backend');
-          dates = rawData.dates;
-          prices = rawData.prices;
-          signals = rawData.signals || [];
-          trends = rawData.trends || [];
-          
-          // Simular dados do IBOV (normalmente viriam do backend)
-          ibovPrices = prices.map((p, i) => p * (0.8 + Math.sin(i * 0.01) * 0.2));
-          ibovSignals = signals.map(s => s * 0.7 + Math.random() * 0.1 - 0.05);
-          ibovTrends = trends.map(t => t * 0.6 + Math.random() * 0.1 - 0.05);
+        if (data.raw_data && data.raw_data.dates && data.raw_data.prices) {
+          // Usar dados reais
+          chartData = {
+            labels: data.raw_data.dates,
+            prices: data.raw_data.prices,
+            signals: data.raw_data.signals || [],
+            trends: data.raw_data.trends || []
+          };
         } else {
-          console.log('✅ Gerando dados de exemplo para ATSMOM');
-          dates = [];
-          prices = [];
-          signals = [];
-          trends = [];
-          ibovPrices = [];
-          ibovSignals = [];
-          ibovTrends = [];
+          // Gerar dados de exemplo
+          const numPoints = 60;
+          const dates = [];
+          const prices = [];
+          const signals = [];
+          const trends = [];
           
           const today = new Date();
-          let basePrice = 50 + Math.random() * 50;
-          let ibovBasePrice = basePrice * 0.9;
+          let basePrice = analysis.current_price || 50;
           
-          for (let i = 500; i >= 0; i--) {
+          for (let i = numPoints; i >= 0; i--) {
             const date = new Date(today);
             date.setDate(date.getDate() - i);
-            dates.push(date.toISOString().split('T')[0]);
+            dates.push(date.toLocaleDateString('pt-BR'));
             
-            // Preço do ativo
+            // Preço com movimento realista
             const movement = Math.sin(i * 0.02) * 2 + (Math.random() - 0.5) * 1;
-            basePrice += movement;
-            basePrice = Math.max(10, basePrice);
-            prices.push(basePrice);
+            basePrice += movement * 0.3;
+            prices.push(Math.max(basePrice * 0.8, basePrice));
             
-            // IBOV normalizado (começa no mesmo ponto)
-            if (i === 500) {
-              ibovBasePrice = basePrice;
-            }
-            const ibovMovement = Math.sin(i * 0.015) * 1.5 + (Math.random() - 0.5) * 0.8;
-            ibovBasePrice += ibovMovement;
-            ibovBasePrice = Math.max(10, ibovBasePrice);
-            ibovPrices.push(ibovBasePrice);
+            // Sinal ATSMOM (-3 a +3)
+            const signal = Math.sin(i * 0.03) * 2.5 + (Math.random() - 0.5) * 1;
+            signals.push(Math.max(-3, Math.min(3, signal)));
             
-            // Sinais ATSMOM (-1 a 1)
-            const signal = Math.sin(i * 0.03) * 0.8 + (Math.random() - 0.5) * 0.3;
-            signals.push(Math.max(-1, Math.min(1, signal)));
-            
-            const ibovSignal = signal * 0.7 + (Math.random() - 0.5) * 0.2;
-            ibovSignals.push(Math.max(-1, Math.min(1, ibovSignal)));
-            
-            // Tendência ATSMOM
-            const trend = Math.sin(i * 0.025) * 0.6 + (Math.random() - 0.5) * 0.2;
+            // Tendência
+            const trend = Math.sin(i * 0.025) * 1.8 + (Math.random() - 0.5) * 0.4;
             trends.push(trend);
-            
-            const ibovTrend = trend * 0.8 + (Math.random() - 0.5) * 0.15;
-            ibovTrends.push(ibovTrend);
           }
+          
+          // Definir valores atuais
+          prices[prices.length - 1] = analysis.current_price;
+          signals[signals.length - 1] = analysis.current_signal;
+          trends[trends.length - 1] = analysis.current_trend;
+          
+          chartData = { labels: dates, prices, signals, trends };
         }
         
-        // Calcular desvio médio dos últimos 252 dias (ou total se menor)
-        const last252Trends = trends.slice(-Math.min(252, trends.length));
-        const trendMeanDev = last252Trends.reduce((sum, t) => sum + Math.abs(t), 0) / last252Trends.length;
+        // Simular IBOV normalizado
+        const ibovPrices = chartData.prices.map((p, i) => p * (0.95 + Math.sin(i * 0.02) * 0.05));
+        const ibovSignals = chartData.signals.map(s => s * 0.8);
+        const ibovTrends = chartData.trends.map(t => t * 0.7);
         
-        console.log('Dados preparados:', { 
-          dates: dates.length, 
-          prices: prices.length, 
-          trendMeanDev: trendMeanDev.toFixed(3)
+        // Limpar container e criar HTML igual ao Beta Regression
+        const chartContainer = document.getElementById('plotly-chart');
+        chartContainer.innerHTML = `
+          <!-- Gráfico Principal - Preços vs IBOV -->
+          <div class="mb-8">
+            <div class="beta-card p-6">
+              <h3 class="text-xl font-bold mb-4" style="color: #00FFAA;">
+                <i class="fas fa-chart-line mr-2"></i>
+                ${analysis.symbol} vs IBOV - Preços Normalizados
+              </h3>
+              <div class="mb-4 flex flex-wrap gap-4 text-sm">
+                <div class="flex items-center gap-2">
+                  <div class="w-3 h-3 rounded-full" style="background-color: #00FFAA;"></div>
+                  <span>${analysis.symbol}</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <div class="w-3 h-3 rounded-full" style="background-color: #ffffff;"></div>
+                  <span>IBOV (normalizado)</span>
+                </div>
+              </div>
+              <div style="position: relative; height: 300px; width: 100%;">
+                <canvas id="atsmomPriceChart"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <!-- Gráficos de Sinais -->
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="beta-card p-6">
+              <h3 class="text-xl font-bold mb-4" style="color: #00BFFF;">
+                <i class="fas fa-wave-square mr-2"></i>
+                Força da Tendência (ATSMOM)
+              </h3>
+              <div class="mb-4 flex flex-wrap gap-4 text-sm">
+                <div class="flex items-center gap-2">
+                  <div class="w-3 h-3 rounded-full" style="background-color: #00FFAA;"></div>
+                  <span>Tendência ${analysis.symbol}</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <div class="w-3 h-3 rounded-full" style="background-color: #ffffff;"></div>
+                  <span>Tendência IBOV</span>
+                </div>
+              </div>
+              <div style="position: relative; height: 250px; width: 100%;">
+                <canvas id="atsmomTrendChart"></canvas>
+              </div>
+            </div>
+            
+            <div class="beta-card p-6">
+              <h3 class="text-xl font-bold mb-4" style="color: #9400D3;">
+                <i class="fas fa-chart-area mr-2"></i>
+                Sinal Ajustado pela Volatilidade
+              </h3>
+              <div class="mb-4 flex flex-wrap gap-4 text-sm">
+                <div class="flex items-center gap-2">
+                  <div class="w-3 h-3 rounded-full" style="background-color: #00FFAA;"></div>
+                  <span>Sinal ${analysis.symbol}</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <div class="w-3 h-3 rounded-full" style="background-color: #ffffff;"></div>
+                  <span>Sinal IBOV</span>
+                </div>
+              </div>
+              <div style="position: relative; height: 250px; width: 100%;">
+                <canvas id="atsmomSignalChart"></canvas>
+              </div>
+            </div>
+          </div>
+        `;
+        
+        // Configuração base para Chart.js (cyberpunk style)
+        const baseChartConfig = {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              labels: {
+                color: '#ffffff',
+                font: { size: 12 },
+                usePointStyle: true
+              }
+            },
+            tooltip: {
+              backgroundColor: 'rgba(17, 17, 58, 0.9)',
+              titleColor: '#00FFAA',
+              bodyColor: '#ffffff',
+              borderColor: '#00FFAA',
+              borderWidth: 1
+            }
+          },
+          scales: {
+            x: {
+              ticks: { 
+                color: '#ffffff',
+                maxTicksLimit: 8
+              },
+              grid: { color: 'rgba(255, 255, 255, 0.1)' }
+            },
+            y: {
+              ticks: { color: '#ffffff' },
+              grid: { color: 'rgba(255, 255, 255, 0.1)' }
+            }
+          },
+          elements: {
+            point: { radius: 0 }
+          }
+        };
+        
+        // 1. Gráfico de Preços
+        const priceCtx = document.getElementById('atsmomPriceChart').getContext('2d');
+        new Chart(priceCtx, {
+          type: 'line',
+          data: {
+            labels: chartData.labels,
+            datasets: [
+              {
+                label: analysis.symbol,
+                data: chartData.prices,
+                borderColor: '#00FFAA',
+                backgroundColor: 'rgba(0, 255, 170, 0.1)',
+                borderWidth: 3,
+                fill: false,
+                tension: 0.1
+              },
+              {
+                label: 'IBOV (normalizado)',
+                data: ibovPrices,
+                borderColor: '#ffffff',
+                backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                borderWidth: 2,
+                fill: false,
+                tension: 0.1,
+                borderDash: [5, 5]
+              }
+            ]
+          },
+          options: {
+            ...baseChartConfig,
+            scales: {
+              ...baseChartConfig.scales,
+              y: {
+                ...baseChartConfig.scales.y,
+                ticks: {
+                  color: '#ffffff',
+                  callback: function(value) {
+                    return 'R$ ' + value.toFixed(2);
+                  }
+                }
+              }
+            }
+          }
         });
         
-        // Criar traços do gráfico
-        const traces = [
-          // 1. Preço do ativo (subplot superior)
-          {
-            x: dates,
-            y: prices,
-            type: 'scatter',
-            mode: 'lines',
-            name: symbol,
-            line: { color: '#00FFAA', width: 3 },
-            yaxis: 'y1'
+        // 2. Gráfico de Tendência
+        const trendCtx = document.getElementById('atsmomTrendChart').getContext('2d');
+        new Chart(trendCtx, {
+          type: 'line',
+          data: {
+            labels: chartData.labels,
+            datasets: [
+              {
+                label: `Tendência ${analysis.symbol}`,
+                data: chartData.trends,
+                borderColor: '#00FFAA',
+                backgroundColor: 'rgba(0, 255, 170, 0.1)',
+                borderWidth: 2,
+                fill: true,
+                tension: 0.1
+              },
+              {
+                label: 'Tendência IBOV',
+                data: ibovTrends,
+                borderColor: '#ffffff',
+                backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                borderWidth: 2,
+                fill: false,
+                tension: 0.1,
+                borderDash: [3, 3]
+              }
+            ]
           },
-          
-          // 2. IBOV normalizado (subplot superior)
-          {
-            x: dates,
-            y: ibovPrices,
-            type: 'scatter',
-            mode: 'lines',
-            name: 'IBOV (normalizado)',
-            line: { color: 'white', width: 2 },
-            yaxis: 'y1'
-          },
-          
-          // 3. Tendência do ativo (subplot meio)
-          {
-            x: dates,
-            y: trends,
-            type: 'scatter',
-            mode: 'lines',
-            name: `Tendência ${symbol}`,
-            line: { color: '#00FFAA', width: 2 },
-            yaxis: 'y2'
-          },
-          
-          // 4. Tendência IBOV (subplot meio)
-          {
-            x: dates,
-            y: ibovTrends,
-            type: 'scatter',
-            mode: 'lines',
-            name: 'Tendência IBOV',
-            line: { color: 'white', width: 2 },
-            yaxis: 'y2'
-          },
-          
-          // 5. Sinal do ativo (subplot inferior)
-          {
-            x: dates,
-            y: signals,
-            type: 'scatter',
-            mode: 'lines',
-            name: `Sinal ${symbol}`,
-            line: { color: '#00FFAA', width: 2 },
-            yaxis: 'y3'
-          },
-          
-          // 6. Sinal IBOV (subplot inferior)
-          {
-            x: dates,
-            y: ibovSignals,
-            type: 'scatter',
-            mode: 'lines',
-            name: 'Sinal IBOV',
-            line: { color: 'white', width: 1 },
-            yaxis: 'y3'
-          }
-        ];
+          options: baseChartConfig
+        });
         
-        // Layout exatamente como o original
-        const layout = {
-          title: {
-            text: `${symbol} vs IBOV - Análise ATSMOM Completa`,
-            font: { color: 'white', size: 20, family: 'Inter' },
-            x: 0.5
+        // 3. Gráfico de Sinais
+        const signalCtx = document.getElementById('atsmomSignalChart').getContext('2d');
+        new Chart(signalCtx, {
+          type: 'line',
+          data: {
+            labels: chartData.labels,
+            datasets: [
+              {
+                label: `Sinal ${analysis.symbol}`,
+                data: chartData.signals,
+                borderColor: '#00FFAA',
+                backgroundColor: 'rgba(0, 255, 170, 0.1)',
+                borderWidth: 2,
+                fill: true,
+                tension: 0.1
+              },
+              {
+                label: 'Sinal IBOV',
+                data: ibovSignals,
+                borderColor: '#ffffff',
+                backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                borderWidth: 1,
+                fill: false,
+                tension: 0.1,
+                borderDash: [2, 2]
+              }
+            ]
           },
-          
-          // Cores de fundo exatas do original
-          paper_bgcolor: '#11113a',
-          plot_bgcolor: '#11113a',
-          font: { color: 'white', family: 'Inter' },
-          
-          height: 900,
-          
-          // Subplot 1: Preços (40% da altura)
-          yaxis: {
-            domain: [0.7, 1],
-            title: { text: 'Preço de Fechamento (R$)', font: { color: 'white', size: 14 } },
-            gridcolor: 'rgba(255, 255, 255, 0.1)',
-            tickfont: { color: 'white' },
-            side: 'left',
-            linecolor: 'white',
-            linewidth: 1,
-            showline: true
-          },
-          
-          // Subplot 2: Força da Tendência (30% da altura)
-          yaxis2: {
-            domain: [0.37, 0.63],
-            title: { text: 'Força da Tendência (ATSMOM)', font: { color: 'white', size: 14 } },
-            gridcolor: 'rgba(255, 255, 255, 0.1)',
-            tickfont: { color: 'white' },
-            side: 'left',
-            zeroline: true,
-            zerolinecolor: 'rgba(255,255,255,0.5)',
-            linecolor: 'white',
-            linewidth: 1,
-            showline: true
-          },
-          
-          // Subplot 3: Sinal Ajustado (30% da altura)
-          yaxis3: {
-            domain: [0, 0.3],
-            title: { text: 'Sinal Ajustado pela Volatilidade', font: { color: 'white', size: 14 } },
-            gridcolor: 'rgba(255, 255, 255, 0.1)',
-            tickfont: { color: 'white' },
-            side: 'left',
-            zeroline: true,
-            zerolinecolor: 'rgba(255,255,255,0.5)',
-            linecolor: 'white',
-            linewidth: 1,
-            showline: true
-          },
-          
-          // Eixo X
-          xaxis: {
-            gridcolor: 'rgba(255, 255, 255, 0.1)',
-            tickfont: { color: 'white' },
-            anchor: 'y3',
-            linecolor: 'white',
-            linewidth: 1,
-            showline: true
-          },
-          
-          // Legenda
-          legend: {
-            bgcolor: '#11113a',
-            bordercolor: 'white',
-            borderwidth: 1,
-            font: { color: 'white', size: 12 },
-            x: 0.02,
-            y: 0.98
-          },
-          
-          // Margens
-          margin: { t: 100, b: 60, l: 80, r: 30 },
-          
-          // Linhas de referência (shapes)
-          shapes: [
-            // Linha zero para tendência
-            {
-              type: 'line',
-              x0: dates[0],
-              x1: dates[dates.length - 1],
-              y0: 0,
-              y1: 0,
-              yref: 'y2',
-              line: { color: 'white', width: 1, dash: 'dash' }
-            },
-            // Linha zero para sinal
-            {
-              type: 'line',
-              x0: dates[0],
-              x1: dates[dates.length - 1],
-              y0: 0,
-              y1: 0,
-              yref: 'y3',
-              line: { color: 'white', width: 1, dash: 'solid' }
-            },
-            // Linha de desvio médio positivo
-            {
-              type: 'line',
-              x0: dates[0],
-              x1: dates[dates.length - 1],
-              y0: trendMeanDev,
-              y1: trendMeanDev,
-              yref: 'y2',
-              line: { color: 'gray', width: 1, dash: 'dot' }
-            },
-            // Linha de desvio médio negativo
-            {
-              type: 'line',
-              x0: dates[0],
-              x1: dates[dates.length - 1],
-              y0: -trendMeanDev,
-              y1: -trendMeanDev,
-              yref: 'y2',
-              line: { color: 'gray', width: 1, dash: 'dot' }
+          options: {
+            ...baseChartConfig,
+            scales: {
+              ...baseChartConfig.scales,
+              y: {
+                ...baseChartConfig.scales.y,
+                min: -3,
+                max: 3,
+                ticks: {
+                  color: '#ffffff',
+                  stepSize: 0.5
+                }
+              }
             }
-          ],
-          
-          // Anotações para as linhas de desvio
-          annotations: [
-            {
-              x: dates[Math.floor(dates.length * 0.9)],
-              y: trendMeanDev,
-              yref: 'y2',
-              text: `+${trendMeanDev.toFixed(3)}`,
-              showarrow: false,
-              font: { color: 'gray', size: 10 }
-            },
-            {
-              x: dates[Math.floor(dates.length * 0.9)],
-              y: -trendMeanDev,
-              yref: 'y2',
-              text: `-${trendMeanDev.toFixed(3)}`,
-              showarrow: false,
-              font: { color: 'gray', size: 10 }
-            }
-          ]
-        };
-        
-        // Configurações do gráfico
-        const config = {
-          displayModeBar: true,
-          displaylogo: false,
-          responsive: true,
-          modeBarButtonsToRemove: ['pan2d', 'lasso2d', 'select2d', 'autoScale2d'],
-          toImageButtonOptions: {
-            format: 'png',
-            filename: `${symbol}_ATSMOM_analysis`,
-            height: 900,
-            width: 1200,
-            scale: 2
           }
-        };
+        });
         
-        // Renderizar o gráfico
-        Plotly.newPlot(container, traces, layout, config);
-        
-        console.log(`✅ Gráfico ATSMOM de ${symbol} renderizado com sucesso`);
+        console.log('✅ Gráficos ATSMOM criados com sucesso usando Chart.js');
         
       } catch (error) {
-        console.error('❌ Erro ao renderizar gráfico ATSMOM:', error);
+        console.error('❌ Erro ao criar gráficos ATSMOM:', error);
         document.getElementById('plotly-chart').innerHTML = `
           <div style="color: white; text-align: center; padding: 50px;">
             <i class="fas fa-exclamation-triangle" style="font-size: 48px; color: #ef4444; margin-bottom: 20px;"></i>
-            <h3>Erro ao carregar gráfico</h3>
-            <p>Não foi possível renderizar o gráfico ATSMOM: ${error.message}</p>
+            <h3>Erro ao carregar gráficos</h3>
+            <p>${error.message}</p>
           </div>
         `;
       }
@@ -1056,7 +985,6 @@ Debug: ${JSON.stringify({
 
     // Display Bulk Results
     function displayBulkResults(data) {
-      // Summary cards
       const compras = data.results.filter(r => r.signal_status === 'COMPRA').length;
       const vendas = data.results.filter(r => r.signal_status === 'VENDA').length;
       const neutros = data.results.filter(r => r.signal_status === 'NEUTRO').length;
@@ -1086,7 +1014,6 @@ Debug: ${JSON.stringify({
       
       document.getElementById('bulk-summary').innerHTML = summaryHtml;
       
-      // Table
       const tbody = document.getElementById('bulk-table-body');
       tbody.innerHTML = data.results.map(result => `
         <tr class="border-b border-white border-opacity-10 hover:bg-white hover:bg-opacity-5 cursor-pointer" onclick="analyzeFromTable('${result.symbol}')">
@@ -1097,9 +1024,9 @@ Debug: ${JSON.stringify({
               ${result.signal_status}
             </span>
           </td>
-          <td class="py-3 px-4">${result.current_signal}</td>
-          <td class="py-3 px-4">${result.current_trend}</td>
-          <td class="py-3 px-4">${result.current_volatility}%</td>
+          <td class="py-3 px-4">${result.current_signal.toFixed(4)}</td>
+          <td class="py-3 px-4">${result.current_trend.toFixed(4)}</td>
+          <td class="py-3 px-4">${result.current_volatility.toFixed(1)}%</td>
           <td class="py-3 px-4">${result.beta}</td>
         </tr>
       `).join('');
@@ -1162,7 +1089,6 @@ Debug: ${JSON.stringify({
       const comparison = data.comparison;
       const summary = comparison.comparison_summary;
       
-      // Summary
       const summaryHtml = `
         <div class="bg-white bg-opacity-5 p-4 rounded-lg text-center">
           <div class="text-lg font-bold text-purple-400">${summary.stronger_signal}</div>
@@ -1179,15 +1105,11 @@ Debug: ${JSON.stringify({
       `;
       
       document.getElementById('comparison-summary').innerHTML = summaryHtml;
-      
-      // Asset cards
       document.getElementById('compare-asset1').innerHTML = createAssetCard(comparison.symbol1);
       document.getElementById('compare-asset2').innerHTML = createAssetCard(comparison.symbol2);
-      
       document.getElementById('compare-results').classList.remove('hidden');
     }
 
-    // Create Asset Card for Comparison
     function createAssetCard(assetData) {
       const data = assetData.data;
       return `
@@ -1203,15 +1125,15 @@ Debug: ${JSON.stringify({
           </div>
           <div class="bg-white bg-opacity-5 p-3 rounded-lg flex justify-between">
             <span class="text-gray-400">Força:</span>
-            <span class="font-semibold">${data.current_signal}</span>
+            <span class="font-semibold">${data.current_signal.toFixed(4)}</span>
           </div>
           <div class="bg-white bg-opacity-5 p-3 rounded-lg flex justify-between">
             <span class="text-gray-400">Tendência:</span>
-            <span class="font-semibold">${data.current_trend}</span>
+            <span class="font-semibold">${data.current_trend.toFixed(4)}</span>
           </div>
           <div class="bg-white bg-opacity-5 p-3 rounded-lg flex justify-between">
             <span class="text-gray-400">Volatilidade:</span>
-            <span class="font-semibold">${data.current_volatility}%</span>
+            <span class="font-semibold">${data.current_volatility.toFixed(1)}%</span>
           </div>
           <div class="bg-white bg-opacity-5 p-3 rounded-lg flex justify-between">
             <span class="text-gray-400">Beta:</span>
@@ -1248,11 +1170,9 @@ Debug: ${JSON.stringify({
       setLoading(btn, false);
     }
 
-    // Display Overview Results
     function displayOverviewResults(data) {
       const overview = data.overview;
       
-      // Stats
       const statsHtml = `
         <div class="bg-white bg-opacity-5 p-4 rounded-lg text-center">
           <div class="text-xl font-bold">${overview.total_assets}</div>
@@ -1282,7 +1202,6 @@ Debug: ${JSON.stringify({
       
       document.getElementById('overview-stats').innerHTML = statsHtml;
       
-      // Table
       const tbody = document.getElementById('overview-table-body');
       tbody.innerHTML = data.assets.map(asset => `
         <tr class="border-b border-white border-opacity-10 hover:bg-white hover:bg-opacity-5 cursor-pointer" onclick="analyzeFromTable('${asset.symbol}')">
@@ -1293,8 +1212,8 @@ Debug: ${JSON.stringify({
               ${asset.signal}
             </span>
           </td>
-          <td class="py-3 px-4">${asset.signal_strength}</td>
-          <td class="py-3 px-4">${asset.volatility}%</td>
+          <td class="py-3 px-4">${asset.signal_strength.toFixed(4)}</td>
+          <td class="py-3 px-4">${asset.volatility.toFixed(1)}%</td>
           <td class="py-3 px-4">${asset.beta}</td>
         </tr>
       `).join('');
@@ -1302,7 +1221,6 @@ Debug: ${JSON.stringify({
       document.getElementById('overview-results').classList.remove('hidden');
     }
 
-    // Helper Functions
     function getStatusBadgeClass(status) {
       switch(status) {
         case 'COMPRA': return 'bg-green-600 bg-opacity-20 text-green-400 border border-green-500 border-opacity-30';
@@ -1312,7 +1230,6 @@ Debug: ${JSON.stringify({
     }
 
     function analyzeFromTable(symbol) {
-      // Switch to individual tab and analyze
       document.querySelector('[data-tab="individual"]').click();
       document.getElementById('individual-symbol').value = symbol;
       analyzeIndividual();
@@ -1324,7 +1241,6 @@ Debug: ${JSON.stringify({
     document.getElementById('compareBtn').addEventListener('click', compareAssets);
     document.getElementById('overviewBtn').addEventListener('click', getMarketOverview);
 
-    // Enter key listeners
     document.getElementById('individual-symbol').addEventListener('keypress', (e) => {
       if (e.key === 'Enter') analyzeIndividual();
     });

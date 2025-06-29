@@ -1,8 +1,3 @@
-"""
-ATSMOM - Adaptive Time Series Momentum Service
-Adaptado do MetaTrader5 para yfinance
-"""
-
 import yfinance as yf
 import pandas as pd
 import numpy as np
