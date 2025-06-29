@@ -126,6 +126,39 @@
       padding: 20px;
       min-height: 600px;
     }
+    select {
+      background-color: rgba(255, 255, 255, 0.1) !important;
+      color: white !important;
+      border: 1px solid rgba(255, 255, 255, 0.2) !important;
+      border-radius: 8px !important;
+      padding: 12px 16px !important;
+      backdrop-filter: blur(20px) !important;
+      appearance: none !important;
+      -webkit-appearance: none !important;
+      -moz-appearance: none !important;
+      background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e") !important;
+      background-repeat: no-repeat !important;
+      background-position: right 12px center !important;
+      background-size: 16px !important;
+      padding-right: 40px !important;
+    }
+  
+    select:hover {
+      border-color: rgba(186, 57, 175, 0.5) !important;
+      background-color: rgba(255, 255, 255, 0.15) !important;
+    }
+  
+    select:focus {
+      outline: none !important;
+      border-color: #ba39af !important;
+      box-shadow: 0 0 0 2px rgba(186, 57, 175, 0.2) !important;
+    }
+  
+    select option {
+      background-color: #1a1a1a !important;
+      color: white !important;
+      padding: 8px 12px !important;
+    }
   </style>
 </head>
 <body class="text-white">
@@ -137,10 +170,9 @@
         <img src="logo.png" alt="Geminii Logo" class="w-6 h-6 cursor-pointer" onclick="window.location.href='/'">
       </div>
       <div class="hidden md:flex items-center space-x-6 text-xs text-gray-300 ml-8">
-        <a href="/dashboard" class="hover:text-white transition-colors">Scanner</a>
-        <a href="/monitor-basico" class="hover:text-white transition-colors">Monitor Beta</a>
+        <a href="/dashboard" class="hover:text-white transition-colors">Dashboard</a>
+        <a href="/beta-regression" class="hover:text-white transition-colors">Beta Regression</a>
         <span class="text-white font-medium">ML Trading</span>
-        <a href="/planos" class="hover:text-white transition-colors">Planos</a>
       </div>
       <div class="flex items-center space-x-3 ml-8">
         <div id="apiStatus" class="w-8 h-8 bg-green-500 bg-opacity-10 border border-green-500 border-opacity-30 rounded-full flex items-center justify-center relative">
@@ -187,12 +219,9 @@
                 <i class="fas fa-calendar-alt mr-2"></i>Dias para Previsão
               </label>
               <select id="predictionDays" class="w-full px-4 py-3 bg-white bg-opacity-10 border border-white border-opacity-20 rounded-lg text-white focus:outline-none focus:border-geminii backdrop-blur-sm">
-                <option value="3">3 dias</option>
                 <option value="5" selected>5 dias</option>
-                <option value="7">7 dias</option>
                 <option value="10">10 dias</option>
                 <option value="15">15 dias</option>
-                <option value="21">21 dias</option>
                 <option value="30">30 dias</option>
               </select>
             </div>
@@ -222,6 +251,7 @@
       <div id="resultsSection" class="results-section space-y-6">
         
         <!-- Trading Signal Card -->
+        <!-- Trading Signal Card -->
         <div class="ml-card p-6">
           <div class="text-center">
             <h3 class="text-xl font-bold mb-4">
@@ -242,6 +272,63 @@
               <div class="bg-white bg-opacity-5 p-4 rounded-lg">
                 <div class="text-sm text-gray-400 mb-1">Stop Loss</div>
                 <div id="stopLossPrice" class="text-2xl font-bold text-red-400">--</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Estratégia Explicativa -->
+        <div class="ml-card p-6">
+          <div class="flex items-start gap-4">
+            <div class="flex-shrink-0 w-12 h-12 bg-gradient-to-r from-pink-500 to-purple-600 rounded-full flex items-center justify-center">
+              <i class="fas fa-brain text-white text-lg"></i>
+            </div>
+            <div class="flex-1">
+              <h3 class="text-lg font-bold mb-3 text-white">
+                <i class="fas fa-lightbulb mr-2 text-yellow-400"></i>Como Funciona Nossa Estratégia de Machine Learning
+              </h3>
+              <div class="space-y-3 text-gray-300 leading-relaxed">
+                <p>
+                  Nosso modelo de <strong class="text-white">Machine Learning altamente completo</strong> analisa múltiplos indicadores técnicos, 
+                  padrões históricos e volatilidade do mercado para prever a direção futura do preço do ativo. 
+                  O sistema utiliza algoritmos avançados de ensemble que combinam diferentes técnicas de aprendizado para maximizar a precisão.
+                </p>
+                <p>
+                  <strong class="text-geminii">Logo abaixo você encontra:</strong> análise gráfica com previsões visuais, 
+                  métricas de volatilidade (ATR, volatilidade 60 dias), performance histórica do modelo e matriz de confusão 
+                  que demonstra a eficácia das predições em operações passadas.
+                </p>
+                <p>
+                  <strong class="text-white">O sinal consiste na direção recomendada</strong> (COMPRA ou VENDA) baseada na análise preditiva. 
+                  Com base na <span class="text-yellow-400 font-medium">volatilidade atual do ativo</span>, o sistema calcula automaticamente:
+                </p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                  <div class="bg-white bg-opacity-5 p-4 rounded-lg border-l-4 border-red-400">
+                    <div class="flex items-center gap-2 mb-2">
+                      <i class="fas fa-shield-alt text-red-400"></i>
+                      <span class="font-semibold text-red-400">Stop Loss Sugerido</span>
+                    </div>
+                    <p class="text-sm text-gray-400">
+                      Calculado dinamicamente com base no ATR e volatilidade para proteger seu capital
+                    </p>
+                  </div>
+                  <div class="bg-white bg-opacity-5 p-4 rounded-lg border-l-4 border-green-400">
+                    <div class="flex items-center gap-2 mb-2">
+                      <i class="fas fa-target text-green-400"></i>
+                      <span class="font-semibold text-green-400">Take Profit Otimizado</span>
+                    </div>
+                    <p class="text-sm text-gray-400">
+                      Previamente analisado pelo sistema para maximizar o potencial de lucro
+                    </p>
+                  </div>
+                </div>
+                <div class="mt-4 p-4 bg-blue-600 bg-opacity-20 border border-blue-500 border-opacity-30 rounded-lg">
+                  <p class="text-sm">
+                    <i class="fas fa-info-circle text-blue-400 mr-2"></i>
+                    <strong class="text-blue-400">Importante:</strong> Você é livre para utilizar os níveis de stop e gain onde desejar. 
+                    Nossos valores são sugestões baseadas em análise técnica, mas a decisão final é sempre sua.
+                  </p>
+                </div>
               </div>
             </div>
           </div>

@@ -906,6 +906,4 @@ if __name__ == "__main__":
         else:
             print(f"❌ Conexão MP: {test_result['error']}")
     
-    print("\n🎯 SERVIÇO COMPLETO E PRONTO PARA APROVAÇÃO!")
 
-print("🚀 MercadoPago Service carregado completamente!")

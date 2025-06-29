@@ -29,9 +29,9 @@ class SwingTradeMachineLearningService:
         
         # Parâmetros dos stops dinâmicos
         self.ATR_FACTOR = 2.0
-        self.VOL_FACTOR = 1.5
+        self.VOL_FACTOR = 2.0
         self.MIN_STOP = 0.02
-        self.MAX_STOP = 0.08
+        self.MAX_STOP = 0.06
         self.MIN_TAKE = 0.04
         self.MAX_TAKE = 0.20
 
@@ -763,9 +763,7 @@ Sinal histórico: {'COMPRA' if historical_prediction == 1 else 'VENDA'}
                 }
             )
             
-            print(f"DEBUG: HTML gerado com {len(html_output)} caracteres")
-            print("DEBUG: Gráfico criado com sucesso - versão MetaTrader")
-            
+    
             return html_output
             
         except Exception as e:

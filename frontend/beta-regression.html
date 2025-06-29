@@ -91,7 +91,6 @@
     .signal-venda { border-left: 4px solid #ef4444; }
     .signal-neutro { border-left: 4px solid #6b7280; }
 
-    /* Estilos escuros para select */
     .dark-select {
       background-color: rgba(30, 30, 30, 0.9);
       border: 1px solid rgba(255, 255, 255, 0.2);
@@ -109,6 +108,44 @@
       outline: none;
       border-color: #ba39af;
       box-shadow: 0 0 0 2px rgba(186, 57, 175, 0.2);
+    }
+
+    .strategy-indicator {
+      display: inline-flex;
+      align-items: center;
+      padding: 8px 16px;
+      border-radius: 25px;
+      font-size: 14px;
+      font-weight: 700;
+      border: 1px solid;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      animation: pulse 2s infinite;
+    }
+    
+    .strategy-compra {
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: white;
+      border-color: #10b981;
+      box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
+    }
+    
+    .strategy-venda {
+      background: linear-gradient(135deg, #ef4444, #dc2626);
+      color: white;
+      border-color: #ef4444;
+      box-shadow: 0 0 20px rgba(239, 68, 68, 0.3);
+    }
+    
+    .strategy-neutro {
+      background: linear-gradient(135deg, #6b7280, #4b5563);
+      color: white;
+      border-color: #6b7280;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
     }
   </style>
 </head>
@@ -161,9 +198,7 @@
               class="px-4 py-2 bg-white bg-opacity-10 border border-white border-opacity-20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-geminii backdrop-blur-sm"
             >
             <select id="yearsSelect" class="dark-select px-4 py-2 rounded-lg">
-              <option value="1">1 Ano</option>
-              <option value="2" selected>2 Anos</option>
-              <option value="3">3 Anos</option>
+              <option value="1" selected>1 Anos</option>
               <option value="5">5 Anos</option>
             </select>
             <button id="analyzeBtn" class="px-6 py-2 bg-gradient-to-r from-pink-500 to-purple-600 hover:shadow-lg rounded-lg transition-all font-medium">
@@ -176,6 +211,86 @@
       <!-- Status -->
       <div id="statusMsg" class="mb-6 p-4 rounded-lg hidden backdrop-blur-sm"></div>
 
+      <!-- Estratégia Explicativa -->
+      <div id="strategyExplanation" class="mb-8 hidden">
+        <div class="beta-card p-6">
+          <div class="flex items-start gap-4">
+            <div class="flex-shrink-0 w-12 h-12 bg-gradient-to-r from-pink-500 to-purple-600 rounded-full flex items-center justify-center">
+              <i class="fas fa-chart-line text-white text-lg"></i>
+            </div>
+            <div class="flex-1">
+              <h3 class="text-lg font-bold mb-3 text-white">
+                <i class="fas fa-lightbulb mr-2 text-yellow-400"></i>Como Funciona a Estratégia Beta Regression
+              </h3>
+              <div class="space-y-3 text-gray-300 leading-relaxed">
+                <p>
+                  A estratégia <strong class="text-white">Beta Regression</strong> utiliza regressão móvel para calcular o intercepto (Beta0) 
+                  e determinar sinais de compra e venda baseados na normalização deste valor combinado com a posição do preço em relação à média móvel.
+                </p>
+                <p>
+                  <strong class="text-geminii">Sinais de Trading:</strong>
+                </p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                  <div class="bg-white bg-opacity-5 p-4 rounded-lg border-l-4 border-green-400">
+                    <div class="flex items-center gap-2 mb-2">
+                      <i class="fas fa-arrow-up text-green-400"></i>
+                      <span class="font-semibold text-green-400">Sinal de COMPRA</span>
+                    </div>
+                    <p class="text-sm text-gray-400">
+                      Beta0 Normalizado > 0.5 <strong>E</strong> preço acima da média móvel (20 períodos)
+                    </p>
+                  </div>
+                  <div class="bg-white bg-opacity-5 p-4 rounded-lg border-l-4 border-red-400">
+                    <div class="flex items-center gap-2 mb-2">
+                      <i class="fas fa-arrow-down text-red-400"></i>
+                      <span class="font-semibold text-red-400">Sinal de VENDA</span>
+                    </div>
+                    <p class="text-sm text-gray-400">
+                      Beta0 Normalizado < 0.5 <strong>E</strong> preço abaixo da média móvel (20 períodos)
+                    </p>
+                  </div>
+                </div>
+                <div class="mt-4 p-4 bg-blue-600 bg-opacity-20 border border-blue-500 border-opacity-30 rounded-lg">
+                  <p class="text-sm">
+                    <i class="fas fa-info-circle text-blue-400 mr-2"></i>
+                    <strong class="text-blue-400">Importante:</strong> A estratégia opera com stop loss automático de 5% para proteção do capital. 
+                    Os sinais mudam conforme o Beta0 Normalizado cruza o nível 0.5 e a relação preço/média móvel.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sinal Atual -->
+      <div id="currentSignal" class="mb-8 hidden">
+        <div class="beta-card p-6">
+          <div class="text-center">
+            <h3 class="text-xl font-bold mb-4">
+              <i class="fas fa-signal mr-2"></i>Sinal Atual de Trading
+            </h3>
+            <div id="signalIndicator" class="inline-block mb-4">
+              <!-- Preenchido via JS -->
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+              <div class="bg-white bg-opacity-5 p-4 rounded-lg">
+                <div class="text-sm text-gray-400 mb-1">Beta0 Normalizado</div>
+                <div id="currentBeta" class="text-xl font-bold text-white">--</div>
+              </div>
+              <div class="bg-white bg-opacity-5 p-4 rounded-lg">
+                <div class="text-sm text-gray-400 mb-1">Preço Atual</div>
+                <div id="currentPrice" class="text-xl font-bold text-white">--</div>
+              </div>
+              <div class="bg-white bg-opacity-5 p-4 rounded-lg">
+                <div class="text-sm text-gray-400 mb-1">Média Móvel</div>
+                <div id="currentMM" class="text-xl font-bold text-white">--</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Análise Individual -->
       <div id="individualAnalysis" class="mb-8 hidden">
         <div class="beta-card p-6">
@@ -186,87 +301,80 @@
           
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
             <div class="bg-white bg-opacity-5 p-4 rounded-lg">
-              <div class="text-sm text-gray-400">Status</div>
-              <div id="analysisStatus" class="text-xl font-bold"></div>
+              <div class="text-sm text-gray-400">Win Rate</div>
+              <div id="winRate" class="text-xl font-bold"></div>
             </div>
             
             <div class="bg-white bg-opacity-5 p-4 rounded-lg">
-              <div class="text-sm text-gray-400">Preço Atual</div>
-              <div id="analysisPrice" class="text-xl font-bold"></div>
+              <div class="text-sm text-gray-400">Total Trades</div>
+              <div id="totalTrades" class="text-xl font-bold"></div>
             </div>
             
             <div class="bg-white bg-opacity-5 p-4 rounded-lg">
-              <div class="text-sm text-gray-400">Beta0 Normalizado</div>
-              <div id="analysisBeta" class="text-xl font-bold"></div>
+              <div class="text-sm text-gray-400">Retorno Bruto</div>
+              <div id="grossReturn" class="text-xl font-bold"></div>
             </div>
             
             <div class="bg-white bg-opacity-5 p-4 rounded-lg">
-              <div class="text-sm text-gray-400">Retorno Final</div>
-              <div id="analysisReturn" class="text-xl font-bold"></div>
+              <div class="text-sm text-gray-400">Retorno Líquido</div>
+              <div id="netReturn" class="text-xl font-bold"></div>
             </div>
           </div>
           
-          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div>
-              <h4 class="text-lg font-semibold mb-4">Status de Proximidade</h4>
-              <div id="proximityStatus" class="signal-card">
-                <div class="font-semibold text-lg mb-2">Carregando...</div>
-                <div class="text-sm text-gray-400">Aguardando análise</div>
+              <h4 class="text-lg font-semibold mb-4">Métricas de Risco</h4>
+              <div class="space-y-3">
+                <div class="bg-white bg-opacity-5 p-3 rounded-lg flex justify-between">
+                  <span class="text-gray-400">Max Drawdown:</span>
+                  <span id="maxDrawdown" class="font-semibold">0%</span>
+                </div>
+                <div class="bg-white bg-opacity-5 p-3 rounded-lg flex justify-between">
+                  <span class="text-gray-400">Volatilidade:</span>
+                  <span id="volatility" class="font-semibold">0%</span>
+                </div>
+                <div class="bg-white bg-opacity-5 p-3 rounded-lg flex justify-between">
+                  <span class="text-gray-400">Sharpe Ratio:</span>
+                  <span id="sharpeRatio" class="font-semibold">0</span>
+                </div>
               </div>
             </div>
             
             <div>
-              <h4 class="text-lg font-semibold mb-4">Performance da Estratégia</h4>
+              <h4 class="text-lg font-semibold mb-4">Resultado das Operações</h4>
               <div class="space-y-3">
                 <div class="bg-white bg-opacity-5 p-3 rounded-lg flex justify-between">
-                  <span class="text-gray-400">Retorno Bruto:</span>
-                  <span id="grossReturn" class="font-semibold">0%</span>
+                  <span class="text-gray-400">Trades Vencedores:</span>
+                  <span id="winningTrades" class="font-semibold text-green-400">0</span>
                 </div>
                 <div class="bg-white bg-opacity-5 p-3 rounded-lg flex justify-between">
-                  <span class="text-gray-400">Retorno Líquido:</span>
-                  <span id="netReturn" class="font-semibold">0%</span>
+                  <span class="text-gray-400">Trades Perdedores:</span>
+                  <span id="losingTrades" class="font-semibold text-red-400">0</span>
                 </div>
                 <div class="bg-white bg-opacity-5 p-3 rounded-lg flex justify-between">
-                  <span class="text-gray-400">Total de Trades:</span>
-                  <span id="totalTrades" class="font-semibold">0</span>
+                  <span class="text-gray-400">Total Taxas:</span>
+                  <span id="totalFees" class="font-semibold">R$ 0</span>
                 </div>
+              </div>
+            </div>
+            
+            <div>
+              <h4 class="text-lg font-semibold mb-4">Período da Análise</h4>
+              <div class="bg-white bg-opacity-5 p-4 rounded-lg">
+                <div class="text-sm text-gray-400 mb-2">Período analisado:</div>
+                <div id="analysisPeriod" class="text-sm font-semibold">--</div>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Histórico de Trades -->
-      <div id="tradesHistory" class="mb-8 hidden">
-        <div class="beta-card p-6">
-          <h3 class="text-xl font-bold mb-6">Histórico de Trades (Últimos 10)</h3>
-          <div class="overflow-x-auto">
-            <table class="w-full">
-              <thead>
-                <tr class="border-b border-white border-opacity-10">
-                  <th class="text-left py-3 px-4">Data Entrada</th>
-                  <th class="text-left py-3 px-4">Preço Entrada</th>
-                  <th class="text-left py-3 px-4">Data Saída</th>
-                  <th class="text-left py-3 px-4">Preço Saída</th>
-                  <th class="text-left py-3 px-4">PnL (%)</th>
-                  <th class="text-left py-3 px-4">Tipo</th>
-                  <th class="text-left py-3 px-4">Resultado</th>
-                </tr>
-              </thead>
-              <tbody id="tradesTableBody">
-                <!-- Trades serão inseridos aqui -->
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      <!-- Gráfico Principal - Análise Simplificada -->
+      <!-- Gráfico Principal - Preço e Média Móvel -->
       <div id="mainChart" class="mb-8 hidden">
         <div class="beta-card p-6">
           <h3 class="text-xl font-bold mb-4">
             <i class="fas fa-chart-line text-purple-400 mr-2"></i>
-            📈 Análise Simplificada (Últimos 60 Períodos)
+            Preço e Média Móvel (com Sinais de Trading)
           </h3>
           <div class="mb-4 flex flex-wrap gap-4 text-sm">
             <div class="flex items-center gap-2">
@@ -292,21 +400,75 @@
         </div>
       </div>
 
-      <!-- Gráficos Adicionais -->
-      <div id="chartsSection" class="hidden">
+      <!-- Gráficos Beta0 e Retornos -->
+      <div id="chartsSection" class="mb-8 hidden">
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div class="beta-card p-6">
-            <h3 class="text-xl font-bold mb-4">Beta0 Normalizado</h3>
+            <h3 class="text-xl font-bold mb-4">
+              <i class="fas fa-wave-square text-blue-400 mr-2"></i>
+              Beta0 Normalizado
+            </h3>
+            <div class="mb-4 flex flex-wrap gap-4 text-sm">
+              <div class="flex items-center gap-2">
+                <div class="w-3 h-3 rounded-full" style="background-color: #00BFFF;"></div>
+                <span>Beta0 > 0.5 = Tendência de Alta</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <div class="w-3 h-3 rounded-full" style="background-color: #FF6B6B;"></div>
+                <span>Beta0 < 0.5 = Tendência de Baixa</span>
+              </div>
+            </div>
             <div class="chart-wrapper" style="position: relative; height: 300px; width: 100%;">
               <canvas id="betaChart"></canvas>
             </div>
           </div>
           
           <div class="beta-card p-6">
-            <h3 class="text-xl font-bold mb-4">Retornos Acumulados</h3>
+            <h3 class="text-xl font-bold mb-4">
+              <i class="fas fa-chart-area text-green-400 mr-2"></i>
+              Retornos Acumulados
+            </h3>
+            <div class="mb-4 flex flex-wrap gap-4 text-sm">
+              <div class="flex items-center gap-2">
+                <div class="w-3 h-3 rounded-full" style="background-color: #8b5cf6;"></div>
+                <span>Retorno Bruto</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <div class="w-3 h-3 rounded-full" style="background-color: #d946ef;"></div>
+                <span>Retorno Líquido (após taxas)</span>
+              </div>
+            </div>
             <div class="chart-wrapper" style="position: relative; height: 300px; width: 100%;">
               <canvas id="returnsChart"></canvas>
             </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Histórico de Trades -->
+      <div id="tradesHistory" class="mb-8 hidden">
+        <div class="beta-card p-6">
+          <h3 class="text-xl font-bold mb-6">
+            <i class="fas fa-history text-yellow-400 mr-2"></i>
+            Histórico de Trades (Últimos 10)
+          </h3>
+          <div class="overflow-x-auto">
+            <table class="w-full">
+              <thead>
+                <tr class="border-b border-white border-opacity-10">
+                  <th class="text-left py-3 px-4 text-gray-300">Data Entrada</th>
+                  <th class="text-left py-3 px-4 text-gray-300">Preço Entrada</th>
+                  <th class="text-left py-3 px-4 text-gray-300">Data Saída</th>
+                  <th class="text-left py-3 px-4 text-gray-300">Preço Saída</th>
+                  <th class="text-left py-3 px-4 text-gray-300">PnL (%)</th>
+                  <th class="text-left py-3 px-4 text-gray-300">Tipo</th>
+                  <th class="text-left py-3 px-4 text-gray-300">Resultado</th>
+                </tr>
+              </thead>
+              <tbody id="tradesTableBody">
+                <!-- Trades serão inseridos aqui -->
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
@@ -326,6 +488,8 @@
     const individualAnalysis = document.getElementById('individualAnalysis');
     const tradesHistory = document.getElementById('tradesHistory');
     const chartsSection = document.getElementById('chartsSection');
+    const strategyExplanation = document.getElementById('strategyExplanation');
+    const currentSignal = document.getElementById('currentSignal');
     
     // Charts
     let betaChart = null;
@@ -354,8 +518,10 @@
     function setLoading(element, loading) {
       if (loading) {
         element.classList.add('loading');
+        element.innerHTML = '<span class="spinner mr-2"></span>Processando...';
       } else {
         element.classList.remove('loading');
+        element.innerHTML = '<i class="fas fa-brain mr-2"></i>Analisar';
       }
     }
     
@@ -367,16 +533,9 @@
       }
     }
     
-    function getProximityClass(status) {
-      if (status.includes('COMPRA')) return 'signal-compra';
-      if (status.includes('VENDA')) return 'signal-venda';
-      return 'signal-neutro';
-    }
-    
     // Analisar ação individual
     async function analyzeStock() {
       const symbol = stockInput.value.trim().toUpperCase();
-      const timeframe = '1d'; // Fixo em 1 dia
       const anos = parseInt(yearsSelect.value);
       
       if (!symbol) {
@@ -395,7 +554,6 @@
           },
           body: JSON.stringify({
             symbol: symbol,
-            timeframe: timeframe,
             anos: anos
           })
         });
@@ -420,70 +578,131 @@
     function displayIndividualAnalysis(data) {
       const analysis = data.analysis_data;
       
+      // Mostrar explicação da estratégia
+      strategyExplanation.classList.remove('hidden');
+      
+      // Sinal atual
+      displayCurrentSignal(analysis);
+      
       // Título e timestamp
-      document.getElementById('analysisTitle').textContent = `${analysis.symbol} - Diário`;
+      document.getElementById('analysisTitle').textContent = `${analysis.symbol} - Análise Beta Regression`;
       document.getElementById('analysisTimestamp').textContent = analysis.timestamp;
       
       // Métricas principais
-      document.getElementById('analysisStatus').textContent = analysis.status;
-      document.getElementById('analysisStatus').className = `text-xl font-bold ${getStatusColor(analysis.status)}`;
-      
-      document.getElementById('analysisPrice').textContent = formatCurrency(analysis.last_close);
-      document.getElementById('analysisBeta').textContent = analysis.beta0_norm.toFixed(4);
-      document.getElementById('analysisReturn').textContent = `${analysis.acc_returns_after_fees_final.toFixed(2)}%`;
-      document.getElementById('analysisReturn').className = `text-xl font-bold ${analysis.acc_returns_after_fees_final >= 0 ? 'text-green-400' : 'text-red-400'}`;
-      
-      // Status de proximidade
-      const proximityDiv = document.getElementById('proximityStatus');
-      proximityDiv.className = `signal-card ${getProximityClass(analysis.proximity_status)}`;
-      proximityDiv.innerHTML = `
-        <div class="font-semibold text-lg mb-2">${analysis.proximity_status}</div>
-        <div class="text-sm text-gray-400">Status baseado em Beta0 normalizado</div>
-      `;
-      
-      // Performance
-      document.getElementById('grossReturn').textContent = `${analysis.acc_returns_final.toFixed(2)}%`;
-      document.getElementById('grossReturn').className = `font-semibold ${analysis.acc_returns_final >= 0 ? 'text-green-400' : 'text-red-400'}`;
-      
-      document.getElementById('netReturn').textContent = `${analysis.acc_returns_after_fees_final.toFixed(2)}%`;
-      document.getElementById('netReturn').className = `font-semibold ${analysis.acc_returns_after_fees_final >= 0 ? 'text-green-400' : 'text-red-400'}`;
+      document.getElementById('winRate').textContent = `${analysis.win_rate}%`;
+      document.getElementById('winRate').className = `text-xl font-bold ${analysis.win_rate >= 50 ? 'text-green-400' : 'text-red-400'}`;
       
       document.getElementById('totalTrades').textContent = analysis.total_trades;
+      
+      document.getElementById('grossReturn').textContent = `${analysis.return_bruto.toFixed(2)}%`;
+      document.getElementById('grossReturn').className = `text-xl font-bold ${analysis.return_bruto >= 0 ? 'text-green-400' : 'text-red-400'}`;
+      
+      document.getElementById('netReturn').textContent = `${analysis.final_return.toFixed(2)}%`;
+      document.getElementById('netReturn').className = `text-xl font-bold ${analysis.final_return >= 0 ? 'text-green-400' : 'text-red-400'}`;
+      
+      // Métricas de risco
+      document.getElementById('maxDrawdown').textContent = `${analysis.max_drawdown.toFixed(2)}%`;
+      document.getElementById('maxDrawdown').className = `font-semibold text-red-400`;
+      
+      document.getElementById('volatility').textContent = `${analysis.volatility.toFixed(2)}%`;
+      document.getElementById('sharpeRatio').textContent = analysis.sharpe_ratio.toFixed(2);
+      document.getElementById('sharpeRatio').className = `font-semibold ${analysis.sharpe_ratio >= 0 ? 'text-green-400' : 'text-red-400'}`;
+      
+      // Resultado das operações
+      document.getElementById('winningTrades').textContent = analysis.winning_trades;
+      document.getElementById('losingTrades').textContent = analysis.losing_trades;
+      document.getElementById('totalFees').textContent = formatCurrency(analysis.total_fees);
+      
+      // Período da análise
+      document.getElementById('analysisPeriod').textContent = analysis.periodo;
       
       // Mostrar seções
       individualAnalysis.classList.remove('hidden');
       
-      // Gráfico principal de preços com sinais
+      // Gráficos
       if (data.chart_data) {
         updateMainChart(data.chart_data);
         updateCharts(data.chart_data);
       }
       
-      // Histórico de trades (limitado aos últimos 10)
+      // Histórico de trades
       if (data.trades_history && data.trades_history.length > 0) {
         displayTradesHistory(data.trades_history);
       }
     }
     
-    // Histórico de trades (limitado aos últimos 10, ordenado por data mais recente)
+    // Exibir sinal atual
+    function displayCurrentSignal(analysis) {
+      const signalIndicator = document.getElementById('signalIndicator');
+      const currentBeta = document.getElementById('currentBeta');
+      const currentPrice = document.getElementById('currentPrice');
+      const currentMM = document.getElementById('currentMM');
+      
+      // Determinar classe do sinal
+      let signalClass = 'strategy-neutro';
+      let signalIcon = 'fas fa-minus';
+      
+      if (analysis.status === 'COMPRA') {
+        signalClass = 'strategy-compra';
+        signalIcon = 'fas fa-arrow-up';
+      } else if (analysis.status === 'VENDA') {
+        signalClass = 'strategy-venda';
+        signalIcon = 'fas fa-arrow-down';
+      }
+      
+      signalIndicator.innerHTML = `
+        <div class="strategy-indicator ${signalClass}">
+          <i class="${signalIcon} mr-2"></i>
+          ${analysis.status}
+        </div>
+      `;
+      
+      // Preencher dados atuais
+      currentBeta.textContent = analysis.beta0_norm.toFixed(4);
+      currentBeta.className = `text-xl font-bold ${analysis.beta0_norm > 0.5 ? 'text-green-400' : 'text-red-400'}`;
+      
+      currentPrice.textContent = formatCurrency(analysis.last_close);
+      currentMM.textContent = formatCurrency(analysis.mm);
+      
+      // Destacar se preço está acima ou abaixo da MM
+      if (analysis.mm_pos === 1) {
+        currentPrice.className += ' text-green-400';
+        currentMM.className += ' text-gray-400';
+      } else {
+        currentPrice.className += ' text-red-400';
+        currentMM.className += ' text-gray-400';
+      }
+      
+      currentSignal.classList.remove('hidden');
+    }
+    
+    // Histórico de trades (últimos 10, ordenados por data)
     function displayTradesHistory(trades) {
       const tbody = document.getElementById('tradesTableBody');
       
       // Ordenar trades por data de entrada (mais recente primeiro) e limitar a 10
       const sortedTrades = trades
-        .sort((a, b) => new Date(b['Entry Date']) - new Date(a['Entry Date']))
+        .sort((a, b) => {
+          const dateA = new Date(a['Entry Date'].split('/').reverse().join('-'));
+          const dateB = new Date(b['Entry Date'].split('/').reverse().join('-'));
+          return dateB - dateA;
+        })
         .slice(0, 10);
       
       tbody.innerHTML = sortedTrades.map(trade => `
-        <tr class="border-b border-white border-opacity-10 hover:bg-white hover:bg-opacity-5">
-          <td class="py-3 px-4">${trade['Entry Date']}</td>
-          <td class="py-3 px-4">${formatCurrency(trade['Entry Price'])}</td>
-          <td class="py-3 px-4">${trade['Exit Date']}</td>
-          <td class="py-3 px-4">${formatCurrency(trade['Exit Price'])}</td>
-          <td class="py-3 px-4 ${trade['PnL (%)'] >= 0 ? 'text-green-400' : 'text-red-400'}">${trade['PnL (%)'].toFixed(2)}%</td>
-          <td class="py-3 px-4">${trade['Type']}</td>
-          <td class="py-3 px-4">
-            <span class="px-2 py-1 rounded-full text-xs ${trade['Outcome'] === 'GAIN' ? 'bg-green-600 bg-opacity-20 text-green-400' : 'bg-red-600 bg-opacity-20 text-red-400'}">
+        <tr class="border-b border-white border-opacity-10 hover:bg-white hover:bg-opacity-5 transition-colors">
+          <td class="py-3 px-4 text-sm">${trade['Entry Date']}</td>
+          <td class="py-3 px-4 text-sm">${formatCurrency(trade['Entry Price'])}</td>
+          <td class="py-3 px-4 text-sm">${trade['Exit Date']}</td>
+          <td class="py-3 px-4 text-sm">${formatCurrency(trade['Exit Price'])}</td>
+          <td class="py-3 px-4 text-sm font-semibold ${trade['PnL (%)'] >= 0 ? 'text-green-400' : 'text-red-400'}">${trade['PnL (%)'].toFixed(2)}%</td>
+          <td class="py-3 px-4 text-sm">
+            <span class="px-2 py-1 rounded-full text-xs ${trade['Type'] === 'LONG' ? 'bg-blue-600 bg-opacity-20 text-blue-400' : 'bg-orange-600 bg-opacity-20 text-orange-400'}">
+              ${trade['Type']}
+            </span>
+          </td>
+          <td class="py-3 px-4 text-sm">
+            <span class="px-2 py-1 rounded-full text-xs font-semibold ${trade['Outcome'] === 'GAIN' ? 'bg-green-600 bg-opacity-20 text-green-400' : 'bg-red-600 bg-opacity-20 text-red-400'}">
               ${trade['Outcome']}
             </span>
           </td>
@@ -493,58 +712,39 @@
       tradesHistory.classList.remove('hidden');
     }
     
-    // Atualizar gráfico principal com sinais (idêntico ao padrão cyberpunk)
+    // Atualizar gráfico principal com sinais (cyberpunk style)
     function updateMainChart(chartData) {
-      console.log('Iniciando updateMainChart com dados:', chartData);
-      
       if (!chartData || !chartData.prices || !chartData.labels) {
         console.error('Dados do gráfico inválidos:', chartData);
-        showStatus('Dados do gráfico inválidos', 'error');
         return;
       }
       
       try {
         const canvas = document.getElementById('priceSignalsChart');
-        if (!canvas) {
-          console.error('Canvas não encontrado');
-          return;
-        }
-        
         const ctx = canvas.getContext('2d');
         
-        // Destruir gráfico anterior
         if (priceSignalsChart) {
           priceSignalsChart.destroy();
-          priceSignalsChart = null;
         }
         
-        // Preparar dados dos sinais
         const signals = chartData.trading_signals || [];
         const prices = chartData.prices || [];
         const labels = chartData.labels || [];
         const mmData = chartData.mm || [];
         
-        console.log('Dados preparados:', {
-          signals: signals.length,
-          prices: prices.length,
-          labels: labels.length,
-          mm: mmData.length
-        });
-        
-        // Criar segmentos coloridos baseados nos sinais (idêntico ao padrão)
+        // Criar segmentos coloridos baseados nos sinais
         const datasets = [];
         
-        // Linha de preço com cores dinâmicas por segmento
         for (let i = 1; i < prices.length; i++) {
           const signal = signals[i];
           let color;
           
           if (signal === 1) {
-            color = '#00FFAA'; // Verde cyberpunk para compra
+            color = '#00FFAA'; // Verde cyberpunk
           } else if (signal === -1) {
-            color = '#FF3232'; // Vermelho cyberpunk para venda
+            color = '#FF3232'; // Vermelho cyberpunk
           } else {
-            color = '#969696'; // Cinza para neutro
+            color = '#969696'; // Cinza
           }
           
           datasets.push({
@@ -562,32 +762,32 @@
           });
         }
         
-        // Datasets para legenda (idêntico ao padrão)
-        datasets.push({
-          label: 'Sinal de Compra',
-          data: [],
-          borderColor: '#00FFAA',
-          backgroundColor: '#00FFAA',
-          borderWidth: 2
-        });
+        // Datasets para legenda
+        datasets.push(
+          {
+            label: 'Sinal de Compra',
+            data: [],
+            borderColor: '#00FFAA',
+            backgroundColor: '#00FFAA',
+            borderWidth: 2
+          },
+          {
+            label: 'Sinal de Venda',
+            data: [],
+            borderColor: '#FF3232',
+            backgroundColor: '#FF3232',
+            borderWidth: 2
+          },
+          {
+            label: 'Neutro',
+            data: [],
+            borderColor: '#969696',
+            backgroundColor: '#969696',
+            borderWidth: 2
+          }
+        );
         
-        datasets.push({
-          label: 'Sinal de Venda',
-          data: [],
-          borderColor: '#FF3232',
-          backgroundColor: '#FF3232',
-          borderWidth: 2
-        });
-        
-        datasets.push({
-          label: 'Neutro',
-          data: [],
-          borderColor: '#969696',
-          backgroundColor: '#969696',
-          borderWidth: 2
-        });
-        
-        // Média móvel com estilo cyberpunk
+        // Média móvel
         if (mmData.length > 0) {
           datasets.push({
             label: 'Média Móvel',
@@ -601,7 +801,6 @@
           });
         }
         
-        // Configurar gráfico (idêntico ao padrão cyberpunk)
         priceSignalsChart = new Chart(ctx, {
           type: 'line',
           data: {
@@ -610,7 +809,7 @@
           },
           options: {
             responsive: true,
-            maintainAspectRatio: false, // Importante: permite que o gráfico use a altura do container
+            maintainAspectRatio: false,
             interaction: {
               intersect: false,
               mode: 'index'
@@ -664,7 +863,6 @@
           }
         });
         
-        console.log('Gráfico criado com sucesso');
         document.getElementById('mainChart').classList.remove('hidden');
         
       } catch (error) {
@@ -673,7 +871,7 @@
       }
     }
     
-    // Atualizar gráficos Chart.js
+    // Atualizar gráficos Beta0 e Retornos
     function updateCharts(chartData) {
       if (!chartData) return;
       
@@ -691,16 +889,17 @@
           datasets: [{
             label: 'Beta0 Normalizado',
             data: chartData.beta0_norm,
-            borderColor: '#ba39af',
-            backgroundColor: 'rgba(186, 57, 175, 0.1)',
+            borderColor: '#00BFFF',
+            backgroundColor: 'rgba(0, 191, 255, 0.1)',
             borderWidth: 2,
             fill: true,
-            tension: 0.4
+            tension: 0.4,
+            pointRadius: 0
           }]
         },
         options: {
           responsive: true,
-          maintainAspectRatio: false, // Permite usar altura do container
+          maintainAspectRatio: false,
           plugins: {
             legend: {
               labels: { color: 'white' }
@@ -708,16 +907,50 @@
           },
           scales: {
             x: {
-              ticks: { color: 'white' },
+              ticks: { 
+                color: 'white',
+                maxTicksLimit: 8
+              },
               grid: { color: 'rgba(255,255,255,0.1)' }
             },
             y: {
-              ticks: { color: 'white' },
-              grid: { color: 'rgba(255,255,255,0.1)' }
+              ticks: { 
+                color: 'white',
+                callback: function(value) {
+                  return value.toFixed(2);
+                }
+              },
+              grid: { color: 'rgba(255,255,255,0.1)' },
+              min: 0,
+              max: 1
+            }
+          },
+          elements: {
+            point: {
+              radius: 0
             }
           }
         }
       });
+      
+      // Adicionar linha de referência em 0.5
+      betaChart.options.plugins.annotation = {
+        annotations: {
+          line1: {
+            type: 'line',
+            yMin: 0.5,
+            yMax: 0.5,
+            borderColor: '#FFD700',
+            borderWidth: 2,
+            borderDash: [5, 5],
+            label: {
+              content: 'Nível 0.5',
+              enabled: true,
+              position: 'start'
+            }
+          }
+        }
+      };
       
       // Retornos Acumulados
       const returnsCtx = document.getElementById('returnsChart').getContext('2d');
@@ -737,7 +970,8 @@
             backgroundColor: 'rgba(139, 92, 246, 0.1)',
             borderWidth: 2,
             fill: false,
-            tension: 0.4
+            tension: 0.4,
+            pointRadius: 0
           }, {
             label: 'Retorno Líquido (%)',
             data: chartData.acc_returns_after_fees,
@@ -745,11 +979,13 @@
             backgroundColor: 'rgba(217, 70, 239, 0.1)',
             borderWidth: 2,
             fill: false,
-            tension: 0.4
+            tension: 0.4,
+            pointRadius: 0
           }]
         },
         options: {
           responsive: true,
+          maintainAspectRatio: false,
           plugins: {
             legend: {
               labels: { color: 'white' }
@@ -757,7 +993,10 @@
           },
           scales: {
             x: {
-              ticks: { color: 'white' },
+              ticks: { 
+                color: 'white',
+                maxTicksLimit: 8
+              },
               grid: { color: 'rgba(255,255,255,0.1)' }
             },
             y: {
@@ -768,6 +1007,11 @@
                 }
               },
               grid: { color: 'rgba(255,255,255,0.1)' }
+            }
+          },
+          elements: {
+            point: {
+              radius: 0
             }
           }
         }

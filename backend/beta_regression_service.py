@@ -22,7 +22,7 @@ class BetaRegressionService:
         }
         
     def calculate_fees(self, volume):
-        """Calcula taxas de corretagem baseadas no volume"""
+        """Calcula taxas de corretagem baseadas no volume (B3)"""
         if volume <= 10_000_000:
             return 0.0230 / 100
         elif volume <= 50_000_000:
@@ -32,8 +32,8 @@ class BetaRegressionService:
         else:
             return 0.0110 / 100
     
-    def get_yfinance_data(self, symbol, timeframe='1d', anos=1):
-        """Obtém dados do Yahoo Finance"""
+    def get_yfinance_data(self, symbol, anos=1):
+        """Obtém dados do Yahoo Finance - APENAS DIÁRIO"""
         try:
             # Adicionar .SA para ações brasileiras se necessário
             if not symbol.endswith('.SA') and len(symbol) <= 6:
@@ -41,32 +41,21 @@ class BetaRegressionService:
             else:
                 ticker = symbol
             
-            # Determinar período baseado nos anos - aumentar para mais dados
+            # Determinar período baseado nos anos
             if anos <= 1:
                 period = "2y"  # Aumentado para ter mais dados
             elif anos <= 2:
-                period = "3y"  # Aumentado para ter mais dados
+                period = "3y"
             elif anos <= 5:
                 period = "5y"
             else:
                 period = "max"
             
-            # Mapear timeframes
-            interval_map = {
-                '1h': '1h',
-                '4h': '1h',  # Yahoo não tem 4h, usar 1h
-                '1d': '1d',
-                'D1': '1d',
-                'H4': '1h'
-            }
+            print(f"Buscando dados para {ticker}, período: {period}, intervalo: 1d")
             
-            interval = interval_map.get(timeframe, '1d')
-            
-            print(f"Buscando dados para {ticker}, período: {period}, intervalo: {interval}")
-            
-            # Baixar dados
+            # Baixar dados APENAS DIÁRIOS
             stock = yf.Ticker(ticker)
-            df = stock.history(period=period, interval=interval)
+            df = stock.history(period=period, interval='1d')
             
             if df.empty:
                 raise Exception(f"Sem dados disponíveis para {ticker}")
@@ -74,18 +63,8 @@ class BetaRegressionService:
             # Converter colunas para minúsculas para compatibilidade
             df.columns = df.columns.str.lower()
             
-            # Se for 4H, fazer resample dos dados de 1h
-            if timeframe in ['4h', 'H4']:
-                df = df.resample('4H').agg({
-                    'open': 'first',
-                    'high': 'max',
-                    'low': 'min',
-                    'close': 'last',
-                    'volume': 'sum'
-                }).dropna()
-            
-            # CORREÇÃO: Filtrar por anos usando timezone-aware comparison
-            if anos < 5:  # Só filtrar se não for período máximo
+            # Filtrar por anos usando timezone-aware comparison
+            if anos < 5:
                 data_inicio = datetime.now()
                 data_inicio = data_inicio.replace(tzinfo=df.index.tz) - timedelta(days=anos*365)
                 df = df[df.index >= data_inicio]
@@ -101,54 +80,58 @@ class BetaRegressionService:
             return None
     
     def calculate_beta_regression(self, df):
-        """Calcula Beta Regressivo com RollingOLS"""
+        """Calcula Beta Regressivo com RollingOLS - IGUAL AO METATRADER"""
         try:
-            # Preparação dos dados
-            df = df.copy()  # Fazer cópia para evitar SettingWithCopyWarning
+            df = df.copy()
+            
+            # Prepara colunas EXATAMENTE como no MetaTrader
             df["Adj Close"] = df["close"]
             df["Returns"] = df["Adj Close"].pct_change()
             df["Price_Lag"] = df["Adj Close"].shift(1)
             df["Price_Lag2"] = df["Adj Close"].shift(2)
-            df["const"] = 1
+            df["const"] = 1  # Coluna de constante para intercepto
             
-            # Remover NaNs para a regressão
-            df_reg = df[["Adj Close", "const", "Price_Lag", "Price_Lag2"]].dropna()
+            # Remove NaNs para regressão
+            df_clean = df[["Adj Close", "const", "Price_Lag", "Price_Lag2"]].dropna()
             
-            if len(df_reg) < 50:
+            if len(df_clean) < 50:
                 raise Exception("Dados insuficientes para regressão")
             
-            # Regressão móvel - janela de 252 períodos (1 ano)
-            window = min(252, len(df_reg))  # Usar 252 ou o máximo disponível
+            # Define janela de regressão IGUAL ao MetaTrader
+            window = min(252, len(df_clean)//4)
+            period = 20  # Para média móvel
             
             print(f"Executando regressão móvel com janela de {window} períodos")
             
+            # Regressão RollingOLS FOCADA NO INTERCEPTO
             reg = RollingOLS(
-                endog=df_reg["Adj Close"],
-                exog=df_reg[["const", "Price_Lag", "Price_Lag2"]],
+                endog=df_clean["Adj Close"],
+                exog=df_clean[["const", "Price_Lag", "Price_Lag2"]],
                 window=window
             ).fit()
             
-            # Alinhar Beta0 com o DataFrame original
+            # Extrai Beta0 = INTERCEPTO (como no MetaTrader)
             df["Beta0"] = np.nan
-            df.loc[df_reg.index, "Beta0"] = reg.params["const"]
+            df.loc[df_clean.index, "Beta0"] = reg.params["const"]
             
-            # Forward fill para preencher valores iniciais
-            df["Beta0"] = df["Beta0"].fillna(method='bfill')
-            
-            # Normalização da Beta0
+            # Normalização EXATA como no MetaTrader
             df["Beta0_Norm"] = (
-                df["Beta0"].rolling(20, min_periods=5).mean()
-                          .rolling(20, min_periods=5)
+                df["Beta0"].rolling(20).mean()
+                          .rolling(20)
                           .apply(lambda x: np.mean(x < x.iloc[-1]) if len(x) > 0 else 0.5)
             )
             
-            # Preencher valores iniciais
-            df["Beta0_Norm"] = df["Beta0_Norm"].fillna(0.5)
-            
-            # Coluna Beta0 anterior (para cruzamentos)
+            # Beta0_g = valor defasado (como no MetaTrader)
             df["Beta0_g"] = df["Beta0_Norm"].shift(1)
-            df["MM"] = df["Adj Close"].rolling(20, min_periods=5).mean()
+            
+            # Média móvel simples (como no MetaTrader)
+            df["MM"] = df["Adj Close"].rolling(period).mean()
             df["MM_Pos"] = np.where(df["Adj Close"] > df["MM"], 1, 0)
+            
+            # Preencher valores iniciais
+            df["Beta0"] = df["Beta0"].fillna(method='bfill')
+            df["Beta0_Norm"] = df["Beta0_Norm"].fillna(0.5)
+            df["Beta0_g"] = df["Beta0_g"].fillna(0.5)
             
             return df
             
@@ -156,56 +139,34 @@ class BetaRegressionService:
             print(f"Erro no cálculo da Beta Regressão: {e}")
             return None
     
-    def calculate_proximity_status(self, df):
-        """Calcula Status de Proximidade"""
-        try:
-            df = df.copy()
-            df["Proximity_Status"] = np.where(
-                (df["Beta0_Norm"] > 0.8) & (df["Beta0_g"] <= 0.8) & (df["MM_Pos"] == 1),
-                "NOVA COMPRA",
-                np.where(
-                    (df["Beta0_Norm"] > 0.6) & (df["Beta0_g"] <= 0.6) & (df["MM_Pos"] == 1),
-                    "PREPARANDO COMPRA",
-                    np.where(
-                        (df["Beta0_Norm"] < 0.2) & (df["Beta0_g"] >= 0.2) & (df["MM_Pos"] == 0),
-                        "IMINENTE VENDA",
-                        np.where(
-                            (df["Beta0_Norm"] < 0.4) & (df["Beta0_g"] >= 0.4) & (df["MM_Pos"] == 0),
-                            "PREPARANDO VENDA",
-                            "NEUTRO"
-                        )
-                    )
-                )
-            )
-            
-            return df
-            
-        except Exception as e:
-            print(f"Erro no cálculo do Status de Proximidade: {e}")
-            return None
-    
     def calculate_trading_signals(self, df):
-        """Calcula sinais de trading e backtest"""
+        """Calcula sinais de trading EXATAMENTE como no MetaTrader"""
         try:
             df = df.copy()
-            # Sinais de compra/venda
+            
+            # Sinais EXATOS do MetaTrader
             long_signal = (df["Beta0_Norm"] > 0.5) & (df["MM_Pos"] == 1)
             short_signal = (df["Beta0_Norm"] < 0.5) & (df["MM_Pos"] == 0)
-            df["trading"] = np.where(long_signal, 1,
+            
+            df["trading"] = np.where(long_signal, 1, 
                              np.where(short_signal, -1, 0))
             
-            # Cálculo de retornos
+            # Retornos por operação IGUAL ao MetaTrader
             df["Trading"] = np.where(df["trading"] == 1, df["Returns"],
                              np.where(df["trading"] == -1, -df["Returns"], 0))
             
-            # Stop loss em -5%
+            # Stop loss fixo em -5% (como no MetaTrader)
             df["Trading"] = np.where(df["Trading"] < -0.05, -0.05, df["Trading"])
+            
+            # Retornos acumulados (antes das taxas)
             df["Acc_Returns"] = df["Trading"].cumsum()
             
-            # Cálculo de taxas (assumindo volume padrão)
-            df["Volume"] = df["close"] * 100  # Volume simulado
+            # Volume financeiro e taxas (como no MetaTrader)
+            df["Volume"] = df["close"] * 100  # Lote de 100 ações
             df["Fees"] = df["Volume"].apply(self.calculate_fees)
             df["Trading_Fees"] = np.where(df["trading"] != 0, df["Volume"] * df["Fees"], 0)
+            
+            # Ajusta retornos com taxas
             df["Trading_After_Fees"] = df["Trading"] - (df["Trading_Fees"] / df["Volume"])
             df["Acc_Returns_After_Fees"] = df["Trading_After_Fees"].cumsum()
             
@@ -215,8 +176,51 @@ class BetaRegressionService:
             print(f"Erro no cálculo dos sinais de trading: {e}")
             return None
     
+    def calculate_statistics(self, df):
+        """Calcula estatísticas COMPLETAS como no MetaTrader"""
+        try:
+            # Estatísticas básicas
+            total_trades = len(df[df["trading"] != 0])
+            winning_trades = len(df[df["Trading_After_Fees"] > 0])
+            losing_trades = len(df[df["Trading_After_Fees"] < 0])
+            win_rate = (winning_trades / total_trades * 100) if total_trades > 0 else 0
+            final_return = df["Acc_Returns_After_Fees"].iloc[-1] * 100
+            
+            # Drawdown
+            rolling_max_af = df["Acc_Returns_After_Fees"].cummax()
+            drawdown_af = (rolling_max_af - df["Acc_Returns_After_Fees"])
+            max_drawdown = drawdown_af.max() * 100
+            
+            # Métricas adicionais
+            avg_return = df["Trading_After_Fees"].mean() * 100
+            volatility = df["Trading_After_Fees"].std() * 100 * np.sqrt(252)  # anualizada
+            sharpe_ratio = (avg_return / volatility) if volatility != 0 else 0
+            total_fees = df["Trading_Fees"].sum()
+            
+            # Impacto das taxas
+            tax_impact = (df['Acc_Returns'].iloc[-1]*100 - final_return)
+            
+            return {
+                'total_trades': total_trades,
+                'winning_trades': winning_trades,
+                'losing_trades': losing_trades,
+                'win_rate': win_rate,
+                'final_return': final_return,
+                'max_drawdown': max_drawdown,
+                'avg_return': avg_return,
+                'volatility': volatility,
+                'sharpe_ratio': sharpe_ratio,
+                'total_fees': total_fees,
+                'tax_impact': tax_impact,
+                'return_bruto': df['Acc_Returns'].iloc[-1] * 100
+            }
+            
+        except Exception as e:
+            print(f"Erro no cálculo das estatísticas: {e}")
+            return {}
+    
     def get_trades_history(self, df):
-        """Extrai histórico de trades"""
+        """Extrai histórico de trades COMPLETO"""
         try:
             df_copy = df.copy()
             df_copy["signal"] = df_copy["trading"].shift(1).fillna(0)
@@ -237,9 +241,16 @@ class BetaRegressionService:
                     if current_signal != 0 and entry_index is not None:
                         exit_date = date
                         exit_price = price_close
-                        trade_return = (exit_price / entry_price) - 1
+                        
+                        # Calcula retorno considerando tipo de posição
+                        if current_signal == 1:  # Long
+                            trade_return = (exit_price / entry_price) - 1
+                        else:  # Short
+                            trade_return = (entry_price / exit_price) - 1
+                        
                         outcome = "STOP" if trade_return < 0 else "GAIN"
                         trade_type = "LONG" if current_signal == 1 else "SHORT"
+                        
                         trades.append({
                             "Entry Date": entry_date.strftime('%d/%m/%Y'),
                             "Entry Price": round(entry_price, 2),
@@ -260,13 +271,19 @@ class BetaRegressionService:
             if current_signal != 0 and entry_price is not None:
                 exit_date = df_copy.index[-1]
                 exit_price = df_copy["close"].iloc[-1]
-                trade_return = (exit_price / entry_price) - 1
+                
+                if current_signal == 1:  # Long
+                    trade_return = (exit_price / entry_price) - 1
+                else:  # Short
+                    trade_return = (entry_price / exit_price) - 1
+                
                 outcome = "STOP" if trade_return < 0 else "GAIN"
                 trade_type = "LONG" if current_signal == 1 else "SHORT"
+                
                 trades.append({
                     "Entry Date": entry_date.strftime('%d/%m/%Y'),
                     "Entry Price": round(entry_price, 2),
-                    "Exit Date": exit_date.strftime('%d/%m/%Y'),
+                    "Exit Date": f"{exit_date.strftime('%d/%m/%Y')} (Em aberto)",
                     "Exit Price": round(exit_price, 2),
                     "PnL (%)": round(trade_return * 100, 2),
                     "Outcome": outcome,
@@ -279,10 +296,10 @@ class BetaRegressionService:
             print(f"Erro ao extrair histórico de trades: {e}")
             return []
     
-    def create_cyberpunk_chart(self, df, symbol, timeframe):
-        """Cria gráfico cyberpunk com 4 subplots"""
+    def create_cyberpunk_chart(self, df, symbol):
+        """Cria gráfico cyberpunk IDÊNTICO ao MetaTrader"""
         try:
-            # Template cyberpunk
+            # Template cyberpunk EXATO
             cyberpunk_template = dict(
                 layout=dict(
                     plot_bgcolor='rgb(27, 27, 50)',
@@ -306,7 +323,7 @@ class BetaRegressionService:
             pio.templates['cyberpunk'] = cyberpunk_template
             pio.templates.default = 'cyberpunk'
             
-            # Criar subplots
+            # Criar subplots IDÊNTICO ao MetaTrader
             fig = make_subplots(
                 rows=4, cols=1,
                 shared_xaxes=True,
@@ -318,21 +335,21 @@ class BetaRegressionService:
                 row_heights=[0.4, 0.2, 0.2, 0.2]
             )
             
-            # Subplot 1: Preço colorido por sinais
+            # 1) GRÁFICO PREÇO COLORIDO POR SINAIS (como MetaTrader)
             for i in range(1, len(df)):
                 if df['trading'].iloc[i] == 1:
-                    color = self.cyberpunk_colors['neon_green']
+                    color = self.cyberpunk_colors['neon_green']   # Verde neon
                 elif df['trading'].iloc[i] == -1:
-                    color = self.cyberpunk_colors['neon_red']
+                    color = self.cyberpunk_colors['neon_red']     # Vermelho neon
                 else:
-                    color = self.cyberpunk_colors['gray']
+                    color = self.cyberpunk_colors['gray']         # Cinza
                 
                 fig.add_trace(
                     go.Scatter(
                         x=df.index[i-1:i+1],
                         y=df['close'].iloc[i-1:i+1],
                         mode='lines',
-                        line=dict(color=color, width=2),
+                        line=dict(color=color, width=2, shape='spline'),
                         showlegend=False
                     ),
                     row=1, col=1
@@ -344,30 +361,30 @@ class BetaRegressionService:
                     x=df.index,
                     y=df["MM"],
                     name="Média Móvel",
-                    line=dict(color=self.cyberpunk_colors['neon_orange'], width=2)
+                    line=dict(color=self.cyberpunk_colors['neon_orange'], width=2, shape='spline')
                 ),
                 row=1, col=1
             )
             
-            # Subplot 2: Beta0 Normalizado
+            # 2) BETA0 NORMALIZADO (como MetaTrader)
             fig.add_trace(
                 go.Scatter(
                     x=df.index,
                     y=df["Beta0_Norm"],
                     name="Beta0 Normalizado",
-                    line=dict(color=self.cyberpunk_colors['neon_blue'], width=2),
+                    line=dict(color=self.cyberpunk_colors['neon_blue'], width=2, shape='spline'),
                     fill='tonexty',
                     fillcolor='rgba(0, 191, 255, 0.1)'
                 ),
                 row=2, col=1
             )
             
-            # Linhas de referência
+            # Linhas de referência (EXATAS do MetaTrader)
             colors = [self.cyberpunk_colors['neon_green'], self.cyberpunk_colors['gray'], self.cyberpunk_colors['neon_red']]
-            for ref, c in zip([0.8, 0.5, 0.2], colors):
+            for ref, c in zip([0.5, 0.0, -0.5], colors):
                 fig.add_hline(y=ref, line=dict(color=c, width=1, dash='dash'), row=2, col=1)
             
-            # Subplot 3: Retornos por operação
+            # 3) RETORNOS POR OPERAÇÃO (como MetaTrader)
             fig.add_trace(
                 go.Scatter(
                     x=df.index,
@@ -389,13 +406,13 @@ class BetaRegressionService:
                 row=3, col=1
             )
             
-            # Subplot 4: Retornos acumulados
+            # 4) RETORNOS ACUMULADOS (como MetaTrader)
             fig.add_trace(
                 go.Scatter(
                     x=df.index,
                     y=np.round(df["Acc_Returns"]*100, 2),
                     name="Retorno Bruto",
-                    line=dict(color=self.cyberpunk_colors['neon_purple'], width=2),
+                    line=dict(color=self.cyberpunk_colors['neon_purple'], width=2, shape='spline'),
                     fill='tonexty',
                     fillcolor='rgba(148, 0, 211, 0.1)'
                 ),
@@ -407,16 +424,16 @@ class BetaRegressionService:
                     x=df.index,
                     y=np.round(df["Acc_Returns_After_Fees"]*100, 2),
                     name="Retorno Líquido",
-                    line=dict(color=self.cyberpunk_colors['neon_pink'], width=2, dash='dash')
+                    line=dict(color=self.cyberpunk_colors['neon_pink'], width=2, shape='spline', dash='dash')
                 ),
                 row=4, col=1
             )
             
-            # Layout
+            # Layout IDÊNTICO ao MetaTrader
             fig.update_layout(
                 height=1200,
                 width=1200,
-                title_text=f"Beta0 Intercept - {symbol} - {timeframe}",
+                title_text=f"Análise de Trading (Beta0 Intercept) - {symbol} - Diário",
                 title_font=dict(size=24, color='rgb(200,200,250)'),
                 showlegend=True,
                 legend=dict(
@@ -464,14 +481,14 @@ class BetaRegressionService:
             print(f"Erro ao criar gráfico: {e}")
             return None
     
-    def run_analysis(self, symbol, timeframe='1d', anos=1):
-        """Executa análise completa"""
+    def run_analysis(self, symbol, anos=1):
+        """Executa análise completa IDÊNTICA ao MetaTrader"""
         try:
             print(f"=== INICIANDO ANÁLISE BETA REGRESSÃO ===")
-            print(f"Símbolo: {symbol}, Timeframe: {timeframe}, Anos: {anos}")
+            print(f"Símbolo: {symbol}, Timeframe: Diário, Anos: {anos}")
             
             # 1. Obter dados
-            df = self.get_yfinance_data(symbol, timeframe, anos)
+            df = self.get_yfinance_data(symbol, anos)
             if df is None:
                 return {'success': False, 'error': 'Erro ao obter dados do Yahoo Finance'}
             
@@ -480,21 +497,19 @@ class BetaRegressionService:
             if df is None:
                 return {'success': False, 'error': 'Erro no cálculo da Beta Regressão'}
             
-            # 3. Calcular Status de Proximidade
-            df = self.calculate_proximity_status(df)
-            if df is None:
-                return {'success': False, 'error': 'Erro no cálculo do Status de Proximidade'}
-            
-            # 4. Calcular sinais de trading
+            # 3. Calcular sinais de trading
             df = self.calculate_trading_signals(df)
             if df is None:
                 return {'success': False, 'error': 'Erro no cálculo dos sinais de trading'}
+            
+            # 4. Calcular estatísticas
+            stats = self.calculate_statistics(df)
             
             # 5. Extrair histórico de trades
             trades_history = self.get_trades_history(df)
             
             # 6. Criar gráfico
-            chart_html = self.create_cyberpunk_chart(df, symbol, timeframe)
+            chart_html = self.create_cyberpunk_chart(df, symbol)
             
             # 7. Determinar status atual
             last_signal = df["trading"].iloc[-1]
@@ -505,24 +520,41 @@ class BetaRegressionService:
             else:
                 status_str = "NEUTRO"
             
-            # 8. Preparar dados de análise
+            # 8. Preparar dados de análise COMPLETOS
             analysis_data = {
                 "symbol": symbol,
-                "timeframe": timeframe,
+                "timeframe": "Diário",
                 "status": status_str,
                 "last_close": round(df["close"].iloc[-1], 2),
+                "beta0": round(df["Beta0"].iloc[-1], 4),
                 "beta0_norm": round(df["Beta0_Norm"].iloc[-1], 4),
-                "proximity_status": df["Proximity_Status"].iloc[-1],
-                "acc_returns_final": round(df["Acc_Returns"].iloc[-1] * 100, 2),
-                "acc_returns_after_fees_final": round(df["Acc_Returns_After_Fees"].iloc[-1] * 100, 2),
-                "total_trades": len(trades_history),
+                "mm": round(df["MM"].iloc[-1], 2),
+                "mm_pos": df["MM_Pos"].iloc[-1],
+                
+                # Estatísticas COMPLETAS
+                "total_trades": stats.get('total_trades', 0),
+                "winning_trades": stats.get('winning_trades', 0),
+                "losing_trades": stats.get('losing_trades', 0),
+                "win_rate": round(stats.get('win_rate', 0), 2),
+                "final_return": round(stats.get('final_return', 0), 2),
+                "return_bruto": round(stats.get('return_bruto', 0), 2),
+                "max_drawdown": round(stats.get('max_drawdown', 0), 2),
+                "avg_return": round(stats.get('avg_return', 0), 4),
+                "volatility": round(stats.get('volatility', 0), 2),
+                "sharpe_ratio": round(stats.get('sharpe_ratio', 0), 2),
+                "total_fees": round(stats.get('total_fees', 0), 2),
+                "tax_impact": round(stats.get('tax_impact', 0), 2),
+                
+                "periodo": f"{df.index[0].strftime('%d/%m/%Y')} até {df.index[-1].strftime('%d/%m/%Y')}",
                 "timestamp": datetime.now().strftime('%d/%m/%Y %H:%M:%S')
             }
             
             print(f"=== ANÁLISE CONCLUÍDA ===")
             print(f"Status: {status_str}, Preço: R$ {analysis_data['last_close']}")
-            print(f"Beta0 Norm: {analysis_data['beta0_norm']}, Status Proximidade: {analysis_data['proximity_status']}")
+            print(f"Beta0 Norm: {analysis_data['beta0_norm']}")
             print(f"Total de trades: {analysis_data['total_trades']}")
+            print(f"Win Rate: {analysis_data['win_rate']}%")
+            print(f"Retorno final: {analysis_data['final_return']}%")
             
             return {
                 'success': True,
