@@ -96,7 +96,7 @@ app.register_blueprint(get_swing_trade_ml_blueprint())
 app.register_blueprint(beta_regression_bp, url_prefix='/beta_regression')
 app.register_blueprint(chart_ativos_bp)
 register_atsmom_routes(app)
-recommendations_free_bp()
+app.register_blueprint(recommendations_free_bp)
 
 # Registrar blueprints condicionais
 if MP_AVAILABLE and mercadopago_bp:
