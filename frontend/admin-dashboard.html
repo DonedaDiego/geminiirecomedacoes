@@ -586,7 +586,7 @@
                          class="w-full px-3 py-2 bg-white bg-opacity-10 border border-gray-600 rounded-lg text-white text-sm">
                 </div>
                 
-                <button type="submit" class="action-btn w-full bg-geminii hover:bg-purple-700 py-2 px-4 rounded-lg text-sm font-medium">
+                <button type="button" onclick="createRecommendationFree()" class="action-btn w-full bg-geminii hover:bg-purple-700 py-2 px-4 rounded-lg text-sm font-medium">
                   <i class="fas fa-plus mr-1"></i>
                   Criar Cupom
                 </button>
@@ -780,7 +780,7 @@
                 Nova Recomendação
               </h3>
               
-              <form id="recommendationForm" class="space-y-4">
+              <form id="recommendationForm" class="space-y-4" onsubmit="event.preventDefault(); createRecommendationFree(); return false;">
                 <div>
                   <label class="block text-sm text-gray-300 mb-1">Ticker</label>
                   <input type="text" id="recTicker" required
@@ -1090,17 +1090,17 @@
                 Nova Recomendação
               </h3>
               
-              <form id="recommendationForm" class="space-y-4">
+              <form id="recommendationFreeForm" class="space-y-4">
                 <div>
                   <label class="block text-sm text-gray-300 mb-1">Ticker</label>
-                  <input type="text" id="recTicker" required
+                  <input type="text" id="recFreeTicker" required
                         class="w-full px-3 py-2 bg-white bg-opacity-10 border border-gray-600 rounded-lg text-white text-sm"
                         placeholder="PETR4">
                 </div>
                 
                 <div>
                   <label class="block text-sm text-gray-300 mb-1">Ação</label>
-                  <select id="recAction" required class="w-full px-3 py-2 bg-white bg-opacity-10 border border-gray-600 rounded-lg text-white text-sm">
+                  <select id="recFreeAction" required class="w-full px-3 py-2 bg-white bg-opacity-10 border border-gray-600 rounded-lg text-white text-sm">
                     <option value="">Selecione...</option>
                     <option value="COMPRA">Compra</option>
                     <option value="VENDA">Venda</option>
@@ -1109,32 +1109,32 @@
                 
                 <div>
                   <label class="block text-sm text-gray-300 mb-1">Preço de Entrada (R$)</label>
-                  <input type="number" id="recEntryPrice" required min="0" step="0.01"
+                  <input type="number" id="recFreeEntryPrice" required min="0" step="0.01"
                         class="w-full px-3 py-2 bg-white bg-opacity-10 border border-gray-600 rounded-lg text-white text-sm"
                         placeholder="35.50">
                 </div>
                 
                 <div>
                   <label class="block text-sm text-gray-300 mb-1">Stop Loss (R$)</label>
-                  <input type="number" id="recStopLoss" required min="0" step="0.01"
+                  <input type="number" id="recFreeStopLoss" required min="0" step="0.01"
                         class="w-full px-3 py-2 bg-white bg-opacity-10 border border-gray-600 rounded-lg text-white text-sm"
                         placeholder="33.00">
                 </div>
                 
                 <div>
                   <label class="block text-sm text-gray-300 mb-1">Alvo (R$)</label>
-                  <input type="number" id="recTargetPrice" required min="0" step="0.01"
+                  <input type="number" id="recFreeTargetPrice" required min="0" step="0.01"
                         class="w-full px-3 py-2 bg-white bg-opacity-10 border border-gray-600 rounded-lg text-white text-sm"
                         placeholder="40.00">
                 </div>
                 
                 <div>
                   <label class="block text-sm text-gray-300 mb-1">Confiança (%)</label>
-                  <input type="number" id="recConfidence" min="0" max="100" step="1" value="85"
+                  <input type="number" id="recFreeConfidence" min="0" max="100" step="1" value="85"
                         class="w-full px-3 py-2 bg-white bg-opacity-10 border border-gray-600 rounded-lg text-white text-sm">
                 </div>
                 
-                <button type="submit" class="action-btn w-full bg-geminii hover:bg-purple-700 py-2 px-4 rounded-lg text-sm font-medium">
+                <button type="button" onclick="createRecommendationFree()" class="action-btn w-full bg-geminii hover:bg-purple-700 py-2 px-4 rounded-lg text-sm font-medium">
                   <i class="fas fa-plus mr-1"></i>
                   Criar Recomendação
                 </button>
@@ -1186,6 +1186,82 @@
     let adminToken = null;
     let currentUser = null;
     let selectedPortfolio = null;
+
+    async function createRecommendationFree() {
+      const formData = {
+        ticker: document.getElementById('recFreeTicker').value.toUpperCase().trim(),
+        action: document.getElementById('recFreeAction').value,
+        entry_price: parseFloat(document.getElementById('recFreeEntryPrice').value),
+        stop_loss: parseFloat(document.getElementById('recFreeStopLoss').value),
+        target_price: parseFloat(document.getElementById('recFreeTargetPrice').value),
+        confidence: parseFloat(document.getElementById('recFreeConfidence').value) || 85
+      };
+      
+      // Validações
+      if (!formData.ticker || !formData.action || !formData.entry_price || !formData.stop_loss || !formData.target_price) {
+        alert('❌ Preencha todos os campos obrigatórios!');
+        return;
+      }
+      
+      // Validar lógica de preços para COMPRA
+      if (formData.action === 'COMPRA') {
+        if (formData.stop_loss >= formData.entry_price) {
+          alert('❌ Para COMPRA: Stop Loss deve ser menor que o preço de entrada!');
+          return;
+        }
+        if (formData.target_price <= formData.entry_price) {
+          alert('❌ Para COMPRA: Preço alvo deve ser maior que o preço de entrada!');
+          return;
+        }
+      }
+      
+      // Validar lógica de preços para VENDA
+      if (formData.action === 'VENDA') {
+        if (formData.stop_loss <= formData.entry_price) {
+          alert('❌ Para VENDA: Stop Loss deve ser maior que o preço de entrada!');
+          return;
+        }
+        if (formData.target_price >= formData.entry_price) {
+          alert('❌ Para VENDA: Preço alvo deve ser menor que o preço de entrada!');
+          return;
+        }
+      }
+      
+      try {
+        // ✅ USAR A ROTA CORRETA DO SEU BACKEND
+        const response = await fetch('/api/recommendations/admin/create-single', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${adminToken}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(formData)
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+          alert('✅ Recomendação criada com sucesso!');
+          
+          // Limpar formulário
+          document.getElementById('recFreeTicker').value = '';
+          document.getElementById('recFreeAction').value = '';
+          document.getElementById('recFreeEntryPrice').value = '';
+          document.getElementById('recFreeStopLoss').value = '';
+          document.getElementById('recFreeTargetPrice').value = '';
+          document.getElementById('recFreeConfidence').value = '85';
+          
+          // Recarregar lista
+          loadRecommendationsFree();
+        } else {
+          alert('❌ ' + result.error);
+        }
+        
+      } catch (error) {
+        console.error('Erro ao criar recomendação:', error);
+        alert('❌ Erro de conexão com o servidor');
+      }
+    }
 
     // Initialize admin dashboard
     async function initAdminDashboard() {
@@ -2009,54 +2085,6 @@
         `;
       }).join('');
     }
-
-    // ===== FORMULÁRIO DE RECOMENDAÇÃO ATUALIZADO =====
-    document.getElementById('recommendationForm').addEventListener('submit', async function(e) {
-      e.preventDefault();
-      
-      if (!selectedPortfolio) {
-        alert('Selecione uma carteira primeiro');
-        return;
-      }
-      
-      const formData = {
-        portfolio: selectedPortfolio,
-        ticker: document.getElementById('recTicker').value.toUpperCase(),
-        action_type: document.getElementById('recAction').value,
-        entry_price: parseFloat(document.getElementById('recEntryPrice').value),
-        market_price: document.getElementById('recMarketPrice').value ? parseFloat(document.getElementById('recMarketPrice').value) : null,
-        target_weight: document.getElementById('recWeight').value ? parseFloat(document.getElementById('recWeight').value) : null,
-        recommendation_date: document.getElementById('recDate').value,
-        price_target: document.getElementById('recPriceTarget').value ? parseFloat(document.getElementById('recPriceTarget').value) : null,
-        reason: document.getElementById('recReason').value
-      };
-      
-      try {
-        const response = await fetch('/api/admin/portfolio/add-recommendation', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${adminToken}`
-          },
-          body: JSON.stringify(formData)
-        });
-        
-        const result = await response.json();
-        
-        if (result.success) {
-          alert('✅ Recomendação criada com sucesso!');
-          this.reset();
-          // Reset date to today
-          document.getElementById('recDate').value = new Date().toISOString().split('T')[0];
-          loadPortfolioRecommendations();
-        } else {
-          alert('❌ ' + result.error);
-        }
-        
-      } catch (error) {
-        alert('❌ Erro de conexão');
-      }
-    });
 
     // Remove recommendation - FUNÇÃO HABILITADA
     async function removeRecommendation(recId) {
@@ -3009,20 +3037,31 @@ function displayUsers(users) {
 
       // Recomentation free
       async function loadRecommendationsFree() {
+        console.log('🔄 Carregando recomendações free...');
+        
         try {
+          // ✅ CORRIGIR URL DA API - usar a rota correta do seu arquivo
           const response = await fetch('/api/recommendations/admin/all', {
             headers: { 'Authorization': `Bearer ${adminToken}` }
           });
-
+      
           if (response.ok) {
             const result = await response.json();
             if (result.success) {
+              console.log(`✅ ${result.recommendations.length} recomendações carregadas`);
               displayRecommendationsFree(result.recommendations);
               updateRecommendationsStats(result.recommendations);
+            } else {
+              console.error('Erro da API:', result.error);
+              showRecommendationsError(result.error);
             }
+          } else {
+            console.error('Erro HTTP:', response.status);
+            showRecommendationsError(`Erro ${response.status}: ${response.statusText}`);
           }
         } catch (error) {
-          console.error('Error loading recommendations:', error);
+          console.error('Erro de conexão:', error);
+          showRecommendationsError('Erro de conexão com o servidor');
         }
       }
 
@@ -3031,74 +3070,149 @@ function displayUsers(users) {
         const container = document.getElementById('recommendationsList');
         
         if (!recommendations || recommendations.length === 0) {
-          container.innerHTML = '<p class="text-gray-400 text-center py-4">Nenhuma recomendação encontrada</p>';
+          container.innerHTML = `
+            <div class="text-center py-8">
+              <i class="fas fa-gift text-4xl text-gray-600 mb-4"></i>
+              <p class="text-gray-400 text-lg mb-2">Nenhuma recomendação encontrada</p>
+              <p class="text-gray-500 text-sm">Crie novas recomendações ou gere automaticamente</p>
+              <button onclick="loadRecommendationsFree()" class="mt-3 bg-blue-600 hover:bg-blue-700 py-2 px-4 rounded-lg text-sm">
+                <i class="fas fa-sync mr-1"></i>Recarregar
+              </button>
+            </div>
+          `;
           return;
         }
-
+      
         container.innerHTML = recommendations.map(rec => {
           const isCompra = rec.action === 'COMPRA';
-          const statusColor = rec.status === 'ATIVA' ? 'text-green-400' : 
-                            rec.status === 'FINALIZADA_GANHO' ? 'text-blue-400' : 
-                            rec.status === 'FINALIZADA_PERDA' ? 'text-red-400' : 'text-gray-400';
+          const statusColor = getStatusColor(rec.status);
+          const statusText = getStatusText(rec.status);
           
           return `
-            <div class="border border-gray-600 rounded-lg p-4">
-              <div class="flex items-center justify-between mb-2">
+            <div class="border border-gray-600 rounded-lg p-4 hover:border-geminii transition-all duration-300">
+              <!-- Header da Recomendação -->
+              <div class="flex items-center justify-between mb-3">
                 <div class="flex items-center gap-3">
-                  <div class="w-10 h-10 rounded-lg flex items-center justify-center ${isCompra ? 'bg-green-600' : 'bg-red-600'}">
-                    <i class="fas ${isCompra ? 'fa-arrow-up' : 'fa-arrow-down'} text-white"></i>
+                  <div class="w-12 h-12 rounded-lg flex items-center justify-center ${isCompra ? 'bg-green-600' : 'bg-red-600'}">
+                    <i class="fas ${isCompra ? 'fa-arrow-up' : 'fa-arrow-down'} text-white text-lg"></i>
                   </div>
                   <div>
-                    <h4 class="text-lg font-bold text-white">${rec.ticker}</h4>
+                    <h4 class="text-xl font-bold text-white">${rec.ticker}</h4>
                     <p class="text-sm text-gray-400">${rec.company_name || 'N/A'}</p>
                   </div>
                 </div>
                 <div class="text-right">
-                  <span class="text-sm ${statusColor} font-medium">${rec.status}</span>
-                  <div class="text-xs text-gray-400">${formatDate(rec.created_at)}</div>
+                  <span class="px-3 py-1 rounded-full text-xs font-medium ${statusColor}">${statusText}</span>
+                  <div class="text-xs text-gray-400 mt-1">${formatDate(rec.created_at)}</div>
                 </div>
               </div>
               
-              <div class="grid grid-cols-2 gap-3 text-sm mb-3">
-                <div>
-                  <span class="text-gray-400">Entrada:</span>
-                  <span class="text-white ml-2">R$ ${rec.entry_price.toFixed(2)}</span>
+              <!-- Grid de Preços -->
+              <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm mb-4">
+                <div class="text-center bg-gray-800 bg-opacity-30 rounded-lg p-3">
+                  <div class="text-xs text-gray-400 mb-1">Entrada</div>
+                  <div class="font-bold text-blue-400">R$ ${rec.entry_price.toFixed(2)}</div>
                 </div>
-                <div>
-                  <span class="text-gray-400">Atual:</span>
-                  <span class="text-white ml-2">R$ ${rec.current_price.toFixed(2)}</span>
+                <div class="text-center bg-gray-800 bg-opacity-30 rounded-lg p-3">
+                  <div class="text-xs text-gray-400 mb-1">Atual</div>
+                  <div class="font-bold text-white">R$ ${rec.current_price.toFixed(2)}</div>
                 </div>
-                <div>
-                  <span class="text-gray-400">Alvo:</span>
-                  <span class="text-green-400 ml-2">R$ ${rec.target_price.toFixed(2)}</span>
+                <div class="text-center bg-gray-800 bg-opacity-30 rounded-lg p-3">
+                  <div class="text-xs text-gray-400 mb-1">Alvo</div>
+                  <div class="font-bold text-green-400">R$ ${rec.target_price.toFixed(2)}</div>
                 </div>
-                <div>
-                  <span class="text-gray-400">Stop:</span>
-                  <span class="text-red-400 ml-2">R$ ${rec.stop_loss.toFixed(2)}</span>
+                <div class="text-center bg-gray-800 bg-opacity-30 rounded-lg p-3">
+                  <div class="text-xs text-gray-400 mb-1">Stop</div>
+                  <div class="font-bold text-red-400">R$ ${rec.stop_loss.toFixed(2)}</div>
                 </div>
               </div>
               
-              <div class="flex items-center justify-between">
-                <div class="flex items-center gap-4 text-sm">
-                  <span class="text-gray-400">
-                    Performance: 
-                    <span class="${rec.performance >= 0 ? 'text-green-400' : 'text-red-400'} font-medium">
+              <!-- Indicadores -->
+              <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center gap-6 text-sm">
+                  <div class="flex items-center gap-2">
+                    <span class="text-gray-400">Performance:</span>
+                    <span class="font-bold ${rec.performance >= 0 ? 'text-green-400' : 'text-red-400'}">
                       ${rec.performance >= 0 ? '+' : ''}${rec.performance.toFixed(2)}%
                     </span>
-                  </span>
-                  <span class="text-gray-400">
-                    Confiança: <span class="text-white">${rec.confidence}%</span>
-                  </span>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <span class="text-gray-400">Confiança:</span>
+                    <span class="font-bold text-white">${rec.confidence}%</span>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <span class="text-gray-400">R/R:</span>
+                    <span class="font-bold text-yellow-400">${rec.risk_reward.toFixed(2)}</span>
+                  </div>
                 </div>
-                ${rec.status === 'ATIVA' ? `
-                  <button onclick="closeRecommendation(${rec.id})" class="bg-orange-600 hover:bg-orange-700 px-3 py-1 rounded text-xs">
-                    <i class="fas fa-times mr-1"></i>Encerrar
+              </div>
+              
+              <!-- Ações -->
+              <div class="flex items-center justify-between pt-3 border-t border-gray-700">
+                <div class="text-xs text-gray-500">
+                  ID: ${rec.id} | Criado: ${formatDate(rec.created_at)}
+                </div>
+                <div class="flex gap-2">
+                  ${rec.status === 'ATIVA' ? `
+                    <button onclick="closeRecommendationFree(${rec.id})" 
+                            class="bg-orange-600 hover:bg-orange-700 px-3 py-1 rounded text-xs font-medium transition-colors">
+                      <i class="fas fa-times mr-1"></i>Encerrar
+                    </button>
+                  ` : ''}
+                  <button onclick="viewRecommendationDetails(${rec.id})" 
+                          class="bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded text-xs font-medium transition-colors">
+                    <i class="fas fa-eye mr-1"></i>Detalhes
                   </button>
-                ` : ''}
+                </div>
               </div>
             </div>
           `;
         }).join('');
+      }
+
+      function getStatusColor(status) {
+        const colors = {
+          'ATIVA': 'bg-green-600 text-green-200',
+          'FINALIZADA_GANHO': 'bg-blue-600 text-blue-200', 
+          'FINALIZADA_PERDA': 'bg-red-600 text-red-200',
+          'FINALIZADA_MANUAL': 'bg-gray-600 text-gray-200'
+        };
+        return colors[status] || 'bg-gray-600 text-gray-200';
+      }
+      
+      function getStatusText(status) {
+        const texts = {
+          'ATIVA': 'Ativa',
+          'FINALIZADA_GANHO': 'Ganho',
+          'FINALIZADA_PERDA': 'Perda', 
+          'FINALIZADA_MANUAL': 'Manual'
+        };
+        return texts[status] || status;
+      }
+      
+      function formatDate(dateString) {
+        if (!dateString) return 'N/A';
+        return new Date(dateString).toLocaleDateString('pt-BR', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+      }  
+      
+      function showRecommendationsError(message) {
+        const container = document.getElementById('recommendationsList');
+        container.innerHTML = `
+          <div class="text-center py-8">
+            <i class="fas fa-exclamation-triangle text-4xl text-red-500 mb-4"></i>
+            <p class="text-red-400 text-lg mb-2">Erro ao carregar recomendações</p>
+            <p class="text-gray-400 text-sm mb-4">${message}</p>
+            <button onclick="loadRecommendationsFree()" class="bg-red-600 hover:bg-red-700 py-2 px-4 rounded-lg text-sm">
+              <i class="fas fa-sync mr-1"></i>Tentar Novamente
+            </button>
+          </div>
+        `;
       }
 
       // Update statistics
@@ -3121,17 +3235,30 @@ function displayUsers(users) {
           .map(r => r.performance);
         const avgLoss = lossValues.length > 0 ? lossValues.reduce((a, b) => a + b, 0) / lossValues.length : 0;
         
-        document.getElementById('recStatsTotal').textContent = total;
-        document.getElementById('recStatsActive').textContent = active;
-        document.getElementById('recStatsClosed').textContent = closed;
-        document.getElementById('recStatsSuccess').textContent = `${successRate.toFixed(1)}%`;
-        document.getElementById('recStatsAvgGain').textContent = `+${avgGain.toFixed(2)}%`;
-        document.getElementById('recStatsAvgLoss').textContent = `${avgLoss.toFixed(2)}%`;
+        // Atualizar elementos da UI
+        const elements = {
+          'recStatsTotal': total,
+          'recStatsActive': active,
+          'recStatsClosed': closed,
+          'recStatsSuccess': `${successRate.toFixed(1)}%`,
+          'recStatsAvgGain': `+${avgGain.toFixed(2)}%`,
+          'recStatsAvgLoss': `${avgLoss.toFixed(2)}%`
+        };
+        
+        Object.entries(elements).forEach(([id, value]) => {
+          const element = document.getElementById(id);
+          if (element) element.textContent = value;
+        });
       }
 
       // Generate monthly recommendations
       async function generateMonthlyRecommendations() {
-        if (!confirm('Gerar novas recomendações mensais? Isso criará até 5 novas recomendações.')) return;
+        if (!confirm('Gerar novas recomendações mensais automaticamente?\n\nIsso criará até 5 novas recomendações usando IA.')) return;
+        
+        const button = event.target;
+        const originalText = button.innerHTML;
+        button.disabled = true;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>Gerando...';
         
         try {
           const response = await fetch('/api/recommendations/admin/generate', {
@@ -3145,22 +3272,27 @@ function displayUsers(users) {
           const result = await response.json();
           
           if (result.success) {
-            alert('✅ ' + result.message);
+            alert(`✅ ${result.message}\n\n${result.recommendations.length} recomendações criadas!`);
             loadRecommendationsFree();
           } else {
             alert('❌ ' + result.error);
           }
           
         } catch (error) {
-          alert('❌ Erro de conexão');
+          console.error('Erro ao gerar recomendações:', error);
+          alert('❌ Erro de conexão com o servidor');
+        } finally {
+          button.disabled = false;
+          button.innerHTML = originalText;
         }
       }
 
       // Update all prices
       async function updateAllPrices() {
-        const btn = event.target.closest('button');
-        btn.disabled = true;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>Atualizando...';
+        const button = event.target;
+        const originalText = button.innerHTML;
+        button.disabled = true;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>Atualizando...';
         
         try {
           const response = await fetch('/api/recommendations/admin/update-prices', {
@@ -3181,19 +3313,21 @@ function displayUsers(users) {
           }
           
         } catch (error) {
-          alert('❌ Erro de conexão');
+          console.error('Erro ao atualizar preços:', error);
+          alert('❌ Erro de conexão com o servidor');
         } finally {
-          btn.disabled = false;
-          btn.innerHTML = '<i class="fas fa-sync mr-1"></i>Atualizar Preços';
+          button.disabled = false;
+          button.innerHTML = originalText;
         }
       }
 
       // Close recommendation
-      async function closeRecommendation(recId) {
+      async function closeRecommendationFree(recId) {
         const finalPrice = prompt('Digite o preço final da operação (R$):');
-        if (!finalPrice) return;
+        if (!finalPrice || isNaN(finalPrice)) return;
         
-        const status = confirm('A operação foi lucrativa?') ? 'FINALIZADA_GANHO' : 'FINALIZADA_PERDA';
+        const isWin = confirm('A operação foi lucrativa?\n\nOK = Ganho | Cancelar = Perda');
+        const status = isWin ? 'FINALIZADA_GANHO' : 'FINALIZADA_PERDA';
         
         try {
           const response = await fetch(`/api/recommendations/admin/close/${recId}`, {
@@ -3211,15 +3345,20 @@ function displayUsers(users) {
           const result = await response.json();
           
           if (result.success) {
-            alert(`✅ Recomendação encerrada! Performance: ${result.performance.toFixed(2)}%`);
+            alert(`✅ Recomendação encerrada!\n\nPerformance: ${result.performance.toFixed(2)}%`);
             loadRecommendationsFree();
           } else {
             alert('❌ ' + result.error);
           }
           
         } catch (error) {
-          alert('❌ Erro de conexão');
+          console.error('Erro ao encerrar recomendação:', error);
+          alert('❌ Erro de conexão com o servidor');
         }
+      }
+
+      function viewRecommendationDetails(recId) {
+        alert(`Ver detalhes da recomendação ID: ${recId}\n\n(Função será implementada em breve)`);
       }
 
       // Form submission

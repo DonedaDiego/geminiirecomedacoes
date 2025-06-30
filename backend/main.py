@@ -19,7 +19,7 @@ from beta_regression_routes import beta_regression_bp
 from atsmom_routes import register_atsmom_routes
 from chart_ativos_routes import chart_ativos_bp
 from carrossel_yfinance_routes import get_carrossel_blueprint
-from recommendations_routes_free import recommendations_free_bp
+from recommendations_routes_free import get_recommendations_free_blueprint
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -96,6 +96,7 @@ app.register_blueprint(get_swing_trade_ml_blueprint())
 app.register_blueprint(beta_regression_bp, url_prefix='/beta_regression')
 app.register_blueprint(chart_ativos_bp)
 register_atsmom_routes(app)
+recommendations_free_bp = get_recommendations_free_blueprint()
 app.register_blueprint(recommendations_free_bp)
 
 # Registrar blueprints condicionais
@@ -892,19 +893,19 @@ def create_app():
     initialize_database()
     return app
 
-if __name__ == "__main__":
+# if __name__ == "__main__":
    
-    # Inicializar banco
-    initialize_database()
+#     # Inicializar banco
+#     initialize_database()
     
-    # Configurar para desenvolvimento
-    app.config['ENV'] = 'development'
-    app.config['DEBUG'] = True
+#     # Configurar para desenvolvimento
+#     app.config['ENV'] = 'development'
+#     app.config['DEBUG'] = True
     
-    # Executar Flask
-    print("🚀 Iniciando servidor Flask local...")
-    app.run(
-        host='0.0.0.0',
-        port=5000,
-        debug=True
-    )
+#     # Executar Flask
+#     print("🚀 Iniciando servidor Flask local...")
+#     app.run(
+#         host='0.0.0.0',
+#         port=5000,
+#         debug=True
+#     )

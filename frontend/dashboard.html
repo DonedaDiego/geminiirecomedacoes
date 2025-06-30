@@ -577,6 +577,7 @@
       
       await checkAuth();
       await loadUserStats();
+      await loadFreeRecommendationsStats(); 
       checkApiStatus();
       setInterval(checkApiStatus, 30000);
       
@@ -801,6 +802,82 @@
         console.error('❌ Erro ao carregar estatísticas:', error);
       }
     }
+
+    // Load Free Recommendations Stats
+    async function loadFreeRecommendationsStats() {
+      if (!userToken) {
+        console.log('⚠️ Token não disponível para carregar recomendações');
+        return;
+      }
+
+      try {
+        console.log('📡 Carregando estatísticas das recomendações free...');
+        
+        const response = await fetch('/api/recommendations/admin/all', {
+          headers: { 'Authorization': `Bearer ${userToken}` }
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          if (result.success) {
+            const allRecs = result.recommendations || [];
+            
+            // Filtrar apenas ativas
+            const activeRecs = allRecs.filter(r => r.status === 'ATIVA');
+            
+            // Calcular estatísticas
+            const closedRecs = allRecs.filter(r => r.status && r.status.startsWith('FINALIZADA'));
+            const wins = closedRecs.filter(r => r.status === 'FINALIZADA_GANHO');
+            const successRate = closedRecs.length > 0 ? (wins.length / closedRecs.length * 100) : 0;
+            
+            // Calcular próxima atualização (primeira sexta do próximo mês)
+            const now = new Date();
+            const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+            const firstFriday = new Date(nextMonth);
+            while (firstFriday.getDay() !== 5) {
+              firstFriday.setDate(firstFriday.getDate() + 1);
+            }
+            const daysUntilUpdate = Math.ceil((firstFriday - now) / (1000 * 60 * 60 * 24));
+            
+            // Atualizar elementos do dashboard
+            const activeSignalsEl = document.getElementById('activeSignalsCount');
+            const successRateEl = document.getElementById('freeSuccessRate');
+            const nextUpdateEl = document.getElementById('nextUpdateDays');
+            
+            if (activeSignalsEl) {
+              activeSignalsEl.textContent = activeRecs.length;
+            }
+            
+            if (successRateEl) {
+              successRateEl.textContent = successRate > 0 ? `${successRate.toFixed(1)}%` : '--';
+            }
+            
+            if (nextUpdateEl) {
+              nextUpdateEl.textContent = daysUntilUpdate > 0 ? `${daysUntilUpdate} dias` : 'Em breve';
+            }
+            
+            console.log('📊 Estatísticas free carregadas:', {
+              ativas: activeRecs.length,
+              sucesso: successRate.toFixed(1) + '%',
+              proximaAtualizacao: daysUntilUpdate + ' dias'
+            });
+            
+          }
+        }
+      } catch (error) {
+        console.error('❌ Erro ao carregar recomendações free:', error);
+        
+        // Valores padrão em caso de erro
+        const activeSignalsEl = document.getElementById('activeSignalsCount');
+        const successRateEl = document.getElementById('freeSuccessRate');
+        const nextUpdateEl = document.getElementById('nextUpdateDays');
+        
+        if (activeSignalsEl) activeSignalsEl.textContent = '--';
+        if (successRateEl) successRateEl.textContent = '--';
+        if (nextUpdateEl) nextUpdateEl.textContent = '--';
+      }
+    }
+
 
     // Show premium feature dialog
     function showPremiumFeature(featureName) {

@@ -103,6 +103,32 @@
       from { opacity: 0; transform: translateY(20px); }
       to { opacity: 1; transform: translateY(0); }
     }
+
+    .status-badge {
+      padding: 0.25rem 0.75rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .status-ativa {
+      background-color: rgba(16, 185, 129, 0.2);
+      color: #10b981;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .status-ganho {
+      background-color: rgba(34, 197, 94, 0.2);
+      color: #22c55e;
+      border: 1px solid rgba(34, 197, 94, 0.3);
+    }
+
+    .status-perda {
+      background-color: rgba(239, 68, 68, 0.2);
+      color: #ef4444;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
   </style>
 </head>
 <body class="min-h-screen text-white">
@@ -117,7 +143,7 @@
         </div>
         <div class="hidden md:flex items-center space-x-6">
           <a href="dashboard.html" class="text-gray-300 hover:text-primary transition-colors">Dashboard</a>
-          <a href="recomendacoes.html" class="text-primary font-medium">Recomendações Free</a>
+          <a href="recomendacoes-free.html" class="text-primary font-medium">Recomendações Free</a>
         </div>
       </div>
       
@@ -294,42 +320,97 @@
 
   <script>
     let recommendations = [];
+    let allRecommendations = [];
     let performanceChart = null;
     let userToken = null;
 
     // Initialize
     async function init() {
+      console.log('🚀 Inicializando Recomendações Free...');
+      
       userToken = localStorage.getItem('geminii_token');
       if (!userToken) {
+        console.log('❌ Token não encontrado - redirecionando para login');
         window.location.href = '/login.html';
         return;
       }
 
+      console.log('✅ Token encontrado');
+      
+      // Verificar se o usuário está autenticado
+      await verifyAuth();
+      
+      // Carregar dados
       await loadRecommendations();
       initPerformanceChart();
       updateTimers();
-      setInterval(updateTimers, 60000); // Update every minute
+      
+      // Atualizar a cada minuto
+      setInterval(updateTimers, 60000);
+    }
+
+    // Verificar autenticação
+    async function verifyAuth() {
+      try {
+        const response = await fetch('/api/auth/verify', {
+          headers: { 'Authorization': `Bearer ${userToken}` }
+        });
+
+        if (!response.ok) {
+          throw new Error('Token inválido');
+        }
+
+        const result = await response.json();
+        if (!result.success) {
+          throw new Error('Verificação falhou');
+        }
+
+        console.log('✅ Usuário autenticado:', result.data.user.name);
+      } catch (error) {
+        console.error('❌ Erro na autenticação:', error);
+        localStorage.removeItem('geminii_token');
+        localStorage.removeItem('geminii_user');
+        window.location.href = '/login.html';
+      }
     }
 
     // Load recommendations
     async function loadRecommendations() {
+      console.log('📡 Carregando recomendações...');
+      
       try {
-        const response = await fetch('/api/recommendations/free/active', {
+        const response = await fetch('/api/recommendations/admin/all', {
           headers: { 'Authorization': `Bearer ${userToken}` }
         });
 
+        console.log('📊 Status da resposta:', response.status);
+
         if (response.ok) {
           const result = await response.json();
+          console.log('📄 Resultado da API:', result);
+          
           if (result.success) {
-            recommendations = result.recommendations;
+            allRecommendations = result.recommendations || [];
+            console.log(`📈 Total de recomendações: ${allRecommendations.length}`);
+            
+            // Filtrar apenas as ativas para mostrar ao usuário
+            recommendations = allRecommendations.filter(r => r.status === 'ATIVA');
+            console.log(`🎯 Recomendações ativas: ${recommendations.length}`);
+            
             displayRecommendations();
             updateStats();
             updatePerformanceChart();
+          } else {
+            console.error('❌ API retornou erro:', result.error);
+            showError('Erro na API: ' + result.error);
           }
+        } else {
+          console.error('❌ Erro HTTP:', response.status);
+          showError(`Erro HTTP ${response.status}`);
         }
       } catch (error) {
-        console.error('Error loading recommendations:', error);
-        showError();
+        console.error('❌ Erro de conexão:', error);
+        showError('Erro de conexão: ' + error.message);
       }
     }
 
@@ -343,12 +424,19 @@
             <i class="fas fa-inbox text-6xl text-gray-600 mb-4"></i>
             <p class="text-xl text-gray-400">Nenhuma recomendação ativa no momento</p>
             <p class="text-sm text-gray-500 mt-2">Novas recomendações são geradas mensalmente</p>
+            <button onclick="loadRecommendations()" class="mt-4 bg-primary hover:bg-primary/80 text-white px-6 py-2 rounded-lg">
+              Tentar Novamente
+            </button>
           </div>
         `;
         return;
       }
 
+      console.log('🎨 Exibindo recomendações:', recommendations.length);
       container.innerHTML = recommendations.map(rec => createRecommendationCard(rec)).join('');
+      
+      // Carregar mini charts após um pequeno delay
+      setTimeout(loadMiniCharts, 100);
     }
 
     // Create recommendation card
@@ -358,10 +446,12 @@
       const actionIcon = isCompra ? 'fa-arrow-trend-up' : 'fa-arrow-trend-down';
       const actionColor = isCompra ? 'text-success' : 'text-danger';
       
-      // Calculate potential profit
-      const potentialProfit = ((rec.target_price - rec.entry_price) / rec.entry_price * 100).toFixed(2);
-      const risk = ((rec.entry_price - rec.stop_loss) / rec.entry_price * 100).toFixed(2);
-      const riskReward = (Math.abs(potentialProfit) / Math.abs(risk)).toFixed(2);
+      // Calculate metrics
+      const currentPrice = rec.current_price || rec.entry_price;
+      const performance = ((currentPrice - rec.entry_price) / rec.entry_price * 100);
+      const potentialProfit = ((rec.target_price - rec.entry_price) / rec.entry_price * 100);
+      const risk = Math.abs((rec.entry_price - rec.stop_loss) / rec.entry_price * 100);
+      const riskReward = risk > 0 ? (Math.abs(potentialProfit) / risk) : 0;
 
       return `
         <div class="recommendation-card ${cardClass} rounded-xl p-6 fade-in cursor-pointer" onclick="showDetails('${rec.id}')">
@@ -372,12 +462,15 @@
               </div>
               <div>
                 <h3 class="text-xl font-bold text-white">${rec.ticker}</h3>
-                <p class="text-sm text-gray-400">${rec.company_name || 'Carregando...'}</p>
+                <p class="text-sm text-gray-400">${rec.company_name || 'Ação Brasileira'}</p>
               </div>
             </div>
-            <span class="px-3 py-1 rounded-full text-sm font-semibold ${isCompra ? 'bg-success/20 text-success' : 'bg-danger/20 text-danger'}">
-              ${rec.action}
-            </span>
+            <div class="text-right">
+              <span class="status-badge status-ativa">
+                ${rec.action}
+              </span>
+              <div class="text-xs text-gray-400 mt-1">${formatDate(rec.created_at)}</div>
+            </div>
           </div>
 
           <div class="grid grid-cols-2 gap-4 mb-4">
@@ -387,8 +480,8 @@
             </div>
             <div>
               <p class="text-sm text-gray-400">Preço Atual</p>
-              <p class="text-lg font-semibold ${rec.current_price > rec.entry_price ? 'text-success' : 'text-danger'}">
-                R$ ${rec.current_price.toFixed(2)}
+              <p class="text-lg font-semibold ${performance >= 0 ? 'text-success' : 'text-danger'}">
+                R$ ${currentPrice.toFixed(2)}
               </p>
             </div>
             <div>
@@ -401,39 +494,108 @@
             </div>
           </div>
 
-          <div class="flex items-center justify-between text-sm">
+          <div class="flex items-center justify-between text-sm mb-4">
             <div class="flex items-center gap-4">
               <span class="text-gray-400">
                 <i class="fas fa-chart-line mr-1"></i>
-                Potencial: <span class="${potentialProfit > 0 ? 'text-success' : 'text-danger'} font-medium">${potentialProfit > 0 ? '+' : ''}${potentialProfit}%</span>
+                Performance: <span class="${performance >= 0 ? 'text-success' : 'text-danger'} font-medium">
+                  ${performance >= 0 ? '+' : ''}${performance.toFixed(2)}%
+                </span>
               </span>
               <span class="text-gray-400">
-                <i class="fas fa-shield-alt mr-1"></i>
-                R/R: <span class="text-white font-medium">1:${riskReward}</span>
+                <i class="fas fa-target mr-1"></i>
+                Potencial: <span class="${potentialProfit >= 0 ? 'text-success' : 'text-danger'} font-medium">
+                  ${potentialProfit >= 0 ? '+' : ''}${potentialProfit.toFixed(2)}%
+                </span>
               </span>
             </div>
+          </div>
+
+          <div class="flex items-center justify-between text-sm">
             <span class="text-gray-400">
-              <i class="fas fa-calendar mr-1"></i>
-              ${formatDate(rec.created_at)}
+              <i class="fas fa-shield-alt mr-1"></i>
+              R/R: <span class="text-white font-medium">1:${riskReward.toFixed(1)}</span>
+            </span>
+            <span class="text-gray-400">
+              <i class="fas fa-brain mr-1"></i>
+              Confiança: <span class="text-white font-medium">${rec.confidence || 85}%</span>
             </span>
           </div>
 
           <div class="mt-4 pt-4 border-t border-white/10">
-            <canvas id="miniChart${rec.id}" height="120"></canvas>
+            <canvas id="miniChart${rec.id}" height="80"></canvas>
           </div>
         </div>
       `;
     }
 
+    // Load mini charts
+    function loadMiniCharts() {
+      recommendations.forEach(rec => {
+        const canvas = document.getElementById(`miniChart${rec.id}`);
+        if (canvas) {
+          const ctx = canvas.getContext('2d');
+          
+          new Chart(ctx, {
+            type: 'line',
+            data: {
+              labels: ['', '', '', '', '', '', ''],
+              datasets: [{
+                data: generateMiniChartData(rec),
+                borderColor: rec.action === 'COMPRA' ? '#10b981' : '#ef4444',
+                borderWidth: 2,
+                tension: 0.4,
+                pointRadius: 0,
+                fill: true,
+                backgroundColor: rec.action === 'COMPRA' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)'
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: {
+                legend: { display: false },
+                tooltip: { enabled: false }
+              },
+              scales: {
+                x: { display: false },
+                y: { display: false }
+              }
+            }
+          });
+        }
+      });
+    }
+
+    // Generate mini chart data
+    function generateMiniChartData(rec) {
+      const basePrice = rec.entry_price;
+      const currentPrice = rec.current_price || rec.entry_price;
+      const trend = rec.action === 'COMPRA' ? 1 : -1;
+      const volatility = 0.015;
+      
+      return Array.from({length: 7}, (_, i) => {
+        const progress = i / 6;
+        const trendPrice = basePrice + ((currentPrice - basePrice) * progress);
+        const randomFactor = (Math.random() - 0.5) * volatility * basePrice;
+        return Math.max(0, trendPrice + randomFactor);
+      });
+    }
+
     // Show details modal
-    async function showDetails(recId) {
-      const rec = recommendations.find(r => r.id === recId);
+    function showDetails(recId) {
+      const rec = recommendations.find(r => r.id == recId);
       if (!rec) return;
 
       const modal = document.getElementById('detailsModal');
       const content = document.getElementById('modalContent');
 
-      // Load detailed chart
+      const currentPrice = rec.current_price || rec.entry_price;
+      const performance = ((currentPrice - rec.entry_price) / rec.entry_price * 100);
+      const potentialProfit = ((rec.target_price - rec.entry_price) / rec.entry_price * 100);
+      const distanceToTarget = ((rec.target_price - currentPrice) / currentPrice * 100);
+      const distanceToStop = Math.abs((currentPrice - rec.stop_loss) / currentPrice * 100);
+
       content.innerHTML = `
         <div class="space-y-6">
           <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -455,11 +617,6 @@
             </div>
           </div>
 
-          <div>
-            <h4 class="text-lg font-semibold text-white mb-3">Análise Técnica</h4>
-            <canvas id="detailChart" height="400"></canvas>
-          </div>
-
           <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div class="bg-white/5 rounded-lg p-4">
               <h4 class="text-lg font-semibold text-white mb-3">Parâmetros da Operação</h4>
@@ -477,8 +634,8 @@
                   <span class="text-warning font-medium">R$ ${rec.stop_loss.toFixed(2)}</span>
                 </div>
                 <div class="flex justify-between">
-                  <span class="text-gray-400">Risk/Reward:</span>
-                  <span class="text-white font-medium">1:${rec.risk_reward || '2.0'}</span>
+                  <span class="text-gray-400">Confiança:</span>
+                  <span class="text-white font-medium">${rec.confidence || 85}%</span>
                 </div>
               </div>
             </div>
@@ -488,142 +645,34 @@
               <div class="space-y-2">
                 <div class="flex justify-between">
                   <span class="text-gray-400">Preço Atual:</span>
-                  <span class="text-white font-medium">R$ ${rec.current_price.toFixed(2)}</span>
+                  <span class="text-white font-medium">R$ ${currentPrice.toFixed(2)}</span>
                 </div>
                 <div class="flex justify-between">
-                  <span class="text-gray-400">Variação:</span>
-                  <span class="${rec.performance > 0 ? 'text-success' : 'text-danger'} font-medium">
-                    ${rec.performance > 0 ? '+' : ''}${rec.performance.toFixed(2)}%
+                  <span class="text-gray-400">Performance:</span>
+                  <span class="${performance >= 0 ? 'text-success' : 'text-danger'} font-medium">
+                    ${performance >= 0 ? '+' : ''}${performance.toFixed(2)}%
                   </span>
                 </div>
                 <div class="flex justify-between">
                   <span class="text-gray-400">Dist. do Alvo:</span>
-                  <span class="text-white font-medium">${((rec.target_price - rec.current_price) / rec.current_price * 100).toFixed(2)}%</span>
+                  <span class="text-white font-medium">${distanceToTarget.toFixed(2)}%</span>
                 </div>
                 <div class="flex justify-between">
                   <span class="text-gray-400">Dist. do Stop:</span>
-                  <span class="text-white font-medium">${((rec.current_price - rec.stop_loss) / rec.current_price * 100).toFixed(2)}%</span>
+                  <span class="text-white font-medium">${distanceToStop.toFixed(2)}%</span>
                 </div>
               </div>
             </div>
           </div>
 
           <div class="bg-white/5 rounded-lg p-4">
-            <h4 class="text-lg font-semibold text-white mb-3">Análise ML</h4>
-            <p class="text-gray-300">${rec.ml_analysis || 'Análise gerada por algoritmos de Machine Learning considerando padrões históricos, momentum e indicadores técnicos.'}</p>
+            <h4 class="text-lg font-semibold text-white mb-3">Análise da Recomendação</h4>
+            <p class="text-gray-300">${rec.reason || 'Recomendação gerada por algoritmos de Machine Learning considerando padrões históricos, momentum e indicadores técnicos avançados.'}</p>
           </div>
         </div>
       `;
 
       modal.classList.remove('hidden');
-      
-      // Load detailed chart
-      setTimeout(() => loadDetailChart(rec), 100);
-    }
-
-    // Load detail chart
-    async function loadDetailChart(rec) {
-      try {
-        const response = await fetch(`/api/recommendations/free/${rec.id}/chart-data`, {
-          headers: { 'Authorization': `Bearer ${userToken}` }
-        });
-
-        if (response.ok) {
-          const result = await response.json();
-          if (result.success) {
-            createDetailChart(result.data, rec);
-          }
-        }
-      } catch (error) {
-        console.error('Error loading chart data:', error);
-      }
-    }
-
-    // Create detail chart
-    function createDetailChart(data, rec) {
-      const ctx = document.getElementById('detailChart').getContext('2d');
-      
-      new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: data.dates,
-          datasets: [{
-            label: 'Preço',
-            data: data.prices,
-            borderColor: '#6366f1',
-            backgroundColor: 'rgba(99, 102, 241, 0.1)',
-            borderWidth: 2,
-            tension: 0.1,
-            pointRadius: 0,
-            pointHoverRadius: 5
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: { display: false },
-            annotation: {
-              annotations: {
-                entryLine: {
-                  type: 'line',
-                  yMin: rec.entry_price,
-                  yMax: rec.entry_price,
-                  borderColor: '#6366f1',
-                  borderWidth: 2,
-                  borderDash: [5, 5],
-                  label: {
-                    content: `Entrada: R$ ${rec.entry_price.toFixed(2)}`,
-                    enabled: true,
-                    position: 'start'
-                  }
-                },
-                targetLine: {
-                  type: 'line',
-                  yMin: rec.target_price,
-                  yMax: rec.target_price,
-                  borderColor: '#10b981',
-                  borderWidth: 2,
-                  borderDash: [5, 5],
-                  label: {
-                    content: `Alvo: R$ ${rec.target_price.toFixed(2)}`,
-                    enabled: true,
-                    position: 'start'
-                  }
-                },
-                stopLine: {
-                  type: 'line',
-                  yMin: rec.stop_loss,
-                  yMax: rec.stop_loss,
-                  borderColor: '#ef4444',
-                  borderWidth: 2,
-                  borderDash: [5, 5],
-                  label: {
-                    content: `Stop: R$ ${rec.stop_loss.toFixed(2)}`,
-                    enabled: true,
-                    position: 'start'
-                  }
-                }
-              }
-            }
-          },
-          scales: {
-            x: {
-              grid: { color: 'rgba(255, 255, 255, 0.1)' },
-              ticks: { color: '#9ca3af' }
-            },
-            y: {
-              grid: { color: 'rgba(255, 255, 255, 0.1)' },
-              ticks: { 
-                color: '#9ca3af',
-                callback: function(value) {
-                  return 'R$ ' + value.toFixed(2);
-                }
-              }
-            }
-          }
-        }
-      });
     }
 
     // Close modal
@@ -633,45 +682,51 @@
 
     // Update stats
     function updateStats() {
+      const activeCount = recommendations.length;
       const buyCount = recommendations.filter(r => r.action === 'COMPRA').length;
       const sellCount = recommendations.filter(r => r.action === 'VENDA').length;
       
-      document.getElementById('totalRecommendations').textContent = recommendations.length;
+      document.getElementById('totalRecommendations').textContent = activeCount;
       document.getElementById('buySignals').textContent = buyCount;
       document.getElementById('sellSignals').textContent = sellCount;
 
-      // Calculate success rate from historical data
+      // Calculate success rate from all recommendations
       calculateSuccessRate();
     }
 
     // Calculate success rate
-    async function calculateSuccessRate() {
+    function calculateSuccessRate() {
       try {
-        const response = await fetch('/api/recommendations/free/statistics', {
-          headers: { 'Authorization': `Bearer ${userToken}` }
-        });
-
-        if (response.ok) {
-          const result = await response.json();
-          if (result.success) {
-            const stats = result.statistics;
-            document.getElementById('successRate').textContent = `${stats.success_rate.toFixed(1)}%`;
-            document.getElementById('closedRecommendations').textContent = stats.closed_count;
-            document.getElementById('avgGain').textContent = `+${stats.avg_gain.toFixed(2)}%`;
-            document.getElementById('avgLoss').textContent = `${stats.avg_loss.toFixed(2)}%`;
-            document.getElementById('profitFactor').textContent = stats.profit_factor.toFixed(2);
-            
-            if (stats.best_performance) {
-              document.getElementById('bestPerformance').innerHTML = `
-                <div class="text-2xl font-bold text-success">${stats.best_performance.ticker}</div>
-                <div class="text-lg text-success">+${stats.best_performance.gain.toFixed(2)}%</div>
-                <div class="text-sm text-gray-400">${formatDate(stats.best_performance.date)}</div>
-              `;
-            }
-          }
+        const closedRecs = allRecommendations.filter(r => r.status && r.status.startsWith('FINALIZADA'));
+        const wins = closedRecs.filter(r => r.status === 'FINALIZADA_GANHO');
+        const losses = closedRecs.filter(r => r.status === 'FINALIZADA_PERDA');
+        
+        const successRate = closedRecs.length > 0 ? (wins.length / closedRecs.length * 100) : 0;
+        const avgGain = wins.length > 0 ? wins.reduce((sum, r) => sum + (r.performance || 0), 0) / wins.length : 0;
+        const avgLoss = losses.length > 0 ? losses.reduce((sum, r) => sum + (r.performance || 0), 0) / losses.length : 0;
+        const profitFactor = Math.abs(avgLoss) > 0 ? Math.abs(avgGain / avgLoss) : 0;
+        
+        // Update UI
+        document.getElementById('successRate').textContent = `${successRate.toFixed(1)}%`;
+        document.getElementById('closedRecommendations').textContent = closedRecs.length;
+        document.getElementById('avgGain').textContent = `+${Math.abs(avgGain).toFixed(2)}%`;
+        document.getElementById('avgLoss').textContent = `${avgLoss.toFixed(2)}%`;
+        document.getElementById('profitFactor').textContent = profitFactor.toFixed(2);
+        
+        // Best performance
+        if (wins.length > 0) {
+          const bestWin = wins.reduce((best, current) => 
+            (current.performance || 0) > (best.performance || 0) ? current : best
+          );
+          
+          document.getElementById('bestPerformance').innerHTML = `
+            <div class="text-2xl font-bold text-success">${bestWin.ticker}</div>
+            <div class="text-lg text-success">+${(bestWin.performance || 0).toFixed(2)}%</div>
+            <div class="text-sm text-gray-400">${formatDate(bestWin.created_at)}</div>
+          `;
         }
       } catch (error) {
-        console.error('Error loading statistics:', error);
+        console.error('Erro ao calcular estatísticas:', error);
       }
     }
 
@@ -717,31 +772,30 @@
     }
 
     // Update performance chart
-    async function updatePerformanceChart() {
+    function updatePerformanceChart() {
       try {
-        const response = await fetch('/api/recommendations/free/performance-history', {
-          headers: { 'Authorization': `Bearer ${userToken}` }
-        });
-
-        if (response.ok) {
-          const result = await response.json();
-          if (result.success) {
-            const data = result.history;
-            
-            performanceChart.data.labels = data.map(d => d.ticker);
-            performanceChart.data.datasets[0].data = data.map(d => d.performance);
-            performanceChart.data.datasets[0].backgroundColor = data.map(d => 
-              d.performance >= 0 ? 'rgba(16, 185, 129, 0.6)' : 'rgba(239, 68, 68, 0.6)'
-            );
-            performanceChart.data.datasets[0].borderColor = data.map(d => 
-              d.performance >= 0 ? '#10b981' : '#ef4444'
-            );
-            
-            performanceChart.update();
-          }
+        // Filter closed recommendations with performance data
+        const closedRecs = allRecommendations.filter(r => 
+          r.status && r.status.startsWith('FINALIZADA') && r.performance !== undefined
+        );
+        
+        // Get the most recent 10
+        const recentClosed = closedRecs.slice(-10);
+        
+        if (recentClosed.length > 0) {
+          performanceChart.data.labels = recentClosed.map(d => d.ticker);
+          performanceChart.data.datasets[0].data = recentClosed.map(d => d.performance || 0);
+          performanceChart.data.datasets[0].backgroundColor = recentClosed.map(d => 
+            (d.performance || 0) >= 0 ? 'rgba(16, 185, 129, 0.6)' : 'rgba(239, 68, 68, 0.6)'
+          );
+          performanceChart.data.datasets[0].borderColor = recentClosed.map(d => 
+            (d.performance || 0) >= 0 ? '#10b981' : '#ef4444'
+          );
         }
+        
+        performanceChart.update();
       } catch (error) {
-        console.error('Error loading performance history:', error);
+        console.error('Erro ao atualizar gráfico de performance:', error);
       }
     }
 
@@ -760,22 +814,26 @@
     // Refresh recommendations
     async function refreshRecommendations() {
       const btn = event.target.closest('button');
+      const originalText = btn.innerHTML;
+      
       btn.disabled = true;
       btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Atualizando...';
       
       await loadRecommendations();
       
       btn.disabled = false;
-      btn.innerHTML = '<i class="fas fa-sync mr-2"></i>Atualizar';
+      btn.innerHTML = originalText;
     }
 
     // Format date
     function formatDate(dateString) {
+      if (!dateString) return '--';
       return new Date(dateString).toLocaleDateString('pt-BR');
     }
 
     // Calculate duration
     function calculateDuration(startDate) {
+      if (!startDate) return '--';
       const start = new Date(startDate);
       const now = new Date();
       const days = Math.floor((now - start) / (1000 * 60 * 60 * 24));
@@ -783,12 +841,13 @@
     }
 
     // Show error
-    function showError() {
+    function showError(message = 'Erro ao carregar recomendações') {
       const container = document.getElementById('recommendationsContainer');
       container.innerHTML = `
         <div class="col-span-2 text-center py-12">
           <i class="fas fa-exclamation-triangle text-6xl text-danger mb-4"></i>
-          <p class="text-xl text-gray-400">Erro ao carregar recomendações</p>
+          <p class="text-xl text-gray-400">${message}</p>
+          <p class="text-sm text-gray-500 mt-2">Verifique sua conexão e tente novamente</p>
           <button onclick="loadRecommendations()" class="mt-4 bg-primary hover:bg-primary/80 text-white px-6 py-2 rounded-lg">
             Tentar Novamente
           </button>
@@ -803,63 +862,34 @@
       window.location.href = '/';
     }
 
-    // Initialize on load
-    document.addEventListener('DOMContentLoaded', init);
-
-    // Load mini charts after cards are rendered
-    async function loadMiniCharts() {
-      for (const rec of recommendations) {
-        const canvas = document.getElementById(`miniChart${rec.id}`);
-        if (canvas) {
-          const ctx = canvas.getContext('2d');
-          
-          // Simple mini chart with fake data for now
-          new Chart(ctx, {
-            type: 'line',
-            data: {
-              labels: ['', '', '', '', '', '', ''],
-              datasets: [{
-                data: generateMiniChartData(rec),
-                borderColor: rec.action === 'COMPRA' ? '#10b981' : '#ef4444',
-                borderWidth: 2,
-                tension: 0.4,
-                pointRadius: 0,
-                fill: true,
-                backgroundColor: rec.action === 'COMPRA' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)'
-              }]
-            },
-            options: {
-              responsive: true,
-              maintainAspectRatio: false,
-              plugins: {
-                legend: { display: false },
-                tooltip: { enabled: false }
-              },
-              scales: {
-                x: { display: false },
-                y: { display: false }
-              }
-            }
-          });
-        }
+    // Test function for debugging
+    window.testConnection = async function() {
+      console.log('🧪 Testando conexão...');
+      try {
+        const response = await fetch('/api/recommendations/admin/all', {
+          headers: { 'Authorization': `Bearer ${userToken}` }
+        });
+        console.log('Status:', response.status);
+        const data = await response.json();
+        console.log('Data:', data);
+      } catch (error) {
+        console.error('Erro:', error);
       }
-    }
+    };
 
-    // Generate mini chart data
-    function generateMiniChartData(rec) {
-      const basePrice = rec.entry_price;
-      const trend = rec.action === 'COMPRA' ? 1 : -1;
-      const volatility = 0.02;
-      
-      return Array.from({length: 7}, (_, i) => {
-        const randomFactor = (Math.random() - 0.5) * volatility;
-        const trendFactor = trend * (i / 7) * 0.03;
-        return basePrice * (1 + trendFactor + randomFactor);
-      });
-    }
+    // Initialize on load
+    document.addEventListener('DOMContentLoaded', function() {
+      console.log('📄 DOM carregado - inicializando...');
+      init();
+    });
 
-    // Call loadMiniCharts after displaying recommendations
-    window.displayRecommendations = function() {
-      displayRecommendations();
-      setTimeout(loadMiniCharts, 100);
-    }
+    // Also try window.onload as backup
+    window.addEventListener('load', function() {
+      console.log('🎯 Window loaded - verificando inicialização...');
+      if (!userToken) {
+        init();
+      }
+    });
+  </script>
+</body>
+</html>
