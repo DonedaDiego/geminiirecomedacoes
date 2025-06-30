@@ -512,10 +512,10 @@ def get_portfolio_assets(admin_id, portfolio_name):
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
-@admin_bp.route('/portfolio/add-asset', methods=['POST'])
+
 @require_admin()
-def add_portfolio_asset(admin_id):
-    """Adicionar ativo a carteira"""
+def add_portfolio_asset_admin(admin_id):
+    """Adicionar ativo a carteira (ROTA CORRIGIDA)"""
     try:
         data = request.get_json()
         
@@ -528,6 +528,7 @@ def add_portfolio_asset(admin_id):
         target_price = data.get('target_price')
         entry_date = data.get('entry_date')
         
+        # Validações básicas
         if not all([portfolio, ticker, weight, sector, entry_price, target_price]):
             return jsonify({'success': False, 'error': 'Dados obrigatórios faltando'}), 400
         
@@ -537,13 +538,21 @@ def add_portfolio_asset(admin_id):
             
         cursor = conn.cursor()
         
+        # Verificar se portfolio existe
+        cursor.execute("SELECT name FROM portfolios WHERE name = %s", (portfolio,))
+        if not cursor.fetchone():
+            cursor.close()
+            conn.close()
+            return jsonify({'success': False, 'error': f'Portfolio {portfolio} não encontrado'}), 404
+        
         try:
-            # Inserir ou atualizar ativo
+            # Inserir ou atualizar ativo (ON CONFLICT para evitar duplicatas)
             cursor.execute("""
                 INSERT INTO portfolio_assets (
                     portfolio_name, ticker, weight, sector, entry_price, 
-                    current_price, target_price, entry_date
-                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                    current_price, target_price, entry_date, is_active,
+                    created_at, updated_at
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
                 ON CONFLICT (portfolio_name, ticker) 
                 DO UPDATE SET 
                     weight = EXCLUDED.weight,
@@ -552,25 +561,39 @@ def add_portfolio_asset(admin_id):
                     current_price = EXCLUDED.current_price,
                     target_price = EXCLUDED.target_price,
                     entry_date = EXCLUDED.entry_date,
+                    is_active = true,
                     updated_at = CURRENT_TIMESTAMP
-            """, (portfolio, ticker, weight, sector, entry_price, current_price, target_price, entry_date))
+                RETURNING id
+            """, (
+                portfolio, ticker, weight, sector, entry_price, 
+                current_price, target_price, entry_date, True
+            ))
+            
+            result = cursor.fetchone()
+            asset_id = result[0] if result else None
             
             conn.commit()
-            message = f'Ativo {ticker} adicionado à carteira {portfolio}'
+            
+            message = f'Ativo {ticker} adicionado à carteira {portfolio} com sucesso!'
+            
+            cursor.close()
+            conn.close()
+            
+            return jsonify({
+                'success': True,
+                'message': message,
+                'asset_id': asset_id
+            })
             
         except Exception as e:
-            print(f"⚠️ Erro ao adicionar ativo: {e}")
-            message = f'Erro: não foi possível adicionar ativo'
-        
-        cursor.close()
-        conn.close()
-        
-        return jsonify({
-            'success': True,
-            'message': message
-        })
+            conn.rollback()
+            cursor.close()
+            conn.close()
+            print(f"❌ Erro SQL ao inserir ativo: {e}")
+            return jsonify({'success': False, 'error': f'Erro no banco de dados: {str(e)}'}), 500
         
     except Exception as e:
+        print(f"❌ Erro geral ao adicionar ativo: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @admin_bp.route('/portfolio/remove-asset', methods=['DELETE'])
@@ -1427,6 +1450,82 @@ def get_recent_activity(admin_id):
         print(f"Erro na atividade recente: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
+# ===== ADICIONE ESTA ROTA NO SEU admin_routes.py =====
+# Coloque no final do arquivo, antes da linha "def get_admin_blueprint():"
+
+@admin_bp.route('/portfolio/add-asset', methods=['POST'])
+@require_admin()
+def add_portfolio_asset_missing_route(admin_id):
+    """Adicionar ativo à carteira - ROTA QUE ESTAVA FALTANDO"""
+    try:
+        data = request.get_json()
+        
+        portfolio = data.get('portfolio')
+        ticker = data.get('ticker', '').upper()
+        weight = data.get('weight')
+        sector = data.get('sector')
+        entry_price = data.get('entry_price')
+        current_price = data.get('current_price')
+        target_price = data.get('target_price')
+        entry_date = data.get('entry_date')
+        
+        # Validações
+        if not all([portfolio, ticker, weight, sector, entry_price, target_price]):
+            return jsonify({'success': False, 'error': 'Dados obrigatórios faltando'}), 400
+        
+        conn = get_db_connection()
+        if not conn:
+            return jsonify({'success': False, 'error': 'Erro de conexão'}), 500
+            
+        cursor = conn.cursor()
+        
+        try:
+            # Inserir ativo
+            cursor.execute("""
+                INSERT INTO portfolio_assets (
+                    portfolio_name, ticker, weight, sector, entry_price, 
+                    current_price, target_price, entry_date, is_active,
+                    created_at, updated_at
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                ON CONFLICT (portfolio_name, ticker) 
+                DO UPDATE SET 
+                    weight = EXCLUDED.weight,
+                    sector = EXCLUDED.sector,
+                    entry_price = EXCLUDED.entry_price,
+                    current_price = EXCLUDED.current_price,
+                    target_price = EXCLUDED.target_price,
+                    entry_date = EXCLUDED.entry_date,
+                    is_active = true,
+                    updated_at = CURRENT_TIMESTAMP
+                RETURNING id
+            """, (
+                portfolio, ticker, weight, sector, entry_price, 
+                current_price, target_price, entry_date, True
+            ))
+            
+            result = cursor.fetchone()
+            asset_id = result[0] if result else None
+            
+            conn.commit()
+            cursor.close()
+            conn.close()
+            
+            return jsonify({
+                'success': True,
+                'message': f'Ativo {ticker} adicionado à carteira {portfolio} com sucesso!',
+                'asset_id': asset_id
+            })
+            
+        except Exception as e:
+            conn.rollback()
+            cursor.close()
+            conn.close()
+            print(f"❌ Erro SQL: {e}")
+            return jsonify({'success': False, 'error': f'Erro no banco: {str(e)}'}), 500
+        
+    except Exception as e:
+        print(f"❌ Erro geral: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 # ===== FUNÇÃO EXPORT =====
 def get_admin_blueprint():
