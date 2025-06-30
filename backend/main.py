@@ -96,7 +96,7 @@ app.register_blueprint(get_swing_trade_ml_blueprint())
 app.register_blueprint(beta_regression_bp, url_prefix='/beta_regression')
 app.register_blueprint(chart_ativos_bp)
 register_atsmom_routes(app)
-recommendations_free_bp()
+app.register_blueprint(recommendations_free_bp)
 
 # Registrar blueprints condicionais
 if MP_AVAILABLE and mercadopago_bp:
@@ -892,19 +892,19 @@ def create_app():
     initialize_database()
     return app
 
-# if __name__ == "__main__":
+if __name__ == "__main__":
    
-#     # Inicializar banco
-#     initialize_database()
+    # Inicializar banco
+    initialize_database()
     
-#     # Configurar para desenvolvimento
-#     app.config['ENV'] = 'development'
-#     app.config['DEBUG'] = True
+    # Configurar para desenvolvimento
+    app.config['ENV'] = 'development'
+    app.config['DEBUG'] = True
     
-#     # Executar Flask
-#     print("🚀 Iniciando servidor Flask local...")
-#     app.run(
-#         host='0.0.0.0',
-#         port=5000,
-#         debug=True
-#     )
+    # Executar Flask
+    print("🚀 Iniciando servidor Flask local...")
+    app.run(
+        host='0.0.0.0',
+        port=5000,
+        debug=True
+    )

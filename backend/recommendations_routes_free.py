@@ -447,7 +447,5 @@ def get_all_recommendations():
 
 # Função para obter o blueprint
 def get_recommendations_free_blueprint():
-    """Retornar blueprint para registrar no Flask"""
-    # Criar tabela se não existir
     create_recommendations_table()
     return recommendations_free_bp
