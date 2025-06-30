@@ -408,18 +408,16 @@ def setup_enhanced_database():
     print("🚀 Configurando banco sincronizado com MercadoPago Service...")
     
     if test_connection():
-        
         create_plans_table()
         create_users_table()
-        update_users_table_for_service()  # Para compatibilidade com users existentes
+        update_users_table_for_service()
         
         create_payments_table()
         create_payment_history()
-        
         create_password_reset_table()
-        
         create_coupons_table()
         
+        create_portfolio_tables()  # ✅ ADICIONAR ESTA LINHA
         
         create_initial_admin()
         
@@ -600,18 +598,119 @@ def validate_coupon(code, plan_name, user_id):
     except Exception as e:
         return {'valid': False, 'error': f'Erro interno: {str(e)}'}
 
+
+def create_portfolio_tables():
+    """Criar tabelas do sistema de portfolios"""
+    try:
+        conn = get_db_connection()
+        if not conn:
+            return False
+            
+        cursor = conn.cursor()
+        
+        # 1. Tabela portfolios
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS portfolios (
+                id SERIAL PRIMARY KEY,
+                name VARCHAR(50) UNIQUE NOT NULL,
+                display_name VARCHAR(100) NOT NULL,
+                description TEXT,
+                is_active BOOLEAN DEFAULT true,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        """)
+        
+        # 2. Inserir portfolios padrão
+        cursor.execute("""
+            INSERT INTO portfolios (name, display_name, description, is_active)
+            VALUES 
+                ('smart_bdr', 'Smart BDR', 'Carteira de BDRs inteligentes', true),
+                ('growth', 'Growth', 'Carteira de crescimento', true),
+                ('smallcaps', 'Small Caps', 'Carteira de pequenas empresas', true),
+                ('bluechips', 'Blue Chips', 'Carteira de grandes empresas', true)
+            ON CONFLICT (name) DO NOTHING
+        """)
+        
+        # 3. Tabela portfolio_assets (SEM FOREIGN KEY)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS portfolio_assets (
+                id SERIAL PRIMARY KEY,
+                portfolio_name VARCHAR(50) NOT NULL,
+                ticker VARCHAR(10) NOT NULL,
+                weight DECIMAL(5,2) DEFAULT 0,
+                sector VARCHAR(100),
+                entry_price DECIMAL(10,2),
+                current_price DECIMAL(10,2),
+                target_price DECIMAL(10,2),
+                entry_date DATE,
+                is_active BOOLEAN DEFAULT true,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(portfolio_name, ticker)
+            );
+        """)
+        
+        # 4. Tabela portfolio_recommendations
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS portfolio_recommendations (
+                id SERIAL PRIMARY KEY,
+                portfolio_name VARCHAR(50) NOT NULL,
+                ticker VARCHAR(10) NOT NULL,
+                action_type VARCHAR(10) NOT NULL CHECK (action_type IN ('BUY', 'SELL', 'HOLD')),
+                target_weight DECIMAL(5,2),
+                recommendation_date DATE NOT NULL,
+                reason TEXT,
+                price_target DECIMAL(10,2),
+                current_price DECIMAL(10,2),
+                entry_price DECIMAL(10,2),
+                market_price DECIMAL(10,2),
+                is_active BOOLEAN DEFAULT true,
+                created_by INTEGER,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        """)
+        
+        # 5. Tabela user_portfolios
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS user_portfolios (
+                id SERIAL PRIMARY KEY,
+                user_id INTEGER NOT NULL,
+                portfolio_name VARCHAR(50) NOT NULL,
+                is_active BOOLEAN DEFAULT true,
+                granted_by INTEGER,
+                granted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(user_id, portfolio_name)
+            );
+        """)
+        
+        # 6. Criar índices
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_portfolio_assets_portfolio ON portfolio_assets(portfolio_name)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_portfolio_recommendations_portfolio ON portfolio_recommendations(portfolio_name)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_user_portfolios_user ON user_portfolios(user_id)")
+        
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        print("✅ Tabelas de portfolio criadas!")
+        return True
+        
+    except Exception as e:
+        print(f"❌ Erro ao criar tabelas de portfolio: {e}")
+        return False
+
+
+
+
 if __name__ == "__main__":
-    print("🔥 CONFIGURANDO BANCO SINCRONIZADO COM MERCADOPAGO SERVICE")
     print("=" * 60)
     
-    # Configurar banco completo
     setup_enhanced_database()
     
-    print("\n🔍 VERIFICANDO COMPATIBILIDADE...")
     verify_service_compatibility()
     
-    print("\n🧹 LIMPANDO DADOS ANTIGOS...")
     cleanup_expired_tokens()
     
-    print("\n✅ CONFIGURAÇÃO CONCLUÍDA!")
-    print("🎯 Banco pronto para MercadoPago Service!")
+    
