@@ -118,6 +118,7 @@
                                 </a>
                             </label>
                         </div>
+                    </div>
                    
                     <!-- Botão Submit -->
                     <button type="submit" 
@@ -208,6 +209,7 @@
             loadingOverlay.classList.remove('hidden');
             
             try {
+                // ✅ CORREÇÃO: Removido o campo inexistente 'marketing_consent'
                 const response = await fetch('/api/auth/register', {
                     method: 'POST',
                     headers: {
@@ -216,8 +218,7 @@
                     body: JSON.stringify({
                         name: name,
                         email: email,
-                        password: password,
-                        marketing_consent: document.getElementById('acceptMarketing').checked
+                        password: password
                     })
                 });
                 
