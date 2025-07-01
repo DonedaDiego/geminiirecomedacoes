@@ -29,7 +29,7 @@ try:
     mp_sdk.request_options.timeout = 30
     mp_sdk.request_options.max_retries = 3
     preference_client = mp_sdk.preference()
-    print("✅ SDK Mercado Pago carregado com configurações de aprovação!")
+    
 except ImportError:
     print("❌ Módulo mercadopago não encontrado. Instale: pip install mercadopago")
 except Exception as e:

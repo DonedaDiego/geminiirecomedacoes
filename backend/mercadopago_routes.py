@@ -10,7 +10,7 @@ try:
     import mercadopago
     import mercadopago_service
     MP_AVAILABLE = True
-    print("✅ SDK Mercado Pago carregado com sucesso!")
+    
 except ImportError as e:
     MP_AVAILABLE = False
     print(f"❌ SDK Mercado Pago não disponível: {e}")
@@ -293,11 +293,6 @@ def get_mercadopago_blueprint():
     """Retornar blueprint otimizado"""
     return mercadopago_bp
 
-# ===== DEBUG INFO =====
-print(f"🚀 MercadoPago Routes carregado! SDK: {'✅' if MP_AVAILABLE else '❌'}")
-if not MP_AVAILABLE:
-    print("📦 Para corrigir: pip install mercadopago")# mercadopago_routes.py - VERSÃO CORRIGIDA COM VERIFICAÇÃO DE SDK
-# ========================================================================
 
 from flask import Blueprint, request, jsonify
 from datetime import datetime
@@ -594,7 +589,3 @@ def get_mercadopago_blueprint():
     """Retornar blueprint otimizado"""
     return mercadopago_bp
 
-# ===== DEBUG INFO =====
-print(f"🚀 MercadoPago Routes carregado! SDK: {'✅' if MP_AVAILABLE else '❌'}")
-if not MP_AVAILABLE:
-    print("📦 Para corrigir: pip install mercadopago")

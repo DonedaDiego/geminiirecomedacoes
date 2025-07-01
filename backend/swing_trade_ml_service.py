@@ -191,12 +191,7 @@ class SwingTradeMachineLearningService:
 
     def prepare_model_data(self, df):
         """Prepara os dados para o modelo - VERSÃO CORRIGIDA"""
-        print("Preparando dados para o modelo...")
-        
-        # Debug: verificar estrutura do DataFrame
-        print(f"Shape do DataFrame: {df.shape}")
-        print(f"Colunas disponíveis: {df.columns.tolist()}")
-        
+         
         # Features
         features = ['Smoothed_Close', 'RSI', 'stochastic_k', 'Williams_%R', 'PROC', 'Z_Score', 'Volatility']
         
@@ -904,12 +899,6 @@ Sinal histórico: {'COMPRA' if historical_prediction == 1 else 'VENDA'}
 
     def debug_chart_data(self, df):
         """Debug para verificar os dados do gráfico"""
-        print("=== DEBUG DOS DADOS DO GRÁFICO ===")
-        print(f"Shape do DataFrame: {df.shape}")
-        print(f"Colunas disponíveis: {df.columns.tolist()}")
-        print(f"Index type: {type(df.index)}")
-        print(f"Últimas 5 linhas:")
-        print(df.tail())
         
         # Verificar se as colunas necessárias existem
         required_cols = ['Open', 'High', 'Low', 'Close', 'prediction']

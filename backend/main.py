@@ -44,7 +44,7 @@ mercadopago_bp = None
 try:
     mercadopago_bp = get_mercadopago_blueprint()
     MP_AVAILABLE = True
-    print("✅ Blueprint Mercado Pago carregado com sucesso!")
+    
 except ImportError as e:
     print(f"⚠️ Mercado Pago não disponível: {e}")
 except Exception as e:
@@ -73,7 +73,7 @@ carrossel_bp = None
 try:
     carrossel_bp = get_carrossel_blueprint()
     CARROSSEL_AVAILABLE = True
-    print("✅ Blueprint Carrossel YFinance carregado com sucesso!")
+    
 except ImportError as e:
     print(f"⚠️ Carrossel não disponível: {e}")
     CARROSSEL_AVAILABLE = False
@@ -107,7 +107,7 @@ if MP_AVAILABLE and mercadopago_bp:
 if ADMIN_AVAILABLE and admin_bp:
     try:
         app.register_blueprint(admin_bp)
-        print("✅ Blueprint Admin registrado com sucesso!")
+        
     except Exception as e:
         print(f"❌ Erro ao registrar admin blueprint: {e}")
         ADMIN_AVAILABLE = False
@@ -115,7 +115,7 @@ if ADMIN_AVAILABLE and admin_bp:
 if CARROSSEL_AVAILABLE and carrossel_bp:
     try:
         app.register_blueprint(carrossel_bp)
-        print("✅ Blueprint Carrossel registrado com sucesso!")
+        
     except Exception as e:
         print(f"❌ Erro ao registrar carrossel blueprint: {e}")
         CARROSSEL_AVAILABLE = False
@@ -124,7 +124,7 @@ try:
     from newsletter_routes import get_newsletter_blueprint
     newsletter_bp = get_newsletter_blueprint()
     app.register_blueprint(newsletter_bp)
-    print("✅ Newsletter blueprint registrado!")
+    
 except Exception as e:
     print(f"❌ Erro newsletter: {e}")
 

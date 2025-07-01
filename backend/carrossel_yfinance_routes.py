@@ -312,5 +312,3 @@ def internal_error(error):
         'message': 'Tente novamente em alguns instantes'
     }), 500
 
-# Log de inicialização do blueprint
-logger.info("🎠 Blueprint do Carrossel YFinance carregado com sucesso!")

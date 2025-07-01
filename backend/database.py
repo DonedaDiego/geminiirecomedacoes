@@ -86,7 +86,6 @@ def create_plans_table():
         cursor.close()
         conn.close()
         
-        print("✅ Planos sincronizados: Pro (id=1), Premium (id=2), Básico (id=3)")
         return True
         
     except Exception as e:
@@ -146,9 +145,7 @@ def update_users_table_for_service():
             return False
             
         cursor = conn.cursor()
-        
-        print("🔧 Atualizando tabela users para compatibilidade com MercadoPago service...")
-        
+               
         # Adicionar campos necessários para o service
         cursor.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS subscription_status VARCHAR(20) DEFAULT 'inactive'")
         cursor.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS subscription_plan VARCHAR(50)")
@@ -315,7 +312,6 @@ def create_coupons_table():
         cursor.close()
         conn.close()
         
-        print("✅ Sistema de cupons criado (sincronizado com service)!")
         return True
         
     except Exception as e:
@@ -405,7 +401,7 @@ def create_initial_admin():
 
 def setup_enhanced_database():
     """🔥 Configurar banco SINCRONIZADO com MercadoPago Service"""
-    print("🚀 Configurando banco sincronizado com MercadoPago Service...")
+    
     
     if test_connection():
         create_plans_table()
@@ -694,7 +690,7 @@ def create_portfolio_tables():
         cursor.close()
         conn.close()
         
-        print("✅ Tabelas de portfolio criadas!")
+        
         return True
         
     except Exception as e:
@@ -702,6 +698,53 @@ def create_portfolio_tables():
         return False
 
 
+def get_portfolio_assets(portfolio_name):
+    """Buscar ativos de uma carteira específica"""
+    try:
+        conn = get_db_connection()
+        if not conn:
+            return []
+            
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            SELECT id, ticker, weight, sector, entry_price, current_price, 
+                   target_price, entry_date, is_active, created_at, updated_at
+            FROM portfolio_assets 
+            WHERE portfolio_name = %s AND is_active = true
+            ORDER BY weight DESC, ticker ASC
+        """, (portfolio_name,))
+        
+        assets = []
+        
+        for row in cursor.fetchall():
+            asset_id, ticker, weight, sector, entry_price, current_price, target_price, entry_date, is_active, created_at, updated_at = row
+            
+            assets.append({
+                'id': asset_id,
+                'ticker': ticker,
+                'weight': float(weight) if weight else 0.0,
+                'sector': sector or 'N/A',
+                'entry_price': float(entry_price) if entry_price else 0.0,
+                'current_price': float(current_price) if current_price else 0.0,
+                'target_price': float(target_price) if target_price else 0.0,
+                'entry_date': entry_date.isoformat() if entry_date else None,
+                'is_active': is_active,
+                'created_at': created_at.isoformat() if created_at else None,
+                'updated_at': updated_at.isoformat() if updated_at else None
+            })
+        
+        cursor.close()
+        conn.close()
+        
+        return assets
+        
+    except Exception as e:
+        print(f"❌ Erro em get_portfolio_assets: {e}")
+        return []
+
+  
+    
 
 
 if __name__ == "__main__":
