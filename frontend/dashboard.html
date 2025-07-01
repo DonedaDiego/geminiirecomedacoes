@@ -809,7 +809,6 @@
       }
     }
 
-    // Load Free Recommendations Stats
     // Load Free Recommendations Stats com retry
     async function loadFreeRecommendationsStatsWithRetry(attempt = 1) {
       if (!userToken) {
@@ -820,7 +819,8 @@
       try {
         console.log(`📡 Carregando estatísticas das recomendações free (tentativa ${attempt})...`);
         
-        const response = await fetch('/api/recommendations/admin/all', {
+        // ✅ MUDANÇA PRINCIPAL: Usar endpoint público (/free/all) ao invés de admin
+        const response = await fetch('/api/recommendations/free/all', {
           headers: { 
             'Authorization': `Bearer ${userToken}`,
             'Content-Type': 'application/json'

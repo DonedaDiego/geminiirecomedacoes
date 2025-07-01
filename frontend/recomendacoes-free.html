@@ -442,16 +442,17 @@
       console.log(`📡 Carregando recomendações (tentativa ${attempt})...`);
       
       try {
-        const response = await fetch('/api/recommendations/admin/all', {
+        // ✅ MUDANÇA PRINCIPAL: Usar endpoint público (/free/all) ao invés de admin
+        const response = await fetch('/api/recommendations/free/all', {
           headers: { 
             'Authorization': `Bearer ${userToken}`,
             'Content-Type': 'application/json'
           },
           cache: 'no-cache'
         });
-
+    
         console.log('📊 Status da resposta:', response.status, response.statusText);
-
+    
         // Tratamento específico para diferentes códigos de erro
         if (response.status === 401) {
           console.log('🔑 Token expirado - tentando renovar...');
@@ -460,7 +461,7 @@
             return loadRecommendationsWithRetry(attempt + 1);
           }
         }
-
+    
         if (response.status === 403) {
           console.log('🚫 Acesso negado - verificando permissões...');
           
@@ -472,21 +473,21 @@
           // Se ainda assim não conseguir, mostrar erro específico
           throw new Error('Acesso negado. Verifique suas permissões ou contate o suporte.');
         }
-
+    
         if (response.status === 404) {
           console.log('🔍 Endpoint não encontrado');
           throw new Error('Serviço temporariamente indisponível');
         }
-
+    
         if (response.status >= 500) {
           console.log('🛠️ Erro do servidor');
           throw new Error('Erro interno do servidor. Tente novamente em alguns minutos.');
         }
-
+    
         if (!response.ok) {
           throw new Error(`Erro HTTP ${response.status}: ${response.statusText}`);
         }
-
+    
         const result = await response.json();
         console.log('📄 Resultado da API recebido');
         

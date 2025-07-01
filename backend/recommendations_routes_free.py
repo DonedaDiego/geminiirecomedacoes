@@ -1,4 +1,4 @@
-# recommendations_routes_free.py
+# recommendations_routes_free.py - VERSÃO ATUALIZADA COM ENDPOINTS PÚBLICOS
 
 from flask import Blueprint, request, jsonify
 from datetime import datetime, timezone
@@ -9,7 +9,7 @@ from functools import wraps
 # Criar Blueprint
 recommendations_free_bp = Blueprint('recommendations_free', __name__, url_prefix='/api/recommendations')
 
-# Decorator para verificar autenticação
+# Decorator para verificar autenticação (USUÁRIOS COMUNS)
 def require_auth(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -32,12 +32,12 @@ def require_auth(f):
     
     return decorated_function
 
-# ===== ROTAS PÚBLICAS (REQUEREM AUTENTICAÇÃO) =====
+# ===== ROTAS PÚBLICAS PARA USUÁRIOS COMUNS =====
 
 @recommendations_free_bp.route('/free/active', methods=['GET'])
 @require_auth
 def get_active_recommendations():
-    """Buscar recomendações ativas"""
+    """✅ PÚBLICO: Buscar recomendações ativas"""
     try:
         # Atualizar preços antes de retornar
         RecommendationsServiceFree.update_current_prices()
@@ -57,10 +57,65 @@ def get_active_recommendations():
             'error': f'Erro ao buscar recomendações: {str(e)}'
         }), 500
 
+@recommendations_free_bp.route('/free/all', methods=['GET'])
+@require_auth
+def get_all_recommendations_public():
+    """✅ PÚBLICO: Buscar todas as recomendações (ativas + fechadas)"""
+    try:
+        from database import get_db_connection
+        conn = get_db_connection()
+        if not conn:
+            return jsonify({'success': False, 'error': 'Erro de conexão'}), 500
+            
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT id, ticker, company_name, action, entry_price, stop_loss,
+                   target_price, current_price, confidence, risk_reward,
+                   technical_data, status, created_at, performance, closed_at
+            FROM recommendations_free
+            ORDER BY created_at DESC
+            LIMIT 100
+        """)
+        
+        recommendations = []
+        for row in cursor.fetchall():
+            recommendations.append({
+                'id': row[0],
+                'ticker': row[1],
+                'company_name': row[2],
+                'action': row[3],
+                'entry_price': float(row[4]),
+                'stop_loss': float(row[5]),
+                'target_price': float(row[6]),
+                'current_price': float(row[7]),
+                'confidence': float(row[8]),
+                'risk_reward': float(row[9]),
+                'technical_data': row[10],
+                'status': row[11],
+                'created_at': row[12].isoformat() if row[12] else None,
+                'performance': float(row[13]) if row[13] else 0,
+                'closed_at': row[14].isoformat() if row[14] else None
+            })
+        
+        cursor.close()
+        conn.close()
+        
+        return jsonify({
+            'success': True,
+            'recommendations': recommendations,
+            'count': len(recommendations)
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'Erro ao buscar recomendações: {str(e)}'
+        }), 500
+
 @recommendations_free_bp.route('/free/statistics', methods=['GET'])
 @require_auth
-def get_statistics():
-    """Buscar estatísticas de performance"""
+def get_statistics_public():
+    """✅ PÚBLICO: Buscar estatísticas de performance"""
     try:
         stats = RecommendationsServiceFree.get_statistics()
         
@@ -83,8 +138,8 @@ def get_statistics():
 
 @recommendations_free_bp.route('/free/<int:rec_id>/chart-data', methods=['GET'])
 @require_auth
-def get_recommendation_chart(rec_id):
-    """Buscar dados para gráfico de uma recomendação"""
+def get_recommendation_chart_public(rec_id):
+    """✅ PÚBLICO: Buscar dados para gráfico de uma recomendação"""
     try:
         # Buscar ticker da recomendação
         from database import get_db_connection
@@ -125,8 +180,8 @@ def get_recommendation_chart(rec_id):
 
 @recommendations_free_bp.route('/free/performance-history', methods=['GET'])
 @require_auth
-def get_performance_history():
-    """Buscar histórico de performance"""
+def get_performance_history_public():
+    """✅ PÚBLICO: Buscar histórico de performance"""
     try:
         history = RecommendationsServiceFree.get_performance_history()
         
@@ -141,7 +196,7 @@ def get_performance_history():
             'error': f'Erro ao buscar histórico: {str(e)}'
         }), 500
 
-# ===== ROTAS ADMIN =====
+# ===== ROTAS ADMIN (MANTIDAS COMO ESTAVAM) =====
 
 def require_admin(f):
     @wraps(f)
@@ -444,6 +499,83 @@ def get_all_recommendations():
             'success': False,
             'error': f'Erro ao buscar recomendações: {str(e)}'
         }), 500
+
+
+# ===== ADICIONAR ESTE ENDPOINT NO recommendations_routes_free.py =====
+
+@recommendations_free_bp.route('/free/dashboard-stats', methods=['GET'])
+@require_auth
+def get_dashboard_stats():
+    """✅ PÚBLICO: Estatísticas simplificadas para o dashboard"""
+    try:
+        from database import get_db_connection
+        conn = get_db_connection()
+        if not conn:
+            return jsonify({
+                'success': True,
+                'stats': {
+                    'active_count': 0,
+                    'success_rate': 0,
+                    'days_to_next_update': 30
+                }
+            })
+            
+        cursor = conn.cursor()
+        
+        # Contar recomendações ativas
+        cursor.execute("""
+            SELECT COUNT(*) FROM recommendations_free 
+            WHERE status = 'ATIVA'
+        """)
+        active_count = cursor.fetchone()[0] or 0
+        
+        # Calcular taxa de sucesso
+        cursor.execute("""
+            SELECT 
+                COUNT(CASE WHEN status = 'FINALIZADA_GANHO' THEN 1 END) as wins,
+                COUNT(CASE WHEN status LIKE 'FINALIZADA%' THEN 1 END) as total_closed
+            FROM recommendations_free
+            WHERE created_at >= NOW() - INTERVAL '90 days'
+        """)
+        
+        result = cursor.fetchone()
+        wins = result[0] or 0
+        total_closed = result[1] or 0
+        success_rate = (wins / total_closed * 100) if total_closed > 0 else 0
+        
+        cursor.close()
+        conn.close()
+        
+        # Calcular próxima atualização (primeira sexta do próximo mês)
+        from datetime import datetime
+        now = datetime.now()
+        next_month = datetime(now.year, now.month + 1, 1) if now.month < 12 else datetime(now.year + 1, 1, 1)
+        first_friday = next_month
+        while first_friday.weekday() != 4:  # 4 = sexta-feira
+            first_friday = datetime(first_friday.year, first_friday.month, first_friday.day + 1)
+        
+        days_to_next_update = (first_friday - now).days
+        
+        return jsonify({
+            'success': True,
+            'stats': {
+                'active_count': active_count,
+                'success_rate': round(success_rate, 1),
+                'days_to_next_update': max(1, days_to_next_update)
+            }
+        })
+        
+    except Exception as e:
+        print(f"Erro ao buscar estatísticas do dashboard: {e}")
+        # Retornar valores padrão em caso de erro
+        return jsonify({
+            'success': True,
+            'stats': {
+                'active_count': 0,
+                'success_rate': 0,
+                'days_to_next_update': 30
+            }
+        })
 
 # Função para obter o blueprint
 def get_recommendations_free_blueprint():
