@@ -569,6 +569,7 @@
     let userToken = null;
 
     // Initialize dashboard
+    // Initialize dashboard
     async function initDashboard() {
       console.log('🚀 Inicializando Dashboard Geminii...');
       
@@ -577,7 +578,7 @@
       
       await checkAuth();
       await loadUserStats();
-      await loadFreeRecommendationsStats(); 
+      await loadFreeRecommendationsStatsWithRetry(); // ⬅️ MUDANÇA AQUI
       checkApiStatus();
       setInterval(checkApiStatus, 30000);
       
@@ -629,6 +630,7 @@
     }
 
     // Check authentication
+    // Check authentication com retry
     async function checkAuth() {
       const token = localStorage.getItem('geminii_token');
       const userData = localStorage.getItem('geminii_user');
@@ -643,7 +645,11 @@
         console.log('🔍 Verificando autenticação com o servidor...');
         
         const response = await fetch('/api/auth/verify', {
-          headers: { 'Authorization': `Bearer ${token}` }
+          headers: { 
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          cache: 'no-cache'
         });
 
         const result = await response.json();
@@ -804,18 +810,50 @@
     }
 
     // Load Free Recommendations Stats
-    async function loadFreeRecommendationsStats() {
+    // Load Free Recommendations Stats com retry
+    async function loadFreeRecommendationsStatsWithRetry(attempt = 1) {
       if (!userToken) {
         console.log('⚠️ Token não disponível para carregar recomendações');
         return;
       }
 
       try {
-        console.log('📡 Carregando estatísticas das recomendações free...');
+        console.log(`📡 Carregando estatísticas das recomendações free (tentativa ${attempt})...`);
         
         const response = await fetch('/api/recommendations/admin/all', {
-          headers: { 'Authorization': `Bearer ${userToken}` }
+          headers: { 
+            'Authorization': `Bearer ${userToken}`,
+            'Content-Type': 'application/json'
+          },
+          cache: 'no-cache'
         });
+
+        console.log('📊 Status da resposta (recomendações):', response.status);
+
+        // Tratamento específico para erro 403
+        if (response.status === 403) {
+          console.log('🚫 Erro 403 nas recomendações - verificando auth...');
+          
+          // Tentar renovar a autenticação
+          await checkAuth();
+          
+          if (attempt < 3) {
+            console.log('🔄 Tentando carregar recomendações novamente...');
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            return loadFreeRecommendationsStatsWithRetry(attempt + 1);
+          }
+          
+          // Se esgotar tentativas, usar valores padrão
+          console.log('❌ Acesso negado às recomendações - usando valores padrão');
+          setDefaultRecommendationValues();
+          return;
+        }
+
+        if (response.status === 401) {
+          console.log('🔑 Token expirado para recomendações');
+          setDefaultRecommendationValues();
+          return;
+        }
 
         if (response.ok) {
           const result = await response.json();
@@ -862,22 +900,37 @@
               proximaAtualizacao: daysUntilUpdate + ' dias'
             });
             
+          } else {
+            throw new Error(result.error || 'Erro na API');
           }
+        } else {
+          throw new Error(`HTTP ${response.status}`);
         }
       } catch (error) {
-        console.error('❌ Erro ao carregar recomendações free:', error);
+        console.error(`❌ Erro ao carregar recomendações free (tentativa ${attempt}):`, error);
         
-        // Valores padrão em caso de erro
-        const activeSignalsEl = document.getElementById('activeSignalsCount');
-        const successRateEl = document.getElementById('freeSuccessRate');
-        const nextUpdateEl = document.getElementById('nextUpdateDays');
+        if (attempt < 3) {
+          console.log(`🔄 Tentando novamente em 3 segundos...`);
+          await new Promise(resolve => setTimeout(resolve, 3000));
+          return loadFreeRecommendationsStatsWithRetry(attempt + 1);
+        }
         
-        if (activeSignalsEl) activeSignalsEl.textContent = '--';
-        if (successRateEl) successRateEl.textContent = '--';
-        if (nextUpdateEl) nextUpdateEl.textContent = '--';
+        // Se esgotar todas as tentativas, usar valores padrão
+        setDefaultRecommendationValues();
       }
     }
-
+    // Definir valores padrão quando não conseguir carregar recomendações
+    function setDefaultRecommendationValues() {
+      console.log('📋 Definindo valores padrão para recomendações...');
+      
+      const activeSignalsEl = document.getElementById('activeSignalsCount');
+      const successRateEl = document.getElementById('freeSuccessRate');
+      const nextUpdateEl = document.getElementById('nextUpdateDays');
+      
+      if (activeSignalsEl) activeSignalsEl.textContent = '--';
+      if (successRateEl) successRateEl.textContent = '--';
+      if (nextUpdateEl) nextUpdateEl.textContent = '--';
+    }
 
     // Show premium feature dialog
     function showPremiumFeature(featureName) {
