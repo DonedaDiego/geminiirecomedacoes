@@ -19,6 +19,8 @@ from atsmom_routes import register_atsmom_routes
 from chart_ativos_routes import chart_ativos_bp
 from carrossel_yfinance_routes import get_carrossel_blueprint
 from recommendations_routes_free import get_recommendations_free_blueprint
+from volatilidade_routes import volatilidade_bp
+
 from dotenv import load_dotenv
 
 
@@ -117,6 +119,7 @@ app.register_blueprint(beta_regression_bp, url_prefix='/beta_regression')
 app.register_blueprint(chart_ativos_bp)
 register_atsmom_routes(app)
 recommendations_free_bp = get_recommendations_free_blueprint()
+app.register_blueprint(volatilidade_bp)
 app.register_blueprint(recommendations_free_bp)
 
 CORS(app, 
@@ -297,6 +300,11 @@ def atsmom_page():
 @app.route('/recomendacoes-free.html')
 def Recomendation_free():
     return send_from_directory('../frontend', 'recomendacoes-free.html')
+
+
+@app.route('/sup_res_vol.html')
+def Sup_Res_volatility():
+    return send_from_directory('../frontend', 'sup_res_vol.html')
 
 # ===== PÁGINAS DE RETORNO DO PAGAMENTO =====
 

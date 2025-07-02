@@ -51,7 +51,7 @@
       border-color: rgba(255, 255, 255, 0.2);
     }
     
-    .ml-dropdown {
+    .dropdown {
       position: absolute;
       top: 100%;
       left: 0;
@@ -70,7 +70,7 @@
       box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
     }
     
-    .ml-dropdown.show {
+    .dropdown.show {
       opacity: 1;
       visibility: visible;
       transform: translateY(0);
@@ -84,15 +84,9 @@
     }
     
     .ml-card:hover {
-      background: linear-gradient(135degce, rgba(138, 43, 226, 0.15), rgba(147, 51, 234, 0.08));
+      background: linear-gradient(135deg, rgba(138, 43, 226, 0.15), rgba(147, 51, 234, 0.08));
       border-color: rgba(138, 43, 226, 0.3);
       transform: translateY(-2px);
-    }
-    
-    .stat-card {
-      background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.8));
-      backdrop-filter: blur(20px);
-      border: 1px solid rgba(255, 255, 255, 0.3);
     }
     
     .navbar {
@@ -158,8 +152,6 @@
         </div>
         <div class="hidden md:flex items-center space-x-6">
           <a href="dashboard.html" class="nav-active transition-colors font-medium">Dashboard</a>
-          <!-- <a href="analises.html" class="text-gray-300 hover:text-primary transition-colors">Smart Carteiras</a> -->
-          <!-- <a href="swing-trade-machine-learning.html" class="text-gray-300 hover:text-primary transition-colors">Machine Learning</a> -->
         </div>
       </div>
   
@@ -174,7 +166,6 @@
       </div>
     </div>
   </nav>
-  
 
   <!-- Main Content -->
   <main class="pt-20 px-6 pb-12">
@@ -211,76 +202,6 @@
             <a href="planos.html" class="btn-primary px-6 py-3 rounded-xl font-semibold inline-block text-center">
               <i class="fas fa-crown mr-2"></i>Fazer Upgrade
             </a>
-            <!-- <button class="bg-gray-700 hover:bg-gray-600 text-gray-200 px-6 py-3 rounded-xl font-semibold transition-colors">
-              <i class="fas fa-cog mr-2"></i>Configurações
-            </button> -->
-          </div>
-        </div>
-      </div>
-
-      <!-- Stats Grid -->
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <div class="stat-card rounded-xl p-6 fade-in">
-          <div class="flex items-center justify-between mb-4">
-            <div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-              <i class="fas fa-chart-line text-primary text-xl"></i>
-            </div>
-            <div class="text-right">
-              <div id="totalPortfolios" class="text-2xl font-bold text-gray-800">0</div>
-              <div class="text-sm text-gray-600">Carteiras</div>
-            </div>
-          </div>
-          <div class="text-sm text-primary flex items-center">
-            <i class="fas fa-briefcase mr-1"></i>
-            <span id="portfoliosText">Disponíveis</span>
-          </div>
-        </div>
-
-        <div class="stat-card rounded-xl p-6 fade-in">
-          <div class="flex items-center justify-between mb-4">
-            <div class="w-12 h-12 bg-success/10 rounded-lg flex items-center justify-center">
-              <i class="fas fa-trending-up text-success text-xl"></i>
-            </div>
-            <div class="text-right">
-              <div id="totalRecommendations" class="text-2xl font-bold text-success">0</div>
-              <div class="text-sm text-gray-600">Recomendações</div>
-            </div>
-          </div>
-          <div class="text-sm text-success flex items-center">
-            <i class="fas fa-lightbulb mr-1"></i>
-            <span id="recommendationsText">Ativas</span>
-          </div>
-        </div>
-
-        <div class="stat-card rounded-xl p-6 fade-in">
-          <div class="flex items-center justify-between mb-4">
-            <div class="w-12 h-12 bg-warning/10 rounded-lg flex items-center justify-center">
-              <i class="fas fa-percentage text-warning text-xl"></i>
-            </div>
-            <div class="text-right">
-              <div id="portfolioPerformance" class="text-2xl font-bold text-warning">0%</div>
-              <div class="text-sm text-gray-600">Performance</div>
-            </div>
-          </div>
-          <div class="text-sm text-warning flex items-center">
-            <i class="fas fa-chart-line mr-1"></i>
-            <span id="performanceText">Média geral</span>
-          </div>
-        </div>
-
-        <div class="stat-card rounded-xl p-6 fade-in">
-          <div class="flex items-center justify-between mb-4">
-            <div class="w-12 h-12 bg-accent/10 rounded-lg flex items-center justify-center">
-              <i class="fas fa-clock text-accent text-xl"></i>
-            </div>
-            <div class="text-right">
-              <div id="lastUpdate" class="text-2xl font-bold text-accent">Traders Free</div>
-              <div class="text-sm text-gray-600">Recomendações Quinzenais</div>
-            </div>
-          </div>
-          <div class="text-sm text-accent flex items-center">
-            <i class="fas fa-sync mr-1"></i>
-            <span>Tempo real</span>
           </div>
         </div>
       </div>
@@ -361,7 +282,7 @@
             </a>
           </div>
           
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div class="bg-white/5 rounded-lg p-4">
               <div class="flex items-center justify-between mb-2">
                 <span class="text-gray-400">Sinais Ativos</span>
@@ -395,7 +316,7 @@
               <i class="fas fa-info-circle text-geminii mr-3"></i>
               <p class="text-sm text-gray-300">
                 <span class="font-semibold text-white">100% Grátis:</span> 
-                Nossos modelos de ML analisam o mercado e geram até 5 recomendações mensais com entrada, alvo e stop loss definidos.
+                Nossos modelos de ML analisam o mercado e geram até 1 recomendação mensal com entrada, alvo e stop loss definidos.
               </p>
             </div>
           </div>
@@ -409,65 +330,198 @@
           Ações Rápidas
         </h2>
         
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
           
-          <!-- GRÁTIS -->
-          <a href="monitor-basico.html" class="relative bg-gradient-to-r from-success/10 to-success/5 hover:from-success/20 hover:to-success/10 border border-success/20 rounded-xl p-6 transition-all group">
-            <div class="flex items-center gap-4">
-              <div class="w-12 h-12 bg-success/20 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
-                <i class="fas fa-chart-area text-success text-lg"></i>
+          <!-- GRÁTIS - Submenu -->
+          <div class="relative">
+            <div 
+              onclick="toggleGratisDropdown()"
+              class="bg-gradient-to-r from-success/10 to-success/5 hover:from-success/20 hover:to-success/10 border border-success/20 rounded-xl p-4 transition-all group cursor-pointer relative"
+            >
+              <div class="flex items-center gap-3">
+                <div class="w-12 h-12 bg-success/20 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <i class="fas fa-gift text-success text-lg"></i>
+                </div>
+                <div class="flex-1">
+                  <h3 class="font-semibold text-white">Fique à Vontade</h3>
+                  <p class="text-sm text-gray-300">Recursos Gratuitos</p>
+                </div>
+                <i class="fas fa-chevron-down text-gray-400 transition-transform duration-300" id="gratisChevron"></i>
               </div>
-              <div>
-                <h3 class="font-semibold text-white">Monitor Beta</h3>
-                <p class="text-sm text-gray-300">Análise vs IBOVESPA</p>
+              <span class="absolute top-3 right-3 bg-green-500 text-white text-xs px-2 py-1 rounded-full font-bold">GRÁTIS</span>
+            </div>
+            
+            <!-- Submenu Dropdown Grátis -->
+            <div id="gratisDropdown" class="dropdown">
+              <div class="grid grid-cols-1 gap-2">
+                <a href="monitor-basico.html" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white">
+                  <i class="fas fa-chart-area text-success w-5"></i>
+                  <div>
+                    <div class="font-medium">Monitor Beta</div>
+                    <div class="text-xs text-gray-400">Análise vs IBOVESPA</div>
+                  </div>
+                </a>
+                
+                <a href="rsl.html" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white">
+                  <i class="fas fa-robot text-pink-400 w-5"></i>
+                  <div>
+                    <div class="font-medium">RSL Premium</div>
+                    <div class="text-xs text-gray-400">Indicadores IA</div>
+                  </div>
+                </a>
+                
+                <a href="sup_res_vol.html" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white">
+                  <i class="fas fa-chart-line text-blue-400 w-5"></i>
+                  <div>
+                    <div class="font-medium">Suporte e Resistência</div>
+                    <div class="text-xs text-gray-400">Com base em Volatilidade</div>
+                  </div>
+                </a>
+                
+                <div onclick="showPremiumFeature('Radar Financeiro')" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white cursor-pointer">
+                  <i class="fas fa-radar-chart text-cyan-400 w-5"></i>
+                  <div class="flex-1">
+                    <div class="font-medium">Radar Financeiro</div>
+                    <div class="text-xs text-gray-400">Indicadores Fundamentalistas</div>
+                  </div>
+                  <span class="bg-red-600 text-white text-xs px-2 py-1 rounded-full font-bold">EM BREVE</span>
+                </div>
               </div>
             </div>
-            <span class="absolute top-4 right-4 bg-green-500 text-white text-xs px-2 py-1 rounded-full font-bold">GRÁTIS</span>
-          </a>
-
-          <a href="rsl.html" class="bg-gradient-to-r from-pink-500/10 to-pink-500/5 hover:from-pink-500/20 hover:to-pink-500/10 border border-pink-500/20 rounded-xl p-6 transition-all group cursor-pointer relative">
-            <div class="flex items-center gap-4">
-              <div class="w-12 h-12 bg-pink-500/20 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
-                <i class="fas fa-robot text-pink-400 text-lg"></i>
-              </div>
-              <div>
-                <h3 class="font-semibold text-white">RSL Premium</h3>
-                <p class="text-sm text-gray-300">Indicadores IA</p>
-              </div>
-            </div>
-            <span class="absolute top-4 right-4 bg-green-500 text-white text-xs px-2 py-1 rounded-full font-bold">GRÁTIS</span>
-          </a>
-
-          <!-- PLANO PRO -->
-          <div onclick="showPremiumFeature('Long & Short')" class="bg-gradient-to-r from-secondary/10 to-secondary/5 hover:from-secondary/20 hover:to-secondary/10 border border-secondary/20 rounded-xl p-6 transition-all group cursor-pointer relative">
-            <div class="flex items-center gap-4">
-              <div class="bg-gradient-to-r from-primary/10 to-primary/5 hover:from-primary/20 hover:to-primary/10 border border-primary/20 rounded-xl p-6 transition-all group cursor-pointer relative">
-                <i class="fas fa-exchange-alt text-secondary text-lg"></i>
-              </div>
-              <div>
-                <h3 class="font-semibold text-white">Long & Short</h3>
-                <p class="text-sm text-gray-300">Cointegração</p>
-              </div>
-            </div>
-            <span class="absolute top-4 right-4 bg-warning text-white text-xs px-2 py-1 rounded-full font-bold">PRO</span>
           </div>
 
-          <div onclick="showPremiumFeature('Hunter Walls')" class="bg-gradient-to-r from-orange-500/10 to-orange-500/5 hover:from-orange-500/20 hover:to-orange-500/10 border border-orange-500/20 rounded-xl p-6 transition-all group cursor-pointer relative">
-            <div class="flex items-center gap-4">
-              <div class="w-12 h-12 bg-orange-500/20 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
-                <i class="fas fa-crosshairs text-orange-400 text-lg"></i>
+          <!-- PRO - Submenu -->
+          <div class="relative">
+            <div 
+              onclick="toggleProDropdown()"
+              class="bg-gradient-to-r from-warning/10 to-warning/5 hover:from-warning/20 hover:to-warning/10 border border-warning/20 rounded-xl p-4 transition-all group cursor-pointer relative"
+            >
+              <div class="flex items-center gap-3">
+                <div class="w-12 h-12 bg-warning/20 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <i class="fas fa-chart-line text-warning text-lg"></i>
+                </div>
+                <div class="flex-1">
+                  <h3 class="font-semibold text-white">Estatística Aplicada</h3>
+                  <p class="text-sm text-gray-300">Análises Profissionais</p>
+                </div>
+                <i class="fas fa-chevron-down text-gray-400 transition-transform duration-300" id="proChevron"></i>
               </div>
-              <div>
-                <h3 class="font-semibold text-white">Hunter Walls</h3>
-                <p class="text-sm text-gray-300">Análise de Opções</p>
+              <span class="absolute top-3 right-3 bg-warning text-white text-xs px-2 py-1 rounded-full font-bold">PRO</span>
+            </div>
+            
+            <!-- Submenu Dropdown Pro -->
+            <div id="proDropdown" class="dropdown">
+              <div class="grid grid-cols-1 gap-2">
+                <div onclick="showPremiumFeature('Long & Short')" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white cursor-pointer">
+                  <i class="fas fa-exchange-alt text-secondary w-5"></i>
+                  <div>
+                    <div class="font-medium">Long & Short</div>
+                    <div class="text-xs text-gray-400">Cointegração Estatística</div>
+                  </div>
+                </div>
+                
+                <div onclick="showPremiumFeature('Correlação Matrix')" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white cursor-pointer">
+                  <i class="fas fa-project-diagram text-indigo-400 w-5"></i>
+                  <div class="flex-1">
+                    <div class="font-medium">Correlação Matrix</div>
+                    <div class="text-xs text-gray-400">Matriz de Correlações</div>
+                  </div>
+                  <span class="bg-red-600 text-white text-xs px-2 py-1 rounded-full font-bold">EM BREVE</span>
+                </div>
+                
+                <div onclick="showPremiumFeature('Regressão Linear')" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white cursor-pointer">
+                  <i class="fas fa-chart-line text-green-400 w-5"></i>
+                  <div class="flex-1">
+                    <div class="font-medium">Regressão Linear</div>
+                    <div class="text-xs text-gray-400">Análise Preditiva</div>
+                  </div>
+                  <span class="bg-red-600 text-white text-xs px-2 py-1 rounded-full font-bold">EM BREVE</span>
+                </div>
+                
+                <div onclick="showPremiumFeature('Volatilidade GARCH')" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white cursor-pointer">
+                  <i class="fas fa-wave-square text-red-400 w-5"></i>
+                  <div class="flex-1">
+                    <div class="font-medium">Volatilidade GARCH</div>
+                    <div class="text-xs text-gray-400">Modelos de Volatilidade</div>
+                  </div>
+                  <span class="bg-red-600 text-white text-xs px-2 py-1 rounded-full font-bold">EM BREVE</span>
+                </div>
               </div>
             </div>
-            <span class="absolute top-4 right-4 bg-warning text-white text-xs px-2 py-1 rounded-full font-bold">PRO</span>
           </div>
 
-          <!-- PLANO PREMIUM (ESTRATÉGICO) -->
-          <div onclick="showPremiumFeature('Smart Carteiras')" class="bg-gradient-to-r from-primary/10 to-primary/5 hover:from-primary/20 hover:to-primary/10 border border-primary/20 rounded-xl p-6 transition-all group cursor-pointer relative">
-            <div class="flex items-center gap-4">
+          <!-- PRO - Monitor de Opções com Submenu -->
+          <div class="relative">
+            <div 
+              onclick="toggleOpcoesDropdown()"
+              class="bg-gradient-to-r from-orange-500/10 to-orange-500/5 hover:from-orange-500/20 hover:to-orange-500/10 border border-orange-500/20 rounded-xl p-4 transition-all group cursor-pointer relative"
+            >
+              <div class="flex items-center gap-3">
+                <div class="w-12 h-12 bg-orange-500/20 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <i class="fas fa-chart-pie text-orange-400 text-lg"></i>
+                </div>
+                <div class="flex-1">
+                  <h3 class="font-semibold text-white">Monitor de Opções</h3>
+                  <p class="text-sm text-gray-300">Análise Completa + IA</p>
+                </div>
+                <i class="fas fa-chevron-down text-gray-400 transition-transform duration-300" id="opcoesChevron"></i>
+              </div>
+              <span class="absolute top-3 right-3 bg-warning text-white text-xs px-2 py-1 rounded-full font-bold">PRO</span>
+            </div>
+            
+            <!-- Submenu Dropdown Opções -->
+            <div id="opcoesDropdown" class="dropdown">
+              <div class="grid grid-cols-1 gap-2">
+                <div onclick="showPremiumFeature('Hunter Walls')" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white cursor-pointer">
+                  <i class="fas fa-crosshairs text-orange-400 w-5"></i>
+                  <div>
+                    <div class="font-medium">Hunter Walls</div>
+                    <div class="text-xs text-gray-400">Detecção de Muros de Opções</div>
+                  </div>
+                </div>
+                
+                <div onclick="showPremiumFeature('Greeks Monitor')" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white cursor-pointer">
+                  <i class="fas fa-calculator text-blue-400 w-5"></i>
+                  <div class="flex-1">
+                    <div class="font-medium">Greeks Monitor</div>
+                    <div class="text-xs text-gray-400">Delta, Gamma, Theta, Vega</div>
+                  </div>
+                  <span class="bg-red-600 text-white text-xs px-2 py-1 rounded-full font-bold">EM BREVE</span>
+                </div>
+                
+                <div onclick="showPremiumFeature('Volume Profile')" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white cursor-pointer">
+                  <i class="fas fa-chart-bar text-purple-400 w-5"></i>
+                  <div class="flex-1">
+                    <div class="font-medium">Volume Profile</div>
+                    <div class="text-xs text-gray-400">Análise de Volume por Preço</div>
+                  </div>
+                  <span class="bg-red-600 text-white text-xs px-2 py-1 rounded-full font-bold">EM BREVE</span>
+                </div>
+                
+                <div onclick="showPremiumFeature('IV Scanner')" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white cursor-pointer">
+                  <i class="fas fa-search text-green-400 w-5"></i>
+                  <div class="flex-1">
+                    <div class="font-medium">IV Scanner</div>
+                    <div class="text-xs text-gray-400">Scanner de Volatilidade Implícita</div>
+                  </div>
+                  <span class="bg-red-600 text-white text-xs px-2 py-1 rounded-full font-bold">EM BREVE</span>
+                </div>
+                
+                <div onclick="showPremiumFeature('Options Flow')" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white cursor-pointer">
+                  <i class="fas fa-stream text-yellow-400 w-5"></i>
+                  <div class="flex-1">
+                    <div class="font-medium">Options Flow</div>
+                    <div class="text-xs text-gray-400">Fluxo de Opções em Tempo Real</div>
+                  </div>
+                  <span class="bg-red-600 text-white text-xs px-2 py-1 rounded-full font-bold">EM BREVE</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- PREMIUM - Smart Carteiras -->
+          <div onclick="showPremiumFeature('Smart Carteiras')" class="bg-gradient-to-r from-primary/10 to-primary/5 hover:from-primary/20 hover:to-primary/10 border border-primary/20 rounded-xl p-4 transition-all group cursor-pointer relative">
+            <div class="flex items-center gap-3">
               <div class="w-12 h-12 bg-primary/20 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
                 <i class="fa-solid fa-square-poll-vertical fa-beat-fade" style="color: #B197FC;"></i>
               </div>
@@ -476,17 +530,17 @@
                 <p class="text-sm text-gray-300">Análises especializadas com Machine Learning</p>
               </div>
             </div>
-            <span class="absolute top-4 right-4 bg-secondary text-white text-xs px-2 py-1 rounded-full font-bold">PREMIUM</span>
+            <span class="absolute top-3 right-3 bg-secondary text-white text-xs px-2 py-1 rounded-full font-bold">PREMIUM</span>
           </div>
 
-          <!-- Machine Learning com Submenu -->
+          <!-- PREMIUM - Machine Learning com Submenu -->
           <div class="relative">
             <div 
-              onclick="showPremiumFeature('Machine Learning')"
-              class="bg-gradient-to-r from-purple-500/10 to-purple-500/5 hover:from-purple-500/20 hover:to-purple-500/10 border border-purple-500/20 rounded-xl p-6 transition-all group cursor-pointer relative"
+              onclick="toggleMLDropdown()"
+              class="bg-gradient-to-r from-purple-500/10 to-purple-500/5 hover:from-purple-500/20 hover:to-purple-500/10 border border-purple-500/20 rounded-xl p-4 transition-all group cursor-pointer relative"
             >
-              <div class="flex items-center gap-4">
-                <div class="bg-gradient-to-r from-primary/10 to-primary/5 hover:from-primary/20 hover:to-primary/10 border border-primary/20 rounded-xl p-6 transition-all group cursor-pointer relative">
+              <div class="flex items-center gap-3">
+                <div class="w-12 h-12 bg-purple-500/20 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
                   <i class="fas fa-brain text-purple-400 text-lg"></i>
                 </div>
                 <div class="flex-1">
@@ -495,11 +549,11 @@
                 </div>
                 <i class="fas fa-chevron-down text-gray-400 transition-transform duration-300" id="mlChevron"></i>
               </div>
-              <span class="absolute top-4 right-4 bg-purple-600 text-white text-xs px-2 py-1 rounded-full font-bold">PREMIUM</span>
+              <span class="absolute top-3 right-3 bg-purple-600 text-white text-xs px-2 py-1 rounded-full font-bold">PREMIUM</span>
             </div>
             
-            <!-- Submenu Dropdown -->
-            <div id="mlDropdown" class="ml-dropdown">
+            <!-- Submenu Dropdown ML -->
+            <div id="mlDropdown" class="dropdown">
               <div class="grid grid-cols-1 gap-2">
                 <a href="swing-trade-machine-learning.html" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white">
                   <i class="fas fa-chart-line text-green-400 w-5"></i>
@@ -546,21 +600,9 @@
             </div>
           </div>
 
-          <!-- <a href="planos.html" class="bg-gradient-to-r from-primary to-secondary text-white rounded-xl p-6 transition-all group hover:shadow-lg">
-            <div class="flex items-center gap-4">
-              <div class="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
-                <i class="fas fa-crown text-white text-lg"></i>
-              </div>
-              <div>
-                <h3 class="font-semibold">Fazer Upgrade</h3>
-                <p class="text-sm opacity-90">Todos os recursos</p>
-              </div>
-            </div>
-          </a>
         </div>
-      </div> -->
+      </div>
 
-      
     </div>
   </main>
 
@@ -569,29 +611,33 @@
     let userToken = null;
 
     // Initialize dashboard
-    // Initialize dashboard
     async function initDashboard() {
       console.log('🚀 Inicializando Dashboard Geminii...');
       
-      // Tentar carregar dados do localStorage primeiro (fallback)
       tryLoadFromLocalStorage();
-      
       await checkAuth();
       await loadUserStats();
-      await loadFreeRecommendationsStatsWithRetry(); // ⬅️ MUDANÇA AQUI
+      await loadFreeRecommendationsStatsWithRetry();
       checkApiStatus();
       setInterval(checkApiStatus, 30000);
       
       // Close dropdown when clicking outside
       document.addEventListener('click', function(event) {
-        const dropdown = document.getElementById('mlDropdown');
-        if (dropdown) {
-          const mlCard = event.target.closest('.relative');
-          
-          if (!mlCard && dropdown.classList.contains('show')) {
-            toggleMLDropdown();
+        const allDropdowns = ['mlDropdown', 'opcoesDropdown', 'gratisDropdown', 'proDropdown'];
+        
+        allDropdowns.forEach(dropdownId => {
+          const dropdown = document.getElementById(dropdownId);
+          if (dropdown && dropdown.classList.contains('show')) {
+            const isClickInside = event.target.closest(`#${dropdownId}`) || 
+                                 event.target.closest(`[onclick*="toggle${dropdownId.replace('Dropdown', '').replace('ml', 'ML')}Dropdown"]`);
+            if (!isClickInside) {
+              const functionName = `toggle${dropdownId.replace('Dropdown', '').replace('ml', 'ML')}Dropdown`;
+              if (window[functionName]) {
+                window[functionName]();
+              }
+            }
           }
-        }
+        });
       });
       
       console.log('✅ Dashboard inicializado!');
@@ -613,10 +659,88 @@
       }
     }
 
+    // Helper function to close other dropdowns
+    function closeOtherDropdowns(except) {
+      const allDropdowns = ['mlDropdown', 'opcoesDropdown', 'gratisDropdown', 'proDropdown'];
+      const allChevrons = ['mlChevron', 'opcoesChevron', 'gratisChevron', 'proChevron'];
+      
+      allDropdowns.forEach((dropdownId, index) => {
+        if (!except.includes(dropdownId)) {
+          const dropdown = document.getElementById(dropdownId);
+          const chevron = document.getElementById(allChevrons[index]);
+          
+          if (dropdown && dropdown.classList.contains('show')) {
+            dropdown.classList.remove('show');
+            if (chevron) chevron.style.transform = 'rotate(0deg)';
+          }
+        }
+      });
+    }
+
+    // Toggle Grátis Dropdown
+    function toggleGratisDropdown() {
+      const dropdown = document.getElementById('gratisDropdown');
+      const chevron = document.getElementById('gratisChevron');
+      
+      // Close other dropdowns
+      closeOtherDropdowns(['gratisDropdown']);
+      
+      if (dropdown && chevron) {
+        if (dropdown.classList.contains('show')) {
+          dropdown.classList.remove('show');
+          chevron.style.transform = 'rotate(0deg)';
+        } else {
+          dropdown.classList.add('show');
+          chevron.style.transform = 'rotate(180deg)';
+        }
+      }
+    }
+
+    // Toggle Pro Dropdown
+    function toggleProDropdown() {
+      const dropdown = document.getElementById('proDropdown');
+      const chevron = document.getElementById('proChevron');
+      
+      // Close other dropdowns
+      closeOtherDropdowns(['proDropdown']);
+      
+      if (dropdown && chevron) {
+        if (dropdown.classList.contains('show')) {
+          dropdown.classList.remove('show');
+          chevron.style.transform = 'rotate(0deg)';
+        } else {
+          dropdown.classList.add('show');
+          chevron.style.transform = 'rotate(180deg)';
+        }
+      }
+    }
+
     // Toggle ML Dropdown
     function toggleMLDropdown() {
       const dropdown = document.getElementById('mlDropdown');
       const chevron = document.getElementById('mlChevron');
+      
+      // Close other dropdowns
+      closeOtherDropdowns(['mlDropdown']);
+      
+      if (dropdown && chevron) {
+        if (dropdown.classList.contains('show')) {
+          dropdown.classList.remove('show');
+          chevron.style.transform = 'rotate(0deg)';
+        } else {
+          dropdown.classList.add('show');
+          chevron.style.transform = 'rotate(180deg)';
+        }
+      }
+    }
+
+    // Toggle Opções Dropdown
+    function toggleOpcoesDropdown() {
+      const dropdown = document.getElementById('opcoesDropdown');
+      const chevron = document.getElementById('opcoesChevron');
+      
+      // Close other dropdowns
+      closeOtherDropdowns(['opcoesDropdown']);
       
       if (dropdown && chevron) {
         if (dropdown.classList.contains('show')) {
@@ -630,7 +754,6 @@
     }
 
     // Check authentication
-    // Check authentication com retry
     async function checkAuth() {
       const token = localStorage.getItem('geminii_token');
       const userData = localStorage.getItem('geminii_user');
@@ -660,10 +783,7 @@
           currentUser = result.data.user;
           
           console.log('✅ Dados do usuário recebidos:', currentUser);
-          
-          // Atualizar localStorage com dados mais recentes
           localStorage.setItem('geminii_user', JSON.stringify(currentUser));
-          
           updateUserInterface(currentUser);
         } else {
           console.log('❌ Falha na verificação, limpando dados...');
@@ -674,7 +794,6 @@
       } catch (error) {
         console.error('❌ Erro na verificação de auth:', error);
         
-        // Em caso de erro de rede, tentar usar dados do localStorage
         try {
           const userData = localStorage.getItem('geminii_user');
           if (userData) {
@@ -689,7 +808,6 @@
           console.error('Erro ao usar dados do localStorage:', e);
         }
         
-        // Se não conseguir usar localStorage, redirecionar
         localStorage.removeItem('geminii_token');
         localStorage.removeItem('geminii_user');
         window.location.href = '/login.html';
@@ -705,14 +823,12 @@
         return;
       }
 
-      // Verificar se os elementos existem antes de atualizar
       const userInitialsEl = document.getElementById('userInitials');
       const userNameEl = document.getElementById('userName');
       const userEmailEl = document.getElementById('userEmail');
       const planBadgeEl = document.getElementById('userPlanBadge');
       const memberSinceEl = document.getElementById('memberSince');
 
-      // Atualizar nome e iniciais
       if (user.name) {
         const initials = user.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
         
@@ -727,13 +843,11 @@
         }
       }
 
-      // Atualizar email
       if (user.email && userEmailEl) {
         userEmailEl.textContent = user.email;
         console.log('✅ Email atualizado:', user.email);
       }
 
-      // Atualizar plano
       if (planBadgeEl) {
         const planId = user.plan_id || 3;
         
@@ -743,7 +857,7 @@
         } else if (planId === 1) {
           planBadgeEl.textContent = 'Pro';
           planBadgeEl.className = 'px-3 py-1 rounded-full text-sm font-semibold bg-warning text-white';
-        } else if (planId >=2) {
+        } else if (planId >= 2) {
           planBadgeEl.textContent = 'Premium';
           planBadgeEl.className = 'px-3 py-1 rounded-full text-sm font-semibold bg-secondary text-white';
         }
@@ -751,7 +865,6 @@
         console.log('✅ Plano atualizado:', planId);
       }
 
-      // Atualizar data de criação
       if (user.created_at && memberSinceEl) {
         const createdDate = new Date(user.created_at).toLocaleDateString('pt-BR');
         memberSinceEl.textContent = createdDate;
@@ -777,30 +890,6 @@
           const result = await response.json();
           if (result.success) {
             const portfolios = result.portfolios || [];
-            
-            const totalPortfoliosEl = document.getElementById('totalPortfolios');
-            const portfoliosTextEl = document.getElementById('portfoliosText');
-            const totalRecommendationsEl = document.getElementById('totalRecommendations');
-            const recommendationsTextEl = document.getElementById('recommendationsText');
-            
-            if (totalPortfoliosEl) {
-              totalPortfoliosEl.textContent = portfolios.length;
-            }
-            
-            if (portfoliosTextEl) {
-              portfoliosTextEl.textContent = 
-                portfolios.length > 0 ? `${portfolios.length} disponível${portfolios.length > 1 ? 'is' : ''}` : 'Nenhuma disponível';
-            }
-            
-            // Simular outras estatísticas
-            if (totalRecommendationsEl) {
-              totalRecommendationsEl.textContent = portfolios.length * 3;
-            }
-            
-            if (recommendationsTextEl) {
-              recommendationsTextEl.textContent = 'Ativas';
-            }
-            
             console.log('📊 Estatísticas carregadas:', portfolios.length, 'carteiras');
           }
         }
@@ -819,7 +908,6 @@
       try {
         console.log(`📡 Carregando estatísticas das recomendações free (tentativa ${attempt})...`);
         
-        // ✅ MUDANÇA PRINCIPAL: Usar endpoint público (/free/all) ao invés de admin
         const response = await fetch('/api/recommendations/free/all', {
           headers: { 
             'Authorization': `Bearer ${userToken}`,
@@ -830,11 +918,8 @@
 
         console.log('📊 Status da resposta (recomendações):', response.status);
 
-        // Tratamento específico para erro 403
         if (response.status === 403) {
           console.log('🚫 Erro 403 nas recomendações - verificando auth...');
-          
-          // Tentar renovar a autenticação
           await checkAuth();
           
           if (attempt < 3) {
@@ -843,7 +928,6 @@
             return loadFreeRecommendationsStatsWithRetry(attempt + 1);
           }
           
-          // Se esgotar tentativas, usar valores padrão
           console.log('❌ Acesso negado às recomendações - usando valores padrão');
           setDefaultRecommendationValues();
           return;
@@ -859,16 +943,11 @@
           const result = await response.json();
           if (result.success) {
             const allRecs = result.recommendations || [];
-            
-            // Filtrar apenas ativas
             const activeRecs = allRecs.filter(r => r.status === 'ATIVA');
-            
-            // Calcular estatísticas
             const closedRecs = allRecs.filter(r => r.status && r.status.startsWith('FINALIZADA'));
             const wins = closedRecs.filter(r => r.status === 'FINALIZADA_GANHO');
             const successRate = closedRecs.length > 0 ? (wins.length / closedRecs.length * 100) : 0;
             
-            // Calcular próxima atualização (primeira sexta do próximo mês)
             const now = new Date();
             const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
             const firstFriday = new Date(nextMonth);
@@ -877,22 +956,13 @@
             }
             const daysUntilUpdate = Math.ceil((firstFriday - now) / (1000 * 60 * 60 * 24));
             
-            // Atualizar elementos do dashboard
             const activeSignalsEl = document.getElementById('activeSignalsCount');
             const successRateEl = document.getElementById('freeSuccessRate');
             const nextUpdateEl = document.getElementById('nextUpdateDays');
             
-            if (activeSignalsEl) {
-              activeSignalsEl.textContent = activeRecs.length;
-            }
-            
-            if (successRateEl) {
-              successRateEl.textContent = successRate > 0 ? `${successRate.toFixed(1)}%` : '--';
-            }
-            
-            if (nextUpdateEl) {
-              nextUpdateEl.textContent = daysUntilUpdate > 0 ? `${daysUntilUpdate} dias` : 'Em breve';
-            }
+            if (activeSignalsEl) activeSignalsEl.textContent = activeRecs.length;
+            if (successRateEl) successRateEl.textContent = successRate > 0 ? `${successRate.toFixed(1)}%` : '--';
+            if (nextUpdateEl) nextUpdateEl.textContent = daysUntilUpdate > 0 ? `${daysUntilUpdate} dias` : 'Em breve';
             
             console.log('📊 Estatísticas free carregadas:', {
               ativas: activeRecs.length,
@@ -915,10 +985,10 @@
           return loadFreeRecommendationsStatsWithRetry(attempt + 1);
         }
         
-        // Se esgotar todas as tentativas, usar valores padrão
         setDefaultRecommendationValues();
       }
     }
+
     // Definir valores padrão quando não conseguir carregar recomendações
     function setDefaultRecommendationValues() {
       console.log('📋 Definindo valores padrão para recomendações...');
@@ -940,22 +1010,28 @@
       }
     
       const userPlanId = currentUser.plan_id || 3;
-      
-      // ✅ NOVA LÓGICA: Verificação correta por plano específico
       let hasAccess = false;
       let requiredPlanName = '';
       
       // Definir acesso baseado no recurso
-      if (featureName === 'Long & Short' || featureName === 'Hunter Walls') {
-        // Recursos PRO - precisam de plano 1 (Pro) ou 2 (Premium)
+      if (featureName === 'Long & Short' || featureName === 'Hunter Walls' || 
+          featureName === 'Greeks Monitor' || featureName === 'Volume Profile' || 
+          featureName === 'IV Scanner' || featureName === 'Options Flow' ||
+          featureName === 'Correlação Matrix' || featureName === 'Regressão Linear' ||
+          featureName === 'Volatilidade GARCH') {
         hasAccess = (userPlanId === 1 || userPlanId === 2);
         requiredPlanName = 'Pro';
       }
       
       if (featureName === 'Smart Carteiras' || featureName === 'Machine Learning') {
-        // Recursos PREMIUM - precisam apenas de plano 2 (Premium)
         hasAccess = (userPlanId === 2);
         requiredPlanName = 'Premium';
+      }
+
+      // Recursos GRÁTIS futuras
+      if (featureName === 'Suporte e Resistência' || featureName === 'Radar Financeiro') {
+        hasAccess = true; // Grátis para todos
+        requiredPlanName = 'Grátis';
       }
     
       // Se tem acesso, permitir
@@ -982,8 +1058,56 @@
           toggleMLDropdown();
           return;
         }
+
+        // Funcionalidades GRÁTIS futuras
+        if (featureName === 'Suporte e Resistência') {
+          alert(`🏭 Análise Setorial\n\nComparativo por Setores da Economia!\n\nEm breve será implementado.`);
+          return;
+        }
+
+        if (featureName === 'Radar Financeiro') {
+          alert(`📡 Radar Financeiro\n\nIndicadores Fundamentalistas Completos!\n\nEm breve será implementado.`);
+          return;
+        }
+
+        // Funcionalidades PRO futuras
+        if (featureName === 'Correlação Matrix') {
+          alert(`📊 Correlação Matrix\n\nMatriz de Correlações entre Ativos!\n\nEm breve será implementado.`);
+          return;
+        }
+
+        if (featureName === 'Regressão Linear') {
+          alert(`📈 Regressão Linear\n\nAnálise Preditiva Avançada!\n\nEm breve será implementado.`);
+          return;
+        }
+
+        if (featureName === 'Volatilidade GARCH') {
+          alert(`📊 Volatilidade GARCH\n\nModelos Avançados de Volatilidade!\n\nEm breve será implementado.`);
+          return;
+        }
     
-        // Recursos EM BREVE
+        // Recursos EM BREVE para Opções
+        if (featureName === 'Greeks Monitor') {
+          alert(`📊 Greeks Monitor\n\nMonitoramento completo de Delta, Gamma, Theta e Vega!\n\nEm breve será implementado.`);
+          return;
+        }
+
+        if (featureName === 'Volume Profile') {
+          alert(`📈 Volume Profile\n\nAnálise avançada de Volume por Preço!\n\nEm breve será implementado.`);
+          return;
+        }
+
+        if (featureName === 'IV Scanner') {
+          alert(`🔍 IV Scanner\n\nScanner inteligente de Volatilidade Implícita!\n\nEm breve será implementado.`);
+          return;
+        }
+
+        if (featureName === 'Options Flow') {
+          alert(`📊 Options Flow\n\nFluxo de Opções em Tempo Real!\n\nEm breve será implementado.`);
+          return;
+        }
+
+        // Recursos EM BREVE para ML
         if (featureName === 'Pattern Recognition') {
           alert(`👁️ Pattern Recognition\n\nReconhecimento de Padrões Avançado!\n\nEm breve será implementado.`);
           return;
@@ -998,7 +1122,7 @@
         alert(`🎉 ${featureName}\n\nFuncionalidade disponível em seu plano!\nEm breve será implementada.`);
         
       } else {
-        // ✅ USUÁRIO NÃO TEM ACESSO - Mostrar upgrade
+        // USUÁRIO NÃO TEM ACESSO - Mostrar upgrade
         const planNames = { 3: 'Básico', 1: 'Pro', 2: 'Premium' };
         const currentPlanName = currentUser.plan_name || planNames[userPlanId] || 'Básico';
         
@@ -1067,9 +1191,12 @@
     window.logout = logout;
     window.showPremiumFeature = showPremiumFeature;
     window.toggleMLDropdown = toggleMLDropdown;
+    window.toggleOpcoesDropdown = toggleOpcoesDropdown;
+    window.toggleGratisDropdown = toggleGratisDropdown;
+    window.toggleProDropdown = toggleProDropdown;
 
     // Initialize when page loads
     document.addEventListener('DOMContentLoaded', initDashboard);
-</script>
+  </script>
 </body>
 </html>

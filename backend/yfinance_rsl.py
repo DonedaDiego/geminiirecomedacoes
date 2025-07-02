@@ -74,7 +74,7 @@ class YFinanceRSLService:
         'ESTR3': 'Viagens e Lazer',
         'SHOW3': 'Viagens e Lazer',
         'CVCB3': 'Viagens e Lazer',
-        'BAHI3': 'Diversos',
+        'BHIA3': 'Diversos',
         'COGN3': 'Diversos',
         'CSED3': 'Diversos',
         'YDUQ3': 'Diversos',

@@ -381,7 +381,7 @@ def create_initial_admin():
             "Diego Doneda - Admin", 
             admin_email, 
             admin_password, 
-            2,  # Pro
+            2,  
             "Premium", 
             "admin",
             "active",

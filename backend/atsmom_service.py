@@ -109,51 +109,41 @@ class ATSMOMService:
                            symbol: str, ibov_data: pd.DataFrame, ibov_signal: pd.Series, 
                            ibov_trend: pd.Series, strike: Optional[float] = None) -> str:
         try:
-            fig = make_subplots(
-                rows=3, cols=1,
-                subplot_titles=(
-                    f'{symbol} vs IBOV - Preço de Fechamento',
-                    'Força da Tendência (ATSMOM)',
-                    'Sinal Ajustado pela Volatilidade'
-                ),
-                vertical_spacing=0.1,
-                row_heights=[0.4, 0.3, 0.3]
-            )
-            
-            plot_bgcolor = '#11113a'
-            paper_bgcolor = '#11113a'
+            fig = make_subplots(rows=3, cols=1, 
+                               subplot_titles=(f'{symbol} vs IBOV - Preço De Fechamento', 
+                                             'Força da Tendência (ATSMOM)',
+                                             'Sinal ajustado pela volatilidade'),
+                               vertical_spacing=0.1,
+                               row_heights=[0.4, 0.3, 0.3])
+
+            # Configurações de cores igual ao código antigo
+            plot_bgcolor = 'rgba(0,0,0,0)'  # Transparente
+            paper_bgcolor = 'rgba(0,0,0,0)'  # Transparente  
             grid_color = 'rgba(255, 255, 255, 0.1)'
             
+            # Gráfico de Preço (usando as cores do código antigo)
             fig.add_trace(
-                go.Scatter(
-                    x=data.index,
-                    y=data['close'],
-                    line=dict(color='#00FFAA', width=3),
-                    name=symbol
-                ),
+                go.Scatter(x=data.index, y=data['close'],
+                          line=dict(color='#00FFAA', width=3),  # Verde cyberpunk
+                          name=symbol),
                 row=1, col=1
             )
             
+            # IBOV normalizado para comparação  
             ibov_normalized = ibov_data['close'] / ibov_data['close'].iloc[0] * data['close'].iloc[0]
             fig.add_trace(
-                go.Scatter(
-                    x=ibov_data.index,
-                    y=ibov_normalized,
-                    line=dict(color='white', width=2, dash='solid'),
-                    name='IBOV (normalizado)'
-                ),
+                go.Scatter(x=ibov_data.index, y=ibov_normalized,
+                          line=dict(color='white', width=2, dash='solid'),
+                          name='IBOV (normalizado)'),
                 row=1, col=1
             )
             
+            # Adiciona linha do strike se fornecido
             if strike is not None:
-                fig.add_hline(
-                    y=strike,
-                    line_dash="dash",
-                    line_color="yellow",
-                    annotation_text=f"Strike R$ {strike:.2f}",
-                    row=1, col=1
-                )
-            
+                fig.add_hline(y=strike, line_dash="dash", line_color="yellow",
+                             annotation_text=f"Strike R$ {strike:.2f}", row=1, col=1)
+           
+            # Calcula desvio médio dos últimos 252 dias para trend (igual código antigo)
             if len(trend) >= 252:
                 trend_mean_dev = trend.tail(252).abs().mean()
             else:
@@ -162,67 +152,51 @@ class ATSMOMService:
             if pd.isna(trend_mean_dev) or trend_mean_dev == 0:
                 trend_mean_dev = 0.001
             
+            # Gráfico de Força da Tendência
             fig.add_trace(
-                go.Scatter(
-                    x=trend.index,
-                    y=trend,
-                    line=dict(color='#00FFAA', width=2),
-                    name=f'Tendência {symbol}'
-                ),
+                go.Scatter(x=trend.index, y=trend,
+                          line=dict(color='#00FFAA', width=2),  # Verde cyberpunk
+                          name=f'Tendência {symbol}'),
                 row=2, col=1
             )
             
-            fig.add_hline(
-                y=trend_mean_dev,
-                line_dash="dot",
-                line_color="gray",
-                opacity=0.8,
-                row=2, col=1,
-                annotation_text=f"+{trend_mean_dev:.3f}"
-            )
-            fig.add_hline(
-                y=-trend_mean_dev,
-                line_dash="dot",
-                line_color="gray",
-                opacity=0.8,
-                row=2, col=1,
-                annotation_text=f"-{trend_mean_dev:.3f}"
-            )
+            # Adiciona linhas de desvio médio para tendência
+            fig.add_hline(y=trend_mean_dev, line_dash="dot", line_color="gray",
+                         opacity=0.8, row=2, col=1,
+                         annotation_text=f"+{trend_mean_dev:.3f}")
+            fig.add_hline(y=-trend_mean_dev, line_dash="dot", line_color="gray",
+                         opacity=0.8, row=2, col=1,
+                         annotation_text=f"-{trend_mean_dev:.3f}")
             
             fig.add_trace(
-                go.Scatter(
-                    x=ibov_trend.index,
-                    y=ibov_trend,
-                    line=dict(color='white', width=2, dash='solid'),
-                    name='Tendência IBOV'
-                ),
+                go.Scatter(x=ibov_trend.index, y=ibov_trend,
+                          line=dict(color='white', width=2, dash='solid'),
+                          name='Tendência IBOV'),
                 row=2, col=1
             )
             
-            fig.add_hline(y=0, line_dash="dash", line_color="white", opacity=0.5, row=2, col=1)
-            
+            fig.add_hline(y=0, line_dash="dash", line_color="white",
+                         opacity=0.5, row=2, col=1)
+
+            # Gráfico de Sinal Final
             fig.add_trace(
-                go.Scatter(
-                    x=signal.index,
-                    y=signal,
-                    line=dict(color='#00FFAA', width=2),
-                    name=f'Sinal {symbol}'
-                ),
+                go.Scatter(x=signal.index, y=signal,
+                          line=dict(color='#00FFAA', width=2),  # Verde cyberpunk
+                          name=f'Sinal {symbol}'),
                 row=3, col=1
             )
             
             fig.add_trace(
-                go.Scatter(
-                    x=ibov_signal.index,
-                    y=ibov_signal,
-                    line=dict(color='white', width=1, dash='solid'),
-                    name='Sinal IBOV'
-                ),
+                go.Scatter(x=ibov_signal.index, y=ibov_signal,
+                          line=dict(color='white', width=1, dash='solid'),
+                          name='Sinal IBOV'),
                 row=3, col=1
             )
             
-            fig.add_hline(y=0, line_dash="solid", line_color="white", opacity=0.5, row=3, col=1)
-            
+            fig.add_hline(y=0, line_dash="solid", line_color="white",
+                         opacity=0.5, row=3, col=1)
+
+            # Layout igual ao código antigo com fundo transparente
             fig.update_layout(
                 height=900,
                 showlegend=True,
@@ -230,13 +204,14 @@ class ATSMOMService:
                 plot_bgcolor=plot_bgcolor,
                 font=dict(color='white'),
                 legend=dict(
-                    bgcolor=plot_bgcolor,
+                    bgcolor='rgba(0,0,0,0)',  # Transparente
                     bordercolor='white',
                     borderwidth=1
                 ),
                 margin=dict(t=100)
             )
-            
+
+            # Eixos igual ao código antigo
             fig.update_xaxes(
                 showgrid=True,
                 gridwidth=1,
@@ -246,7 +221,7 @@ class ATSMOMService:
                 showline=True,
                 tickfont=dict(color='white')
             )
-            
+
             fig.update_yaxes(
                 showgrid=True,
                 gridwidth=1,
@@ -256,7 +231,7 @@ class ATSMOMService:
                 showline=True,
                 tickfont=dict(color='white')
             )
-            
+
             return fig.to_html(include_plotlyjs='cdn')
             
         except Exception as e:
@@ -331,7 +306,7 @@ class ATSMOMService:
                     'prices': [float(x) if not pd.isna(x) else 0.0 for x in data['close'].tail(60)],
                     'signals': [float(x) if not pd.isna(x) else 0.0 for x in final_signal.tail(60)],
                     'trends': [float(x) if not pd.isna(x) else 0.0 for x in trend_strength.tail(60)],
-                    'dates': [d.strftime('%Y-%m-%d') for d in data.index[-60:]]  # ✅ CORRETO
+                    'dates': [d.strftime('%Y-%m-%d') for d in data.index[-60:]]
                 }
             }
             

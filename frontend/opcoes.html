@@ -142,9 +142,7 @@
         </div>
         <div class="hidden md:flex items-center space-x-6">
           <a href="dashboard.html" class="text-gray-300 hover:text-primary transition-colors">Dashboard</a>
-          <a href="analises.html" class="text-gray-300 hover:text-primary transition-colors">Análises</a>
           <a href="opcoes.html" class="nav-active transition-colors font-medium">Hunter Walls</a>
-          <a href="relatorios.html" class="text-gray-300 hover:text-primary transition-colors">Relatórios</a>
         </div>
       </div>
       
@@ -369,11 +367,12 @@
           currentUser = result.data.user;
           
           // Verificar se tem plano Premium
-          if (currentUser.plan_id < 2) {
-            showUpgradeRequired();
-            return;
-          }
-          
+          const allowedPlans = [1, 2];
+            if (!allowedPlans.includes(currentUser.plan_id)) {
+              showUpgradeRequired();
+              return;
+            }
+                      
         } else {
           localStorage.removeItem('geminii_token');
           localStorage.removeItem('geminii_user');
