@@ -1,6 +1,3 @@
-# auth_routes.py - ROTAS COMPLETAS DE AUTENTICAÇÃO - CORRIGIDO
-# ==================================================
-
 from flask import Blueprint, request, jsonify, render_template_string, redirect, url_for
 import jwt
 import hashlib

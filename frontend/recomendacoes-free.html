@@ -389,7 +389,7 @@
       try {
         console.log(`🔍 Verificando autenticação (tentativa ${attempt})...`);
         
-        const response = await fetch('/api/auth/verify', {
+        const response = await fetch('/auth/verify', {
           headers: { 
             'Authorization': `Bearer ${userToken}`,
             'Content-Type': 'application/json'
@@ -545,7 +545,7 @@
     // Verificar conexão
     async function checkConnection() {
       try {
-        const response = await fetch('/api/auth/verify', {
+        const response = await fetch('/auth/verify', {
           headers: { 'Authorization': `Bearer ${userToken}` },
           cache: 'no-cache'
         });

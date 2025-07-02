@@ -1,5 +1,6 @@
 from flask import Flask, jsonify, send_from_directory, request, redirect
 import jwt
+from flask_cors import CORS
 from datetime import datetime, timedelta, timezone
 import os
 from database import get_db_connection
@@ -117,8 +118,12 @@ app.register_blueprint(chart_ativos_bp)
 register_atsmom_routes(app)
 recommendations_free_bp = get_recommendations_free_blueprint()
 app.register_blueprint(recommendations_free_bp)
-app.register_blueprint(get_auth_blueprint())
 
+CORS(app, 
+     origins=['*'],
+     methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+     allow_headers=['Content-Type', 'Authorization'],
+     supports_credentials=True)
 
 
 # Blueprints condicionais
@@ -142,7 +147,7 @@ if CARROSSEL_AVAILABLE and carrossel_bp:
         print(f"❌ Erro ao registrar carrossel blueprint: {e}")
         CARROSSEL_AVAILABLE = False
 
-# 🔥 REGISTRAR NOVO SISTEMA DE AUTH
+# ===== REGISTRAR AUTH BLUEPRINT (CORREÇÃO) =====
 if AUTH_AVAILABLE and auth_bp:
     try:
         app.register_blueprint(auth_bp)
@@ -150,7 +155,6 @@ if AUTH_AVAILABLE and auth_bp:
     except Exception as e:
         print(f"❌ Erro ao registrar auth blueprint: {e}")
         AUTH_AVAILABLE = False
-
 # Newsletter
 try:
     from newsletter_routes import get_newsletter_blueprint
@@ -373,7 +377,7 @@ def payment_success():
                         headers['Authorization'] = `Bearer ${{token}}`;
                     }}
                     
-                    const response = await fetch('/api/auth/verify', {{ headers }});
+                    const response = await fetch('/auth/verify', {{ headers }});
                     
                     if (response.ok) {{
                         const data = await response.json();
@@ -588,7 +592,7 @@ def dashboard_api():
     except Exception as e:
         return jsonify({'success': False, 'error': f'Erro interno: {str(e)}'}), 500
 
-@app.route('/api/auth/register', methods=['POST'])
+@app.route('/auth/register', methods=['POST'])
 def register_api():
     """Registro via API - compatibilidade"""
     try:
@@ -644,7 +648,7 @@ def validate_coupon():
     except Exception as e:
         return jsonify({'success': False, 'error': f'Erro interno: {str(e)}'}), 500
 
-@app.route('/api/auth/login', methods=['POST'])
+@app.route('/auth/login', methods=['POST'])
 def login_api():
     """Login via API - compatibilidade"""
     try:
@@ -657,25 +661,12 @@ def login_api():
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
-@app.route('/api/auth/verify', methods=['GET'])
-def verify_api():
-    """Verificar token via API - compatibilidade"""
-    try:
-        if AUTH_AVAILABLE:
-            from auth_routes import auth_bp
-            with app.test_request_context():
-                return auth_bp.verify_token()
-        else:
-            return jsonify({'success': False, 'error': 'Sistema de auth não disponível'}), 503
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
-
-@app.route('/api/auth/logout', methods=['POST'])
+@app.route('/auth/logout', methods=['POST'])
 def logout():
     """Logout do usuário"""
     return jsonify({'success': True, 'message': 'Logout realizado com sucesso!'}), 200
 
-@app.route('/api/auth/forgot-password', methods=['POST'])
+@app.route('/auth/forgot-password', methods=['POST'])
 def forgot_password():
     """Solicitar recuperação de senha"""
     try:
@@ -714,7 +705,7 @@ def forgot_password():
     except Exception as e:
         return jsonify({'success': False, 'error': f'Erro interno: {str(e)}'}), 500
 
-@app.route('/api/auth/validate-reset-token', methods=['POST'])
+@app.route('/auth/validate-reset-token', methods=['POST'])
 def validate_reset():
     """Validar token de recuperação"""
     try:
@@ -746,7 +737,7 @@ def validate_reset():
     except Exception as e:
         return jsonify({'success': False, 'error': f'Erro interno: {str(e)}'}), 500
 
-@app.route('/api/auth/reset-password', methods=['POST'])
+@app.route('/auth/reset-password', methods=['POST'])
 def reset_password_api():
     """Redefinir senha com token"""
     try:
