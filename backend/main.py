@@ -1,13 +1,11 @@
-# main.py - VERSÃO LIMPA (sem duplicações)
-
-from flask import Flask, jsonify, send_from_directory, request
+from flask import Flask, jsonify, send_from_directory, request, redirect
 import jwt
 from datetime import datetime, timedelta, timezone
 import os
 from database import get_db_connection
 import mercadopago_service
 
-# Imports dos blueprints
+
 from beta_routes import beta_bp
 from long_short_routes import long_short_bp
 from rsl_routes import get_rsl_blueprint
@@ -21,6 +19,10 @@ from chart_ativos_routes import chart_ativos_bp
 from carrossel_yfinance_routes import get_carrossel_blueprint
 from recommendations_routes_free import get_recommendations_free_blueprint
 from dotenv import load_dotenv
+
+
+from email_service import setup_email_system
+from auth_routes import get_auth_blueprint
 
 load_dotenv()
 if not os.getenv('JWT_SECRET'):
@@ -37,20 +39,21 @@ app.config['MAIL_USE_SSL'] = True
 app.config['MAIL_USERNAME'] = os.environ.get('EMAIL_USER', 'contato@geminii.com.br')
 app.config['MAIL_PASSWORD'] = os.environ.get('EMAIL_PASSWORD', '#Giminii#')
 
-# ===== CONFIGURAÇÃO MERCADO PAGO =====
+# ===== CONFIGURAÇÃO BLUEPRINTS EXISTENTES =====
+
+# Mercado Pago
 MP_AVAILABLE = False
 mercadopago_bp = None
 
 try:
     mercadopago_bp = get_mercadopago_blueprint()
     MP_AVAILABLE = True
-    
 except ImportError as e:
     print(f"⚠️ Mercado Pago não disponível: {e}")
 except Exception as e:
     print(f"❌ Erro ao carregar Mercado Pago: {e}")
 
-# ===== CONFIGURAÇÃO ADMIN BLUEPRINT =====
+# Admin
 ADMIN_AVAILABLE = False
 admin_bp = None
 
@@ -66,14 +69,13 @@ except Exception as e:
     print(f"❌ Erro ao carregar admin blueprint: {e}")
     ADMIN_AVAILABLE = False
 
-# ===== CONFIGURAÇÃO CARROSSEL =====
+# Carrossel
 CARROSSEL_AVAILABLE = False
 carrossel_bp = None
 
 try:
     carrossel_bp = get_carrossel_blueprint()
     CARROSSEL_AVAILABLE = True
-    
 except ImportError as e:
     print(f"⚠️ Carrossel não disponível: {e}")
     CARROSSEL_AVAILABLE = False
@@ -81,7 +83,24 @@ except Exception as e:
     print(f"❌ Erro ao carregar Carrossel: {e}")
     CARROSSEL_AVAILABLE = False
 
+# 🔥 NOVO SISTEMA DE AUTENTICAÇÃO
+AUTH_AVAILABLE = False
+auth_bp = None
+
+try:
+    auth_bp = get_auth_blueprint()
+    AUTH_AVAILABLE = True
+    print("✅ Blueprint Auth carregado com sucesso!")
+except ImportError as e:
+    print(f"⚠️ Auth routes não disponível: {e}")
+    AUTH_AVAILABLE = False
+except Exception as e:
+    print(f"❌ Erro ao carregar auth blueprint: {e}")
+    AUTH_AVAILABLE = False
+
 # ===== REGISTRAR BLUEPRINTS =====
+
+# Blueprints existentes
 app.register_blueprint(opcoes_bp)
 app.register_blueprint(beta_bp)
 app.register_blueprint(long_short_bp)
@@ -98,8 +117,11 @@ app.register_blueprint(chart_ativos_bp)
 register_atsmom_routes(app)
 recommendations_free_bp = get_recommendations_free_blueprint()
 app.register_blueprint(recommendations_free_bp)
+app.register_blueprint(get_auth_blueprint())
 
-# Registrar blueprints condicionais
+
+
+# Blueprints condicionais
 if MP_AVAILABLE and mercadopago_bp:
     app.register_blueprint(mercadopago_bp)
     print("✅ Blueprint Mercado Pago registrado!")
@@ -107,7 +129,7 @@ if MP_AVAILABLE and mercadopago_bp:
 if ADMIN_AVAILABLE and admin_bp:
     try:
         app.register_blueprint(admin_bp)
-        
+        print("✅ Blueprint Admin registrado!")
     except Exception as e:
         print(f"❌ Erro ao registrar admin blueprint: {e}")
         ADMIN_AVAILABLE = False
@@ -115,25 +137,41 @@ if ADMIN_AVAILABLE and admin_bp:
 if CARROSSEL_AVAILABLE and carrossel_bp:
     try:
         app.register_blueprint(carrossel_bp)
-        
+        print("✅ Blueprint Carrossel registrado!")
     except Exception as e:
         print(f"❌ Erro ao registrar carrossel blueprint: {e}")
         CARROSSEL_AVAILABLE = False
 
+# 🔥 REGISTRAR NOVO SISTEMA DE AUTH
+if AUTH_AVAILABLE and auth_bp:
+    try:
+        app.register_blueprint(auth_bp)
+        print("✅ Blueprint Auth registrado!")
+    except Exception as e:
+        print(f"❌ Erro ao registrar auth blueprint: {e}")
+        AUTH_AVAILABLE = False
+
+# Newsletter
 try:
     from newsletter_routes import get_newsletter_blueprint
     newsletter_bp = get_newsletter_blueprint()
     app.register_blueprint(newsletter_bp)
-    
+    print("✅ Blueprint Newsletter registrado!")
 except Exception as e:
     print(f"❌ Erro newsletter: {e}")
 
 # ===== INICIALIZAÇÃO =====
 def initialize_database():
-    """Inicializar banco se necessário"""
+    """🔥 Inicializar banco e sistema de email"""
     try:
         from database import setup_enhanced_database
         setup_enhanced_database()
+        
+        # 🔥 INICIALIZAR SISTEMA DE EMAIL
+        if setup_email_system():
+            print("✅ Sistema de email inicializado!")
+        else:
+            print("⚠️ Falha na inicialização do sistema de email")
         
     except Exception as e:
         print(f"⚠️ Erro ao verificar banco: {e}")
@@ -551,63 +589,18 @@ def dashboard_api():
         return jsonify({'success': False, 'error': f'Erro interno: {str(e)}'}), 500
 
 @app.route('/api/auth/register', methods=['POST'])
-def register():
-    """Registrar novo usuário"""
+def register_api():
+    """Registro via API - compatibilidade"""
     try:
-        data = request.get_json()
-        
-        if not data:
-            return jsonify({'success': False, 'error': 'Dados JSON necessários'}), 400
-        
-        name = data.get('name', '').strip()
-        email = data.get('email', '').strip()
-        password = data.get('password', '')
-        
-        if not name or not email or not password:
-            return jsonify({'success': False, 'error': 'Nome, e-mail e senha são obrigatórios'}), 400
-        
-        if len(password) < 6:
-            return jsonify({'success': False, 'error': 'Senha deve ter pelo menos 6 caracteres'}), 400
-        
-        if '@' not in email:
-            return jsonify({'success': False, 'error': 'E-mail inválido'}), 400
-        
-        conn = get_db_connection()
-        if not conn:
-            return jsonify({'success': False, 'error': 'Erro de conexão com banco'}), 500
-        
-        cursor = conn.cursor()
-        
-        cursor.execute("SELECT id FROM users WHERE email = %s", (email,))
-        if cursor.fetchone():
-            cursor.close()
-            conn.close()
-            return jsonify({'success': False, 'error': 'E-mail já cadastrado'}), 400
-        
-        hashed_password = mercadopago_service.hash_password(password)
-        cursor.execute("""
-            INSERT INTO users (name, email, password, plan_id, plan_name, created_at) 
-            VALUES (%s, %s, %s, %s, %s, %s) RETURNING id
-        """, (name, email, hashed_password, 3, 'Básico', datetime.now(timezone.utc)))
-        
-        user_id = cursor.fetchone()[0]
-        conn.commit()
-        cursor.close()
-        conn.close()
-        
-        return jsonify({
-            'success': True,
-            'message': 'Usuário criado com sucesso!',
-            'data': {
-                'user_id': user_id,
-                'name': name,
-                'email': email,
-                'plan_name': 'Pro'
-            }
-        }), 201
-        
+        if AUTH_AVAILABLE:
+            from auth_routes import auth_bp
+            with app.test_request_context():
+                return auth_bp.register()
+        else:
+            return jsonify({'success': False, 'error': 'Sistema de auth não disponível'}), 503
     except Exception as e:
-        return jsonify({'success': False, 'error': f'Erro interno: {str(e)}'}), 500
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 
 @app.route('/api/validate-coupon', methods=['POST'])
 def validate_coupon():
@@ -652,125 +645,30 @@ def validate_coupon():
         return jsonify({'success': False, 'error': f'Erro interno: {str(e)}'}), 500
 
 @app.route('/api/auth/login', methods=['POST'])
-def login():
-    """Login do usuário"""
+def login_api():
+    """Login via API - compatibilidade"""
     try:
-        data = request.get_json()
-        
-        if not data:
-            return jsonify({'success': False, 'error': 'Dados JSON necessários'}), 400
-        
-        email = data.get('email', '').strip()
-        password = data.get('password', '')
-        
-        if not email or not password:
-            return jsonify({'success': False, 'error': 'E-mail e senha são obrigatórios'}), 400
-        
-        conn = get_db_connection()
-        if not conn:
-            return jsonify({'success': False, 'error': 'Erro de conexão com banco'}), 500
-        
-        cursor = conn.cursor()
-        
-        cursor.execute("""
-            SELECT id, name, email, password, plan_id, plan_name, user_type 
-            FROM users WHERE email = %s
-        """, (email,))
-        
-        user = cursor.fetchone()
-        cursor.close()
-        conn.close()
-        
-        if not user:
-            return jsonify({'success': False, 'error': 'E-mail não encontrado'}), 401
-        
-        user_id, name, email, stored_password, plan_id, plan_name, user_type = user
-        
-        if mercadopago_service.hash_password(password) != stored_password:
-            return jsonify({'success': False, 'error': 'Senha incorreta'}), 401
-        
-        token_payload = {
-            'user_id': user_id,
-            'email': email,
-            'exp': datetime.now(timezone.utc) + timedelta(days=7)
-        }
-        
-        token = jwt.encode(token_payload, app.config['SECRET_KEY'], algorithm='HS256')
-        
-        return jsonify({
-            'success': True,
-            'message': 'Login realizado com sucesso!',
-            'data': {
-                'user': {
-                    'id': user_id,
-                    'name': name,
-                    'email': email,
-                    'plan_id': plan_id,
-                    'plan_name': plan_name,
-                    'user_type': user_type
-                },
-                'token': token
-            }
-        }), 200
-        
+        if AUTH_AVAILABLE:
+            from auth_routes import auth_bp
+            with app.test_request_context():
+                return auth_bp.login()
+        else:
+            return jsonify({'success': False, 'error': 'Sistema de auth não disponível'}), 503
     except Exception as e:
-        return jsonify({'success': False, 'error': f'Erro interno: {str(e)}'}), 500
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 @app.route('/api/auth/verify', methods=['GET'])
-def verify_token():
-    """Verificar se token é válido"""
+def verify_api():
+    """Verificar token via API - compatibilidade"""
     try:
-        auth_header = request.headers.get('Authorization')
-        
-        if not auth_header or not auth_header.startswith('Bearer '):
-            return jsonify({'success': False, 'error': 'Token não fornecido'}), 401
-        
-        token = auth_header.replace('Bearer ', '')
-        
-        try:
-            payload = jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
-            user_id = payload['user_id']
-            
-            conn = get_db_connection()
-            if not conn:
-                return jsonify({'success': False, 'error': 'Erro de conexão com banco'}), 500
-            
-            cursor = conn.cursor()
-            cursor.execute("""
-                SELECT id, name, email, plan_id, plan_name, user_type 
-                FROM users WHERE id = %s
-            """, (user_id,))
-            
-            user = cursor.fetchone()
-            cursor.close()
-            conn.close()
-            
-            if not user:
-                return jsonify({'success': False, 'error': 'Usuário não encontrado'}), 401
-            
-            user_id, name, email, plan_id, plan_name, user_type = user
-            
-            return jsonify({
-                'success': True,
-                'data': {
-                    'user': {
-                        'id': user_id,
-                        'name': name,
-                        'email': email,
-                        'plan_id': plan_id,
-                        'plan_name': plan_name,
-                        'user_type': user_type
-                    }
-                }
-            })
-            
-        except jwt.ExpiredSignatureError:
-            return jsonify({'success': False, 'error': 'Token expirado'}), 401
-        except jwt.InvalidTokenError:
-            return jsonify({'success': False, 'error': 'Token inválido'}), 401
-        
+        if AUTH_AVAILABLE:
+            from auth_routes import auth_bp
+            with app.test_request_context():
+                return auth_bp.verify_token()
+        else:
+            return jsonify({'success': False, 'error': 'Sistema de auth não disponível'}), 503
     except Exception as e:
-        return jsonify({'success': False, 'error': f'Erro interno: {str(e)}'}), 500
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 @app.route('/api/auth/logout', methods=['POST'])
 def logout():

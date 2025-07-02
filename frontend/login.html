@@ -156,6 +156,33 @@
       animation: pulse 2s infinite;
     }
 
+    /* Alerta de confirmação de email */
+    .confirmation-alert {
+      background: rgba(245, 158, 11, 0.1);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 20px;
+      display: none;
+    }
+
+    .confirmation-alert.show {
+      display: block;
+      animation: slideIn 0.3s ease;
+    }
+
+    .resend-btn {
+      background: rgba(245, 158, 11, 0.2);
+      border: 1px solid rgba(245, 158, 11, 0.5);
+      color: #f59e0b;
+      transition: all 0.3s ease;
+    }
+
+    .resend-btn:hover {
+      background: rgba(245, 158, 11, 0.3);
+      color: #ffffff;
+    }
+
     @keyframes float {
       0%, 100% { transform: translateY(0px) rotate(0deg); opacity: 0.3; }
       50% { transform: translateY(-30px) rotate(180deg); opacity: 0.6; }
@@ -164,6 +191,11 @@
     @keyframes pulse {
       0%, 100% { opacity: 0.8; }
       50% { opacity: 1; }
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
     }
   </style>
 </head>
@@ -210,6 +242,26 @@
         </div>
         <div class="text-xs text-yellow-800 mt-1">
           Acesso completo ao sistema
+        </div>
+      </div>
+
+      <!-- Alerta de Confirmação de Email -->
+      <div id="confirmationAlert" class="confirmation-alert">
+        <div class="flex items-start gap-3">
+          <i class="fas fa-envelope text-yellow-500 text-lg mt-1"></i>
+          <div class="flex-1">
+            <h4 class="text-yellow-300 font-medium mb-1">Email não confirmado</h4>
+            <p class="text-yellow-200 text-sm mb-3">Você precisa confirmar seu email antes de fazer login. Verifique sua caixa de entrada.</p>
+            <div class="flex gap-2">
+              <button id="resendBtn" class="resend-btn px-3 py-1 rounded text-xs font-medium">
+                <i class="fas fa-paper-plane mr-1"></i>
+                Reenviar Email
+              </button>
+              <button onclick="closeConfirmationAlert()" class="text-yellow-400 hover:text-yellow-300 text-xs">
+                Fechar
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -301,16 +353,17 @@
 
   <script>
     let currentUserType = 'user';
+    let pendingConfirmationEmail = null;
 
-    // Set user type
+    // Definir tipo de usuário
     function setUserType(type) {
       currentUserType = type;
       
-      // Update buttons
+      // Atualizar botões
       document.getElementById('userBtn').classList.toggle('active', type === 'user');
       document.getElementById('adminBtn').classList.toggle('active', type === 'admin');
       
-      // Update UI based on type
+      // Atualizar UI baseado no tipo
       const subtitle = document.getElementById('loginSubtitle');
       const loginBtn = document.getElementById('loginBtn');
       const loginBtnText = document.getElementById('loginBtnText');
@@ -332,19 +385,82 @@
       }
     }
 
-    // Quick admin login
+    // Login rápido para admin
     function quickAdminLogin() {
       document.getElementById('loginEmail').value = 'diego@geminii.com.br';
-      document.getElementById('loginPassword').value = 'admin123';
+      document.getElementById('loginPassword').value = '@Lice8127';
     }
 
-    // Check if already logged in
+    // Funções de confirmação de email
+    function showConfirmationAlert(email) {
+      pendingConfirmationEmail = email;
+      const alert = document.getElementById('confirmationAlert');
+      alert.classList.add('show');
+    }
+
+    function closeConfirmationAlert() {
+      const alert = document.getElementById('confirmationAlert');
+      alert.classList.remove('show');
+      pendingConfirmationEmail = null;
+    }
+
+    async function resendConfirmation() {
+      if (!pendingConfirmationEmail) return;
+
+      const resendBtn = document.getElementById('resendBtn');
+      const originalText = resendBtn.innerHTML;
+      
+      resendBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>Enviando...';
+      resendBtn.disabled = true;
+
+      try {
+        const response = await fetch('/auth/resend-confirmation', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: pendingConfirmationEmail })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          resendBtn.innerHTML = '<i class="fas fa-check mr-1"></i>Enviado!';
+          resendBtn.classList.add('bg-green-600');
+          
+          setTimeout(() => {
+            closeConfirmationAlert();
+            showMessage('Email de confirmação reenviado! Verifique sua caixa de entrada.', 'success');
+          }, 1500);
+        } else {
+          showMessage(result.error, 'error');
+          resendBtn.innerHTML = originalText;
+          resendBtn.disabled = false;
+        }
+      } catch (error) {
+        showMessage('Erro ao reenviar email. Tente novamente.', 'error');
+        resendBtn.innerHTML = originalText;
+        resendBtn.disabled = false;
+      }
+    }
+
+    function showMessage(message, type = 'error') {
+      const messageDiv = document.getElementById('loginMessage');
+      const icon = type === 'success' ? 'fas fa-check-circle' : 'fas fa-times-circle';
+      const color = type === 'success' ? 'text-green-400' : 'text-red-400';
+      
+      messageDiv.innerHTML = `<p class="${color}"><i class="${icon} mr-1"></i>${message}</p>`;
+      
+      setTimeout(() => {
+        messageDiv.innerHTML = '';
+      }, 5000);
+    }
+
+    // Verificar se já está logado
     async function checkAuthStatus() {
       const token = localStorage.getItem('geminii_token');
       if (!token) return;
 
       try {
-        const response = await fetch('/api/auth/verify', {
+        const response = await fetch('/auth/verify', {
           headers: { 'Authorization': `Bearer ${token}` }
         });
 
@@ -353,7 +469,7 @@
           const user = result.data.user;
           const isAdmin = user.user_type === 'admin' || user.user_type === 'master';
           
-          // Redirect based on user type
+          // Redirecionar baseado no tipo de usuário
           if (isAdmin) {
             window.location.href = '/admin-dashboard.html';
           } else {
@@ -369,7 +485,7 @@
       }
     }
 
-    // Login form handler
+    // Handler do formulário de login
     document.getElementById('loginForm').addEventListener('submit', async function(e) {
       e.preventDefault();
       
@@ -379,20 +495,21 @@
       const loginBtn = document.getElementById('loginBtn');
       const loginBtnText = document.getElementById('loginBtnText');
       
-      // Validation
+      // Validação
       if (!email || !password) {
-        messageDiv.innerHTML = '<p class="text-red-400"><i class="fas fa-exclamation-triangle mr-1"></i>Preencha todos os campos</p>';
+        showMessage('Preencha todos os campos', 'error');
         return;
       }
 
-      // Loading state
+      // Estado de loading
       loginBtn.disabled = true;
       const originalText = loginBtnText.innerHTML;
       loginBtnText.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Entrando...';
       messageDiv.innerHTML = '';
+      closeConfirmationAlert(); // Fechar alerta anterior
       
       try {
-        const response = await fetch('/api/auth/login', {
+        const response = await fetch('/auth/login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email, password })
@@ -404,19 +521,19 @@
           const user = data.data.user;
           const isAdmin = user.user_type === 'admin' || user.user_type === 'master';
           
-          // Check if admin mode is selected but user is not admin
+          // Verificar se modo admin está selecionado mas usuário não é admin
           if (currentUserType === 'admin' && !isAdmin) {
-            messageDiv.innerHTML = '<p class="text-red-400"><i class="fas fa-shield-alt mr-1"></i>Acesso negado! Este usuário não tem privilégios de administrador.</p>';
+            showMessage('Acesso negado! Este usuário não tem privilégios de administrador.', 'error');
             loginBtn.disabled = false;
             loginBtnText.innerHTML = originalText;
             return;
           }
           
-          // Store auth data
+          // Armazenar dados de autenticação
           localStorage.setItem('geminii_token', data.data.token);
           localStorage.setItem('geminii_user', JSON.stringify(user));
           
-          messageDiv.innerHTML = '<p class="text-green-400"><i class="fas fa-check-circle mr-1"></i>Login realizado! Redirecionando...</p>';
+          showMessage('Login realizado! Redirecionando...', 'success');
           
           setTimeout(() => {
             if (currentUserType === 'admin' && isAdmin) {
@@ -427,32 +544,45 @@
           }, 1500);
           
         } else {
-          messageDiv.innerHTML = `<p class="text-red-400"><i class="fas fa-times-circle mr-1"></i>${data.error}</p>`;
+          // Verificar se é erro de email não confirmado
+          if (data.requires_confirmation) {
+            showConfirmationAlert(data.email || email);
+          } else {
+            showMessage(data.error, 'error');
+          }
         }
       } catch (error) {
         console.error('❌ Erro no login:', error);
-        messageDiv.innerHTML = '<p class="text-red-400"><i class="fas fa-exclamation-triangle mr-1"></i>Erro de conexão. Tente novamente.</p>';
+        showMessage('Erro de conexão. Tente novamente.', 'error');
       } finally {
         loginBtn.disabled = false;
         loginBtnText.innerHTML = originalText;
       }
     });
 
-    // Auto-focus email field
+    // Event listeners
     document.addEventListener('DOMContentLoaded', function() {
       checkAuthStatus();
       document.getElementById('loginEmail').focus();
-      setUserType('user'); // Default to user
+      setUserType('user'); // Padrão para usuário
       
-      console.log('🔐 Página de Login Enhanced carregada');
+      // Event listener para reenvio de confirmação
+      document.getElementById('resendBtn').addEventListener('click', resendConfirmation);
+      
+      console.log('🔐 Página de Login carregada com sistema de email');
     });
 
-    // Enter key handling
+    // Manipulação da tecla Enter
     document.addEventListener('keypress', function(e) {
       if (e.key === 'Enter' && !document.getElementById('loginBtn').disabled) {
         document.getElementById('loginForm').dispatchEvent(new Event('submit'));
       }
     });
+
+    // Funções globais
+    window.setUserType = setUserType;
+    window.quickAdminLogin = quickAdminLogin;
+    window.closeConfirmationAlert = closeConfirmationAlert;
   </script>
 </body>
 </html>

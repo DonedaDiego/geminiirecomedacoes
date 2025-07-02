@@ -17,124 +17,250 @@
             }
         }
     </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body { font-family: 'Inter', sans-serif; }
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background: linear-gradient(135deg, #000000 0%, #1a1a1a 100%);
+        }
         .gradient-bg {
             background: linear-gradient(135deg, #ba39af, #d946ef);
+        }
+        
+        /* 🔥 NOVOS ESTILOS PARA CONFIRMAÇÃO */
+        .success-container {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 16px;
+            backdrop-filter: blur(20px);
+        }
+        
+        .email-icon {
+            background: linear-gradient(135deg, #10b981, #059669);
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        
+        .success-btn {
+            background: linear-gradient(135deg, #10b981, #059669);
+            transition: all 0.3s ease;
+        }
+        
+        .success-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(16, 185, 129, 0.3);
+        }
+        
+        .steps-indicator {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .step {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .step.active {
+            background: #10b981;
+            transform: scale(1.2);
         }
     </style>
 </head>
 <body class="bg-gray-900 text-white min-h-screen">
     <div class="min-h-screen flex items-center justify-center p-4">
         <div class="w-full max-w-md">
-            <!-- Header -->
-            <div class="text-center mb-8">
-                <h1 class="text-3xl font-bold gradient-bg bg-clip-text text-transparent">
-                    Geminii Tech
-                </h1>
-                <p class="text-gray-400 mt-2">Crie sua conta para começar</p>
+            
+            <!-- 🔥 CONTAINER DE REGISTRO -->
+            <div id="registerContainer">
+                <!-- Header -->
+                <div class="text-center mb-8">
+                    <img src="assets/logo.png" alt="Geminii Logo" class="w-16 h-16 mx-auto mb-4 cursor-pointer" onclick="window.location.href='/'" onerror="this.src='/assets/logo.png';">
+                    <h1 class="text-3xl font-bold gradient-bg bg-clip-text text-transparent">
+                        Geminii Tech
+                    </h1>
+                    <p class="text-gray-400 mt-2">Crie sua conta para começar</p>
+                </div>
+
+                <!-- Steps Indicator -->
+                <div class="steps-indicator">
+                    <div class="step active"></div>
+                    <div class="step"></div>
+                </div>
+
+                <!-- Form -->
+                <div class="bg-gray-800 rounded-lg p-8 shadow-xl border border-gray-700">
+                    <form id="registerForm" class="space-y-6">
+                        <!-- Nome -->
+                        <div>
+                            <label for="name" class="block text-sm font-medium text-gray-300 mb-2">
+                                <i class="fas fa-user mr-2 text-geminii"></i>Nome Completo
+                            </label>
+                            <input type="text" 
+                                   id="name" 
+                                   name="name" 
+                                   required
+                                   class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:border-geminii focus:ring-1 focus:ring-geminii text-white placeholder-gray-400"
+                                   placeholder="Seu nome completo">
+                        </div>
+
+                        <!-- Email -->
+                        <div>
+                            <label for="email" class="block text-sm font-medium text-gray-300 mb-2">
+                                <i class="fas fa-envelope mr-2 text-geminii"></i>E-mail
+                            </label>
+                            <input type="email" 
+                                   id="email" 
+                                   name="email" 
+                                   required
+                                   class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:border-geminii focus:ring-1 focus:ring-geminii text-white placeholder-gray-400"
+                                   placeholder="seu@email.com">
+                        </div>
+
+                        <!-- Senha -->
+                        <div>
+                            <label for="password" class="block text-sm font-medium text-gray-300 mb-2">
+                                <i class="fas fa-lock mr-2 text-geminii"></i>Senha
+                            </label>
+                            <input type="password" 
+                                   id="password" 
+                                   name="password" 
+                                   required
+                                   minlength="6"
+                                   class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:border-geminii focus:ring-1 focus:ring-geminii text-white placeholder-gray-400"
+                                   placeholder="Mínimo 6 caracteres">
+                        </div>
+
+                        <!-- Confirmar Senha -->
+                        <div>
+                            <label for="confirmPassword" class="block text-sm font-medium text-gray-300 mb-2">
+                                <i class="fas fa-lock mr-2 text-geminii"></i>Confirmar Senha
+                            </label>
+                            <input type="password" 
+                                   id="confirmPassword" 
+                                   name="confirmPassword" 
+                                   required
+                                   class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:border-geminii focus:ring-1 focus:ring-geminii text-white placeholder-gray-400"
+                                   placeholder="Confirme sua senha">
+                        </div>
+
+                        <!-- Termos e Privacidade -->
+                        <div class="space-y-3">
+                            <div class="flex items-start space-x-3">
+                                <input type="checkbox" 
+                                       id="acceptTerms" 
+                                       required
+                                       class="mt-1 w-4 h-4 text-geminii bg-gray-700 border-gray-600 rounded focus:ring-geminii focus:ring-2">
+                                <label for="acceptTerms" class="text-sm text-gray-300 leading-relaxed">
+                                    Eu aceito os 
+                                    <a href="/termos-de-uso" target="_blank" class="text-geminii hover:text-geminii-dark underline">
+                                        Termos de Uso
+                                    </a>
+                                </label>
+                            </div>
+
+                            <div class="flex items-start space-x-3">
+                                <input type="checkbox" 
+                                       id="acceptPrivacy" 
+                                       required
+                                       class="mt-1 w-4 h-4 text-geminii bg-gray-700 border-gray-600 rounded focus:ring-geminii focus:ring-2">
+                                <label for="acceptPrivacy" class="text-sm text-gray-300 leading-relaxed">
+                                    Eu aceito a 
+                                    <a href="/politica-de-privacidade" target="_blank" class="text-geminii hover:text-geminii-dark underline">
+                                        Política de Privacidade
+                                    </a>
+                                </label>
+                            </div>
+                        </div>
+                       
+                        <!-- Botão Submit -->
+                        <button type="submit" 
+                                id="submitBtn"
+                                class="w-full gradient-bg text-white py-3 px-4 rounded-lg font-medium hover:opacity-90 transition-opacity focus:outline-none focus:ring-2 focus:ring-geminii focus:ring-offset-2 focus:ring-offset-gray-800">
+                            <span id="submitText"><i class="fas fa-user-plus mr-2"></i>Criar Conta</span>
+                            <span id="submitLoading" class="hidden"><i class="fas fa-spinner fa-spin mr-2"></i>Criando...</span>
+                        </button>
+                    </form>
+
+                    <!-- Divider -->
+                    <div class="mt-6 text-center">
+                        <span class="text-gray-400">Já tem uma conta?</span>
+                        <a href="/login" class="text-geminii hover:text-geminii-dark ml-1 font-medium">
+                            Fazer Login
+                        </a>
+                    </div>
+                </div>
             </div>
 
-            <!-- Form -->
-            <div class="bg-gray-800 rounded-lg p-8 shadow-xl border border-gray-700">
-                <form id="registerForm" class="space-y-6">
-                    <!-- Nome -->
-                    <div>
-                        <label for="name" class="block text-sm font-medium text-gray-300 mb-2">
-                            Nome Completo
-                        </label>
-                        <input type="text" 
-                               id="name" 
-                               name="name" 
-                               required
-                               class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:border-geminii focus:ring-1 focus:ring-geminii text-white placeholder-gray-400"
-                               placeholder="Seu nome completo">
+            <!-- 🔥 CONTAINER DE SUCESSO/CONFIRMAÇÃO -->
+            <div id="successContainer" class="hidden">
+                <div class="success-container p-8 text-center">
+                    <div class="email-icon">
+                        <i class="fas fa-envelope text-white text-2xl"></i>
                     </div>
-
-                    <!-- Email -->
-                    <div>
-                        <label for="email" class="block text-sm font-medium text-gray-300 mb-2">
-                            E-mail
-                        </label>
-                        <input type="email" 
-                               id="email" 
-                               name="email" 
-                               required
-                               class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:border-geminii focus:ring-1 focus:ring-geminii text-white placeholder-gray-400"
-                               placeholder="seu@email.com">
+                    
+                    <h2 class="text-2xl font-bold text-green-400 mb-4">Conta Criada!</h2>
+                    <p class="text-gray-300 mb-6 leading-relaxed">
+                        Olá, <strong id="successUserName"></strong>! Sua conta foi criada com sucesso.
+                    </p>
+                    
+                    <div class="bg-gray-800 rounded-lg p-4 mb-6 border border-gray-700">
+                        <h3 class="text-white font-medium mb-2">
+                            <i class="fas fa-mail-bulk mr-2 text-yellow-400"></i>
+                            Confirme seu email
+                        </h3>
+                        <p class="text-gray-400 text-sm mb-3">
+                            Enviamos um email de confirmação para:
+                        </p>
+                        <p class="text-geminii font-medium" id="successUserEmail"></p>
+                        
+                        <div class="mt-4 p-3 bg-yellow-500 bg-opacity-10 border border-yellow-500 border-opacity-30 rounded-lg">
+                            <p class="text-yellow-300 text-sm">
+                                <i class="fas fa-exclamation-triangle mr-2"></i>
+                                Você precisa confirmar seu email antes de fazer login
+                            </p>
+                        </div>
                     </div>
-
-                    <!-- Senha -->
-                    <div>
-                        <label for="password" class="block text-sm font-medium text-gray-300 mb-2">
-                            Senha
-                        </label>
-                        <input type="password" 
-                               id="password" 
-                               name="password" 
-                               required
-                               minlength="6"
-                               class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:border-geminii focus:ring-1 focus:ring-geminii text-white placeholder-gray-400"
-                               placeholder="Mínimo 6 caracteres">
-                    </div>
-
-                    <!-- Confirmar Senha -->
-                    <div>
-                        <label for="confirmPassword" class="block text-sm font-medium text-gray-300 mb-2">
-                            Confirmar Senha
-                        </label>
-                        <input type="password" 
-                               id="confirmPassword" 
-                               name="confirmPassword" 
-                               required
-                               class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:border-geminii focus:ring-1 focus:ring-geminii text-white placeholder-gray-400"
-                               placeholder="Confirme sua senha">
-                    </div>
-
-                    <!-- Termos e Privacidade -->
+                    
                     <div class="space-y-3">
-                        <div class="flex items-start space-x-3">
-                            <input type="checkbox" 
-                                   id="acceptTerms" 
-                                   required
-                                   class="mt-1 w-4 h-4 text-geminii bg-gray-700 border-gray-600 rounded focus:ring-geminii focus:ring-2">
-                            <label for="acceptTerms" class="text-sm text-gray-300 leading-relaxed">
-                                Eu aceito os 
-                                <a href="/termos-de-uso" target="_blank" class="text-geminii hover:text-geminii-dark underline">
-                                    Termos de Uso
-                                </a>
-                            </label>
-                        </div>
-
-                        <div class="flex items-start space-x-3">
-                            <input type="checkbox" 
-                                   id="acceptPrivacy" 
-                                   required
-                                   class="mt-1 w-4 h-4 text-geminii bg-gray-700 border-gray-600 rounded focus:ring-geminii focus:ring-2">
-                            <label for="acceptPrivacy" class="text-sm text-gray-300 leading-relaxed">
-                                Eu aceito a 
-                                <a href="/politica-de-privacidade" target="_blank" class="text-geminii hover:text-geminii-dark underline">
-                                    Política de Privacidade
-                                </a>
-                            </label>
-                        </div>
+                        <button onclick="resendConfirmationEmail()" 
+                                id="resendConfirmBtn"
+                                class="w-full bg-gray-700 hover:bg-gray-600 text-white py-3 px-4 rounded-lg font-medium transition-colors">
+                            <i class="fas fa-paper-plane mr-2"></i>
+                            Reenviar Email
+                        </button>
+                        
+                        <button onclick="goToLogin()" 
+                                class="w-full success-btn text-white py-3 px-4 rounded-lg font-medium">
+                            <i class="fas fa-sign-in-alt mr-2"></i>
+                            Ir para Login
+                        </button>
                     </div>
-                   
-                    <!-- Botão Submit -->
-                    <button type="submit" 
-                            id="submitBtn"
-                            class="w-full gradient-bg text-white py-3 px-4 rounded-lg font-medium hover:opacity-90 transition-opacity focus:outline-none focus:ring-2 focus:ring-geminii focus:ring-offset-2 focus:ring-offset-gray-800">
-                        <span id="submitText">Criar Conta</span>
-                        <span id="submitLoading" class="hidden">Criando...</span>
-                    </button>
-                </form>
-
-                <!-- Divider -->
-                <div class="mt-6 text-center">
-                    <span class="text-gray-400">Já tem uma conta?</span>
-                    <a href="/login" class="text-geminii hover:text-geminii-dark ml-1 font-medium">
-                        Fazer Login
-                    </a>
+                    
+                    <div class="mt-6 pt-4 border-t border-gray-700">
+                        <p class="text-gray-400 text-sm">
+                            Não recebeu o email? Verifique sua caixa de spam ou 
+                            <button onclick="resendConfirmationEmail()" class="text-geminii hover:text-geminii-dark underline">
+                                clique aqui para reenviar
+                            </button>
+                        </p>
+                    </div>
                 </div>
             </div>
 
@@ -151,13 +277,81 @@
 
     <!-- Loading Overlay -->
     <div id="loadingOverlay" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div class="bg-gray-800 rounded-lg p-6 text-center">
+        <div class="bg-gray-800 rounded-lg p-6 text-center border border-gray-700">
             <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-geminii mx-auto mb-4"></div>
             <p class="text-white">Criando sua conta...</p>
         </div>
     </div>
 
     <script>
+        let registeredUserData = null;
+
+        // 🔥 MOSTRAR CONTAINER DE SUCESSO
+        function showSuccessContainer(userData) {
+            registeredUserData = userData;
+            
+            // Atualizar dados na tela de sucesso
+            document.getElementById('successUserName').textContent = userData.name;
+            document.getElementById('successUserEmail').textContent = userData.email;
+            
+            // Atualizar steps indicator
+            const steps = document.querySelectorAll('.step');
+            steps[0].classList.remove('active');
+            steps[1].classList.add('active');
+            
+            // Esconder formulário e mostrar sucesso
+            document.getElementById('registerContainer').classList.add('hidden');
+            document.getElementById('successContainer').classList.remove('hidden');
+        }
+
+        // 🔥 REENVIAR EMAIL DE CONFIRMAÇÃO
+        async function resendConfirmationEmail() {
+            if (!registeredUserData) return;
+
+            const resendBtn = document.getElementById('resendConfirmBtn');
+            const originalText = resendBtn.innerHTML;
+            
+            resendBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Enviando...';
+            resendBtn.disabled = true;
+
+            try {
+                const response = await fetch('/auth/resend-confirmation', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: registeredUserData.email })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    resendBtn.innerHTML = '<i class="fas fa-check mr-2"></i>Email Enviado!';
+                    resendBtn.classList.remove('bg-gray-700', 'hover:bg-gray-600');
+                    resendBtn.classList.add('bg-green-600');
+                    
+                    setTimeout(() => {
+                        resendBtn.innerHTML = originalText;
+                        resendBtn.classList.add('bg-gray-700', 'hover:bg-gray-600');
+                        resendBtn.classList.remove('bg-green-600');
+                        resendBtn.disabled = false;
+                    }, 3000);
+                } else {
+                    alert(`Erro: ${result.error}`);
+                    resendBtn.innerHTML = originalText;
+                    resendBtn.disabled = false;
+                }
+            } catch (error) {
+                alert('Erro de conexão. Tente novamente.');
+                resendBtn.innerHTML = originalText;
+                resendBtn.disabled = false;
+            }
+        }
+
+        // 🔥 IR PARA LOGIN
+        function goToLogin() {
+            window.location.href = '/login';
+        }
+
+        // Registro form handler
         document.getElementById('registerForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
@@ -209,8 +403,7 @@
             loadingOverlay.classList.remove('hidden');
             
             try {
-                // ✅ CORREÇÃO: Removido o campo inexistente 'marketing_consent'
-                const response = await fetch('/api/auth/register', {
+                const response = await fetch('/auth/register', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -225,10 +418,22 @@
                 const data = await response.json();
                 
                 if (data.success) {
-                    alert('Conta criada com sucesso! Você será redirecionado para o login.');
-                    window.location.href = '/login';
+                    // 🔥 MOSTRAR TELA DE CONFIRMAÇÃO
+                    showSuccessContainer({
+                        name: data.data.name,
+                        email: data.data.email,
+                        user_id: data.data.user_id
+                    });
                 } else {
-                    alert('Erro ao criar conta: ' + data.error);
+                    // Verificar se é reenvio de confirmação
+                    if (data.requires_confirmation) {
+                        showSuccessContainer({
+                            name: name,
+                            email: email
+                        });
+                    } else {
+                        alert('Erro ao criar conta: ' + data.error);
+                    }
                 }
                 
             } catch (error) {
@@ -254,6 +459,12 @@
                 this.style.borderColor = '#d946ef';
             }
         });
+
+        // Global functions
+        window.resendConfirmationEmail = resendConfirmationEmail;
+        window.goToLogin = goToLogin;
+
+        console.log('📝 Página de Registro Enhanced carregada com sistema de confirmação');
     </script>
 </body>
 </html>

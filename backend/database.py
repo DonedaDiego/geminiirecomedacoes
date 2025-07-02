@@ -152,13 +152,15 @@ def update_users_table_for_service():
         cursor.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS plan_expires_at TIMESTAMP")
         cursor.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS user_type VARCHAR(20) DEFAULT 'regular'")
         cursor.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS registration_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+        cursor.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS email_confirmed BOOLEAN DEFAULT TRUE")
+        cursor.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS email_confirmed_at TIMESTAMP")
+
         
         # Atualizar dados existentes
         cursor.execute("""
             UPDATE users 
-            SET subscription_plan = plan_name,
-                registration_date = COALESCE(registration_date, created_at)
-            WHERE subscription_plan IS NULL OR registration_date IS NULL
+            SET email_confirmed = TRUE, email_confirmed_at = CURRENT_TIMESTAMP
+            WHERE email_confirmed IS NULL
         """)
         
         # Criar índices
@@ -379,10 +381,11 @@ def create_initial_admin():
             "Diego Doneda - Admin", 
             admin_email, 
             admin_password, 
-            1,  # Pro
-            "Pro", 
+            2,  # Pro
+            "Premium", 
             "admin",
             "active",
+            True,
             now, 
             now
         ))
@@ -413,8 +416,8 @@ def setup_enhanced_database():
         create_password_reset_table()
         create_coupons_table()
         
-        create_portfolio_tables()  # ✅ ADICIONAR ESTA LINHA
-        
+        create_portfolio_tables()  
+        create_email_confirmations_table() 
         create_initial_admin()
         
         return True
@@ -528,7 +531,42 @@ def cleanup_expired_tokens():
         print(f"❌ Erro ao limpar tokens: {e}")
         return False
 
-# ===== FUNÇÕES AUXILIARES PARA COMPATIBILIDADE =====
+def create_email_confirmations_table():
+    """🔥 Criar tabela de confirmações de email"""
+    try:
+        conn = get_db_connection()
+        if not conn:
+            return False
+            
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS email_confirmations (
+                id SERIAL PRIMARY KEY,
+                user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+                token VARCHAR(255) UNIQUE NOT NULL,
+                email VARCHAR(255) NOT NULL,
+                expires_at TIMESTAMP NOT NULL,
+                confirmed BOOLEAN DEFAULT FALSE,
+                confirmed_at TIMESTAMP NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        """)
+        
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_email_confirmations_token ON email_confirmations(token)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_email_confirmations_user ON email_confirmations(user_id)")
+        
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        return True
+        
+    except Exception as e:
+        print(f"❌ Erro ao criar tabela email_confirmations: {e}")
+        return False
+
+
 
 def validate_coupon(code, plan_name, user_id):
     """🔥 Validar cupom - CORRIGIDO para usar campos corretos"""
@@ -593,6 +631,9 @@ def validate_coupon(code, plan_name, user_id):
         
     except Exception as e:
         return {'valid': False, 'error': f'Erro interno: {str(e)}'}
+
+
+
 
 
 def create_portfolio_tables():
