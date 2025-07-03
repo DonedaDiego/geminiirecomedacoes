@@ -1,5 +1,3 @@
-# email_service.py - VERSÃO RESEND COMPLETA
-
 import os
 import secrets
 import hashlib
@@ -12,9 +10,9 @@ class EmailService:
     def __init__(self):
         # 🔥 RESEND CONFIG
         self.resend_api_key = os.environ.get('RESEND_API_KEY')
-        self.from_email = os.environ.get('FROM_EMAIL', 'onboarding@resend.dev')  # Temporário
+        self.from_email = os.environ.get('FROM_EMAIL', 'onboarding@resend.dev')
         self.from_name = 'Geminii Tech'
-        self.base_url = os.environ.get('BASE_URL', 'http://localhost:5000')
+        self.base_url = os.environ.get('BASE_URL', 'https://app-geminii.railway.app')  # SUA URL REAL
         
         # MODO TESTE - Para desenvolvimento sem Resend
         self.test_mode = not self.resend_api_key
@@ -23,6 +21,7 @@ class EmailService:
             print("⚠️ MODO TESTE ativo - Configure RESEND_API_KEY para emails reais")
         else:
             print(f"✅ RESEND ativo - Enviando de: {self.from_email}")
+            print(f"🌐 Base URL: {self.base_url}")
 
     def send_email(self, to_email, subject, html_content):
         """📧 Enviar email via Resend"""
@@ -50,7 +49,7 @@ class EmailService:
                 "html": html_content
             }
             
-            print(f"📤 Enviando email para {to_email}...")
+            print(f"📤 Enviando email via Resend para {to_email}...")
             
             response = requests.post(url, headers=headers, data=json.dumps(data))
             

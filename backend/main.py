@@ -20,6 +20,7 @@ from chart_ativos_routes import chart_ativos_bp
 from carrossel_yfinance_routes import get_carrossel_blueprint
 from recommendations_routes_free import get_recommendations_free_blueprint
 from volatilidade_routes import volatilidade_bp
+from email_routes import get_email_blueprint 
 
 from dotenv import load_dotenv
 
@@ -101,6 +102,9 @@ except Exception as e:
     print(f"❌ Erro ao carregar auth blueprint: {e}")
     AUTH_AVAILABLE = False
 
+
+
+
 # ===== REGISTRAR BLUEPRINTS =====
 
 # Blueprints existentes
@@ -166,6 +170,31 @@ try:
     print("✅ Blueprint Newsletter registrado!")
 except Exception as e:
     print(f"❌ Erro newsletter: {e}")
+
+
+EMAIL_AVAILABLE = False
+email_bp = None
+
+try:
+    email_bp = get_email_blueprint()  
+    EMAIL_AVAILABLE = True
+    print("✅ Blueprint Email carregado com sucesso!")
+except ImportError as e:
+    print(f"⚠️ Email routes não disponível: {e}")
+    EMAIL_AVAILABLE = False
+except Exception as e:
+    print(f"❌ Erro ao carregar email blueprint: {e}")
+    EMAIL_AVAILABLE = False
+
+# 🔥 REGISTRAR BLUEPRINT
+if EMAIL_AVAILABLE and email_bp:
+    try:
+        app.register_blueprint(email_bp)
+        print("✅ Blueprint Email registrado!")
+    except Exception as e:
+        print(f"❌ Erro ao registrar email blueprint: {e}")
+        EMAIL_AVAILABLE = False
+
 
 # ===== INICIALIZAÇÃO =====
 def initialize_database():
@@ -674,110 +703,6 @@ def logout():
     """Logout do usuário"""
     return jsonify({'success': True, 'message': 'Logout realizado com sucesso!'}), 200
 
-@app.route('/auth/forgot-password', methods=['POST'])
-def forgot_password():
-    """Solicitar recuperação de senha"""
-    try:
-        data = request.get_json()
-        
-        if not data:
-            return jsonify({'success': False, 'error': 'Dados JSON necessários'}), 400
-        
-        email = data.get('email', '').strip()
-        
-        if not email or '@' not in email:
-            return jsonify({'success': False, 'error': 'E-mail é obrigatório'}), 400
-        
-        result = mercadopago_service.generate_reset_token_service(email)
-        
-        if result['success']:
-            email_sent = mercadopago_service.send_reset_email(
-                result['user_email'], 
-                result['user_name'], 
-                result['token']
-            )
-            
-            if email_sent:
-                return jsonify({
-                    'success': True,
-                    'message': 'E-mail de recuperação enviado!'
-                }), 200
-            else:
-                return jsonify({
-                    'success': False,
-                    'error': 'Erro ao enviar e-mail. Tente novamente.'
-                }), 500
-        else:
-            return jsonify(result), 400
-        
-    except Exception as e:
-        return jsonify({'success': False, 'error': f'Erro interno: {str(e)}'}), 500
-
-@app.route('/auth/validate-reset-token', methods=['POST'])
-def validate_reset():
-    """Validar token de recuperação"""
-    try:
-        data = request.get_json()
-        
-        if not data:
-            return jsonify({'success': False, 'error': 'Dados JSON necessários'}), 400
-        
-        token = data.get('token', '').strip()
-        
-        if not token:
-            return jsonify({'success': False, 'error': 'Token é obrigatório'}), 400
-        
-        result = mercadopago_service.validate_reset_token_service(token)
-        
-        if result['success']:
-            return jsonify({
-                'success': True,
-                'message': 'Token válido!',
-                'data': {
-                    'user_name': result['user_name'],
-                    'email': result['email'],
-                    'expires_at': result['expires_at']
-                }
-            }), 200
-        else:
-            return jsonify(result), 400
-        
-    except Exception as e:
-        return jsonify({'success': False, 'error': f'Erro interno: {str(e)}'}), 500
-
-@app.route('/auth/reset-password', methods=['POST'])
-def reset_password_api():
-    """Redefinir senha com token"""
-    try:
-        data = request.get_json()
-        
-        if not data:
-            return jsonify({'success': False, 'error': 'Dados JSON necessários'}), 400
-        
-        token = data.get('token', '').strip()
-        new_password = data.get('new_password', '')
-        
-        if not token or not new_password:
-            return jsonify({'success': False, 'error': 'Token e nova senha são obrigatórios'}), 400
-        
-        if len(new_password) < 6:
-            return jsonify({'success': False, 'error': 'Nova senha deve ter pelo menos 6 caracteres'}), 400
-        
-        result = mercadopago_service.reset_password_service(token, new_password)
-        
-        if result['success']:
-            return jsonify({
-                'success': True,
-                'message': result['message'],
-                'data': {
-                    'user_name': result['user_name']
-                }
-            }), 200
-        else:
-            return jsonify(result), 400
-        
-    except Exception as e:
-        return jsonify({'success': False, 'error': f'Erro interno: {str(e)}'}), 500
 
 # ===== FUNÇÃO CREATE_APP PARA RAILWAY =====
 def create_app():
