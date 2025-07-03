@@ -1,19 +1,72 @@
+# email_service.py - VERSÃO RESEND COMPLETA
+
 import os
 import secrets
 import hashlib
+import requests
+import json
 from datetime import datetime, timedelta, timezone
 from database import get_db_connection
 
 class EmailService:
     def __init__(self):
-        self.smtp_server = "smtp.titan.email"
-        self.smtp_port = 465
-        self.from_email = os.environ.get('EMAIL_USER', 'contato@geminii.com.br')
-        self.password = os.environ.get('EMAIL_PASSWORD', '#Geminii20')
+        # 🔥 RESEND CONFIG
+        self.resend_api_key = os.environ.get('RESEND_API_KEY')
+        self.from_email = os.environ.get('FROM_EMAIL', 'onboarding@resend.dev')  # Temporário
+        self.from_name = 'Geminii Tech'
         self.base_url = os.environ.get('BASE_URL', 'http://localhost:5000')
         
-        # MODO TESTE - SEM SMTP
-        self.test_mode = True
+        # MODO TESTE - Para desenvolvimento sem Resend
+        self.test_mode = not self.resend_api_key
+        
+        if self.test_mode:
+            print("⚠️ MODO TESTE ativo - Configure RESEND_API_KEY para emails reais")
+        else:
+            print(f"✅ RESEND ativo - Enviando de: {self.from_email}")
+
+    def send_email(self, to_email, subject, html_content):
+        """📧 Enviar email via Resend"""
+        try:
+            if self.test_mode:
+                print(f"\n📧 [MODO TESTE] Email simulado:")
+                print(f"   Para: {to_email}")
+                print(f"   Assunto: {subject}")
+                print(f"   De: {self.from_email}")
+                print(f"   ✅ Email 'enviado' com sucesso")
+                return True
+            
+            # 🔥 ENVIAR VIA RESEND API
+            url = "https://api.resend.com/emails"
+            
+            headers = {
+                'Authorization': f'Bearer {self.resend_api_key}',
+                'Content-Type': 'application/json'
+            }
+            
+            data = {
+                "from": f"{self.from_name} <{self.from_email}>",
+                "to": [to_email],
+                "subject": subject,
+                "html": html_content
+            }
+            
+            print(f"📤 Enviando email para {to_email}...")
+            
+            response = requests.post(url, headers=headers, data=json.dumps(data))
+            
+            if response.status_code == 200:
+                result = response.json()
+                print(f"✅ Email enviado via Resend!")
+                print(f"   ID: {result.get('id', 'N/A')}")
+                return True
+            else:
+                print(f"❌ Erro Resend: {response.status_code}")
+                print(f"   Resposta: {response.text}")
+                return False
+            
+        except Exception as e:
+            print(f"❌ Erro ao enviar email: {e}")
+            return False
 
     def setup_tables(self):
         """🔧 Criar tabelas necessárias"""
@@ -30,8 +83,8 @@ class EmailService:
             try:
                 cursor.execute("""
                     ALTER TABLE users 
-                    ADD COLUMN IF NOT EXISTS email_confirmed BOOLEAN DEFAULT TRUE,
-                    ADD COLUMN IF NOT EXISTS email_confirmed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    ADD COLUMN IF NOT EXISTS email_confirmed BOOLEAN DEFAULT FALSE,
+                    ADD COLUMN IF NOT EXISTS email_confirmed_at TIMESTAMP DEFAULT NULL
                 """)
                 print("✅ Campos adicionados na tabela users")
             except Exception as e:
@@ -71,15 +124,15 @@ class EmailService:
             except Exception as e:
                 print(f"⚠️ Erro ao criar password_reset_tokens: {e}")
             
-            # 4. Confirmar usuários existentes
+            # 4. IMPORTANTE: Confirmar usuários EXISTENTES (admin, etc)
             try:
                 cursor.execute("""
                     UPDATE users 
                     SET email_confirmed = TRUE, email_confirmed_at = CURRENT_TIMESTAMP 
-                    WHERE email_confirmed IS NULL OR email_confirmed = FALSE
+                    WHERE email_confirmed IS NULL AND created_at < NOW() - INTERVAL '1 day'
                 """)
                 updated = cursor.rowcount
-                print(f"✅ {updated} usuários marcados como confirmados")
+                print(f"✅ {updated} usuários antigos marcados como confirmados")
             except Exception as e:
                 print(f"⚠️ Erro ao confirmar usuários: {e}")
             
@@ -101,38 +154,6 @@ class EmailService:
             
         except Exception as e:
             print(f"❌ Erro na configuração de tabelas: {e}")
-            return False
-
-    def send_email(self, to_email, subject, html_content):
-        """📧 Enviar email (modo teste ou real)"""
-        try:
-            if self.test_mode:
-                print(f"\n📧 [MODO TESTE] Email simulado:")
-                print(f"   Para: {to_email}")
-                print(f"   Assunto: {subject}")
-                print(f"   ✅ Email 'enviado' com sucesso")
-                return True
-            
-            # MODO REAL (quando configurar SMTP)
-            import smtplib
-            from email.mime.text import MIMEText
-            from email.mime.multipart import MIMEMultipart
-            
-            msg = MIMEMultipart()
-            msg['From'] = self.from_email
-            msg['To'] = to_email
-            msg['Subject'] = subject
-            msg.attach(MIMEText(html_content, 'html'))
-            
-            with smtplib.SMTP_SSL(self.smtp_server, self.smtp_port) as server:
-                server.login(self.from_email, self.password)
-                server.send_message(msg)
-            
-            print(f"✅ Email enviado para {to_email}")
-            return True
-            
-        except Exception as e:
-            print(f"❌ Erro ao enviar email: {e}")
             return False
 
     # ===== MÉTODOS DE CONFIRMAÇÃO DE EMAIL =====
@@ -160,12 +181,11 @@ class EmailService:
             cursor.close()
             conn.close()
             
-            # Mostrar link no console (modo teste)
-            if self.test_mode:
-                link = f"{self.base_url}/auth/confirm-email?token={token}"
-                print(f"\n🔗 [LINK DE CONFIRMAÇÃO]:")
-                print(f"   {link}")
-                print(f"   ⏰ Expira em: 24 horas")
+            # Mostrar link no console (sempre útil para debug)
+            link = f"{self.base_url}/auth/confirm-email?token={token}"
+            print(f"\n🔗 [LINK DE CONFIRMAÇÃO]:")
+            print(f"   {link}")
+            print(f"   ⏰ Expira em: 24 horas")
             
             return {'success': True, 'token': token}
             
@@ -184,13 +204,89 @@ class EmailService:
         <html>
         <head>
             <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <style>
-                body {{ font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f5f5f5; }}
-                .container {{ max-width: 600px; margin: 0 auto; background: white; border-radius: 10px; overflow: hidden; }}
-                .header {{ background: linear-gradient(135deg, #ba39af, #d946ef); padding: 30px; text-align: center; color: white; }}
-                .content {{ padding: 30px; text-align: center; }}
-                .button {{ display: inline-block; background: linear-gradient(135deg, #ba39af, #d946ef); color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; margin: 20px 0; }}
-                .footer {{ background: #f8f8f8; padding: 20px; text-align: center; font-size: 12px; color: #666; }}
+                body {{ 
+                    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+                    margin: 0; 
+                    padding: 20px; 
+                    background: #f8fafc;
+                    line-height: 1.6;
+                }}
+                .container {{ 
+                    max-width: 600px; 
+                    margin: 0 auto; 
+                    background: white; 
+                    border-radius: 16px; 
+                    overflow: hidden; 
+                    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+                }}
+                .header {{ 
+                    background: linear-gradient(135deg, #ba39af, #d946ef); 
+                    padding: 40px 30px; 
+                    text-align: center; 
+                    color: white; 
+                }}
+                .header h1 {{
+                    margin: 0;
+                    font-size: 28px;
+                    font-weight: 700;
+                }}
+                .header p {{
+                    margin: 8px 0 0 0;
+                    opacity: 0.9;
+                    font-size: 16px;
+                }}
+                .content {{ 
+                    padding: 40px 30px; 
+                    text-align: center; 
+                    color: #374151;
+                }}
+                .content h2 {{
+                    color: #1f2937;
+                    margin-bottom: 16px;
+                    font-size: 24px;
+                }}
+                .button {{ 
+                    display: inline-block; 
+                    background: linear-gradient(135deg, #ba39af, #d946ef); 
+                    color: white !important; 
+                    padding: 16px 32px; 
+                    text-decoration: none; 
+                    border-radius: 8px; 
+                    font-weight: 600; 
+                    margin: 24px 0;
+                    font-size: 16px;
+                    transition: transform 0.2s;
+                }}
+                .button:hover {{
+                    transform: translateY(-2px);
+                }}
+                .link-text {{
+                    background: #f3f4f6;
+                    padding: 12px;
+                    border-radius: 6px;
+                    word-break: break-all;
+                    font-size: 12px;
+                    color: #6b7280;
+                    margin: 16px 0;
+                }}
+                .warning {{
+                    background: #fef3c7;
+                    border: 1px solid #f59e0b;
+                    padding: 16px;
+                    border-radius: 8px;
+                    margin: 20px 0;
+                    color: #92400e;
+                }}
+                .footer {{ 
+                    background: #f9fafb; 
+                    padding: 24px; 
+                    text-align: center; 
+                    font-size: 14px; 
+                    color: #6b7280; 
+                    border-top: 1px solid #e5e7eb;
+                }}
             </style>
         </head>
         <body>
@@ -202,17 +298,24 @@ class EmailService:
                 
                 <div class="content">
                     <h2>Olá, {user_name}!</h2>
-                    <p>Bem-vindo à <strong>Geminii Tech</strong>!</p>
-                    <p>Para completar seu cadastro, confirme seu email clicando no botão abaixo:</p>
+                    <p>Bem-vindo à <strong>Geminii Tech</strong>! Estamos muito felizes em tê-lo conosco.</p>
+                    <p>Para ativar sua conta e começar a usar nossa plataforma, confirme seu email clicando no botão abaixo:</p>
                     
                     <a href="{link}" class="button">✅ Confirmar Email</a>
                     
-                    <p><small>Ou acesse: <a href="{link}">{link}</a></small></p>
-                    <p><strong>⚠️ Este link expira em 24 horas.</strong></p>
+                    <div class="warning">
+                        <strong>⏰ Importante:</strong> Este link expira em 24 horas por segurança.
+                    </div>
+                    
+                    <p style="font-size: 14px; color: #6b7280;">
+                        Se o botão não funcionar, copie e cole este link no seu navegador:
+                    </p>
+                    <div class="link-text">{link}</div>
                 </div>
                 
                 <div class="footer">
                     <p>© 2025 Geminii Tech - Trading Automatizado</p>
+                    <p>Se você não criou esta conta, pode ignorar este email.</p>
                 </div>
             </div>
         </body>
@@ -222,7 +325,7 @@ class EmailService:
         return self.send_email(email, subject, html_content)
 
     def confirm_email_token(self, token):
-        """✅ Confirmar email com token - NOME CORRETO"""
+        """✅ Confirmar email com token"""
         try:
             conn = get_db_connection()
             if not conn:
@@ -340,12 +443,11 @@ class EmailService:
             cursor.close()
             conn.close()
             
-            # Mostrar link no console (modo teste)
-            if self.test_mode:
-                link = f"{self.base_url}/reset-password?token={token}"
-                print(f"\n🔑 [LINK DE RESET]:")
-                print(f"   {link}")
-                print(f"   ⏰ Expira em: 1 hora")
+            # Mostrar link no console (sempre útil para debug)
+            link = f"{self.base_url}/reset-password?token={token}"
+            print(f"\n🔑 [LINK DE RESET]:")
+            print(f"   {link}")
+            print(f"   ⏰ Expira em: 1 hora")
             
             return {
                 'success': True,
@@ -369,14 +471,89 @@ class EmailService:
         <html>
         <head>
             <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <style>
-                body {{ font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f5f5f5; }}
-                .container {{ max-width: 600px; margin: 0 auto; background: white; border-radius: 10px; overflow: hidden; }}
-                .header {{ background: linear-gradient(135deg, #ba39af, #d946ef); padding: 30px; text-align: center; color: white; }}
-                .content {{ padding: 30px; text-align: center; }}
-                .button {{ display: inline-block; background: linear-gradient(135deg, #ba39af, #d946ef); color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; margin: 20px 0; }}
-                .footer {{ background: #f8f8f8; padding: 20px; text-align: center; font-size: 12px; color: #666; }}
-                .warning {{ background: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 5px; margin: 20px 0; }}
+                body {{ 
+                    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+                    margin: 0; 
+                    padding: 20px; 
+                    background: #f8fafc;
+                    line-height: 1.6;
+                }}
+                .container {{ 
+                    max-width: 600px; 
+                    margin: 0 auto; 
+                    background: white; 
+                    border-radius: 16px; 
+                    overflow: hidden; 
+                    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+                }}
+                .header {{ 
+                    background: linear-gradient(135deg, #ef4444, #dc2626); 
+                    padding: 40px 30px; 
+                    text-align: center; 
+                    color: white; 
+                }}
+                .header h1 {{
+                    margin: 0;
+                    font-size: 28px;
+                    font-weight: 700;
+                }}
+                .header p {{
+                    margin: 8px 0 0 0;
+                    opacity: 0.9;
+                    font-size: 16px;
+                }}
+                .content {{ 
+                    padding: 40px 30px; 
+                    text-align: center; 
+                    color: #374151;
+                }}
+                .content h2 {{
+                    color: #1f2937;
+                    margin-bottom: 16px;
+                    font-size: 24px;
+                }}
+                .button {{ 
+                    display: inline-block; 
+                    background: linear-gradient(135deg, #ef4444, #dc2626); 
+                    color: white !important; 
+                    padding: 16px 32px; 
+                    text-decoration: none; 
+                    border-radius: 8px; 
+                    font-weight: 600; 
+                    margin: 24px 0;
+                    font-size: 16px;
+                    transition: transform 0.2s;
+                }}
+                .button:hover {{
+                    transform: translateY(-2px);
+                }}
+                .link-text {{
+                    background: #f3f4f6;
+                    padding: 12px;
+                    border-radius: 6px;
+                    word-break: break-all;
+                    font-size: 12px;
+                    color: #6b7280;
+                    margin: 16px 0;
+                }}
+                .warning {{
+                    background: #fef2f2;
+                    border: 1px solid #ef4444;
+                    padding: 16px;
+                    border-radius: 8px;
+                    margin: 20px 0;
+                    color: #dc2626;
+                }}
+                .footer {{ 
+                    background: #f9fafb; 
+                    padding: 24px; 
+                    text-align: center; 
+                    font-size: 14px; 
+                    color: #6b7280; 
+                    border-top: 1px solid #e5e7eb;
+                }}
             </style>
         </head>
         <body>
@@ -388,19 +565,29 @@ class EmailService:
                 
                 <div class="content">
                     <h2>Olá, {user_name}!</h2>
-                    <p>Recebemos uma solicitação para redefinir sua senha.</p>
+                    <p>Recebemos uma solicitação para redefinir a senha da sua conta.</p>
+                    <p>Se foi você quem solicitou, clique no botão abaixo para criar uma nova senha:</p>
                     
                     <a href="{link}" class="button">🔑 Redefinir Senha</a>
                     
                     <div class="warning">
-                        <p><strong>⚠️ Este link expira em 1 hora.</strong></p>
+                        <strong>⏰ Importante:</strong> Este link expira em 1 hora por segurança.
                     </div>
                     
-                    <p><small>Se você não solicitou, ignore este email.</small></p>
+                    <p style="font-size: 14px; color: #6b7280;">
+                        Se o botão não funcionar, copie e cole este link no seu navegador:
+                    </p>
+                    <div class="link-text">{link}</div>
+                    
+                    <p style="font-size: 14px; color: #ef4444; margin-top: 24px;">
+                        <strong>Se você não solicitou esta alteração, ignore este email.</strong> 
+                        Sua senha permanecerá inalterada.
+                    </p>
                 </div>
                 
                 <div class="footer">
                     <p>© 2025 Geminii Tech - Trading Automatizado</p>
+                    <p>Este é um email automático, não responda.</p>
                 </div>
             </div>
         </body>
@@ -545,7 +732,9 @@ def setup_email_system():
     if email_service.setup_tables():
         print("✅ Sistema de email configurado!")
         if email_service.test_mode:
-            print("📧 MODO TESTE ativo - Links aparecerão no console")
+            print("📧 MODO TESTE ativo - Configure RESEND_API_KEY para emails reais")
+        else:
+            print("📧 MODO RESEND ativo - Emails serão enviados via Resend")
         return True
     else:
         print("❌ Falha na configuração")
