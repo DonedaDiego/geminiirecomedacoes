@@ -5,6 +5,8 @@ from datetime import datetime, timedelta, timezone
 import os
 from database import get_db_connection
 import mercadopago_service
+from trial_routes import get_trial_blueprint
+from trial_service import check_user_trial_status
 
 
 from beta_routes import beta_bp
@@ -125,6 +127,8 @@ register_atsmom_routes(app)
 recommendations_free_bp = get_recommendations_free_blueprint()
 app.register_blueprint(volatilidade_bp)
 app.register_blueprint(recommendations_free_bp)
+trial_bp = get_trial_blueprint()
+app.register_blueprint(trial_bp)
 
 CORS(app, 
      origins=['*'],

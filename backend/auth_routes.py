@@ -4,6 +4,7 @@ import hashlib
 from datetime import datetime, timezone, timedelta
 from database import get_db_connection
 from email_service import email_service
+from trial_service import create_trial_user, check_user_trial_status
 
 # Blueprint
 auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
@@ -25,7 +26,7 @@ def generate_jwt_token(user_id, email, secret_key):
 
 @auth_bp.route('/register', methods=['POST'])
 def register():
-    """🔥 Registro com confirmação de email"""
+    """🔥 Registro com trial Premium de 15 dias + confirmação de email"""
     try:
         data = request.get_json()
         
@@ -46,28 +47,23 @@ def register():
         if '@' not in email or '.' not in email:
             return jsonify({'success': False, 'error': 'E-mail inválido'}), 400
         
+        # Verificar se email já existe
         conn = get_db_connection()
         if not conn:
             return jsonify({'success': False, 'error': 'Erro de conexão com banco'}), 500
         
         cursor = conn.cursor()
-        
-        # Verificar se email já existe
         cursor.execute("SELECT id, email_confirmed FROM users WHERE email = %s", (email,))
         existing_user = cursor.fetchone()
+        cursor.close()
+        conn.close()
         
         if existing_user:
             user_id, is_confirmed = existing_user
             if is_confirmed:
-                cursor.close()
-                conn.close()
                 return jsonify({'success': False, 'error': 'E-mail já cadastrado e confirmado'}), 400
             else:
                 # Email existe mas não confirmado - reenviar confirmação
-                cursor.close()
-                conn.close()
-                
-                # Gerar novo token
                 token_result = email_service.generate_confirmation_token(user_id, email)
                 if token_result['success']:
                     email_sent = email_service.send_confirmation_email(name, email, token_result['token'])
@@ -80,17 +76,30 @@ def register():
                 
                 return jsonify({'success': False, 'error': 'Erro ao reenviar confirmação'}), 500
         
-        # Criar novo usuário (NÃO CONFIRMADO)
-        hashed_password = hash_password(password)
-        cursor.execute("""
-            INSERT INTO users (name, email, password, plan_id, plan_name, email_confirmed, created_at) 
-            VALUES (%s, %s, %s, %s, %s, %s, %s) RETURNING id
-        """, (name, email, hashed_password, 3, 'Básico', False, datetime.now(timezone.utc)))
+        # 🔥 USAR O TRIAL SERVICE PARA CRIAR USUÁRIO COM TRIAL PREMIUM
+        trial_result = create_trial_user(name, email, password)
         
-        user_id = cursor.fetchone()[0]
-        conn.commit()
-        cursor.close()
-        conn.close()
+        if not trial_result['success']:
+            return jsonify({
+                'success': False,
+                'error': trial_result['error']
+            }), 400
+        
+        user_id = trial_result['user_id']
+        
+        # 🔥 AGORA PRECISAMOS ATUALIZAR O USUÁRIO PARA NÃO CONFIRMADO
+        # (porque o trial_service cria confirmado, mas queremos confirmação de email)
+        conn = get_db_connection()
+        if conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                UPDATE users 
+                SET email_confirmed = FALSE, email_confirmed_at = NULL
+                WHERE id = %s
+            """, (user_id,))
+            conn.commit()
+            cursor.close()
+            conn.close()
         
         # Gerar token de confirmação
         token_result = email_service.generate_confirmation_token(user_id, email)
@@ -104,8 +113,13 @@ def register():
         if email_sent:
             return jsonify({
                 'success': True,
-                'message': 'Conta criada! Verifique seu email para confirmação.',
+                'message': '🎉 Conta criada com TRIAL PREMIUM de 15 dias! Verifique seu email para ativar.',
                 'requires_confirmation': True,
+                'trial_info': {
+                    'message': 'Você ganhou 15 dias de acesso Premium GRATUITO!',
+                    'plan_name': 'Premium',
+                    'days_remaining': 15
+                },
                 'data': {
                     'user_id': user_id,
                     'name': name,
@@ -266,7 +280,7 @@ def resend_confirmation():
 
 @auth_bp.route('/login', methods=['POST'])
 def login():
-    """🔥 Login com verificação de email confirmado - VERSÃO CORRIGIDA"""
+    """🔥 Login com verificação de trial"""
     try:
         data = request.get_json()
         
@@ -325,12 +339,17 @@ def login():
         
         print("✅ Email confirmado - procedendo com login")
         
+        # 🔥 VERIFICAR STATUS DO TRIAL
+        trial_status = check_user_trial_status(user_id)
+        print(f"📊 Status do trial: {trial_status}")
+        
         # Gerar token JWT
         from flask import current_app
         token = generate_jwt_token(user_id, email, current_app.config['SECRET_KEY'])
         
         print(f"🎫 Token JWT gerado: {token[:50]}...")
         
+        # 🔥 PREPARAR RESPOSTA COM TRIAL INFO
         login_response = {
             'success': True,
             'message': 'Login realizado com sucesso!',
@@ -339,14 +358,45 @@ def login():
                     'id': user_id,
                     'name': name,
                     'email': user_email,
-                    'plan_id': plan_id,
-                    'plan_name': plan_name,
-                    'user_type': user_type,
+                    'plan_id': trial_status.get('plan_id', plan_id),
+                    'plan_name': trial_status.get('plan_name', plan_name),
+                    'user_type': trial_status.get('user_type', user_type),
                     'email_confirmed': email_confirmed
                 },
                 'token': token
             }
         }
+        
+        # 🔥 ADICIONAR TRIAL INFO SE APLICÁVEL
+        if trial_status.get('valid', False):
+            if trial_status.get('is_trial', False):
+                days_left = trial_status.get('days_remaining', 0)
+                
+                login_response['trial_info'] = {
+                    'is_trial': True,
+                    'expires_at': trial_status.get('expires_at'),
+                    'days_remaining': days_left,
+                    'hours_remaining': trial_status.get('hours_remaining', 0),
+                    'urgency_level': 'high' if days_left <= 3 else 'medium' if days_left <= 7 else 'low'
+                }
+                
+                # Mensagem personalizada baseada no tempo restante
+                if days_left <= 1:
+                    login_response['message'] = '⚠️ Seu trial Premium expira hoje! Não perca o acesso total.'
+                elif days_left <= 3:
+                    login_response['message'] = f'⏰ Apenas {days_left} dias restantes do seu trial Premium!'
+                elif days_left <= 7:
+                    login_response['message'] = f'🚀 Você tem {days_left} dias de trial Premium restantes!'
+                else:
+                    login_response['message'] = f'🎉 Bem-vindo! {days_left} dias de Premium restantes!'
+            
+            elif trial_status.get('trial_expired', False):
+                login_response['trial_info'] = {
+                    'is_trial': False,
+                    'trial_expired': True,
+                    'message': 'Seu trial Premium expirou. Que tal fazer upgrade?'
+                }
+                login_response['message'] = '💡 Seu trial Premium expirou, mas você ainda pode acessar os recursos básicos!'
         
         print(f"🎉 Login bem-sucedido para: {name}")
         return jsonify(login_response), 200
@@ -373,7 +423,7 @@ def forgot_password():
         if not email or '@' not in email:
             return jsonify({'success': False, 'error': 'E-mail é obrigatório'}), 400
         
-        # Gerar token de reset
+        from email_service import email_service
         result = email_service.generate_password_reset_token(email)
         
         if result['success']:
@@ -473,7 +523,7 @@ def reset_password():
 
 @auth_bp.route('/verify', methods=['GET'])
 def verify_token():
-    """🔥 Verificar se token JWT é válido - VERSÃO CORRIGIDA"""
+    """🔥 Verificar token JWT com informações de trial"""
     try:
         auth_header = request.headers.get('Authorization')
         
@@ -482,14 +532,19 @@ def verify_token():
             return jsonify({'success': False, 'error': 'Token não fornecido'}), 401
         
         token = auth_header.replace('Bearer ', '')
-        print(f"🔍 Verificando token: {token[:50]}...")
+        
         
         try:
             from flask import current_app
             payload = jwt.decode(token, current_app.config['SECRET_KEY'], algorithms=['HS256'])
             user_id = payload['user_id']
             
-            print(f"✅ Token válido, user_id: {user_id}")
+            # 🔥 VERIFICAR STATUS DO TRIAL PRIMEIRO
+            trial_status = check_user_trial_status(user_id)
+            
+            if not trial_status.get('valid', False):
+                print(f"❌ Status do trial inválido: {trial_status}")
+                return jsonify({'success': False, 'error': 'Usuário não encontrado ou erro no trial'}), 401
             
             conn = get_db_connection()
             if not conn:
@@ -512,22 +567,41 @@ def verify_token():
             
             user_id, name, email, plan_id, plan_name, user_type, email_confirmed = user
             
-            print(f"✅ Usuário verificado: {name} ({email})")
             
-            return jsonify({
+            # 🔥 PREPARAR RESPOSTA COM TRIAL INFO
+            response_data = {
                 'success': True,
                 'data': {
                     'user': {
                         'id': user_id,
                         'name': name,
                         'email': email,
-                        'plan_id': plan_id,
-                        'plan_name': plan_name,
-                        'user_type': user_type,
+                        'plan_id': trial_status.get('plan_id', plan_id),
+                        'plan_name': trial_status.get('plan_name', plan_name),
+                        'user_type': trial_status.get('user_type', user_type),
                         'email_confirmed': email_confirmed
                     }
                 }
-            })
+            }
+            
+            # 🔥 ADICIONAR TRIAL INFO SE APLICÁVEL
+            if trial_status.get('is_trial', False):
+                response_data['trial_info'] = {
+                    'is_trial': True,
+                    'expires_at': trial_status.get('expires_at'),
+                    'days_remaining': trial_status.get('days_remaining', 0),
+                    'hours_remaining': trial_status.get('hours_remaining', 0),
+                    'urgency_level': 'high' if trial_status.get('days_remaining', 0) <= 3 else 'medium' if trial_status.get('days_remaining', 0) <= 7 else 'low',
+                    'message': trial_status.get('message', 'Trial ativo')
+                }
+            elif trial_status.get('trial_expired', False):
+                response_data['trial_info'] = {
+                    'is_trial': False,
+                    'trial_expired': True,
+                    'message': 'Trial expirado'
+                }
+            
+            return jsonify(response_data)
             
         except jwt.ExpiredSignatureError:
             print("❌ Token expirado")
@@ -553,12 +627,3 @@ def get_auth_blueprint():
     """Retornar blueprint para registrar no Flask"""
     return auth_bp
 
-if __name__ == "__main__":
-    print("🔐 Auth Routes - Sistema completo de autenticação CORRIGIDO")
-    print("📧 Recursos incluídos:")
-    print("  - Registro com confirmação de email")
-    print("  - Login com verificação de email")
-    print("  - Reset de senha com token") 
-    print("  - Validação de tokens JWT")
-    print("  - Reenvio de confirmação")
-    print("  - Debug aprimorado")

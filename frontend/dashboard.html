@@ -76,19 +76,6 @@
       transform: translateY(0);
     }
     
-    .ml-card {
-      background: linear-gradient(135deg, rgba(138, 43, 226, 0.1), rgba(147, 51, 234, 0.05));
-      border: 1px solid rgba(138, 43, 226, 0.2);
-      backdrop-filter: blur(20px);
-      transition: all 0.3s ease;
-    }
-    
-    .ml-card:hover {
-      background: linear-gradient(135deg, rgba(138, 43, 226, 0.15), rgba(147, 51, 234, 0.08));
-      border-color: rgba(138, 43, 226, 0.3);
-      transform: translateY(-2px);
-    }
-    
     .navbar {
       background: rgba(15, 15, 15, 0.95);
       backdrop-filter: blur(20px);
@@ -138,6 +125,46 @@
       from { box-shadow: 0 0 20px rgba(138, 43, 226, 0.3); }
       to { box-shadow: 0 0 30px rgba(138, 43, 226, 0.6); }
     }
+
+
+    .trial-banner {
+      background: linear-gradient(135deg, #8b5cf6, #6366f1);
+      border: 1px solid rgba(139, 92, 246, 0.3);
+      animation: trialGlow 3s ease-in-out infinite alternate;
+    }
+    
+    @keyframes trialGlow {
+      from { box-shadow: 0 0 20px rgba(139, 92, 246, 0.4); }
+      to { box-shadow: 0 0 30px rgba(139, 92, 246, 0.7); }
+    }
+    
+    .trial-urgent {
+      background: linear-gradient(135deg, #f59e0b, #ef4444);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      animation: urgentPulse 1.5s ease-in-out infinite alternate;
+    }
+    
+    @keyframes urgentPulse {
+      from { box-shadow: 0 0 15px rgba(239, 68, 68, 0.5); }
+      to { box-shadow: 0 0 25px rgba(239, 68, 68, 0.8); }
+    }
+    
+    .trial-expired {
+      background: linear-gradient(135deg, #6b7280, #4b5563);
+      border: 1px solid rgba(107, 114, 128, 0.3);
+    }
+    .ml-card {
+      background: linear-gradient(135deg, rgba(138, 43, 226, 0.1), rgba(147, 51, 234, 0.05));
+      border: 1px solid rgba(138, 43, 226, 0.2);
+      backdrop-filter: blur(20px);
+      transition: all 0.3s ease;
+    }
+    
+    .ml-card:hover {
+      background: linear-gradient(135deg, rgba(138, 43, 226, 0.15), rgba(147, 51, 234, 0.08));
+      border-color: rgba(138, 43, 226, 0.3);
+      transform: translateY(-2px);
+    }
   </style>
 </head>
 <body class="min-h-screen">
@@ -171,6 +198,33 @@
   <main class="pt-20 px-6 pb-12">
     <div class="max-w-7xl mx-auto">
       
+      <!-- 🔥 TRIAL BANNER (será mostrado se usuário estiver em trial) -->
+      <div id="trialBanner" class="trial-banner rounded-2xl p-6 mb-6 fade-in hidden">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-4">
+            <div class="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
+              <i class="fas fa-crown text-white text-xl"></i>
+            </div>
+            <div>
+              <h3 class="text-xl font-bold text-white mb-1" id="trialTitle">🎉 Trial Premium Ativo!</h3>
+              <p class="text-white/90 text-sm" id="trialSubtitle">Você tem acesso completo a todos os recursos Premium</p>
+            </div>
+          </div>
+          <div class="text-right">
+            <div class="text-3xl font-bold text-white mb-1" id="trialDaysLeft">15</div>
+            <div class="text-white/80 text-sm" id="trialDaysText">dias restantes</div>
+          </div>
+        </div>
+        
+        <div class="mt-4 flex items-center justify-between">
+          <div class="text-white/80 text-sm" id="trialExpiryText">
+            Expira em: <span id="trialExpiryDate" class="font-semibold">--</span>
+          </div>
+          <div class="flex gap-3">
+        </div>
+        </div>
+      </div>
+
       <!-- Header Section -->
       <div class="card rounded-2xl p-8 mb-8 fade-in">
         <div class="flex flex-col lg:flex-row items-center gap-8">
@@ -190,6 +244,9 @@
               <div class="flex items-center gap-2">
                 <span class="text-gray-400">Plano:</span>
                 <span id="userPlanBadge" class="px-3 py-1 rounded-full text-sm font-semibold bg-gray-100 text-gray-700">Básico</span>
+                <span id="trialIndicator" class="hidden px-2 py-1 rounded-full text-xs font-bold bg-purple-600 text-white animate-pulse">
+                  TRIAL
+                </span>
               </div>
               <div class="text-sm text-gray-400">
                 <i class="fas fa-calendar mr-2"></i>
@@ -199,7 +256,8 @@
           </div>
           
           <div class="flex flex-col gap-3">
-            <a href="planos.html" class="btn-primary px-6 py-3 rounded-xl font-semibold inline-block text-center">
+            <!-- 🔥 BOTÃO DINÂMICO BASEADO NO TRIAL -->
+            <a href="planos.html" id="upgradeButton" class="btn-primary px-6 py-3 rounded-xl font-semibold inline-block text-center">
               <i class="fas fa-crown mr-2"></i>Fazer Upgrade
             </a>
           </div>
@@ -609,6 +667,7 @@
   <script>
     let currentUser = null;
     let userToken = null;
+    let trialInfo = null; 
 
     // Initialize dashboard
     async function initDashboard() {
@@ -620,25 +679,6 @@
       await loadFreeRecommendationsStatsWithRetry();
       checkApiStatus();
       setInterval(checkApiStatus, 30000);
-      
-      // Close dropdown when clicking outside
-      document.addEventListener('click', function(event) {
-        const allDropdowns = ['mlDropdown', 'opcoesDropdown', 'gratisDropdown', 'proDropdown'];
-        
-        allDropdowns.forEach(dropdownId => {
-          const dropdown = document.getElementById(dropdownId);
-          if (dropdown && dropdown.classList.contains('show')) {
-            const isClickInside = event.target.closest(`#${dropdownId}`) || 
-                                 event.target.closest(`[onclick*="toggle${dropdownId.replace('Dropdown', '').replace('ml', 'ML')}Dropdown"]`);
-            if (!isClickInside) {
-              const functionName = `toggle${dropdownId.replace('Dropdown', '').replace('ml', 'ML')}Dropdown`;
-              if (window[functionName]) {
-                window[functionName]();
-              }
-            }
-          }
-        });
-      });
       
       console.log('✅ Dashboard inicializado!');
     }
@@ -659,111 +699,17 @@
       }
     }
 
-    // Helper function to close other dropdowns
-    function closeOtherDropdowns(except) {
-      const allDropdowns = ['mlDropdown', 'opcoesDropdown', 'gratisDropdown', 'proDropdown'];
-      const allChevrons = ['mlChevron', 'opcoesChevron', 'gratisChevron', 'proChevron'];
-      
-      allDropdowns.forEach((dropdownId, index) => {
-        if (!except.includes(dropdownId)) {
-          const dropdown = document.getElementById(dropdownId);
-          const chevron = document.getElementById(allChevrons[index]);
-          
-          if (dropdown && dropdown.classList.contains('show')) {
-            dropdown.classList.remove('show');
-            if (chevron) chevron.style.transform = 'rotate(0deg)';
-          }
-        }
-      });
-    }
-
-    // Toggle Grátis Dropdown
-    function toggleGratisDropdown() {
-      const dropdown = document.getElementById('gratisDropdown');
-      const chevron = document.getElementById('gratisChevron');
-      
-      // Close other dropdowns
-      closeOtherDropdowns(['gratisDropdown']);
-      
-      if (dropdown && chevron) {
-        if (dropdown.classList.contains('show')) {
-          dropdown.classList.remove('show');
-          chevron.style.transform = 'rotate(0deg)';
-        } else {
-          dropdown.classList.add('show');
-          chevron.style.transform = 'rotate(180deg)';
-        }
-      }
-    }
-
-    // Toggle Pro Dropdown
-    function toggleProDropdown() {
-      const dropdown = document.getElementById('proDropdown');
-      const chevron = document.getElementById('proChevron');
-      
-      // Close other dropdowns
-      closeOtherDropdowns(['proDropdown']);
-      
-      if (dropdown && chevron) {
-        if (dropdown.classList.contains('show')) {
-          dropdown.classList.remove('show');
-          chevron.style.transform = 'rotate(0deg)';
-        } else {
-          dropdown.classList.add('show');
-          chevron.style.transform = 'rotate(180deg)';
-        }
-      }
-    }
-
-    // Toggle ML Dropdown
-    function toggleMLDropdown() {
-      const dropdown = document.getElementById('mlDropdown');
-      const chevron = document.getElementById('mlChevron');
-      
-      // Close other dropdowns
-      closeOtherDropdowns(['mlDropdown']);
-      
-      if (dropdown && chevron) {
-        if (dropdown.classList.contains('show')) {
-          dropdown.classList.remove('show');
-          chevron.style.transform = 'rotate(0deg)';
-        } else {
-          dropdown.classList.add('show');
-          chevron.style.transform = 'rotate(180deg)';
-        }
-      }
-    }
-
-    // Toggle Opções Dropdown
-    function toggleOpcoesDropdown() {
-      const dropdown = document.getElementById('opcoesDropdown');
-      const chevron = document.getElementById('opcoesChevron');
-      
-      // Close other dropdowns
-      closeOtherDropdowns(['opcoesDropdown']);
-      
-      if (dropdown && chevron) {
-        if (dropdown.classList.contains('show')) {
-          dropdown.classList.remove('show');
-          chevron.style.transform = 'rotate(0deg)';
-        } else {
-          dropdown.classList.add('show');
-          chevron.style.transform = 'rotate(180deg)';
-        }
-      }
-    }
-
     // Check authentication
     async function checkAuth() {
       const token = localStorage.getItem('geminii_token');
       const userData = localStorage.getItem('geminii_user');
-
+    
       if (!token || !userData) {
         console.log('❌ Token ou userData não encontrados, redirecionando...');
         window.location.href = '/login.html';
         return;
       }
-
+    
       try {
         console.log('🔍 Verificando autenticação com o servidor...');
         
@@ -774,17 +720,49 @@
           },
           cache: 'no-cache'
         });
-
+    
         const result = await response.json();
         console.log('📡 Resposta da verificação:', result);
-
+    
         if (result.success && result.data && result.data.user) {
           userToken = token;
           currentUser = result.data.user;
           
+          // 🔥 CORREÇÃO: VERIFICAR MÚLTIPLAS ESTRUTURAS POSSÍVEIS
+          trialInfo = result.trial_info || 
+                      result.data.trial_info || 
+                      result.data.trial || 
+                      null;
+          
+          // 🔥 SE AINDA NÃO ENCONTROU, VERIFICAR SE OS DADOS ESTÃO NO USER
+          if (!trialInfo && currentUser) {
+            // Verificar se trial info está no objeto user
+            if (currentUser.trial_info) {
+              trialInfo = currentUser.trial_info;
+            }
+            // Ou verificar se user_type é 'trial'
+            else if (currentUser.user_type === 'trial') {
+              trialInfo = {
+                is_trial: true,
+                trial_expired: false,
+                days_remaining: 15, // valor padrão
+                expires_at: null
+              };
+            }
+          }
+          
+          console.log('🔥 TRIAL INFO FINAL:', trialInfo);
+          console.log('🔥 USER TYPE:', currentUser.user_type);
+          console.log('🔥 PLAN ID:', currentUser.plan_id);
+          
+          window.trialInfo = trialInfo; // 🔥 TORNAR GLOBAL PARA DEBUG
+          
           console.log('✅ Dados do usuário recebidos:', currentUser);
+          
           localStorage.setItem('geminii_user', JSON.stringify(currentUser));
           updateUserInterface(currentUser);
+          console.log('🔥 EXECUTANDO updateTrialInterface com:', trialInfo);
+          updateTrialInterface(trialInfo);
         } else {
           console.log('❌ Falha na verificação, limpando dados...');
           localStorage.removeItem('geminii_token');
@@ -802,6 +780,7 @@
             currentUser = user;
             userToken = token;
             updateUserInterface(user);
+            updateTrialInterface(null); // Esconder banner quando offline
             return;
           }
         } catch (e) {
@@ -828,6 +807,7 @@
       const userEmailEl = document.getElementById('userEmail');
       const planBadgeEl = document.getElementById('userPlanBadge');
       const memberSinceEl = document.getElementById('memberSince');
+      const trialIndicatorEl = document.getElementById('trialIndicator');
 
       if (user.name) {
         const initials = user.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
@@ -850,19 +830,41 @@
 
       if (planBadgeEl) {
         const planId = user.plan_id || 3;
+        const userType = user.user_type || 'regular';
         
-        if (planId === 3) {
-          planBadgeEl.textContent = 'Básico';
-          planBadgeEl.className = 'px-3 py-1 rounded-full text-sm font-semibold bg-gray-600 text-gray-200';
-        } else if (planId === 1) {
-          planBadgeEl.textContent = 'Pro';
-          planBadgeEl.className = 'px-3 py-1 rounded-full text-sm font-semibold bg-warning text-white';
-        } else if (planId >= 2) {
-          planBadgeEl.textContent = 'Premium';
-          planBadgeEl.className = 'px-3 py-1 rounded-full text-sm font-semibold bg-secondary text-white';
+        // 🔥 VERIFICAR SE É TRIAL
+        if (userType === 'trial') {
+          planBadgeEl.textContent = 'Premium Trial';
+          planBadgeEl.style.background = '#7c3aed';
+          planBadgeEl.style.color = 'white';
+          
+          // Mostrar indicador de trial
+          if (trialIndicatorEl) {
+            trialIndicatorEl.style.display = 'inline-block';
+          }
+        } else {
+          // Usuário normal
+          if (planId === 3) {
+            planBadgeEl.textContent = 'Básico';
+            planBadgeEl.style.background = '#4b5563';
+            planBadgeEl.style.color = '#d1d5db';
+          } else if (planId === 1) {
+            planBadgeEl.textContent = 'Pro';
+            planBadgeEl.style.background = '#f59e0b';
+            planBadgeEl.style.color = 'white';
+          } else if (planId >= 2) {
+            planBadgeEl.textContent = 'Premium';
+            planBadgeEl.style.background = '#8b5cf6';
+            planBadgeEl.style.color = 'white';
+          }
+          
+          // Esconder indicador de trial
+          if (trialIndicatorEl) {
+            trialIndicatorEl.style.display = 'none';
+          }
         }
         
-        console.log('✅ Plano atualizado:', planId);
+        console.log('✅ Plano atualizado:', planId, userType);
       }
 
       if (user.created_at && memberSinceEl) {
@@ -870,8 +872,106 @@
         memberSinceEl.textContent = createdDate;
         console.log('✅ Data de criação atualizada:', createdDate);
       }
-
+    
       console.log('🎉 Interface do usuário atualizada com sucesso!');
+    }
+
+    // 🔥 NOVA FUNÇÃO PARA ATUALIZAR INTERFACE DO TRIAL
+    function updateTrialInterface(trialInfo) {
+      console.log('🔥 updateTrialInterface chamado com:', trialInfo);
+      console.log('🔥 currentUser:', currentUser);
+      
+      const trialBannerEl = document.getElementById('trialBanner');
+      const trialTitleEl = document.getElementById('trialTitle');
+      const trialSubtitleEl = document.getElementById('trialSubtitle');
+      const trialDaysLeftEl = document.getElementById('trialDaysLeft');
+      const trialDaysTextEl = document.getElementById('trialDaysText');
+      const trialExpiryDateEl = document.getElementById('trialExpiryDate');
+      const upgradeButtonEl = document.getElementById('upgradeButton');
+      
+      // VERIFICAR SE OS ELEMENTOS EXISTEM
+      if (!trialBannerEl) {
+        console.log('❌ Elemento trialBanner não encontrado no DOM');
+        return;
+      }
+      
+      // 🔥 VERIFICAR SE É TRIAL ATRAVÉS DO USER_TYPE TAMBÉM
+      const isTrialUser = currentUser && currentUser.user_type === 'trial';
+      const hasTrialInfo = trialInfo && trialInfo.is_trial && !trialInfo.trial_expired;
+      
+      console.log('🔥 isTrialUser:', isTrialUser);
+      console.log('🔥 hasTrialInfo:', hasTrialInfo);
+      
+      if (!hasTrialInfo && !isTrialUser) {
+        console.log('❌ Trial não está ativo');
+        trialBannerEl.style.display = 'none';
+        trialBannerEl.classList.add('hidden');
+        return;
+      }
+      
+      // ✅ TRIAL ATIVO DETECTADO
+      console.log('🎉 Trial ativo detectado!');
+      
+      const daysLeft = trialInfo ? trialInfo.days_remaining || 15 : 15;
+      const expiresAt = trialInfo ? trialInfo.expires_at : null;
+      
+      // MOSTRAR BANNER
+      trialBannerEl.style.display = 'block';
+      trialBannerEl.classList.remove('hidden');
+      
+      // DEFINIR CLASSE BASEADA NA URGÊNCIA
+      if (daysLeft <= 1) {
+        trialBannerEl.className = 'trial-urgent rounded-2xl p-6 mb-6 fade-in';
+      } else if (daysLeft <= 3) {
+        trialBannerEl.className = 'trial-urgent rounded-2xl p-6 mb-6 fade-in';
+      } else {
+        trialBannerEl.className = 'trial-banner rounded-2xl p-6 mb-6 fade-in';
+      }
+      
+      // ATUALIZAR TEXTOS
+      if (daysLeft <= 1) {
+        if (trialTitleEl) trialTitleEl.textContent = '⚠️ Trial Premium Expirando Hoje!';
+        if (trialSubtitleEl) trialSubtitleEl.textContent = 'Seu trial Premium expira hoje. Não perca o acesso aos recursos avançados!';
+      } else if (daysLeft <= 3) {
+        if (trialTitleEl) trialTitleEl.textContent = '⏰ Trial Premium Expirando em Breve!';
+        if (trialSubtitleEl) trialSubtitleEl.textContent = `Apenas ${daysLeft} dias restantes do seu trial Premium!`;
+      } else {
+        if (trialTitleEl) trialTitleEl.textContent = '🎉 Trial Premium Ativo!';
+        if (trialSubtitleEl) trialSubtitleEl.textContent = 'Você tem acesso completo a todos os recursos Premium';
+      }
+      
+      if (trialDaysLeftEl) trialDaysLeftEl.textContent = daysLeft;
+      if (trialDaysTextEl) trialDaysTextEl.textContent = daysLeft === 1 ? 'dia restante' : 'dias restantes';
+      
+      if (expiresAt && trialExpiryDateEl) {
+        const expiryDate = new Date(expiresAt);
+        trialExpiryDateEl.textContent = expiryDate.toLocaleDateString('pt-BR');
+      }
+      
+      if (upgradeButtonEl) {
+        if (daysLeft <= 3) {
+          upgradeButtonEl.innerHTML = '<i class="fas fa-crown" style="margin-right: 8px;"></i>Upgrade Agora!';
+          upgradeButtonEl.style.background = 'linear-gradient(135deg, #dc2626, #ec4899)';
+          upgradeButtonEl.style.animation = 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite';
+        } else {
+          upgradeButtonEl.innerHTML = '<i class="fas fa-crown" style="margin-right: 8px;"></i>Ver Planos';
+          upgradeButtonEl.style.background = 'linear-gradient(135deg, #6366f1, #8b5cf6)';
+          upgradeButtonEl.style.animation = 'none';
+        }
+      }
+      
+      console.log('✅ Interface do trial atualizada com sucesso!');
+    }
+
+    // 🔥 FUNÇÃO PARA DISPENSAR BANNER DE TRIAL
+    function dismissTrialBanner() {
+      const trialBannerEl = document.getElementById('trialBanner');
+      if (trialBannerEl) {
+        trialBannerEl.style.display = 'none';
+        
+        // Salvar preferência no localStorage (opcional)
+        localStorage.setItem('geminii_trial_banner_dismissed', 'true');
+      }
     }
 
     // Load user statistics
@@ -1010,8 +1110,12 @@
       }
     
       const userPlanId = currentUser.plan_id || 3;
+      const userType = currentUser.user_type || 'regular';
       let hasAccess = false;
       let requiredPlanName = '';
+      
+      // 🔥 VERIFICAR SE USUÁRIO TEM TRIAL ATIVO
+      const hasActiveTrial = trialInfo && trialInfo.is_trial && !trialInfo.trial_expired;
       
       // Definir acesso baseado no recurso
       if (featureName === 'Long & Short' || featureName === 'Hunter Walls' || 
@@ -1019,18 +1123,18 @@
           featureName === 'IV Scanner' || featureName === 'Options Flow' ||
           featureName === 'Correlação Matrix' || featureName === 'Regressão Linear' ||
           featureName === 'Volatilidade GARCH') {
-        hasAccess = (userPlanId === 1 || userPlanId === 2);
+        hasAccess = (userPlanId === 1 || userPlanId === 2) || hasActiveTrial;
         requiredPlanName = 'Pro';
       }
       
       if (featureName === 'Smart Carteiras' || featureName === 'Machine Learning') {
-        hasAccess = (userPlanId === 2);
+        hasAccess = (userPlanId === 2) || hasActiveTrial;
         requiredPlanName = 'Premium';
       }
 
-      // Recursos GRÁTIS futuras
+      // Recursos GRÁTIS
       if (featureName === 'Suporte e Resistência' || featureName === 'Radar Financeiro') {
-        hasAccess = true; // Grátis para todos
+        hasAccess = true;
         requiredPlanName = 'Grátis';
       }
     
@@ -1126,10 +1230,104 @@
         const planNames = { 3: 'Básico', 1: 'Pro', 2: 'Premium' };
         const currentPlanName = currentUser.plan_name || planNames[userPlanId] || 'Básico';
         
-        const message = `💎 Recurso ${requiredPlanName}\n\n${featureName} está disponível apenas para planos ${requiredPlanName} ou superior.\n\nSeu plano atual: ${currentPlanName}\nPlano necessário: ${requiredPlanName}\n\nDeseja fazer upgrade agora?`;
+        let message = `💎 Recurso ${requiredPlanName}\n\n${featureName} está disponível apenas para planos ${requiredPlanName} ou superior.\n\nSeu plano atual: ${currentPlanName}\nPlano necessário: ${requiredPlanName}`;
+        
+        // 🔥 MENSAGEM ESPECIAL SE TRIAL EXPIROU
+        if (trialInfo && trialInfo.trial_expired) {
+          message += `\n\n⏰ Seu trial Premium expirou! Você já teve acesso a este recurso.\n\nQue tal reativar?`;
+        }
+        
+        message += `\n\nDeseja fazer upgrade agora?`;
         
         if (confirm(message)) {
           window.location.href = '/planos.html';
+        }
+      }
+    }
+
+    // Helper function to close other dropdowns
+    function closeOtherDropdowns(except) {
+      const allDropdowns = ['mlDropdown', 'opcoesDropdown', 'gratisDropdown', 'proDropdown'];
+      const allChevrons = ['mlChevron', 'opcoesChevron', 'gratisChevron', 'proChevron'];
+      
+      allDropdowns.forEach((dropdownId, index) => {
+        if (!except.includes(dropdownId)) {
+          const dropdown = document.getElementById(dropdownId);
+          const chevron = document.getElementById(allChevrons[index]);
+          
+          if (dropdown && dropdown.classList.contains('show')) {
+            dropdown.classList.remove('show');
+            if (chevron) chevron.style.transform = 'rotate(0deg)';
+          }
+        }
+      });
+    }
+
+    // Toggle functions for dropdowns
+    function toggleGratisDropdown() {
+      const dropdown = document.getElementById('gratisDropdown');
+      const chevron = document.getElementById('gratisChevron');
+      
+      closeOtherDropdowns(['gratisDropdown']);
+      
+      if (dropdown && chevron) {
+        if (dropdown.classList.contains('show')) {
+          dropdown.classList.remove('show');
+          chevron.style.transform = 'rotate(0deg)';
+        } else {
+          dropdown.classList.add('show');
+          chevron.style.transform = 'rotate(180deg)';
+        }
+      }
+    }
+
+    function toggleProDropdown() {
+      const dropdown = document.getElementById('proDropdown');
+      const chevron = document.getElementById('proChevron');
+      
+      closeOtherDropdowns(['proDropdown']);
+      
+      if (dropdown && chevron) {
+        if (dropdown.classList.contains('show')) {
+          dropdown.classList.remove('show');
+          chevron.style.transform = 'rotate(0deg)';
+        } else {
+          dropdown.classList.add('show');
+          chevron.style.transform = 'rotate(180deg)';
+        }
+      }
+    }
+
+    function toggleMLDropdown() {
+      const dropdown = document.getElementById('mlDropdown');
+      const chevron = document.getElementById('mlChevron');
+      
+      closeOtherDropdowns(['mlDropdown']);
+      
+      if (dropdown && chevron) {
+        if (dropdown.classList.contains('show')) {
+          dropdown.classList.remove('show');
+          chevron.style.transform = 'rotate(0deg)';
+        } else {
+          dropdown.classList.add('show');
+          chevron.style.transform = 'rotate(180deg)';
+        }
+      }
+    }
+
+    function toggleOpcoesDropdown() {
+      const dropdown = document.getElementById('opcoesDropdown');
+      const chevron = document.getElementById('opcoesChevron');
+      
+      closeOtherDropdowns(['opcoesDropdown']);
+      
+      if (dropdown && chevron) {
+        if (dropdown.classList.contains('show')) {
+          dropdown.classList.remove('show');
+          chevron.style.transform = 'rotate(0deg)';
+        } else {
+          dropdown.classList.add('show');
+          chevron.style.transform = 'rotate(180deg)';
         }
       }
     }
@@ -1194,6 +1392,7 @@
     window.toggleOpcoesDropdown = toggleOpcoesDropdown;
     window.toggleGratisDropdown = toggleGratisDropdown;
     window.toggleProDropdown = toggleProDropdown;
+    window.dismissTrialBanner = dismissTrialBanner; // 🔥 NOVA FUNÇÃO GLOBAL
 
     // Initialize when page loads
     document.addEventListener('DOMContentLoaded', initDashboard);

@@ -12,7 +12,7 @@ class EmailService:
         self.resend_api_key = os.environ.get('RESEND_API_KEY')
         self.from_email = os.environ.get('FROM_EMAIL', 'onboarding@resend.dev')
         self.from_name = 'Geminii Tech'
-        self.base_url = os.environ.get('BASE_URL', 'https://app-geminii.railway.app')  # SUA URL REAL
+        self.base_url = os.environ.get('BASE_URL', 'https://app-geminii.railway.app')  
         
         # MODO TESTE - Para desenvolvimento sem Resend
         self.test_mode = not self.resend_api_key

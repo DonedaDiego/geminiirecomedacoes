@@ -93,7 +93,7 @@ def create_plans_table():
         return False
 
 def create_users_table():
-    """🔥 Criar tabela users COM TODOS OS CAMPOS NECESSÁRIOS PARA O SERVICE"""
+    """🔥 Criar tabela users COM TODOS OS CAMPOS NECESSÁRIOS PARA O TRIAL"""
     try:
         conn = get_db_connection()
         if not conn:
@@ -107,15 +107,22 @@ def create_users_table():
                 name VARCHAR(100) NOT NULL,
                 email VARCHAR(100) UNIQUE NOT NULL,
                 password VARCHAR(255) NOT NULL,
-                plan_id INTEGER DEFAULT 1,
-                plan_name VARCHAR(50) DEFAULT 'Pro',
+                
+                -- 🔥 CORREÇÃO: DEFAULT para plano BÁSICO
+                plan_id INTEGER DEFAULT 3,
+                plan_name VARCHAR(50) DEFAULT 'Básico',
                 user_type VARCHAR(20) DEFAULT 'regular',
                 
-                -- 🔥 CAMPOS NECESSÁRIOS PARA O MERCADO PAGO SERVICE
+                -- 🔥 CAMPOS OBRIGATÓRIOS PARA TRIAL
+                plan_expires_at TIMESTAMP,
                 subscription_status VARCHAR(20) DEFAULT 'inactive',
                 subscription_plan VARCHAR(50),
-                plan_expires_at TIMESTAMP,
                 
+                -- 🔥 CAMPOS OBRIGATÓRIOS PARA EMAIL
+                email_confirmed BOOLEAN DEFAULT FALSE,
+                email_confirmed_at TIMESTAMP,
+                
+                -- DATAS
                 registration_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -125,11 +132,11 @@ def create_users_table():
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_users_type ON users(user_type);")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_users_subscription ON users(subscription_status);")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_users_plan_expires ON users(plan_expires_at);")
         
         conn.commit()
         cursor.close()
         conn.close()
-        
         
         return True
         
@@ -369,8 +376,10 @@ def create_initial_admin():
         now = datetime.now(timezone.utc)
         
         cursor.execute("""
-            INSERT INTO users (name, email, password, plan_id, plan_name, user_type, subscription_status, created_at, updated_at) 
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+            INSERT INTO users (name, email, password, plan_id, plan_name, user_type, 
+                              subscription_status, email_confirmed, email_confirmed_at, 
+                              created_at, updated_at) 
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             ON CONFLICT (email) DO UPDATE SET 
                 plan_id = EXCLUDED.plan_id,
                 plan_name = EXCLUDED.plan_name,
@@ -378,16 +387,17 @@ def create_initial_admin():
                 updated_at = EXCLUDED.updated_at
             RETURNING id
         """, (
-            "Diego Doneda - Admin", 
-            admin_email, 
-            admin_password, 
-            2,  
-            "Premium", 
-            "admin",
-            "active",
-            True,
-            now, 
-            now
+            "Diego Doneda - Admin",    # name
+            admin_email,               # email
+            admin_password,            # password
+            2,                         # plan_id (Premium)
+            "Premium",                 # plan_name
+            "admin",                   # user_type
+            "active",                  # subscription_status
+            True,                      # email_confirmed
+            now,                       # email_confirmed_at
+            now,                       # created_at
+            now                        # updated_at
         ))
         
         admin_id = cursor.fetchone()[0]
