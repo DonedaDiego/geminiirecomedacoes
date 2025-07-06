@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste de Cupons - Geminii Tech</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://sdk.mercadopago.com/js/v2"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #1f1f1f 0%, #2d2d2d 100%);
+        }
+        
+        .test-card {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 16px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .coupon-success {
+            background: rgba(34, 197, 94, 0.1) !important;
+            border-color: rgba(34, 197, 94, 0.5) !important;
+            color: #22c55e !important;
+        }
+        
+        .coupon-error {
+            background: rgba(239, 68, 68, 0.1) !important;
+            border-color: rgba(239, 68, 68, 0.5) !important;
+            color: #ef4444 !important;
+        }
+        
+        .log-area {
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white min-h-screen p-8">
+    
+    <div class="max-w-4xl mx-auto">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-white mb-2">Teste de Cupons - Geminii Tech</h1>
+            <p class="text-gray-400">Página para testar validação e aplicação de cupons</p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            
+            <!-- Seção de Teste de Cupom -->
+            <div class="test-card p-6">
+                <h2 class="text-xl font-bold text-white mb-4">
+                    <i class="fas fa-ticket-alt text-purple-400 mr-2"></i>
+                    Teste de Validação de Cupom
+                </h2>
+                
+                <div class="space-y-4">
+                    <!-- Input do Cupom -->
+                    <div>
+                        <label class="block text-sm text-gray-300 mb-2">Código do Cupom</label>
+                        <div class="flex gap-3">
+                            <input 
+                                type="text" 
+                                id="couponInput"
+                                placeholder="Digite o código (ex: CURSO50)"
+                                class="flex-1 px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:border-purple-500 focus:outline-none"
+                                maxlength="20"
+                            >
+                            <button 
+                                id="validateBtn"
+                                onclick="validateCoupon()"
+                                class="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg transition-colors"
+                            >
+                                Validar
+                            </button>
+                        </div>
+                        <div id="couponFeedback" class="mt-2 text-sm hidden"></div>
+                    </div>
+
+                    <!-- Seleção de Plano -->
+                    <div>
+                        <label class="block text-sm text-gray-300 mb-2">Plano para Teste</label>
+                        <select id="planSelect" class="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white">
+                            <option value="pro">Pro - R$ 79/mês</option>
+                            <option value="premium">Premium - R$ 149/mês</option>
+                        </select>
+                    </div>
+
+                    <!-- Tipo de Pagamento -->
+                    <div>
+                        <label class="block text-sm text-gray-300 mb-2">Ciclo de Pagamento</label>
+                        <select id="cycleSelect" class="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white">
+                            <option value="monthly">Mensal</option>
+                            <option value="annual">Anual</option>
+                        </select>
+                    </div>
+
+                    <!-- Resultado da Validação -->
+                    <div id="validationResult" class="hidden p-4 border rounded-lg">
+                        <h3 class="font-bold mb-2">Resultado da Validação:</h3>
+                        <div id="validationContent"></div>
+                    </div>
+
+                    <!-- Teste de Checkout -->
+                    <div id="checkoutSection" class="hidden">
+                        <h3 class="text-lg font-bold text-white mb-3">Teste de Checkout</h3>
+                        <div class="grid grid-cols-2 gap-4 text-sm">
+                            <div>
+                                <span class="text-gray-400">Preço Original:</span>
+                                <span id="originalPrice" class="text-white font-bold">R$ 0</span>
+                            </div>
+                            <div>
+                                <span class="text-gray-400">Desconto:</span>
+                                <span id="discountAmount" class="text-green-400 font-bold">R$ 0</span>
+                            </div>
+                            <div>
+                                <span class="text-gray-400">Preço Final:</span>
+                                <span id="finalPrice" class="text-purple-400 font-bold text-lg">R$ 0</span>
+                            </div>
+                            <div>
+                                <span class="text-gray-400">Economia:</span>
+                                <span id="savingsPercent" class="text-green-400 font-bold">0%</span>
+                            </div>
+                        </div>
+                        
+                        <button 
+                            onclick="testCheckout()"
+                            class="w-full mt-4 px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-lg transition-colors"
+                        >
+                            Testar Checkout com Cupom
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Log de Ações -->
+            <div class="test-card p-6">
+                <h2 class="text-xl font-bold text-white mb-4">
+                    <i class="fas fa-code text-green-400 mr-2"></i>
+                    Log de Ações
+                </h2>
+                
+                <div class="space-y-4">
+                    <!-- Status da API -->
+                    <div class="flex items-center justify-between p-3 bg-gray-800 rounded-lg">
+                        <span class="text-gray-300">Status da API:</span>
+                        <span id="apiStatus" class="text-yellow-400">Verificando...</span>
+                    </div>
+
+                    <!-- Autenticação -->
+                    <div class="flex items-center justify-between p-3 bg-gray-800 rounded-lg">
+                        <span class="text-gray-300">Usuário Logado:</span>
+                        <span id="userStatus" class="text-yellow-400">Verificando...</span>
+                    </div>
+
+                    <!-- Log Area -->
+                    <div class="bg-black rounded-lg p-4 log-area">
+                        <div class="text-green-400 text-xs mb-2">🔍 LOG DE DEPURAÇÃO:</div>
+                        <div id="logArea" class="text-gray-300 space-y-1">
+                            <!-- Logs aparecerão aqui -->
+                        </div>
+                    </div>
+
+                    <!-- Controles -->
+                    <div class="flex gap-2">
+                        <button onclick="clearLog()" class="flex-1 px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg text-sm">
+                            Limpar Log
+                        </button>
+                        <button onclick="testApiConnection()" class="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm">
+                            Testar API
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Seção de Cupons Disponíveis -->
+        <div class="test-card p-6 mt-8">
+            <h2 class="text-xl font-bold text-white mb-4">
+                <i class="fas fa-list text-blue-400 mr-2"></i>
+                Cupons Disponíveis para Teste
+            </h2>
+            
+            <div id="availableCoupons" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <!-- Cupons serão carregados aqui -->
+            </div>
+            
+            <button onclick="loadAvailableCoupons()" class="mt-4 px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg">
+                Carregar Cupons do Admin
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // ===== VARIÁVEIS GLOBAIS =====
+        let currentUser = null;
+        let userToken = null;
+        let appliedCoupon = null;
+        let discountData = null;
+        let mp = null;
+        
+        // Preços dos planos
+        const planPrices = {
+            pro: { monthly: 79, annual: 72 },
+            premium: { monthly: 149, annual: 137 }
+        };
+
+        // ===== INICIALIZAÇÃO =====
+        document.addEventListener('DOMContentLoaded', function() {
+            log('🚀 Página de teste de cupons iniciada');
+            
+            // Verificar autenticação
+            checkAuth();
+            
+            // Verificar API
+            testApiConnection();
+            
+            // Inicializar MercadoPago
+            initMercadoPago();
+            
+            // Event listeners
+            setupEventListeners();
+            
+            log('✅ Inicialização completa');
+        });
+
+        // ===== FUNÇÕES DE LOG =====
+        function log(message, type = 'info') {
+            const logArea = document.getElementById('logArea');
+            const timestamp = new Date().toLocaleTimeString();
+            
+            const colors = {
+                info: 'text-blue-400',
+                success: 'text-green-400', 
+                error: 'text-red-400',
+                warning: 'text-yellow-400'
+            };
+            
+            const icons = {
+                info: 'ℹ️',
+                success: '✅',
+                error: '❌',
+                warning: '⚠️'
+            };
+            
+            const logEntry = document.createElement('div');
+            logEntry.className = `${colors[type]} text-xs`;
+            logEntry.innerHTML = `[${timestamp}] ${icons[type]} ${message}`;
+            
+            logArea.appendChild(logEntry);
+            logArea.scrollTop = logArea.scrollHeight;
+        }
+
+        function clearLog() {
+            document.getElementById('logArea').innerHTML = '';
+            log('Log limpo', 'info');
+        }
+
+        // ===== VERIFICAÇÃO DE AUTH =====
+        async function checkAuth() {
+            const token = localStorage.getItem('geminii_token');
+            
+            if (!token) {
+                log('❌ Usuário não autenticado', 'warning');
+                document.getElementById('userStatus').textContent = 'Não logado';
+                document.getElementById('userStatus').className = 'text-red-400';
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/auth/verify', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    currentUser = result.data.user;
+                    userToken = token;
+                    log(`✅ Usuário autenticado: ${currentUser.name}`, 'success');
+                    document.getElementById('userStatus').textContent = currentUser.name;
+                    document.getElementById('userStatus').className = 'text-green-400';
+                } else {
+                    log('❌ Token inválido', 'error');
+                    document.getElementById('userStatus').textContent = 'Token inválido';
+                    document.getElementById('userStatus').className = 'text-red-400';
+                }
+
+            } catch (error) {
+                log(`❌ Erro na verificação: ${error.message}`, 'error');
+                document.getElementById('userStatus').textContent = 'Erro de conexão';
+                document.getElementById('userStatus').className = 'text-red-400';
+            }
+        }
+
+        // ===== TESTE DE API =====
+        async function testApiConnection() {
+            try {
+                log('🔍 Testando conexão com API...', 'info');
+                
+                const response = await fetch('/api/status');
+                const data = await response.json();
+                
+                if (data.status === 'online') {
+                    log('✅ API online e funcionando', 'success');
+                    document.getElementById('apiStatus').textContent = 'Online ✅';
+                    document.getElementById('apiStatus').className = 'text-green-400';
+                } else {
+                    log('⚠️ API respondeu mas status não é online', 'warning');
+                    document.getElementById('apiStatus').textContent = 'Instável ⚠️';
+                    document.getElementById('apiStatus').className = 'text-yellow-400';
+                }
+
+            } catch (error) {
+                log(`❌ Erro de conexão: ${error.message}`, 'error');
+                document.getElementById('apiStatus').textContent = 'Offline ❌';
+                document.getElementById('apiStatus').className = 'text-red-400';
+            }
+        }
+
+        // ===== VALIDAÇÃO DE CUPOM COM DEBUG COMPLETO =====
+        async function validateCoupon() {
+            const couponCode = document.getElementById('couponInput').value.trim().toUpperCase();
+            const planName = document.getElementById('planSelect').value;
+            
+            log('🎫 DEBUG: Iniciando validação de cupom', 'info');
+            log(`📝 Código: ${couponCode}`, 'info');
+            log(`📦 Plano: ${planName}`, 'info');
+            
+            if (!couponCode) {
+                log('❌ DEBUG: Código vazio', 'error');
+                showFeedback('Digite um código de cupom', 'error');
+                return;
+            }
+
+            try {
+                log(`🔄 DEBUG: Enviando requisição...`, 'info');
+                
+                // Desabilitar botão
+                const validateBtn = document.getElementById('validateBtn');
+                validateBtn.disabled = true;
+                validateBtn.textContent = 'Validando...';
+
+                // Dados para enviar
+                const requestData = {
+                    code: couponCode,
+                    plan_name: planName,
+                    user_id: currentUser ? currentUser.id : 1
+                };
+
+                log(`📤 DEBUG: Dados da requisição:`, 'info');
+                log(`${JSON.stringify(requestData, null, 2)}`, 'info');
+
+                const response = await fetch('/api/validate-coupon', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...(userToken && { 'Authorization': `Bearer ${userToken}` })
+                    },
+                    body: JSON.stringify(requestData)
+                });
+
+                log(`📡 DEBUG: Status da resposta: ${response.status}`, 'info');
+                log(`📡 DEBUG: Headers: ${JSON.stringify([...response.headers.entries()])}`, 'info');
+
+                const result = await response.json();
+                log(`📥 DEBUG: Resposta completa:`, result.success ? 'success' : 'error');
+                log(`${JSON.stringify(result, null, 2)}`, result.success ? 'success' : 'error');
+
+                if (result.success) {
+                    appliedCoupon = couponCode;
+                    discountData = result.data;
+                    
+                    log('✅ DEBUG: Cupom válido aplicado!', 'success');
+                    log(`💾 DEBUG: Dados salvos - appliedCoupon: ${appliedCoupon}`, 'success');
+                    log(`💾 DEBUG: Dados salvos - discountData:`, 'success');
+                    log(`${JSON.stringify(discountData, null, 2)}`, 'success');
+                    
+                    showFeedback(`✅ Cupom válido! ${result.data.discount_percent}% de desconto`, 'success');
+                    document.getElementById('couponInput').classList.add('coupon-success');
+                    document.getElementById('couponInput').classList.remove('coupon-error');
+                    
+                    // Mostrar resultado e calcular preços
+                    showValidationResult(result.data);
+                    calculatePrices();
+                    
+                    log('🔄 DEBUG: Interface atualizada com sucesso', 'success');
+
+                } else {
+                    log(`❌ DEBUG: Cupom inválido: ${result.error}`, 'error');
+                    appliedCoupon = null;
+                    discountData = null;
+                    
+                    showFeedback(`❌ ${result.error}`, 'error');
+                    document.getElementById('couponInput').classList.add('coupon-error');
+                    document.getElementById('couponInput').classList.remove('coupon-success');
+                    hideValidationResult();
+                }
+
+            } catch (error) {
+                log(`❌ DEBUG: Erro crítico na validação: ${error.message}`, 'error');
+                log(`Stack: ${error.stack}`, 'error');
+                showFeedback('❌ Erro de conexão', 'error');
+                hideValidationResult();
+                
+                appliedCoupon = null;
+                discountData = null;
+            } finally {
+                // Reabilitar botão
+                const validateBtn = document.getElementById('validateBtn');
+                validateBtn.disabled = false;
+                validateBtn.textContent = 'Validar';
+                
+                log('🔄 DEBUG: Validação finalizada', 'info');
+            }
+        }
+
+        // ===== EXIBIÇÃO DE RESULTADOS =====
+        function showValidationResult(data) {
+            const resultDiv = document.getElementById('validationResult');
+            const contentDiv = document.getElementById('validationContent');
+            
+            contentDiv.innerHTML = `
+                <div class="space-y-2 text-sm">
+                    <div><span class="text-gray-400">Cupom ID:</span> <span class="text-white">${data.coupon_id}</span></div>
+                    <div><span class="text-gray-400">Desconto:</span> <span class="text-green-400 font-bold">${data.discount_percent}%</span></div>
+                    <div><span class="text-gray-400">Tipo:</span> <span class="text-white">${data.discount_type}</span></div>
+                    <div><span class="text-gray-400">Planos aplicáveis:</span> <span class="text-white">${data.applicable_plans.join(', ') || 'Todos'}</span></div>
+                </div>
+            `;
+            
+            resultDiv.classList.remove('hidden');
+            resultDiv.className = 'p-4 border border-green-500 bg-green-500 bg-opacity-10 rounded-lg';
+            
+            document.getElementById('checkoutSection').classList.remove('hidden');
+        }
+
+        function hideValidationResult() {
+            document.getElementById('validationResult').classList.add('hidden');
+            document.getElementById('checkoutSection').classList.add('hidden');
+            appliedCoupon = null;
+            discountData = null;
+        }
+
+        function showFeedback(message, type) {
+            const feedback = document.getElementById('couponFeedback');
+            const input = document.getElementById('couponInput');
+            
+            feedback.textContent = message;
+            feedback.classList.remove('hidden');
+            
+            if (type === 'success') {
+                feedback.className = 'mt-2 text-sm text-green-400';
+                input.className = input.className.replace(/coupon-(success|error)/g, '') + ' coupon-success';
+            } else {
+                feedback.className = 'mt-2 text-sm text-red-400';
+                input.className = input.className.replace(/coupon-(success|error)/g, '') + ' coupon-error';
+            }
+        }
+
+        function showCouponFeedback(message, type) {
+            showFeedback(message, type);
+        }
+
+        // ===== CÁLCULO DE PREÇOS COM DEBUG =====
+        function calculatePrices() {
+            const planName = document.getElementById('planSelect').value;
+            const cycle = document.getElementById('cycleSelect').value;
+            
+            log('💰 DEBUG: Calculando preços...', 'info');
+            log(`📦 Plano: ${planName}`, 'info');
+            log(`📅 Ciclo: ${cycle}`, 'info');
+            
+            const originalPrice = planPrices[planName][cycle];
+            let finalPrice = originalPrice;
+            let discountAmount = 0;
+            
+            log(`💵 Preço original: R$ ${originalPrice}`, 'info');
+            
+            if (discountData) {
+                log('🎫 DEBUG: Aplicando desconto...', 'info');
+                log(`📊 Dados do desconto: ${JSON.stringify(discountData)}`, 'info');
+                
+                const discountPercent = parseFloat(discountData.discount_percent);
+                discountAmount = (originalPrice * discountPercent) / 100;
+                finalPrice = originalPrice - discountAmount;
+                
+                log(`📈 Percentual de desconto: ${discountPercent}%`, 'info');
+                log(`💸 Valor do desconto: R$ ${discountAmount.toFixed(2)}`, 'info');
+                log(`💰 Preço final: R$ ${finalPrice.toFixed(2)}`, 'info');
+            } else {
+                log('ℹ️ DEBUG: Nenhum desconto aplicado', 'info');
+            }
+            
+            const savingsPercent = originalPrice > 0 ? ((discountAmount / originalPrice) * 100).toFixed(1) : 0;
+            
+            // Atualizar interface
+            document.getElementById('originalPrice').textContent = `R$ ${originalPrice}`;
+            document.getElementById('discountAmount').textContent = `R$ ${discountAmount.toFixed(2)}`;
+            document.getElementById('finalPrice').textContent = `R$ ${finalPrice.toFixed(2)}`;
+            document.getElementById('savingsPercent').textContent = `${savingsPercent}%`;
+            
+            log(`📊 DEBUG: Interface atualizada com economia de ${savingsPercent}%`, 'success');
+            
+            // Retornar dados calculados para uso no checkout
+            return {
+                originalPrice,
+                finalPrice,
+                discountAmount,
+                savingsPercent
+            };
+        }
+
+        // ===== TESTE DE CHECKOUT COM DEBUG COMPLETO =====
+        async function testCheckout() {
+            if (!appliedCoupon) {
+                log('❌ Nenhum cupom aplicado', 'error');
+                return;
+            }
+
+            try {
+                log('🛒 DEBUG: Iniciando teste de checkout...', 'info');
+                
+                const planName = document.getElementById('planSelect').value;
+                const cycle = document.getElementById('cycleSelect').value;
+                
+                // Calcular preços para debug
+                const originalPrice = planPrices[planName][cycle];
+                let finalPrice = originalPrice;
+                let discountAmount = 0;
+                
+                if (discountData) {
+                    const discountPercent = parseFloat(discountData.discount_percent);
+                    discountAmount = (originalPrice * discountPercent) / 100;
+                    finalPrice = originalPrice - discountAmount;
+                }
+                
+                log(`💰 DEBUG: Preços calculados`, 'info');
+                log(`   - Plano: ${planName} (${cycle})`, 'info');
+                log(`   - Preço original: R$ ${originalPrice}`, 'info');
+                log(`   - Desconto: ${discountData.discount_percent}%`, 'info');
+                log(`   - Valor do desconto: R$ ${discountAmount.toFixed(2)}`, 'info');
+                log(`   - Preço final: R$ ${finalPrice.toFixed(2)}`, 'info');
+                
+                const checkoutData = {
+                    plan: planName,
+                    cycle: cycle,
+                    coupon_code: appliedCoupon,
+                    discounted_price: finalPrice, // ✅ ADICIONAR PREÇO COM DESCONTO
+                    user_id: currentUser ? currentUser.id : 1,
+                    user_email: currentUser ? currentUser.email : 'teste@geminii.com.br',
+                    user_name: currentUser ? currentUser.name : 'Usuário Teste',
+                    device_id: 'test-device-' + Date.now()
+                };
+
+                log(`📤 DEBUG: Dados completos do checkout:`, 'info');
+                log(`${JSON.stringify(checkoutData, null, 2)}`, 'info');
+
+                const response = await fetch('/api/mercadopago/checkout/create', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...(userToken && { 'Authorization': `Bearer ${userToken}` })
+                    },
+                    body: JSON.stringify(checkoutData)
+                });
+
+                log(`📡 DEBUG: Status da resposta: ${response.status}`, 'info');
+                log(`📡 DEBUG: Headers da resposta: ${JSON.stringify([...response.headers.entries()])}`, 'info');
+
+                const result = await response.json();
+                log(`📥 DEBUG: Resposta completa do checkout:`, result.success ? 'success' : 'error');
+                log(`${JSON.stringify(result, null, 2)}`, result.success ? 'success' : 'error');
+
+                if (result.success) {
+                    log('✅ SUCESSO: Checkout criado!', 'success');
+                    log(`🆔 Preference ID: ${result.data.preference_id}`, 'success');
+                    log(`💰 Preço final no MP: R$ ${result.data.price}`, 'success');
+                    
+                    if (result.data.original_price) {
+                        log(`💸 Preço original: R$ ${result.data.original_price}`, 'success');
+                        log(`🎫 Cupom aplicado: ${result.data.coupon_code}`, 'success');
+                    }
+                    
+                    alert(`✅ Checkout criado com sucesso!\n\nPreference ID: ${result.data.preference_id}\nPreço: R$ ${result.data.price}\nCupom: ${appliedCoupon}`);
+                } else {
+                    log('❌ ERRO no checkout:', 'error');
+                    log(`Detalhes: ${result.error}`, 'error');
+                    if (result.details) {
+                        log(`Detalhes técnicos: ${JSON.stringify(result.details)}`, 'error');
+                    }
+                    alert(`❌ Erro no checkout: ${result.error}`);
+                }
+
+            } catch (error) {
+                log(`❌ ERRO CRÍTICO no checkout: ${error.message}`, 'error');
+                log(`Stack trace: ${error.stack}`, 'error');
+                alert(`❌ Erro de conexão: ${error.message}`);
+            }
+        }
+
+        // ===== CARREGAR CUPONS DISPONÍVEIS =====
+        async function loadAvailableCoupons() {
+            try {
+                log('📋 Carregando cupons disponíveis...', 'info');
+                
+                const response = await fetch('/api/admin/coupons', {
+                    headers: {
+                        ...(userToken && { 'Authorization': `Bearer ${userToken}` })
+                    }
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    displayAvailableCoupons(result.coupons);
+                    log(`✅ ${result.coupons.length} cupons carregados`, 'success');
+                } else {
+                    log(`❌ Erro ao carregar cupons: ${result.error}`, 'error');
+                }
+
+            } catch (error) {
+                log(`❌ Erro de conexão: ${error.message}`, 'error');
+            }
+        }
+
+        function displayAvailableCoupons(coupons) {
+            const container = document.getElementById('availableCoupons');
+            
+            if (!coupons || coupons.length === 0) {
+                container.innerHTML = '<p class="text-gray-400 col-span-full text-center">Nenhum cupom encontrado</p>';
+                return;
+            }
+
+            container.innerHTML = coupons.map(coupon => `
+                <div class="p-4 bg-gray-800 rounded-lg border border-gray-600 hover:border-purple-500 transition-colors">
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="font-bold text-white">${coupon.code}</h3>
+                        <span class="px-2 py-1 text-xs rounded ${coupon.is_active ? 'bg-green-600 text-green-200' : 'bg-red-600 text-red-200'}">
+                            ${coupon.is_active ? 'Ativo' : 'Inativo'}
+                        </span>
+                    </div>
+                    <div class="text-sm text-gray-300 space-y-1">
+                        <div>Desconto: <span class="text-purple-400 font-bold">${coupon.discount_percent}%</span></div>
+                        <div>Usado: ${coupon.used_count || 0}/${coupon.max_uses || '∞'}</div>
+                        ${coupon.valid_until ? `<div class="text-xs">Válido até: ${new Date(coupon.valid_until).toLocaleDateString()}</div>` : ''}
+                    </div>
+                    <button onclick="testCoupon('${coupon.code}')" class="w-full mt-3 px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm rounded transition-colors">
+                        Testar este cupom
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        function testCoupon(code) {
+            document.getElementById('couponInput').value = code;
+            validateCoupon();
+        }
+
+        // ===== MERCADO PAGO =====
+        function initMercadoPago() {
+            try {
+                const publicKey = 'TEST-a5bcc6b2-29d6-4c1e-ad6c-31ce73d0d377';
+                mp = new MercadoPago(publicKey, { locale: 'pt-BR' });
+                log('✅ MercadoPago inicializado', 'success');
+            } catch (error) {
+                log(`❌ Erro ao inicializar MP: ${error.message}`, 'error');
+            }
+        }
+
+        // ===== EVENT LISTENERS =====
+        function setupEventListeners() {
+            // Enter no input do cupom
+            document.getElementById('couponInput').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    validateCoupon();
+                }
+            });
+
+            // Mudança de plano/ciclo
+            document.getElementById('planSelect').addEventListener('change', () => {
+                if (discountData) calculatePrices();
+            });
+
+            document.getElementById('cycleSelect').addEventListener('change', () => {
+                if (discountData) calculatePrices();
+            });
+
+            // Limpar resultado ao mudar cupom
+            document.getElementById('couponInput').addEventListener('input', () => {
+                hideValidationResult();
+                document.getElementById('couponFeedback').classList.add('hidden');
+                document.getElementById('couponInput').className = document.getElementById('couponInput').className.replace(/coupon-(success|error)/g, '');
+            });
+        }
+
+        // ===== FUNÇÕES GLOBAIS =====
+        window.validateCoupon = validateCoupon;
+        window.testCheckout = testCheckout;
+        window.clearLog = clearLog;
+        window.testApiConnection = testApiConnection;
+        window.loadAvailableCoupons = loadAvailableCoupons;
+        window.testCoupon = testCoupon;
+    </script>
+</body>
+</html>

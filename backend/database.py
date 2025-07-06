@@ -7,24 +7,57 @@ from psycopg2.extras import RealDictCursor
 from datetime import datetime, timezone
 
 def get_db_connection():
-    """Conectar com PostgreSQL (local ou Railway)"""
-    try:
-        database_url = os.environ.get("DATABASE_URL")
-        
-        if database_url:
-            conn = psycopg2.connect(database_url, sslmode='require')
-        else:
-            conn = psycopg2.connect(
-                host=os.environ.get("DB_HOST", "localhost"),
-                database=os.environ.get("DB_NAME", "postgres"),
-                user=os.environ.get("DB_USER", "postgres"),
-                password=os.environ.get("DB_PASSWORD", "#geminii"),
-                port=os.environ.get("DB_PORT", "5432")
-            )
-        return conn
-    except Exception as e:
-        print(f"❌ Erro ao conectar no banco: {e}")
-        return None
+    """Conectar com PostgreSQL (local ou Railway) - VERSÃO CORRIGIDA"""
+    max_retries = 3
+    retry_delay = 1
+    
+    for attempt in range(max_retries):
+        try:
+            database_url = os.environ.get("DATABASE_URL")
+            
+            if database_url:
+                # Corrigir URL do Railway/Heroku se necessário
+                if database_url.startswith("postgres://"):
+                    database_url = database_url.replace("postgres://", "postgresql://", 1)
+                
+                conn = psycopg2.connect(
+                    database_url, 
+                    sslmode='require',
+                    connect_timeout=10
+                )
+                print(f"✅ Conectado via DATABASE_URL (tentativa {attempt + 1})")
+            else:
+                conn = psycopg2.connect(
+                    host=os.environ.get("DB_HOST", "localhost"),
+                    database=os.environ.get("DB_NAME", "postgres"),
+                    user=os.environ.get("DB_USER", "postgres"),
+                    password=os.environ.get("DB_PASSWORD", "#geminii"),
+                    port=os.environ.get("DB_PORT", "5432"),
+                    connect_timeout=10
+                )
+                print(f"✅ Conectado via variáveis locais (tentativa {attempt + 1})")
+            
+            # Testar conexão
+            cursor = conn.cursor()
+            cursor.execute("SELECT 1")
+            cursor.fetchone()
+            cursor.close()
+            
+            return conn
+            
+        except Exception as e:
+            print(f"❌ Tentativa {attempt + 1} falhou: {e}")
+            
+            if attempt < max_retries - 1:
+                print(f"⏳ Tentando novamente em {retry_delay}s...")
+                import time
+                time.sleep(retry_delay)
+                retry_delay *= 2
+            else:
+                print("❌ Todas as tentativas falharam")
+                return None
+    
+    return None
 
 def test_connection():
     try:

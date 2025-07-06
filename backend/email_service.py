@@ -1,30 +1,36 @@
 import os
 import secrets
 import hashlib
-import requests
+import smtplib
 import json
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 from datetime import datetime, timedelta, timezone
 from database import get_db_connection
 
 class EmailService:
     def __init__(self):
-        # 🔥 RESEND CONFIG
-        self.resend_api_key = os.environ.get('RESEND_API_KEY')
-        self.from_email = os.environ.get('FROM_EMAIL', 'onboarding@resend.dev')
+        # 🔥 SMTP CORPORATIVO CONFIG (Titan)
+        self.smtp_server = os.environ.get('SMTP_SERVER', 'smtp.titan.email')
+        self.smtp_port = int(os.environ.get('SMTP_PORT', '465'))  # 465 para SSL (Titan)
+        self.smtp_username = os.environ.get('EMAIL_USER', 'contato@geminii.com.br')
+        self.smtp_password = os.environ.get('EMAIL_PASSWORD', '#Geminii20')
+        self.from_email = os.environ.get('FROM_EMAIL', 'contato@geminii.com.br')
         self.from_name = 'Geminii Tech'
         self.base_url = os.environ.get('BASE_URL', 'https://app-geminii.railway.app')  
         
-        # MODO TESTE - Para desenvolvimento sem Resend
-        self.test_mode = not self.resend_api_key
+        # MODO TESTE - Para desenvolvimento sem SMTP
+        self.test_mode = False  # Sempre usar SMTP real com suas credenciais
         
         if self.test_mode:
-            print("⚠️ MODO TESTE ativo - Configure RESEND_API_KEY para emails reais")
+            print("⚠️ MODO TESTE ativo - Configure EMAIL_PASSWORD para emails reais")
         else:
-            print(f"✅ RESEND ativo - Enviando de: {self.from_email}")
+            print(f"✅ SMTP ativo - Enviando de: {self.from_email}")
+            print(f"📡 Servidor: {self.smtp_server}:{self.smtp_port}")
             print(f"🌐 Base URL: {self.base_url}")
 
     def send_email(self, to_email, subject, html_content):
-        """📧 Enviar email via Resend"""
+        """📧 Enviar email via SMTP corporativo"""
         try:
             if self.test_mode:
                 print(f"\n📧 [MODO TESTE] Email simulado:")
@@ -34,35 +40,38 @@ class EmailService:
                 print(f"   ✅ Email 'enviado' com sucesso")
                 return True
             
-            # 🔥 ENVIAR VIA RESEND API
-            url = "https://api.resend.com/emails"
+            # 🔥 ENVIAR VIA SMTP CORPORATIVO
+            print(f"📤 Enviando email via SMTP para {to_email}...")
             
-            headers = {
-                'Authorization': f'Bearer {self.resend_api_key}',
-                'Content-Type': 'application/json'
-            }
+            # Criar mensagem
+            msg = MIMEMultipart('alternative')
+            msg['From'] = f"{self.from_name} <{self.from_email}>"
+            msg['To'] = to_email
+            msg['Subject'] = subject
             
-            data = {
-                "from": f"{self.from_name} <{self.from_email}>",
-                "to": [to_email],
-                "subject": subject,
-                "html": html_content
-            }
+            # Adicionar conteúdo HTML
+            html_part = MIMEText(html_content, 'html', 'utf-8')
+            msg.attach(html_part)
             
-            print(f"📤 Enviando email via Resend para {to_email}...")
+            # Conectar e enviar
+            with smtplib.SMTP_SSL(self.smtp_server, self.smtp_port) as server:
+                # SSL já está ativo no port 465, não precisa starttls()
+                server.login(self.smtp_username, self.smtp_password)
+                server.send_message(msg)
             
-            response = requests.post(url, headers=headers, data=json.dumps(data))
+            print(f"✅ Email enviado via SMTP!")
+            return True
             
-            if response.status_code == 200:
-                result = response.json()
-                print(f"✅ Email enviado via Resend!")
-                print(f"   ID: {result.get('id', 'N/A')}")
-                return True
-            else:
-                print(f"❌ Erro Resend: {response.status_code}")
-                print(f"   Resposta: {response.text}")
-                return False
-            
+        except smtplib.SMTPAuthenticationError as e:
+            print(f"❌ Erro de autenticação SMTP: {e}")
+            print(f"   Verifique SMTP_USERNAME e SMTP_PASSWORD")
+            return False
+        except smtplib.SMTPRecipientsRefused as e:
+            print(f"❌ Destinatário recusado: {e}")
+            return False
+        except smtplib.SMTPServerDisconnected as e:
+            print(f"❌ Servidor SMTP desconectado: {e}")
+            return False
         except Exception as e:
             print(f"❌ Erro ao enviar email: {e}")
             return False
@@ -730,10 +739,7 @@ def setup_email_system():
     
     if email_service.setup_tables():
         print("✅ Sistema de email configurado!")
-        if email_service.test_mode:
-            print("📧 MODO TESTE ativo - Configure RESEND_API_KEY para emails reais")
-        else:
-            print("📧 MODO RESEND ativo - Emails serão enviados via Resend")
+        print("📧 MODO SMTP CORPORATIVO ativo - Emails via Titan")
         return True
     else:
         print("❌ Falha na configuração")

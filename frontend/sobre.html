@@ -26,10 +26,40 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
     body {
+      background: linear-gradient(135deg, #0c0c0c 0%, #1a1a1a 100%);
+      min-height: 100vh;
       overflow-x: hidden;
     }
 
-    /* Neon Logo Effect */
+    /* Floating elements animation */
+    .floating-elements {
+      position: fixed;
+      inset: 0;
+      overflow: hidden;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .floating-icon {
+      position: absolute;
+      opacity: 0.1;
+      animation: float 8s ease-in-out infinite;
+      color: #ba39af;
+    }
+
+    .floating-icon:nth-child(1) { top: 10%; left: 10%; animation-delay: 0s; font-size: 2rem; }
+    .floating-icon:nth-child(2) { top: 20%; right: 20%; animation-delay: 2s; font-size: 3rem; }
+    .floating-icon:nth-child(3) { bottom: 30%; left: 15%; animation-delay: 4s; font-size: 2.5rem; }
+    .floating-icon:nth-child(4) { bottom: 20%; right: 10%; animation-delay: 6s; font-size: 2rem; }
+    .floating-icon:nth-child(5) { top: 50%; left: 5%; animation-delay: 1s; font-size: 1.5rem; }
+    .floating-icon:nth-child(6) { top: 60%; right: 5%; animation-delay: 3s; font-size: 2rem; }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0px) rotate(0deg); }
+      50% { transform: translateY(-20px) rotate(180deg); }
+    }
+
+    /* Enhanced navbar */
     .neon-logo {
       transition: all 0.3s ease;
       border-radius: 4px;
@@ -46,14 +76,13 @@
       transform: scale(1.1);
     }
 
-    /* Navbar Effects */
     nav:hover {
-      background: rgba(186, 57, 175, 0.05);
-      border-color: rgba(186, 57, 175, 0.3);
+      background: rgba(186, 57, 175, 0.08);
+      border-color: rgba(186, 57, 175, 0.4);
       box-shadow: 
         0 25px 50px -12px rgba(0, 0, 0, 0.25),
-        0 0 20px rgba(186, 57, 175, 0.2),
-        0 0 40px rgba(186, 57, 175, 0.1);
+        0 0 30px rgba(186, 57, 175, 0.3),
+        0 0 60px rgba(186, 57, 175, 0.15);
       transition: all 0.3s ease;
     }
 
@@ -66,78 +95,241 @@
       transition: all 0.3s ease;
     }
 
-    /* Content Cards */
+    /* Enhanced content cards */
     .content-card {
-      background: rgba(255, 255, 255, 0.05);
+      background: rgba(255, 255, 255, 0.08);
       backdrop-filter: blur(20px);
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
       border-radius: 20px;
-      padding: 2rem;
-      transition: all 0.3s ease;
+      padding: 2.5rem;
+      transition: all 0.4s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .content-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(45deg, transparent, rgba(186, 57, 175, 0.1), transparent);
+      transition: left 0.6s ease;
+    }
+
+    .content-card:hover::before {
+      left: 100%;
     }
 
     .content-card:hover {
-      background: rgba(255, 255, 255, 0.08);
-      border-color: rgba(186, 57, 175, 0.3);
-      transform: translateY(-5px);
-      box-shadow: 0 20px 40px rgba(186, 57, 175, 0.1);
+      background: rgba(255, 255, 255, 0.12);
+      border-color: rgba(186, 57, 175, 0.4);
+      transform: translateY(-8px);
+      box-shadow: 0 25px 50px rgba(186, 57, 175, 0.2);
     }
 
-    /* Section Headers */
+    /* Enhanced section headers */
     .section-header {
       background: linear-gradient(135deg, #ba39af, #d946ef);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
       font-weight: 800;
+      position: relative;
     }
 
-    /* Process Steps */
+    .section-header::after {
+      content: '';
+      position: absolute;
+      bottom: -8px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 60px;
+      height: 3px;
+      background: linear-gradient(135deg, #ba39af, #d946ef);
+      border-radius: 2px;
+    }
+
+    /* Enhanced process steps */
     .process-step {
       position: relative;
-      padding-left: 3rem;
+      padding: 2rem;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      transition: all 0.3s ease;
+      margin-bottom: 1.5rem;
     }
 
     .process-step::before {
       content: '';
       position: absolute;
-      left: 0;
-      top: 0.5rem;
-      width: 2rem;
-      height: 2rem;
+      top: -12px;
+      left: 2rem;
+      width: 40px;
+      height: 40px;
       background: linear-gradient(135deg, #ba39af, #d946ef);
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
+      font-size: 1rem;
+      font-weight: bold;
+      color: white;
+      box-shadow: 0 4px 12px rgba(186, 57, 175, 0.3);
     }
 
-    .process-step:nth-child(1)::before { content: '1'; color: white; font-weight: bold; font-size: 0.875rem; }
-    .process-step:nth-child(2)::before { content: '2'; color: white; font-weight: bold; font-size: 0.875rem; }
-    .process-step:nth-child(3)::before { content: '3'; color: white; font-weight: bold; font-size: 0.875rem; }
-    .process-step:nth-child(4)::before { content: '4'; color: white; font-weight: bold; font-size: 0.875rem; }
+    .process-step:nth-child(1)::before { content: '01'; }
+    .process-step:nth-child(2)::before { content: '02'; }
+    .process-step:nth-child(3)::before { content: '03'; }
+    .process-step:nth-child(4)::before { content: '04'; }
 
-    /* Feature Icons */
+    .process-step:hover {
+      background: rgba(186, 57, 175, 0.08);
+      border-color: rgba(186, 57, 175, 0.3);
+      transform: translateX(10px);
+    }
+
+    /* Enhanced feature icons */
+    .feature-card {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 16px;
+      padding: 2rem;
+      text-align: center;
+      transition: all 0.4s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .feature-card::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle, rgba(186, 57, 175, 0.1) 0%, transparent 70%);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .feature-card:hover::before {
+      opacity: 1;
+    }
+
+    .feature-card:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(186, 57, 175, 0.3);
+      transform: translateY(-10px);
+      box-shadow: 0 20px 40px rgba(186, 57, 175, 0.2);
+    }
+
     .feature-icon {
-      width: 4rem;
-      height: 4rem;
+      width: 80px;
+      height: 80px;
       background: linear-gradient(135deg, #ba39af, #d946ef);
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
       color: white;
-      font-size: 1.5rem;
-      margin-bottom: 1rem;
+      font-size: 2rem;
+      margin: 0 auto 1.5rem;
+      box-shadow: 0 8px 24px rgba(186, 57, 175, 0.3);
+      transition: all 0.3s ease;
     }
 
-    /* Geminii Text */
+    .feature-card:hover .feature-icon {
+      transform: scale(1.1) rotate(10deg);
+      box-shadow: 0 12px 36px rgba(186, 57, 175, 0.4);
+    }
+
+    /* Enhanced company hierarchy */
+    .company-card {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 16px;
+      padding: 2rem;
+      text-align: center;
+      transition: all 0.4s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .company-card::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 4px;
+      background: linear-gradient(135deg, #ba39af, #d946ef);
+      transform: translateX(-100%);
+      transition: transform 0.3s ease;
+    }
+
+    .company-card:hover::after {
+      transform: translateX(0);
+    }
+
+    .company-card:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(186, 57, 175, 0.3);
+      transform: translateY(-5px);
+    }
+
+    /* Enhanced geminii text */
     .geminii-text {
       color: #ba39af;
       font-weight: 700;
+      transition: all 0.3s ease;
     }
 
-    /* User Menu (copiado do index) */
+    .geminii-text:hover {
+      text-shadow: 
+        0 0 20px rgba(186, 57, 175, 0.8),
+        0 0 40px rgba(186, 57, 175, 0.6);
+    }
+
+    /* Enhanced CTA button */
+    .cta-button {
+      background: linear-gradient(135deg, #ba39af, #d946ef);
+      color: white;
+      padding: 1rem 2rem;
+      border-radius: 50px;
+      text-decoration: none;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .cta-button::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+      transition: left 0.6s ease;
+    }
+
+    .cta-button:hover::before {
+      left: 100%;
+    }
+
+    .cta-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 30px rgba(186, 57, 175, 0.4);
+    }
+
+    /* User Menu Styles */
     .user-menu {
       position: relative;
       display: inline-block;
@@ -148,12 +340,12 @@
       position: absolute;
       right: 0;
       top: 100%;
-      background: rgba(255, 255, 255, 0.95);
+      background: rgba(0, 0, 0, 0.9);
       backdrop-filter: blur(20px);
-      border: 1px solid rgba(255, 255, 255, 0.2);
+      border: 1px solid rgba(186, 57, 175, 0.3);
       border-radius: 12px;
       min-width: 200px;
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
       z-index: 1000;
       margin-top: 8px;
       padding: 8px;
@@ -168,7 +360,7 @@
       align-items: center;
       gap: 8px;
       padding: 8px 12px;
-      color: #333;
+      color: #fff;
       text-decoration: none;
       border-radius: 8px;
       transition: all 0.2s ease;
@@ -176,7 +368,7 @@
     }
 
     .user-menu-item:hover {
-      background: rgba(186, 57, 175, 0.1);
+      background: rgba(186, 57, 175, 0.2);
       color: #ba39af;
     }
 
@@ -219,6 +411,43 @@
       background: linear-gradient(135deg, #8b5cf6, #7c3aed);
     }
 
+    /* Stats section */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 2rem;
+      margin: 3rem 0;
+    }
+
+    .stat-card {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 2rem;
+      text-align: center;
+      transition: all 0.3s ease;
+    }
+
+    .stat-card:hover {
+      background: rgba(186, 57, 175, 0.1);
+      border-color: rgba(186, 57, 175, 0.3);
+      transform: translateY(-5px);
+    }
+
+    .stat-number {
+      font-size: 2.5rem;
+      font-weight: 900;
+      color: #ba39af;
+      margin-bottom: 0.5rem;
+    }
+
+    .stat-label {
+      color: rgba(255, 255, 255, 0.8);
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
     /* Responsive */
     @media (max-width: 768px) {
       .content-card {
@@ -226,28 +455,33 @@
       }
       
       .process-step {
-        padding-left: 2.5rem;
+        padding: 1.5rem;
       }
       
       .feature-icon {
-        width: 3rem;
-        height: 3rem;
-        font-size: 1.25rem;
+        width: 60px;
+        height: 60px;
+        font-size: 1.5rem;
+      }
+      
+      .company-card {
+        padding: 1.5rem;
       }
     }
   </style>
 </head>
-<body class="bg-black text-white font-sans">
+<body class="text-white font-sans">
+  <!-- Floating Elements -->
+  <div class="floating-elements">
+    <i class="floating-icon fas fa-chart-line"></i>
+    <i class="floating-icon fas fa-robot"></i>
+    <i class="floating-icon fas fa-brain"></i>
+    <i class="floating-icon fas fa-code"></i>
+    <i class="floating-icon fas fa-analytics"></i>
+    <i class="floating-icon fas fa-rocket"></i>
+  </div>
+
   <div class="relative min-h-screen">
-    <!-- Background Pattern -->
-    <div class="fixed inset-0 z-0">
-      <div class="absolute inset-0 bg-gradient-to-br from-purple-900/20 via-black to-pink-900/20"></div>
-      <div class="absolute top-0 left-0 w-full h-full opacity-10">
-        <div class="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-500 rounded-full blur-3xl"></div>
-        <div class="absolute bottom-1/4 right-1/4 w-96 h-96 bg-pink-500 rounded-full blur-3xl"></div>
-      </div>
-    </div>
-    
     <!-- Navbar -->
     <nav class="fixed top-6 left-1/2 transform -translate-x-1/2 z-50 bg-opacity-5 border-opacity-10 bg-white border-white border rounded-full pt-4 pr-4 pb-4 pl-4 shadow-xl backdrop-blur-md">
       <div class="flex items-center justify-between">
@@ -279,10 +513,10 @@
               <span id="userInitials">GU</span>
             </div>
             <div class="user-menu-dropdown" id="userMenuDropdown">
-              <div class="px-3 py-2 border-b border-gray-200">
-                <p class="text-sm font-medium text-gray-900" id="userName">Usuário</p>
-                <p class="text-xs text-gray-500" id="userEmail">email@example.com</p>
-                <p class="text-xs text-gray-500">
+              <div class="px-3 py-2 border-b border-gray-600">
+                <p class="text-sm font-medium text-white" id="userName">Usuário</p>
+                <p class="text-xs text-gray-400" id="userEmail">email@example.com</p>
+                <p class="text-xs text-gray-400">
                   Plano: <span id="userPlan" class="font-medium">Básico</span>
                   <span id="planBadge" class="plan-badge">Free</span>
                 </p>
@@ -295,7 +529,7 @@
                 <i class="fas fa-crown"></i>
                 Planos & Assinatura
               </a>
-              <div class="border-t border-gray-200 mt-1 pt-1">
+              <div class="border-t border-gray-600 mt-1 pt-1">
                 <a href="#" onclick="logout()" class="user-menu-item">
                   <i class="fas fa-sign-out-alt"></i>
                   Sair
@@ -309,93 +543,113 @@
     
     <!-- Main Content -->
     <div class="relative z-10 pt-32 pb-20">
-      <div class="max-w-6xl mx-auto px-6">
+      <div class="max-w-7xl mx-auto px-6">
         
-        <!-- Header Section -->
+        <!-- Hero Section -->
         <div class="text-center mb-16">
-          <h1 class="text-4xl md:text-6xl font-bold mb-6">
+          <h1 class="text-5xl md:text-7xl font-bold mb-8 leading-tight">
             Sobre a <span class="geminii-text">Geminii Tech</span>
           </h1>
-          <p class="text-xl text-gray-300 max-w-3xl mx-auto leading-relaxed">
-            Tecnologia de ponta para revolucionar suas decisões de investimento através de inteligência artificial e análise quantitativa.
+          <p class="text-xl md:text-2xl text-gray-300 max-w-4xl mx-auto leading-relaxed mb-8">
+            Revolucionando o mercado financeiro através de <strong class="geminii-text">inteligência artificial</strong> e análise quantitativa avançada.
           </p>
+          
+          <!-- Stats Preview -->
+          <div class="stats-grid max-w-4xl mx-auto">
+            <div class="stat-card">
+              <div class="stat-number">2025</div>
+              <div class="stat-label">Fundação</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-number">300+</div>
+              <div class="stat-label">Ações Monitoradas</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-number">75%</div>
+              <div class="stat-label">Precisão IA</div>
+            </div>
+            <div class="stat-card">C
+              <div class="stat-number">24/7</div>
+              <div class="stat-label">Análise Contínua</div>
+            </div>
+          </div>
         </div>
 
         <!-- Company Hierarchy -->
         <div class="content-card mb-16">
-          <div class="text-center mb-8">
-            <h2 class="text-3xl font-bold section-header mb-4">Grupo Geminii Research</h2>
-            <p class="text-gray-300 text-lg">
-              A <strong class="geminii-text">Geminii Tech</strong> é uma empresa do grupo <strong class="geminii-text">Geminii Research</strong> (holding), 
-              especializada em desenvolver ferramentas tecnológicas avançadas para o mercado financeiro.
+          <div class="text-center mb-12">
+            <h2 class="text-4xl font-bold section-header mb-8">Ecossistema Geminii</h2>
+            <p class="text-lg text-gray-300 max-w-3xl mx-auto">
+              Um grupo tecnológico especializado em revolucionar o mercado financeiro através de soluções inovadoras e inteligência artificial.
             </p>
           </div>
           
-          <div class="grid md:grid-cols-2 gap-8">
-            <div class="text-center">
-              <div class="feature-icon mx-auto">
+          <div class="grid lg:grid-cols-2 gap-8 mb-8">
+            <div class="company-card">
+              <div class="feature-icon mx-auto mb-6">
                 <i class="fas fa-building"></i>
               </div>
-              <h3 class="text-xl font-bold mb-2 geminii-text">Geminii Research</h3>
-              <p class="text-gray-300">
-                Holding responsável pelas estratégias de investimento, pesquisa financeira e desenvolvimento de carteiras recomendadas.
+              <h3 class="text-2xl font-bold mb-4 geminii-text">Geminii Research</h3>
+              <p class="text-gray-300 text-lg leading-relaxed mb-4">
+                <strong>Holding principal</strong> responsável pela pesquisa financeira, desenvolvimento de estratégias de investimento e criação de carteiras recomendadas baseadas em análise quantitativa.
               </p>
+              <a href="https://geminii.com.br" target="_blank" class="cta-button">
+                <i class="fas fa-external-link-alt"></i>
+                Visitar Site Principal
+              </a>
             </div>
             
-            <div class="text-center">
-              <div class="feature-icon mx-auto">
+            <div class="company-card">
+              <div class="feature-icon mx-auto mb-6">
                 <i class="fas fa-code"></i>
               </div>
-              <h3 class="text-xl font-bold mb-2 geminii-text">Geminii Tech</h3>
-              <p class="text-gray-300">
-                Braço tecnológico que desenvolve rastreadores, ferramentas de análise e plataformas para democratizar o acesso às estratégias.
+              <h3 class="text-2xl font-bold mb-4 geminii-text">Geminii Tech</h3>
+              <p class="text-gray-300 text-lg leading-relaxed mb-4">
+                <strong>Braço tecnológico</strong> que desenvolve ferramentas avançadas, rastreadores de mercado e plataformas para democratizar o acesso às estratégias de investimento.
               </p>
+              <div class="text-sm text-gray-400 italic">
+                Você está aqui! 🚀
+              </div>
             </div>
           </div>
         </div>
 
-        <!-- Main Story -->
+        <!-- Process Section -->
         <div class="content-card mb-16">
-          <h2 class="text-3xl font-bold section-header mb-8 text-center">
-            Como a Geminii Research Revoluciona Recomendações Financeiras
+          <h2 class="text-4xl font-bold section-header mb-12 text-center">
+            Nossa Metodologia Revolucionária
           </h2>
           
-          <p class="text-lg text-gray-300 mb-8 leading-relaxed">
-            Imagine transformar milhões de dados do mercado financeiro em recomendações precisas e lucrativas. 
-            É exatamente isso que fazemos na <span class="geminii-text">Geminii</span> através da nossa tecnologia de IA.
+          <p class="text-xl text-gray-300 mb-12 text-center max-w-4xl mx-auto leading-relaxed">
+            Transformamos <strong class="geminii-text">milhões de dados</strong> do mercado financeiro em recomendações precisas e lucrativas através de um processo tecnológico avançado.
           </p>
 
-          <div class="space-y-8">
+          <div class="space-y-6">
             <div class="process-step">
-              <h3 class="text-xl font-bold mb-3 text-white">Coleta Massiva de Dados</h3>
-              <p class="text-gray-300 leading-relaxed">
-                Nossa jornada se inicia com uma coleta massiva de dados em tempo real, capturando cada movimento do mercado 
-                através de APIs especializadas. Cada fonte é uma peça essencial que alimenta nossa inteligência artificial.
+              <h3 class="text-2xl font-bold mb-4 text-white">Coleta Massiva de Dados</h3>
+              <p class="text-gray-300 text-lg leading-relaxed">
+                Capturamos cada movimento do mercado em tempo real através de APIs especializadas e fontes de dados premium, criando uma base sólida para nossa inteligência artificial.
               </p>
             </div>
 
             <div class="process-step">
-              <h3 class="text-xl font-bold mb-3 text-white">Laboratório Digital</h3>
-              <p class="text-gray-300 leading-relaxed">
-                Estes dados são então transformados em nosso laboratório digital, onde criamos features únicas e targets precisos. 
-                É aqui que a mágica acontece - padrões invisíveis aos olhos humanos são descobertos e transformados em insights acionáveis.
+              <h3 class="text-2xl font-bold mb-4 text-white">Laboratório de Engenharia de Features</h3>
+              <p class="text-gray-300 text-lg leading-relaxed">
+                Nosso laboratório digital transforma dados brutos em features únicas e targets precisos, descobrindo padrões invisíveis aos métodos tradicionais de análise.
               </p>
             </div>
 
             <div class="process-step">
-              <h3 class="text-xl font-bold mb-3 text-white">Inteligência Artificial Avançada</h3>
-              <p class="text-gray-300 leading-relaxed">
-                Nossa IA então entra em ação, processando e analisando esses dados com modelos de Machine Learning avançados. 
-                Cada modelo é treinado para identificar oportunidades específicas e padrões complexos no mercado.
+              <h3 class="text-2xl font-bold mb-4 text-white">Modelos de Machine Learning Avançados</h3>
+              <p class="text-gray-300 text-lg leading-relaxed">
+                Utilizamos algoritmos de última geração para processar e analisar dados, com modelos especializados para identificar oportunidades específicas e padrões complexos.
               </p>
             </div>
 
             <div class="process-step">
-              <h3 class="text-xl font-bold mb-3 text-white">Democratização Tecnológica</h3>
-              <p class="text-gray-300 leading-relaxed">
-                Através da <span class="geminii-text">Geminii Tech</span>, democratizamos essas estratégias avançadas, 
-                oferecendo rastreadores completos que capturam todas as imperfeições do mercado e disponibilizamos 
-                nossas carteiras recomendadas para investidores de todos os níveis.
+              <h3 class="text-2xl font-bold mb-4 text-white">Democratização Tecnológica</h3>
+              <p class="text-gray-300 text-lg leading-relaxed">
+                Através da <span class="geminii-text">Geminii Tech</span>, disponibilizamos ferramentas profissionais e carteiras recomendadas para investidores de todos os níveis, democratizando o acesso a estratégias de nível institucional.
               </p>
             </div>
           </div>
@@ -403,38 +657,38 @@
 
         <!-- Features Section -->
         <div class="content-card mb-16">
-          <h2 class="text-3xl font-bold section-header mb-8 text-center">
-            O Que Você Encontra na Geminii Tech
+          <h2 class="text-4xl font-bold section-header mb-12 text-center">
+            Nossas Soluções Tecnológicas
           </h2>
           
           <div class="grid md:grid-cols-3 gap-8">
-            <div class="text-center">
-              <div class="feature-icon mx-auto">
+            <div class="feature-card">
+              <div class="feature-icon">
+                <i class="fas fa-chart-line"></i>
+              </div>
+              <h3 class="text-xl font-bold mb-4 geminii-text">Monitor Beta</h3>
+              <p class="text-gray-300 leading-relaxed">
+                Análise de risco e correlação com IBOVESPA em múltiplos períodos para decisões mais assertivas.
+              </p>
+            </div>
+            
+            <div class="feature-card">
+              <div class="feature-icon">
                 <i class="fas fa-radar-dish"></i>
               </div>
-              <h3 class="text-xl font-bold mb-3 geminii-text">Rastreadores Completos</h3>
-              <p class="text-gray-300">
-                Os mais avançados rastreadores para identificar todas as imperfeições e oportunidades do mercado em tempo real.
+              <h3 class="text-xl font-bold mb-4 geminii-text">RSL Radar</h3>
+              <p class="text-gray-300 leading-relaxed">
+                Mapeamento inteligente de setores por RSL vs volatilidade com dados reais calculados via IA.
               </p>
             </div>
             
-            <div class="text-center">
-              <div class="feature-icon mx-auto">
-                <i class="fas fa-briefcase"></i>
+            <div class="feature-card">
+              <div class="feature-icon">
+                <i class="fas fa-crosshairs"></i>
               </div>
-              <h3 class="text-xl font-bold mb-3 geminii-text">Carteiras Recomendadas</h3>
-              <p class="text-gray-300">
-                Acesso exclusivo às carteiras desenvolvidas pela Geminii Research, baseadas em anos de pesquisa e IA.
-              </p>
-            </div>
-            
-            <div class="text-center">
-              <div class="feature-icon mx-auto">
-                <i class="fas fa-robot"></i>
-              </div>
-              <h3 class="text-xl font-bold mb-3 geminii-text">Automação Inteligente</h3>
-              <p class="text-gray-300">
-                Ferramentas que automatizam análises complexas, permitindo decisões de investimento mais rápidas e precisas.
+              <h3 class="text-xl font-bold mb-4 geminii-text">Suporte & Resistência</h3>
+              <p class="text-gray-300 leading-relaxed">
+                Níveis científicos baseados em volatilidade real - sem achismo, apenas matemática pura.
               </p>
             </div>
           </div>
@@ -443,12 +697,23 @@
         <!-- Mission Section -->
         <div class="content-card">
           <div class="text-center">
-            <h2 class="text-3xl font-bold section-header mb-6">Nossa Missão</h2>
-            <p class="text-xl text-gray-300 leading-relaxed max-w-4xl mx-auto">
-              Democratizar o acesso a estratégias de investimento de nível institucional, 
+            <h2 class="text-4xl font-bold section-header mb-8">Nossa Missão</h2>
+            <p class="text-xl md:text-2xl text-gray-300 leading-relaxed max-w-5xl mx-auto mb-8">
+              Democratizar o acesso a estratégias de investimento de <strong class="geminii-text">nível institucional</strong>, 
               utilizando tecnologia de ponta para que qualquer investidor possa se beneficiar 
               da mesma inteligência artificial que move os grandes fundos.
             </p>
+            
+            <div class="flex flex-wrap justify-center gap-4 mt-8">
+              <a href="/dashboard.html" class="cta-button">
+                <i class="fas fa-rocket"></i>
+                Começar Agora
+              </a>
+              <a href="https://geminii.com.br" target="_blank" class="cta-button" style="background: linear-gradient(135deg, #10b981, #059669);">
+                <i class="fas fa-external-link-alt"></i>
+                Geminii Research
+              </a>
+            </div>
           </div>
         </div>
 
@@ -465,7 +730,7 @@
       window.location.href = '/dashboard.html';
     }
 
-    // Auth functions (básicas para a página)
+    // Auth functions
     async function checkAuthStatus() {
       const token = localStorage.getItem('geminii_token');
       const userData = localStorage.getItem('geminii_user');
@@ -522,13 +787,13 @@
       const planId = user.plan_id || 3;
       
       if (planId === 3) {
-        planBadge.textContent = 'Grátis';
+        planBadge.textContent = 'GRÁTIS';
         planBadge.className = 'plan-badge';
       } else if (planId === 1) {
-        planBadge.textContent = 'Pro';
+        planBadge.textContent = 'PRO';
         planBadge.className = 'plan-badge premium';
       } else if (planId >= 2) {
-        planBadge.textContent = 'Premium';
+        planBadge.textContent = 'PREMIUM';
         planBadge.className = 'plan-badge strategic';
       }
     }
@@ -559,7 +824,6 @@
     }
 
     function showLoginModal() {
-      // Redirecionar para página principal com modal
       window.location.href = '/login.html';
     }
 
@@ -589,7 +853,7 @@
       setInterval(checkApiStatus, 30000);
       checkAuthStatus();
       
-      console.log('🎯 Geminii Tech - Página Sobre carregada!');
+      console.log('🎯 Geminii Tech - Página Sobre Enhanced carregada!');
     });
 
     // Global functions

@@ -1,5 +1,3 @@
-# mercadopago_service.py - VERSÃO LIMPA E ORGANIZADA
-# ====================================================
 
 import os
 import time
@@ -166,7 +164,8 @@ def get_plans_service():
     except Exception as e:
         return {"success": False, "error": str(e)}
 
-def create_checkout_service(plan, cycle, customer_email=None, user_id=None, user_email=None, user_name=None, discounted_price=None, coupon_code=None, device_id=None):
+def create_checkout_service(plan, cycle, customer_email, user_id=None, user_email=None, 
+                          user_name=None, discounted_price=None, coupon_code=None, device_id=None):
     """Criar checkout com melhorias para aprovação - VERSÃO CORRIGIDA"""
     if not mp_sdk or not preference_client:
         return {"success": False, "error": "SDK Mercado Pago não disponível"}
@@ -224,6 +223,7 @@ def create_checkout_service(plan, cycle, customer_email=None, user_id=None, user
                 "pending": f"{base_url}/payment/pending", 
                 "failure": f"{base_url}/payment/failure"
             },
+            
             "external_reference": external_reference,
             "notification_url": f"{base_url}/api/mercadopago/webhook",
             "auto_return": "approved",
@@ -237,7 +237,9 @@ def create_checkout_service(plan, cycle, customer_email=None, user_id=None, user
                 "installments": 12,
                 "default_installments": 1
             }
+            
         }
+        
         
         # 🔥 CORREÇÃO: USAR DADOS REAIS DO USUÁRIO
         if payer_email and payer_email != 'cliente@geminii.com.br':
