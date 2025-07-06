@@ -196,7 +196,7 @@
       transform: translateX(100%);
     }
 
-    /* Coupon styling - CORRIGIDO */
+    /* Coupon styling */
     .coupon-input {
       background: rgba(255, 255, 255, 0.1);
       border: 1px solid rgba(255, 255, 255, 0.2);
@@ -211,15 +211,15 @@
     }
 
     .coupon-success {
-      background: rgba(16, 185, 129, 0.1) !important;
-      border-color: rgba(16, 185, 129, 0.5) !important;
-      color: #10b981 !important;
+      background: rgba(16, 185, 129, 0.1);
+      border-color: rgba(16, 185, 129, 0.5);
+      color: #10b981;
     }
 
     .coupon-error {
-      background: rgba(239, 68, 68, 0.1) !important;
-      border-color: rgba(239, 68, 68, 0.5) !important;
-      color: #ef4444 !important;
+      background: rgba(239, 68, 68, 0.1);
+      border-color: rgba(239, 68, 68, 0.5);
+      color: #ef4444;
     }
 
     .discount-badge {
@@ -724,7 +724,7 @@
 
     // ===== INICIALIZAÇÃO =====
     document.addEventListener('DOMContentLoaded', function() {
-      console.log('🚀 Geminii Planos - VERSÃO CORRIGIDA carregada!');
+      console.log('🚀 Geminii Planos - Versão Integrada carregada!');
       
       // Inicializar componentes
       initializeMercadoPago();
@@ -900,46 +900,30 @@
       });
     }
 
-    // ===== ATUALIZAÇÃO DE PREÇOS - CORRIGIDA =====
+    // ===== ATUALIZAÇÃO DE PREÇOS =====
     function updatePlanPricing(planName) {
       const plan = plansData.find(p => p.name === planName);
-      if (!plan) {
-        console.warn(`❌ Plano ${planName} não encontrado!`);
-        return;
-      }
-
-      console.log(`🔄 Atualizando preços para: ${planName}`);
+      if (!plan) return;
 
       const originalPrice = isAnnual ? plan.price_annual : plan.price_monthly;
       let finalPrice = originalPrice;
       let discountAmount = 0;
       let showDiscount = false;
 
-      // 🔥 CORREÇÃO PRINCIPAL: Aplicar desconto se houver cupom válido
+      // Aplicar desconto se houver cupom válido
       if (appliedCoupon && discountData) {
-        console.log(`🎫 Aplicando cupom ${appliedCoupon} para ${planName}`);
-        console.log(`📊 Dados do desconto:`, discountData);
-        
         const isApplicable = !discountData.applicable_plans || 
                            discountData.applicable_plans.length === 0 || 
                            discountData.applicable_plans.includes(planName);
 
-        console.log(`🔍 Cupom aplicável ao plano ${planName}:`, isApplicable);
-
         if (isApplicable) {
-          // 🔥 CONVERSÃO CORRETA DO DECIMAL
-          const discountPercent = parseFloat(discountData.discount_percent);
-          discountAmount = (originalPrice * discountPercent) / 100;
+          discountAmount = (originalPrice * discountData.discount_percent) / 100;
           finalPrice = originalPrice - discountAmount;
           showDiscount = true;
-          
-          console.log(`💰 Cálculo: ${originalPrice} - ${discountAmount} = ${finalPrice}`);
         }
-      } else {
-        console.log(`ℹ️ Nenhum cupom aplicado para ${planName}`);
       }
 
-      // 🔥 ATUALIZAR ELEMENTOS DO DOM
+      // Atualizar elementos do DOM
       const priceElement = document.getElementById(`price-${planName}`);
       const periodElement = document.getElementById(`period-${planName}`);
       const originalPriceElement = document.getElementById(`original-price-${planName}`);
@@ -949,70 +933,52 @@
       const discountBadge = document.getElementById(`discount-badge-${planName}`);
       const discountText = document.getElementById(`discount-text-${planName}`);
 
-      // Preço principal
       if (priceElement) {
         priceElement.textContent = `R$ ${Math.round(finalPrice)}`;
-        console.log(`✅ Preço atualizado: R$ ${Math.round(finalPrice)}`);
-      } else {
-        console.warn(`❌ Elemento #price-${planName} não encontrado!`);
       }
 
-      // Período
       if (periodElement) {
         periodElement.textContent = isAnnual ? 'por mês (anual)' : 'por mês';
       }
 
-      // 🔥 MOSTRAR/ESCONDER ELEMENTOS DE DESCONTO
+      // Mostrar/esconder elementos de desconto
       if (showDiscount) {
-        console.log(`✅ Mostrando desconto para ${planName}`);
-        
-        // Preço original riscado
         if (originalPriceElement && originalAmountElement) {
           originalAmountElement.textContent = originalPrice;
           originalPriceElement.classList.remove('hidden');
         }
 
-        // Economia
         if (savingsElement && savingsAmountElement) {
           savingsAmountElement.textContent = Math.round(discountAmount);
           savingsElement.classList.remove('hidden');
         }
 
-        // Badge de desconto
         if (discountBadge && discountText) {
-          const discountPercent = parseFloat(discountData.discount_percent);
-          discountText.textContent = `${Math.round(discountPercent)}% OFF`;
+          discountText.textContent = `${Math.round(discountData.discount_percent)}% OFF`;
           discountBadge.classList.remove('hidden');
         }
       } else {
-        // Esconder elementos de desconto
         if (originalPriceElement) originalPriceElement.classList.add('hidden');
         if (savingsElement) savingsElement.classList.add('hidden');
         if (discountBadge) discountBadge.classList.add('hidden');
       }
 
-      // 🔥 ATUALIZAR BOTÃO
+      // Atualizar botão
       const button = document.getElementById(`btn-${planName}`);
       if (button) {
         const cycle = isAnnual ? 'Anual' : 'Mensal';
-        const priceText = showDiscount ? 
-          `R$ ${Math.round(finalPrice)} (${Math.round(parseFloat(discountData.discount_percent))}% OFF)` : 
-          `R$ ${Math.round(finalPrice)}`;
-        button.textContent = `Escolher ${plan.display_name} ${cycle} - ${priceText}`;
+        button.textContent = `Escolher ${plan.display_name} ${cycle} - R$ ${Math.round(finalPrice)}`;
       }
-
-      console.log(`✅ Atualização completa para ${planName}`);
     }
 
     function updatePrices() {
       isAnnual = document.getElementById('annual-toggle').checked;
-      console.log(`🔄 Mudando para ciclo: ${isAnnual ? 'anual' : 'mensal'}`);
       updatePlansInterface();
     }
 
-    // ===== SISTEMA DE CUPOM - CORRIGIDO =====
+    // ===== SISTEMA DE CUPOM =====
     async function applyCoupon() {
-      const couponCode = document.getElementById('coupon-input').value.trim().toUpperCase();
+      const couponCode = document.getElementById('coupon-input').value.trim().toUpperCase(); // ✅ CORRIGIDO
       
       if (!couponCode) {
         showCouponFeedback('Digite um código de cupom', 'error');
@@ -1020,15 +986,13 @@
       }
 
       try {
-        console.log('🎫 INICIANDO VALIDAÇÃO DO CUPOM:', couponCode);
+        console.log('🎫 Validando cupom:', couponCode); // ✅ ADICIONAR LOG
         
         const applyCouponBtn = document.getElementById('apply-coupon-btn');
         applyCouponBtn.disabled = true;
         applyCouponBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Validando...';
 
         const userId = currentUser ? currentUser.id : 1;
-
-        console.log('📤 Enviando dados:', { code: couponCode, plan_name: 'pro', user_id: userId });
 
         const response = await fetch(`${API_BASE}/validate-coupon`, {
           method: 'POST',
@@ -1043,74 +1007,32 @@
         });
 
         const result = await response.json();
-        console.log('📥 RESPOSTA DO SERVIDOR:', result);
+        console.log('📋 Resultado cupom:', result); // ✅ ADICIONAR LOG
 
         if (result.success) {
-          // 🔥 APLICAR CUPOM COM SUCESSO
           appliedCoupon = couponCode;
           discountData = result.data;
           
-          console.log('✅ CUPOM APLICADO COM SUCESSO!');
-          console.log('💾 appliedCoupon =', appliedCoupon);
-          console.log('💾 discountData =', discountData);
+          showCouponFeedback(`Cupom aplicado! ${result.data.discount_percent}% de desconto`, 'success');
+          document.getElementById('coupon-input').classList.add('coupon-success');
+          document.getElementById('coupon-input').classList.remove('coupon-error');
           
-          showCouponFeedback(`✅ Cupom aplicado! ${Math.round(parseFloat(result.data.discount_percent))}% de desconto`, 'success');
-          
-          const couponInput = document.getElementById('coupon-input');
-          couponInput.classList.add('coupon-success');
-          couponInput.classList.remove('coupon-error');
-          
-          // 🔥 ATUALIZAR INTERFACE
-          console.log('🔄 Atualizando interface...');
           updatePlansInterface();
-          console.log('✅ Interface atualizada!');
 
         } else {
-          console.log('❌ CUPOM INVÁLIDO:', result.error);
           showCouponFeedback(result.error || 'Cupom inválido', 'error');
-          
-          const couponInput = document.getElementById('coupon-input');
-          couponInput.classList.add('coupon-error');
-          couponInput.classList.remove('coupon-success');
-          
-          // Limpar dados
-          appliedCoupon = null;
-          discountData = null;
+          document.getElementById('coupon-input').classList.add('coupon-error');
+          document.getElementById('coupon-input').classList.remove('coupon-success');
         }
 
       } catch (error) {
-        console.error('❌ ERRO CRÍTICO:', error);
+        console.error('❌ Erro cupom:', error); // ✅ ADICIONAR LOG
         showCouponFeedback('Erro ao validar cupom. Tente novamente.', 'error');
-        
-        // Limpar dados
-        appliedCoupon = null;
-        discountData = null;
       } finally {
         const applyCouponBtn = document.getElementById('apply-coupon-btn');
         applyCouponBtn.disabled = false;
         applyCouponBtn.innerHTML = '<i class="fas fa-check mr-1"></i> Aplicar';
       }
-    }
-
-    // 🔥 FUNÇÃO DE FEEDBACK CORRIGIDA
-    function showCouponFeedback(message, type) {
-      const feedback = document.getElementById('coupon-feedback');
-      
-      feedback.textContent = message;
-      feedback.classList.remove('hidden');
-      
-      // Remover classes antigas
-      feedback.className = 'mt-2 text-xs';
-      
-      if (type === 'success') {
-        feedback.classList.add('text-green-400');
-      } else if (type === 'error') {
-        feedback.classList.add('text-red-400');
-      } else {
-        feedback.classList.add('text-yellow-400');
-      }
-      
-      console.log(`💬 Feedback exibido: ${message} (${type})`);
     }
 
     // ===== CHECKOUT =====
@@ -1144,30 +1066,20 @@
           checkoutData.user_name = currentUser.name;
         }
         
-        // 🔥 ADICIONAR DADOS DO CUPOM SE APLICADO
+        // Adicionar dados do cupom se aplicado
         if (appliedCoupon && discountData) {
-          console.log('🎫 ADICIONANDO CUPOM AO CHECKOUT:', appliedCoupon);
-          
           const isApplicable = !discountData.applicable_plans || 
                              discountData.applicable_plans.length === 0 || 
                              discountData.applicable_plans.includes(planName);
           
           if (isApplicable) {
-            const discountPercent = parseFloat(discountData.discount_percent);
-            const discountAmount = (originalPrice * discountPercent) / 100;
+            const discountAmount = (originalPrice * discountData.discount_percent) / 100;
             finalPrice = originalPrice - discountAmount;
             
             checkoutData.coupon_code = appliedCoupon;
             checkoutData.discounted_price = finalPrice;
-            
-            console.log('💰 CHECKOUT COM DESCONTO:');
-            console.log(`   - Preço original: R$ ${originalPrice}`);
-            console.log(`   - Desconto: ${discountPercent}%`);
-            console.log(`   - Preço final: R$ ${finalPrice}`);
           }
         }
-        
-        console.log('📤 DADOS DO CHECKOUT:', checkoutData);
         
         // Criar checkout no backend
         const response = await fetch(`${API_BASE}/mercadopago/checkout/create`, {
@@ -1179,7 +1091,6 @@
         });
         
         const result = await response.json();
-        console.log('📥 RESPOSTA DO CHECKOUT:', result);
         
         if (result.success) {
           // Salvar dados localmente para referência
@@ -1201,8 +1112,6 @@
           
           const redirectUrl = isProduction ? result.data.checkout_url : result.data.sandbox_url;
           
-          console.log('🔗 REDIRECIONANDO PARA:', redirectUrl);
-          
           // Redirecionar
           setTimeout(() => {
             window.location.href = redirectUrl;
@@ -1214,7 +1123,7 @@
         }
         
       } catch (error) {
-        console.error('❌ Erro no checkout:', error);
+        console.error('Erro no checkout:', error);
         showMessage('Erro de conexão. Verifique sua internet e tente novamente.', 'error');
         showLoading(false);
       }

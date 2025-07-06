@@ -189,7 +189,7 @@ def create_checkout_service(plan, cycle, customer_email, user_id=None, user_emai
         ## descomentar par ao deploy
         base_url = "https://app.geminii.com.br" if os.environ.get('DATABASE_URL') else "http://localhost:5000"
         
-        # Usar temporariamente para testes:
+        # testes locais
         #base_url = "https://geminii-tech.up.railway.app"
         
         item_title = f"Geminii {plan_data['name']} - {cycle_display}"
