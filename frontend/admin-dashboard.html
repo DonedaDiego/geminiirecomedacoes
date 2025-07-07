@@ -765,6 +765,16 @@
               </form>
             </div>
 
+              <!-- Após o botão "Adicionar Ativo" -->
+              <div id="editControls" style="display: none;" class="mt-2">
+                <button type="button" onclick="cancelEdit()" 
+                        class="w-full bg-gray-600 hover:bg-gray-700 py-2 px-4 rounded-lg text-sm font-medium">
+                  <i class="fas fa-times mr-1"></i>
+                  Cancelar Edição
+                </button>
+              </div>
+
+
             <!-- Add Recommendation Card -->
             <div class="admin-card p-6" id="addRecommendationCard" style="display: none;">
               <h3 class="text-lg font-bold text-white mb-4">
@@ -772,7 +782,7 @@
                 Nova Recomendação
               </h3>
               
-              <form id="recommendationForm" class="space-y-4" onsubmit="event.preventDefault(); createRecommendationFree(); return false;">
+              <form id="recommendationForm" class="space-y-4">
                 <div>
                   <label class="block text-sm text-gray-300 mb-1">Ticker</label>
                   <input type="text" id="recTicker" required
@@ -1180,14 +1190,14 @@
     let selectedPortfolio = null;
 
     async function createRecommendationFree() {
-      const formData = {
-        ticker: document.getElementById('recFreeTicker').value.toUpperCase().trim(),
-        action: document.getElementById('recFreeAction').value,
-        entry_price: parseFloat(document.getElementById('recFreeEntryPrice').value),
-        stop_loss: parseFloat(document.getElementById('recFreeStopLoss').value),
-        target_price: parseFloat(document.getElementById('recFreeTargetPrice').value),
-        confidence: parseFloat(document.getElementById('recFreeConfidence').value) || 85
-      };
+        const formData = {
+          ticker: document.getElementById('recFreeTicker').value.toUpperCase().trim(),
+          action: document.getElementById('recFreeAction').value,
+          entry_price: parseFloat(document.getElementById('recFreeEntryPrice').value),
+          stop_loss: parseFloat(document.getElementById('recFreeStopLoss').value),
+          target_price: parseFloat(document.getElementById('recFreeTargetPrice').value),
+          confidence: parseFloat(document.getElementById('recFreeConfidence').value) || 85
+        };
       
       // Validações
       if (!formData.ticker || !formData.action || !formData.entry_price || !formData.stop_loss || !formData.target_price) {
@@ -1739,11 +1749,29 @@
                 <div class="font-semibold text-geminii text-lg">${asset.weight}%</div>
                 <div class="text-xs text-gray-400">peso</div>
               </div>
-              <button onclick="removeAsset(${asset.id})" class="text-red-400 hover:text-red-300 p-2" title="Remover ativo">
-                <i class="fas fa-trash text-sm"></i>
-              </button>
+              
+              <!-- Botões de Ação -->
+              <div class="flex items-center gap-2">
+                <!-- ✅ NOVO: Botão de rebalanceamento individual -->
+                <button onclick="showSingleAssetRebalance('${asset.ticker}', ${currentPrice}, ${entryPrice}, ${targetPrice})" 
+                        class="text-yellow-400 hover:text-yellow-300 p-2 rounded transition-colors" 
+                        title="Rebalancear este ativo">
+                  <i class="fas fa-balance-scale text-sm"></i>
+                </button>
+                
+                <button onclick="editAsset(${asset.id})" 
+                        class="text-blue-400 hover:text-blue-300 p-2 rounded transition-colors" 
+                        title="Editar ativo">
+                  <i class="fas fa-edit text-sm"></i>
+                </button>
+                <button onclick="removeAsset(${asset.id})" 
+                        class="text-red-400 hover:text-red-300 p-2 rounded transition-colors" 
+                        title="Remover ativo">
+                  <i class="fas fa-trash text-sm"></i>
+                </button>
+              </div>
             </div>
-
+    
             <!-- Grid de Preços -->
             <div class="grid grid-cols-3 gap-3 text-sm mb-3">
               <div class="text-center">
@@ -1772,7 +1800,7 @@
                 ` : ''}
               </div>
             </div>
-
+    
             <!-- Performance Total -->
             ${entryPrice && targetPrice ? `
               <div class="bg-gray-800 bg-opacity-30 rounded-lg p-2">
@@ -1790,6 +1818,53 @@
       
       document.getElementById('totalAssets').textContent = assets.length;
       document.getElementById('totalWeight').textContent = totalWeight.toFixed(1) + '%';
+    }
+
+    function showSingleAssetRebalance(ticker, precoAtual, precoEntrada, precoAlvo) {
+      const performance = precoAtual && precoEntrada ? ((precoAtual - precoEntrada) / precoEntrada * 100) : 0;
+      
+      const options = `
+        <div class="space-y-3">
+          <div class="text-center mb-4">
+            <h4 class="text-xl font-bold text-white">${ticker}</h4>
+            <p class="text-gray-400">Performance: <span class="${performance >= 0 ? 'text-green-400' : 'text-red-400'}">${performance >= 0 ? '+' : ''}${performance.toFixed(2)}%</span></p>
+          </div>
+          
+          <button onclick="rebalanceAsset('${ticker}', 'GANHO', ${precoAtual}, ${precoEntrada}); closeQuickRebalance();" 
+                  class="w-full bg-green-600 hover:bg-green-700 py-3 px-4 rounded-lg font-medium transition-colors">
+            <i class="fas fa-arrow-up mr-2"></i>Realizar Ganho
+            <div class="text-sm opacity-75">Vender para capturar lucro</div>
+          </button>
+          
+          <button onclick="rebalanceAsset('${ticker}', 'PERDA', ${precoAtual}, ${precoEntrada}); closeQuickRebalance();" 
+                  class="w-full bg-red-600 hover:bg-red-700 py-3 px-4 rounded-lg font-medium transition-colors">
+            <i class="fas fa-arrow-down mr-2"></i>Cortar Perda
+            <div class="text-sm opacity-75">Vender para limitar prejuízo</div>
+          </button>
+          
+          <button onclick="closeQuickRebalance()" 
+                  class="w-full bg-gray-600 hover:bg-gray-700 py-2 px-4 rounded-lg font-medium transition-colors">
+            Cancelar
+          </button>
+        </div>
+      `;
+    
+      const modalHTML = `
+        <div id="quickRebalanceModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div class="bg-gray-900 rounded-xl max-w-md w-full mx-4 p-6 border border-gray-700">
+            <h3 class="text-lg font-bold text-white mb-4 text-center">Rebalancear ${ticker}</h3>
+            ${options}
+          </div>
+        </div>
+      `;
+    
+      document.body.insertAdjacentHTML('beforeend', modalHTML);
+    }
+    function closeQuickRebalance() {
+      const modal = document.getElementById('quickRebalanceModal');
+      if (modal) {
+        modal.remove();
+      }
     }
 
     // ✅ NOVA FUNÇÃO: Limpar todos os ativos da carteira
@@ -1835,100 +1910,463 @@
         return;
       }
       
-      if (!confirm(`Gerar recomendações de VENDA para todos os ativos atuais da carteira ${selectedPortfolio.toUpperCase()}?\n\nIsso criará automaticamente recomendações de SELL para rebalanceamento.`)) {
-        return;
-      }
-      
       try {
-        const response = await fetch('/api/admin/portfolio/generate-rebalance', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${adminToken}`
-          },
-          body: JSON.stringify({ 
-            portfolio: selectedPortfolio,
-            reason: 'Rebalanceamento automático - Ajuste de portfólio conforme nova estratégia'
-          })
+        // Buscar ativos atuais da carteira
+        const response = await fetch(`/api/admin/portfolio/${selectedPortfolio}/assets`, {
+          headers: { 'Authorization': `Bearer ${adminToken}` }
         });
         
         const result = await response.json();
         
-        if (result.success) {
-          alert(`✅ ${result.recommendations_created} recomendações de rebalanceamento criadas!`);
-          loadPortfolioRecommendations();
+        if (result.success && result.assets && result.assets.length > 0) {
+          showRebalanceModal(result.assets);
         } else {
-          alert('❌ ' + result.error);
+          alert('❌ Nenhum ativo encontrado nesta carteira para rebalancear');
         }
         
       } catch (error) {
-        console.error('Error generating rebalance:', error);
+        console.error('Erro ao buscar ativos:', error);
         alert('❌ Erro de conexão');
       }
     }
 
+    function showRebalanceModal(assets) {
+      const portfolioNames = {
+        'smart_bdr': 'Smart BDR',
+        'growth': 'Growth',
+        'smallcaps': 'Small Caps',
+        'bluechips': 'Blue Chips'
+      };
+      
+      const modalHTML = `
+        <div id="rebalanceModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onclick="closeRebalanceModal()">
+          <div class="bg-gray-900 rounded-xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto border border-gray-700" onclick="event.stopPropagation()">
+            <div class="p-6">
+              <!-- Header -->
+              <div class="flex items-center justify-between mb-6">
+                <div>
+                  <h3 class="text-2xl font-bold text-white">Rebalanceamento: ${portfolioNames[selectedPortfolio]}</h3>
+                  <p class="text-gray-400">Selecione os ativos que deseja rebalancear</p>
+                </div>
+                <button onclick="closeRebalanceModal()" class="text-gray-400 hover:text-white transition-colors">
+                  <i class="fas fa-times text-xl"></i>
+                </button>
+              </div>
+              
+              <!-- Lista de Ativos -->
+              <div class="space-y-4">
+                ${assets.map(asset => {
+                  const entryPrice = asset.entry_price || 0;
+                  const currentPrice = asset.current_price || 0;
+                  const targetPrice = asset.target_price || 0;
+                  const performance = currentPrice && entryPrice ? ((currentPrice - entryPrice) / entryPrice * 100) : 0;
+                  const potential = targetPrice && currentPrice ? ((targetPrice - currentPrice) / currentPrice * 100) : 0;
+                  
+                  return `
+                    <div class="bg-gray-800 bg-opacity-50 rounded-lg p-4 border border-gray-700">
+                      <div class="flex items-center justify-between">
+                        <!-- Info do Ativo -->
+                        <div class="flex-1">
+                          <div class="flex items-center gap-4 mb-3">
+                            <div>
+                              <h4 class="text-xl font-bold text-white">${asset.ticker}</h4>
+                              <p class="text-sm text-gray-400">${asset.sector} • Peso: ${asset.weight}%</p>
+                            </div>
+                            
+                            <!-- Performance Badge -->
+                            <div class="px-3 py-1 rounded-lg ${performance >= 0 ? 'bg-green-600 bg-opacity-20 border border-green-600' : 'bg-red-600 bg-opacity-20 border border-red-600'}">
+                              <span class="text-sm font-medium ${performance >= 0 ? 'text-green-400' : 'text-red-400'}">
+                                ${performance >= 0 ? '+' : ''}${performance.toFixed(2)}%
+                              </span>
+                            </div>
+                          </div>
+                          
+                          <!-- Grid de Preços -->
+                          <div class="grid grid-cols-4 gap-4 text-sm">
+                            <div class="text-center">
+                              <div class="text-xs text-gray-400 mb-1">Entrada</div>
+                              <div class="font-medium text-blue-400">R$ ${entryPrice.toFixed(2)}</div>
+                            </div>
+                            <div class="text-center">
+                              <div class="text-xs text-gray-400 mb-1">Atual</div>
+                              <div class="font-medium text-white">R$ ${currentPrice.toFixed(2)}</div>
+                            </div>
+                            <div class="text-center">
+                              <div class="text-xs text-gray-400 mb-1">Alvo</div>
+                              <div class="font-medium text-green-400">R$ ${targetPrice.toFixed(2)}</div>
+                            </div>
+                            <div class="text-center">
+                              <div class="text-xs text-gray-400 mb-1">Potencial</div>
+                              <div class="font-medium ${potential >= 0 ? 'text-green-400' : 'text-red-400'}">
+                                ${potential >= 0 ? '+' : ''}${potential.toFixed(1)}%
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <!-- Botões de Ação -->
+                        <div class="flex flex-col gap-2 ml-6">
+                          <button onclick="rebalanceAsset('${asset.ticker}', 'GANHO', ${currentPrice}, ${entryPrice})" 
+                                  class="bg-green-600 hover:bg-green-700 px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
+                            <i class="fas fa-arrow-up"></i>
+                            Realizar Ganho
+                          </button>
+                          <button onclick="rebalanceAsset('${asset.ticker}', 'PERDA', ${currentPrice}, ${entryPrice})" 
+                                  class="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
+                            <i class="fas fa-arrow-down"></i>
+                            Cortar Perda
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  `;
+                }).join('')}
+              </div>
+              
+              <!-- Footer -->
+              <div class="mt-6 flex justify-end">
+                <button onclick="closeRebalanceModal()" 
+                        class="bg-gray-600 hover:bg-gray-700 px-6 py-2 rounded-lg font-medium transition-colors">
+                  Fechar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      document.body.insertAdjacentHTML('beforeend', modalHTML);
+    }
+
+    
+    function rebalanceAsset(ticker, tipo, precoAtual, precoReferencia) {
+      // Fechar modal
+      closeRebalanceModal();
+      closeQuickRebalance();
+      
+      // ✅ PREENCHER FORMULÁRIO DE PORTFOLIO (campos rec*)
+      document.getElementById('recTicker').value = ticker;
+      document.getElementById('recAction').value = 'SELL';
+      document.getElementById('recEntryPrice').value = precoAtual.toFixed(2);
+      document.getElementById('recMarketPrice').value = precoAtual.toFixed(2);
+      document.getElementById('recPriceTarget').value = precoAtual.toFixed(2);
+      document.getElementById('recWeight').value = '0';
+      
+      const today = new Date().toISOString().split('T')[0];
+      document.getElementById('recDate').value = today;
+      
+      let justificativa = '';
+      if (tipo === 'GANHO') {
+        const ganhoPercent = ((precoAtual - precoReferencia) / precoReferencia * 100).toFixed(2);
+        justificativa = `Rebalanceamento por realização de ganho de ${ganhoPercent}% no ativo ${ticker}. Posição atingiu objetivo de rentabilidade conforme estratégia da carteira ${selectedPortfolio.toUpperCase()}. Recomenda-se venda total para captura de lucros e realocação em outras oportunidades.`;
+      } else {
+        const perdaPercent = ((precoAtual - precoReferencia) / precoReferencia * 100).toFixed(2);
+        justificativa = `Rebalanceamento por corte de perda de ${perdaPercent}% no ativo ${ticker}. Posição não performou conforme esperado na estratégia da carteira ${selectedPortfolio.toUpperCase()}. Recomenda-se venda para preservação de capital e realocação.`;
+      }
+      
+      document.getElementById('recReason').value = justificativa;
+      
+      // Scroll para o formulário
+      document.getElementById('addRecommendationCard').scrollIntoView({ behavior: 'smooth' });
+      
+      // Destacar formulário
+      const card = document.getElementById('addRecommendationCard');
+      card.style.border = '2px solid #ba39af';
+      card.style.boxShadow = '0 0 20px rgba(186, 57, 175, 0.3)';
+      
+      setTimeout(() => {
+        card.style.border = '';
+        card.style.boxShadow = '';
+      }, 3000);
+      
+      alert(`✅ Formulário preenchido para rebalanceamento por ${tipo.toLowerCase()} do ${ticker}!\n\nTodos os campos obrigatórios foram preenchidos. Clique em "Criar Recomendação" para registrar.`);
+    }
+
+    function closeRebalanceModal() {
+      const modal = document.getElementById('rebalanceModal');
+      if (modal) {
+        modal.remove();
+      }
+    }
+
     // ✅ EVENT LISTENER CORRIGIDO - SUBSTITUA O EXISTENTE
-    document.addEventListener('DOMContentLoaded', function() {
-      const assetForm = document.getElementById('assetForm');
-      if (assetForm) {
-        assetForm.addEventListener('submit', async function(e) {
-          e.preventDefault();
-          console.log('📝 Formulário enviado');
+    // ===== SUBSTITUIR TODO O document.addEventListener('DOMContentLoaded') EXISTENTE =====
+
+  document.addEventListener('DOMContentLoaded', function() {
+    console.log('🚀 Inicializando event listeners dos formulários...');
+    
+    // ===== 1. EVENT LISTENER DO ASSET FORM (CORRIGIDO) =====
+    const assetForm = document.getElementById('assetForm');
+    if (assetForm) {
+      assetForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        console.log('📝 Formulário de ativo enviado');
+        
+        if (!selectedPortfolio) {
+          alert('❌ Selecione uma carteira primeiro');
+          return;
+        }
+        
+        // Verificar se está em modo edição
+        const isEditing = this.dataset.editingId;
+        const submitBtn = this.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+        
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = isEditing ? 
+          '<i class="fas fa-spinner fa-spin mr-1"></i>Atualizando...' : 
+          '<i class="fas fa-spinner fa-spin mr-1"></i>Enviando...';
+        
+        // ✅ CORRIGIDO: Usar campos corretos do ASSET FORM (asset*, não rec*)
+        const formData = {
+          portfolio: selectedPortfolio,
+          ticker: document.getElementById('assetTicker').value.toUpperCase().trim(),
+          weight: parseFloat(document.getElementById('assetWeight').value),
+          sector: document.getElementById('assetSector').value.trim(),
+          entry_price: parseFloat(document.getElementById('assetEntryPrice').value),
+          current_price: document.getElementById('assetCurrentPrice').value ? 
+                        parseFloat(document.getElementById('assetCurrentPrice').value) : null,
+          target_price: parseFloat(document.getElementById('assetTargetPrice').value),
+          entry_date: document.getElementById('assetEntryDate').value
+        };
+        
+        // Se está editando, adicionar ID
+        if (isEditing) {
+          formData.id = parseInt(isEditing);
+        }
+        
+        try {
+          const url = isEditing ? '/api/admin/portfolio/update-asset' : '/api/admin/portfolio/add-asset';
+          const method = isEditing ? 'PUT' : 'POST';
           
-          if (!selectedPortfolio) {
-            alert('❌ Selecione uma carteira primeiro');
-            return;
-          }
+          const response = await fetch(url, {
+            method: method,
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${adminToken}`
+            },
+            body: JSON.stringify(formData)
+          });
           
-          // Loading no botão
-          const submitBtn = this.querySelector('button[type="submit"]');
-          const originalText = submitBtn.innerHTML;
-          submitBtn.disabled = true;
-          submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>Enviando...';
+          const result = await response.json();
           
-          const formData = {
-            portfolio: selectedPortfolio,
-            ticker: document.getElementById('assetTicker').value.toUpperCase().trim(),
-            weight: parseFloat(document.getElementById('assetWeight').value),
-            sector: document.getElementById('assetSector').value.trim(),
-            entry_price: parseFloat(document.getElementById('assetEntryPrice').value),
-            current_price: document.getElementById('assetCurrentPrice').value ? 
-                          parseFloat(document.getElementById('assetCurrentPrice').value) : null,
-            target_price: parseFloat(document.getElementById('assetTargetPrice').value),
-            entry_date: document.getElementById('assetEntryDate').value
-          };
-          
-          try {
-            const response = await fetch('/api/admin/portfolio/add-asset', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${adminToken}`
-              },
-              body: JSON.stringify(formData)
-            });
+          if (result.success) {
+            alert(isEditing ? '✅ Ativo atualizado com sucesso!' : '✅ Ativo adicionado com sucesso!');
             
-            const result = await response.json();
-            
-            if (result.success) {
-              alert('✅ Ativo adicionado com sucesso!');
+            if (isEditing) {
+              cancelEdit(); // Limpar modo edição
+            } else {
               this.reset();
               document.getElementById('assetEntryDate').value = new Date().toISOString().split('T')[0];
-              loadPortfolioAssets();
-            } else {
-              alert('❌ ' + result.error);
             }
             
-          } catch (error) {
-            console.error('Erro:', error);
-            alert('❌ Erro de conexão');
-          } finally {
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = originalText;
+            loadPortfolioAssets();
+          } else {
+            alert('❌ ' + result.error);
           }
-        });
+          
+        } catch (error) {
+          console.error('Erro ao processar ativo:', error);
+          alert('❌ Erro de conexão');
+        } finally {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = originalText;
+        }
+      });
+      
+      console.log('✅ Event listener do assetForm configurado');
+    }
+    
+    // ===== 2. EVENT LISTENER DO RECOMMENDATION FORM (NOVO) =====
+    const recommendationForm = document.getElementById('recommendationForm');
+    if (recommendationForm) {
+      recommendationForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        console.log('📊 Formulário de recomendação enviado');
+        
+        if (!selectedPortfolio) {
+          alert('❌ Selecione uma carteira primeiro');
+          return;
+        }
+        
+        const submitBtn = this.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+        
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>Criando...';
+        
+        try {
+          await createPortfolioRecommendation();
+        } catch (error) {
+          console.error('Erro ao criar recomendação:', error);
+          alert('❌ Erro ao criar recomendação');
+        } finally {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = originalText;
+        }
+      });
+      
+      console.log('✅ Event listener do recommendationForm configurado');
+    }
+    
+    // ===== 3. INICIALIZAÇÃO ADICIONAL =====
+    
+    // Definir data de hoje nos formulários
+    const today = new Date().toISOString().split('T')[0];
+    
+    const assetEntryDate = document.getElementById('assetEntryDate');
+    if (assetEntryDate && !assetEntryDate.value) {
+      assetEntryDate.value = today;
+    }
+    
+    const recDate = document.getElementById('recDate');
+    if (recDate && !recDate.value) {
+      recDate.value = today;
+    }
+    
+    console.log('✅ Datas padrão configuradas');
+    
+    // ===== 4. CONFIGURAÇÕES ADICIONAIS DOS FORMULÁRIOS =====
+    
+    // Configurar validação em tempo real para asset form
+    const assetTicker = document.getElementById('assetTicker');
+    if (assetTicker) {
+      assetTicker.addEventListener('input', function() {
+        this.value = this.value.toUpperCase();
+      });
+    }
+    
+    // Configurar validação em tempo real para recommendation form
+    const recTicker = document.getElementById('recTicker');
+    if (recTicker) {
+      recTicker.addEventListener('input', function() {
+        this.value = this.value.toUpperCase();
+      });
+    }
+    
+    // ===== 5. LOGS DE CONFIRMAÇÃO =====
+    console.log('🎯 Event listeners configurados com sucesso:');
+    console.log('   ✅ assetForm - Para adicionar/editar ativos');
+    console.log('   ✅ recommendationForm - Para criar recomendações de portfolio');
+    console.log('   ✅ Validações em tempo real ativadas');
+    console.log('   ✅ Datas padrão definidas');
+  });
+
+  // ===== FUNÇÃO createPortfolioRecommendation (CASO NÃO EXISTA) =====
+  // Se esta função ainda não existir no seu código, adicione ela também:
+
+  async function createPortfolioRecommendation() {
+    const formData = {
+      portfolio: selectedPortfolio,
+      ticker: document.getElementById('recTicker').value.toUpperCase().trim(),
+      action_type: document.getElementById('recAction').value,
+      entry_price: parseFloat(document.getElementById('recEntryPrice').value),
+      market_price: parseFloat(document.getElementById('recMarketPrice').value),
+      target_weight: parseFloat(document.getElementById('recWeight').value),
+      recommendation_date: document.getElementById('recDate').value,
+      price_target: parseFloat(document.getElementById('recPriceTarget').value),
+      reason: document.getElementById('recReason').value.trim()
+    };
+    
+    // ✅ VALIDAÇÃO COMPLETA
+    const requiredFields = [
+      { field: 'portfolio', name: 'Carteira' },
+      { field: 'ticker', name: 'Ticker' },
+      { field: 'action_type', name: 'Ação' },
+      { field: 'entry_price', name: 'Preço de Entrada' },
+      { field: 'recommendation_date', name: 'Data da Recomendação' },
+      { field: 'price_target', name: 'Preço Alvo' }
+    ];
+    
+    for (const { field, name } of requiredFields) {
+      if (!formData[field] || (typeof formData[field] === 'number' && isNaN(formData[field]))) {
+        alert(`❌ Campo obrigatório faltando: ${name}`);
+        return;
       }
-    });
+    }
+    
+    if (!formData.reason || formData.reason.length < 10) {
+      alert('❌ Justificativa deve ter pelo menos 10 caracteres');
+      return;
+    }
+    
+    try {
+      const response = await fetch('/api/admin/portfolio/add-recommendation', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${adminToken}`
+        },
+        body: JSON.stringify(formData)
+      });
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        // ✅ DETECTAR SE É REBALANCEAMENTO
+        const isRebalancing = formData.reason && formData.reason.toLowerCase().includes('rebalanceamento');
+        const messageType = isRebalancing ? 'rebalanceamento' : 'recomendação';
+        
+        alert(`✅ Recomendação de ${messageType} criada com sucesso!\n\nTicker: ${formData.ticker}\nAção: ${formData.action_type}\n\nA recomendação foi registrada no histórico da carteira.`);
+        
+        // Limpar formulário
+        document.getElementById('recommendationForm').reset();
+        
+        // Restaurar data de hoje
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('recDate').value = today;
+        
+        // Recarregar recomendações para mostrar a nova
+        loadPortfolioRecommendations();
+        
+        // ✅ TOAST DE SUCESSO (se a função existir)
+        if (typeof showSuccessToast === 'function') {
+          showSuccessToast(`Recomendação de ${messageType} registrada!`);
+        }
+        
+      } else {
+        alert('❌ Erro ao criar recomendação: ' + result.error);
+      }
+      
+    } catch (error) {
+      console.error('Erro ao criar recomendação:', error);
+      alert('❌ Erro de conexão com o servidor');
+    }
+  }
+
+  // ===== FUNÇÕES AUXILIARES (CASO NÃO EXISTAM) =====
+
+  // Função cancelEdit (caso não exista)
+  if (typeof cancelEdit === 'undefined') {
+    function cancelEdit() {
+      const form = document.getElementById('assetForm');
+      
+      // Limpar modo edição
+      delete form.dataset.editingId;
+      form.reset();
+      
+      // Restaurar botão original
+      const submitBtn = form.querySelector('button[type="submit"]');
+      submitBtn.innerHTML = '<i class="fas fa-plus mr-1"></i>Adicionar Ativo';
+      submitBtn.classList.remove('bg-orange-600', 'hover:bg-orange-700');
+      submitBtn.classList.add('bg-green-600', 'hover:bg-green-700');
+      
+      // Esconder botão cancelar
+      const editControls = document.getElementById('editControls');
+      if (editControls) {
+        editControls.style.display = 'none';
+      }
+      
+      // Definir data de hoje
+      document.getElementById('assetEntryDate').value = new Date().toISOString().split('T')[0];
+    }
+  }
+
+  console.log('📋 DOMContentLoaded completo configurado com:');
+  console.log('   🔧 Asset Form - Campos assetTicker, assetWeight, etc.');
+  console.log('   🔧 Recommendation Form - Campos recTicker, recAction, etc.');
+  console.log('   🔧 Validações e datas automáticas');
+  console.log('   🔧 Logs detalhados para debug');
   
     // ===== FUNÇÕES DE PORTFOLIO ASSETS =====
 
@@ -2038,6 +2476,82 @@
       }
     }
 
+    async function createPortfolioRecommendation() {
+      const formData = {
+        portfolio: selectedPortfolio,
+        ticker: document.getElementById('recTicker').value.toUpperCase().trim(),
+        action_type: document.getElementById('recAction').value,
+        entry_price: parseFloat(document.getElementById('recEntryPrice').value),
+        market_price: parseFloat(document.getElementById('recMarketPrice').value),
+        target_weight: parseFloat(document.getElementById('recWeight').value),
+        recommendation_date: document.getElementById('recDate').value,
+        price_target: parseFloat(document.getElementById('recPriceTarget').value),
+        reason: document.getElementById('recReason').value.trim()
+      };
+      
+      // ✅ VALIDAÇÃO COMPLETA
+      const requiredFields = [
+        { field: 'portfolio', name: 'Carteira' },
+        { field: 'ticker', name: 'Ticker' },
+        { field: 'action_type', name: 'Ação' },
+        { field: 'entry_price', name: 'Preço de Entrada' },
+        { field: 'recommendation_date', name: 'Data da Recomendação' },
+        { field: 'price_target', name: 'Preço Alvo' }
+      ];
+      
+      for (const { field, name } of requiredFields) {
+        if (!formData[field] || (typeof formData[field] === 'number' && isNaN(formData[field]))) {
+          alert(`❌ Campo obrigatório faltando: ${name}`);
+          return;
+        }
+      }
+      
+      if (!formData.reason || formData.reason.length < 10) {
+        alert('❌ Justificativa deve ter pelo menos 10 caracteres');
+        return;
+      }
+      
+      try {
+        const response = await fetch('/api/admin/portfolio/add-recommendation', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${adminToken}`
+          },
+          body: JSON.stringify(formData)
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+          // ✅ DETECTAR SE É REBALANCEAMENTO
+          const isRebalancing = formData.reason && formData.reason.toLowerCase().includes('rebalanceamento');
+          const messageType = isRebalancing ? 'rebalanceamento' : 'recomendação';
+          
+          alert(`✅ Recomendação de ${messageType} criada com sucesso!\n\nTicker: ${formData.ticker}\nAção: ${formData.action_type}\n\nA recomendação foi registrada no histórico da carteira.`);
+          
+          // Limpar formulário
+          document.getElementById('recommendationForm').reset();
+          
+          // Restaurar data de hoje
+          const today = new Date().toISOString().split('T')[0];
+          document.getElementById('recDate').value = today;
+          
+          // Recarregar recomendações para mostrar a nova
+          loadPortfolioRecommendations();
+          
+          // ✅ TOAST DE SUCESSO
+          showSuccessToast(`Recomendação de ${messageType} registrada!`);
+          
+        } else {
+          alert('❌ Erro ao criar recomendação: ' + result.error);
+        }
+        
+      } catch (error) {
+        console.error('Erro ao criar recomendação:', error);
+        alert('❌ Erro de conexão com o servidor');
+      }
+    }
 
     // ===== FUNÇÕES DE RECOMENDAÇÕES (ATUALIZADAS) =====
     
@@ -2079,18 +2593,21 @@
         `;
         return;
       }
-
+    
       container.innerHTML = recommendations.map(rec => {
         const entryPrice = rec.entry_price || 0;
         const marketPrice = rec.market_price || rec.current_price || 0;
         const targetPrice = rec.price_target || rec.target_price || 0;
+        
+        // ✅ DETECTAR SE É REBALANCEAMENTO
+        const isRebalancing = rec.reason && rec.reason.toLowerCase().includes('rebalanceamento');
         
         // Calcular potenciais
         const entryToTarget = targetPrice && entryPrice ? ((targetPrice - entryPrice) / entryPrice * 100) : 0;
         const marketToTarget = targetPrice && marketPrice ? ((targetPrice - marketPrice) / marketPrice * 100) : 0;
         
         return `
-          <div class="border border-gray-700 rounded-lg p-4 hover:border-geminii transition-colors">
+          <div class="border ${isRebalancing ? 'border-yellow-600 bg-yellow-600 bg-opacity-10' : 'border-gray-700'} rounded-lg p-4 hover:border-geminii transition-colors">
             <!-- Header Principal -->
             <div class="flex items-center justify-between mb-3">
               <div class="flex items-center space-x-3">
@@ -2101,6 +2618,11 @@
                 <span class="px-2 py-1 rounded text-xs font-medium ${getActionBadgeClass(rec.action_type)}">
                   ${getActionText(rec.action_type)}
                 </span>
+                ${isRebalancing ? `
+                  <span class="px-2 py-1 rounded text-xs font-medium bg-yellow-600 text-yellow-200">
+                    <i class="fas fa-balance-scale mr-1"></i>Rebalanceamento
+                  </span>
+                ` : ''}
               </div>
               <div class="flex items-center space-x-2">
                 <span class="text-xs text-gray-400">${formatDate(rec.recommendation_date)}</span>
@@ -2109,8 +2631,8 @@
                 </button>
               </div>
             </div>
-
-            <!-- Grid de Preços Atualizado -->
+    
+            <!-- Grid de Preços -->
             <div class="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm mb-3">
               <div class="text-center">
                 <div class="text-xs text-gray-400 mb-1">Entrada Rec.</div>
@@ -2129,39 +2651,14 @@
                 <div class="font-medium text-green-400">R$ ${targetPrice.toFixed(2)}</div>
               </div>
               
-              ${rec.target_weight ? `
+              ${rec.target_weight !== undefined ? `
                 <div class="text-center md:col-span-3">
                   <div class="text-xs text-gray-400 mb-1">Peso Alvo</div>
                   <div class="font-medium text-geminii">${rec.target_weight}%</div>
                 </div>
               ` : ''}
             </div>
-
-            <!-- Cálculo de Performance -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-2 mb-3">
-              ${entryToTarget !== 0 ? `
-                <div class="bg-gray-800 bg-opacity-30 rounded-lg p-2">
-                  <div class="flex justify-between items-center">
-                    <span class="text-xs text-gray-400">Potencial (Entrada):</span>
-                    <span class="text-xs font-medium ${entryToTarget >= 0 ? 'text-green-400' : 'text-red-400'}">
-                      ${entryToTarget >= 0 ? '+' : ''}${entryToTarget.toFixed(1)}%
-                    </span>
-                  </div>
-                </div>
-              ` : ''}
-              
-              ${marketToTarget !== 0 ? `
-                <div class="bg-gray-800 bg-opacity-30 rounded-lg p-2">
-                  <div class="flex justify-between items-center">
-                    <span class="text-xs text-gray-400">Potencial (Mercado):</span>
-                    <span class="text-xs font-medium ${marketToTarget >= 0 ? 'text-green-400' : 'text-red-400'}">
-                      ${marketToTarget >= 0 ? '+' : ''}${marketToTarget.toFixed(1)}%
-                    </span>
-                  </div>
-                </div>
-              ` : ''}
-            </div>
-
+    
             <!-- Justificativa -->
             ${rec.reason ? `
               <div class="bg-gray-800 bg-opacity-50 rounded-lg p-3">
@@ -2174,33 +2671,143 @@
       }).join('');
     }
 
+    function showSuccessToast(message) {
+      const toast = document.createElement('div');
+      toast.className = 'fixed top-4 right-4 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg z-50 flex items-center gap-2';
+      toast.innerHTML = `
+        <i class="fas fa-check-circle"></i>
+        <span>${message}</span>
+      `;
+      
+      document.body.appendChild(toast);
+      
+      // Animar entrada
+      toast.style.transform = 'translateX(100%)';
+      toast.style.transition = 'transform 0.3s ease';
+      
+      setTimeout(() => {
+        toast.style.transform = 'translateX(0)';
+      }, 100);
+      
+      // Remover após 4 segundos
+      setTimeout(() => {
+        toast.style.transform = 'translateX(100%)';
+        setTimeout(() => {
+          if (toast.parentNode) {
+            toast.parentNode.removeChild(toast);
+          }
+        }, 300);
+      }, 4000);
+    }
+
     // Remove recommendation - FUNÇÃO HABILITADA
-    async function removeRecommendation(recId) {
-      if (!confirm('Remover esta recomendação?')) return;
+    async function removeAsset(assetId) {
+      if (!confirm('Remover este ativo da carteira?')) return;
       
       try {
-        const response = await fetch('/api/admin/portfolio/delete-recommendation', {
+        const response = await fetch('/api/admin/portfolio/remove-asset', {
           method: 'DELETE',
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${adminToken}`
           },
-          body: JSON.stringify({ id: recId })
+          body: JSON.stringify({ id: assetId })
         });
         
         const result = await response.json();
         
         if (result.success) {
-          alert('✅ Recomendação removida!');
-          loadPortfolioRecommendations();
+          alert('✅ Ativo removido com sucesso!');
+          loadPortfolioAssets(); // Recarregar lista
         } else {
           alert('❌ ' + result.error);
         }
         
       } catch (error) {
-        console.error('Error removing recommendation:', error);
+        console.error('Error removing asset:', error);
         alert('❌ Erro de conexão');
       }
+    }
+
+    async function editAsset(assetId) {
+      try {
+        // Buscar dados do ativo
+        const response = await fetch(`/api/admin/portfolio/asset/${assetId}`, {
+          headers: { 'Authorization': `Bearer ${adminToken}` }
+        });
+        
+        if (!response.ok) {
+          // Se não tem endpoint específico, pegar da lista atual
+          const assetsResponse = await fetch(`/api/admin/portfolio/${selectedPortfolio}/assets`, {
+            headers: { 'Authorization': `Bearer ${adminToken}` }
+          });
+          
+          const assetsResult = await assetsResponse.json();
+          if (assetsResult.success) {
+            const asset = assetsResult.assets.find(a => a.id === assetId);
+            if (asset) {
+              fillEditForm(asset);
+            } else {
+              alert('❌ Ativo não encontrado');
+            }
+          }
+          return;
+        }
+        
+        const result = await response.json();
+        if (result.success) {
+          fillEditForm(result.asset);
+        } else {
+          alert('❌ ' + result.error);
+        }
+        
+      } catch (error) {
+        console.error('Error loading asset for edit:', error);
+        alert('❌ Erro ao carregar dados do ativo');
+      }
+    }
+
+    function fillEditForm(asset) {
+      // Preencher formulário com dados do ativo
+      document.getElementById('assetTicker').value = asset.ticker;
+      document.getElementById('assetWeight').value = asset.weight;
+      document.getElementById('assetSector').value = asset.sector;
+      document.getElementById('assetEntryPrice').value = asset.entry_price;
+      document.getElementById('assetCurrentPrice').value = asset.current_price || '';
+      document.getElementById('assetTargetPrice').value = asset.target_price;
+      document.getElementById('assetEntryDate').value = asset.entry_date || '';
+      
+      // Marcar como modo edição
+      const form = document.getElementById('assetForm');
+      form.dataset.editingId = asset.id;
+      
+      // Mudar texto do botão
+      const submitBtn = form.querySelector('button[type="submit"]');
+      submitBtn.innerHTML = '<i class="fas fa-save mr-1"></i>Atualizar Ativo';
+      submitBtn.classList.remove('bg-green-600', 'hover:bg-green-700');
+      submitBtn.classList.add('bg-orange-600', 'hover:bg-orange-700');
+      
+      // Scroll para o formulário
+      document.getElementById('addAssetCard').scrollIntoView({ behavior: 'smooth' });
+      
+      alert(`✅ Dados do ativo ${asset.ticker} carregados para edição!`);
+    }
+
+    function cancelEdit() {
+      const form = document.getElementById('assetForm');
+      
+      // Limpar modo edição
+      delete form.dataset.editingId;
+      form.reset();
+      
+      // Restaurar botão original
+      const submitBtn = form.querySelector('button[type="submit"]');
+      submitBtn.innerHTML = '<i class="fas fa-plus mr-1"></i>Adicionar Ativo';
+      submitBtn.classList.remove('bg-orange-600', 'hover:bg-orange-700');
+      submitBtn.classList.add('bg-green-600', 'hover:bg-green-700');
+      
+      // Definir data de hoje
+      document.getElementById('assetEntryDate').value = new Date().toISOString().split('T')[0];
     }
 
     // ===== HELPER FUNCTIONS =====
@@ -2212,6 +2819,20 @@
         'HOLD': 'bg-yellow-600 text-yellow-200'
       };
       return classes[action] || 'bg-gray-600 text-gray-200';
+    }
+    
+    function getActionText(action) {
+      const texts = {
+        'BUY': 'Comprar',
+        'SELL': 'Vender', 
+        'HOLD': 'Manter'
+      };
+      return texts[action] || action;
+    }
+    
+    function formatDate(dateString) {
+      if (!dateString) return 'N/A';
+      return new Date(dateString).toLocaleDateString('pt-BR');
     }
 
     function getActionText(action) {
@@ -3621,6 +4242,14 @@ function displayUsers(users) {
     // Initialize
     document.addEventListener('DOMContentLoaded', initAdminDashboard);
     if (sectionName === 'recommendationsFree') loadRecommendationsFree();
+    window.generateRebalanceRecommendations = generateRebalanceRecommendations;
+    window.showRebalanceModal = showRebalanceModal;
+    window.rebalanceAsset = rebalanceAsset;
+    window.closeRebalanceModal = closeRebalanceModal;
+    window.showSingleAssetRebalance = showSingleAssetRebalance;
+    window.closeQuickRebalance = closeQuickRebalance;
+    window.createPortfolioRecommendation = createPortfolioRecommendation;
+    window.showSuccessToast = showSuccessToast;
   </script>
 </body>
 </html>

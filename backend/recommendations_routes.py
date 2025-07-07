@@ -1,7 +1,3 @@
-"""
-Blueprint para gerenciar recomendações de carteiras
-Autor: Geminii Tech
-"""
 
 from flask import Blueprint, jsonify, request
 import jwt

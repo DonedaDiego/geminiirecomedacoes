@@ -328,7 +328,6 @@ def delete_user(admin_id):
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
-
 # ===== GERENCIAMENTO DE PORTFOLIOS =====
 
 @admin_bp.route('/portfolio/<portfolio_name>/assets')
@@ -513,6 +512,40 @@ def clear_portfolio_assets(admin_id):
             'success': True,
             'message': message
         })
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@admin_bp.route('/portfolio/update-asset', methods=['PUT'])
+@require_admin()
+def update_portfolio_asset(admin_id):
+    try:
+        data = request.get_json()
+        asset_id = data.get('id')
+        
+        if not asset_id:
+            return jsonify({'success': False, 'error': 'ID do ativo é obrigatório'}), 400
+        
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            UPDATE portfolio_assets 
+            SET ticker = %s, weight = %s, sector = %s, 
+                entry_price = %s, current_price = %s, target_price = %s, 
+                entry_date = %s, updated_at = CURRENT_TIMESTAMP
+            WHERE id = %s
+        """, (
+            data.get('ticker'), data.get('weight'), data.get('sector'),
+            data.get('entry_price'), data.get('current_price'), data.get('target_price'),
+            data.get('entry_date'), asset_id
+        ))
+        
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        return jsonify({'success': True, 'message': 'Ativo atualizado com sucesso!'})
         
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
