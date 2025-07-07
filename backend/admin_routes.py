@@ -329,10 +329,12 @@ def delete_user(admin_id):
 
 # ===== GERENCIAMENTO DE CUPONS =====
 
+# SUBSTITUA ESTA FUNÇÃO NO SEU admin_routes.py
+
 @admin_bp.route('/coupons', methods=['GET'])
 @require_admin()
 def get_coupons(admin_id):
-    """Listar cupons"""
+    """Listar cupons - CORRIGIDO para usar campos do Railway"""
     try:
         conn = get_db_connection()
         if not conn:
@@ -341,32 +343,45 @@ def get_coupons(admin_id):
         cursor = conn.cursor()
         
         try:
+            # ✅ USAR APENAS OS CAMPOS QUE EXISTEM NO RAILWAY
             cursor.execute("""
-                SELECT code, discount_percent, discount_type, discount_value, 
-                       applicable_plans, max_uses, used_count, valid_until, is_active, created_at
+                SELECT id, code, discount_percent, discount_type, 
+                       applicable_plans, max_uses, used_count, valid_until, 
+                       active, is_active, created_at
                 FROM coupons
                 ORDER BY created_at DESC
             """)
             
             coupons = []
             for row in cursor.fetchall():
-                code, discount_percent, discount_type, discount_value, applicable_plans, max_uses, used_count, valid_until, is_active, created_at = row
+                coupon_id, code, discount_percent, discount_type, applicable_plans, max_uses, used_count, valid_until, active, is_active, created_at = row
+                
+                # Determinar se está ativo
+                coupon_active = bool(active or is_active)
+                
+                # Processar applicable_plans (ARRAY no Railway)
+                plans_list = []
+                if applicable_plans:
+                    if isinstance(applicable_plans, list):
+                        plans_list = applicable_plans
+                    elif isinstance(applicable_plans, str):
+                        plans_list = applicable_plans.split(',') if applicable_plans else []
                 
                 coupons.append({
+                    'id': coupon_id,
                     'code': code,
                     'discount_percent': float(discount_percent) if discount_percent else 0,
-                    'discount_type': discount_type,
-                    'discount_value': float(discount_value) if discount_value else 0,
-                    'applicable_plans': applicable_plans or [],
+                    'discount_type': discount_type or 'percent',
+                    'applicable_plans': plans_list,
                     'max_uses': max_uses,
                     'used_count': used_count or 0,
                     'valid_until': valid_until.isoformat() if valid_until else None,
-                    'is_active': is_active,
+                    'is_active': coupon_active,  # JavaScript espera is_active
                     'created_at': created_at.isoformat() if created_at else None
                 })
             
         except Exception as e:
-            print(f"⚠️ Erro ao buscar cupons (tabela pode não existir): {e}")
+            print(f"⚠️ Erro ao buscar cupons: {e}")
             coupons = []
         
         cursor.close()

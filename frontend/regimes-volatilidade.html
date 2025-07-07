@@ -1,0 +1,1207 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Análise de Regimes de Volatilidade - Geminii Tech</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            dark: '#000000',
+            light: '#ffffff',
+            subtle: 'rgba(255,255,255,0.1)',
+            geminii: '#ba39af'
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    body { 
+      font-family: 'Inter', sans-serif; 
+      background: linear-gradient(135deg, #0c0c0c 0%, #1a1a1a 100%);
+      min-height: 100vh;
+    }
+    
+    .vol-card {
+      background: rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 16px;
+      transition: all 0.3s ease;
+    }
+    
+    .vol-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 20px 40px rgba(186, 57, 175, 0.15);
+      border-color: rgba(186, 57, 175, 0.3);
+    }
+    
+    .loading {
+      opacity: 0.6;
+      pointer-events: none;
+    }
+    
+    .spinner {
+      border: 2px solid rgba(255, 255, 255, 0.1);
+      border-radius: 50%;
+      border-top: 2px solid #ba39af;
+      width: 20px;
+      height: 20px;
+      animation: spin 1s linear infinite;
+      display: inline-block;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .dark-select {
+      background-color: rgba(30, 30, 30, 0.9);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: white;
+      backdrop-filter: blur(10px);
+    }
+
+    .dark-select option {
+      background-color: #1a1a1a;
+      color: white;
+      padding: 8px;
+    }
+
+    .dark-select:focus {
+      outline: none;
+      border-color: #ba39af;
+      box-shadow: 0 0 0 2px rgba(186, 57, 175, 0.2);
+    }
+
+    .signal-indicator {
+      display: inline-flex;
+      align-items: center;
+      padding: 12px 20px;
+      border-radius: 25px;
+      font-size: 14px;
+      font-weight: 700;
+      border: 1px solid;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      animation: pulse 2s infinite;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .signal-buy-volatility {
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: white;
+      border-color: #10b981;
+      box-shadow: 0 0 30px rgba(16, 185, 129, 0.4);
+    }
+    
+    .signal-sell-volatility {
+      background: linear-gradient(135deg, #ef4444, #dc2626);
+      color: white;
+      border-color: #ef4444;
+      box-shadow: 0 0 30px rgba(239, 68, 68, 0.4);
+    }
+    
+    .signal-put-bias {
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      color: white;
+      border-color: #f59e0b;
+      box-shadow: 0 0 30px rgba(245, 158, 11, 0.4);
+    }
+    
+    .signal-call-bias {
+      background: linear-gradient(135deg, #3b82f6, #2563eb);
+      color: white;
+      border-color: #3b82f6;
+      box-shadow: 0 0 30px rgba(59, 130, 246, 0.4);
+    }
+    
+    .signal-hold {
+      background: linear-gradient(135deg, #6b7280, #4b5563);
+      color: white;
+      border-color: #6b7280;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+
+    .metric-card {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      padding: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      transition: all 0.3s ease;
+    }
+
+    .metric-card:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(186, 57, 175, 0.3);
+    }
+
+    .regime-low { 
+      border-left: 4px solid #10b981; 
+      background: linear-gradient(90deg, rgba(16, 185, 129, 0.1) 0%, transparent 100%);
+    }
+    .regime-medium { 
+      border-left: 4px solid #f59e0b;
+      background: linear-gradient(90deg, rgba(245, 158, 11, 0.1) 0%, transparent 100%);
+    }
+    .regime-high { 
+      border-left: 4px solid #ef4444;
+      background: linear-gradient(90deg, rgba(239, 68, 68, 0.1) 0%, transparent 100%);
+    }
+
+    .confidence-bar {
+      width: 100%;
+      height: 8px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+      overflow: hidden;
+      margin-top: 8px;
+    }
+
+    .confidence-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #ba39af, #e879f9);
+      border-radius: 4px;
+      transition: width 0.5s ease;
+    }
+
+    .reasoning-item {
+      display: flex;
+      align-items: center;
+      padding: 8px 12px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 8px;
+      margin-bottom: 6px;
+      border-left: 3px solid #ba39af;
+    }
+
+    .chart-container {
+      height: 280px;
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 8px;
+      padding: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .chart-container > div {
+      width: 100% !important;
+      height: 100% !important;
+    }
+
+    .explanation-card {
+      background: linear-gradient(135deg, rgba(186, 57, 175, 0.1) 0%, rgba(147, 51, 234, 0.1) 100%);
+      border: 1px solid rgba(186, 57, 175, 0.3);
+    }
+  </style>
+</head>
+<body class="text-white">
+  
+  <!-- Navbar -->
+  <nav class="fixed top-6 left-1/2 transform -translate-x-1/2 z-50 bg-opacity-5 border-opacity-10 bg-white border-white border rounded-full px-4 py-3 shadow-xl backdrop-blur-md">
+    <div class="flex items-center justify-between">
+      <div class="flex items-center">
+        <div class="w-6 h-6 bg-gradient-to-r from-pink-500 to-purple-600 rounded-full cursor-pointer" onclick="window.location.href='/'"></div>
+      </div>
+      <div class="hidden md:flex items-center space-x-6 text-xs text-gray-300 ml-8">
+        <a href="/dashboard" class="hover:text-white transition-colors">Dashboard</a>
+        <a href="/suporte-resistencia" class="hover:text-white transition-colors">Suporte E Resistência</a>
+        <span class="text-white font-medium">Regimes Volatilidade</span>
+        <a href="/monitor-basico" class="hover:text-white transition-colors">Monitor Beta</a>
+        <a href="/rsl" class="hover:text-white transition-colors">RSL Radar</a>
+      </div>
+      <div class="flex items-center space-x-3 ml-8">
+        <div id="apiStatus" class="w-8 h-8 bg-green-500 bg-opacity-10 border border-green-500 border-opacity-30 rounded-full flex items-center justify-center relative">
+          <i class="fas fa-chart-line text-green-500 text-xs"></i>
+          <div class="absolute -top-1 -right-1 w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Content -->
+  <div class="pt-32 pb-16">
+    <div class="max-w-7xl mx-auto px-6">
+      
+      <!-- Header -->
+      <div class="text-center mb-12">
+        <h1 class="text-4xl md:text-5xl font-bold mb-4">
+          <span style="color: #ba39af; font-weight: 900;">Regimes de</span>
+          <span class="text-white font-light">Volatilidade</span>
+        </h1>
+        <p class="text-neutral-300 text-lg max-w-3xl mx-auto">
+          Sistema avançado com 3 indicadores não convencionais: Regime Clustering, Fluxo Direcional e Squeeze Score.
+          Identifica automaticamente regimes de volatilidade e gera sinais precisos para opções.
+        </p>
+      </div>
+
+      <!-- Controles -->
+      <div class="vol-card p-6 mb-8">
+        <div class="flex flex-col md:flex-row gap-4 items-center justify-center">
+          <div class="flex gap-3 flex-wrap items-center">
+            <input 
+              id="stockInput" 
+              type="text" 
+              placeholder="Digite o código da ação (ex: PETR4)" 
+              class="px-4 py-2 bg-white bg-opacity-10 border border-white border-opacity-20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-geminii backdrop-blur-sm"
+            >
+            <select id="periodSelect" class="dark-select px-4 py-2 rounded-lg">
+              <option value="6mo" selected>6 meses</option>
+              <option value="3mo">3 meses</option>
+              <option value="1y">1 ano</option>
+              <option value="2y">2 anos</option>
+            </select>
+            <button id="analyzeBtn" class="px-6 py-2 bg-gradient-to-r from-pink-500 to-purple-600 hover:shadow-lg rounded-lg transition-all font-medium">
+              <i class="fas fa-brain mr-2"></i>Analisar
+            </button>
+            <button id="screenerBtn" class="px-6 py-2 bg-gradient-to-r from-green-500 to-blue-600 hover:shadow-lg rounded-lg transition-all font-medium">
+              <i class="fas fa-search mr-2"></i>Rastreador
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Status -->
+      <div id="statusMsg" class="mb-6 p-4 rounded-lg hidden backdrop-blur-sm"></div>
+
+      <!-- Sinal Principal -->
+      <div id="mainSignal" class="mb-8 hidden">
+        <div class="vol-card p-8">
+          <div class="text-center">
+            <h3 class="text-2xl font-bold mb-6">
+              <i class="fas fa-bullseye mr-3"></i>Sinal de Trading
+            </h3>
+            <div id="signalIndicator" class="inline-block mb-6">
+              <!-- Preenchido via JS -->
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
+              <div class="metric-card">
+                <div class="text-sm text-gray-400 mb-1">Estratégia</div>
+                <div id="recommendedStrategy" class="text-lg font-bold text-white">--</div>
+              </div>
+              <div class="metric-card">
+                <div class="text-sm text-gray-400 mb-1">Confiança</div>
+                <div id="signalConfidence" class="text-lg font-bold text-white">--</div>
+                <div class="confidence-bar">
+                  <div id="confidenceFill" class="confidence-fill" style="width: 0%"></div>
+                </div>
+              </div>
+              <div class="metric-card">
+                <div class="text-sm text-gray-400 mb-1">
+                  Preço Atual 
+                  <i class="fas fa-circle text-green-400 text-xs ml-1 animate-pulse" title="Tempo real"></i>
+                </div>
+                <div id="currentPrice" class="text-lg font-bold text-white">--</div>
+              </div>
+              <div class="metric-card">
+                <div class="text-sm text-gray-400 mb-1">Última Atualização</div>
+                <div id="lastUpdate" class="text-sm font-bold text-white">--</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Métricas dos Indicadores -->
+      <div id="metricsSection" class="mb-8 hidden">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          
+          <!-- Regime Clustering -->
+          <div class="vol-card p-6">
+            <h3 class="text-xl font-bold mb-4">
+              <i class="fas fa-layer-group text-purple-400 mr-2"></i>
+              Regime de Volatilidade
+            </h3>
+            <div id="regimeCard" class="metric-card">
+              <div class="flex justify-between items-center mb-3">
+                <span class="text-lg font-semibold" id="regimeName">--</span>
+                <span class="text-2xl font-bold" id="regimeNumber">--</span>
+              </div>
+              <div class="text-sm text-gray-400 mb-2">
+                Persistência: <span id="regimePersistence" class="text-white font-medium">--</span> dias
+              </div>
+              <div class="text-xs text-gray-500" id="regimeDescription">--</div>
+            </div>
+          </div>
+
+          <!-- Fluxo Direcional -->
+          <div class="vol-card p-6">
+            <h3 class="text-xl font-bold mb-4">
+              <i class="fas fa-exchange-alt text-orange-400 mr-2"></i>
+              Fluxo Direcional
+            </h3>
+            <div class="metric-card">
+              <div class="flex justify-between items-center mb-3">
+                <span class="text-lg font-semibold" id="directionalSignal">--</span>
+                <span class="text-2xl font-bold" id="asymmetryRatio">--</span>
+              </div>
+              <div class="grid grid-cols-2 gap-3 text-sm">
+                <div>
+                  <div class="text-gray-400">Força</div>
+                  <div class="text-blue-400 font-medium" id="directionalStrength">--</div>
+                </div>
+                <div>
+                  <div class="text-gray-400">Assimetria</div>
+                  <div class="text-orange-400 font-medium" id="asymmetryDisplay">--</div>
+                </div>
+              </div>
+              <div class="mt-2 text-xs text-gray-500" id="directionalDescription">--</div>
+            </div>
+          </div>
+
+          <!-- Squeeze Score -->
+          <div class="vol-card p-6">
+            <h3 class="text-xl font-bold mb-4">
+              <i class="fas fa-compress-arrows-alt text-blue-400 mr-2"></i>
+              Compressão/Expansão
+            </h3>
+            <div class="metric-card">
+              <div class="flex justify-between items-center mb-3">
+                <span class="text-lg font-semibold" id="squeezeSignal">--</span>
+                <span class="text-2xl font-bold" id="squeezeScore">--</span>
+              </div>
+              <div class="text-sm text-gray-400 mb-2">
+                Força: <span id="squeezeStrength" class="text-white font-medium">--</span>%
+              </div>
+              <div class="text-xs text-gray-500" id="squeezeDescription">--</div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Raciocínio do Sinal -->
+      <div id="reasoningSection" class="mb-8 hidden">
+        <div class="vol-card p-6">
+          <h3 class="text-xl font-bold mb-4">
+            <i class="fas fa-lightbulb text-yellow-400 mr-2"></i>
+            Por que este sinal?
+          </h3>
+          <div id="reasoningList" class="space-y-3">
+            <!-- Preenchido via JS -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Gráficos Separados -->
+      <div id="chartsSection" class="mb-8 hidden">
+        
+        <!-- Gráfico Principal - Preço -->
+        <div class="vol-card p-6 mb-6">
+          <h4 class="text-xl font-bold mb-4 text-white">
+            <i class="fas fa-chart-line mr-2"></i>Evolução do Preço
+          </h4>
+          <div class="chart-container" style="height: 350px;">
+            <div id="priceChart" style="width: 100%; height: 100%;"></div>
+          </div>
+        </div>
+
+        <!-- Gráficos dos Indicadores -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          
+          <!-- Gráfico Regime -->
+          <div class="vol-card p-6">
+            <h4 class="text-lg font-bold mb-4 text-purple-400">
+              <i class="fas fa-layer-group mr-2"></i>Evolução dos Regimes
+            </h4>
+            <div class="chart-container">
+              <div id="regimeChart" style="width: 100%; height: 100%;"></div>
+            </div>
+          </div>
+
+          <!-- Gráfico Squeeze -->
+          <div class="vol-card p-6">
+            <h4 class="text-lg font-bold mb-4 text-blue-400">
+              <i class="fas fa-compress-arrows-alt mr-2"></i>Compressão vs Expansão
+            </h4>
+            <div class="chart-container">
+              <div id="squeezeChart" style="width: 100%; height: 100%;"></div>
+            </div>
+          </div>
+
+          <!-- Gráfico Assimetria -->
+          <div class="vol-card p-6">
+            <h4 class="text-lg font-bold mb-4 text-orange-400">
+              <i class="fas fa-exchange-alt mr-2"></i>Assimetria Direcional
+            </h4>
+            <div class="chart-container">
+              <div id="asymmetryChart" style="width: 100%; height: 100%;"></div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Screener Results -->
+      <div id="screenerSection" class="mb-8 hidden">
+        <div class="vol-card p-6">
+          <div class="flex justify-between items-center mb-6">
+            <h3 class="text-2xl font-bold">
+              <i class="fas fa-radar text-green-400 mr-2"></i>
+              Rastreador de Volatilidade
+            </h3>
+            <div class="text-sm text-gray-400">
+              <span id="screenerCount">--</span> oportunidades encontradas
+            </div>
+          </div>
+          <div id="screenerResults" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <!-- Preenchido via JS -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Card Explicativo -->
+      <div class="vol-card explanation-card p-8 mb-8">
+        <h2 class="text-2xl font-bold mb-6 text-center">
+          <i class="fas fa-graduation-cap text-geminii mr-3"></i>
+          Como Funciona o Sistema de Regimes de Volatilidade
+        </h2>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+          
+          <!-- Regime Clustering -->
+          <div class="space-y-4">
+            <div class="flex items-center mb-3">
+              <i class="fas fa-layer-group text-purple-400 text-xl mr-3"></i>
+              <h3 class="text-lg font-bold">Regimes de Volatilidade</h3>
+            </div>
+            <p class="text-gray-300 text-sm leading-relaxed mb-4">
+              Usa machine learning (K-means) para identificar 3 estados de mercado: <strong>Baixa</strong>, <strong>Média</strong> e <strong>Alta</strong> volatilidade.
+            </p>
+            <div class="space-y-2 text-xs">
+              <div class="flex items-center">
+                <div class="w-3 h-3 bg-green-500 rounded mr-2"></div>
+                <span><strong>Baixa:</strong> Mercado calmo, ideal para venda de volatilidade</span>
+              </div>
+              <div class="flex items-center">
+                <div class="w-3 h-3 bg-yellow-500 rounded mr-2"></div>
+                <span><strong>Média:</strong> Transição, atenção para breakouts</span>
+              </div>
+              <div class="flex items-center">
+                <div class="w-3 h-3 bg-red-500 rounded mr-2"></div>
+                <span><strong>Alta:</strong> Mercado agitado, compra de volatilidade</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Fluxo Direcional -->
+          <div class="space-y-4">
+            <div class="flex items-center mb-3">
+              <i class="fas fa-exchange-alt text-orange-400 text-xl mr-3"></i>
+              <h3 class="text-lg font-bold">Assimetria Direcional</h3>
+            </div>
+            <p class="text-gray-300 text-sm leading-relaxed mb-4">
+              Mede se as <strong>quedas</strong> são mais violentas que as <strong>subidas</strong> ou vice-versa. Crucial para escolher puts vs calls.
+            </p>
+            <div class="space-y-2 text-xs">
+              <div class="flex items-center">
+                <div class="w-3 h-3 bg-red-500 rounded mr-2"></div>
+                <span><strong>Viés de Queda:</strong> Quedas mais violentas → Puts</span>
+              </div>
+              <div class="flex items-center">
+                <div class="w-3 h-3 bg-blue-500 rounded mr-2"></div>
+                <span><strong>Viés de Alta:</strong> Subidas mais violentas → Calls</span>
+              </div>
+              <div class="flex items-center">
+                <div class="w-3 h-3 bg-gray-500 rounded mr-2"></div>
+                <span><strong>Neutro:</strong> Movimentos simétricos</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Squeeze Score -->
+          <div class="space-y-4">
+            <div class="flex items-center mb-3">
+              <i class="fas fa-compress-arrows-alt text-blue-400 text-xl mr-3"></i>
+              <h3 class="text-lg font-bold">Compressão/Expansão</h3>
+            </div>
+            <p class="text-gray-300 text-sm leading-relaxed mb-4">
+              Compara <strong>Bollinger Bands</strong> vs <strong>Keltner Channels</strong> para detectar quando a volatilidade está "espremida".
+            </p>
+            <div class="space-y-2 text-xs">
+              <div class="flex items-center">
+                <div class="w-3 h-3 bg-green-500 rounded mr-2"></div>
+                <span><strong>Compressão:</strong> Volatilidade baixa, explosão iminente</span>
+              </div>
+              <div class="flex items-center">
+                <div class="w-3 h-3 bg-red-500 rounded mr-2"></div>
+                <span><strong>Expansão:</strong> Volatilidade alta, possível reversão</span>
+              </div>
+              <div class="flex items-center">
+                <div class="w-3 h-3 bg-gray-500 rounded mr-2"></div>
+                <span><strong>Neutro:</strong> Condição normal</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Estratégias -->
+        <div class="mt-8 pt-6 border-t border-gray-600">
+          <h3 class="text-xl font-bold mb-4 text-center">Estratégias Recomendadas</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            
+            <div class="bg-green-500 bg-opacity-10 border border-green-500 border-opacity-30 rounded-lg p-4">
+              <h4 class="font-bold text-green-400 mb-2">Comprar Volatilidade</h4>
+              <p class="text-xs text-gray-300">Long Straddle/Strangle quando há compressão + regime médio/alto</p>
+            </div>
+
+            <div class="bg-red-500 bg-opacity-10 border border-red-500 border-opacity-30 rounded-lg p-4">
+              <h4 class="font-bold text-red-400 mb-2">Vender Volatilidade</h4>
+              <p class="text-xs text-gray-300">Iron Condor/Credit Spreads quando há expansão + regime baixo</p>
+            </div>
+
+            <div class="bg-orange-500 bg-opacity-10 border border-orange-500 border-opacity-30 rounded-lg p-4">
+              <h4 class="font-bold text-orange-400 mb-2">Viés de Queda</h4>
+              <p class="text-xs text-gray-300">Put Spreads quando assimetria > 1.5 (quedas mais violentas)</p>
+            </div>
+
+            <div class="bg-blue-500 bg-opacity-10 border border-blue-500 border-opacity-30 rounded-lg p-4">
+              <h4 class="font-bold text-blue-400 mb-2">Viés de Alta</h4>
+              <p class="text-xs text-gray-300">Call Spreads quando assimetria < 0.7 (altas mais violentas)</p>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  <script>
+    // Configurações
+    const API_BASE = window.location.origin + '/api/volatility';
+    
+    // Elementos DOM
+    const stockInput = document.getElementById('stockInput');
+    const periodSelect = document.getElementById('periodSelect');
+    const analyzeBtn = document.getElementById('analyzeBtn');
+    const screenerBtn = document.getElementById('screenerBtn');
+    const statusMsg = document.getElementById('statusMsg');
+    const mainSignal = document.getElementById('mainSignal');
+    const metricsSection = document.getElementById('metricsSection');
+    const reasoningSection = document.getElementById('reasoningSection');
+    const screenerSection = document.getElementById('screenerSection');
+    const chartsSection = document.getElementById('chartsSection');
+    
+    // Traduções para português
+    const translations = {
+      'BUY_VOLATILITY': 'COMPRAR VOLATILIDADE',
+      'SELL_VOLATILITY': 'VENDER VOLATILIDADE', 
+      'PUT_BIAS': 'VIÉS DE QUEDA',
+      'CALL_BIAS': 'VIÉS DE ALTA',
+      'HOLD': 'AGUARDAR',
+      'NEUTRAL': 'NEUTRO',
+      'COMPRESSION': 'COMPRESSÃO',
+      'EXPANSION': 'EXPANSÃO',
+      'Low': 'Baixa',
+      'Medium': 'Média', 
+      'High': 'Alta',
+      'Long Straddle': 'Long Straddle',
+      'Iron Condor': 'Iron Condor',
+      'Put Spread': 'Put Spread',
+      'Call Spread': 'Call Spread'
+    };
+    
+    function translate(text) {
+      return translations[text] || text;
+    }
+    
+    // Funções utilitárias
+    function showStatus(message, type = 'info') {
+      const bgClass = type === 'success' ? 'bg-green-600 bg-opacity-20 border-green-500 border-opacity-30' : 
+                     type === 'error' ? 'bg-red-600 bg-opacity-20 border-red-500 border-opacity-30' : 
+                     'bg-blue-600 bg-opacity-20 border-blue-500 border-opacity-30';
+      
+      statusMsg.className = `mb-6 p-4 rounded-lg border backdrop-blur-sm ${bgClass}`;
+      statusMsg.textContent = message;
+      statusMsg.classList.remove('hidden');
+      
+      setTimeout(() => statusMsg.classList.add('hidden'), 5000);
+    }
+    
+    function formatCurrency(value) {
+      return new Intl.NumberFormat('pt-BR', {
+        style: 'currency',
+        currency: 'BRL'
+      }).format(value);
+    }
+    
+    function setLoading(button, loading) {
+      if (loading) {
+        button.classList.add('loading');
+        if (button === analyzeBtn) {
+          button.innerHTML = '<span class="spinner mr-2"></span>Analisando...';
+        } else {
+          button.innerHTML = '<span class="spinner mr-2"></span>Buscando...';
+        }
+      } else {
+        button.classList.remove('loading');
+        if (button === analyzeBtn) {
+          button.innerHTML = '<i class="fas fa-brain mr-2"></i>Analisar';
+        } else {
+          button.innerHTML = '<i class="fas fa-search mr-2"></i>Rastreador';
+        }
+      }
+    }
+    
+    // Testar conectividade da API
+    async function testAPI() {
+      try {
+        const response = await fetch(`${API_BASE}/health`);
+        const data = await response.json();
+        
+        if (response.ok) {
+          document.getElementById('apiStatus').className = 'w-8 h-8 bg-green-500 bg-opacity-10 border border-green-500 border-opacity-30 rounded-full flex items-center justify-center relative';
+          return true;
+        } else {
+          throw new Error('API retornou erro');
+        }
+      } catch (error) {
+        document.getElementById('apiStatus').className = 'w-8 h-8 bg-red-500 bg-opacity-10 border border-red-500 border-opacity-30 rounded-full flex items-center justify-center relative';
+        return false;
+      }
+    }
+    
+    // Analisar ação individual
+    async function analyzeStock() {
+      const symbol = stockInput.value.trim().toUpperCase();
+      const period = periodSelect.value;
+      
+      if (!symbol) {
+        showStatus('Digite o código de uma ação', 'error');
+        return;
+      }
+      
+      // Limpar ticker - remover .SA se presente
+      const cleanSymbol = symbol.replace('.SA', '');
+      
+      setLoading(analyzeBtn, true);
+      showStatus('Executando análise de regimes de volatilidade...', 'info');
+      
+      try {
+        const url = `${API_BASE}/analyze/${cleanSymbol}?period=${period}`;
+        const response = await fetch(url);
+        const data = await response.json();
+        
+        if (response.ok && data.success) {
+          displayAnalysis(data);
+          showStatus(`Análise de ${cleanSymbol} concluída com sucesso!`, 'success');
+        } else {
+          const errorMsg = data.error || `Erro HTTP ${response.status}`;
+          showStatus(errorMsg, 'error');
+        }
+      } catch (error) {
+        showStatus('Erro ao conectar com o servidor', 'error');
+      }
+      
+      setLoading(analyzeBtn, false);
+    }
+    
+    // Executar screener
+    async function runScreener() {
+      setLoading(screenerBtn, true);
+      showStatus('Executando rastreador em ativos brasileiros...', 'info');
+      
+      try {
+        const url = `${API_BASE}/screener?min_confidence=60&period=${periodSelect.value}`;
+        const response = await fetch(url);
+        const data = await response.json();
+        
+        if (response.ok && data.success) {
+          displayScreenerResults(data.screener_results);
+          showStatus(`Rastreador concluído! ${data.total_found} oportunidades encontradas.`, 'success');
+        } else {
+          showStatus(data.error || 'Erro no rastreador', 'error');
+        }
+      } catch (error) {
+        showStatus('Erro ao executar rastreador', 'error');
+      }
+      
+      setLoading(screenerBtn, false);
+    }
+    
+    // Exibir análise individual
+    function displayAnalysis(data) {
+      const metrics = data.metrics;
+      const signal = data.trading_signal;
+      
+      // Sinal principal
+      displayMainSignal(signal, data.current_price, data.last_update);
+      
+      // Métricas dos indicadores
+      displayMetrics(metrics);
+      
+      // Raciocínio
+      displayReasoning(signal.reasoning || []);
+      
+      // Gráficos separados
+      if (data.chart_data && data.chart_data.length > 0) {
+        displaySeparateCharts(data.chart_data);
+      }
+      
+      // Mostrar seções
+      mainSignal.classList.remove('hidden');
+      metricsSection.classList.remove('hidden');
+      reasoningSection.classList.remove('hidden');
+      chartsSection.classList.remove('hidden');
+      
+      // Esconder screener
+      screenerSection.classList.add('hidden');
+    }
+    
+    // Exibir sinal principal
+    function displayMainSignal(signal, price, lastUpdate) {
+      const signalIndicator = document.getElementById('signalIndicator');
+      
+      // Classe e ícone do sinal
+      let signalClass = 'signal-hold';
+      let signalIcon = 'fas fa-pause';
+      let signalText = translate(signal.signal);
+      
+      switch (signal.signal) {
+        case 'BUY_VOLATILITY':
+          signalClass = 'signal-buy-volatility';
+          signalIcon = 'fas fa-arrow-up';
+          break;
+        case 'SELL_VOLATILITY':
+          signalClass = 'signal-sell-volatility';
+          signalIcon = 'fas fa-arrow-down';
+          break;
+        case 'PUT_BIAS':
+          signalClass = 'signal-put-bias';
+          signalIcon = 'fas fa-chevron-down';
+          break;
+        case 'CALL_BIAS':
+          signalClass = 'signal-call-bias';
+          signalIcon = 'fas fa-chevron-up';
+          break;
+      }
+      
+      signalIndicator.innerHTML = `
+        <div class="signal-indicator ${signalClass}">
+          <i class="${signalIcon} mr-2"></i>
+          ${signalText}
+        </div>
+      `;
+      
+      // Dados complementares
+      document.getElementById('recommendedStrategy').textContent = translate(signal.strategy) || '--';
+      document.getElementById('signalConfidence').textContent = `${signal.confidence || 0}%`;
+      document.getElementById('confidenceFill').style.width = `${signal.confidence || 0}%`;
+      document.getElementById('currentPrice').textContent = formatCurrency(price || 0);
+      document.getElementById('lastUpdate').textContent = lastUpdate ? new Date(lastUpdate).toLocaleString('pt-BR') : '--';
+    }
+    
+    // Exibir métricas dos indicadores
+    function displayMetrics(metrics) {
+      // Regime
+      const regime = metrics.regime;
+      const regimeCard = document.getElementById('regimeCard');
+      regimeCard.className = `metric-card regime-${regime.name.toLowerCase()}`;
+      
+      document.getElementById('regimeName').textContent = translate(regime.name) || '--';
+      document.getElementById('regimeNumber').textContent = regime.current || '--';
+      document.getElementById('regimePersistence').textContent = regime.persistence || '--';
+      document.getElementById('regimeDescription').textContent = getRegimeDescription(regime.name);
+      
+      // Fluxo Direcional
+      const directional = metrics.directional;
+      document.getElementById('directionalSignal').textContent = translate(directional.signal) || '--';
+      document.getElementById('asymmetryRatio').textContent = (directional.asymmetry_ratio || 0).toFixed(2);
+      document.getElementById('directionalStrength').textContent = `${(directional.strength || 0).toFixed(1)}%`;
+      document.getElementById('asymmetryDisplay').textContent = (directional.asymmetry_ratio || 0).toFixed(2);
+      document.getElementById('directionalDescription').textContent = getDirectionalDescription(directional.signal);
+      
+      // Squeeze
+      const squeeze = metrics.squeeze;
+      document.getElementById('squeezeSignal').textContent = translate(squeeze.signal) || '--';
+      document.getElementById('squeezeScore').textContent = (squeeze.score || 0).toFixed(3);
+      document.getElementById('squeezeStrength').textContent = (squeeze.strength || 0).toFixed(1);
+      document.getElementById('squeezeDescription').textContent = getSqueezeDescription(squeeze.signal);
+    }
+    
+    // Exibir raciocínio
+    function displayReasoning(reasoning) {
+      const reasoningList = document.getElementById('reasoningList');
+      
+      if (!reasoning || reasoning.length === 0) {
+        reasoningList.innerHTML = '<div class="reasoning-item"><i class="fas fa-info-circle text-geminii mr-3"></i><span>Análise em andamento...</span></div>';
+        return;
+      }
+      
+      reasoningList.innerHTML = reasoning.map(reason => `
+        <div class="reasoning-item">
+          <i class="fas fa-check-circle text-geminii mr-3"></i>
+          <span>${reason}</span>
+        </div>
+      `).join('');
+    }
+    
+    // Exibir gráficos separados
+    function displaySeparateCharts(chartData) {
+      if (!chartData || chartData.length === 0) return;
+      
+      const dates = chartData.map((d, i) => new Date(Date.now() - (chartData.length - i) * 24 * 60 * 60 * 1000));
+      const prices = chartData.map(d => d.Close || 0);
+      const regimes = chartData.map(d => d.regime || 0);
+      const squeeze = chartData.map(d => d.squeeze_smooth || 0);
+      const directional = chartData.map(d => d.dir_asymmetry_ratio || 1);
+      
+      // Configuração base dos gráficos - CORRIGIDA
+      const baseConfig = {
+        responsive: true,
+        displayModeBar: false,
+        autosize: true
+      };
+      
+      const baseLayout = {
+        paper_bgcolor: 'transparent',
+        plot_bgcolor: 'transparent',
+        font: { color: 'white', size: 10 },
+        margin: { t: 10, r: 15, b: 30, l: 50 },
+        showlegend: false,
+        autosize: true,
+        width: null,
+        height: 260,
+        xaxis: {
+          gridcolor: 'rgba(255,255,255,0.1)',
+          zerolinecolor: 'rgba(255,255,255,0.1)',
+          showticklabels: false,
+          fixedrange: true
+        },
+        yaxis: {
+          gridcolor: 'rgba(255,255,255,0.1)',
+          zerolinecolor: 'rgba(255,255,255,0.1)',
+          fixedrange: true,
+          title: { standoff: 10 }
+        }
+      };
+
+      // Layout específico para gráfico de preço
+      const priceLayout = {
+        paper_bgcolor: 'transparent',
+        plot_bgcolor: 'transparent',
+        font: { color: 'white', size: 12 },
+        margin: { t: 20, r: 20, b: 40, l: 60 },
+        showlegend: false,
+        autosize: true,
+        width: null,
+        height: 320,
+        xaxis: {
+          gridcolor: 'rgba(255,255,255,0.1)',
+          zerolinecolor: 'rgba(255,255,255,0.1)',
+          type: 'date',
+          fixedrange: true
+        },
+        yaxis: {
+          gridcolor: 'rgba(255,255,255,0.1)',
+          zerolinecolor: 'rgba(255,255,255,0.1)',
+          fixedrange: true,
+          title: { text: 'Preço (R$)', standoff: 15 }
+        }
+      };
+      
+      // Aguardar um pouco para garantir que os containers estão renderizados
+      setTimeout(() => {
+        
+        // Gráfico Principal - Preço com Regimes coloridos
+        try {
+          const priceTrace = {
+            x: dates,
+            y: prices,
+            type: 'scatter',
+            mode: 'lines',
+            line: { color: '#ffffff', width: 2 },
+            name: 'Preço'
+          };
+
+          // Criar áreas coloridas baseadas nos regimes
+          const regimeAreas = [];
+          let currentRegime = regimes[0];
+          let startIndex = 0;
+
+          for (let i = 1; i <= regimes.length; i++) {
+            if (i === regimes.length || regimes[i] !== currentRegime) {
+              const regimeColor = currentRegime === 0 ? 'rgba(16, 185, 129, 0.1)' : 
+                                 currentRegime === 1 ? 'rgba(245, 158, 11, 0.1)' : 
+                                 'rgba(239, 68, 68, 0.1)';
+              
+              regimeAreas.push({
+                type: 'rect',
+                xref: 'x',
+                yref: 'paper',
+                x0: dates[startIndex],
+                y0: 0,
+                x1: dates[i - 1],
+                y1: 1,
+                fillcolor: regimeColor,
+                opacity: 0.3,
+                layer: 'below',
+                line: { width: 0 }
+              });
+
+              if (i < regimes.length) {
+                currentRegime = regimes[i];
+                startIndex = i;
+              }
+            }
+          }
+
+          Plotly.newPlot('priceChart', [priceTrace], {
+            ...priceLayout,
+            shapes: regimeAreas
+          }, baseConfig);
+        } catch (error) {
+          console.error('Erro no gráfico de preço:', error);
+        }
+        
+        // Gráfico de Regimes
+        try {
+          const regimeTrace = {
+            x: dates.map((d, i) => i),
+            y: regimes,
+            type: 'scatter',
+            mode: 'lines+markers',
+            line: { color: '#8b5cf6', width: 2 },
+            marker: { 
+              size: 3, 
+              color: regimes.map(r => r === 0 ? '#10b981' : r === 1 ? '#f59e0b' : '#ef4444')
+            },
+            fill: 'tozeroy',
+            fillcolor: 'rgba(139, 92, 246, 0.1)'
+          };
+          
+          Plotly.newPlot('regimeChart', [regimeTrace], {
+            ...baseLayout,
+            yaxis: { 
+              ...baseLayout.yaxis,
+              title: { text: 'Regime', standoff: 10 },
+              tickvals: [0, 1, 2],
+              ticktext: ['Baixa', 'Média', 'Alta'],
+              range: [-0.1, 2.1]
+            }
+          }, baseConfig);
+        } catch (error) {
+          console.error('Erro no gráfico de regimes:', error);
+        }
+        
+        // Gráfico de Squeeze
+        try {
+          const squeezeTrace = {
+            x: dates.map((d, i) => i),
+            y: squeeze,
+            type: 'scatter',
+            mode: 'lines',
+            line: { color: '#3b82f6', width: 2 },
+            fill: 'tozeroy',
+            fillcolor: 'rgba(59, 130, 246, 0.1)'
+          };
+          
+          const compressionLine = {
+            x: dates.map((d, i) => i),
+            y: Array(dates.length).fill(0.8),
+            type: 'scatter',
+            mode: 'lines',
+            line: { color: '#ef4444', width: 1, dash: 'dash' },
+            hoverinfo: 'skip'
+          };
+          
+          const expansionLine = {
+            x: dates.map((d, i) => i),
+            y: Array(dates.length).fill(1.5),
+            type: 'scatter',
+            mode: 'lines',
+            line: { color: '#10b981', width: 1, dash: 'dash' },
+            hoverinfo: 'skip'
+          };
+          
+          Plotly.newPlot('squeezeChart', [squeezeTrace, compressionLine, expansionLine], {
+            ...baseLayout,
+            yaxis: { 
+              ...baseLayout.yaxis, 
+              title: { text: 'Squeeze', standoff: 10 }
+            }
+          }, baseConfig);
+        } catch (error) {
+          console.error('Erro no gráfico de squeeze:', error);
+        }
+        
+        // Gráfico de Assimetria
+        try {
+          const asymmetryTrace = {
+            x: dates.map((d, i) => i),
+            y: directional,
+            type: 'scatter',
+            mode: 'lines',
+            line: { color: '#f59e0b', width: 2 },
+            fill: 'tonexty',
+            fillcolor: 'rgba(245, 158, 11, 0.1)'
+          };
+          
+          const neutralLine = {
+            x: dates.map((d, i) => i),
+            y: Array(dates.length).fill(1),
+            type: 'scatter',
+            mode: 'lines',
+            line: { color: '#6b7280', width: 1, dash: 'dash' },
+            hoverinfo: 'skip'
+          };
+          
+          const putBiasLine = {
+            x: dates.map((d, i) => i),
+            y: Array(dates.length).fill(1.5),
+            type: 'scatter',
+            mode: 'lines',
+            line: { color: '#ef4444', width: 1, dash: 'dash' },
+            hoverinfo: 'skip'
+          };
+          
+          const callBiasLine = {
+            x: dates.map((d, i) => i),
+            y: Array(dates.length).fill(0.7),
+            type: 'scatter',
+            mode: 'lines',
+            line: { color: '#10b981', width: 1, dash: 'dash' },
+            hoverinfo: 'skip'
+          };
+          
+          Plotly.newPlot('asymmetryChart', [asymmetryTrace, neutralLine, putBiasLine, callBiasLine], {
+            ...baseLayout,
+            yaxis: { 
+              ...baseLayout.yaxis, 
+              title: { text: 'Assimetria', standoff: 10 }
+            }
+          }, baseConfig);
+        } catch (error) {
+          console.error('Erro no gráfico de assimetria:', error);
+        }
+        
+      }, 100); // Delay de 100ms para garantir renderização
+    }
+    
+    // Exibir resultados do screener
+    function displayScreenerResults(results) {
+      document.getElementById('screenerCount').textContent = results.length;
+      
+      const screenerResults = document.getElementById('screenerResults');
+      screenerResults.innerHTML = results.map(result => `
+        <div class="metric-card cursor-pointer hover:bg-opacity-10" onclick="loadTicker('${result.ticker}')">
+          <div class="flex justify-between items-start mb-3">
+            <h4 class="text-lg font-bold">${result.ticker}</h4>
+            <span class="text-sm text-${getSignalColor(result.signal)}-400 font-medium">
+              ${result.confidence}%
+            </span>
+          </div>
+          <div class="text-sm text-gray-400 mb-2">
+            ${translate(result.signal)}
+          </div>
+          <div class="text-lg font-semibold text-white mb-2">
+            ${translate(result.strategy)}
+          </div>
+          <div class="flex justify-between text-xs text-gray-500">
+            <span>Regime: ${translate(result.regime)}</span>
+            <span>${formatCurrency(result.current_price)}</span>
+          </div>
+        </div>
+      `).join('');
+      
+      // Mostrar seção
+      screenerSection.classList.remove('hidden');
+      
+      // Esconder análise individual
+      mainSignal.classList.add('hidden');
+      metricsSection.classList.add('hidden');
+      reasoningSection.classList.add('hidden');
+      chartsSection.classList.add('hidden');
+    }
+    
+    // Funções auxiliares
+    function getRegimeDescription(regime) {
+      switch (regime) {
+        case 'Low': return 'Baixa volatilidade - mercado calmo';
+        case 'Medium': return 'Volatilidade moderada - atenção';
+        case 'High': return 'Alta volatilidade - mercado agitado';
+        default: return 'Regime desconhecido';
+      }
+    }
+    
+    function getDirectionalDescription(signal) {
+      switch (signal) {
+        case 'PUT_BIAS': return 'Quedas mais violentas que subidas';
+        case 'CALL_BIAS': return 'Subidas mais violentas que quedas';
+        case 'NEUTRAL': return 'Volatilidade simétrica';
+        default: return 'Fluxo indefinido';
+      }
+    }
+    
+    function getSqueezeDescription(signal) {
+      switch (signal) {
+        case 'COMPRESSION': return 'Compressão - antecipa explosão';
+        case 'EXPANSION': return 'Expansão - possível reversão';
+        case 'NEUTRAL': return 'Condição neutra';
+        default: return 'Squeeze indefinido';
+      }
+    }
+    
+    function getSignalColor(signal) {
+      switch (signal) {
+        case 'BUY_VOLATILITY': return 'green';
+        case 'SELL_VOLATILITY': return 'red';
+        case 'PUT_BIAS': return 'orange';
+        case 'CALL_BIAS': return 'blue';
+        default: return 'gray';
+      }
+    }
+    
+    function loadTicker(ticker) {
+      stockInput.value = ticker;
+      analyzeStock();
+    }
+    
+    // Event Listeners
+    analyzeBtn.addEventListener('click', analyzeStock);
+    screenerBtn.addEventListener('click', runScreener);
+    
+    stockInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') analyzeStock();
+    });
+    
+    // Inicialização
+    async function initialize() {
+      const apiConnected = await testAPI();
+      
+      if (apiConnected) {
+        showStatus('Sistema de Regimes de Volatilidade carregado! Digite uma ação ou execute o rastreador.', 'info');
+      } else {
+        showStatus('Aviso: Erro na conectividade da API. Verifique se o servidor está rodando.', 'error');
+      }
+      
+      // Auto-load exemplo
+      setTimeout(() => {
+        stockInput.value = 'PETR4';
+      }, 1000);
+    }
+    
+    // Inicializar quando a página carregar
+    initialize();
+  </script>
+</body>
+</html>

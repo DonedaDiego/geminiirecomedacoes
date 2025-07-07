@@ -164,22 +164,22 @@
   <div class="relative min-h-screen">
     
     <!-- Glass floating navbar -->
-    <nav class="fixed top-6 left-1/2 transform -translate-x-1/2 z-50 bg-opacity-5 border-opacity-10 bg-white border-white border rounded-full pt-4 pr-4 pb-4 pl-4 shadow-xl backdrop-blur-md">
+    <nav class="fixed top-6 left-1/2 transform -translate-x-1/2 z-50 bg-opacity-5 border-opacity-10 bg-white border-white border rounded-full px-4 py-3 shadow-xl backdrop-blur-md">
       <div class="flex items-center justify-between">
         <div class="flex items-center">
-          <img src="https://app.geminii.com.br/wp-content/uploads/2025/06/logo.png" alt="Geminii Logo" class="w-6 h-6 cursor-pointer" onclick="window.location.href='/dashboard'">
+          <img src="/assets/logo.png" alt="Geminii Logo" class="w-6 h-6 cursor-pointer" onclick="window.location.href='/dashboard'">
         </div>
         <div class="hidden md:flex items-center space-x-6 text-xs text-gray-300 ml-8">
           <a href="/dashboard" class="hover:text-white transition-colors">Dashboard</a>
-          <a href="/monitor-basico" class="hover:text-white transition-colors">Monitor Beta</a>
           <span class="text-white font-medium">Long & Short</span>
+          <a href="/planos" class="hover:text-white transition-colors">Planos</a>
+          <a href="/sobre" class="hover:text-white transition-colors">Sobre</a>
         </div>
         <div class="flex items-center space-x-3 ml-8">
           <div id="apiStatus" class="w-8 h-8 bg-green-500 bg-opacity-10 border border-green-500 border-opacity-30 rounded-full flex items-center justify-center relative">
-            <i class="fas fa-shield-alt text-green-500 text-xs"></i>
+            <i class="fas fa-chart-line text-green-500 text-xs"></i>
             <div class="absolute -top-1 -right-1 w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
           </div>
-          <button onclick="window.location.href='/dashboard'" class="hover:bg-gray-200 transition-colors text-xs font-medium text-black bg-gray-100 rounded-full pt-1.5 pr-3 pb-1.5 pl-3">Voltar</button>
         </div>
       </div>
     </nav>
@@ -946,6 +946,8 @@
       const ctx = document.getElementById('zscoreChart');
       if (!ctx || !data.dates.length) return;
       
+      console.log('🔍 Dados do Z-Score Chart:', data);
+      
       new Chart(ctx, {
         type: 'line',
         data: {
@@ -957,30 +959,204 @@
             backgroundColor: 'rgba(186, 57, 175, 0.1)',
             borderWidth: 2,
             fill: false,
-            tension: 0.4
+            tension: 0.4,
+            pointRadius: 0,
+            pointHoverRadius: 4
+          },
+          // ✅ LINHA DE RESISTÊNCIA SUPERIOR (+2)
+          {
+            label: 'Resistência (+2)',
+            data: Array(data.dates.length).fill(2),
+            borderColor: '#ef4444',
+            borderWidth: 2,
+            borderDash: [10, 5],
+            fill: false,
+            pointRadius: 0,
+            pointHoverRadius: 0
+          },
+          // ✅ LINHA DE SUPORTE INFERIOR (-2)
+          {
+            label: 'Suporte (-2)',
+            data: Array(data.dates.length).fill(-2),
+            borderColor: '#22c55e',
+            borderWidth: 2,
+            borderDash: [10, 5],
+            fill: false,
+            pointRadius: 0,
+            pointHoverRadius: 0
+          },
+          // ✅ LINHA NEUTRA (0)
+          {
+            label: 'Linha Neutra',
+            data: Array(data.dates.length).fill(0),
+            borderColor: '#6b7280',
+            borderWidth: 1,
+            borderDash: [5, 5],
+            fill: false,
+            pointRadius: 0,
+            pointHoverRadius: 0
           }]
         },
         options: {
           responsive: true,
           maintainAspectRatio: false,
+          interaction: {
+            intersect: false,
+            mode: 'index'
+          },
           plugins: {
             legend: { 
               labels: { color: 'white' },
               display: true
+            },
+            tooltip: {
+              backgroundColor: 'rgba(0, 0, 0, 0.8)',
+              titleColor: 'white',
+              bodyColor: 'white',
+              borderColor: '#ba39af',
+              borderWidth: 1,
+              callbacks: {
+                label: function(context) {
+                  if (context.datasetIndex === 0) {
+                    return `Z-Score: ${context.parsed.y.toFixed(3)}`;
+                  }
+                  return null; // Não mostrar tooltip para linhas de referência
+                }
+              },
+              filter: function(tooltipItem) {
+                return tooltipItem.datasetIndex === 0; // Só mostrar tooltip do Z-Score
+              }
             }
           },
           scales: {
             x: { 
-              ticks: { color: 'white' }, 
-              grid: { color: 'rgba(255,255,255,0.1)' } 
+              ticks: { 
+                color: 'white',
+                maxTicksLimit: 10
+              }, 
+              grid: { 
+                color: 'rgba(255,255,255,0.1)',
+                borderColor: 'rgba(255,255,255,0.3)'
+              },
+              title: {
+                display: true,
+                text: 'Data',
+                color: 'white'
+              }
             },
             y: { 
-              ticks: { color: 'white' }, 
-              grid: { color: 'rgba(255,255,255,0.1)' } 
+              ticks: { 
+                color: 'white',
+                callback: function(value) {
+                  return value.toFixed(2);
+                }
+              }, 
+              grid: { 
+                color: 'rgba(255,255,255,0.1)',
+                borderColor: 'rgba(255,255,255,0.3)'
+              },
+              title: {
+                display: true,
+                text: 'Z-Score',
+                color: 'white'
+              }
             }
           }
         }
       });
+      
+      console.log('✅ Z-Score Chart renderizado com linhas de referência');
+    }
+
+    function createSpreadChart(data) {
+      const ctx = document.getElementById('spreadChart');
+      if (!ctx || !data.dates.length) return;
+      
+      console.log('🔍 Dados do Spread Chart:', data);
+      
+      // Calcular média para linha de referência
+      const values = data.values.filter(v => !isNaN(v) && v !== null);
+      const mean = values.length > 0 ? values.reduce((a, b) => a + b, 0) / values.length : 0;
+      
+      new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: data.dates,
+          datasets: [{
+            label: 'Spread (Razão de Preços)',
+            data: data.values,
+            borderColor: '#f59e0b',
+            backgroundColor: 'rgba(245, 158, 11, 0.1)',
+            borderWidth: 2,
+            fill: true,
+            tension: 0.4,
+            pointRadius: 0,
+            pointHoverRadius: 4
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: {
+            intersect: false,
+            mode: 'index'
+          },
+          plugins: {
+            legend: { 
+              labels: { color: 'white' },
+              display: true
+            },
+            tooltip: {
+              backgroundColor: 'rgba(0, 0, 0, 0.8)',
+              titleColor: 'white',
+              bodyColor: 'white',
+              borderColor: '#f59e0b',
+              borderWidth: 1,
+              callbacks: {
+                label: function(context) {
+                  return `Spread: ${context.parsed.y.toFixed(4)}`;
+                }
+              }
+            }
+          },
+          scales: {
+            x: { 
+              ticks: { 
+                color: 'white',
+                maxTicksLimit: 10
+              }, 
+              grid: { 
+                color: 'rgba(255,255,255,0.1)',
+                borderColor: 'rgba(255,255,255,0.3)'
+              },
+              title: {
+                display: true,
+                text: 'Data',
+                color: 'white'
+              }
+            },
+            y: { 
+              ticks: { 
+                color: 'white',
+                callback: function(value) {
+                  return value.toFixed(4);
+                }
+              }, 
+              grid: { 
+                color: 'rgba(255,255,255,0.1)',
+                borderColor: 'rgba(255,255,255,0.3)'
+              },
+              title: {
+                display: true,
+                text: 'Spread (Ação1/Ação2)',
+                color: 'white'
+              }
+            }
+          }
+        }
+      });
+      
+      console.log('✅ Spread Chart renderizado');
     }
     
     function createSpreadChart(data) {
@@ -1028,52 +1204,118 @@
       const ctx = document.getElementById('betaChart');
       if (!ctx) return;
       
-      if (!data.dates.length || data.dates.length === 0) {
+      console.log('🔍 Dados do Beta Chart:', data);
+      
+      if (!data.dates || !data.values || data.dates.length === 0) {
         ctx.parentElement.innerHTML = `
           <div class="text-center py-8 text-gray-400">
             <i class="fas fa-chart-line text-3xl mb-3"></i>
             <p>Dados de Beta Rotativo não disponíveis</p>
-            <p class="text-sm">Período insuficiente para cálculo</p>
+            <p class="text-sm">Período insuficiente para cálculo (mínimo 60 dias)</p>
           </div>
         `;
         return;
       }
+      
+      // Filtrar valores válidos
+      const validData = data.values.filter(v => !isNaN(v) && v !== null && v !== undefined);
+      if (validData.length === 0) {
+        ctx.parentElement.innerHTML = `
+          <div class="text-center py-8 text-gray-400">
+            <i class="fas fa-chart-line text-3xl mb-3"></i>
+            <p>Dados de Beta inválidos</p>
+            <p class="text-sm">Não foi possível calcular beta para este período</p>
+          </div>
+        `;
+        return;
+      }
+      
+      // Calcular estatísticas para linhas de referência
+      const mean = validData.reduce((a, b) => a + b, 0) / validData.length;
+      const variance = validData.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / validData.length;
+      const stdDev = Math.sqrt(variance);
+      
+      console.log(`📊 Beta Stats: média=${mean.toFixed(4)}, desvio=${stdDev.toFixed(4)}, pontos=${validData.length}`);
       
       new Chart(ctx, {
         type: 'line',
         data: {
           labels: data.dates,
           datasets: [{
-            label: 'Beta Rotativo',
+            label: 'Beta Rotativo (60 dias)',
             data: data.values,
             borderColor: '#22c55e',
             backgroundColor: 'rgba(34, 197, 94, 0.1)',
             borderWidth: 2,
             fill: false,
-            tension: 0.4
+            tension: 0.4,
+            pointRadius: 0,
+            pointHoverRadius: 4
           }]
         },
         options: {
           responsive: true,
           maintainAspectRatio: false,
+          interaction: {
+            intersect: false,
+            mode: 'index'
+          },
           plugins: {
             legend: { 
               labels: { color: 'white' },
               display: true
+            },
+            tooltip: {
+              backgroundColor: 'rgba(0, 0, 0, 0.8)',
+              titleColor: 'white',
+              bodyColor: 'white',
+              borderColor: '#22c55e',
+              borderWidth: 1,
+              callbacks: {
+                label: function(context) {
+                  return `Beta: ${context.parsed.y.toFixed(4)}`;
+                }
+              }
             }
           },
           scales: {
             x: { 
-              ticks: { color: 'white' }, 
-              grid: { color: 'rgba(255,255,255,0.1)' } 
+              ticks: { 
+                color: 'white',
+                maxTicksLimit: 10
+              }, 
+              grid: { 
+                color: 'rgba(255,255,255,0.1)',
+                borderColor: 'rgba(255,255,255,0.3)'
+              },
+              title: {
+                display: true,
+                text: 'Data',
+                color: 'white'
+              }
             },
             y: { 
-              ticks: { color: 'white' }, 
-              grid: { color: 'rgba(255,255,255,0.1)' } 
+              ticks: { 
+                color: 'white',
+                callback: function(value) {
+                  return value.toFixed(4);
+                }
+              }, 
+              grid: { 
+                color: 'rgba(255,255,255,0.1)',
+                borderColor: 'rgba(255,255,255,0.3)'
+              },
+              title: {
+                display: true,
+                text: 'Beta (Sensibilidade)',
+                color: 'white'
+              }
             }
           }
         }
       });
+      
+      console.log('✅ Beta Chart renderizado com sucesso');
     }
     // ===== FUNÇÃO PARA CALCULAR MARGEM =====
     async function calcularMargem() {

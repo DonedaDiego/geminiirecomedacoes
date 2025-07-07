@@ -609,10 +609,8 @@ def create_email_confirmations_table():
         print(f"❌ Erro ao criar tabela email_confirmations: {e}")
         return False
 
-
-
 def validate_coupon(code, plan_name, user_id):
-    """🔥 Validar cupom - CORRIGIDO para usar campos corretos"""
+    """Validar cupom usando os campos exatos do Railway"""
     try:
         conn = get_db_connection()
         if not conn:
@@ -620,12 +618,12 @@ def validate_coupon(code, plan_name, user_id):
         
         cursor = conn.cursor()
         
-        # ✅ CORREÇÃO: usar 'active' (não 'is_active') e 'current_uses' (não 'used_count')
+        # Buscar cupom com os campos que existem no Railway
         cursor.execute("""
-            SELECT id, discount_percent, discount_type, max_uses, current_uses, 
-                   expires_at, applicable_plans, min_amount
+            SELECT id, discount_percent, discount_type, max_uses, used_count, 
+                   valid_until, applicable_plans
             FROM coupons 
-            WHERE code = %s AND active = TRUE
+            WHERE code = %s AND (active = TRUE OR is_active = TRUE)
         """, (code.upper(),))
         
         coupon = cursor.fetchone()
@@ -635,22 +633,21 @@ def validate_coupon(code, plan_name, user_id):
             conn.close()
             return {'valid': False, 'error': 'Cupom não encontrado ou inativo'}
         
-        # ✅ USAR OS NOMES CORRETOS DAS COLUNAS
-        coupon_id, discount_percent, discount_type, max_uses, current_uses, expires_at, applicable_plans, min_amount = coupon
+        coupon_id, discount_percent, discount_type, max_uses, used_count, valid_until, applicable_plans = coupon
         
-        # ✅ VERIFICAR expires_at (não valid_until)
-        if expires_at and datetime.now(timezone.utc) > expires_at.replace(tzinfo=timezone.utc):
+        # Verificar se expirou
+        if valid_until and datetime.now(timezone.utc) > valid_until.replace(tzinfo=timezone.utc):
             cursor.close()
             conn.close()
             return {'valid': False, 'error': 'Cupom expirado'}
         
-        # ✅ USAR current_uses (não used_count)
-        if max_uses and current_uses >= max_uses:
+        # Verificar limite de usos
+        if max_uses and used_count and used_count >= max_uses:
             cursor.close()
             conn.close()
             return {'valid': False, 'error': 'Cupom esgotado'}
         
-        # Resto da função permanece igual...
+        # Verificar se usuário já usou
         cursor.execute("""
             SELECT id FROM coupon_uses 
             WHERE coupon_id = %s AND user_id = %s
@@ -664,20 +661,24 @@ def validate_coupon(code, plan_name, user_id):
         cursor.close()
         conn.close()
         
+        # Processar applicable_plans (é ARRAY no Railway)
+        plans_list = []
+        if applicable_plans:
+            if isinstance(applicable_plans, list):
+                plans_list = applicable_plans
+            elif isinstance(applicable_plans, str):
+                plans_list = applicable_plans.split(',')
+        
         return {
             'valid': True,
             'coupon_id': coupon_id,
-            'discount_percent': discount_percent,
-            'discount_type': discount_type,
-            'applicable_plans': applicable_plans.split(',') if applicable_plans else []
+            'discount_percent': float(discount_percent),
+            'discount_type': discount_type or 'percent',
+            'applicable_plans': plans_list
         }
         
     except Exception as e:
         return {'valid': False, 'error': f'Erro interno: {str(e)}'}
-
-
-
-
 
 def create_portfolio_tables():
     """Criar tabelas do sistema de portfolios"""
@@ -781,7 +782,6 @@ def create_portfolio_tables():
         print(f"❌ Erro ao criar tabelas de portfolio: {e}")
         return False
 
-
 def get_portfolio_assets(portfolio_name):
     """Buscar ativos de uma carteira específica"""
     try:
@@ -826,10 +826,7 @@ def get_portfolio_assets(portfolio_name):
     except Exception as e:
         print(f"❌ Erro em get_portfolio_assets: {e}")
         return []
-
   
-    
-
 
 if __name__ == "__main__":
     print("=" * 60)

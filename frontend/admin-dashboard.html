@@ -543,56 +543,48 @@
           </div>
           
           <!-- Create Coupon -->
-          <div>
-            <div class="admin-card p-6">
-              <h3 class="text-lg font-bold text-white mb-4">
-                <i class="fas fa-plus mr-2"></i>
-                Criar Cupom
-              </h3>
-              
-              <form id="couponForm" class="space-y-4">
-                <div>
-                  <label class="block text-sm text-gray-300 mb-1">Código do Cupom</label>
-                  <input type="text" id="couponCode" required
-                         class="w-full px-3 py-2 bg-white bg-opacity-10 border border-gray-600 rounded-lg text-white text-sm"
-                         placeholder="CURSO50">
-                </div>
-                
-                <div>
-                  <label class="block text-sm text-gray-300 mb-1">Desconto (%)</label>
-                  <input type="number" id="couponDiscount" required min="1" max="100"
-                         class="w-full px-3 py-2 bg-white bg-opacity-10 border border-gray-600 rounded-lg text-white text-sm"
-                         placeholder="50">
-                </div>
-                
-                <div>
-                  <label class="block text-sm text-gray-300 mb-1">Planos Aplicáveis</label>
-                  <select id="couponPlans" multiple class="w-full px-3 py-2 bg-white bg-opacity-10 border border-gray-600 rounded-lg text-white text-sm">
-                    <option value="pro">Pro</option>         
-                    <option value="premium">Premium</option>
-                  </select>
-                </div>
-                
-                <div>
-                  <label class="block text-sm text-gray-300 mb-1">Limite de Uso</label>
-                  <input type="number" id="couponMaxUses" min="1"
-                         class="w-full px-3 py-2 bg-white bg-opacity-10 border border-gray-600 rounded-lg text-white text-sm"
-                         placeholder="100">
-                </div>
-                
-                <div>
-                  <label class="block text-sm text-gray-300 mb-1">Valido Até</label>
-                  <input type="date" id="couponValidUntil"
-                         class="w-full px-3 py-2 bg-white bg-opacity-10 border border-gray-600 rounded-lg text-white text-sm">
-                </div>
-                
-                <button type="button" onclick="createRecommendationFree()" class="action-btn w-full bg-geminii hover:bg-purple-700 py-2 px-4 rounded-lg text-sm font-medium">
-                  <i class="fas fa-plus mr-1"></i>
-                  Criar Cupom
-                </button>
-              </form>
+          <form id="couponForm" class="space-y-4">
+            <div>
+              <label class="block text-sm text-gray-300 mb-1">Código do Cupom</label>
+              <input type="text" id="couponCode" required
+                     class="w-full px-3 py-2 bg-white bg-opacity-10 border border-gray-600 rounded-lg text-white text-sm"
+                     placeholder="CURSO50">
             </div>
-          </div>
+            
+            <div>
+              <label class="block text-sm text-gray-300 mb-1">Desconto (%)</label>
+              <input type="number" id="couponDiscount" required min="1" max="100"
+                     class="w-full px-3 py-2 bg-white bg-opacity-10 border border-gray-600 rounded-lg text-white text-sm"
+                     placeholder="50">
+            </div>
+            
+            <div>
+              <label class="block text-sm text-gray-300 mb-1">Planos Aplicáveis</label>
+              <select id="couponPlans" multiple required class="w-full px-3 py-2 bg-white bg-opacity-10 border border-gray-600 rounded-lg text-white text-sm">
+                <option value="pro">Pro</option>         
+                <option value="premium">Premium</option>
+              </select>
+            </div>
+            
+            <div>
+              <label class="block text-sm text-gray-300 mb-1">Limite de Uso</label>
+              <input type="number" id="couponMaxUses" min="1"
+                     class="w-full px-3 py-2 bg-white bg-opacity-10 border border-gray-600 rounded-lg text-white text-sm"
+                     placeholder="100">
+            </div>
+            
+            <div>
+              <label class="block text-sm text-gray-300 mb-1">Valido Até</label>
+              <input type="date" id="couponValidUntil"
+                     class="w-full px-3 py-2 bg-white bg-opacity-10 border border-gray-600 rounded-lg text-white text-sm">
+            </div>
+            
+            <!-- ✅ BOTÃO CORRETO -->
+            <button type="submit" class="action-btn w-full bg-geminii hover:bg-purple-700 py-2 px-4 rounded-lg text-sm font-medium">
+              <i class="fas fa-plus mr-1"></i>
+              Criar Cupom
+            </button>
+          </form>
         </div>
       </div>
       

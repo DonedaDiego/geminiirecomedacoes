@@ -23,6 +23,7 @@ from carrossel_yfinance_routes import get_carrossel_blueprint
 from recommendations_routes_free import get_recommendations_free_blueprint
 from volatilidade_routes import volatilidade_bp
 from email_routes import get_email_blueprint 
+from vol_regimes_routes import vol_regimes_bp
 
 from dotenv import load_dotenv
 
@@ -129,6 +130,8 @@ app.register_blueprint(volatilidade_bp)
 app.register_blueprint(recommendations_free_bp)
 trial_bp = get_trial_blueprint()
 app.register_blueprint(trial_bp)
+app.register_blueprint(vol_regimes_bp)
+
 
 CORS(app, 
      origins=['*'],
@@ -338,6 +341,10 @@ def Recomendation_free():
 @app.route('/sup_res_vol.html')
 def Sup_Res_volatility():
     return send_from_directory('../frontend', 'sup_res_vol.html')
+
+@app.route('/regimes-volatilidade.html')  # Adicionar esta linha
+def regimes_volatilidade_html():
+    return send_from_directory('../frontend', 'regimes-volatilidade.html')
 
 # ===== PÁGINAS DE RETORNO DO PAGAMENTO =====
 
