@@ -24,6 +24,7 @@ from recommendations_routes_free import get_recommendations_free_blueprint
 from volatilidade_routes import volatilidade_bp
 from email_routes import get_email_blueprint 
 from vol_regimes_routes import vol_regimes_bp
+from coupons_service import get_coupons_blueprint, get_validate_blueprint
 
 from dotenv import load_dotenv
 
@@ -131,7 +132,8 @@ app.register_blueprint(recommendations_free_bp)
 trial_bp = get_trial_blueprint()
 app.register_blueprint(trial_bp)
 app.register_blueprint(vol_regimes_bp)
-
+app.register_blueprint(get_coupons_blueprint())  
+app.register_blueprint(get_validate_blueprint())
 
 CORS(app, 
      origins=['*'],
