@@ -165,6 +165,21 @@
       border-color: rgba(138, 43, 226, 0.3);
       transform: translateY(-2px);
     }
+
+    .grid.grid-cols-1.md\\:grid-cols-2.lg\\:grid-cols-3 > div {
+      height: 100%;
+    }
+    
+    .grid.grid-cols-1.md\\:grid-cols-2.lg\\:grid-cols-3 > div > div {
+      height: 100%;
+      min-height: 120px; /* Altura mínima uniforme */
+    }
+
+    .grid.items-stretch > div > div {
+      height: 100%;
+      min-height: 120px;
+    }
+    
   </style>
 </head>
 <body class="min-h-screen">
@@ -388,7 +403,7 @@
           Ações Rápidas
         </h2>
         
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 items-stretch">
           
           <!-- GRÁTIS - Submenu -->
           <div class="relative">

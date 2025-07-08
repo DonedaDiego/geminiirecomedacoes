@@ -36,12 +36,13 @@
       background: rgba(255, 255, 255, 0.08);
       backdrop-filter: blur(20px);
       border: 1px solid rgba(255, 255, 255, 0.2);
-      border-radius: 16px;
+      border-radius: 20px;
+      padding: 2rem;
       transition: all 0.3s ease;
     }
     
     .beta-card:hover {
-      transform: translateY(-2px);
+      transform: translateY(-2px) scale(1.01);
       box-shadow: 0 20px 40px rgba(186, 57, 175, 0.15);
       border-color: rgba(186, 57, 175, 0.3);
     }
@@ -64,43 +65,6 @@
     @keyframes spin {
       0% { transform: rotate(0deg); }
       100% { transform: rotate(360deg); }
-    }
-    
-    .signal-card {
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 12px;
-      padding: 16px;
-      transition: all 0.3s ease;
-    }
-    
-    .signal-card:hover {
-      background: rgba(255, 255, 255, 0.08);
-      border-color: rgba(186, 57, 175, 0.3);
-    }
-    
-    .signal-compra { border-left: 4px solid #10b981; }
-    .signal-venda { border-left: 4px solid #ef4444; }
-    .signal-neutro { border-left: 4px solid #6b7280; }
-
-    /* Estilos escuros para select */
-    .dark-select {
-      background-color: rgba(30, 30, 30, 0.9);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      color: white;
-      backdrop-filter: blur(10px);
-    }
-
-    .dark-select option {
-      background-color: #1a1a1a;
-      color: white;
-      padding: 8px;
-    }
-
-    .dark-select:focus {
-      outline: none;
-      border-color: #ba39af;
-      box-shadow: 0 0 0 2px rgba(186, 57, 175, 0.2);
     }
 
     /* Tabs */
@@ -141,12 +105,36 @@
       to { opacity: 1; transform: translateY(0); }
     }
 
-    /* Plotly Container */
-    .plotly-container {
+    /* Chart Container - Dentro do card */
+    .chart-section {
       background: rgba(255, 255, 255, 0.02);
       border-radius: 12px;
-      padding: 20px;
-      min-height: 600px;
+      padding: 1.5rem;
+      margin-top: 2rem;
+    }
+
+    .chart-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1.5rem;
+    }
+
+    @media (min-width: 1024px) {
+      .chart-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    .chart-item {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      padding: 1.5rem;
+      min-height: 350px;
+    }
+
+    .chart-item.full-width {
+      grid-column: 1 / -1;
+      min-height: 400px;
     }
   </style>
 </head>
@@ -156,17 +144,17 @@
   <nav class="fixed top-6 left-1/2 transform -translate-x-1/2 z-50 bg-opacity-5 border-opacity-10 bg-white border-white border rounded-full px-4 py-3 shadow-xl backdrop-blur-md">
     <div class="flex items-center justify-between">
       <div class="flex items-center">
-        <img src="/assets/logo.png" alt="Geminii Logo" class="w-6 h-6 cursor-pointer" onclick="window.location.href='/dashboard'">
+        <img src="logo.png" alt="Geminii Logo" class="w-6 h-6 cursor-pointer" onclick="window.location.href='/'">
       </div>
       <div class="hidden md:flex items-center space-x-6 text-xs text-gray-300 ml-8">
         <a href="/dashboard" class="hover:text-white transition-colors">Dashboard</a>
+        <a href="swing-trade-machine-learning" class="hover:text-white transition-colors">ML Trading</a>
+        <a href="/beta-regression" class="hover:text-white transition-colors">Beta Regression</a>
         <span class="text-white font-medium">ATSMOM</span>
-        <a href="/planos" class="hover:text-white transition-colors">Planos</a>
-        <a href="/sobre" class="hover:text-white transition-colors">Sobre</a>
       </div>
       <div class="flex items-center space-x-3 ml-8">
         <div id="apiStatus" class="w-8 h-8 bg-green-500 bg-opacity-10 border border-green-500 border-opacity-30 rounded-full flex items-center justify-center relative">
-          <i class="fas fa-chart-line text-green-500 text-xs"></i>
+          <i class="fas fa-brain text-green-500 text-xs"></i>
           <div class="absolute -top-1 -right-1 w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
         </div>
       </div>
@@ -184,24 +172,18 @@
           <span class="text-white font-light">Analytics</span>
         </h1>
         <p class="text-neutral-300 text-lg max-w-2xl mx-auto">
-          Adaptive Time Series Momentum - Análise Avançada de Sinais de Trading
+          Adaptive Time Series Momentum - Análise Avançada de Sinais de Trading (5 Anos)
         </p>
       </div>
 
       <!-- Tabs -->
-      <div class="beta-card p-6 mb-8">
+      <div class="beta-card mb-8">
         <div class="flex flex-wrap gap-2 mb-6 justify-center">
           <button class="tab-button active" data-tab="individual">
             <i class="fas fa-chart-line mr-2"></i>Análise Individual
           </button>
-          <button class="tab-button" data-tab="bulk">
-            <i class="fas fa-list mr-2"></i>Análise em Lote
-          </button>
           <button class="tab-button" data-tab="compare">
             <i class="fas fa-balance-scale mr-2"></i>Comparar Ativos
-          </button>
-          <button class="tab-button" data-tab="overview">
-            <i class="fas fa-globe mr-2"></i>Visão Geral
           </button>
         </div>
 
@@ -215,44 +197,8 @@
                 placeholder="Digite o código da ação (ex: PETR4)" 
                 class="px-4 py-2 bg-white bg-opacity-10 border border-white border-opacity-20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-geminii backdrop-blur-sm"
               >
-              <select id="individual-period" class="dark-select px-4 py-2 rounded-lg">
-                <option value="1y">1 Ano</option>
-                <option value="2y" selected>2 Anos</option>
-                <option value="5y">5 Anos</option>
-                <option value="max">Máximo</option>
-              </select>
-              <input 
-                id="individual-strike" 
-                type="number" 
-                placeholder="Strike (opcional)" 
-                step="0.01"
-                class="px-4 py-2 bg-white bg-opacity-10 border border-white border-opacity-20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-geminii backdrop-blur-sm"
-              >
               <button id="analyzeIndividualBtn" class="px-6 py-2 bg-gradient-to-r from-pink-500 to-purple-600 hover:shadow-lg rounded-lg transition-all font-medium">
                 <i class="fas fa-rocket mr-2"></i>Analisar ATSMOM
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Tab Content: Bulk -->
-        <div id="bulk-content" class="tab-content">
-          <div class="flex flex-col md:flex-row gap-4 items-center justify-center">
-            <div class="flex gap-3 flex-wrap items-center">
-              <select id="bulk-period" class="dark-select px-4 py-2 rounded-lg">
-                <option value="1y">1 Ano</option>
-                <option value="2y" selected>2 Anos</option>
-                <option value="5y">5 Anos</option>
-                <option value="max">Máximo</option>
-              </select>
-              <input 
-                id="bulk-symbols" 
-                type="text" 
-                placeholder="Símbolos separados por vírgula (opcional)" 
-                class="px-4 py-2 bg-white bg-opacity-10 border border-white border-opacity-20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-geminii backdrop-blur-sm w-80"
-              >
-              <button id="analyzeBulkBtn" class="px-6 py-2 bg-gradient-to-r from-orange-500 to-red-600 hover:shadow-lg rounded-lg transition-all font-medium">
-                <i class="fas fa-list mr-2"></i>Analisar Carteira
               </button>
             </div>
           </div>
@@ -274,31 +220,8 @@
                 placeholder="Segundo ativo (ex: VALE3)" 
                 class="px-4 py-2 bg-white bg-opacity-10 border border-white border-opacity-20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-geminii backdrop-blur-sm"
               >
-              <select id="compare-period" class="dark-select px-4 py-2 rounded-lg">
-                <option value="1y">1 Ano</option>
-                <option value="2y" selected>2 Anos</option>
-                <option value="5y">5 Anos</option>
-                <option value="max">Máximo</option>
-              </select>
               <button id="compareBtn" class="px-6 py-2 bg-gradient-to-r from-purple-500 to-blue-600 hover:shadow-lg rounded-lg transition-all font-medium">
                 <i class="fas fa-balance-scale mr-2"></i>Comparar
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Tab Content: Overview -->
-        <div id="overview-content" class="tab-content">
-          <div class="flex flex-col md:flex-row gap-4 items-center justify-center">
-            <div class="flex gap-3 flex-wrap items-center">
-              <select id="overview-period" class="dark-select px-4 py-2 rounded-lg">
-                <option value="1y">1 Ano</option>
-                <option value="2y" selected>2 Anos</option>
-                <option value="5y">5 Anos</option>
-                <option value="max">Máximo</option>
-              </select>
-              <button id="overviewBtn" class="px-6 py-2 bg-gradient-to-r from-green-500 to-teal-600 hover:shadow-lg rounded-lg transition-all font-medium">
-                <i class="fas fa-globe mr-2"></i>Visão Geral
               </button>
             </div>
           </div>
@@ -308,9 +231,9 @@
       <!-- Status -->
       <div id="statusMsg" class="mb-6 p-4 rounded-lg hidden backdrop-blur-sm"></div>
 
-      <!-- Análise Individual - Resultados -->
+      <!-- Análise Individual - Resultados (TUDO EM UM CARD) -->
       <div id="individual-results" class="mb-8 hidden">
-        <div class="beta-card p-6">
+        <div class="beta-card">
           <div class="flex justify-between items-center mb-6">
             <h3 id="individual-title" class="text-2xl font-bold"></h3>
             <div id="individual-timestamp" class="text-sm text-gray-400"></div>
@@ -338,7 +261,7 @@
             </div>
           </div>
           
-          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
             <div>
               <h4 class="text-lg font-semibold mb-4">Métricas ATSMOM</h4>
               <div class="space-y-3">
@@ -357,112 +280,49 @@
               </div>
             </div>
             
-            <div id="individual-strike-analysis" class="hidden">
-              <h4 class="text-lg font-semibold mb-4">Análise de Strike</h4>
+            <div>
+              <h4 class="text-lg font-semibold mb-4">Período de Análise</h4>
               <div class="space-y-3">
                 <div class="bg-white bg-opacity-5 p-3 rounded-lg flex justify-between">
-                  <span class="text-gray-400">Strike:</span>
-                  <span id="strike-price" class="font-semibold">R$ 0,00</span>
+                  <span class="text-gray-400">Dados:</span>
+                  <span class="font-semibold">5 Anos</span>
                 </div>
                 <div class="bg-white bg-opacity-5 p-3 rounded-lg flex justify-between">
-                  <span class="text-gray-400">Distância:</span>
-                  <span id="strike-distance" class="font-semibold">0%</span>
+                  <span class="text-gray-400">Fonte:</span>
+                  <span class="font-semibold">Yahoo Finance</span>
                 </div>
-                <div class="bg-white bg-opacity-5 p-3 rounded">
-                  <div class="text-gray-400 text-sm mb-2">Análise:</div>
-                  <div id="strike-analysis-text" class="text-xs leading-relaxed">--</div>
+                <div class="bg-white bg-opacity-5 p-3 rounded-lg flex justify-between">
+                  <span class="text-gray-400">Benchmark:</span>
+                  <span class="font-semibold">IBOVESPA</span>
                 </div>
               </div>
             </div>
           </div>
-        </div>
-      </div>
 
-      <!-- Gráfico ATSMOM Principal -->
-      <div id="plotly-chart-container" class="mb-8 hidden">
-        <div class="beta-card p-6">
-          <h3 class="text-xl font-bold mb-4">
-            <i class="fas fa-chart-area text-purple-400 mr-2"></i>
-            Análise ATSMOM Completa
-          </h3>
-          <div class="plotly-container">
-            <div id="plotly-chart" style="width: 100%; height: 600px;"></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Análise em Lote - Resultados -->
-      <div id="bulk-results" class="mb-8 hidden">
-        <div class="beta-card p-6">
-          <h3 class="text-xl font-bold mb-6">Resumo da Carteira ATSMOM</h3>
-          
-          <!-- Resumo Cards -->
-          <div id="bulk-summary" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6"></div>
-          
-          <!-- Tabela -->
-          <div class="overflow-x-auto">
-            <table class="w-full">
-              <thead>
-                <tr class="border-b border-white border-opacity-10">
-                  <th class="text-left py-3 px-4">Ativo</th>
-                  <th class="text-left py-3 px-4">Preço</th>
-                  <th class="text-left py-3 px-4">Sinal</th>
-                  <th class="text-left py-3 px-4">Força</th>
-                  <th class="text-left py-3 px-4">Tendência</th>
-                  <th class="text-left py-3 px-4">Volatilidade</th>
-                  <th class="text-left py-3 px-4">Beta</th>
-                </tr>
-              </thead>
-              <tbody id="bulk-table-body">
-                <!-- Resultados serão inseridos aqui -->
-              </tbody>
-            </table>
+          <!-- GRÁFICOS DENTRO DO MESMO CARD -->
+          <div class="chart-section">
+            <h3 class="text-xl font-bold mb-6">
+              <i class="fas fa-chart-area text-purple-400 mr-2"></i>
+              Análise ATSMOM Completa
+            </h3>
+            <div id="plotly-chart" class="w-full"></div>
           </div>
         </div>
       </div>
 
       <!-- Comparação - Resultados -->
       <div id="compare-results" class="mb-8 hidden">
-        <div class="beta-card p-6 mb-6">
+        <div class="beta-card mb-6">
           <h3 class="text-xl font-bold mb-4">Resumo da Comparação</h3>
           <div id="comparison-summary" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
         </div>
         
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div id="compare-asset1" class="beta-card p-6">
+          <div id="compare-asset1" class="beta-card">
             <!-- Primeiro ativo -->
           </div>
-          <div id="compare-asset2" class="beta-card p-6">
+          <div id="compare-asset2" class="beta-card">
             <!-- Segundo ativo -->
-          </div>
-        </div>
-      </div>
-
-      <!-- Visão Geral - Resultados -->
-      <div id="overview-results" class="mb-8 hidden">
-        <div class="beta-card p-6">
-          <h3 class="text-xl font-bold mb-6">Visão Geral do Mercado</h3>
-          
-          <!-- Stats Cards -->
-          <div id="overview-stats" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4 mb-6"></div>
-          
-          <!-- Tabela -->
-          <div class="overflow-x-auto">
-            <table class="w-full">
-              <thead>
-                <tr class="border-b border-white border-opacity-10">
-                  <th class="text-left py-3 px-4">Ativo</th>
-                  <th class="text-left py-3 px-4">Preço</th>
-                  <th class="text-left py-3 px-4">Sinal</th>
-                  <th class="text-left py-3 px-4">Força</th>
-                  <th class="text-left py-3 px-4">Volatilidade</th>
-                  <th class="text-left py-3 px-4">Beta</th>
-                </tr>
-              </thead>
-              <tbody id="overview-table-body">
-                <!-- Resultados serão inseridos aqui -->
-              </tbody>
-            </table>
           </div>
         </div>
       </div>
@@ -505,9 +365,7 @@
         element.classList.remove('loading');
         const icon = element.querySelector('i');
         if (icon && element.id === 'analyzeIndividualBtn') icon.className = 'fas fa-rocket mr-2';
-        if (icon && element.id === 'analyzeBulkBtn') icon.className = 'fas fa-list mr-2';
         if (icon && element.id === 'compareBtn') icon.className = 'fas fa-balance-scale mr-2';
-        if (icon && element.id === 'overviewBtn') icon.className = 'fas fa-globe mr-2';
       }
     }
     
@@ -521,10 +379,7 @@
     
     function hideAllResults() {
       document.getElementById('individual-results').classList.add('hidden');
-      document.getElementById('plotly-chart-container').classList.add('hidden');
-      document.getElementById('bulk-results').classList.add('hidden');
       document.getElementById('compare-results').classList.add('hidden');
-      document.getElementById('overview-results').classList.add('hidden');
     }
 
     // Tab Navigation
@@ -547,8 +402,6 @@
     // Análise Individual
     async function analyzeIndividual() {
       const symbol = document.getElementById('individual-symbol').value.trim().toUpperCase();
-      const period = document.getElementById('individual-period').value;
-      const strike = document.getElementById('individual-strike').value;
       const btn = document.getElementById('analyzeIndividualBtn');
 
       if (!symbol) {
@@ -558,17 +411,12 @@
 
       setLoading(btn, true);
       hideAllResults();
-      showStatus('Executando análise ATSMOM... Isso pode levar alguns segundos', 'info');
+      showStatus('Executando análise ATSMOM (5 anos)... Isso pode levar alguns segundos', 'info');
 
       try {
         const payload = {
-          symbol: symbol,
-          period: period
+          symbol: symbol
         };
-
-        if (strike && strike.trim() !== '') {
-          payload.strike = parseFloat(strike);
-        }
 
         const response = await fetch(`${API_BASE}/analyze`, {
           method: 'POST',
@@ -597,7 +445,7 @@
       setLoading(btn, false);
     }
 
-    // Display Individual Results - CORRIGIDO IGUAL AO BETA REGRESSION
+    // Display Individual Results
     function displayIndividualResults(data) {
       console.log('=== DISPLAY INDIVIDUAL RESULTS ===');
       console.log('Data recebida:', data);
@@ -621,115 +469,64 @@
       document.getElementById('individual-beta').textContent = analysis.beta;
       document.getElementById('individual-update').textContent = analysis.last_update;
       
-      // Strike analysis if available
-      if (analysis.strike !== undefined) {
-        document.getElementById('strike-price').textContent = formatCurrency(analysis.strike);
-        document.getElementById('strike-distance').textContent = `${analysis.distance_to_strike}%`;
-        document.getElementById('strike-analysis-text').textContent = analysis.strike_analysis || 'Análise não disponível';
-        document.getElementById('individual-strike-analysis').classList.remove('hidden');
-      } else {
-        document.getElementById('individual-strike-analysis').classList.add('hidden');
-      }
-      
       // Show results
       document.getElementById('individual-results').classList.remove('hidden');
       
-      // NOVO: Criar gráfico com Chart.js baseado nos dados do ATSMOM
+      // Criar gráfico com Chart.js baseado nos dados do ATSMOM
       createATSMOMChart(data);
-      document.getElementById('plotly-chart-container').classList.remove('hidden');
     }
 
-    // NOVA FUNÇÃO: Criar gráfico ATSMOM com Chart.js (igual ao Beta Regression)
+    // NOVA FUNÇÃO: Criar gráfico ATSMOM com dados REAIS do backend
     function createATSMOMChart(data) {
       try {
-        console.log('Criando gráfico ATSMOM com Chart.js');
+        console.log('=== CRIANDO GRÁFICO ATSMOM COM DADOS REAIS ===');
+        console.log('Raw data recebida:', data.raw_data);
         
         const analysis = data.analysis_data;
+        const rawData = data.raw_data;
         
-        // Preparar dados para Chart.js
-        let chartData;
+        // Usar dados REAIS do backend
+        let chartData = {
+          labels: rawData.dates || [],
+          prices: rawData.prices || [],
+          signals: rawData.signals || [],
+          trends: rawData.trends || [],
+          ibov_signals: rawData.ibov_signals || [],
+          ibov_trends: rawData.ibov_trends || []
+        };
         
-        if (data.raw_data && data.raw_data.dates && data.raw_data.prices) {
-          // Usar dados reais
-          chartData = {
-            labels: data.raw_data.dates,
-            prices: data.raw_data.prices,
-            signals: data.raw_data.signals || [],
-            trends: data.raw_data.trends || []
-          };
-        } else {
-          // Gerar dados de exemplo
-          const numPoints = 60;
-          const dates = [];
-          const prices = [];
-          const signals = [];
-          const trends = [];
-          
-          const today = new Date();
-          let basePrice = analysis.current_price || 50;
-          
-          for (let i = numPoints; i >= 0; i--) {
-            const date = new Date(today);
-            date.setDate(date.getDate() - i);
-            dates.push(date.toLocaleDateString('pt-BR'));
-            
-            // Preço com movimento realista
-            const movement = Math.sin(i * 0.02) * 2 + (Math.random() - 0.5) * 1;
-            basePrice += movement * 0.3;
-            prices.push(Math.max(basePrice * 0.8, basePrice));
-            
-            // Sinal ATSMOM (-3 a +3)
-            const signal = Math.sin(i * 0.03) * 2.5 + (Math.random() - 0.5) * 1;
-            signals.push(Math.max(-3, Math.min(3, signal)));
-            
-            // Tendência
-            const trend = Math.sin(i * 0.025) * 1.8 + (Math.random() - 0.5) * 0.4;
-            trends.push(trend);
-          }
-          
-          // Definir valores atuais
-          prices[prices.length - 1] = analysis.current_price;
-          signals[signals.length - 1] = analysis.current_signal;
-          trends[trends.length - 1] = analysis.current_trend;
-          
-          chartData = { labels: dates, prices, signals, trends };
+        // Verificar se temos dados suficientes
+        if (chartData.labels.length === 0 || chartData.prices.length === 0) {
+          console.warn('Dados insuficientes, usando dados de exemplo');
+          chartData = generateExampleData(analysis);
         }
         
-        // Simular IBOV normalizado
-        const ibovPrices = chartData.prices.map((p, i) => p * (0.95 + Math.sin(i * 0.02) * 0.05));
-        const ibovSignals = chartData.signals.map(s => s * 0.8);
-        const ibovTrends = chartData.trends.map(t => t * 0.7);
-        
-        // Limpar container e criar HTML igual ao Beta Regression
+        // Criar HTML dos gráficos DENTRO do card
         const chartContainer = document.getElementById('plotly-chart');
         chartContainer.innerHTML = `
-          <!-- Gráfico Principal - Preços vs IBOV -->
-          <div class="mb-8">
-            <div class="beta-card p-6">
-              <h3 class="text-xl font-bold mb-4" style="color: #00FFAA;">
-                <i class="fas fa-chart-line mr-2"></i>
-                ${analysis.symbol} vs IBOV - Preços Normalizados
-              </h3>
-              <div class="mb-4 flex flex-wrap gap-4 text-sm">
-                <div class="flex items-center gap-2">
-                  <div class="w-3 h-3 rounded-full" style="background-color: #00FFAA;"></div>
-                  <span>${analysis.symbol}</span>
-                </div>
-                <div class="flex items-center gap-2">
-                  <div class="w-3 h-3 rounded-full" style="background-color: #ffffff;"></div>
-                  <span>IBOV (normalizado)</span>
-                </div>
+          <!-- Gráfico Principal - Preços -->
+          <div class="chart-item full-width mb-6">
+            <h3 class="text-xl font-bold mb-4" style="color: #00FFAA;">
+              <i class="fas fa-chart-line mr-2"></i>
+              ${analysis.symbol} - Preço de Fechamento
+            </h3>
+            <div class="mb-4 flex flex-wrap gap-4 text-sm">
+              <div class="flex items-center gap-2">
+                <div class="w-3 h-3 rounded-full" style="background-color: #00FFAA;"></div>
+                <span>${analysis.symbol}</span>
               </div>
-              <div style="position: relative; height: 300px; width: 100%;">
-                <canvas id="atsmomPriceChart"></canvas>
-              </div>
+            </div>
+            <div style="position: relative; height: 350px; width: 100%;">
+              <canvas id="atsmomPriceChart"></canvas>
             </div>
           </div>
 
-          <!-- Gráficos de Sinais -->
-          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div class="beta-card p-6">
-              <h3 class="text-xl font-bold mb-4" style="color: #00BFFF;">
+          <!-- Gráficos de Sinais - Grid -->
+          <div class="chart-grid">
+            
+            <!-- Força da Tendência -->
+            <div class="chart-item">
+              <h3 class="text-lg font-bold mb-4" style="color: #00BFFF;">
                 <i class="fas fa-wave-square mr-2"></i>
                 Força da Tendência (ATSMOM)
               </h3>
@@ -743,13 +540,14 @@
                   <span>Tendência IBOV</span>
                 </div>
               </div>
-              <div style="position: relative; height: 250px; width: 100%;">
+              <div style="position: relative; height: 280px; width: 100%;">
                 <canvas id="atsmomTrendChart"></canvas>
               </div>
             </div>
             
-            <div class="beta-card p-6">
-              <h3 class="text-xl font-bold mb-4" style="color: #9400D3;">
+            <!-- Sinal Ajustado -->
+            <div class="chart-item">
+              <h3 class="text-lg font-bold mb-4" style="color: #9400D3;">
                 <i class="fas fa-chart-area mr-2"></i>
                 Sinal Ajustado pela Volatilidade
               </h3>
@@ -763,13 +561,14 @@
                   <span>Sinal IBOV</span>
                 </div>
               </div>
-              <div style="position: relative; height: 250px; width: 100%;">
+              <div style="position: relative; height: 280px; width: 100%;">
                 <canvas id="atsmomSignalChart"></canvas>
               </div>
             </div>
+            
           </div>
         `;
-        
+
         // Configuração base para Chart.js (cyberpunk style)
         const baseChartConfig = {
           responsive: true,
@@ -783,28 +582,41 @@
               }
             },
             tooltip: {
-              backgroundColor: 'rgba(17, 17, 58, 0.9)',
+              backgroundColor: 'rgba(17, 17, 58, 0.95)',
               titleColor: '#00FFAA',
               bodyColor: '#ffffff',
               borderColor: '#00FFAA',
-              borderWidth: 1
+              borderWidth: 1,
+              cornerRadius: 8
             }
           },
           scales: {
             x: {
               ticks: { 
                 color: '#ffffff',
-                maxTicksLimit: 8
+                maxTicksLimit: 10
               },
-              grid: { color: 'rgba(255, 255, 255, 0.1)' }
+              grid: { 
+                color: 'rgba(255, 255, 255, 0.1)',
+                drawBorder: false
+              }
             },
             y: {
-              ticks: { color: '#ffffff' },
-              grid: { color: 'rgba(255, 255, 255, 0.1)' }
+              ticks: { 
+                color: '#ffffff',
+                font: { size: 11 }
+              },
+              grid: { 
+                color: 'rgba(255, 255, 255, 0.1)',
+                drawBorder: false
+              }
             }
           },
           elements: {
-            point: { radius: 0 }
+            point: { 
+              radius: 0,
+              hoverRadius: 4
+            }
           }
         };
         
@@ -823,16 +635,6 @@
                 borderWidth: 3,
                 fill: false,
                 tension: 0.1
-              },
-              {
-                label: 'IBOV (normalizado)',
-                data: ibovPrices,
-                borderColor: '#ffffff',
-                backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                borderWidth: 2,
-                fill: false,
-                tension: 0.1,
-                borderDash: [5, 5]
               }
             ]
           },
@@ -844,6 +646,7 @@
                 ...baseChartConfig.scales.y,
                 ticks: {
                   color: '#ffffff',
+                  font: { size: 11 },
                   callback: function(value) {
                     return 'R$ ' + value.toFixed(2);
                   }
@@ -854,6 +657,8 @@
         });
         
         // 2. Gráfico de Tendência
+        const trendMeanDev = calculateMeanDeviation(chartData.trends);
+        
         const trendCtx = document.getElementById('atsmomTrendChart').getContext('2d');
         new Chart(trendCtx, {
           type: 'line',
@@ -871,17 +676,54 @@
               },
               {
                 label: 'Tendência IBOV',
-                data: ibovTrends,
+                data: chartData.ibov_trends,
                 borderColor: '#ffffff',
                 backgroundColor: 'rgba(255, 255, 255, 0.05)',
                 borderWidth: 2,
                 fill: false,
                 tension: 0.1,
                 borderDash: [3, 3]
+              },
+              {
+                label: `+${trendMeanDev.toFixed(3)}`,
+                data: new Array(chartData.labels.length).fill(trendMeanDev),
+                borderColor: 'rgba(128, 128, 128, 0.8)',
+                backgroundColor: 'transparent',
+                borderWidth: 1,
+                borderDash: [2, 2],
+                fill: false,
+                pointRadius: 0,
+                tension: 0
+              },
+              {
+                label: `-${trendMeanDev.toFixed(3)}`,
+                data: new Array(chartData.labels.length).fill(-trendMeanDev),
+                borderColor: 'rgba(128, 128, 128, 0.8)',
+                backgroundColor: 'transparent',
+                borderWidth: 1,
+                borderDash: [2, 2],
+                fill: false,
+                pointRadius: 0,
+                tension: 0
               }
             ]
           },
-          options: baseChartConfig
+          options: {
+            ...baseChartConfig,
+            scales: {
+              ...baseChartConfig.scales,
+              y: {
+                ...baseChartConfig.scales.y,
+                ticks: {
+                  color: '#ffffff',
+                  font: { size: 11 },
+                  callback: function(value) {
+                    return value.toFixed(3);
+                  }
+                }
+              }
+            }
+          }
         });
         
         // 3. Gráfico de Sinais
@@ -902,13 +744,24 @@
               },
               {
                 label: 'Sinal IBOV',
-                data: ibovSignals,
+                data: chartData.ibov_signals,
                 borderColor: '#ffffff',
                 backgroundColor: 'rgba(255, 255, 255, 0.05)',
                 borderWidth: 1,
                 fill: false,
                 tension: 0.1,
                 borderDash: [2, 2]
+              },
+              {
+                label: 'Zero',
+                data: new Array(chartData.labels.length).fill(0),
+                borderColor: 'rgba(255, 255, 255, 0.5)',
+                backgroundColor: 'transparent',
+                borderWidth: 1,
+                borderDash: [5, 5],
+                fill: false,
+                pointRadius: 0,
+                tension: 0
               }
             ]
           },
@@ -918,18 +771,19 @@
               ...baseChartConfig.scales,
               y: {
                 ...baseChartConfig.scales.y,
-                min: -3,
-                max: 3,
                 ticks: {
                   color: '#ffffff',
-                  stepSize: 0.5
+                  font: { size: 11 },
+                  callback: function(value) {
+                    return value.toFixed(2);
+                  }
                 }
               }
             }
           }
         });
-        
-        console.log('✅ Gráficos ATSMOM criados com sucesso usando Chart.js');
+
+        console.log('✅ Gráfico de Sinal ATSMOM criado com sucesso');
         
       } catch (error) {
         console.error('❌ Erro ao criar gráficos ATSMOM:', error);
@@ -937,108 +791,85 @@
           <div style="color: white; text-align: center; padding: 50px;">
             <i class="fas fa-exclamation-triangle" style="font-size: 48px; color: #ef4444; margin-bottom: 20px;"></i>
             <h3>Erro ao carregar gráficos</h3>
-            <p>${error.message}</p>
+            <p>Erro: ${error.message}</p>
+            <p class="text-sm text-gray-400 mt-4">Verifique os dados do backend ou tente novamente.</p>
           </div>
         `;
       }
     }
 
-    // Análise em Lote
-    async function analyzeBulk() {
-      const period = document.getElementById('bulk-period').value;
-      const symbolsInput = document.getElementById('bulk-symbols').value.trim();
-      const btn = document.getElementById('analyzeBulkBtn');
-
-      setLoading(btn, true);
-      hideAllResults();
-      showStatus('Executando análise em lote... Isso pode levar alguns minutos', 'info');
-
-      try {
-        const payload = { period: period };
-        if (symbolsInput) {
-          payload.symbols = symbolsInput.split(',').map(s => s.trim().toUpperCase());
-        }
-
-        const response = await fetch(`${API_BASE}/bulk_analyze`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(payload)
-        });
-
-        const data = await response.json();
-
-        if (data.success) {
-          displayBulkResults(data);
-          showStatus(`Análise em lote concluída! ${data.total_analyzed} ativos processados.`, 'success');
-        } else {
-          showStatus(data.error || 'Erro na análise em lote', 'error');
-        }
-      } catch (error) {
-        showStatus('Erro ao executar análise em lote', 'error');
-        console.error(error);
-      }
-
-      setLoading(btn, false);
+    // Função para calcular desvio médio
+    function calculateMeanDeviation(data) {
+      if (!data || data.length === 0) return 0.001;
+      
+      const last252 = data.slice(-252); // Últimos 252 pontos
+      const absValues = last252.map(x => Math.abs(x));
+      const mean = absValues.reduce((sum, val) => sum + val, 0) / absValues.length;
+      
+      return isNaN(mean) || mean === 0 ? 0.001 : mean;
     }
 
-    // Display Bulk Results
-    function displayBulkResults(data) {
-      const compras = data.results.filter(r => r.signal_status === 'COMPRA').length;
-      const vendas = data.results.filter(r => r.signal_status === 'VENDA').length;
-      const neutros = data.results.filter(r => r.signal_status === 'NEUTRO').length;
+    // Função para gerar dados de exemplo caso não haja dados reais
+    function generateExampleData(analysis) {
+      console.warn('Gerando dados de exemplo - backend não retornou dados suficientes');
       
-      const summaryHtml = `
-        <div class="bg-white bg-opacity-5 p-4 rounded-lg text-center">
-          <div class="text-2xl font-bold">${data.total_analyzed}</div>
-          <div class="text-sm text-gray-400">Total Analisado</div>
-        </div>
-        <div class="bg-white bg-opacity-5 p-4 rounded-lg text-center">
-          <div class="text-2xl font-bold text-green-400">${compras}</div>
-          <div class="text-sm text-gray-400">Sinais de Compra</div>
-        </div>
-        <div class="bg-white bg-opacity-5 p-4 rounded-lg text-center">
-          <div class="text-2xl font-bold text-red-400">${vendas}</div>
-          <div class="text-sm text-gray-400">Sinais de Venda</div>
-        </div>
-        <div class="bg-white bg-opacity-5 p-4 rounded-lg text-center">
-          <div class="text-2xl font-bold text-gray-400">${neutros}</div>
-          <div class="text-sm text-gray-400">Sinais Neutros</div>
-        </div>
-        <div class="bg-white bg-opacity-5 p-4 rounded-lg text-center">
-          <div class="text-2xl font-bold text-red-400">${data.total_errors}</div>
-          <div class="text-sm text-gray-400">Erros</div>
-        </div>
-      `;
+      const numPoints = 60;
+      const dates = [];
+      const prices = [];
+      const signals = [];
+      const trends = [];
+      const ibov_signals = [];
+      const ibov_trends = [];
       
-      document.getElementById('bulk-summary').innerHTML = summaryHtml;
+      const today = new Date();
+      let basePrice = analysis.current_price || 50;
       
-      const tbody = document.getElementById('bulk-table-body');
-      tbody.innerHTML = data.results.map(result => `
-        <tr class="border-b border-white border-opacity-10 hover:bg-white hover:bg-opacity-5 cursor-pointer" onclick="analyzeFromTable('${result.symbol}')">
-          <td class="py-3 px-4 font-bold">${result.symbol}</td>
-          <td class="py-3 px-4">${formatCurrency(result.current_price)}</td>
-          <td class="py-3 px-4">
-            <span class="px-2 py-1 rounded-full text-xs ${getStatusBadgeClass(result.signal_status)}">
-              ${result.signal_status}
-            </span>
-          </td>
-          <td class="py-3 px-4">${result.current_signal.toFixed(4)}</td>
-          <td class="py-3 px-4">${result.current_trend.toFixed(4)}</td>
-          <td class="py-3 px-4">${result.current_volatility.toFixed(1)}%</td>
-          <td class="py-3 px-4">${result.beta}</td>
-        </tr>
-      `).join('');
+      for (let i = numPoints; i >= 0; i--) {
+        const date = new Date(today);
+        date.setDate(date.getDate() - i);
+        dates.push(date.toLocaleDateString('pt-BR'));
+        
+        // Preço do ativo
+        const movement = Math.sin(i * 0.02) * 2 + (Math.random() - 0.5) * 1;
+        basePrice += movement * 0.3;
+        prices.push(Math.max(basePrice * 0.8, basePrice));
+        
+        // Sinal ATSMOM (-3 a +3)
+        const signal = Math.sin(i * 0.03) * 2.5 + (Math.random() - 0.5) * 1;
+        signals.push(Math.max(-3, Math.min(3, signal)));
+        
+        // Sinal IBOV
+        const ibovSignal = signal * 0.8 + (Math.random() - 0.5) * 0.5;
+        ibov_signals.push(Math.max(-3, Math.min(3, ibovSignal)));
+        
+        // Tendência
+        const trend = Math.sin(i * 0.025) * 1.8 + (Math.random() - 0.5) * 0.4;
+        trends.push(trend);
+        
+        // Tendência IBOV
+        const ibovTrend = trend * 0.7 + (Math.random() - 0.5) * 0.3;
+        ibov_trends.push(ibovTrend);
+      }
       
-      document.getElementById('bulk-results').classList.remove('hidden');
+      // Definir valores atuais
+      prices[prices.length - 1] = analysis.current_price;
+      signals[signals.length - 1] = analysis.current_signal;
+      trends[trends.length - 1] = analysis.current_trend;
+      
+      return { 
+        labels: dates, 
+        prices, 
+        signals, 
+        trends, 
+        ibov_signals, 
+        ibov_trends 
+      };
     }
 
     // Comparar Ativos
     async function compareAssets() {
       const symbol1 = document.getElementById('compare-symbol1').value.trim().toUpperCase();
       const symbol2 = document.getElementById('compare-symbol2').value.trim().toUpperCase();
-      const period = document.getElementById('compare-period').value;
       const btn = document.getElementById('compareBtn');
 
       if (!symbol1 || !symbol2) {
@@ -1053,7 +884,7 @@
 
       setLoading(btn, true);
       hideAllResults();
-      showStatus('Comparando ativos... Isso pode levar alguns segundos', 'info');
+      showStatus('Comparando ativos (5 anos)... Isso pode levar alguns segundos', 'info');
 
       try {
         const response = await fetch(`${API_BASE}/compare`, {
@@ -1063,8 +894,7 @@
           },
           body: JSON.stringify({
             symbol1: symbol1,
-            symbol2: symbol2,
-            period: period
+            symbol2: symbol2
           })
         });
 
@@ -1143,103 +973,9 @@
       `;
     }
 
-    // Visão Geral do Mercado
-    async function getMarketOverview() {
-      const period = document.getElementById('overview-period').value;
-      const btn = document.getElementById('overviewBtn');
-
-      setLoading(btn, true);
-      hideAllResults();
-      showStatus('Carregando visão geral do mercado...', 'info');
-
-      try {
-        const response = await fetch(`${API_BASE}/market_overview?period=${period}`);
-        const data = await response.json();
-
-        if (data.success) {
-          displayOverviewResults(data);
-          showStatus('Visão geral carregada com sucesso!', 'success');
-        } else {
-          showStatus(data.error || 'Erro ao carregar visão geral', 'error');
-        }
-      } catch (error) {
-        showStatus('Erro ao carregar visão geral', 'error');
-        console.error(error);
-      }
-
-      setLoading(btn, false);
-    }
-
-    function displayOverviewResults(data) {
-      const overview = data.overview;
-      
-      const statsHtml = `
-        <div class="bg-white bg-opacity-5 p-4 rounded-lg text-center">
-          <div class="text-xl font-bold">${overview.total_assets}</div>
-          <div class="text-xs text-gray-400">Total</div>
-        </div>
-        <div class="bg-white bg-opacity-5 p-4 rounded-lg text-center">
-          <div class="text-xl font-bold text-green-400">${overview.buy_signals}</div>
-          <div class="text-xs text-gray-400">Compra</div>
-        </div>
-        <div class="bg-white bg-opacity-5 p-4 rounded-lg text-center">
-          <div class="text-xl font-bold text-red-400">${overview.sell_signals}</div>
-          <div class="text-xs text-gray-400">Venda</div>
-        </div>
-        <div class="bg-white bg-opacity-5 p-4 rounded-lg text-center">
-          <div class="text-xl font-bold text-gray-400">${overview.neutral_signals}</div>
-          <div class="text-xs text-gray-400">Neutro</div>
-        </div>
-        <div class="bg-white bg-opacity-5 p-4 rounded-lg text-center">
-          <div class="text-xl font-bold">${overview.average_volatility}%</div>
-          <div class="text-xs text-gray-400">Vol. Média</div>
-        </div>
-        <div class="bg-white bg-opacity-5 p-4 rounded-lg text-center">
-          <div class="text-xl font-bold ${getStatusColor(overview.market_sentiment)}">${overview.market_sentiment}</div>
-          <div class="text-xs text-gray-400">Sentimento</div>
-        </div>
-      `;
-      
-      document.getElementById('overview-stats').innerHTML = statsHtml;
-      
-      const tbody = document.getElementById('overview-table-body');
-      tbody.innerHTML = data.assets.map(asset => `
-        <tr class="border-b border-white border-opacity-10 hover:bg-white hover:bg-opacity-5 cursor-pointer" onclick="analyzeFromTable('${asset.symbol}')">
-          <td class="py-3 px-4 font-bold">${asset.symbol}</td>
-          <td class="py-3 px-4">${formatCurrency(asset.price)}</td>
-          <td class="py-3 px-4">
-            <span class="px-2 py-1 rounded-full text-xs ${getStatusBadgeClass(asset.signal)}">
-              ${asset.signal}
-            </span>
-          </td>
-          <td class="py-3 px-4">${asset.signal_strength.toFixed(4)}</td>
-          <td class="py-3 px-4">${asset.volatility.toFixed(1)}%</td>
-          <td class="py-3 px-4">${asset.beta}</td>
-        </tr>
-      `).join('');
-      
-      document.getElementById('overview-results').classList.remove('hidden');
-    }
-
-    function getStatusBadgeClass(status) {
-      switch(status) {
-        case 'COMPRA': return 'bg-green-600 bg-opacity-20 text-green-400 border border-green-500 border-opacity-30';
-        case 'VENDA': return 'bg-red-600 bg-opacity-20 text-red-400 border border-red-500 border-opacity-30';
-        default: return 'bg-gray-600 bg-opacity-20 text-gray-400 border border-gray-500 border-opacity-30';
-      }
-    }
-
-    function analyzeFromTable(symbol) {
-      document.querySelector('[data-tab="individual"]').click();
-      document.getElementById('individual-symbol').value = symbol;
-      analyzeIndividual();
-    }
-
     // Event Listeners
     document.getElementById('analyzeIndividualBtn').addEventListener('click', analyzeIndividual);
-    document.getElementById('analyzeBulkBtn').addEventListener('click', analyzeBulk);
     document.getElementById('compareBtn').addEventListener('click', compareAssets);
-    document.getElementById('overviewBtn').addEventListener('click', getMarketOverview);
 
     document.getElementById('individual-symbol').addEventListener('keypress', (e) => {
       if (e.key === 'Enter') analyzeIndividual();
@@ -1272,7 +1008,7 @@
     // Initialize
     document.addEventListener('DOMContentLoaded', function() {
       checkHealth();
-      showStatus('ATSMOM Analytics carregado! Selecione uma opção de análise para começar.', 'info');
+      showStatus('ATSMOM Analytics carregado! Análise com dados de 5 anos.', 'info');
     });
   </script>
 </body>

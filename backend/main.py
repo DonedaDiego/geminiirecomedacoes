@@ -176,7 +176,7 @@ try:
     from newsletter_routes import get_newsletter_blueprint
     newsletter_bp = get_newsletter_blueprint()
     app.register_blueprint(newsletter_bp)
-    print("✅ Blueprint Newsletter registrado!")
+    
 except Exception as e:
     print(f"❌ Erro newsletter: {e}")
 
@@ -187,7 +187,7 @@ email_bp = None
 try:
     email_bp = get_email_blueprint()  
     EMAIL_AVAILABLE = True
-    print("✅ Blueprint Email carregado com sucesso!")
+    
 except ImportError as e:
     print(f"⚠️ Email routes não disponível: {e}")
     EMAIL_AVAILABLE = False
