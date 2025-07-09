@@ -552,13 +552,12 @@
                   </div>
                 </div>
                 
-                <div onclick="showPremiumFeature('Greeks Monitor')" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white cursor-pointer">
-                  <i class="fas fa-calculator text-blue-400 w-5"></i>
+                <div onclick="window.location.href='screening.html'" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white cursor-pointer">
+                  <i class="fas fa-search text-purple-400 w-5"></i>
                   <div class="flex-1">
-                    <div class="font-medium">Greeks Monitor</div>
-                    <div class="text-xs text-gray-400">Delta, Gamma, Theta, Vega</div>
+                    <div class="font-medium">Screening</div>
+                    <div class="text-xs text-gray-400">Arbitragem, Straddle, Strangle, Collar</div>
                   </div>
-                  <span class="bg-red-600 text-white text-xs px-2 py-1 rounded-full font-bold">EM BREVE</span>
                 </div>
                 
                 <div onclick="showPremiumFeature('Volume Profile')" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white cursor-pointer">
@@ -1133,7 +1132,7 @@
       
       // Definir acesso baseado no recurso
       if (featureName === 'Long & Short' || featureName === 'Hunter Walls' || 
-          featureName === 'Greeks Monitor' || featureName === 'Volume Profile' || 
+          featureName === 'screening' || featureName === 'Volume Profile' || 
           featureName === 'IV Scanner' || featureName === 'Options Flow' ||
           featureName === 'Regimes de Volatilidade' || featureName === 'Regressão Linear' ||
           featureName === 'Volatilidade GARCH') {
@@ -1205,7 +1204,7 @@
         }
     
         // Recursos EM BREVE para Opções
-        if (featureName === 'Greeks Monitor') {
+        if (featureName === 'screening') {
           alert(`📊 Greeks Monitor\n\nMonitoramento completo de Delta, Gamma, Theta e Vega!\n\nEm breve será implementado.`);
           return;
         }

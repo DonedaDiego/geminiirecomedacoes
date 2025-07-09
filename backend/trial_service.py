@@ -54,7 +54,7 @@ def clear_cache(user_id):
 
 # ===== FUNÇÕES PRINCIPAIS DO TRIAL =====
 
-def create_trial_user(name, email, password):
+def create_trial_user(name, email, password, ip_address=None):
     """
     Criar usuário com trial Premium de 15 dias
     """
@@ -84,14 +84,14 @@ def create_trial_user(name, email, password):
             INSERT INTO users (
                 name, email, password, plan_id, plan_name, user_type,
                 plan_expires_at, created_at, updated_at, registration_date,
-                email_confirmed, email_confirmed_at
-            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                email_confirmed, email_confirmed_at, ip_address
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             RETURNING id
         """, (
             name, email, password_hash, 
             2, 'Premium', 'trial',  # 🔥 TRIAL PREMIUM
             trial_expires, now, now, now,
-            True, now
+            True, now, ip_address
         ))
         
         user_id = cursor.fetchone()[0]

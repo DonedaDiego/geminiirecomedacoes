@@ -22,27 +22,16 @@ class EmailService:
         # MODO TESTE - Para desenvolvimento sem SMTP
         self.test_mode = False  # Sempre usar SMTP real com suas credenciais
         
-        if self.test_mode:
-            print("⚠️ MODO TESTE ativo - Configure EMAIL_PASSWORD para emails reais")
-        else:
-            print(f"✅ SMTP ativo - Enviando de: {self.from_email}")
-            print(f"📡 Servidor: {self.smtp_server}:{self.smtp_port}")
-            print(f"🌐 Base URL: {self.base_url}")
+                
 
     def send_email(self, to_email, subject, html_content):
         """📧 Enviar email via SMTP corporativo"""
         try:
             if self.test_mode:
                 print(f"\n📧 [MODO TESTE] Email simulado:")
-                print(f"   Para: {to_email}")
-                print(f"   Assunto: {subject}")
-                print(f"   De: {self.from_email}")
-                print(f"   ✅ Email 'enviado' com sucesso")
+                
                 return True
-            
-            # 🔥 ENVIAR VIA SMTP CORPORATIVO
-            print(f"📤 Enviando email via SMTP para {to_email}...")
-            
+        
             # Criar mensagem
             msg = MIMEMultipart('alternative')
             msg['From'] = f"{self.from_name} <{self.from_email}>"
@@ -63,17 +52,15 @@ class EmailService:
             return True
             
         except smtplib.SMTPAuthenticationError as e:
-            print(f"❌ Erro de autenticação SMTP: {e}")
-            print(f"   Verifique SMTP_USERNAME e SMTP_PASSWORD")
             return False
         except smtplib.SMTPRecipientsRefused as e:
-            print(f"❌ Destinatário recusado: {e}")
+            
             return False
         except smtplib.SMTPServerDisconnected as e:
-            print(f"❌ Servidor SMTP desconectado: {e}")
+            
             return False
         except Exception as e:
-            print(f"❌ Erro ao enviar email: {e}")
+            
             return False
 
     def setup_tables(self):
@@ -112,7 +99,7 @@ class EmailService:
                         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                     )
                 """)
-                print("✅ Tabela email_confirmations criada")
+                
             except Exception as e:
                 print(f"⚠️ Erro ao criar email_confirmations: {e}")
             
@@ -157,7 +144,6 @@ class EmailService:
             cursor.close()
             conn.close()
             
-            print("🎉 Configuração de tabelas concluída!")
             return True
             
         except Exception as e:

@@ -36,6 +36,7 @@ def register():
         name = data.get('name', '').strip()
         email = data.get('email', '').strip().lower()
         password = data.get('password', '')
+        user_ip = request.remote_addr
         
         # Validações
         if not name or not email or not password:
@@ -51,17 +52,23 @@ def register():
         conn = get_db_connection()
         if not conn:
             return jsonify({'success': False, 'error': 'Erro de conexão com banco'}), 500
-        
+
         cursor = conn.cursor()
-        cursor.execute("SELECT id, email_confirmed FROM users WHERE email = %s", (email,))
+        cursor.execute("""
+            SELECT id, email_confirmed, 
+                CASE WHEN email = %s THEN 'email' ELSE 'ip' END as conflict_type
+            FROM users 
+            WHERE email = %s OR ip_address = %s
+        """, (email, email, user_ip))
+
         existing_user = cursor.fetchone()
         cursor.close()
         conn.close()
         
         if existing_user:
-            user_id, is_confirmed = existing_user
-            if is_confirmed:
-                return jsonify({'success': False, 'error': 'E-mail já cadastrado e confirmado'}), 400
+            user_id, is_confirmed, conflict_type = existing_user
+            if conflict_type == 'ip':
+                return jsonify({'success': False, 'error': 'Este usuário já foi registrado com outro e-mail! Dúvidas entre em contato com os canais abaixo'}), 400
             else:
                 # Email existe mas não confirmado - reenviar confirmação
                 token_result = email_service.generate_confirmation_token(user_id, email)
@@ -77,7 +84,7 @@ def register():
                 return jsonify({'success': False, 'error': 'Erro ao reenviar confirmação'}), 500
         
         # 🔥 USAR O TRIAL SERVICE PARA CRIAR USUÁRIO COM TRIAL PREMIUM
-        trial_result = create_trial_user(name, email, password)
+        trial_result = create_trial_user(name, email, password, user_ip)
         
         if not trial_result['success']:
             return jsonify({

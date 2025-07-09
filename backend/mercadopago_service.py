@@ -47,19 +47,20 @@ PLANS = {
         "id": "pro",
         "name": "Pro", 
         "db_id": 1,
-        "monthly_price": 79,
-        "annual_price": 72,
+        "monthly_price": 69.90,  # Corrigido
+        "annual_price": 650.00,  # Corrigido
         "features": ["Monitor avançado de ações", "RSL e análise técnica avançada", "Backtests automáticos", "Alertas via WhatsApp", "Dados históricos ilimitados", "API para desenvolvedores"]
     },
     "premium": {
         "id": "premium", 
         "name": "Premium",
         "db_id": 2,
-        "monthly_price": 149,
-        "annual_price": 137,
+        "monthly_price": 89.00,  # Corrigido
+        "annual_price": 800.00,  # Corrigido
         "features": ["Tudo do Pro +", "Long & Short strategies", "IA para recomendações", "Consultoria personalizada", "Acesso prioritário", "Relatórios exclusivos"]
     }
 }
+
 
 # ===== FUNÇÕES DE VALIDAÇÃO =====
 

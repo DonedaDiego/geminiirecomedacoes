@@ -25,7 +25,7 @@ def get_db_connection():
                     sslmode='require',
                     connect_timeout=10
                 )
-                print(f"✅ Conectado via DATABASE_URL (tentativa {attempt + 1})")
+                
             else:
                 conn = psycopg2.connect(
                     host=os.environ.get("DB_HOST", "localhost"),
@@ -35,7 +35,7 @@ def get_db_connection():
                     port=os.environ.get("DB_PORT", "5432"),
                     connect_timeout=10
                 )
-                print(f"✅ Conectado via variáveis locais (tentativa {attempt + 1})")
+                
             
             # Testar conexão
             cursor = conn.cursor()
@@ -104,13 +104,15 @@ def create_plans_table():
         
         cursor.execute("""
             INSERT INTO plans (id, name, display_name, price_monthly, price_annual, description, features) VALUES
-            (1, 'pro', 'Pro', 79.00, 72.00, 'Para quem já investe e quer se posicionar melhor', 
-             ARRAY['Monitor avançado de ações', 'RSL e análise técnica avançada', 'Backtests automáticos', 'Alertas via WhatsApp', 'Dados históricos ilimitados', 'API para desenvolvedores']),
-            (2, 'premium', 'Premium', 149.00, 137.00, 'Para investidores experientes que querem diferenciais', 
-             ARRAY['Tudo do Pro +', 'Long & Short strategies', 'IA para recomendações', 'Consultoria personalizada', 'Acesso prioritário', 'Relatórios exclusivos']),
+            (1, 'pro', 'Pro', 69.90, 650.00, 'Para quem já investe e quer se posicionar melhor', 
+            ARRAY['Monitor avançado de ações', 'RSL e análise técnica avançada', 'Backtests automáticos', 'Alertas via WhatsApp', 'Dados históricos ilimitados', 'API para desenvolvedores']),
+            (2, 'premium', 'Premium', 89.00, 800.00, 'Para investidores experientes que querem diferenciais', 
+            ARRAY['Tudo do Pro +', 'Long & Short strategies', 'IA para recomendações', 'Consultoria personalizada', 'Acesso prioritário', 'Relatórios exclusivos']),
             (3, 'basico', 'Básico', 0.00, 0.00, 'Acesso básico ao sistema', 
-             ARRAY['Acesso básico ao sistema', 'Dados limitados', 'Funcionalidades essenciais']);
+            ARRAY['Acesso básico ao sistema', 'Dados limitados', 'Funcionalidades essenciais']);
         """)
+
+
         
         # Resetar sequence
         cursor.execute("SELECT setval('plans_id_seq', 3, true)")
@@ -158,7 +160,8 @@ def create_users_table():
                 -- DATAS
                 registration_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                ip_address VARCHAR(45)
             );
         """)
         
@@ -166,6 +169,7 @@ def create_users_table():
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_users_type ON users(user_type);")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_users_subscription ON users(subscription_status);")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_users_plan_expires ON users(plan_expires_at);")
+        cursor.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS ip_address VARCHAR(45)")
         
         conn.commit()
         cursor.close()
@@ -193,7 +197,7 @@ def update_users_table_for_service():
         cursor.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS user_type VARCHAR(20) DEFAULT 'regular'")
         cursor.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS registration_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
         cursor.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS email_confirmed BOOLEAN DEFAULT TRUE")
-        cursor.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS email_confirmed_at TIMESTAMP")
+        cursor.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS ip_address VARCHAR(45)")
 
         
         # Atualizar dados existentes

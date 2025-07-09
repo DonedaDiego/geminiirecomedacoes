@@ -1201,8 +1201,8 @@ def get_enhanced_admin_stats(admin_id):
         cursor.execute("""
             SELECT COALESCE(SUM(
                 CASE 
-                    WHEN plan_id = 1 THEN 79 
-                    WHEN plan_id = 2 THEN 149 
+                    WHEN plan_id = 1 THEN 69.90 
+                    WHEN plan_id = 2 THEN 89 
                     ELSE 0 
                 END
             ), 0) FROM users WHERE plan_id IN (1, 2) AND user_type != 'deleted'

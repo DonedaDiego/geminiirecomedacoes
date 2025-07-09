@@ -25,6 +25,9 @@ from volatilidade_routes import volatilidade_bp
 from email_routes import get_email_blueprint 
 from vol_regimes_routes import vol_regimes_bp
 from coupons_service import get_coupons_blueprint, get_validate_blueprint
+#from screening_routes import screening_bp
+from arbitragem_puts_routes import arbitragem_puts_bp
+from box_3_routes import box3_bp
 
 from dotenv import load_dotenv
 
@@ -134,6 +137,10 @@ app.register_blueprint(trial_bp)
 app.register_blueprint(vol_regimes_bp)
 app.register_blueprint(get_coupons_blueprint())  
 app.register_blueprint(get_validate_blueprint())
+#app.register_blueprint(screening_bp, url_prefix='/screening')
+app.register_blueprint(arbitragem_puts_bp)
+app.register_blueprint(box3_bp)
+
 
 CORS(app, 
      origins=['*'],
@@ -347,6 +354,10 @@ def Sup_Res_volatility():
 @app.route('/regimes-volatilidade.html')  # Adicionar esta linha
 def regimes_volatilidade_html():
     return send_from_directory('../frontend', 'regimes-volatilidade.html')
+
+@app.route('/screening.html')  # Adicionar esta linha
+def Screening():
+    return send_from_directory('../frontend', 'screening.html')
 
 # ===== PÁGINAS DE RETORNO DO PAGAMENTO =====
 
@@ -738,7 +749,7 @@ if __name__ == "__main__":
     app.config['DEBUG'] = True
     
     # Executar Flask
-    print("🚀 Iniciando servidor Flask local...")
+    
     app.run(
         host='0.0.0.0',
         port=5000,
