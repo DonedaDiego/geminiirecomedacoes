@@ -6,7 +6,7 @@ import os
 from database import get_db_connection
 import mercadopago_service
 from trial_routes import get_trial_blueprint
-from trial_service import check_user_trial_status
+from control_pay_service import check_user_subscription_status
 
 
 from beta_routes import beta_bp
@@ -25,7 +25,7 @@ from volatilidade_routes import volatilidade_bp
 from email_routes import get_email_blueprint 
 from vol_regimes_routes import vol_regimes_bp
 from coupons_service import get_coupons_blueprint, get_validate_blueprint
-#from screening_routes import screening_bp
+from control_pay_routes import get_control_pay_blueprint
 from arbitragem_puts_routes import arbitragem_puts_bp
 from box_3_routes import box3_bp
 
@@ -137,10 +137,10 @@ app.register_blueprint(trial_bp)
 app.register_blueprint(vol_regimes_bp)
 app.register_blueprint(get_coupons_blueprint())  
 app.register_blueprint(get_validate_blueprint())
-#app.register_blueprint(screening_bp, url_prefix='/screening')
 app.register_blueprint(arbitragem_puts_bp)
 app.register_blueprint(box3_bp)
-
+control_pay_bp = get_control_pay_blueprint()
+app.register_blueprint(control_pay_bp)
 
 CORS(app, 
      origins=['*'],

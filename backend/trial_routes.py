@@ -4,8 +4,8 @@
 from flask import Blueprint, request, jsonify
 import jwt
 from datetime import datetime, timezone
+from control_pay_service import check_user_subscription_status
 from trial_service import (
-    check_user_trial_status,
     extend_user_trial,
     get_all_trial_users,
     process_expired_trials,
@@ -104,9 +104,9 @@ def require_admin():
 def get_trial_status(user_id):
     """Obter status do trial do usuário logado"""
     try:
-        result = check_user_trial_status(user_id)
+        result = check_user_subscription_status(user_id)
         
-        if not result.get('valid', False):
+        if not result.get('success', False):
             return jsonify({
                 'success': False,
                 'error': result.get('error', 'Erro desconhecido')
@@ -181,7 +181,7 @@ def check_pro_access(user_id):
 def get_trial_info(user_id):
     """Informações completas do trial para o dashboard"""
     try:
-        status = check_user_trial_status(user_id)
+        status = check_user_subscription_status(user_id)
         
         if not status.get('valid', False):
             return jsonify({
@@ -191,11 +191,10 @@ def get_trial_info(user_id):
         
         # Dados para o dashboard
         dashboard_data = {
-            'is_trial': status.get('is_trial', False),
-            'trial_expired': status.get('trial_expired', False),
-            'plan_id': status.get('plan_id', 3),
-            'plan_name': status.get('plan_name', 'Básico'),
-            'user_type': status.get('user_type', 'regular'),
+            'is_trial': status.get('subscription', {}).get('is_trial', False),
+            'plan_id': status.get('subscription', {}).get('current_plan_id', 3),
+            'plan_name': status.get('subscription', {}).get('current_plan_name', 'Básico'),
+            'user_type': status.get('user_info', {}).get('user_type', 'regular'),
             'message': status.get('message', ''),
             'can_access_premium': can_access_premium_features(user_id),
             'can_access_pro': can_access_pro_features(user_id)
@@ -330,9 +329,9 @@ def process_expired_trials_admin(admin_id):
 def get_user_trial_status_admin(admin_id, user_id):
     """Obter status do trial de um usuário específico (admin)"""
     try:
-        result = check_user_trial_status(user_id)
+        result = check_user_subscription_status(user_id)
         
-        if not result.get('valid', False):
+        if not result.get('success', False):
             return jsonify({
                 'success': False,
                 'error': result.get('error', 'Erro desconhecido')

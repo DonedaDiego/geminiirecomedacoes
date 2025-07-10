@@ -493,11 +493,60 @@ def find_or_create_user(cursor, payment_data):
     return None
 
 def calculate_expiration(cycle):
-    """Calcular data de expiração"""
+    """🔥 CORREÇÃO: Calcular data de expiração CORRETA baseada no ciclo"""
+    now = datetime.now(timezone.utc)
+    
     if cycle == 'annual':
-        return datetime.now(timezone.utc) + timedelta(days=365)
+        # Anual = 365 dias (1 ano)
+        expires_at = now + timedelta(days=365)
+        print(f"📅 ANUAL: Expira em {expires_at.strftime('%d/%m/%Y')}")
     else:
-        return datetime.now(timezone.utc) + timedelta(days=30)
+        # Mensal = 30 dias
+        expires_at = now + timedelta(days=30)
+        print(f"📅 MENSAL: Expira em {expires_at.strftime('%d/%m/%Y')}")
+    
+    return expires_at
+
+def update_user_plan_with_correct_expiration(cursor, user_id, plan_db_id, plan_name, cycle):
+    """Atualizar plano do usuário com data de expiração CORRETA"""
+    
+    # 🔥 NOVA VERIFICAÇÃO: Se usuário estava em trial, cancelar trial
+    cursor.execute("SELECT user_type FROM users WHERE id = %s", (user_id,))
+    current_user = cursor.fetchone()
+    
+    was_trial = current_user and current_user[0] == 'trial'
+    if was_trial:
+        print(f"   🔄 CANCELANDO TRIAL: Usuário {user_id} estava em trial, convertendo para pago")
+    
+    # Calcular expiração correta
+    expires_at = calculate_expiration(cycle)
+    
+    print(f"🔄 Atualizando usuário {user_id}:")
+    print(f"   - Plano: {plan_name}")
+    print(f"   - Ciclo: {cycle}")
+    print(f"   - Era trial: {'Sim' if was_trial else 'Não'}")
+    print(f"   - Expira: {expires_at.strftime('%d/%m/%Y às %H:%M')}")
+    
+    cursor.execute("""
+        UPDATE users 
+        SET plan_id = %s, 
+            plan_name = %s,
+            subscription_status = 'active',
+            subscription_plan = %s,
+            plan_expires_at = %s,
+            user_type = 'regular',
+            updated_at = NOW()
+        WHERE id = %s
+    """, (plan_db_id, plan_name, plan_name, expires_at, user_id))
+    
+    rows_updated = cursor.rowcount
+    print(f"✅ {rows_updated} linha(s) atualizada(s)")
+    
+    if rows_updated == 0:
+        raise Exception("ERRO: Nenhuma linha foi atualizada!")
+    
+    return expires_at
+
 
 def update_user_plan(cursor, user_id, plan_db_id, plan_name, expires_at):
     """Atualizar plano do usuário"""
@@ -614,9 +663,10 @@ def process_payment(payment_id):
         
         # 6. Processar
         ensure_tables_exist(cursor)
-        expires_at = calculate_expiration(payment_data['cycle'])
+        # expires_at = calculate_expiration(payment_data['cycle'])
+        # update_user_plan(cursor, user_data['id'], payment_data['plan_db_id'], payment_data['plan_name'], expires_at)
+        expires_at = update_user_plan_with_correct_expiration(cursor, user_data['id'], payment_data['plan_db_id'], payment_data['plan_name'], payment_data['cycle'])
         insert_payment_record(cursor, payment_id, user_data['id'], payment_data, device_id)
-        update_user_plan(cursor, user_data['id'], payment_data['plan_db_id'], payment_data['plan_name'], expires_at)
         insert_payment_history(cursor, user_data['id'], payment_data, payment_id)
         
         conn.commit()

@@ -4,7 +4,8 @@ import hashlib
 from datetime import datetime, timezone, timedelta
 from database import get_db_connection
 from email_service import email_service
-from trial_service import create_trial_user, check_user_trial_status
+from trial_service import create_trial_user
+from control_pay_service import check_user_subscription_status
 
 # Blueprint
 auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
@@ -287,7 +288,7 @@ def resend_confirmation():
 
 @auth_bp.route('/login', methods=['POST'])
 def login():
-    """🔥 Login com verificação de trial"""
+    """🔥 Login com verificação de subscription/trial"""
     try:
         data = request.get_json()
         
@@ -346,9 +347,14 @@ def login():
         
         print("✅ Email confirmado - procedendo com login")
         
-        # 🔥 VERIFICAR STATUS DO TRIAL
-        trial_status = check_user_trial_status(user_id)
-        print(f"📊 Status do trial: {trial_status}")
+        # 🔥 VERIFICAR STATUS DA SUBSCRIPTION/TRIAL
+        subscription_status = check_user_subscription_status(user_id)
+        print(f"📊 Status da subscription: {subscription_status}")
+        
+        # 🔥 VERIFICAR SE A FUNÇÃO RETORNOU SUCESSO
+        if not subscription_status.get('success', False):
+            print("❌ Erro ao verificar status da subscription")
+            return jsonify({'success': False, 'error': 'Erro ao verificar status da conta'}), 500
         
         # Gerar token JWT
         from flask import current_app
@@ -356,7 +362,11 @@ def login():
         
         print(f"🎫 Token JWT gerado: {token[:50]}...")
         
-        # 🔥 PREPARAR RESPOSTA COM TRIAL INFO
+        # 🔥 EXTRAIR DADOS DA SUBSCRIPTION
+        subscription_data = subscription_status.get('subscription', {})
+        user_data = subscription_status.get('user', {})
+        
+        # 🔥 PREPARAR RESPOSTA COM SUBSCRIPTION INFO
         login_response = {
             'success': True,
             'message': 'Login realizado com sucesso!',
@@ -365,45 +375,71 @@ def login():
                     'id': user_id,
                     'name': name,
                     'email': user_email,
-                    'plan_id': trial_status.get('plan_id', plan_id),
-                    'plan_name': trial_status.get('plan_name', plan_name),
-                    'user_type': trial_status.get('user_type', user_type),
+                    'plan_id': user_data.get('plan_id', plan_id),
+                    'plan_name': user_data.get('plan_name', plan_name),
+                    'user_type': user_data.get('user_type', user_type),
                     'email_confirmed': email_confirmed
                 },
                 'token': token
             }
         }
         
-        # 🔥 ADICIONAR TRIAL INFO SE APLICÁVEL
-        if trial_status.get('valid', False):
-            if trial_status.get('is_trial', False):
-                days_left = trial_status.get('days_remaining', 0)
-                
-                login_response['trial_info'] = {
-                    'is_trial': True,
-                    'expires_at': trial_status.get('expires_at'),
-                    'days_remaining': days_left,
-                    'hours_remaining': trial_status.get('hours_remaining', 0),
-                    'urgency_level': 'high' if days_left <= 3 else 'medium' if days_left <= 7 else 'low'
-                }
-                
-                # Mensagem personalizada baseada no tempo restante
-                if days_left <= 1:
-                    login_response['message'] = '⚠️ Seu trial Premium expira hoje! Não perca o acesso total.'
-                elif days_left <= 3:
-                    login_response['message'] = f'⏰ Apenas {days_left} dias restantes do seu trial Premium!'
-                elif days_left <= 7:
-                    login_response['message'] = f'🚀 Você tem {days_left} dias de trial Premium restantes!'
-                else:
-                    login_response['message'] = f'🎉 Bem-vindo! {days_left} dias de Premium restantes!'
+        # 🔥 ADICIONAR TRIAL/SUBSCRIPTION INFO
+        if subscription_data.get('is_trial', False):
+            days_left = subscription_data.get('days_remaining', 0)
             
-            elif trial_status.get('trial_expired', False):
-                login_response['trial_info'] = {
-                    'is_trial': False,
-                    'trial_expired': True,
-                    'message': 'Seu trial Premium expirou. Que tal fazer upgrade?'
-                }
-                login_response['message'] = '💡 Seu trial Premium expirou, mas você ainda pode acessar os recursos básicos!'
+            login_response['trial_info'] = {
+                'is_trial': True,
+                'expires_at': subscription_data.get('expires_at'),
+                'days_remaining': days_left,
+                'hours_remaining': subscription_data.get('hours_remaining', 0),
+                'urgency_level': 'high' if days_left <= 3 else 'medium' if days_left <= 7 else 'low'
+            }
+            
+            # Mensagem personalizada baseada no tempo restante
+            if days_left <= 1:
+                login_response['message'] = '⚠️ Seu trial Premium expira hoje! Não perca o acesso total.'
+            elif days_left <= 3:
+                login_response['message'] = f'⏰ Apenas {days_left} dias restantes do seu trial Premium!'
+            elif days_left <= 7:
+                login_response['message'] = f'🚀 Você tem {days_left} dias de trial Premium restantes!'
+            else:
+                login_response['message'] = f'🎉 Bem-vindo! {days_left} dias de Premium restantes!'
+        
+        elif subscription_data.get('status') == 'trial_expired':
+            login_response['trial_info'] = {
+                'is_trial': False,
+                'trial_expired': True,
+                'message': 'Seu trial Premium expirou. Que tal fazer upgrade?'
+            }
+            login_response['message'] = '💡 Seu trial Premium expirou, mas você ainda pode acessar os recursos básicos!'
+        
+        elif subscription_data.get('status') == 'active':
+            # Subscription paga ativa
+            days_until_renewal = subscription_data.get('days_until_renewal', 0)
+            
+            login_response['subscription_info'] = {
+                'is_paid': True,
+                'status': 'active',
+                'expires_at': subscription_data.get('expires_at'),
+                'days_until_renewal': days_until_renewal,
+                'plan_name': user_data.get('plan_name', plan_name)
+            }
+            
+            if days_until_renewal <= 3:
+                login_response['message'] = f'⚠️ Sua assinatura {user_data.get("plan_name", plan_name)} vence em {days_until_renewal} dias!'
+            elif days_until_renewal <= 7:
+                login_response['message'] = f'📅 Sua assinatura {user_data.get("plan_name", plan_name)} vence em {days_until_renewal} dias.'
+            else:
+                login_response['message'] = f'🎉 Bem-vindo! Assinatura {user_data.get("plan_name", plan_name)} ativa!'
+        
+        elif subscription_data.get('status') == 'expired':
+            login_response['subscription_info'] = {
+                'is_paid': False,
+                'status': 'expired',
+                'message': 'Sua assinatura expirou. Renove para continuar com acesso Premium!'
+            }
+            login_response['message'] = '💡 Sua assinatura expirou, mas você ainda pode acessar os recursos básicos!'
         
         print(f"🎉 Login bem-sucedido para: {name}")
         return jsonify(login_response), 200
@@ -430,7 +466,6 @@ def forgot_password():
         if not email or '@' not in email:
             return jsonify({'success': False, 'error': 'E-mail é obrigatório'}), 400
         
-        from email_service import email_service
         result = email_service.generate_password_reset_token(email)
         
         if result['success']:
@@ -530,7 +565,7 @@ def reset_password():
 
 @auth_bp.route('/verify', methods=['GET'])
 def verify_token():
-    """🔥 Verificar token JWT com informações de trial"""
+    """🔥 Verificar token JWT com informações de subscription/trial"""
     try:
         auth_header = request.headers.get('Authorization')
         
@@ -540,18 +575,17 @@ def verify_token():
         
         token = auth_header.replace('Bearer ', '')
         
-        
         try:
             from flask import current_app
             payload = jwt.decode(token, current_app.config['SECRET_KEY'], algorithms=['HS256'])
             user_id = payload['user_id']
             
-            # 🔥 VERIFICAR STATUS DO TRIAL PRIMEIRO
-            trial_status = check_user_trial_status(user_id)
+            # 🔥 VERIFICAR STATUS DA SUBSCRIPTION/TRIAL
+            subscription_status = check_user_subscription_status(user_id)
             
-            if not trial_status.get('valid', False):
-                print(f"❌ Status do trial inválido: {trial_status}")
-                return jsonify({'success': False, 'error': 'Usuário não encontrado ou erro no trial'}), 401
+            if not subscription_status.get('success', False):
+                print(f"❌ Erro ao verificar subscription: {subscription_status}")
+                return jsonify({'success': False, 'error': 'Erro ao verificar status da conta'}), 500
             
             conn = get_db_connection()
             if not conn:
@@ -574,8 +608,11 @@ def verify_token():
             
             user_id, name, email, plan_id, plan_name, user_type, email_confirmed = user
             
+            # 🔥 EXTRAIR DADOS DA SUBSCRIPTION
+            subscription_data = subscription_status.get('subscription', {})
+            user_data = subscription_status.get('user', {})
             
-            # 🔥 PREPARAR RESPOSTA COM TRIAL INFO
+            # 🔥 PREPARAR RESPOSTA COM SUBSCRIPTION INFO
             response_data = {
                 'success': True,
                 'data': {
@@ -583,32 +620,46 @@ def verify_token():
                         'id': user_id,
                         'name': name,
                         'email': email,
-                        'plan_id': trial_status.get('plan_id', plan_id),
-                        'plan_name': trial_status.get('plan_name', plan_name),
-                        'user_type': trial_status.get('user_type', user_type),
+                        'plan_id': user_data.get('plan_id', plan_id),
+                        'plan_name': user_data.get('plan_name', plan_name),
+                        'user_type': user_data.get('user_type', user_type),
                         'email_confirmed': email_confirmed
                     }
                 }
             }
             
-            # 🔥 ADICIONAR TRIAL INFO SE APLICÁVEL
-            if trial_status.get('is_trial', False):
+            # 🔥 ADICIONAR TRIAL/SUBSCRIPTION INFO
+            if subscription_data.get('is_trial', False):
                 response_data['trial_info'] = {
                     'is_trial': True,
-                    'expires_at': trial_status.get('expires_at'),
-                    'days_remaining': trial_status.get('days_remaining', 0),
-                    'hours_remaining': trial_status.get('hours_remaining', 0),
-                    'urgency_level': 'high' if trial_status.get('days_remaining', 0) <= 3 else 'medium' if trial_status.get('days_remaining', 0) <= 7 else 'low',
-                    'message': trial_status.get('message', 'Trial ativo')
+                    'expires_at': subscription_data.get('expires_at'),
+                    'days_remaining': subscription_data.get('days_remaining', 0),
+                    'hours_remaining': subscription_data.get('hours_remaining', 0),
+                    'urgency_level': 'high' if subscription_data.get('days_remaining', 0) <= 3 else 'medium' if subscription_data.get('days_remaining', 0) <= 7 else 'low',
+                    'message': subscription_data.get('message', 'Trial ativo')
                 }
-            elif trial_status.get('trial_expired', False):
+            elif subscription_data.get('status') == 'trial_expired':
                 response_data['trial_info'] = {
                     'is_trial': False,
                     'trial_expired': True,
                     'message': 'Trial expirado'
                 }
+            elif subscription_data.get('status') == 'active':
+                response_data['subscription_info'] = {
+                    'is_paid': True,
+                    'status': 'active',
+                    'expires_at': subscription_data.get('expires_at'),
+                    'days_until_renewal': subscription_data.get('days_until_renewal', 0),
+                    'plan_name': user_data.get('plan_name', plan_name)
+                }
+            elif subscription_data.get('status') == 'expired':
+                response_data['subscription_info'] = {
+                    'is_paid': False,
+                    'status': 'expired',
+                    'message': 'Assinatura expirada'
+                }
             
-            return jsonify(response_data)
+            return jsonify(response_data), 200
             
         except jwt.ExpiredSignatureError:
             print("❌ Token expirado")
@@ -633,4 +684,3 @@ def logout():
 def get_auth_blueprint():
     """Retornar blueprint para registrar no Flask"""
     return auth_bp
-
