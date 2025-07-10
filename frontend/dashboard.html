@@ -4,6 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dashboard - Geminii Tech</title>
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/logo.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="assets/logo.png">
+  <link rel="apple-touch-icon" href="assets/logo.png">
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -56,9 +59,9 @@
       top: 100%;
       left: 0;
       right: 0;
-      background: rgba(15, 15, 15, 0.98);
+      background: rgba(20, 20, 25, 0.98); 
       backdrop-filter: blur(20px);
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2); 
       border-radius: 16px;
       padding: 12px;
       margin-top: 8px;
@@ -67,7 +70,7 @@
       transform: translateY(-10px);
       transition: all 0.3s ease;
       z-index: 50;
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.8); 
     }
     
     .dropdown.show {
@@ -178,6 +181,15 @@
     .grid.items-stretch > div > div {
       height: 100%;
       min-height: 120px;
+    }
+    .dropdown a,
+    .dropdown div {
+      background-color: rgba(30, 30, 35, 0.6) !important;
+    }
+
+    .dropdown a:hover,
+    .dropdown div:hover {
+      background-color: rgba(50, 50, 60, 0.8) !important;
     }
     
   </style>

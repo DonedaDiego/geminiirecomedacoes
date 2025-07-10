@@ -99,7 +99,13 @@ def create_trial_user(name, email, password, ip_address=None):
         conn.commit()
         cursor.close()
         conn.close()
-        
+        try:
+            from email_service import email_service
+            email_service.send_trial_welcome_email(name, email)
+            print(f"📧 Email de boas-vindas enviado para: {email}")
+        except Exception as e:
+            print(f"❌ Erro ao enviar boas-vindas: {e}")
+                
         return {
             'success': True,
             'user_id': user_id,
