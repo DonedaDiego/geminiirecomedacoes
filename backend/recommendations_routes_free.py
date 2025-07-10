@@ -60,8 +60,17 @@ def get_active_recommendations():
 @recommendations_free_bp.route('/free/all', methods=['GET'])
 @require_auth
 def get_all_recommendations_public():
-    """✅ PÚBLICO: Buscar todas as recomendações (ativas + fechadas)"""
+    """✅ PÚBLICO: Buscar todas as recomendações (ativas + fechadas) COM AUTO-UPDATE"""
     try:
+        # 🔥 AUTO-UPDATE: Atualizar preços automaticamente
+        try:
+            print("🔄 Auto-update de preços no endpoint /free/all...")
+            RecommendationsServiceFree.update_current_prices()
+            print("✅ Auto-update concluído")
+        except Exception as update_error:
+            print(f"⚠️ Erro no auto-update (continuando): {update_error}")
+        
+        # Buscar recomendações
         from database import get_db_connection
         conn = get_db_connection()
         if not conn:
@@ -103,7 +112,8 @@ def get_all_recommendations_public():
         return jsonify({
             'success': True,
             'recommendations': recommendations,
-            'count': len(recommendations)
+            'count': len(recommendations),
+            'last_update': datetime.now(timezone.utc).isoformat()
         })
         
     except Exception as e:
@@ -195,6 +205,114 @@ def get_performance_history_public():
             'success': False,
             'error': f'Erro ao buscar histórico: {str(e)}'
         }), 500
+
+@recommendations_free_bp.route('/free/update-prices', methods=['POST'])
+@require_auth
+def update_prices_public():
+    """✅ PÚBLICO: Atualizar preços atuais via Yahoo Finance"""
+    try:
+        print("🔄 Iniciando atualização de preços (endpoint público)...")
+        
+        # Chamar função de atualização
+        success = RecommendationsServiceFree.update_current_prices()
+        
+        if success:
+            # Buscar recomendações atualizadas
+            recommendations = RecommendationsServiceFree.get_active_recommendations()
+            
+            print(f"✅ Preços atualizados para {len(recommendations)} recomendações")
+            
+            return jsonify({
+                'success': True,
+                'message': f'Preços atualizados com sucesso! {len(recommendations)} recomendações processadas.',
+                'recommendations': recommendations,
+                'updated_at': datetime.now(timezone.utc).isoformat(),
+                'count': len(recommendations)
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': 'Erro ao atualizar preços via Yahoo Finance'
+            }), 500
+            
+    except Exception as e:
+        print(f"❌ Erro ao atualizar preços: {e}")
+        return jsonify({
+            'success': False,
+            'error': f'Erro ao atualizar preços: {str(e)}'
+        }), 500
+
+@recommendations_free_bp.route('/free/refresh', methods=['POST'])
+@require_auth
+def refresh_all_data():
+    """✅ PÚBLICO: Refresh completo - atualiza preços e retorna dados atualizados"""
+    try:
+        print("🔄 Refresh completo iniciado...")
+        
+        # 1. Atualizar preços primeiro
+        price_update_success = RecommendationsServiceFree.update_current_prices()
+        
+        # 2. Buscar todas as recomendações (ativas + fechadas)
+        from database import get_db_connection
+        conn = get_db_connection()
+        if not conn:
+            return jsonify({'success': False, 'error': 'Erro de conexão'}), 500
+            
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT id, ticker, company_name, action, entry_price, stop_loss,
+                   target_price, current_price, confidence, risk_reward,
+                   technical_data, status, created_at, performance, closed_at
+            FROM recommendations_free
+            ORDER BY created_at DESC
+            LIMIT 100
+        """)
+        
+        all_recommendations = []
+        for row in cursor.fetchall():
+            all_recommendations.append({
+                'id': row[0],
+                'ticker': row[1],
+                'company_name': row[2],
+                'action': row[3],
+                'entry_price': float(row[4]),
+                'stop_loss': float(row[5]),
+                'target_price': float(row[6]),
+                'current_price': float(row[7]),
+                'confidence': float(row[8]),
+                'risk_reward': float(row[9]),
+                'technical_data': row[10],
+                'status': row[11],
+                'created_at': row[12].isoformat() if row[12] else None,
+                'performance': float(row[13]) if row[13] else 0,
+                'closed_at': row[14].isoformat() if row[14] else None
+            })
+        
+        cursor.close()
+        conn.close()
+        
+        # 3. Buscar estatísticas atualizadas
+        stats = RecommendationsServiceFree.get_statistics()
+        
+        print(f"✅ Refresh completo: {len(all_recommendations)} recomendações, preços {'atualizados' if price_update_success else 'com erro'}")
+        
+        return jsonify({
+            'success': True,
+            'message': f'Dados atualizados! {len(all_recommendations)} recomendações processadas.',
+            'recommendations': all_recommendations,
+            'statistics': stats,
+            'price_update_success': price_update_success,
+            'updated_at': datetime.now(timezone.utc).isoformat(),
+            'count': len(all_recommendations)
+        })
+        
+    except Exception as e:
+        print(f"❌ Erro no refresh completo: {e}")
+        return jsonify({
+            'success': False,
+            'error': f'Erro no refresh: {str(e)}'
+        }), 500
+
 
 # ===== ROTAS ADMIN (MANTIDAS COMO ESTAVAM) =====
 
