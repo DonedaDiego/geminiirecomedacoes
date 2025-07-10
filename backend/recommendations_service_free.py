@@ -45,14 +45,25 @@ class RecommendationsServiceFree:
     
     @staticmethod
     def calculate_technical_indicators(df):
-        """Calcular indicadores técnicos"""
-        # SMA
-        df['SMA_20'] = df['Close'].rolling(window=20).mean()
-        df['SMA_50'] = df['Close'].rolling(window=50).mean()
+        """Calcular indicadores técnicos com foco em cruzamento"""
         
-        # EMA
-        df['EMA_12'] = df['Close'].ewm(span=12, adjust=False).mean()
-        df['EMA_26'] = df['Close'].ewm(span=26, adjust=False).mean()
+        # ✅ MÉDIAS MAIS RÁPIDAS PARA SINAIS PRECISOS
+        df['EMA_9'] = df['Close'].ewm(span=9, adjust=False).mean()   # Média rápida
+        df['EMA_21'] = df['Close'].ewm(span=21, adjust=False).mean() # Média lenta
+        
+        # Detectar cruzamentos
+        df['Signal_Cross'] = 0
+        
+        # Cruzamento para CIMA (Golden Cross) = COMPRA
+        df.loc[(df['EMA_9'] > df['EMA_21']) & 
+            (df['EMA_9'].shift(1) <= df['EMA_21'].shift(1)), 'Signal_Cross'] = 1
+        
+        # Cruzamento para BAIXO (Death Cross) = VENDA  
+        df.loc[(df['EMA_9'] < df['EMA_21']) & 
+            (df['EMA_9'].shift(1) >= df['EMA_21'].shift(1)), 'Signal_Cross'] = -1
+        
+        # Força do cruzamento (% de distância entre médias)
+        df['Cross_Strength'] = abs((df['EMA_9'] - df['EMA_21']) / df['EMA_21'] * 100)
         
         # MACD
         df['MACD'] = df['EMA_12'] - df['EMA_26']
@@ -84,72 +95,74 @@ class RecommendationsServiceFree:
     
     @staticmethod
     def generate_ml_signal(stock_data):
-        """Gerar sinal usando lógica de ML simulada"""
+        """Gerar sinal com foco em cruzamento de médias"""
         df = stock_data['history'].copy()
         df = RecommendationsServiceFree.calculate_technical_indicators(df)
         
-        # Pegar últimos valores
         last_row = df.iloc[-1]
         current_price = float(last_row['Close'])
         
-        # Pontuação baseada em múltiplos indicadores
         score = 0
         
-        # Tendência de médias móveis
-        if current_price > last_row['SMA_20']:
+        # 🚀 CRUZAMENTO DE MÉDIAS (15 pontos - PESO MAIOR!)
+        if last_row['Signal_Cross'] == 1:  # Golden Cross
+            score += 10  # Sinal forte de compra
+            
+            # Bônus pela força do cruzamento
+            if last_row['Cross_Strength'] > 2:  # >2% de distância
+                score += 5
+            elif last_row['Cross_Strength'] > 1:  # >1% de distância  
+                score += 3
+                
+        elif last_row['Signal_Cross'] == -1:  # Death Cross
+            score -= 10  # Sinal forte de venda
+            
+            if last_row['Cross_Strength'] > 2:
+                score -= 5
+            elif last_row['Cross_Strength'] > 1:
+                score -= 3
+        
+        # Confirmar tendência (EMA 9 acima/abaixo EMA 21)
+        if last_row['EMA_9'] > last_row['EMA_21']:
+            score += 3  # Tendência de alta confirmada
+        else:
+            score -= 3  # Tendência de baixa confirmada
+        
+        # 📊 RSI para confirmar (5 pontos)
+        if 40 < last_row['RSI'] < 60:  # Zona neutra
             score += 2
-        if current_price > last_row['SMA_50']:
-            score += 2
-        if last_row['SMA_20'] > last_row['SMA_50']:
+        elif last_row['RSI'] < 35:  # Oversold + cruzamento = forte compra
             score += 3
+        elif last_row['RSI'] > 65:  # Overbought + cruzamento = forte venda
+            score -= 3
         
-        # MACD
-        if last_row['MACD'] > last_row['Signal']:
-            score += 3
-        if last_row['MACD_Histogram'] > 0:
-            score += 2
-        
-        # RSI
-        if 30 < last_row['RSI'] < 70:
-            score += 2
-        elif last_row['RSI'] < 30:
-            score += 4  # Oversold
-        elif last_row['RSI'] > 70:
-            score -= 4  # Overbought
-        
-        # Bollinger Bands
-        if current_price < last_row['BB_Lower']:
-            score += 3  # Possível reversão
-        elif current_price > last_row['BB_Upper']:
-            score -= 3  # Possível correção
-        
-        # Volume
+        # 📈 Volume confirmação (3 pontos)
         avg_volume = df['Volume'].rolling(window=20).mean().iloc[-1]
         if last_row['Volume'] > avg_volume * 1.5:
-            score += 2  # Alto volume
+            score += 3  # Volume confirma o movimento
         
-        # Momentum (últimos 5 dias)
-        momentum = (current_price - df['Close'].iloc[-5]) / df['Close'].iloc[-5] * 100
-        if momentum > 2:
-            score += 2
-        elif momentum < -2:
-            score -= 2
+        # 🎯 DECISÃO MAIS SELETIVA
+        if score >= 12:  # Precisa de score maior para COMPRA
+            action = 'COMPRA'
+            confidence = min(score / 18 * 100, 95)
+        elif score <= -8:  # Score menor para VENDA
+            action = 'VENDA'  
+            confidence = min(abs(score) / 18 * 100, 95)
+        else:
+            return None  # Não gera recomendação
         
-        # Decisão final
-        action = 'COMPRA' if score >= 8 else 'VENDA' if score <= -3 else None
-        confidence = min(abs(score) / 15 * 100, 95)  # Confiança máxima de 95%
-        
-        # Calcular alvos e stops
+        # Calcular stops/alvos baseados no cruzamento
         atr = last_row['ATR']
+        ema_distance = abs(last_row['EMA_9'] - last_row['EMA_21'])
         
         if action == 'COMPRA':
-            stop_loss = current_price - (atr * 2)
-            target_price = current_price + (atr * 3.5)
-        elif action == 'VENDA':
-            stop_loss = current_price + (atr * 2)
-            target_price = current_price - (atr * 3.5)
-        else:
-            return None
+            # Stop abaixo da EMA 21 ou 1.5x ATR
+            stop_loss = min(last_row['EMA_21'] * 0.98, current_price - (atr * 1.5))
+            target_price = current_price + (atr * 3)
+        else:  # VENDA
+            # Stop acima da EMA 21 ou 1.5x ATR  
+            stop_loss = max(last_row['EMA_21'] * 1.02, current_price + (atr * 1.5))
+            target_price = current_price - (atr * 3)
         
         return {
             'action': action,
@@ -158,49 +171,64 @@ class RecommendationsServiceFree:
             'target_price': target_price,
             'confidence': confidence,
             'score': score,
-            'risk_reward': 3.5 / 2,  # Sempre 1:1.75
+            'crossover_signal': last_row['Signal_Cross'],
+            'cross_strength': last_row['Cross_Strength'],
+            'ema_9': last_row['EMA_9'],
+            'ema_21': last_row['EMA_21'],
             'technical_data': {
+                'ema_9': float(last_row['EMA_9']),
+                'ema_21': float(last_row['EMA_21']),
+                'crossover': int(last_row['Signal_Cross']),
+                'cross_strength': float(last_row['Cross_Strength']),
                 'rsi': float(last_row['RSI']),
-                'macd': float(last_row['MACD']),
-                'sma20': float(last_row['SMA_20']),
-                'sma50': float(last_row['SMA_50']),
                 'volume_ratio': float(last_row['Volume'] / avg_volume)
             }
         }
+
+    @staticmethod
+    def generate_ml_signal_buy_only(stock_data):
+        """Versão que gera APENAS recomendações de COMPRA"""
+        
+        signal = RecommendationsServiceFree.generate_ml_signal(stock_data)
+        
+        # ✅ SÓ RETORNA SE FOR COMPRA
+        if signal and signal['action'] == 'COMPRA':
+            return signal
+        else:
+            return None
     
     @staticmethod
     def generate_monthly_recommendations():
-        """Gerar recomendações mensais automáticas"""
+        """Gerar apenas 2 recomendações de COMPRA por mês"""
         recommendations = []
-        analyzed_stocks = []
         
-        # Embaralhar lista de ações para variedade
         stocks = RecommendationsServiceFree.STOCKS_POOL.copy()
         random.shuffle(stocks)
         
-        # Analisar cada ação
         for ticker in stocks:
             stock_data = RecommendationsServiceFree.get_stock_data(ticker)
             if not stock_data:
                 continue
             
-            signal = RecommendationsServiceFree.generate_ml_signal(stock_data)
-            if signal and signal['confidence'] >= 70:  # Apenas sinais com alta confiança
+            # ✅ USAR VERSÃO SÓ COMPRAS
+            signal = RecommendationsServiceFree.generate_ml_signal_buy_only(stock_data)
+            
+            if signal and signal['confidence'] >= 75:  # Confiança maior para compras
                 recommendations.append({
                     'ticker': ticker,
                     'company_name': stock_data['company_name'],
-                    'action': signal['action'],
+                    'action': signal['action'],  # Sempre COMPRA
                     'entry_price': signal['entry_price'],
-                    'stop_loss': signal['stop_loss'],
+                    'stop_loss': signal['stop_loss'], 
                     'target_price': signal['target_price'],
                     'current_price': signal['entry_price'],
                     'confidence': signal['confidence'],
-                    'risk_reward': signal['risk_reward'],
+                    'crossover_type': 'Golden Cross' if signal['crossover_signal'] == 1 else 'Trend Confirmation',
                     'technical_data': signal['technical_data']
                 })
                 
-                # Limitar a 4-6 recomendações por mês
-                if len(recommendations) >= 5:
+                # ✅ APENAS 2 RECOMENDAÇÕES
+                if len(recommendations) >= 2:
                     break
         
         return recommendations

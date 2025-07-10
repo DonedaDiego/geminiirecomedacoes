@@ -28,6 +28,7 @@ from coupons_service import get_coupons_blueprint, get_validate_blueprint
 from control_pay_routes import get_control_pay_blueprint
 from arbitragem_puts_routes import arbitragem_puts_bp
 from box_3_routes import box3_bp
+from amplitude_routes import amplitude_bp
 
 from dotenv import load_dotenv
 
@@ -141,6 +142,7 @@ app.register_blueprint(arbitragem_puts_bp)
 app.register_blueprint(box3_bp)
 control_pay_bp = get_control_pay_blueprint()
 app.register_blueprint(control_pay_bp)
+app.register_blueprint(amplitude_bp)
 
 CORS(app, 
      origins=['*'],
@@ -358,6 +360,10 @@ def regimes_volatilidade_html():
 @app.route('/screening.html')  # Adicionar esta linha
 def Screening():
     return send_from_directory('../frontend', 'screening.html')
+
+@app.route('/amplitude.html')  # Adicionar esta linha
+def ampli():
+    return send_from_directory('../frontend', 'amplitude.html')
 
 # ===== PÁGINAS DE RETORNO DO PAGAMENTO =====
 

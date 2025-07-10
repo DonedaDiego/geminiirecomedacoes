@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Monitor Amplitude - Geminii Tech</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            dark: '#000000',
+            light: '#ffffff',
+            subtle: 'rgba(255,255,255,0.1)',
+            geminii: '#ba39af'
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    body { 
+      font-family: 'Inter', sans-serif; 
+      background: linear-gradient(135deg, #0c0c0c 0%, #1a1a1a 100%);
+      min-height: 100vh;
+    }
+    
+    .amplitude-card {
+      background: rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 16px;
+      transition: all 0.3s ease;
+    }
+    
+    .amplitude-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 20px 40px rgba(186, 57, 175, 0.15);
+      border-color: rgba(186, 57, 175, 0.3);
+    }
+    
+    .volatility-badge {
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      border: 1px solid;
+    }
+    
+    .loading {
+      opacity: 0.6;
+      pointer-events: none;
+    }
+    
+    .spinner {
+      border: 2px solid rgba(255, 255, 255, 0.1);
+      border-radius: 50%;
+      border-top: 2px solid #ba39af;
+      width: 20px;
+      height: 20px;
+      animation: spin 1s linear infinite;
+      display: inline-block;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    .period-tabs {
+      display: flex;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      padding: 4px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .period-tab {
+      flex: 1;
+      padding: 8px 16px;
+      text-align: center;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-size: 14px;
+      font-weight: 500;
+    }
+    
+    .period-tab.active {
+      background: linear-gradient(45deg, #ba39af, #d946ef);
+      color: white;
+    }
+    
+    .period-tab:not(.active) {
+      color: rgba(255, 255, 255, 0.6);
+    }
+    
+    .period-tab:not(.active):hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .distribution-bar {
+      height: 8px;
+      border-radius: 4px;
+      background: linear-gradient(90deg, #ba39af, #d946ef);
+      transition: all 0.3s ease;
+    }
+
+    .distribution-item {
+      border-left: 4px solid transparent;
+      transition: all 0.3s ease;
+    }
+
+    .distribution-item:hover {
+      border-left-color: #ba39af;
+      background: rgba(186, 57, 175, 0.1);
+    }
+  </style>
+</head>
+<body class="text-white">
+  
+  <!-- Navbar -->
+  <nav class="fixed top-6 left-1/2 transform -translate-x-1/2 z-50 bg-opacity-5 border-opacity-10 bg-white border-white border rounded-full px-4 py-3 shadow-xl backdrop-blur-md">
+    <div class="flex items-center justify-between">
+      <div class="flex items-center">
+        <img src="logo.png" alt="Geminii Logo" class="w-6 h-6 cursor-pointer" onclick="window.location.href='/'">
+      </div>
+      <div class="hidden md:flex items-center space-x-6 text-xs text-gray-300 ml-8">
+        <a href="/dashboard" class="hover:text-white transition-colors">Dashboard</a>
+        <a href="/beta" class="hover:text-white transition-colors">Monitor Beta</a>
+        <span class="text-white font-medium">Amplitude</span>
+        <a href="/rsl" class="hover:text-white transition-colors">RSL Radar</a>
+        <a href="sup_res_vol.html" class="hover:text-white transition-colors">Suporte e Resistência</a>
+      </div>
+      <div class="flex items-center space-x-3 ml-8">
+        <div id="apiStatus" class="w-8 h-8 bg-green-500 bg-opacity-10 border border-green-500 border-opacity-30 rounded-full flex items-center justify-center relative">
+          <i class="fas fa-chart-bar text-green-500 text-xs"></i>
+          <div class="absolute -top-1 -right-1 w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Content -->
+  <div class="pt-32 pb-16">
+    <div class="max-w-7xl mx-auto px-6">
+      
+      <!-- Header -->
+      <div class="text-center mb-12">
+        <h1 class="text-4xl md:text-5xl font-bold mb-4">
+          <span style="color: #ba39af; font-weight: 900;">Monitor</span>
+          <span class="text-white font-light">Amplitude</span>
+        </h1>
+        <p class="text-neutral-300 text-lg max-w-2xl mx-auto">
+          Análise completa de amplitude de variação: descubra como os ativos oscilam em diferentes períodos para timing perfeito de entrada
+        </p>
+      </div>
+
+      <!-- Controles -->
+      <div class="amplitude-card p-6 mb-8">
+        <div class="flex flex-col md:flex-row gap-4 items-center justify-between">
+          <div class="flex gap-3 flex-wrap items-center">
+            <input 
+              id="stockInput" 
+              type="text" 
+              placeholder="Digite o código da ação (ex: PETR4)" 
+              class="px-4 py-2 bg-white bg-opacity-10 border border-white border-opacity-20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-geminii backdrop-blur-sm"
+            >
+            <button id="analyzeBtn" class="px-6 py-2 bg-gradient-to-r from-pink-500 to-purple-600 hover:shadow-lg rounded-lg transition-all font-medium">
+              <i class="fas fa-chart-bar mr-2"></i>Analisar Amplitude
+            </button>
+          </div>
+          
+          <div class="flex gap-3">
+            <button id="compareBtn" class="px-4 py-2 bg-white bg-opacity-10 hover:bg-opacity-20 rounded-lg transition-all font-medium backdrop-blur-sm border border-white border-opacity-20">
+              <i class="fas fa-balance-scale mr-2"></i>Comparar Ativos
+            </button>
+            <button id="popularBtn" class="px-4 py-2 bg-blue-600 bg-opacity-20 hover:bg-opacity-30 rounded-lg transition-all font-medium border border-blue-500 border-opacity-30">
+              <i class="fas fa-fire mr-2"></i>Populares
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card Explicativo -->
+      <div class="amplitude-card p-6 mb-8">
+        <div class="flex items-center gap-4">
+          <div class="w-16 h-16 bg-orange-600 bg-opacity-20 border border-orange-500 border-opacity-30 rounded-full flex items-center justify-center flex-shrink-0">
+            <i class="fas fa-lightbulb text-orange-500 text-2xl"></i>
+          </div>
+          <div class="flex-1">
+            <h3 class="text-xl font-semibold mb-2 text-orange-400">
+              <i class="fas fa-info-circle mr-2"></i>
+              Como Usar a Amplitude de Variação
+            </h3>
+            <p class="text-neutral-300 mb-4">
+              A amplitude mostra quanto uma ação oscila diariamente. Use para: <strong>identificar volatilidade</strong>, <strong>timing de entrada</strong>, <strong>gestão de risco</strong> e <strong>escolher estratégias adequadas</strong> ao seu perfil.
+            </p>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+              <div class="bg-green-600 bg-opacity-20 p-2 rounded text-center">
+                <div class="font-bold text-green-400">&lt; 2%</div>
+                <div class="text-green-300">Baixa</div>
+              </div>
+              <div class="bg-yellow-600 bg-opacity-20 p-2 rounded text-center">
+                <div class="font-bold text-yellow-400">2% - 4%</div>
+                <div class="text-yellow-300">Média</div>
+              </div>
+              <div class="bg-orange-600 bg-opacity-20 p-2 rounded text-center">
+                <div class="font-bold text-orange-400">4% - 6%</div>
+                <div class="text-orange-300">Alta</div>
+              </div>
+              <div class="bg-red-600 bg-opacity-20 p-2 rounded text-center">
+                <div class="font-bold text-red-400">&gt; 6%</div>
+                <div class="text-red-300">Muito Alta</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Status -->
+      <div id="statusMsg" class="mb-6 p-4 rounded-lg hidden backdrop-blur-sm"></div>
+
+      <!-- Análise Individual -->
+      <div id="analysisSection" class="hidden">
+        <!-- Header da Análise -->
+        <div class="amplitude-card p-6 mb-6">
+          <div class="flex justify-between items-center mb-4">
+            <div>
+              <h3 id="analysisTitle" class="text-2xl font-bold"></h3>
+              <p id="analysisSubtitle" class="text-gray-400"></p>
+            </div>
+            <div class="text-right">
+              <div id="currentPrice" class="text-2xl font-bold text-geminii"></div>
+              <div id="analysisDate" class="text-sm text-gray-400"></div>
+            </div>
+          </div>
+          
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div class="bg-white bg-opacity-5 p-4 rounded-lg text-center">
+              <div class="text-sm text-gray-400">Volatilidade</div>
+              <div id="volatilityLevel" class="text-xl font-bold"></div>
+              <div id="volatilityBadge"></div>
+            </div>
+            <div class="bg-white bg-opacity-5 p-4 rounded-lg text-center">
+              <div class="text-sm text-gray-400">Amplitude Média</div>
+              <div id="avgAmplitude" class="text-xl font-bold"></div>
+              <div class="text-xs text-gray-400">Diária</div>
+            </div>
+            <div class="bg-white bg-opacity-5 p-4 rounded-lg text-center">
+              <div class="text-sm text-gray-400">Tendência</div>
+              <div id="trend" class="text-xl font-bold"></div>
+              <div class="text-xs text-gray-400">252 dias</div>
+            </div>
+            <div class="bg-white bg-opacity-5 p-4 rounded-lg text-center">
+              <div class="text-sm text-gray-400">Melhor Período</div>
+              <div id="bestPeriod" class="text-xl font-bold"></div>
+              <div id="bestPeriodRate" class="text-xs text-gray-400"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Grid Principal -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+          
+          <!-- Distribuição de Amplitude Diária -->
+          <div class="amplitude-card p-6">
+            <h4 class="text-lg font-semibold mb-4">
+              <i class="fas fa-chart-pie text-blue-500 mr-2"></i>
+              Distribuição de Amplitude Diária
+            </h4>
+            <div id="amplitudeDistribution" class="space-y-3">
+              <!-- Distribuição será inserida aqui -->
+            </div>
+            <div class="mt-4 text-xs text-gray-400 text-center">
+              Baseado nos últimos 252 dias úteis (1 ano)
+            </div>
+          </div>
+
+          <!-- Distribuição de Variação Diária -->
+          <div class="amplitude-card p-6">
+            <h4 class="text-lg font-semibold mb-4">
+              <i class="fas fa-chart-line text-green-500 mr-2"></i>
+              Distribuição de Variação Diária
+            </h4>
+            <div id="variationDistribution" class="space-y-3">
+              <!-- Distribuição será inserida aqui -->
+            </div>
+            <div class="mt-4 text-xs text-gray-400 text-center">
+              Fechamento vs Abertura (últimos 252 dias)
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Análise por Períodos -->
+        <div class="amplitude-card p-6 mb-6">
+          <h4 class="text-lg font-semibold mb-4">
+            <i class="fas fa-calendar-alt text-purple-500 mr-2"></i>
+            Análise por Períodos
+          </h4>
+          
+          <!-- Seletor de Período -->
+          <div class="period-tabs max-w-2xl mx-auto mb-6">
+            <div class="period-tab active" data-period="2">2 Dias</div>
+            <div class="period-tab" data-period="3">3 Dias</div>
+            <div class="period-tab" data-period="5">5 Dias</div>
+            <div class="period-tab" data-period="12">12 Dias</div>
+            <div class="period-tab" data-period="30">30 Dias</div>
+          </div>
+
+          <!-- Métricas do Período Selecionado -->
+          <div id="periodAnalysis" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <!-- Análise do período será inserida aqui -->
+          </div>
+
+          <!-- Distribuição do Período -->
+          <div class="mt-6">
+            <h5 class="text-md font-semibold mb-3">Distribuição de Variação - <span id="selectedPeriodTitle">2 Dias</span></h5>
+            <div id="periodDistribution" class="space-y-2">
+              <!-- Distribuição do período será inserida aqui -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Recomendações -->
+        <div class="amplitude-card p-6">
+          <h4 class="text-lg font-semibold mb-4">
+            <i class="fas fa-bullseye text-yellow-500 mr-2"></i>
+            Recomendações de Trading
+          </h4>
+          <div id="recommendations" class="space-y-2">
+            <!-- Recomendações serão inseridas aqui -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Seção de Comparação -->
+      <div id="comparisonSection" class="hidden">
+        <div class="amplitude-card p-6 mb-6">
+          <h3 class="text-xl font-bold mb-4">Comparar Múltiplos Ativos</h3>
+          <div class="flex gap-3 mb-4 flex-wrap">
+            <input 
+              id="compareInput" 
+              type="text" 
+              placeholder="Digite códigos separados por vírgula (ex: PETR4,VALE3,ITUB4)" 
+              class="flex-1 px-4 py-2 bg-white bg-opacity-10 border border-white border-opacity-20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-geminii backdrop-blur-sm"
+            >
+            <button id="runCompareBtn" class="px-6 py-2 bg-gradient-to-r from-blue-500 to-cyan-600 hover:shadow-lg rounded-lg transition-all font-medium">
+              <i class="fas fa-balance-scale mr-2"></i>Comparar
+            </button>
+          </div>
+          <div id="comparisonResults" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <!-- Resultados da comparação -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Ações Populares -->
+      <div id="popularSection" class="mt-8">
+        <div class="amplitude-card p-6">
+          <h3 class="text-xl font-bold mb-6 text-center">
+            <i class="fas fa-fire text-orange-500 mr-2"></i>
+            Amplitude de Ações Populares
+          </h3>
+          <div id="popularGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            <div class="text-center py-8 col-span-full">
+              <div class="spinner mx-auto mb-4"></div>
+              <p class="text-gray-400">Carregando ações populares...</p>
+            </div>
+          </div>
+          <div class="mt-4 text-center">
+            <p class="text-xs text-gray-400">
+              <i class="fas fa-info-circle mr-1"></i>
+              Clique em uma ação para análise detalhada
+            </p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    // Configurações
+    const API_BASE = window.location.origin + '/api/amplitude';
+    let currentAnalysis = null;
+    let selectedPeriod = 2;
+    
+    // Elementos DOM
+    const stockInput = document.getElementById('stockInput');
+    const analyzeBtn = document.getElementById('analyzeBtn');
+    const compareBtn = document.getElementById('compareBtn');
+    const popularBtn = document.getElementById('popularBtn');
+    const statusMsg = document.getElementById('statusMsg');
+    const analysisSection = document.getElementById('analysisSection');
+    const comparisonSection = document.getElementById('comparisonSection');
+    const popularSection = document.getElementById('popularSection');
+    
+    // Funções utilitárias
+    function showStatus(message, type = 'info') {
+      const bgClass = type === 'success' ? 'bg-green-600 bg-opacity-20 border-green-500 border-opacity-30' : 
+                     type === 'error' ? 'bg-red-600 bg-opacity-20 border-red-500 border-opacity-30' : 
+                     'bg-blue-600 bg-opacity-20 border-blue-500 border-opacity-30';
+      
+      statusMsg.className = `mb-6 p-4 rounded-lg border backdrop-blur-sm ${bgClass}`;
+      statusMsg.textContent = message;
+      statusMsg.classList.remove('hidden');
+      setTimeout(() => statusMsg.classList.add('hidden'), 5000);
+    }
+    
+    function formatCurrency(value) {
+      return new Intl.NumberFormat('pt-BR', {
+        style: 'currency',
+        currency: 'BRL'
+      }).format(value);
+    }
+    
+    function getVolatilityBadge(level) {
+      const colors = {
+        'BAIXA': { bg: 'bg-green-600', text: 'text-green-200', border: 'border-green-500' },
+        'MÉDIA': { bg: 'bg-yellow-600', text: 'text-yellow-200', border: 'border-yellow-500' },
+        'ALTA': { bg: 'bg-orange-600', text: 'text-orange-200', border: 'border-orange-500' },
+        'MUITO ALTA': { bg: 'bg-red-600', text: 'text-red-200', border: 'border-red-500' }
+      };
+      
+      const color = colors[level] || colors['MÉDIA'];
+      return `<span class="volatility-badge ${color.bg} bg-opacity-20 ${color.text} ${color.border} border-opacity-30">
+        ${level}
+      </span>`;
+    }
+    
+    function setLoading(element, loading) {
+      if (loading) {
+        element.classList.add('loading');
+      } else {
+        element.classList.remove('loading');
+      }
+    }
+    
+    // Event Listeners para abas de período
+    document.querySelectorAll('.period-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.period-tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        selectedPeriod = parseInt(tab.dataset.period);
+        
+        if (currentAnalysis) {
+          updatePeriodAnalysis();
+        }
+      });
+    });
+    
+    // Analisar amplitude de uma ação
+    async function analyzeAmplitude() {
+      const symbol = stockInput.value.trim().toUpperCase();
+      
+      if (!symbol) {
+        showStatus('Digite o código de uma ação', 'error');
+        return;
+      }
+      
+      setLoading(analyzeBtn, true);
+      showStatus('Analisando amplitude... Isso pode levar alguns segundos', 'info');
+      
+      try {
+        const response = await fetch(`${API_BASE}/detailed/${symbol}`);
+        const data = await response.json();
+        
+        if (data.success) {
+          currentAnalysis = data.data;
+          analysisSection.classList.remove('hidden');
+          comparisonSection.classList.add('hidden');
+          updateAnalysisDisplay(data.data);
+          showStatus(`Análise de amplitude de ${symbol} concluída!`, 'success');
+        } else {
+          showStatus(data.error, 'error');
+        }
+      } catch (error) {
+        showStatus('Erro ao analisar amplitude', 'error');
+        console.error(error);
+      }
+      
+      setLoading(analyzeBtn, false);
+    }
+    
+    // Atualizar display da análise
+    function updateAnalysisDisplay(analysisData) {
+      const basic = analysisData.basic_info;
+      const daily = analysisData.daily_patterns;
+      const summary = analysisData.executive_summary;
+      
+      // Header
+      document.getElementById('analysisTitle').textContent = `${basic.ticker} - ${basic.company_name}`;
+      document.getElementById('analysisSubtitle').textContent = `Setor: ${basic.sector}`;
+      document.getElementById('currentPrice').textContent = formatCurrency(basic.current_price);
+      document.getElementById('analysisDate').textContent = `Análise: ${basic.analysis_date}`;
+      
+      // Métricas principais
+      document.getElementById('volatilityLevel').textContent = summary.volatility_level;
+      document.getElementById('volatilityBadge').innerHTML = getVolatilityBadge(summary.volatility_level);
+      document.getElementById('avgAmplitude').textContent = summary.avg_daily_amplitude.toFixed(2) + '%';
+      document.getElementById('trend').textContent = summary.trend;
+      document.getElementById('bestPeriod').textContent = summary.best_period_days ? `${summary.best_period_days} dias` : 'N/A';
+      document.getElementById('bestPeriodRate').textContent = summary.best_period_success_rate ? `${summary.best_period_success_rate.toFixed(1)}% sucesso` : '';
+      
+      // Distribuições
+      updateDistributionDisplay('amplitudeDistribution', daily.amplitude_distribution);
+      updateDistributionDisplay('variationDistribution', daily.variation_distribution);
+      
+      // Análise por período
+      updatePeriodAnalysis();
+      
+      // Recomendações
+      updateRecommendations(summary.recommendation);
+    }
+    
+    // Atualizar display de distribuição
+    function updateDistributionDisplay(containerId, distribution) {
+      const container = document.getElementById(containerId);
+      
+      const html = Object.entries(distribution).map(([key, data]) => `
+        <div class="distribution-item flex justify-between items-center p-3 rounded-lg bg-white bg-opacity-5">
+          <div class="flex-1">
+            <div class="text-sm font-medium">${data.label}</div>
+            <div class="text-xs text-gray-400">${data.count} ocorrências</div>
+          </div>
+          <div class="flex items-center gap-3">
+            <div class="w-20 bg-gray-700 rounded-full h-2">
+              <div class="distribution-bar h-full" style="width: ${data.percentage}%"></div>
+            </div>
+            <div class="text-sm font-bold w-12 text-right">${data.percentage}%</div>
+          </div>
+        </div>
+      `).join('');
+      
+      container.innerHTML = html;
+    }
+    
+    // Atualizar análise por período
+    function updatePeriodAnalysis() {
+      if (!currentAnalysis) return;
+      
+      const periodKey = `${selectedPeriod}_days`;
+      const periodData = currentAnalysis.period_patterns[periodKey];
+      
+      document.getElementById('selectedPeriodTitle').textContent = `${selectedPeriod} Dias`;
+      
+      if (!periodData) {
+        document.getElementById('periodAnalysis').innerHTML = '<div class="col-span-3 text-center text-gray-400">Dados não disponíveis para este período</div>';
+        document.getElementById('periodDistribution').innerHTML = '<div class="text-center text-gray-400">Dados não disponíveis</div>';
+        return;
+      }
+      
+      const stats = periodData.statistics;
+      
+      // Métricas do período
+      document.getElementById('periodAnalysis').innerHTML = `
+        <div class="bg-white bg-opacity-5 p-4 rounded-lg text-center">
+          <div class="text-sm text-gray-400">Variação Média</div>
+          <div class="text-xl font-bold ${stats.avg_variation >= 0 ? 'text-green-400' : 'text-red-400'}">
+            ${stats.avg_variation >= 0 ? '+' : ''}${stats.avg_variation.toFixed(2)}%
+          </div>
+          <div class="text-xs text-gray-400">${selectedPeriod} dias</div>
+        </div>
+        
+        <div class="bg-white bg-opacity-5 p-4 rounded-lg text-center">
+          <div class="text-sm text-gray-400">Taxa de Sucesso</div>
+          <div class="text-xl font-bold ${stats.success_rate >= 50 ? 'text-green-400' : 'text-red-400'}">
+            ${stats.success_rate.toFixed(1)}%
+          </div>
+          <div class="text-xs text-gray-400">${stats.positive_periods}/${stats.total_periods_analyzed} períodos positivos</div>
+        </div>
+        
+        <div class="bg-white bg-opacity-5 p-4 rounded-lg text-center">
+          <div class="text-sm text-gray-400">Volatilidade</div>
+          <div class="text-xl font-bold">${stats.volatility.toFixed(2)}%</div>
+          <div class="text-xs text-gray-400">Desvio padrão</div>
+        </div>
+      `;
+      
+      // Distribuição do período
+      updateDistributionDisplay('periodDistribution', periodData.distribution);
+    }
+    
+    // Atualizar recomendações
+    function updateRecommendations(recommendations) {
+      const container = document.getElementById('recommendations');
+      
+      if (!recommendations || recommendations.length === 0) {
+        container.innerHTML = '<div class="text-gray-400">Nenhuma recomendação disponível</div>';
+        return;
+      }
+      
+      const html = recommendations.map(rec => `
+        <div class="flex items-center gap-3 p-3 bg-white bg-opacity-5 rounded-lg">
+          <i class="fas fa-lightbulb text-yellow-500"></i>
+          <span>${rec}</span>
+        </div>
+      `).join('');
+      
+      container.innerHTML = html;
+    }
+    
+    // Comparar múltiplos ativos
+    async function compareAmplitudes() {
+      const input = document.getElementById('compareInput').value.trim();
+      
+      if (!input) {
+        showStatus('Digite pelo menos um código de ação', 'error');
+        return;
+      }
+      
+      const tickers = input.split(',').map(t => t.trim().toUpperCase()).filter(t => t.length >= 4);
+      
+      if (tickers.length === 0) {
+        showStatus('Nenhum código válido encontrado', 'error');
+        return;
+      }
+      
+      if (tickers.length > 10) {
+        showStatus('Máximo de 10 ativos por comparação', 'error');
+        return;
+      }
+      
+      setLoading(document.getElementById('runCompareBtn'), true);
+      showStatus(`Comparando ${tickers.length} ativos...`, 'info');
+      
+      try {
+        const response = await fetch(`${API_BASE}/compare`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ tickers: tickers })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          comparisonSection.classList.remove('hidden');
+          analysisSection.classList.add('hidden');
+          displayComparison(data.data.comparison);
+          showStatus(`Comparação de ${data.data.total_analyzed} ativos concluída!`, 'success');
+        } else {
+          showStatus(data.error, 'error');
+        }
+      } catch (error) {
+        showStatus('Erro ao comparar ativos', 'error');
+        console.error(error);
+      }
+      
+      setLoading(document.getElementById('runCompareBtn'), false);
+    }
+    
+    // Exibir comparação
+    function displayComparison(comparison) {
+      const container = document.getElementById('comparisonResults');
+      
+      if (!comparison || comparison.length === 0) {
+        container.innerHTML = '<div class="col-span-full text-center text-gray-400">Nenhum ativo válido para comparação</div>';
+        return;
+      }
+      
+      const html = comparison.map((stock, index) => `
+        <div class="amplitude-card p-4 cursor-pointer hover:scale-105 transition-transform" onclick="analyzeFromComparison('${stock.ticker}')">
+          <div class="flex justify-between items-start mb-3">
+            <div>
+              <div class="text-lg font-bold">#${index + 1} ${stock.ticker}</div>
+              <div class="text-sm text-gray-400">${stock.company_name}</div>
+            </div>
+            ${getVolatilityBadge(stock.volatility_level)}
+          </div>
+          
+          <div class="space-y-2">
+            <div class="flex justify-between">
+              <span class="text-sm text-gray-400">Amplitude Média:</span>
+              <span class="font-bold">${stock.avg_amplitude.toFixed(2)}%</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-sm text-gray-400">Tendência:</span>
+              <span class="font-bold">${stock.trend}</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-sm text-gray-400">Melhor Taxa:</span>
+              <span class="font-bold">${stock.success_rate_best_period ? stock.success_rate_best_period.toFixed(1) + '%' : 'N/A'}</span>
+            </div>
+          </div>
+        </div>
+      `).join('');
+      
+      container.innerHTML = html;
+    }
+    
+    // Buscar ações populares
+    async function fetchPopularStocks() {
+      setLoading(popularBtn, true);
+      
+      try {
+        const response = await fetch(`${API_BASE}/popular-stocks`);
+        const data = await response.json();
+        
+        if (data.success) {
+          displayPopularStocks(data.data);
+          showStatus('Ações populares carregadas!', 'success');
+        } else {
+          showStatus('Erro ao carregar ações populares', 'error');
+        }
+      } catch (error) {
+        showStatus('Erro ao carregar ações populares', 'error');
+        console.error(error);
+      }
+      
+      setLoading(popularBtn, false);
+    }
+    
+    // Exibir ações populares
+    function displayPopularStocks(data) {
+      const popularGrid = document.getElementById('popularGrid');
+      
+      // Mostrar agrupamento por volatilidade
+      const grouped = data.grouped_by_volatility;
+      let html = '';
+      
+      // Ordem das categorias
+      const categories = ['BAIXA', 'MÉDIA', 'ALTA', 'MUITO ALTA'];
+      
+      categories.forEach(category => {
+        if (grouped[category] && grouped[category].length > 0) {
+          html += `
+            <div class="col-span-full mb-4">
+              <h4 class="text-lg font-semibold mb-3 text-center">
+                ${getVolatilityBadge(category)} Volatilidade ${category}
+              </h4>
+              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                ${grouped[category].map(stock => `
+                  <div class="amplitude-card p-4 cursor-pointer hover:scale-105 transition-transform" onclick="analyzeFromPopular('${stock.ticker}')">
+                    <div class="text-center">
+                      <div class="text-lg font-bold mb-2">${stock.ticker}</div>
+                      <div class="text-sm text-gray-400 mb-3">${stock.company_name}</div>
+                      
+                      <div class="space-y-2">
+                        <div>
+                          <div class="text-xs text-gray-400">Amplitude Média</div>
+                          <div class="text-xl font-bold">${stock.avg_amplitude.toFixed(2)}%</div>
+                        </div>
+                        
+                        <div class="flex justify-between text-sm">
+                          <span class="text-gray-400">Tendência:</span>
+                          <span class="font-medium">${stock.trend}</span>
+                        </div>
+                        
+                        ${stock.success_rate_best_period ? `
+                          <div class="flex justify-between text-sm">
+                            <span class="text-gray-400">Taxa:</span>
+                            <span class="font-medium">${stock.success_rate_best_period.toFixed(1)}%</span>
+                          </div>
+                        ` : ''}
+                      </div>
+                    </div>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          `;
+        }
+      });
+      
+      if (!html) {
+        html = '<div class="col-span-full text-center text-gray-400">Nenhuma ação popular disponível no momento</div>';
+      }
+      
+      popularGrid.innerHTML = html;
+    }
+    
+    // Analisar ação da comparação
+    function analyzeFromComparison(ticker) {
+      stockInput.value = ticker;
+      showStatus(`Analisando ${ticker} da comparação...`, 'info');
+      analyzeAmplitude();
+    }
+    
+    // Analisar ação das populares
+    function analyzeFromPopular(ticker) {
+      stockInput.value = ticker;
+      showStatus(`Analisando ${ticker} das ações populares...`, 'info');
+      analyzeAmplitude();
+    }
+    
+    // Mostrar seção de comparação
+    function showComparisonSection() {
+      comparisonSection.classList.remove('hidden');
+      analysisSection.classList.add('hidden');
+      document.getElementById('compareInput').focus();
+    }
+    
+    // Event Listeners
+    analyzeBtn.addEventListener('click', analyzeAmplitude);
+    compareBtn.addEventListener('click', showComparisonSection);
+    popularBtn.addEventListener('click', fetchPopularStocks);
+    document.getElementById('runCompareBtn').addEventListener('click', compareAmplitudes);
+    
+    stockInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') analyzeAmplitude();
+    });
+    
+    document.getElementById('compareInput').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') compareAmplitudes();
+    });
+    
+    // Tornar funções globais para onclick
+    window.analyzeFromComparison = analyzeFromComparison;
+    window.analyzeFromPopular = analyzeFromPopular;
+    
+    // Inicialização
+    showStatus('Monitor de Amplitude carregado! Digite um código de ação para começar.', 'info');
+    
+    // Carregar ações populares inicial
+    fetchPopularStocks();
+  </script>
+</body>
+</html>
