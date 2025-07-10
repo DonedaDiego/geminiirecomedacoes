@@ -4,6 +4,7 @@
 from datetime import datetime, timezone, timedelta
 from database import get_db_connection
 import hashlib
+from email_service import email_service
 from control_pay_service import check_email_rate_limit, increment_email_counter
 
 # ===== CACHE SIMPLES PARA PERFORMANCE =====
@@ -108,7 +109,6 @@ def create_trial_user(name, email, password, ip_address=None):
         
     except Exception as e:
         return {'success': False, 'error': f'Erro ao criar usuário: {str(e)}'}
-
 
 
 def downgrade_user_trial(user_id):
@@ -437,130 +437,114 @@ def can_access_pro_features(user_id):
     return status.get('access_permissions', {}).get('can_access_pro', False)
 
 def send_trial_expiring_email(user_info, days_remaining):
-    try:
-        
-        from control_pay_service import SMTP_SERVER, SMTP_PORT, SMTP_USER, SMTP_PASSWORD
-        
-        if not SMTP_USER or not SMTP_PASSWORD:
-            print("❌ Configurações de email não encontradas")
-            return False
-        
-        import smtplib
-        from email.mime.text import MIMEText
-        from email.mime.multipart import MIMEMultipart
-        
-        user_name = user_info['name']
-        user_email = user_info['email']
-        plan_name = user_info['plan_name']
-        expires_at = user_info['expires_at']
-        
-        if not check_email_rate_limit(user_email, 'trial'):
-            print(f"🚫 BLOQUEADO: {user_email} excedeu limite de emails de trial hoje")
-            return False    
-        
-        # Configurar assunto baseado na urgência
-        if days_remaining <= 1:
-            subject = f"🚨 URGENTE: Seu trial {plan_name} expira hoje!"
-            urgency_text = "expira hoje"
-            urgency_color = "#ef4444"
-        elif days_remaining <= 3:
-            subject = f"⚠️ Seu trial {plan_name} expira em {days_remaining} dias"
-            urgency_text = f"expira em {days_remaining} dias"
-            urgency_color = "#f59e0b"
-        else:
-            subject = f"📅 Lembrete: Seu trial {plan_name} expira em {days_remaining} dias"
-            urgency_text = f"expira em {days_remaining} dias"
-            urgency_color = "#3b82f6"
-        
-        # Preparar email HTML
-        html_body = f"""
-        <div style="font-family: Inter, sans-serif; max-width: 600px; margin: 0 auto; background: #f8f9fa;">
-            <div style="background: linear-gradient(135deg, #ba39af, #d946ef); padding: 30px; text-align: center;">
-                <h1 style="color: white; margin: 0; font-size: 24px;">Geminii Tech</h1>
-                <p style="color: white; margin: 10px 0 0 0; opacity: 0.9;">Trading Automatizado</p>
-            </div>
-            
-            <div style="padding: 40px 30px; background: white;">
-                <div style="text-align: center; margin-bottom: 30px;">
-                    <div style="width: 60px; height: 60px; background: {urgency_color}; border-radius: 50%; 
-                                display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
-                        <span style="color: white; font-size: 24px;">⏰</span>
-                    </div>
-                    <h2 style="color: #1a1a1a; margin: 0 0 10px 0; font-size: 20px;">
-                        Olá, {user_name}!
-                    </h2>
-                    <p style="color: {urgency_color}; font-weight: bold; font-size: 16px; margin: 0;">
-                        Seu trial {plan_name} {urgency_text}
-                    </p>
-                </div>
-                
-                <div style="background: #f1f5f9; padding: 20px; border-radius: 12px; margin: 30px 0;">
-                    <h3 style="color: #1a1a1a; margin: 0 0 15px 0; font-size: 16px;">
-                        📋 Detalhes do seu trial:
-                    </h3>
-                    <p style="margin: 5px 0; color: #475569;"><strong>Plano:</strong> {plan_name} (Gratuito)</p>
-                    <p style="margin: 5px 0; color: #475569;"><strong>Expira em:</strong> {expires_at}</p>
-                    <p style="margin: 5px 0; color: #475569;"><strong>Dias restantes:</strong> {days_remaining}</p>
-                </div>
-                
-                <div style="text-align: center; margin: 30px 0;">
-                    <a href="https://app.geminii.com.br/planos" 
-                       style="background: linear-gradient(135deg, #ba39af, #d946ef); 
-                              color: white; padding: 15px 30px; text-decoration: none; 
-                              border-radius: 8px; display: inline-block; font-weight: bold;
-                              font-size: 16px;">
-                        🛒 Escolher Plano Pago
-                    </a>
-                </div>
-                
-                <div style="background: #fef3c7; border: 1px solid #f59e0b; padding: 15px; 
-                            border-radius: 8px; margin: 20px 0;">
-                    <p style="color: #92400e; margin: 0; font-size: 14px;">
-                        <strong>⚠️ Importante:</strong> Após a expiração, sua conta será automaticamente 
-                        transferida para o plano Básico com funcionalidades limitadas.
-                    </p>
-                </div>
-                
-                <div style="margin-top: 30px; text-align: center;">
-                    <p style="color: #64748b; font-size: 14px; margin: 5px 0;">
-                        Tem dúvidas? Entre em contato conosco:
-                    </p>
-                    <p style="color: #64748b; font-size: 14px; margin: 5px 0;">
-                        📧 contato@geminii.com.br
-                    </p>
-                </div>
-            </div>
-            
-            <div style="padding: 20px; text-align: center; background: #1a1a1a; color: #9ca3af;">
-                <p style="margin: 0; font-size: 12px;">
-                    © 2025 Geminii Research - Trading Automatizado
-                </p>
-                <p style="margin: 5px 0 0 0; font-size: 12px;">
-                    Você está recebendo este email porque possui um trial ativo.
-                </p>
-            </div>
-        </div>
-        """
-        
-        # Enviar email
-        msg = MIMEMultipart('alternative')
-        msg['Subject'] = subject
-        msg['From'] = SMTP_USER
-        msg['To'] = user_email
-        
-        msg.attach(MIMEText(html_body, 'html'))
-        
-        with smtplib.SMTP_SSL(SMTP_SERVER, SMTP_PORT) as server:
-            server.login(SMTP_USER, SMTP_PASSWORD)
-            server.send_message(msg)
-        
-        increment_email_counter(user_email, 'trial')
-        print(f"✅ Email de trial enviado para: {user_email} ({days_remaining} dias)")
-        return True
-        
-    except Exception as e:
-        print(f"❌ Erro ao enviar email de trial para {user_email}: {e}")
-        return False
+   try:
+       from email_service import email_service
+       
+       if not check_email_rate_limit(user_info['email'], 'trial'):
+           print(f"🚫 BLOQUEADO: {user_info['email']} excedeu limite de emails de trial hoje")
+           return False
+       
+       user_name = user_info['name']
+       user_email = user_info['email']
+       plan_name = user_info['plan_name']
+       expires_at = user_info['expires_at']
+       
+       # Configurar assunto baseado na urgência
+       if days_remaining <= 1:
+           subject = f"🚨 URGENTE: Seu trial {plan_name} expira hoje!"
+           urgency_text = "expira hoje"
+           urgency_color = "#ef4444"
+       elif days_remaining <= 3:
+           subject = f"⚠️ Seu trial {plan_name} expira em {days_remaining} dias"
+           urgency_text = f"expira em {days_remaining} dias"
+           urgency_color = "#f59e0b"
+       else:
+           subject = f"📅 Lembrete: Seu trial {plan_name} expira em {days_remaining} dias"
+           urgency_text = f"expira em {days_remaining} dias"
+           urgency_color = "#3b82f6"
+       
+       # Preparar email HTML
+       html_body = f"""
+       <div style="font-family: Inter, sans-serif; max-width: 600px; margin: 0 auto; background: #f8f9fa;">
+           <div style="background: linear-gradient(135deg, #ba39af, #d946ef); padding: 30px; text-align: center;">
+               <h1 style="color: white; margin: 0; font-size: 24px;">Geminii Tech</h1>
+               <p style="color: white; margin: 10px 0 0 0; opacity: 0.9;">Trading Automatizado</p>
+           </div>
+           
+           <div style="padding: 40px 30px; background: white;">
+               <div style="text-align: center; margin-bottom: 30px;">
+                   <div style="width: 60px; height: 60px; background: {urgency_color}; border-radius: 50%; 
+                               display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
+                       <span style="color: white; font-size: 24px;">⏰</span>
+                   </div>
+                   <h2 style="color: #1a1a1a; margin: 0 0 10px 0; font-size: 20px;">
+                       Olá, {user_name}!
+                   </h2>
+                   <p style="color: {urgency_color}; font-weight: bold; font-size: 16px; margin: 0;">
+                       Seu trial {plan_name} {urgency_text}
+                   </p>
+               </div>
+               
+               <div style="background: #f1f5f9; padding: 20px; border-radius: 12px; margin: 30px 0;">
+                   <h3 style="color: #1a1a1a; margin: 0 0 15px 0; font-size: 16px;">
+                       📋 Detalhes do seu trial:
+                   </h3>
+                   <p style="margin: 5px 0; color: #475569;"><strong>Plano:</strong> {plan_name} (Gratuito)</p>
+                   <p style="margin: 5px 0; color: #475569;"><strong>Expira em:</strong> {expires_at}</p>
+                   <p style="margin: 5px 0; color: #475569;"><strong>Dias restantes:</strong> {days_remaining}</p>
+               </div>
+               
+               <div style="text-align: center; margin: 30px 0;">
+                   <a href="https://app.geminii.com.br/planos" 
+                      style="background: linear-gradient(135deg, #ba39af, #d946ef); 
+                             color: white; padding: 15px 30px; text-decoration: none; 
+                             border-radius: 8px; display: inline-block; font-weight: bold;
+                             font-size: 16px;">
+                       🛒 Escolher Plano Pago
+                   </a>
+               </div>
+               
+               <div style="background: #fef3c7; border: 1px solid #f59e0b; padding: 15px; 
+                           border-radius: 8px; margin: 20px 0;">
+                   <p style="color: #92400e; margin: 0; font-size: 14px;">
+                       <strong>⚠️ Importante:</strong> Após a expiração, sua conta será automaticamente 
+                       transferida para o plano Básico com funcionalidades limitadas.
+                   </p>
+               </div>
+               
+               <div style="margin-top: 30px; text-align: center;">
+                   <p style="color: #64748b; font-size: 14px; margin: 5px 0;">
+                       Tem dúvidas? Entre em contato conosco:
+                   </p>
+                   <p style="color: #64748b; font-size: 14px; margin: 5px 0;">
+                       📧 contato@geminii.com.br
+                   </p>
+               </div>
+           </div>
+           
+           <div style="padding: 20px; text-align: center; background: #1a1a1a; color: #9ca3af;">
+               <p style="margin: 0; font-size: 12px;">
+                   © 2025 Geminii Research - Trading Automatizado
+               </p>
+               <p style="margin: 5px 0 0 0; font-size: 12px;">
+                   Você está recebendo este email porque possui um trial ativo.
+               </p>
+           </div>
+       </div>
+       """
+       
+       # Enviar email usando o email_service
+       if email_service.send_email(user_email, subject, html_body):
+           increment_email_counter(user_email, 'trial')
+           print(f"✅ Email de trial enviado para: {user_email} ({days_remaining} dias)")
+           return True
+       else:
+           print(f"❌ Falha no envio para: {user_email}")
+           return False
+       
+   except Exception as e:
+       print(f"❌ Erro ao enviar email de trial para {user_email}: {e}")
+       return False
 
 def send_trial_expiring_warnings():
 

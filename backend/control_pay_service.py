@@ -438,22 +438,16 @@ def process_expired_paid_subscriptions():
         return {'success': False, 'error': f'Erro interno: {str(e)}'}
 
 def send_renewal_warning_email(user_info, days_remaining):
- 
     try:
-               
-        user_email = user_info['email']
+        from email_service import email_service
         
+        user_email = user_info['email']
         
         if not check_email_rate_limit(user_email, 'renewal'):
             print(f"🚫 BLOQUEADO: {user_email} excedeu limite de emails de renewal hoje")
             return False
         
-        if not SMTP_USER or not SMTP_PASSWORD:
-            print("❌ Configurações de email não encontradas")
-            return False
-        
         user_name = user_info['name']
-        user_email = user_info['email']
         plan_name = user_info['plan_name']
         expires_at = user_info['expires_at']
         
@@ -541,21 +535,14 @@ def send_renewal_warning_email(user_info, days_remaining):
         </div>
         """
         
-        # Enviar email
-        msg = MIMEMultipart('alternative')
-        msg['Subject'] = subject
-        msg['From'] = SMTP_USER
-        msg['To'] = user_email
-        
-        msg.attach(MIMEText(html_body, 'html'))
-        
-        with smtplib.SMTP_SSL(SMTP_SERVER, SMTP_PORT) as server:
-            server.login(SMTP_USER, SMTP_PASSWORD)
-            server.send_message(msg)
-        
-        increment_email_counter(user_email, 'renewal')
-        print(f"✅ Email de renovação enviado para: {user_email} ({days_remaining} dias)")
-        return True
+        # Enviar email usando o email_service
+        if email_service.send_email(user_email, subject, html_body):
+            increment_email_counter(user_email, 'renewal')
+            print(f"✅ Email de renovação enviado para: {user_email} ({days_remaining} dias)")
+            return True
+        else:
+            print(f"❌ Falha no envio para: {user_email}")
+            return False
         
     except Exception as e:
         print(f"❌ Erro ao enviar email para {user_email}: {e}")
