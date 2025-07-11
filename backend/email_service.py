@@ -5,6 +5,8 @@ import smtplib
 import json
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from email.mime.base import MIMEBase
+from email import encoders
 from datetime import datetime, timedelta, timezone
 from database import get_db_connection
 
@@ -21,11 +23,9 @@ class EmailService:
         
         # MODO TESTE - Para desenvolvimento sem SMTP
         self.test_mode = False  # Sempre usar SMTP real com suas credenciais
-        
-                
 
-    def send_email(self, to_email, subject, html_content):
-        """📧 Enviar email via SMTP corporativo"""
+    def send_email(self, to_email, subject, html_content, text_content=None):
+        """📧 Enviar email via SMTP corporativo COM MELHORIAS ANTI-SPAM"""
         try:
             if self.test_mode:
                 print(f"\n📧 [MODO TESTE] Email simulado:")
@@ -39,19 +39,45 @@ class EmailService:
                 print(f"❌ Email inválido: campos obrigatórios em branco")
                 return False
                 
-            # Criar mensagem
+            # 🔥 CRIAR MENSAGEM COM HEADERS ANTI-SPAM
             msg = MIMEMultipart('alternative')
+            
+            # 🔥 HEADERS ANTI-SPAM MELHORADOS
             msg['From'] = f"{self.from_name} <{self.from_email}>"
             msg['To'] = to_email
             msg['Subject'] = subject
+            msg['Reply-To'] = self.from_email
+            msg['Return-Path'] = self.from_email
             
-            # Adicionar conteúdo HTML
+            # 🔥 HEADERS ADICIONAIS PARA EVITAR SPAM
+            msg['Message-ID'] = f"<{secrets.token_urlsafe(16)}@geminii.com.br>"
+            msg['Date'] = datetime.now().strftime('%a, %d %b %Y %H:%M:%S %z')
+            msg['X-Mailer'] = 'Geminii Tech Notification System'
+            msg['X-Priority'] = '3'
+            msg['X-MSMail-Priority'] = 'Normal'
+            msg['Importance'] = 'Normal'
+            
+            # 🔥 HEADERS ESPECÍFICOS PARA TITAN/HOSTINGER
+            msg['List-Unsubscribe'] = f'<mailto:{self.from_email}?subject=Unsubscribe>'
+            msg['List-Unsubscribe-Post'] = 'List-Unsubscribe=One-Click'
+            
+            # 🔥 VERSÃO TEXTO SIMPLES (OBRIGATÓRIA PARA ANTI-SPAM)
+            if not text_content:
+                # Gerar versão texto a partir do HTML
+                text_content = self.html_to_text(html_content)
+            
+            text_part = MIMEText(text_content, 'plain', 'utf-8')
             html_part = MIMEText(html_content, 'html', 'utf-8')
+            
+            # Adicionar ambas as versões
+            msg.attach(text_part)
             msg.attach(html_part)
             
             # NOVO: Logs mais detalhados
             print(f"📧 Enviando email para: {to_email}")
             print(f"   Assunto: {subject}")
+            print(f"   Tamanho HTML: {len(html_content)} chars")
+            print(f"   Tamanho Texto: {len(text_content)} chars")
             
             # Conectar e enviar
             with smtplib.SMTP_SSL(self.smtp_server, self.smtp_port) as server:
@@ -74,6 +100,231 @@ class EmailService:
             print(f"❌ Erro ao enviar email: {e}")
             return False
 
+    def html_to_text(self, html_content):
+        """🔧 Converter HTML para texto simples (anti-spam)"""
+        try:
+            import re
+            
+            # Remover tags HTML
+            text = re.sub(r'<[^>]+>', '', html_content)
+            
+            # Converter entidades HTML
+            text = text.replace('&nbsp;', ' ')
+            text = text.replace('&amp;', '&')
+            text = text.replace('&lt;', '<')
+            text = text.replace('&gt;', '>')
+            text = text.replace('&quot;', '"')
+            
+            # Limpar espaços extras
+            text = re.sub(r'\s+', ' ', text)
+            text = text.strip()
+            
+            return text
+            
+        except Exception as e:
+            print(f"❌ Erro ao converter HTML para texto: {e}")
+            return "Versão texto do email não disponível."
+
+    def create_professional_email_template(self, content_data):
+        """🎨 Criar template de email profissional anti-spam"""
+        
+        title = content_data.get('title', 'Geminii Tech')
+        subtitle = content_data.get('subtitle', 'Trading Automatizado')
+        main_message = content_data.get('main_message', '')
+        user_name = content_data.get('user_name', '')
+        urgency_color = content_data.get('urgency_color', '#ba39af')
+        button_text = content_data.get('button_text', 'Acessar')
+        button_url = content_data.get('button_url', self.base_url)
+        details = content_data.get('details', [])
+        warning_message = content_data.get('warning_message', '')
+        footer_message = content_data.get('footer_message', '')
+        
+        # 🔥 TEMPLATE HTML PROFISSIONAL E ANTI-SPAM
+        html_template = f"""
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="pt-BR">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="x-apple-disable-message-reformatting" />
+    <title>{title}</title>
+    <!--[if mso]>
+    <noscript>
+        <xml>
+            <o:OfficeDocumentSettings>
+                <o:PixelsPerInch>96</o:PixelsPerInch>
+            </o:OfficeDocumentSettings>
+        </xml>
+    </noscript>
+    <![endif]-->
+    <style type="text/css">
+        /* 🔥 CSS ANTI-SPAM OTIMIZADO */
+        @media screen and (max-width: 600px) {{
+            .container {{ width: 100% !important; }}
+            .content {{ padding: 20px !important; }}
+        }}
+        
+        .preheader {{ display: none !important; visibility: hidden; opacity: 0; color: transparent; height: 0; width: 0; }}
+        
+        body {{ 
+            margin: 0; 
+            padding: 0; 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, Arial, sans-serif; 
+            background-color: #f8fafc;
+            line-height: 1.6;
+            -webkit-text-size-adjust: 100%;
+            -ms-text-size-adjust: 100%;
+        }}
+        
+        table {{ border-collapse: collapse; mso-table-lspace: 0pt; mso-table-rspace: 0pt; }}
+        img {{ border: 0; height: auto; line-height: 100%; outline: none; text-decoration: none; }}
+        
+        .container {{ 
+            max-width: 600px; 
+            margin: 0 auto; 
+            background-color: #ffffff; 
+            border-radius: 8px;
+            overflow: hidden;
+        }}
+        
+        .header {{ 
+            background: linear-gradient(135deg, {urgency_color}, {urgency_color}); 
+            padding: 30px; 
+            text-align: center; 
+        }}
+        
+        .header h1 {{
+            margin: 0;
+            font-size: 24px;
+            font-weight: 600;
+            color: #ffffff;
+        }}
+        
+        .header p {{
+            margin: 8px 0 0 0;
+            color: #ffffff;
+            opacity: 0.9;
+            font-size: 14px;
+        }}
+        
+        .content {{ 
+            padding: 40px 30px; 
+            background-color: #ffffff;
+        }}
+        
+        .button {{ 
+            display: inline-block; 
+            background: linear-gradient(135deg, {urgency_color}, {urgency_color}); 
+            color: #ffffff !important; 
+            padding: 14px 28px; 
+            text-decoration: none; 
+            border-radius: 6px; 
+            font-weight: 600; 
+            margin: 20px 0;
+            font-size: 16px;
+            border: none;
+        }}
+        
+        .details-box {{
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 6px;
+            margin: 20px 0;
+            border-left: 4px solid {urgency_color};
+        }}
+        
+        .warning-box {{
+            background-color: #fef3c7;
+            border: 1px solid #f59e0b;
+            padding: 16px;
+            border-radius: 6px;
+            margin: 20px 0;
+            color: #92400e;
+        }}
+        
+        .footer {{ 
+            background-color: #f1f5f9; 
+            padding: 20px; 
+            text-align: center; 
+            font-size: 12px; 
+            color: #64748b;
+        }}
+    </style>
+</head>
+<body>
+    <!-- 🔥 PREHEADER INVISÍVEL PARA PREVIEW -->
+    <div class="preheader">
+        {main_message[:50]}...
+    </div>
+    
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+        <tr>
+            <td align="center" style="padding: 20px;">
+                <div class="container">
+                    <!-- Header -->
+                    <div class="header">
+                        <h1>{title}</h1>
+                        <p>{subtitle}</p>
+                    </div>
+                    
+                    <!-- Content -->
+                    <div class="content">
+                        <h2 style="color: #1f2937; margin-bottom: 16px; font-size: 20px;">
+                            Olá, {user_name}!
+                        </h2>
+                        
+                        <p style="color: #374151; margin-bottom: 20px; font-size: 16px;">
+                            {main_message}
+                        </p>
+                        
+                        {f'''
+                        <div class="details-box">
+                            <h3 style="color: #1f2937; margin: 0 0 12px 0; font-size: 16px;">
+                                📋 Detalhes:
+                            </h3>
+                            {"".join([f"<p style='margin: 4px 0; color: #4b5563;'><strong>{detail['label']}:</strong> {detail['value']}</p>" for detail in details])}
+                        </div>
+                        ''' if details else ''}
+                        
+                        <div style="text-align: center; margin: 30px 0;">
+                            <a href="{button_url}" class="button">
+                                {button_text}
+                            </a>
+                        </div>
+                        
+                        {f'''
+                        <div class="warning-box">
+                            <strong>⚠️ Importante:</strong> {warning_message}
+                        </div>
+                        ''' if warning_message else ''}
+                        
+                        <div style="margin-top: 30px; text-align: center;">
+                            <p style="color: #64748b; font-size: 14px; margin: 0;">
+                                Dúvidas? Entre em contato: 
+                                <a href="mailto:contato@geminii.com.br" style="color: {urgency_color};">contato@geminii.com.br</a>
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <!-- Footer -->
+                    <div class="footer">
+                        <p style="margin: 0;">© 2025 Geminii Tech - Trading Automatizado</p>
+                        <p style="margin: 8px 0 0 0;">{footer_message}</p>
+                        <p style="margin: 8px 0 0 0;">
+                            <a href="mailto:contato@geminii.com.br?subject=Cancelar emails" style="color: #64748b; text-decoration: underline;">
+                                Cancelar emails
+                            </a>
+                        </p>
+                    </div>
+                </div>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>
+        """
+        
+        return html_template.strip()
 
     def setup_tables(self):
         """🔧 Criar tabelas necessárias"""
@@ -200,135 +451,47 @@ class EmailService:
             return {'success': False, 'error': str(e)}
 
     def send_confirmation_email(self, user_name, email, token):
-        """📧 Enviar email de confirmação"""
-        link = f"{self.base_url}/auth/confirm-email?token={token}"
+        """📧 Enviar email de confirmação COM TEMPLATE ANTI-SPAM"""
         
-        subject = "Confirme seu email - Geminii Tech"
+        # 🔥 USAR NOVO TEMPLATE ANTI-SPAM
+        content_data = {
+            'title': 'Confirme seu Email',
+            'subtitle': 'Geminii Tech - Trading Automatizado',
+            'main_message': f'Bem-vindo à Geminii Tech! Para ativar sua conta e começar a usar nossa plataforma, confirme seu email clicando no botão abaixo.',
+            'user_name': user_name,
+            'urgency_color': '#10b981',
+            'button_text': '✅ Confirmar Email',
+            'button_url': f"{self.base_url}/auth/confirm-email?token={token}",
+            'details': [
+                {'label': 'Email', 'value': email},
+                {'label': 'Validade', 'value': '24 horas'}
+            ],
+            'warning_message': 'Este link expira em 24 horas por segurança.',
+            'footer_message': 'Se você não criou esta conta, pode ignorar este email.'
+        }
         
-        html_content = f"""
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <style>
-                body {{ 
-                    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-                    margin: 0; 
-                    padding: 20px; 
-                    background: #f8fafc;
-                    line-height: 1.6;
-                }}
-                .container {{ 
-                    max-width: 600px; 
-                    margin: 0 auto; 
-                    background: white; 
-                    border-radius: 16px; 
-                    overflow: hidden; 
-                    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-                }}
-                .header {{ 
-                    background: linear-gradient(135deg, #ba39af, #d946ef); 
-                    padding: 40px 30px; 
-                    text-align: center; 
-                    color: white; 
-                }}
-                .header h1 {{
-                    margin: 0;
-                    font-size: 28px;
-                    font-weight: 700;
-                }}
-                .header p {{
-                    margin: 8px 0 0 0;
-                    opacity: 0.9;
-                    font-size: 16px;
-                }}
-                .content {{ 
-                    padding: 40px 30px; 
-                    text-align: center; 
-                    color: #374151;
-                }}
-                .content h2 {{
-                    color: #1f2937;
-                    margin-bottom: 16px;
-                    font-size: 24px;
-                }}
-                .button {{ 
-                    display: inline-block; 
-                    background: linear-gradient(135deg, #ba39af, #d946ef); 
-                    color: white !important; 
-                    padding: 16px 32px; 
-                    text-decoration: none; 
-                    border-radius: 8px; 
-                    font-weight: 600; 
-                    margin: 24px 0;
-                    font-size: 16px;
-                    transition: transform 0.2s;
-                }}
-                .button:hover {{
-                    transform: translateY(-2px);
-                }}
-                .link-text {{
-                    background: #f3f4f6;
-                    padding: 12px;
-                    border-radius: 6px;
-                    word-break: break-all;
-                    font-size: 12px;
-                    color: #6b7280;
-                    margin: 16px 0;
-                }}
-                .warning {{
-                    background: #fef3c7;
-                    border: 1px solid #f59e0b;
-                    padding: 16px;
-                    border-radius: 8px;
-                    margin: 20px 0;
-                    color: #92400e;
-                }}
-                .footer {{ 
-                    background: #f9fafb; 
-                    padding: 24px; 
-                    text-align: center; 
-                    font-size: 14px; 
-                    color: #6b7280; 
-                    border-top: 1px solid #e5e7eb;
-                }}
-            </style>
-        </head>
-        <body>
-            <div class="container">
-                <div class="header">
-                    <h1>🚀 Geminii Tech</h1>
-                    <p>Trading Automatizado</p>
-                </div>
-                
-                <div class="content">
-                    <h2>Olá, {user_name}!</h2>
-                    <p>Bem-vindo à <strong>Geminii Tech</strong>! Estamos muito felizes em tê-lo conosco.</p>
-                    <p>Para ativar sua conta e começar a usar nossa plataforma, confirme seu email clicando no botão abaixo:</p>
-                    
-                    <a href="{link}" class="button">✅ Confirmar Email</a>
-                    
-                    <div class="warning">
-                        <strong>⏰ Importante:</strong> Este link expira em 24 horas por segurança.
-                    </div>
-                    
-                    <p style="font-size: 14px; color: #6b7280;">
-                        Se o botão não funcionar, copie e cole este link no seu navegador:
-                    </p>
-                    <div class="link-text">{link}</div>
-                </div>
-                
-                <div class="footer">
-                    <p>© 2025 Geminii Tech - Trading Automatizado</p>
-                    <p>Se você não criou esta conta, pode ignorar este email.</p>
-                </div>
-            </div>
-        </body>
-        </html>
+        html_content = self.create_professional_email_template(content_data)
+        
+        # Versão texto
+        text_content = f"""
+Geminii Tech - Confirme seu Email
+
+Olá, {user_name}!
+
+Bem-vindo à Geminii Tech! Para ativar sua conta, confirme seu email clicando no link abaixo:
+
+{self.base_url}/auth/confirm-email?token={token}
+
+Este link expira em 24 horas por segurança.
+
+Se você não criou esta conta, pode ignorar este email.
+
+Dúvidas? Entre em contato: contato@geminii.com.br
+
+© 2025 Geminii Tech - Trading Automatizado
         """
         
-        return self.send_email(email, subject, html_content)
+        return self.send_email(email, "Confirme seu email - Geminii Tech", html_content, text_content)
 
     def confirm_email_token(self, token):
         """✅ Confirmar email com token"""
@@ -467,140 +630,48 @@ class EmailService:
             return {'success': False, 'error': str(e)}
 
     def send_password_reset_email(self, user_name, email, token):
-        """📧 Enviar email de reset"""
-        link = f"{self.base_url}/reset-password?token={token}"
+        """📧 Enviar email de reset COM TEMPLATE ANTI-SPAM"""
         
-        subject = "Redefinir senha - Geminii Tech"
+        # 🔥 USAR NOVO TEMPLATE ANTI-SPAM
+        content_data = {
+            'title': 'Redefinir Senha',
+            'subtitle': 'Geminii Tech - Trading Automatizado',
+            'main_message': 'Recebemos uma solicitação para redefinir a senha da sua conta. Se foi você quem solicitou, clique no botão abaixo para criar uma nova senha.',
+            'user_name': user_name,
+            'urgency_color': '#ef4444',
+            'button_text': '🔑 Redefinir Senha',
+            'button_url': f"{self.base_url}/reset-password?token={token}",
+            'details': [
+                {'label': 'Email', 'value': email},
+                {'label': 'Validade', 'value': '1 hora'}
+            ],
+            'warning_message': 'Este link expira em 1 hora por segurança.',
+            'footer_message': 'Se você não solicitou esta alteração, ignore este email.'
+        }
         
-        html_content = f"""
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <style>
-                body {{ 
-                    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-                    margin: 0; 
-                    padding: 20px; 
-                    background: #f8fafc;
-                    line-height: 1.6;
-                }}
-                .container {{ 
-                    max-width: 600px; 
-                    margin: 0 auto; 
-                    background: white; 
-                    border-radius: 16px; 
-                    overflow: hidden; 
-                    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-                }}
-                .header {{ 
-                    background: linear-gradient(135deg, #ef4444, #dc2626); 
-                    padding: 40px 30px; 
-                    text-align: center; 
-                    color: white; 
-                }}
-                .header h1 {{
-                    margin: 0;
-                    font-size: 28px;
-                    font-weight: 700;
-                }}
-                .header p {{
-                    margin: 8px 0 0 0;
-                    opacity: 0.9;
-                    font-size: 16px;
-                }}
-                .content {{ 
-                    padding: 40px 30px; 
-                    text-align: center; 
-                    color: #374151;
-                }}
-                .content h2 {{
-                    color: #1f2937;
-                    margin-bottom: 16px;
-                    font-size: 24px;
-                }}
-                .button {{ 
-                    display: inline-block; 
-                    background: linear-gradient(135deg, #ef4444, #dc2626); 
-                    color: white !important; 
-                    padding: 16px 32px; 
-                    text-decoration: none; 
-                    border-radius: 8px; 
-                    font-weight: 600; 
-                    margin: 24px 0;
-                    font-size: 16px;
-                    transition: transform 0.2s;
-                }}
-                .button:hover {{
-                    transform: translateY(-2px);
-                }}
-                .link-text {{
-                    background: #f3f4f6;
-                    padding: 12px;
-                    border-radius: 6px;
-                    word-break: break-all;
-                    font-size: 12px;
-                    color: #6b7280;
-                    margin: 16px 0;
-                }}
-                .warning {{
-                    background: #fef2f2;
-                    border: 1px solid #ef4444;
-                    padding: 16px;
-                    border-radius: 8px;
-                    margin: 20px 0;
-                    color: #dc2626;
-                }}
-                .footer {{ 
-                    background: #f9fafb; 
-                    padding: 24px; 
-                    text-align: center; 
-                    font-size: 14px; 
-                    color: #6b7280; 
-                    border-top: 1px solid #e5e7eb;
-                }}
-            </style>
-        </head>
-        <body>
-            <div class="container">
-                <div class="header">
-                    <h1>🔐 Geminii Tech</h1>
-                    <p>Redefinir Senha</p>
-                </div>
-                
-                <div class="content">
-                    <h2>Olá, {user_name}!</h2>
-                    <p>Recebemos uma solicitação para redefinir a senha da sua conta.</p>
-                    <p>Se foi você quem solicitou, clique no botão abaixo para criar uma nova senha:</p>
-                    
-                    <a href="{link}" class="button">🔑 Redefinir Senha</a>
-                    
-                    <div class="warning">
-                        <strong>⏰ Importante:</strong> Este link expira em 1 hora por segurança.
-                    </div>
-                    
-                    <p style="font-size: 14px; color: #6b7280;">
-                        Se o botão não funcionar, copie e cole este link no seu navegador:
-                    </p>
-                    <div class="link-text">{link}</div>
-                    
-                    <p style="font-size: 14px; color: #ef4444; margin-top: 24px;">
-                        <strong>Se você não solicitou esta alteração, ignore este email.</strong> 
-                        Sua senha permanecerá inalterada.
-                    </p>
-                </div>
-                
-                <div class="footer">
-                    <p>© 2025 Geminii Tech - Trading Automatizado</p>
-                    <p>Este é um email automático, não responda.</p>
-                </div>
-            </div>
-        </body>
-        </html>
+        html_content = self.create_professional_email_template(content_data)
+        
+        # Versão texto
+        text_content = f"""
+Geminii Tech - Redefinir Senha
+
+Olá, {user_name}!
+
+Recebemos uma solicitação para redefinir a senha da sua conta.
+
+Para criar uma nova senha, clique no link abaixo:
+{self.base_url}/reset-password?token={token}
+
+Este link expira em 1 hora por segurança.
+
+Se você não solicitou esta alteração, ignore este email.
+
+Dúvidas? Entre em contato: contato@geminii.com.br
+
+© 2025 Geminii Tech - Trading Automatizado
         """
         
-        return self.send_email(email, subject, html_content)
+        return self.send_email(email, "Redefinir senha - Geminii Tech", html_content, text_content)
 
     def validate_password_reset_token(self, token):
         """🔍 Validar token de reset"""
@@ -727,912 +798,270 @@ class EmailService:
         except Exception as e:
             print(f"❌ Erro no debug: {e}")
 
-   # ===== Emails lembre trial e pagamento =====
+    # ===== EMAILS DE TRIAL COM TEMPLATE ANTI-SPAM =====
 
     def send_trial_welcome_email(self, user_name, email):
-        """🎉 Enviar email de boas-vindas ao trial"""
-        subject = "🎉 Bem-vindo ao seu Trial Premium!"
+        """🎉 Enviar email de boas-vindas ao trial COM TEMPLATE ANTI-SPAM"""
         
-        html_content = f"""
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <style>
-                body {{ 
-                    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-                    margin: 0; 
-                    padding: 20px; 
-                    background: #f8fafc;
-                    line-height: 1.6;
-                }}
-                .container {{ 
-                    max-width: 600px; 
-                    margin: 0 auto; 
-                    background: white; 
-                    border-radius: 16px; 
-                    overflow: hidden; 
-                    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-                }}
-                .header {{ 
-                    background: linear-gradient(135deg, #ba39af, #d946ef); 
-                    padding: 40px 30px; 
-                    text-align: center; 
-                    color: white; 
-                }}
-                .header h1 {{
-                    margin: 0;
-                    font-size: 28px;
-                    font-weight: 700;
-                }}
-                .content {{ 
-                    padding: 40px 30px; 
-                    text-align: center; 
-                    color: #374151;
-                }}
-                .button {{ 
-                    display: inline-block; 
-                    background: linear-gradient(135deg, #ba39af, #d946ef); 
-                    color: white !important; 
-                    padding: 16px 32px; 
-                    text-decoration: none; 
-                    border-radius: 8px; 
-                    font-weight: 600; 
-                    margin: 24px 0;
-                    font-size: 16px;
-                }}
-                .feature-list {{
-                    background: #f8f9fa;
-                    padding: 20px;
-                    border-radius: 8px;
-                    margin: 20px 0;
-                    text-align: left;
-                }}
-                .feature-list li {{
-                    margin-bottom: 8px;
-                    color: #555;
-                }}
-                .footer {{ 
-                    background: #f9fafb; 
-                    padding: 24px; 
-                    text-align: center; 
-                    font-size: 14px; 
-                    color: #6b7280; 
-                    border-top: 1px solid #e5e7eb;
-                }}
-            </style>
-        </head>
-        <body>
-            <div class="container">
-                <div class="header">
-                    <h1>🎉 Trial Premium Ativado!</h1>
-                    <p>15 dias de acesso completo</p>
-                </div>
-                
-                <div class="content">
-                    <h2>Olá, {user_name}!</h2>
-                    <p style="font-size: 18px;">🎊 <strong>Parabéns!</strong> Você ganhou <strong>15 dias</strong> de acesso Premium GRATUITO!</p>
-                    
-                    <div class="feature-list">
-                        <h3 style="color: #ba39af; margin-top: 0;">🚀 Durante o trial você pode:</h3>
-                        <ul>
-                            <li>✅ Acessar todos os recursos Premium</li>
-                            <li>✅ Usar ferramentas avançadas de trading</li>
-                            <li>✅ Gerar relatórios completos</li>
-                            <li>✅ Suporte prioritário</li>
-                            <li>✅ Acesso ilimitado à plataforma</li>
-                        </ul>
-                    </div>
-                    
-                    <a href="{self.base_url}/dashboard" class="button">🚀 Acessar Dashboard</a>
-                    
-                    <p style="font-size: 14px; color: #6b7280; margin-top: 24px;">
-                        Aproveite ao máximo seus 15 dias de trial!
-                    </p>
-                </div>
-                
-                <div class="footer">
-                    <p>© 2025 Geminii Tech - Trading Automatizado</p>
-                    <p>Seu trial expira em 15 dias. Não perca tempo!</p>
-                </div>
-            </div>
-        </body>
-        </html>
+        content_data = {
+            'title': 'Trial Premium Ativado!',
+            'subtitle': '15 dias de acesso completo',
+            'main_message': 'Parabéns! Você ganhou 15 dias de acesso Premium GRATUITO! Aproveite ao máximo todos os recursos disponíveis.',
+            'user_name': user_name,
+            'urgency_color': '#10b981',
+            'button_text': '🚀 Acessar Dashboard',
+            'button_url': f"{self.base_url}/dashboard",
+            'details': [
+                {'label': 'Tipo', 'value': 'Trial Premium'},
+                {'label': 'Duração', 'value': '15 dias'},
+                {'label': 'Acesso', 'value': 'Recursos completos'}
+            ],
+            'warning_message': 'Aproveite todos os recursos Premium durante seu trial de 15 dias.',
+            'footer_message': 'Seu trial expira em 15 dias. Não perca tempo!'
+        }
+        
+        html_content = self.create_professional_email_template(content_data)
+        
+        text_content = f"""
+Geminii Tech - Trial Premium Ativado!
+
+Olá, {user_name}!
+
+Parabéns! Você ganhou 15 dias de acesso Premium GRATUITO!
+
+Durante o trial você pode:
+- Acessar todos os recursos Premium
+- Usar ferramentas avançadas de trading
+- Gerar relatórios completos
+- Suporte prioritário
+- Acesso ilimitado à plataforma
+
+Acesse agora: {self.base_url}/dashboard
+
+Aproveite ao máximo seus 15 dias de trial!
+
+© 2025 Geminii Tech - Trading Automatizado
         """
         
-        return self.send_email(email, subject, html_content)
+        return self.send_email(email, "🎉 Trial Premium Ativado - Geminii Tech", html_content, text_content)
 
     def send_trial_reminder_email(self, user_name, email, days_remaining):
-        """⏰ Enviar lembrete de trial"""
-        if days_remaining <= 1:
-            subject = "🔥 ÚLTIMO DIA do seu Trial Premium!"
-            urgency = "🔥 ÚLTIMO DIA!"
-            color = "#ef4444"
-        elif days_remaining <= 3:
-            subject = f"🚨 Apenas {days_remaining} dias restantes do Trial!"
-            urgency = f"🚨 Apenas {days_remaining} dias!"
-            color = "#f59e0b"
-        else:
-            subject = f"⏰ {days_remaining} dias restantes do seu Trial Premium"
-            urgency = f"⏰ {days_remaining} dias restantes"
-            color = "#ba39af"
+        """⏰ Enviar lembrete de trial COM TEMPLATE ANTI-SPAM"""
         
-        html_content = f"""
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <style>
-                body {{ 
-                    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-                    margin: 0; 
-                    padding: 20px; 
-                    background: #f8fafc;
-                    line-height: 1.6;
-                }}
-                .container {{ 
-                    max-width: 600px; 
-                    margin: 0 auto; 
-                    background: white; 
-                    border-radius: 16px; 
-                    overflow: hidden; 
-                    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-                }}
-                .header {{ 
-                    background: linear-gradient(135deg, {color}, {color}); 
-                    padding: 40px 30px; 
-                    text-align: center; 
-                    color: white; 
-                }}
-                .header h1 {{
-                    margin: 0;
-                    font-size: 28px;
-                    font-weight: 700;
-                }}
-                .content {{ 
-                    padding: 40px 30px; 
-                    text-align: center; 
-                    color: #374151;
-                }}
-                .button {{ 
-                    display: inline-block; 
-                    background: linear-gradient(135deg, {color}, {color}); 
-                    color: white !important; 
-                    padding: 16px 32px; 
-                    text-decoration: none; 
-                    border-radius: 8px; 
-                    font-weight: 600; 
-                    margin: 24px 0;
-                    font-size: 16px;
-                }}
-                .countdown {{
-                    background: #fef3c7;
-                    border: 2px solid #f59e0b;
-                    padding: 20px;
-                    border-radius: 8px;
-                    margin: 20px 0;
-                    color: #92400e;
-                    font-size: 18px;
-                    font-weight: bold;
-                }}
-                .footer {{ 
-                    background: #f9fafb; 
-                    padding: 24px; 
-                    text-align: center; 
-                    font-size: 14px; 
-                    color: #6b7280; 
-                    border-top: 1px solid #e5e7eb;
-                }}
-            </style>
-        </head>
-        <body>
-            <div class="container">
-                <div class="header">
-                    <h1>{urgency}</h1>
-                    <p>Seu trial Premium está acabando</p>
-                </div>
-                
-                <div class="content">
-                    <h2>Olá, {user_name}!</h2>
-                    <p>Seu trial Premium expira em <strong>{days_remaining} {'dia' if days_remaining == 1 else 'dias'}</strong>!</p>
-                    
-                    <div class="countdown">
-                        ⏰ {days_remaining} {'dia' if days_remaining == 1 else 'dias'} restantes
-                    </div>
-                    
-                    <p>Não perca o acesso a todos os recursos Premium:</p>
-                    <ul style="text-align: left; max-width: 300px; margin: 0 auto;">
-                        <li>🚀 Ferramentas avançadas de trading</li>
-                        <li>📊 Relatórios detalhados</li>
-                        <li>🎯 Suporte prioritário</li>
-                        <li>🔓 Acesso ilimitado</li>
-                    </ul>
-                    
-                    <a href="{self.base_url}/upgrade" class="button">💎 Fazer Upgrade Agora</a>
-                    
-                    <p style="font-size: 14px; color: #6b7280; margin-top: 24px;">
-                        Continue aproveitando todos os recursos Premium!
-                    </p>
-                </div>
-                
-                <div class="footer">
-                    <p>© 2025 Geminii Tech - Trading Automatizado</p>
-                    <p>Não perca a oportunidade de continuar Premium!</p>
-                </div>
-            </div>
-        </body>
-        </html>
+        if days_remaining <= 1:
+            urgency_color = "#ef4444"
+            urgency_text = "ÚLTIMO DIA"
+        elif days_remaining <= 3:
+            urgency_color = "#f59e0b"
+            urgency_text = f"Apenas {days_remaining} dias"
+        else:
+            urgency_color = "#ba39af"
+            urgency_text = f"{days_remaining} dias restantes"
+        
+        content_data = {
+            'title': f'Trial: {urgency_text}',
+            'subtitle': 'Seu trial Premium está acabando',
+            'main_message': f'Seu trial Premium expira em {days_remaining} {"dia" if days_remaining == 1 else "dias"}! Não perca o acesso a todos os recursos Premium.',
+            'user_name': user_name,
+            'urgency_color': urgency_color,
+            'button_text': '💎 Fazer Upgrade Agora',
+            'button_url': f"{self.base_url}/planos",
+            'details': [
+                {'label': 'Dias restantes', 'value': f"{days_remaining} {'dia' if days_remaining == 1 else 'dias'}"},
+                {'label': 'Status', 'value': 'Trial Premium'},
+                {'label': 'Acesso', 'value': 'Todos os recursos'}
+            ],
+            'warning_message': f'Após {days_remaining} {"dia" if days_remaining == 1 else "dias"}, sua conta será transferida para o plano Básico.',
+            'footer_message': 'Continue aproveitando todos os recursos Premium!'
+        }
+        
+        html_content = self.create_professional_email_template(content_data)
+        
+        text_content = f"""
+Geminii Tech - {urgency_text} do Trial
+
+Olá, {user_name}!
+
+Seu trial Premium expira em {days_remaining} {"dia" if days_remaining == 1 else "dias"}!
+
+Não perca o acesso a:
+- Ferramentas avançadas de trading
+- Relatórios detalhados
+- Suporte prioritário
+- Acesso ilimitado
+
+Faça upgrade agora: {self.base_url}/upgrade
+
+Continue aproveitando todos os recursos Premium!
+
+© 2025 Geminii Tech - Trading Automatizado
         """
         
-        return self.send_email(email, subject, html_content)
+        subject = f"⏰ {urgency_text} do seu Trial Premium - Geminii Tech"
+        return self.send_email(email, subject, html_content, text_content)
     
     def send_trial_expired_email(self, user_name, email):
-        """💡 Enviar email de trial expirado"""
-        try:
-            subject = "💡 Seu Trial Premium expirou"
-            
-            html_content = f"""
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <meta charset="UTF-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <style>
-                    body {{ 
-                        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-                        margin: 0; 
-                        padding: 20px; 
-                        background: #f8fafc;
-                        line-height: 1.6;
-                    }}
-                    .container {{ 
-                        max-width: 600px; 
-                        margin: 0 auto; 
-                        background: white; 
-                        border-radius: 16px; 
-                        overflow: hidden; 
-                        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-                    }}
-                    .header {{ 
-                        background: linear-gradient(135deg, #6b7280, #4b5563); 
-                        padding: 40px 30px; 
-                        text-align: center; 
-                        color: white; 
-                    }}
-                    .header h1 {{
-                        margin: 0;
-                        font-size: 28px;
-                        font-weight: 700;
-                    }}
-                    .content {{ 
-                        padding: 40px 30px; 
-                        text-align: center; 
-                        color: #374151;
-                    }}
-                    .button {{ 
-                        display: inline-block; 
-                        background: linear-gradient(135deg, #ba39af, #d946ef); 
-                        color: white !important; 
-                        padding: 16px 32px; 
-                        text-decoration: none; 
-                        border-radius: 8px; 
-                        font-weight: 600; 
-                        margin: 24px 0;
-                        font-size: 16px;
-                    }}
-                    .expired-box {{
-                        background: #fef2f2;
-                        border: 2px solid #ef4444;
-                        padding: 20px;
-                        border-radius: 8px;
-                        margin: 20px 0;
-                        color: #dc2626;
-                    }}
-                    .basic-features {{
-                        background: #f0f9ff;
-                        border: 1px solid #0ea5e9;
-                        padding: 20px;
-                        border-radius: 8px;
-                        margin: 20px 0;
-                        color: #0369a1;
-                    }}
-                    .footer {{ 
-                        background: #f9fafb; 
-                        padding: 24px; 
-                        text-align: center; 
-                        font-size: 14px; 
-                        color: #6b7280; 
-                        border-top: 1px solid #e5e7eb;
-                    }}
-                </style>
-            </head>
-            <body>
-                <div class="container">
-                    <div class="header">
-                        <h1>💡 Trial Expirado</h1>
-                        <p>Mas você ainda pode acessar recursos básicos</p>
-                    </div>
-                    
-                    <div class="content">
-                        <h2>Olá, {user_name}!</h2>
-                        <p>Seu trial Premium de 15 dias expirou.</p>
-                        
-                        <div class="expired-box">
-                            <strong>⏰ Trial Premium expirado</strong><br>
-                            Upgrade para continuar com acesso total
-                        </div>
-                        
-                        <div class="basic-features">
-                            <strong>✅ Você ainda pode acessar:</strong>
-                            <ul style="text-align: left; margin-top: 10px;">
-                                <li>📊 Recursos básicos</li>
-                                <li>📈 Gráficos simples</li>
-                                <li>📧 Suporte por email</li>
-                            </ul>
-                        </div>
-                        
-                        <p>Que tal fazer upgrade e ter acesso completo?</p>
-                        <p><strong>Com Premium você tem:</strong></p>
-                        <ul style="text-align: left; max-width: 300px; margin: 0 auto;">
-                            <li>🚀 Ferramentas avançadas</li>
-                            <li>📊 Relatórios completos</li>
-                            <li>🎯 Suporte prioritário</li>
-                            <li>🔓 Acesso ilimitado</li>
-                        </ul>
-                        
-                        <a href="{self.base_url}/upgrade" class="button">💎 Fazer Upgrade</a>
-                        
-                        <p style="font-size: 14px; color: #6b7280; margin-top: 24px;">
-                            Continue sua jornada conosco!
-                        </p>
-                    </div>
-                    
-                    <div class="footer">
-                        <p>© 2025 Geminii Tech - Trading Automatizado</p>
-                        <p>Obrigado por experimentar nosso trial!</p>
-                    </div>
-                </div>
-            </body>
-            </html>
-            """
-            
-            print(f"📧 Enviando email de trial expirado para: {email}")
-            return self.send_email(email, subject, html_content)
-            
-        except Exception as e:
-            print(f"❌ Erro ao enviar email de trial expirado: {e}")
-            return False
+        """💡 Enviar email de trial expirado COM TEMPLATE ANTI-SPAM"""
         
-     # ===== MÉTODOS DE PAYMENT =====
+        content_data = {
+            'title': 'Trial Expirado',
+            'subtitle': 'Mas você ainda pode acessar recursos básicos',
+            'main_message': 'Seu trial Premium de 15 dias expirou. Que tal fazer upgrade e ter acesso completo novamente?',
+            'user_name': user_name,
+            'urgency_color': '#6b7280',
+            'button_text': '💎 Fazer Upgrade',
+            'button_url': f"{self.base_url}/planos",
+            'details': [
+                {'label': 'Status', 'value': 'Trial expirado'},
+                {'label': 'Plano atual', 'value': 'Básico'},
+                {'label': 'Acesso', 'value': 'Recursos limitados'}
+            ],
+            'warning_message': 'Upgrade para ter acesso completo a todas as funcionalidades.',
+            'footer_message': 'Obrigado por experimentar nosso trial!'
+        }
+        
+        html_content = self.create_professional_email_template(content_data)
+        
+        text_content = f"""
+Geminii Tech - Trial Expirado
+
+Olá, {user_name}!
+
+Seu trial Premium de 15 dias expirou.
+
+Você ainda pode acessar:
+- Recursos básicos
+- Gráficos simples
+- Suporte por email
+
+Com Premium você tem:
+- Ferramentas avançadas
+- Relatórios completos
+- Suporte prioritário
+- Acesso ilimitado
+
+Fazer upgrade: {self.base_url}/upgrade
+
+Continue sua jornada conosco!
+
+© 2025 Geminii Tech - Trading Automatizado
+        """
+        
+        return self.send_email(email, "💡 Trial expirado - Geminii Tech", html_content, text_content)
+
+    # ===== EMAILS DE PAGAMENTO COM TEMPLATE ANTI-SPAM =====
 
     def send_payment_success_email(self, user_name, email, plan_name, amount=None):
-        """✅ Enviar email de pagamento confirmado"""
-        subject = f"✅ Pagamento confirmado - {plan_name}"
+        """✅ Enviar email de pagamento confirmado COM TEMPLATE ANTI-SPAM"""
         
-        html_content = f"""
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <style>
-                body {{ 
-                    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-                    margin: 0; 
-                    padding: 20px; 
-                    background: #f8fafc;
-                    line-height: 1.6;
-                }}
-                .container {{ 
-                    max-width: 600px; 
-                    margin: 0 auto; 
-                    background: white; 
-                    border-radius: 16px; 
-                    overflow: hidden; 
-                    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-                }}
-                .header {{ 
-                    background: linear-gradient(135deg, #10b981, #059669); 
-                    padding: 40px 30px; 
-                    text-align: center; 
-                    color: white; 
-                }}
-                .header h1 {{
-                    margin: 0;
-                    font-size: 28px;
-                    font-weight: 700;
-                }}
-                .content {{ 
-                    padding: 40px 30px; 
-                    text-align: center; 
-                    color: #374151;
-                }}
-                .success-box {{
-                    background: #ecfdf5;
-                    border: 2px solid #10b981;
-                    padding: 20px;
-                    border-radius: 8px;
-                    margin: 20px 0;
-                    color: #065f46;
-                }}
-                .plan-details {{
-                    background: #f8f9fa;
-                    padding: 20px;
-                    border-radius: 8px;
-                    margin: 20px 0;
-                    text-align: left;
-                }}
-                .button {{ 
-                    display: inline-block; 
-                    background: linear-gradient(135deg, #10b981, #059669); 
-                    color: white !important; 
-                    padding: 16px 32px; 
-                    text-decoration: none; 
-                    border-radius: 8px; 
-                    font-weight: 600; 
-                    margin: 24px 0;
-                    font-size: 16px;
-                }}
-                .footer {{ 
-                    background: #f9fafb; 
-                    padding: 24px; 
-                    text-align: center; 
-                    font-size: 14px; 
-                    color: #6b7280; 
-                    border-top: 1px solid #e5e7eb;
-                }}
-            </style>
-        </head>
-        <body>
-            <div class="container">
-                <div class="header">
-                    <h1>✅ Pagamento Confirmado!</h1>
-                    <p>Bem-vindo ao {plan_name}</p>
-                </div>
-                
-                <div class="content">
-                    <h2>Olá, {user_name}!</h2>
-                    <p>Seu pagamento foi <strong>confirmado com sucesso</strong>!</p>
-                    
-                    <div class="success-box">
-                        <strong>🎉 Pagamento Aprovado</strong><br>
-                        Agora você tem acesso total ao plano {plan_name}
-                    </div>
-                    
-                    <div class="plan-details">
-                        <h3 style="color: #10b981; margin-top: 0;">📦 Detalhes da Assinatura:</h3>
-                        <p><strong>Plano:</strong> {plan_name}</p>
-                        {'<p><strong>Valor:</strong> ' + str(amount) + '</p>' if amount else ''}
-                        <p><strong>Status:</strong> Ativo</p>
-                        <p><strong>Renovação:</strong> Automática</p>
-                    </div>
-                    
-                    <p>Agora você pode aproveitar todos os recursos Premium:</p>
-                    <ul style="text-align: left; max-width: 300px; margin: 0 auto;">
-                        <li>🚀 Ferramentas avançadas</li>
-                        <li>📊 Relatórios completos</li>
-                        <li>🎯 Suporte prioritário</li>
-                        <li>🔓 Acesso ilimitado</li>
-                    </ul>
-                    
-                    <a href="{self.base_url}/dashboard" class="button">🚀 Acessar Dashboard</a>
-                    
-                    <p style="font-size: 14px; color: #6b7280; margin-top: 24px;">
-                        Obrigado por escolher a Geminii Tech!
-                    </p>
-                </div>
-                
-                <div class="footer">
-                    <p>© 2025 Geminii Tech - Trading Automatizado</p>
-                    <p>Precisa de ajuda? Entre em contato conosco!</p>
-                </div>
-            </div>
-        </body>
-        </html>
+        content_data = {
+            'title': 'Pagamento Confirmado!',
+            'subtitle': f'Bem-vindo ao {plan_name}',
+            'main_message': f'Seu pagamento foi confirmado com sucesso! Agora você tem acesso total ao plano {plan_name}.',
+            'user_name': user_name,
+            'urgency_color': '#10b981',
+            'button_text': '🚀 Acessar Dashboard',
+            'button_url': f"{self.base_url}/dashboard",
+            'details': [
+                {'label': 'Plano', 'value': plan_name},
+                {'label': 'Status', 'value': 'Ativo'},
+                {'label': 'Renovação', 'value': 'Automática'}
+            ] + ([{'label': 'Valor', 'value': str(amount)}] if amount else []),
+            'warning_message': 'Agora você pode aproveitar todos os recursos Premium.',
+            'footer_message': 'Obrigado por escolher a Geminii Tech!'
+        }
+        
+        html_content = self.create_professional_email_template(content_data)
+        
+        text_content = f"""
+Geminii Tech - Pagamento Confirmado!
+
+Olá, {user_name}!
+
+Seu pagamento foi confirmado com sucesso!
+
+Detalhes:
+- Plano: {plan_name}
+- Status: Ativo
+- Renovação: Automática
+{"- Valor: " + str(amount) if amount else ""}
+
+Agora você pode aproveitar:
+- Ferramentas avançadas
+- Relatórios completos
+- Suporte prioritário
+- Acesso ilimitado
+
+Acessar agora: {self.base_url}/dashboard
+
+Obrigado por escolher a Geminii Tech!
+
+© 2025 Geminii Tech - Trading Automatizado
         """
         
-        return self.send_email(email, subject, html_content)
+        return self.send_email(email, f"✅ Pagamento confirmado - {plan_name} - Geminii Tech", html_content, text_content)
 
     def send_payment_reminder_email(self, user_name, email, plan_name, days_until_renewal, amount=None):
-        """📅 Enviar lembrete de renovação"""
+        """📅 Enviar lembrete de renovação COM TEMPLATE ANTI-SPAM"""
+        
         if days_until_renewal <= 1:
-            subject = f"🔥 Renovação do {plan_name} AMANHÃ!"
-            urgency = "🔥 AMANHÃ!"
-            color = "#ef4444"
+            urgency_color = "#ef4444"
+            urgency_text = "AMANHÃ"
         elif days_until_renewal <= 3:
-            subject = f"⚠️ Renovação do {plan_name} em {days_until_renewal} dias"
-            urgency = f"⚠️ Em {days_until_renewal} dias"
-            color = "#f59e0b"
+            urgency_color = "#f59e0b"
+            urgency_text = f"Em {days_until_renewal} dias"
         else:
-            subject = f"📅 Renovação do {plan_name} em {days_until_renewal} dias"
-            urgency = f"📅 Em {days_until_renewal} dias"
-            color = "#0ea5e9"
+            urgency_color = "#0ea5e9"
+            urgency_text = f"Em {days_until_renewal} dias"
         
-        html_content = f"""
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <style>
-                body {{ 
-                    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-                    margin: 0; 
-                    padding: 20px; 
-                    background: #f8fafc;
-                    line-height: 1.6;
-                }}
-                .container {{ 
-                    max-width: 600px; 
-                    margin: 0 auto; 
-                    background: white; 
-                    border-radius: 16px; 
-                    overflow: hidden; 
-                    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-                }}
-                .header {{ 
-                    background: linear-gradient(135deg, {color}, {color}); 
-                    padding: 40px 30px; 
-                    text-align: center; 
-                    color: white; 
-                }}
-                .header h1 {{
-                    margin: 0;
-                    font-size: 28px;
-                    font-weight: 700;
-                }}
-                .content {{ 
-                    padding: 40px 30px; 
-                    text-align: center; 
-                    color: #374151;
-                }}
-                .renewal-box {{
-                    background: #fef3c7;
-                    border: 2px solid #f59e0b;
-                    padding: 20px;
-                    border-radius: 8px;
-                    margin: 20px 0;
-                    color: #92400e;
-                }}
-                .plan-details {{
-                    background: #f8f9fa;
-                    padding: 20px;
-                    border-radius: 8px;
-                    margin: 20px 0;
-                    text-align: left;
-                }}
-                .button {{ 
-                    display: inline-block; 
-                    background: linear-gradient(135deg, {color}, {color}); 
-                    color: white !important; 
-                    padding: 16px 32px; 
-                    text-decoration: none; 
-                    border-radius: 8px; 
-                    font-weight: 600; 
-                    margin: 24px 0;
-                    font-size: 16px;
-                }}
-                .footer {{ 
-                    background: #f9fafb; 
-                    padding: 24px; 
-                    text-align: center; 
-                    font-size: 14px; 
-                    color: #6b7280; 
-                    border-top: 1px solid #e5e7eb;
-                }}
-            </style>
-        </head>
-        <body>
-            <div class="container">
-                <div class="header">
-                    <h1>Renovação {urgency}</h1>
-                    <p>Sua assinatura {plan_name}</p>
-                </div>
-                
-                <div class="content">
-                    <h2>Olá, {user_name}!</h2>
-                    <p>Sua assinatura <strong>{plan_name}</strong> será renovada em <strong>{days_until_renewal} {'dia' if days_until_renewal == 1 else 'dias'}</strong>.</p>
-                    
-                    <div class="renewal-box">
-                        <strong>📅 Renovação em {days_until_renewal} {'dia' if days_until_renewal == 1 else 'dias'}</strong><br>
-                        Tudo certo para a renovação automática!
-                    </div>
-                    
-                    <div class="plan-details">
-                        <h3 style="color: {color}; margin-top: 0;">📦 Detalhes da Renovação:</h3>
-                        <p><strong>Plano:</strong> {plan_name}</p>
-                        {'<p><strong>Valor:</strong> ' + str(amount) + '</p>' if amount else ''}
-                        <p><strong>Renovação:</strong> Automática</p>
-                        <p><strong>Método:</strong> Cartão cadastrado</p>
-                    </div>
-                    
-                    <p>Continuará aproveitando todos os recursos:</p>
-                    <ul style="text-align: left; max-width: 300px; margin: 0 auto;">
-                        <li>🚀 Ferramentas avançadas</li>
-                        <li>📊 Relatórios completos</li>
-                        <li>🎯 Suporte prioritário</li>
-                        <li>🔓 Acesso ilimitado</li>
-                    </ul>
-                    
-                    <a href="{self.base_url}/account" class="button">⚙️ Gerenciar Assinatura</a>
-                    
-                    <p style="font-size: 14px; color: #6b7280; margin-top: 24px;">
-                        Precisa alterar algo? Acesse sua conta!
-                    </p>
-                </div>
-                
-                <div class="footer">
-                    <p>© 2025 Geminii Tech - Trading Automatizado</p>
-                    <p>Renovação automática em {days_until_renewal} {'dia' if days_until_renewal == 1 else 'dias'}</p>
-                </div>
-            </div>
-        </body>
-        </html>
-        """
+        content_data = {
+            'title': f'Renovação {urgency_text}',
+            'subtitle': f'Sua assinatura {plan_name}',
+            'main_message': f'Sua assinatura {plan_name} será renovada em {days_until_renewal} {"dia" if days_until_renewal == 1 else "dias"}. Tudo certo para a renovação automática!',
+            'user_name': user_name,
+            'urgency_color': urgency_color,
+            'button_text': '⚙️ Gerenciar Assinatura',
+            'button_url': f"{self.base_url}/planos",
+            'details': [
+                {'label': 'Plano', 'value': plan_name},
+                {'label': 'Renovação', 'value': 'Automática'},
+                {'label': 'Método', 'value': 'Cartão cadastrado'}
+            ] + ([{'label': 'Valor', 'value': str(amount)}] if amount else []),
+            'warning_message': 'A renovação será processada automaticamente.',
+            'footer_message': f'Renovação automática em {days_until_renewal} {"dia" if days_until_renewal == 1 else "dias"}'
+        }
         
-        return self.send_email(email, subject, html_content)
-    
-    def send_payment_expired_email(self, user_name, email, plan_name):
-        """💡 Enviar email de assinatura expirada"""
-        subject = f"💡 Sua assinatura {plan_name} expirou"
+        html_content = self.create_professional_email_template(content_data)
         
-        html_content = f"""
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <style>
-                body {{ 
-                    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-                    margin: 0; 
-                    padding: 20px; 
-                    background: #f8fafc;
-                    line-height: 1.6;
-                }}
-                .container {{ 
-                    max-width: 600px; 
-                    margin: 0 auto; 
-                    background: white; 
-                    border-radius: 16px; 
-                    overflow: hidden; 
-                    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-                }}
-                .header {{ 
-                    background: linear-gradient(135deg, #ef4444, #dc2626); 
-                    padding: 40px 30px; 
-                    text-align: center; 
-                    color: white; 
-                }}
-                .header h1 {{
-                    margin: 0;
-                    font-size: 28px;
-                    font-weight: 700;
-                }}
-                .content {{ 
-                    padding: 40px 30px; 
-                    text-align: center; 
-                    color: #374151;
-                }}
-                .expired-box {{
-                    background: #fef2f2;
-                    border: 2px solid #ef4444;
-                    padding: 20px;
-                    border-radius: 8px;
-                    margin: 20px 0;
-                    color: #dc2626;
-                }}
-                .basic-features {{
-                    background: #f0f9ff;
-                    border: 1px solid #0ea5e9;
-                    padding: 20px;
-                    border-radius: 8px;
-                    margin: 20px 0;
-                    color: #0369a1;
-                }}
-                .button {{ 
-                    display: inline-block; 
-                    background: linear-gradient(135deg, #ba39af, #d946ef); 
-                    color: white !important; 
-                    padding: 16px 32px; 
-                    text-decoration: none; 
-                    border-radius: 8px; 
-                    font-weight: 600; 
-                    margin: 24px 0;
-                    font-size: 16px;
-                }}
-                .footer {{ 
-                    background: #f9fafb; 
-                    padding: 24px; 
-                    text-align: center; 
-                    font-size: 14px; 
-                    color: #6b7280; 
-                    border-top: 1px solid #e5e7eb;
-                }}
-            </style>
-        </head>
-        <body>
-            <div class="container">
-                <div class="header">
-                    <h1>💡 Assinatura Expirada</h1>
-                    <p>Renove para continuar Premium</p>
-                </div>
-                
-                <div class="content">
-                    <h2>Olá, {user_name}!</h2>
-                    <p>Sua assinatura <strong>{plan_name}</strong> expirou.</p>
-                    
-                    <div class="expired-box">
-                        <strong>⏰ Assinatura {plan_name} expirada</strong><br>
-                        Renove agora para continuar com acesso total
-                    </div>
-                    
-                    <div class="basic-features">
-                        <strong>✅ Você ainda pode acessar:</strong>
-                        <ul style="text-align: left; margin-top: 10px;">
-                            <li>📊 Recursos básicos</li>
-                            <li>📈 Gráficos simples</li>
-                            <li>📧 Suporte por email</li>
-                        </ul>
-                    </div>
-                    
-                    <p>Renove sua assinatura e volte a ter acesso completo:</p>
-                    <ul style="text-align: left; max-width: 300px; margin: 0 auto;">
-                        <li>🚀 Ferramentas avançadas</li>
-                        <li>📊 Relatórios completos</li>
-                        <li>🎯 Suporte prioritário</li>
-                        <li>🔓 Acesso ilimitado</li>
-                    </ul>
-                    
-                    <a href="{self.base_url}/renew" class="button">🔄 Renovar Assinatura</a>
-                    
-                    <p style="font-size: 14px; color: #6b7280; margin-top: 24px;">
-                        Sentimos sua falta! Volte para o Premium!
-                    </p>
-                </div>
-                
-                <div class="footer">
-                    <p>© 2025 Geminii Tech - Trading Automatizado</p>
-                    <p>Renove e continue aproveitando todos os recursos!</p>
-                </div>
-            </div>
-        </body>
-        </html>
-        """
-        
-        return self.send_email(email, subject, html_content)
+        text_content = f"""
+Geminii Tech - Renovação {urgency_text}
 
-    def send_payment_failed_email(self, user_name, email, plan_name, retry_date=None):
-        """❌ Enviar email de falha no pagamento"""
-        subject = f"❌ Problema com pagamento - {plan_name}"
-        
-        html_content = f"""
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <style>
-                body {{ 
-                    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-                    margin: 0; 
-                    padding: 20px; 
-                    background: #f8fafc;
-                    line-height: 1.6;
-                }}
-                .container {{ 
-                    max-width: 600px; 
-                    margin: 0 auto; 
-                    background: white; 
-                    border-radius: 16px; 
-                    overflow: hidden; 
-                    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-                }}
-                .header {{ 
-                    background: linear-gradient(135deg, #ef4444, #dc2626); 
-                    padding: 40px 30px; 
-                    text-align: center; 
-                    color: white; 
-                }}
-                .header h1 {{
-                    margin: 0;
-                    font-size: 28px;
-                    font-weight: 700;
-                }}
-                .content {{ 
-                    padding: 40px 30px; 
-                    text-align: center; 
-                    color: #374151;
-                }}
-                .failed-box {{
-                    background: #fef2f2;
-                    border: 2px solid #ef4444;
-                    padding: 20px;
-                    border-radius: 8px;
-                    margin: 20px 0;
-                    color: #dc2626;
-                }}
-                .action-box {{
-                    background: #fef3c7;
-                    border: 1px solid #f59e0b;
-                    padding: 20px;
-                    border-radius: 8px;
-                    margin: 20px 0;
-                    color: #92400e;
-                }}
-                .button {{ 
-                    display: inline-block; 
-                    background: linear-gradient(135deg, #ef4444, #dc2626); 
-                    color: white !important; 
-                    padding: 16px 32px; 
-                    text-decoration: none; 
-                    border-radius: 8px; 
-                    font-weight: 600; 
-                    margin: 24px 0;
-                    font-size: 16px;
-                }}
-                .footer {{ 
-                    background: #f9fafb; 
-                    padding: 24px; 
-                    text-align: center; 
-                    font-size: 14px; 
-                    color: #6b7280; 
-                    border-top: 1px solid #e5e7eb;
-                }}
-            </style>
-        </head>
-        <body>
-            <div class="container">
-                <div class="header">
-                    <h1>❌ Falha no Pagamento</h1>
-                    <p>Ação necessária para {plan_name}</p>
-                </div>
-                
-                <div class="content">
-                    <h2>Olá, {user_name}!</h2>
-                    <p>Houve um problema com o pagamento da sua assinatura <strong>{plan_name}</strong>.</p>
-                    
-                    <div class="failed-box">
-                        <strong>❌ Pagamento não processado</strong><br>
-                        Verifique seus dados de pagamento
-                    </div>
-                    
-                    <div class="action-box">
-                        <strong>🔧 O que fazer:</strong>
-                        <ul style="text-align: left; margin-top: 10px;">
-                            <li>Verifique o saldo do cartão</li>
-                            <li>Confirme os dados de pagamento</li>
-                            <li>Atualize o método de pagamento</li>
-                            <li>Entre em contato se persistir</li>
-                        </ul>
-                    </div>
-                    
-                    <p>Resolva agora para não perder o acesso Premium:</p>
-                    <ul style="text-align: left; max-width: 300px; margin: 0 auto;">
-                        <li>🚀 Ferramentas avançadas</li>
-                        <li>📊 Relatórios completos</li>
-                        <li>🎯 Suporte prioritário</li>
-                        <li>🔓 Acesso ilimitado</li>
-                    </ul>
-                    
-                    <a href="{self.base_url}/payment/update" class="button">🔧 Atualizar Pagamento</a>
-                    
-                    {'<p style="font-size: 14px; color: #92400e; margin-top: 24px;"><strong>Próxima tentativa: ' + str(retry_date) + '</strong></p>' if retry_date else ''}
-                </div>
-                
-                <div class="footer">
-                    <p>© 2025 Geminii Tech - Trading Automatizado</p>
-                    <p>Precisa de ajuda? Entre em contato conosco!</p>
-                </div>
-            </div>
-        </body>
-        </html>
+Olá, {user_name}!
+
+Sua assinatura {plan_name} será renovada em {days_until_renewal} {"dia" if days_until_renewal == 1 else "dias"}.
+
+Detalhes:
+- Plano: {plan_name}
+- Renovação: Automática
+- Método: Cartão cadastrado
+{"- Valor: " + str(amount) if amount else ""}
+
+Continuará aproveitando:
+- Ferramentas avançadas
+- Relatórios completos
+- Suporte prioritário
+- Acesso ilimitado
+
+Gerenciar conta: {self.base_url}/account
+
+Precisa alterar algo? Acesse sua conta!
+
+© 2025 Geminii Tech - Trading Automatizado
         """
         
-        return self.send_email(email, subject, html_content)
-    
+        subject = f"📅 Renovação {urgency_text} - {plan_name} - Geminii Tech"
+        return self.send_email(email, subject, html_content, text_content)
+
 # INSTÂNCIA GLOBAL
 email_service = EmailService()
 
@@ -1644,6 +1073,7 @@ def setup_email_system():
     if email_service.setup_tables():
         print("✅ Sistema de email configurado!")
         print("📧 MODO SMTP CORPORATIVO ativo - Emails via Titan")
+        print("🛡️ SISTEMA ANTI-SPAM ativado")
         return True
     else:
         print("❌ Falha na configuração")
