@@ -6,8 +6,8 @@ import os
 from database import get_db_connection
 import mercadopago_service
 from trial_routes import get_trial_blueprint
-from control_pay_service import check_user_subscription_status
-
+from control_pay_routes import get_control_pay_blueprint
+from scheduler_routes import get_scheduler_blueprint
 
 from beta_routes import beta_bp
 from long_short_routes import long_short_bp
@@ -29,6 +29,7 @@ from control_pay_routes import get_control_pay_blueprint
 from arbitragem_puts_routes import arbitragem_puts_bp
 from box_3_routes import box3_bp
 from amplitude_routes import amplitude_bp
+from payment_scheduler import start_payment_scheduler
 
 from dotenv import load_dotenv
 
@@ -140,9 +141,11 @@ app.register_blueprint(get_coupons_blueprint())
 app.register_blueprint(get_validate_blueprint())
 app.register_blueprint(arbitragem_puts_bp)
 app.register_blueprint(box3_bp)
+app.register_blueprint(amplitude_bp)
+app.register_blueprint(get_scheduler_blueprint())
 control_pay_bp = get_control_pay_blueprint()
 app.register_blueprint(control_pay_bp)
-app.register_blueprint(amplitude_bp)
+
 
 CORS(app, 
      origins=['*'],
