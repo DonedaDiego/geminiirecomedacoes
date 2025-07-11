@@ -1,13 +1,15 @@
-# vol_regimes_services.py (VERSÃO CORRIGIDA)
+# vol_regimes_service.py - Hybrid Volatility Bands (GARCH + XGBoost)
 
-import yfinance as yf
-import pandas as pd
 import numpy as np
-from sklearn.cluster import KMeans
-from sklearn.preprocessing import StandardScaler
-from datetime import datetime, timedelta
+import pandas as pd
+import yfinance as yf
+from arch import arch_model
+import xgboost as xgb
+from sklearn.preprocessing import RobustScaler
+import plotly.graph_objects as go
 import logging
 from typing import Dict, List, Optional, Tuple
+from datetime import datetime, timedelta
 import warnings
 
 warnings.filterwarnings('ignore')
@@ -16,7 +18,8 @@ warnings.filterwarnings('ignore')
 class VolatilityRegimesService:
     def __init__(self):
         self.setup_logging()
-        self.scaler = StandardScaler()
+        self.scaler = RobustScaler()
+        self.xgb_model = None
         
     def setup_logging(self):
         """Configurar logging"""
@@ -64,315 +67,402 @@ class VolatilityRegimesService:
     
     def get_stock_data(self, ticker: str, period: str = "6mo") -> Optional[pd.DataFrame]:
         try:
-            # CORREÇÃO: Lógica de ticker melhorada
+            # Lógica de ticker melhorada
             if not ticker.endswith('.SA') and not ticker.startswith('^'):
                 ticker = ticker + '.SA'
             
             self.logger.info(f"Buscando dados para {ticker} - período: {period}")
             
             # Baixar dados
-            stock = yf.Ticker(ticker)
-            data = stock.history(period=period)
+            data = yf.download(ticker, start=None, end=None, period=period, interval='1d')
+            if hasattr(data.columns, 'get_level_values') and ticker in data.columns.get_level_values(1):
+                data = data.xs(ticker, axis=1, level=1)
             
             if data.empty:
                 self.logger.error(f"Nenhum dado encontrado para {ticker}")
                 return None
             
-            # Calcular retornos
-            data['return'] = data['Close'].pct_change()
-            data['return_abs'] = data['return'].abs()
-            data['log_return'] = np.log(data['Close'] / data['Close'].shift(1))
+            # Reset index e calcular retornos
+            data.reset_index(inplace=True)
+            data['Returns'] = data['Close'].pct_change()
+            data['Log_Returns'] = np.log(data['Close'] / data['Close'].shift(1))
+            data.dropna(inplace=True)
             
-            # Remover NaN
-            data = data.dropna()
-            
-            self.logger.info(f"Dados carregados: {len(data)} registros de {data.index[0]} até {data.index[-1]}")
+            self.logger.info(f"Dados carregados: {len(data)} registros de {data['Date'].iloc[0]} até {data['Date'].iloc[-1]}")
             return data
             
         except Exception as e:
             self.logger.error(f"Erro ao buscar dados: {e}")
             return None
     
-    def calculate_regime_clustering(self, data: pd.DataFrame, n_clusters: int = 3, lookback: int = 20) -> pd.DataFrame:
+    def calculate_base_volatility(self, data: pd.DataFrame) -> pd.DataFrame:
+        """Calcular volatilidade base (GARCH e Realized)"""
         df = data.copy()
         
-        # Preparar features para clustering
-        df['vol_realized'] = df['return'].rolling(lookback).std() * np.sqrt(252)
-        df['vol_parkinson'] = np.sqrt((1/(4*np.log(2))) * (np.log(df['High']/df['Low']))**2).rolling(lookback).mean() * np.sqrt(252)
-        df['vol_garman_klass'] = np.sqrt(
-            0.5 * (np.log(df['High']/df['Low']))**2 - 
-            (2*np.log(2)-1) * (np.log(df['Close']/df['Open']))**2
-        ).rolling(lookback).mean() * np.sqrt(252)
+        try:
+            # GARCH
+            garch_model = arch_model(df['Log_Returns'] * 100, vol='Garch', p=1, q=1, dist='Normal')
+            garch_result = garch_model.fit(disp='off')
+            df['garch_vol'] = garch_result.conditional_volatility / 100
+            
+            # Realized Volatility (múltiplas janelas)
+            for window in [3, 5, 10, 20]:
+                df[f'realized_vol_{window}d'] = (
+                    df['Returns'].rolling(window=window)
+                    .apply(lambda x: np.sqrt(np.sum(x**2)))
+                )
+        except Exception as e:
+            self.logger.warning(f"Erro no GARCH, usando volatilidade simples: {e}")
+            df['garch_vol'] = df['Returns'].rolling(20).std()
+            for window in [3, 5, 10, 20]:
+                df[f'realized_vol_{window}d'] = df['Returns'].rolling(window).std()
         
-        # Features adicionais
-        df['return_skew'] = df['return'].rolling(lookback).skew()
-        df['return_kurt'] = df['return'].rolling(lookback).kurt()
-        df['volume_normalized'] = df['Volume'] / df['Volume'].rolling(lookback).mean()
+        return df
+    
+    def engineer_features(self, data: pd.DataFrame) -> pd.DataFrame:
+        """Engenharia de features para XGBoost"""
+        df = data.copy()
         
-        # Criar matriz de features (remover NaN)
-        feature_cols = ['vol_realized', 'vol_parkinson', 'vol_garman_klass', 'return_skew', 'return_kurt', 'volume_normalized']
-        features_df = df[feature_cols].dropna()
+        # Volatilidade histórica multi-timeframe
+        for window in [5, 10, 20, 60]:
+            df[f'vol_std_{window}d'] = df['Returns'].rolling(window).std()
         
-        if len(features_df) < n_clusters:
-            self.logger.warning("Dados insuficientes para clustering")
-            df['regime'] = 0
-            df['regime_name'] = 'Low'
+        # Lags importantes
+        for lag in [1, 2, 5]:
+            df[f'garch_lag_{lag}'] = df['garch_vol'].shift(lag)
+            df[f'returns_lag_{lag}'] = df['Returns'].shift(lag)
+        
+        # Market structure
+        df['daily_range'] = (df['High'] - df['Low']) / df['Close']
+        df['price_momentum_5d'] = df['Close'] / df['Close'].shift(5) - 1
+        
+        # Volume (se disponível)
+        if 'Volume' in df.columns:
+            df['volume_ma_20'] = df['Volume'].rolling(20).mean()
+            df['volume_ratio'] = df['Volume'] / df['volume_ma_20']
+        else:
+            df['volume_ratio'] = 1
+        
+        # Regime detection
+        df['sma_50'] = df['Close'].rolling(50).mean()
+        df['sma_200'] = df['Close'].rolling(200).mean()
+        df['trend_regime'] = np.where(df['sma_50'] > df['sma_200'], 1, 0)
+        df['vol_regime'] = np.where(df['garch_vol'] > df['garch_vol'].rolling(60).mean(), 1, 0)
+        df['vol_percentile'] = df['garch_vol'].rolling(252).rank(pct=True)
+        
+        return df
+    
+    def train_xgboost(self, data: pd.DataFrame) -> pd.DataFrame:
+        """Treinar modelo XGBoost para volatilidade"""
+        df = data.copy()
+        
+        feature_cols = [
+            'garch_lag_1', 'garch_lag_2', 'garch_lag_5',
+            'realized_vol_10d', 'realized_vol_20d', 'realized_vol_3d',
+            'vol_std_10d', 'vol_std_20d', 'vol_std_5d',
+            'vol_percentile', 'vol_regime', 'returns_lag_1',
+            'daily_range', 'price_momentum_5d', 'volume_ratio', 'trend_regime'
+        ]
+        
+        # Preparar dados
+        df_ml = df[feature_cols + ['garch_vol']].copy()
+        df_ml.dropna(inplace=True)
+        
+        if len(df_ml) < 50:
+            self.logger.warning("Dados insuficientes para XGBoost, usando apenas GARCH")
+            df['xgb_vol'] = df['garch_vol']
             return df
         
-        # Normalizar features
-        features_scaled = self.scaler.fit_transform(features_df)
+        X = df_ml[feature_cols]
+        y = df_ml['garch_vol']
         
-        # K-means clustering
-        kmeans = KMeans(n_clusters=n_clusters, random_state=42, n_init=10)
-        clusters = kmeans.fit_predict(features_scaled)
+        # Scaling
+        X_scaled = self.scaler.fit_transform(X)
+        X_scaled = pd.DataFrame(X_scaled, columns=feature_cols, index=X.index)
         
-        # Mapear clusters de volta para o DataFrame original
-        df['regime'] = np.nan
-        df.loc[features_df.index, 'regime'] = clusters
+        # Split temporal
+        train_size = int(len(X_scaled) * 0.8)
+        X_train, X_test = X_scaled[:train_size], X_scaled[train_size:]
+        y_train, y_test = y[:train_size], y[train_size:]
         
-        # Forward fill para preencher NaN
-        df['regime'] = df['regime'].ffill().fillna(0)
-        
-        # Ordenar regimes por volatilidade média (0=baixa, 1=média, 2=alta)
-        regime_stats = []
-        for regime in range(n_clusters):
-            regime_data = df[df['regime'] == regime]
-            if len(regime_data) > 0:
-                avg_vol = regime_data['vol_realized'].mean()
-                regime_stats.append((regime, avg_vol))
-        
-        # Reordenar regimes
-        regime_stats.sort(key=lambda x: x[1])  # Ordenar por volatilidade
-        regime_mapping = {old: new for new, (old, _) in enumerate(regime_stats)}
-        df['regime'] = df['regime'].map(regime_mapping)
-        
-        # Nomear regimes
-        regime_names = {0: 'Low', 1: 'Medium', 2: 'High'}
-        if n_clusters == 4:
-            regime_names = {0: 'Very Low', 1: 'Low', 2: 'Medium', 3: 'High'}
-        
-        df['regime_name'] = df['regime'].map(regime_names)
-        
-        # Estatísticas dos regimes
-        df['regime_persistence'] = df.groupby((df['regime'] != df['regime'].shift()).cumsum())['regime'].transform('count')
-        
-        self.logger.info(f"Regimes identificados: {df['regime_name'].value_counts().to_dict()}")
+        try:
+            # XGBoost otimizado
+            self.xgb_model = xgb.XGBRegressor(
+                n_estimators=200,
+                max_depth=8,
+                learning_rate=0.05,
+                subsample=0.8,
+                colsample_bytree=0.8,
+                reg_alpha=0.1,
+                reg_lambda=0.1,
+                random_state=42,
+                verbosity=0
+            )
+            
+            self.xgb_model.fit(X_train, y_train)
+            
+            # Predições
+            xgb_pred = self.xgb_model.predict(X_test)
+            
+            # Adicionar ao DataFrame
+            df['xgb_vol'] = np.nan
+            test_indices = df_ml.index[train_size:]
+            df.loc[test_indices, 'xgb_vol'] = xgb_pred
+            df['xgb_vol'].fillna(df['garch_vol'], inplace=True)
+            
+        except Exception as e:
+            self.logger.warning(f"Erro no XGBoost: {e}, usando apenas GARCH")
+            df['xgb_vol'] = df['garch_vol']
         
         return df
     
-    def calculate_directional_flow(self, data: pd.DataFrame, window: int = 20) -> pd.DataFrame:
+    def create_hybrid_model(self, data: pd.DataFrame) -> pd.DataFrame:
+        """Criar modelo híbrido GARCH + XGBoost"""
         df = data.copy()
         
-        def calculate_directional_metrics(returns_window):
-            """Calcular métricas direcionais para uma janela"""
-            up_returns = returns_window[returns_window > 0]
-            down_returns = returns_window[returns_window < 0]
-            
-            # Volatilidades direcionais
-            up_vol = np.sqrt(np.mean(up_returns**2)) if len(up_returns) > 0 else 0
-            down_vol = np.sqrt(np.mean(down_returns**2)) if len(down_returns) > 0 else 0
-            
-            # Frequências
-            up_freq = len(up_returns) / len(returns_window) if len(returns_window) > 0 else 0
-            down_freq = len(down_returns) / len(returns_window) if len(returns_window) > 0 else 0
-            
-            # Métricas
-            asymmetry_ratio = down_vol / (up_vol + 1e-8)  # Evitar divisão por zero
-            direction_bias = up_freq - down_freq
-            
-            # Volatilidade condicional (upside vs downside)
-            upside_volatility = up_vol * np.sqrt(252) if up_vol > 0 else 0
-            downside_volatility = down_vol * np.sqrt(252) if down_vol > 0 else 0
-            
-            return {
-                'up_vol': upside_volatility,
-                'down_vol': downside_volatility,
-                'up_freq': up_freq,
-                'down_freq': down_freq,
-                'asymmetry_ratio': asymmetry_ratio,
-                'direction_bias': direction_bias
+        # Regime adaptativo baseado em volatilidade
+        df['vol_regime_adaptive'] = df['garch_vol'].rolling(30).std()
+        df['vol_regime_normalized'] = (
+            df['vol_regime_adaptive'] / df['vol_regime_adaptive'].rolling(252).mean()
+        )
+        
+        # Preencher NaN com valores padrão
+        df['vol_regime_normalized'].fillna(1.0, inplace=True)
+        
+        # Pesos dinâmicos: mais GARCH em alta vol, mais XGBoost em baixa vol
+        df['weight_garch'] = np.clip(0.3 + 0.4 * df['vol_regime_normalized'], 0.3, 0.7)
+        df['weight_xgb'] = 1 - df['weight_garch']
+        
+        # Híbrido final com proteção contra NaN
+        df['hybrid_vol'] = (
+            df['weight_garch'] * df['garch_vol'] + 
+            df['weight_xgb'] * df['xgb_vol']
+        )
+        
+        # Garantir que não há NaN na volatilidade híbrida
+        df['hybrid_vol'].fillna(df['garch_vol'], inplace=True)
+        df['hybrid_vol'].fillna(method='ffill', inplace=True)
+        df['hybrid_vol'].fillna(0.02, inplace=True)  # Fallback final
+        
+        return df
+    
+    def create_bands(self, data: pd.DataFrame) -> pd.DataFrame:
+        """Criar bandas de volatilidade"""
+        df = data.copy()
+        df_temp = df.copy()
+        df_temp['Month'] = df_temp['Date'].dt.to_period('M')
+        
+        monthly_ref = df_temp.groupby('Month').agg(
+            reference_price=('Close', 'last'),
+            monthly_vol=('hybrid_vol', 'last')
+        ).reset_index()
+        
+        monthly_ref['Next_Month'] = monthly_ref['Month'] + 1
+        df_temp = df_temp.merge(
+            monthly_ref[['Next_Month', 'reference_price', 'monthly_vol']],
+            left_on='Month',
+            right_on='Next_Month',
+            how='left'
+        )
+        
+        # Preencher NaN com forward fill para evitar bandas vazias
+        df_temp['monthly_vol'].fillna(method='ffill', inplace=True)
+        df_temp['reference_price'].fillna(method='ffill', inplace=True)
+        
+        # Se ainda houver NaN, usar volatilidade GARCH como fallback
+        df_temp['monthly_vol'].fillna(df['garch_vol'], inplace=True)
+        df_temp['reference_price'].fillna(df['Close'], inplace=True)
+        
+        # Apenas 2 bandas principais: 2σ e 4σ
+        for d in [2, 4]:
+            df[f'banda_superior_{d}sigma'] = (
+                (1 + d * df_temp['monthly_vol']) * df_temp['reference_price']
+            )
+            df[f'banda_inferior_{d}sigma'] = (
+                (1 - d * df_temp['monthly_vol']) * df_temp['reference_price']
+            )
+        
+        # Linha central
+        df['linha_central'] = (df['banda_superior_2sigma'] + df['banda_inferior_2sigma']) / 2
+        
+        # Verificar se ainda há NaN e corrigir
+        for col in ['banda_superior_2sigma', 'banda_inferior_2sigma', 'linha_central', 'banda_superior_4sigma', 'banda_inferior_4sigma']:
+            if col in df.columns and df[col].isna().any():
+                df[col].fillna(method='ffill', inplace=True)
+                df[col].fillna(method='bfill', inplace=True)
+        
+        return df
+    
+    def get_current_signals(self, data: pd.DataFrame, ticker: str) -> Dict:
+        """Gerar sinais atuais de trading"""
+        latest = data.iloc[-1]
+        current_price = latest['Close']
+        
+        # Verificar se há NaN nas bandas e usar fallback
+        def safe_get(col_name, fallback_value):
+            value = latest[col_name] if not pd.isna(latest[col_name]) else fallback_value
+            return value
+        
+        # Fallbacks baseados no preço atual e volatilidade
+        vol_fallback = latest['garch_vol'] if not pd.isna(latest['garch_vol']) else 0.02
+        
+        signals = {
+            'price': current_price,
+            'volatility': latest['hybrid_vol'] if not pd.isna(latest['hybrid_vol']) else vol_fallback,
+            'trend_regime': 'Bull' if latest['trend_regime'] == 1 else 'Bear',
+            'vol_regime': 'High' if latest['vol_regime'] == 1 else 'Low',
+            'bandas': {
+                'superior_2σ': safe_get('banda_superior_2sigma', current_price * (1 + 2 * vol_fallback)),
+                'inferior_2σ': safe_get('banda_inferior_2sigma', current_price * (1 - 2 * vol_fallback)),
+                'superior_4σ': safe_get('banda_superior_4sigma', current_price * (1 + 4 * vol_fallback)),
+                'inferior_4σ': safe_get('banda_inferior_4sigma', current_price * (1 - 4 * vol_fallback)),
+                'linha_central': safe_get('linha_central', current_price)
             }
+        }
         
-        # Calcular métricas direcionais em janela móvel
-        directional_metrics = []
+        # Posição do preço nas bandas
+        sup_2sigma = signals['bandas']['superior_2σ']
+        inf_2sigma = signals['bandas']['inferior_2σ']
+        central = signals['bandas']['linha_central']
         
-        for i in range(len(df)):
-            if i < window:
-                # Valores iniciais
-                metrics = {
-                    'up_vol': 0, 'down_vol': 0, 'up_freq': 0.5, 'down_freq': 0.5,
-                    'asymmetry_ratio': 1, 'direction_bias': 0
-                }
-            else:
-                returns_window = df['return'].iloc[i-window:i]
-                metrics = calculate_directional_metrics(returns_window)
-            
-            directional_metrics.append(metrics)
-        
-        # Adicionar métricas ao DataFrame
-        metrics_df = pd.DataFrame(directional_metrics, index=df.index)
-        for col in metrics_df.columns:
-            df[f'dir_{col}'] = metrics_df[col]
-        
-        # Sinal direcional
-        df['directional_signal'] = np.where(
-            df['dir_asymmetry_ratio'] > 1.5, 'PUT_BIAS',
-            np.where(df['dir_asymmetry_ratio'] < 0.7, 'CALL_BIAS', 'NEUTRAL')
-        )
-        
-        # Força do sinal (0-100)
-        df['directional_strength'] = np.where(
-            df['directional_signal'] == 'PUT_BIAS',
-            np.clip((df['dir_asymmetry_ratio'] - 1.5) * 50, 0, 100),
-            np.where(
-                df['directional_signal'] == 'CALL_BIAS',
-                np.clip((0.7 - df['dir_asymmetry_ratio']) * 100, 0, 100),
-                0
-            )
-        )
-        
-        self.logger.info(f"Sinais direcionais: {df['directional_signal'].value_counts().to_dict()}")
-        
-        return df
-    
-    def calculate_squeeze_score(self, data: pd.DataFrame, bb_period: int = 20, kc_period: int = 20) -> pd.DataFrame:
-        df = data.copy()
-        
-        # Bollinger Bands
-        df['bb_middle'] = df['Close'].rolling(bb_period).mean()
-        df['bb_std'] = df['Close'].rolling(bb_period).std()
-        df['bb_upper'] = df['bb_middle'] + (2 * df['bb_std'])
-        df['bb_lower'] = df['bb_middle'] - (2 * df['bb_std'])
-        df['bb_width'] = (df['bb_upper'] - df['bb_lower']) / df['bb_middle']
-        
-        # Keltner Channels (usando ATR)
-        df['hl'] = df['High'] - df['Low']
-        df['hc'] = abs(df['High'] - df['Close'].shift(1))
-        df['lc'] = abs(df['Low'] - df['Close'].shift(1))
-        df['atr'] = df[['hl', 'hc', 'lc']].max(axis=1).rolling(kc_period).mean()
-        
-        df['kc_middle'] = df['Close'].rolling(kc_period).mean()
-        df['kc_upper'] = df['kc_middle'] + (2 * df['atr'])
-        df['kc_lower'] = df['kc_middle'] - (2 * df['atr'])
-        df['kc_width'] = (df['kc_upper'] - df['kc_lower']) / df['kc_middle']
-        
-        # Squeeze Score
-        df['squeeze_score'] = df['bb_width'] / (df['kc_width'] + 1e-8)
-        
-        # Squeeze Score suavizado
-        df['squeeze_smooth'] = df['squeeze_score'].rolling(5).mean()
-        
-        # Squeeze Signal
-        df['squeeze_signal'] = np.where(
-            df['squeeze_smooth'] < 0.8, 'COMPRESSION',
-            np.where(df['squeeze_smooth'] > 1.5, 'EXPANSION', 'NEUTRAL')
-        )
-        
-        # Força do squeeze (0-100)
-        df['squeeze_strength'] = np.where(
-            df['squeeze_signal'] == 'COMPRESSION',
-            np.clip((0.8 - df['squeeze_smooth']) * 100, 0, 100),
-            np.where(
-                df['squeeze_signal'] == 'EXPANSION',
-                np.clip((df['squeeze_smooth'] - 1.5) * 50, 0, 100),
-                0
-            )
-        )
-        
-        # Detectar breakouts
-        df['squeeze_breakout'] = (
-            (df['squeeze_signal'].shift(1) == 'COMPRESSION') & 
-            (df['squeeze_signal'] == 'NEUTRAL')
-        )
-        
-        self.logger.info(f"Sinais de squeeze: {df['squeeze_signal'].value_counts().to_dict()}")
-        
-        return df
-    
-    def generate_combined_signals(self, data: pd.DataFrame) -> pd.DataFrame:
-        df = data.copy()
-        
-        # Lógica de combinação
-        latest = df.tail(5)  # Últimos 5 períodos
-        
-        # Médias dos indicadores recentes
-        avg_squeeze = latest['squeeze_smooth'].mean()
-        avg_asymmetry = latest['dir_asymmetry_ratio'].mean()
-        regime_current = df['regime'].iloc[-1]
-        
-        # Sinais combinados
-        signal = 'HOLD'
-        confidence = 0
-        strategy = ''
-        reasoning = []
-        
-        # COMPRA FORTE DE VOLATILIDADE
-        if avg_squeeze < 0.8 and regime_current >= 1:
+        if current_price > sup_2sigma:
+            position = 'Acima Banda Superior 2σ - Sobrecomprado'
+            signal = 'SELL_VOLATILITY'
+            confidence = 80
+            strategy = 'Iron Condor'
+        elif current_price < inf_2sigma:
+            position = 'Abaixo Banda Inferior 2σ - Sobrevendido'
             signal = 'BUY_VOLATILITY'
             confidence = 85
             strategy = 'Long Straddle'
-            reasoning = [
-                f'Squeeze baixo ({avg_squeeze:.3f}) indica compressão',
-                f'Regime {regime_current} sugere volatilidade crescente'
-            ]
+        elif current_price > central:
+            position = 'Metade Superior - Bullish'
+            signal = 'CALL_BIAS'
+            confidence = 65
+            strategy = 'Call Spread'
+        else:
+            position = 'Metade Inferior - Bearish'
+            signal = 'PUT_BIAS'
+            confidence = 65
+            strategy = 'Put Spread'
+        
+        signals['position'] = position
+        signals['signal'] = signal
+        signals['confidence'] = confidence
+        signals['strategy'] = strategy
+        
+        return signals
+    
+    def generate_chart_data(self, data: pd.DataFrame, ticker: str, days_back: int = 180) -> Dict:
+        """Gerar dados para Chart.js ao invés de HTML Plotly"""
+        try:
+            # Filtrar dados recentes
+            df_plot = data.tail(days_back).copy()
+            ticker_display = ticker.replace('.SA', '')
             
-            # Ajuste direcional
-            if avg_asymmetry > 1.5:
-                strategy += ' + Put bias'
-                reasoning.append('Fluxo direcional favorece puts')
-            elif avg_asymmetry < 0.7:
-                strategy += ' + Call bias'
-                reasoning.append('Fluxo direcional favorece calls')
-        
-        # VENDA DE VOLATILIDADE
-        elif avg_squeeze > 1.5 and regime_current == 0:
-            signal = 'SELL_VOLATILITY'
-            confidence = 75
-            strategy = 'Iron Condor'
-            reasoning = [
-                f'Squeeze alto ({avg_squeeze:.3f}) indica expansão máxima',
-                f'Regime {regime_current} sugere baixa volatilidade'
-            ]
-        
-        # ESTRATÉGIAS DIRECIONAIS
-        elif 0.8 <= avg_squeeze <= 1.5:
-            if avg_asymmetry > 1.5:
-                signal = 'PUT_BIAS'
-                confidence = 70
-                strategy = 'Put Spread'
-                reasoning = [
-                    f'Assimetria alta ({avg_asymmetry:.2f}) favorece quedas',
-                    'Squeeze neutro permite estratégia direcional'
-                ]
-            elif avg_asymmetry < 0.7:
-                signal = 'CALL_BIAS'
-                confidence = 70
-                strategy = 'Call Spread'
-                reasoning = [
-                    f'Assimetria baixa ({avg_asymmetry:.2f}) favorece altas',
-                    'Squeeze neutro permite estratégia direcional'
-                ]
-        
-        # Adicionar ao DataFrame
-        df.loc[df.index[-1], 'combined_signal'] = signal
-        df.loc[df.index[-1], 'signal_confidence'] = confidence
-        df.loc[df.index[-1], 'recommended_strategy'] = strategy
-        
-        return df, {
-            'signal': signal,
-            'confidence': confidence,
-            'strategy': strategy,
-            'reasoning': reasoning,
-            'metrics': {
-                'squeeze_score': avg_squeeze,
-                'asymmetry_ratio': avg_asymmetry,
-                'current_regime': regime_current
+            # Garantir que Date é datetime
+            if 'Date' in df_plot.columns:
+                df_plot['Date'] = pd.to_datetime(df_plot['Date'])
+            
+            # Preparar dados para Chart.js
+            chart_data = {
+                'labels': [],
+                'datasets': {
+                    'candlestick': {'data': []},
+                    'banda_superior_2sigma': [],
+                    'banda_inferior_2sigma': [],
+                    'banda_superior_4sigma': [],
+                    'banda_inferior_4sigma': [],
+                    'linha_central': [],
+                    'prices': []
+                },
+                'config': {
+                    'title': f'{ticker_display} - Bandas de Volatilidade Híbridas (GARCH + XGBoost)',
+                    'yAxisLabel': 'Preço (R$)' if '.SA' in ticker else 'Preço (USD)'
+                }
             }
-        }
+            
+            # Processar dados linha por linha
+            for idx, row in df_plot.iterrows():
+                # Data - verificar se é datetime ou já é string
+                if hasattr(row['Date'], 'strftime'):
+                    date_str = row['Date'].strftime('%Y-%m-%d')
+                else:
+                    # Se já é string ou timestamp, converter
+                    try:
+                        date_obj = pd.to_datetime(row['Date'])
+                        date_str = date_obj.strftime('%Y-%m-%d')
+                    except:
+                        date_str = str(row['Date'])[:10]  # Pegar primeiros 10 caracteres
+                
+                chart_data['labels'].append(date_str)
+                
+                # Verificar se as colunas existem e não são NaN
+                def safe_float(val):
+                    try:
+                        if pd.isna(val):
+                            return 0.0
+                        return float(val)
+                    except:
+                        return 0.0
+                
+                # Dados OHLC para candlestick
+                chart_data['datasets']['candlestick']['data'].append({
+                    'x': date_str,
+                    'o': safe_float(row.get('Open', row.get('Close', 0))),
+                    'h': safe_float(row.get('High', row.get('Close', 0))),
+                    'l': safe_float(row.get('Low', row.get('Close', 0))),
+                    'c': safe_float(row.get('Close', 0))
+                })
+                
+                # Preços para linha
+                chart_data['datasets']['prices'].append(safe_float(row.get('Close', 0)))
+                
+                # Bandas (usar valores padrão se não existirem)
+                close_price = safe_float(row.get('Close', 0))
+                chart_data['datasets']['banda_superior_2sigma'].append(
+                    safe_float(row.get('banda_superior_2sigma', close_price * 1.05))
+                )
+                chart_data['datasets']['banda_inferior_2sigma'].append(
+                    safe_float(row.get('banda_inferior_2sigma', close_price * 0.95))
+                )
+                chart_data['datasets']['banda_superior_4sigma'].append(
+                    safe_float(row.get('banda_superior_4sigma', close_price * 1.10))
+                )
+                chart_data['datasets']['banda_inferior_4sigma'].append(
+                    safe_float(row.get('banda_inferior_4sigma', close_price * 0.90))
+                )
+                chart_data['datasets']['linha_central'].append(
+                    safe_float(row.get('linha_central', close_price))
+                )
+            
+            self.logger.info(f"Dados do gráfico gerados: {len(chart_data['labels'])} pontos")
+            return chart_data
+            
+        except Exception as e:
+            self.logger.error(f"Erro ao gerar dados do gráfico: {e}")
+            import traceback
+            traceback.print_exc()
+            
+            # Retornar dados mínimos em caso de erro
+            return {
+                'labels': ['2025-07-11'],
+                'datasets': {
+                    'candlestick': {'data': [{'x': '2025-07-11', 'o': 30, 'h': 35, 'l': 28, 'c': 32}]},
+                    'banda_superior_2sigma': [35],
+                    'banda_inferior_2sigma': [29],
+                    'banda_superior_4sigma': [38],
+                    'banda_inferior_4sigma': [26],
+                    'linha_central': [32],
+                    'prices': [32]
+                },
+                'config': {'title': 'Erro ao carregar dados', 'yAxisLabel': 'Preço'}
+            }
     
     def get_analysis_summary(self, ticker: str, period: str = "6mo") -> Dict:
+        """Análise completa do ticker"""
         try:
-            # CORREÇÃO: Processar ticker corretamente
+            # Processar ticker corretamente
             search_ticker = ticker if ticker.endswith('.SA') or ticker.startswith('^') else ticker + '.SA'
             clean_ticker = ticker.replace('.SA', '').upper()
             
@@ -387,96 +477,105 @@ class VolatilityRegimesService:
             if len(data) < 50:
                 return {'error': f'Dados insuficientes ({len(data)} registros). Mínimo 50.', 'success': False}
             
-            # CORREÇÃO: Buscar preço atual/corrente em tempo real
+            # Buscar preço atual/corrente em tempo real
             try:
                 stock = yf.Ticker(search_ticker)
-                # Tentar pegar dados intraday primeiro (1 minuto, último dia)
                 current_data = stock.history(period="1d", interval="1m")
                 
                 if not current_data.empty:
-                    # Preço mais recente (último tick)
                     current_price = float(current_data['Close'].iloc[-1])
                     last_update_time = current_data.index[-1]
                     self.logger.info(f"Preço corrente obtido: {current_price} às {last_update_time}")
                 else:
-                    # Fallback: usar último fechamento dos dados históricos
                     current_price = float(data['Close'].iloc[-1])
-                    last_update_time = data.index[-1]
+                    last_update_time = data['Date'].iloc[-1]
                     self.logger.warning(f"Usando último fechamento histórico: {current_price}")
                     
             except Exception as e:
-                # Fallback final: último fechamento dos dados principais
                 current_price = float(data['Close'].iloc[-1])
-                last_update_time = data.index[-1]
+                last_update_time = data['Date'].iloc[-1]
                 self.logger.warning(f"Erro ao buscar preço corrente, usando fechamento: {current_price} - {e}")
             
-            # Calcular indicadores
-            data = self.calculate_regime_clustering(data)
-            data = self.calculate_directional_flow(data)
-            data = self.calculate_squeeze_score(data)
+            # Processar dados através do pipeline
+            data = self.calculate_base_volatility(data)
+            data = self.engineer_features(data)
+            data = self.train_xgboost(data)
+            data = self.create_hybrid_model(data)
+            data = self.create_bands(data)
             
             # Gerar sinais
-            data, combined_signal = self.generate_combined_signals(data)
+            signals = self.get_current_signals(data, search_ticker)
+            
+            # Gerar dados do gráfico Chart.js
+            chart_data = self.generate_chart_data(data, search_ticker)
             
             # Estatísticas atuais
             latest = data.iloc[-1]
             
-            # CORREÇÃO PRINCIPAL: Aplicar convert_to_json_safe em TODOS os valores
+            # Aplicar convert_to_json_safe em TODOS os valores
             summary = {
                 'ticker': clean_ticker,
                 'period': period,
                 'data_points': len(data),
                 'last_update': last_update_time.strftime('%Y-%m-%d %H:%M:%S'),
-                'current_price': self.convert_to_json_safe(current_price),  # PREÇO CORRENTE
-                'historical_close': self.convert_to_json_safe(latest['Close']),  # Último fechamento histórico
+                'current_price': self.convert_to_json_safe(current_price),
+                'historical_close': self.convert_to_json_safe(latest['Close']),
                 
-                # Métricas atuais - TODAS convertidas
+                # Métricas atuais - Adaptadas para bandas de volatilidade
                 'metrics': {
-                    'regime': {
-                        'current': self.convert_to_json_safe(latest['regime']),
-                        'name': str(latest['regime_name']),
-                        'persistence': self.convert_to_json_safe(latest['regime_persistence'])
+                    'volatility': {
+                        'garch': self.convert_to_json_safe(latest['garch_vol']),
+                        'xgb': self.convert_to_json_safe(latest['xgb_vol']),
+                        'hybrid': self.convert_to_json_safe(latest['hybrid_vol']),
+                        'regime': signals['vol_regime']
                     },
-                    'directional': {
-                        'asymmetry_ratio': self.convert_to_json_safe(latest['dir_asymmetry_ratio']),
-                        'signal': str(latest['directional_signal']),
-                        'strength': self.convert_to_json_safe(latest['directional_strength'])
+                    'bands': {
+                        'superior_2sigma': self.convert_to_json_safe(signals['bandas']['superior_2σ']),
+                        'inferior_2sigma': self.convert_to_json_safe(signals['bandas']['inferior_2σ']),
+                        'superior_4sigma': self.convert_to_json_safe(signals['bandas']['superior_4σ']),
+                        'inferior_4sigma': self.convert_to_json_safe(signals['bandas']['inferior_4σ']),
+                        'linha_central': self.convert_to_json_safe(signals['bandas']['linha_central'])
                     },
-                    'squeeze': {
-                        'score': self.convert_to_json_safe(latest['squeeze_smooth']),
-                        'signal': str(latest['squeeze_signal']),
-                        'strength': self.convert_to_json_safe(latest['squeeze_strength'])
+                    'position': {
+                        'description': signals['position'],
+                        'trend_regime': signals['trend_regime']
                     }
                 },
                 
-                # Sinal combinado - TODOS convertidos
+                # Sinal de trading
                 'trading_signal': {
-                    'signal': combined_signal['signal'],
-                    'confidence': self.convert_to_json_safe(combined_signal['confidence']),
-                    'strategy': combined_signal['strategy'],
-                    'reasoning': combined_signal['reasoning'],
+                    'signal': signals['signal'],
+                    'confidence': self.convert_to_json_safe(signals['confidence']),
+                    'strategy': signals['strategy'],
+                    'reasoning': [signals['position']],
                     'metrics': {
-                        'squeeze_score': self.convert_to_json_safe(combined_signal['metrics']['squeeze_score']),
-                        'asymmetry_ratio': self.convert_to_json_safe(combined_signal['metrics']['asymmetry_ratio']),
-                        'current_regime': self.convert_to_json_safe(combined_signal['metrics']['current_regime'])
+                        'volatility': self.convert_to_json_safe(signals['volatility']),
+                        'price_vs_central': self.convert_to_json_safe(
+                            (current_price - signals['bandas']['linha_central']) / signals['bandas']['linha_central'] * 100
+                        )
                     }
                 },
                 
-                # Dados para gráficos (últimos 50 pontos) - TODOS convertidos
+                # Dados para gráficos (últimos 50 pontos)
                 'chart_data': [
                     {
+                        'Date': row['Date'].strftime('%Y-%m-%d'),
                         'Close': self.convert_to_json_safe(row['Close']),
-                        'regime': self.convert_to_json_safe(row['regime']),
-                        'squeeze_smooth': self.convert_to_json_safe(row['squeeze_smooth']),
-                        'dir_asymmetry_ratio': self.convert_to_json_safe(row['dir_asymmetry_ratio'])
+                        'banda_superior_2sigma': self.convert_to_json_safe(row['banda_superior_2sigma']),
+                        'banda_inferior_2sigma': self.convert_to_json_safe(row['banda_inferior_2sigma']),
+                        'linha_central': self.convert_to_json_safe(row['linha_central']),
+                        'hybrid_vol': self.convert_to_json_safe(row['hybrid_vol'])
                     }
                     for _, row in data.tail(50).iterrows()
                 ],
                 
+                # Dados do gráfico Chart.js
+                'chart_data_full': chart_data,
+                
                 'success': True
             }
             
-            self.logger.info(f"Análise concluída para {clean_ticker}: {combined_signal['signal']} - Preço corrente: R$ {current_price:.2f}")
+            self.logger.info(f"Análise concluída para {clean_ticker}: {signals['signal']} - Preço corrente: R$ {current_price:.2f}")
             return summary
             
         except Exception as e:
