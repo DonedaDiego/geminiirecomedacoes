@@ -5,8 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Bandas de Volatilidade Híbridas - Geminii Tech</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
   <script>
     tailwind.config = {
       theme: {
@@ -65,6 +63,25 @@
     @keyframes spin {
       0% { transform: rotate(0deg); }
       100% { transform: rotate(360deg); }
+    }
+
+    .dark-select {
+      background-color: rgba(30, 30, 30, 0.9);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: white;
+      backdrop-filter: blur(10px);
+    }
+
+    .dark-select option {
+      background-color: #1a1a1a;
+      color: white;
+      padding: 8px;
+    }
+
+    .dark-select:focus {
+      outline: none;
+      border-color: #ba39af;
+      box-shadow: 0 0 0 2px rgba(186, 57, 175, 0.2);
     }
 
     .signal-indicator {
@@ -138,6 +155,20 @@
     .band-superior { border-left-color: #ef4444; }
     .band-inferior { border-left-color: #10b981; }
     .band-central { border-left-color: #6b7280; }
+
+    .confidence-bar {
+      width: 100%;
+      height: 8px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .confidence-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #10b981, #059669);
+      transition: width 1s ease;
+    }
   </style>
 </head>
 <body class="text-white">
@@ -171,17 +202,15 @@
       <div class="text-center mb-12">
         <h1 class="text-4xl md:text-5xl font-bold mb-4">
           <span style="color: #ba39af; font-weight: 900;">Bandas de</span>
-          <span class="text-white font-light">Volatilidade</span>
+          <span class="text-white font-light">Volatilidade Híbridas</span>
         </h1>
         <p class="text-neutral-300 text-lg max-w-2xl mx-auto">
-          Este indicador foi desenvolvido com base em modelos estatísticos 
-          e técnicas modernas de machine learning, com o objetivo de identificar zonas
-          potenciais de suporte e resistência utilizando a volatilidade como referência.
-          O modelo parte da estimativa da volatilidade anual dos ativos, ajustando-a para o
-          contexto mensal e, posteriormente, para projeções diárias. Para isso, combinamos 
-          o poder preditivo do XGBoost, uma das técnicas de aprendizado de máquina mais 
-          avançadas utilizadas pela Geminii, com o modelo GARCH, um dos estimadores mais robustos
-          e reconhecidos para previsão de volatilidade financeira.
+          Este indicador foi desenvolvido com base em modelos estatísticos e técnicas modernas de machine learning, com o objetivo de identificar 
+          zonas potenciais de suporte e resistência utilizando a volatilidade como referência.
+          O modelo parte da estimativa da volatilidade anual dos ativos, ajustando-a para o contexto mensal e,
+          posteriormente, para projeções diárias. Para isso, combinamos o poder preditivo do XGBoost, uma das técnicas de a
+          prendizado de máquina mais avançadas utilizadas pela Geminii, com o modelo GARCH, um dos estimadores mais robustos e
+          reconhecidos para previsão de volatilidade financeira.
         </p>
       </div>
 
@@ -195,6 +224,9 @@
               placeholder="Digite o código da ação (ex: PETR4)" 
               class="px-4 py-2 bg-white bg-opacity-10 border border-white border-opacity-20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-geminii backdrop-blur-sm"
             >
+            <select id="periodSelect" class="dark-select px-4 py-2 rounded-lg" style="display: none;">
+              <option value="2y" selected>2 anos</option>
+            </select>
             <button id="analyzeBtn" class="px-6 py-2 bg-gradient-to-r from-pink-500 to-purple-600 hover:shadow-lg rounded-lg transition-all font-medium">
               <i class="fas fa-brain mr-2"></i>Analisar
             </button>
@@ -210,19 +242,30 @@
         <div class="vol-card p-6">
           <div class="text-center">
             <h3 class="text-xl font-bold mb-4">
-              
+              <i class="fas fa-bullseye mr-2"></i>Momento da Vol
             </h3>
             <div id="signalIndicator" class="inline-block mb-4">
               <!-- Preenchido via JS -->
             </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
               <div class="bg-white bg-opacity-5 p-4 rounded-lg">
                 <div class="text-sm text-gray-400 mb-1">Preço Atual</div>
                 <div id="currentPrice" class="text-xl font-bold text-white">--</div>
               </div>
               <div class="bg-white bg-opacity-5 p-4 rounded-lg">
-                <div class="text-sm text-gray-400 mb-1">Volatilidade Ensemble</div>
+                <div class="text-sm text-gray-400 mb-1">Volatilidade Híbrida</div>
                 <div id="hybridVolatility" class="text-xl font-bold text-white">--</div>
+              </div>
+              <div class="bg-white bg-opacity-5 p-4 rounded-lg">
+                <div class="text-sm text-gray-400 mb-1"></div>
+                <div id="confidenceValue" class="text-xl font-bold text-white">--</div>
+                <div class="confidence-bar mt-2">
+                  <div id="confidenceFill" class="confidence-fill" style="width: 0%"></div>
+                </div>
+              </div>
+              <div class="bg-white bg-opacity-5 p-4 rounded-lg">
+                <div class="text-sm text-gray-400 mb-1">Estratégia</div>
+                <div id="strategyValue" class="text-sm font-bold text-white">--</div>
               </div>
             </div>
           </div>
@@ -341,10 +384,22 @@
             <i class="fas fa-chart-line text-geminii mr-2"></i>
             Gráfico Interativo - Bandas de Volatilidade Híbridas
           </h3>
-          <div style="background: transparent; border-radius: 12px; padding: 20px;">
-            <div id="interactiveChart" style="width: 100%; height: 700px; background: transparent; position: relative;">
-              <canvas id="bandsChart"></canvas>
+          <div style="background: rgba(255, 255, 255, 0.05); border-radius: 12px; padding: 20px; border: 1px solid rgba(255, 255, 255, 0.1);">
+            <div id="interactiveChart" style="width: 100%; height: 700px; background: transparent;">
+              <!-- Gráfico Plotly será inserido aqui -->
             </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Estratégia Recomendada -->
+      <div id="strategySection" class="mb-8 hidden">
+        <div class="vol-card p-6">
+          <h3 class="text-xl font-bold mb-4">
+            
+          </h3>
+          <div id="strategyContent" class="space-y-4">
+
           </div>
         </div>
       </div>
@@ -358,12 +413,14 @@
     
     // Elementos DOM
     const stockInput = document.getElementById('stockInput');
+    const periodSelect = document.getElementById('periodSelect');
     const analyzeBtn = document.getElementById('analyzeBtn');
     const statusMsg = document.getElementById('statusMsg');
     const tradingSignal = document.getElementById('tradingSignal');
     const bandsSection = document.getElementById('bandsSection');
     const metricsSection = document.getElementById('metricsSection');
     const chartSection = document.getElementById('chartSection');
+    const strategySection = document.getElementById('strategySection');
     
     // Funções utilitárias
     function showStatus(message, type = 'info') {
@@ -401,7 +458,7 @@
     // Analisar ação
     async function analyzeStock() {
       const symbol = stockInput.value.trim().toUpperCase();
-      const period = '2y'; // Período fixo de 2 anos
+      const period = periodSelect.value;
       
       if (!symbol) {
         showStatus('Digite o código de uma ação', 'error');
@@ -443,6 +500,7 @@
       bandsSection.classList.add('hidden');
       metricsSection.classList.add('hidden');
       chartSection.classList.add('hidden');
+      strategySection.classList.add('hidden');
     }
     
     // Exibir análise completa
@@ -461,11 +519,15 @@
       // Gráfico
       displayChart(data);
       
+      // Estratégia
+      displayStrategy(data);
+      
       // Mostrar seções
       tradingSignal.classList.remove('hidden');
       bandsSection.classList.remove('hidden');
       metricsSection.classList.remove('hidden');
       chartSection.classList.remove('hidden');
+      
     }
     
     // Exibir sinal de trading
@@ -511,6 +573,14 @@
       // Dados do sinal
       document.getElementById('currentPrice').textContent = formatCurrency(data.current_price);
       document.getElementById('hybridVolatility').textContent = formatPercentage(data.metrics?.volatility?.hybrid || 0);
+      document.getElementById('confidenceValue').textContent = `${signal.confidence || 0}%`;
+      document.getElementById('strategyValue').textContent = signal.strategy || '--';
+      
+      // Barra de confiança
+      const confidenceFill = document.getElementById('confidenceFill');
+      setTimeout(() => {
+        confidenceFill.style.width = `${signal.confidence || 0}%`;
+      }, 500);
     }
     
     // Exibir bandas de volatilidade
@@ -543,189 +613,75 @@
     
     // Exibir gráfico
     function displayChart(data) {
-      if (data.chart_data_full) {
-        createVolatilityBandsChart(data.chart_data_full);
+      if (data.chart_html) {
+        const chartContainer = document.getElementById('interactiveChart');
+        
+        // Criar iframe para o gráfico Plotly
+        const iframe = document.createElement('iframe');
+        iframe.style.width = '100%';
+        iframe.style.height = '700px';
+        iframe.style.border = 'none';
+        iframe.style.background = 'transparent';
+        
+        chartContainer.innerHTML = '';
+        chartContainer.appendChild(iframe);
+        
+        // Escrever HTML do Plotly no iframe
+        const doc = iframe.contentDocument || iframe.contentWindow.document;
+        doc.open();
+        doc.write(data.chart_html);
+        doc.close();
+        
+        console.log('Gráfico Plotly carregado');
       } else {
         document.getElementById('interactiveChart').innerHTML = '<p class="text-center text-gray-400">Gráfico não disponível</p>';
       }
     }
     
-    // Criar gráfico Chart.js com bandas de volatilidade
-    function createVolatilityBandsChart(chartData) {
-      try {
-        const ctx = document.getElementById('bandsChart').getContext('2d');
-        
-        // Destruir gráfico anterior se existir
-        if (window.bandsChartInstance) {
-          window.bandsChartInstance.destroy();
-        }
-        
-        const datasets = chartData.datasets;
-        
-        window.bandsChartInstance = new Chart(ctx, {
-          type: 'line',
-          data: {
-            labels: chartData.labels,
-            datasets: [
-              // Preços (linha principal)
-              {
-                label: 'Preço',
-                data: datasets.prices,
-                borderColor: '#00FFAA',
-                backgroundColor: 'rgba(0, 255, 170, 0.1)',
-                borderWidth: 3,
-                fill: false,
-                tension: 0.1,
-                pointRadius: 0,
-                pointHoverRadius: 6
-              },
-              // Banda Superior 2σ
-              {
-                label: 'Banda Superior 2σ',
-                data: datasets.banda_superior_2sigma,
-                borderColor: '#FF6B6B',
-                backgroundColor: 'transparent',
-                borderWidth: 2,
-                fill: false,
-                tension: 0.1,
-                pointRadius: 0,
-                borderDash: [0]
-              },
-              // Banda Inferior 2σ
-              {
-                label: 'Banda Inferior 2σ',
-                data: datasets.banda_inferior_2sigma,
-                borderColor: '#4ECDC4',
-                backgroundColor: 'transparent',
-                borderWidth: 2,
-                fill: false,
-                tension: 0.1,
-                pointRadius: 0,
-                borderDash: [0]
-              },
-              // Banda Superior 4σ
-              {
-                label: 'Banda Superior 4σ',
-                data: datasets.banda_superior_4sigma,
-                borderColor: '#FF4757',
-                backgroundColor: 'transparent',
-                borderWidth: 1.5,
-                fill: false,
-                tension: 0.1,
-                pointRadius: 0,
-                borderDash: [5, 5]
-              },
-              // Banda Inferior 4σ
-              {
-                label: 'Banda Inferior 4σ',
-                data: datasets.banda_inferior_4sigma,
-                borderColor: '#2ED573',
-                backgroundColor: 'transparent',
-                borderWidth: 1.5,
-                fill: false,
-                tension: 0.1,
-                pointRadius: 0,
-                borderDash: [5, 5]
-              },
-              // Linha Central
-              {
-                label: 'Linha Central',
-                data: datasets.linha_central,
-                borderColor: '#ffffff',
-                backgroundColor: 'transparent',
-                borderWidth: 2,
-                fill: false,
-                tension: 0.1,
-                pointRadius: 0,
-                borderDash: [10, 5]
-              }
-            ]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            interaction: {
-              intersect: false,
-              mode: 'index'
-            },
-            plugins: {
-              title: {
-                display: true,
-                text: chartData.config.title,
-                color: '#ffffff',
-                font: {
-                  size: 16,
-                  weight: 'bold'
-                },
-                padding: 20
-              },
-              legend: {
-                position: 'top',
-                align: 'start',
-                labels: {
-                  color: '#ffffff',
-                  font: { size: 12 },
-                  usePointStyle: true,
-                  padding: 15
-                }
-              },
-              tooltip: {
-                backgroundColor: 'rgba(17, 17, 58, 0.95)',
-                titleColor: '#00FFAA',
-                bodyColor: '#ffffff',
-                borderColor: '#00FFAA',
-                borderWidth: 1,
-                cornerRadius: 8,
-                padding: 12,
-                callbacks: {
-                  label: function(context) {
-                    const value = context.parsed.y;
-                    return `${context.dataset.label}: R$ ${value.toFixed(2)}`;
-                  }
-                }
-              }
-            },
-            scales: {
-              x: {
-                type: 'time',
-                time: {
-                  unit: 'day',
-                  displayFormats: {
-                    day: 'MMM dd'
-                  }
-                },
-                ticks: { 
-                  color: '#ffffff',
-                  maxTicksLimit: 8,
-                  font: { size: 11 }
-                },
-                grid: { 
-                  color: 'rgba(255, 255, 255, 0.1)',
-                  drawBorder: false
-                }
-              }
-            },
-            elements: {
-              point: { 
-                radius: 0,
-                hoverRadius: 4
-              }
-            }
-          }
+    // Exibir estratégia recomendada
+    function displayStrategy(data) {
+      const signal = data.trading_signal;
+      const strategyContent = document.getElementById('strategyContent');
+      
+      let strategyHtml = `
+        <div class="bg-white bg-opacity-5 p-4 rounded-lg">
+          <h4 class="font-semibold mb-2 text-geminii">Estratégia: ${signal.strategy || 'Indefinida'}</h4>
+          <p class="text-gray-300 mb-3">Confiança: ${signal.confidence || 0}%</p>
+      `;
+      
+      if (signal.reasoning && signal.reasoning.length > 0) {
+        strategyHtml += '<div class="space-y-2">';
+        signal.reasoning.forEach(reason => {
+          strategyHtml += `<div class="flex items-start gap-2">
+            <i class="fas fa-check-circle text-green-400 mt-1 text-xs"></i>
+            <span class="text-sm text-gray-300">${reason}</span>
+          </div>`;
         });
-        
-        console.log('✅ Gráfico de Bandas de Volatilidade criado com Chart.js');
-        
-      } catch (error) {
-        console.error('❌ Erro ao criar gráfico:', error);
-        document.getElementById('interactiveChart').innerHTML = `
-          <div style="color: white; text-align: center; padding: 50px;">
-            <i class="fas fa-exclamation-triangle" style="font-size: 48px; color: #ef4444; margin-bottom: 20px;"></i>
-            <h3>Erro ao carregar gráfico</h3>
-            <p>Erro: ${error.message}</p>
+        strategyHtml += '</div>';
+      }
+      
+      strategyHtml += '</div>';
+      
+      // Adicionar métricas da estratégia
+      if (signal.metrics) {
+        strategyHtml += `
+          <div class="bg-white bg-opacity-5 p-4 rounded-lg">
+            <h4 class="font-semibold mb-2 text-blue-400">Métricas da Estratégia</h4>
+            <div class="grid grid-cols-2 gap-4 text-sm">
+              <div>
+                <span class="text-gray-400">Volatilidade:</span>
+                <span class="font-semibold">${formatPercentage(signal.metrics.volatility || 0)}</span>
+              </div>
+              <div>
+                <span class="text-gray-400">Preço vs Central:</span>
+                <span class="font-semibold">${(signal.metrics.price_vs_central || 0).toFixed(2)}%</span>
+              </div>
+            </div>
           </div>
         `;
       }
+      
+      strategyContent.innerHTML = strategyHtml;
     }
     
     // Event Listeners

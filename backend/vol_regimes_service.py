@@ -353,111 +353,110 @@ class VolatilityRegimesService:
         
         return signals
     
-    def generate_chart_data(self, data: pd.DataFrame, ticker: str, days_back: int = 180) -> Dict:
-        """Gerar dados para Chart.js ao invés de HTML Plotly"""
+    def generate_plotly_chart(self, data: pd.DataFrame, ticker: str, days_back: int = 180) -> str:
+        """Gerar gráfico Plotly em HTML"""
         try:
             # Filtrar dados recentes
             df_plot = data.tail(days_back).copy()
             ticker_display = ticker.replace('.SA', '')
             
-            # Garantir que Date é datetime
-            if 'Date' in df_plot.columns:
-                df_plot['Date'] = pd.to_datetime(df_plot['Date'])
+            # Criar figura Plotly
+            fig = go.Figure()
             
-            # Preparar dados para Chart.js
-            chart_data = {
-                'labels': [],
-                'datasets': {
-                    'candlestick': {'data': []},
-                    'banda_superior_2sigma': [],
-                    'banda_inferior_2sigma': [],
-                    'banda_superior_4sigma': [],
-                    'banda_inferior_4sigma': [],
-                    'linha_central': [],
-                    'prices': []
-                },
-                'config': {
-                    'title': f'{ticker_display} - Bandas de Volatilidade Híbridas (GARCH + XGBoost)',
-                    'yAxisLabel': 'Preço (R$)' if '.SA' in ticker else 'Preço (USD)'
-                }
-            }
+            # Candlestick
+            fig.add_trace(go.Candlestick(
+                x=df_plot['Date'],
+                open=df_plot['Open'],
+                high=df_plot['High'],
+                low=df_plot['Low'],
+                close=df_plot['Close'],
+                name='Preço',
+                increasing_line_color='white',
+                decreasing_line_color='red'
+            ))
             
-            # Processar dados linha por linha
-            for idx, row in df_plot.iterrows():
-                # Data - verificar se é datetime ou já é string
-                if hasattr(row['Date'], 'strftime'):
-                    date_str = row['Date'].strftime('%Y-%m-%d')
-                else:
-                    # Se já é string ou timestamp, converter
-                    try:
-                        date_obj = pd.to_datetime(row['Date'])
-                        date_str = date_obj.strftime('%Y-%m-%d')
-                    except:
-                        date_str = str(row['Date'])[:10]  # Pegar primeiros 10 caracteres
-                
-                chart_data['labels'].append(date_str)
-                
-                # Verificar se as colunas existem e não são NaN
-                def safe_float(val):
-                    try:
-                        if pd.isna(val):
-                            return 0.0
-                        return float(val)
-                    except:
-                        return 0.0
-                
-                # Dados OHLC para candlestick
-                chart_data['datasets']['candlestick']['data'].append({
-                    'x': date_str,
-                    'o': safe_float(row.get('Open', row.get('Close', 0))),
-                    'h': safe_float(row.get('High', row.get('Close', 0))),
-                    'l': safe_float(row.get('Low', row.get('Close', 0))),
-                    'c': safe_float(row.get('Close', 0))
-                })
-                
-                # Preços para linha
-                chart_data['datasets']['prices'].append(safe_float(row.get('Close', 0)))
-                
-                # Bandas (usar valores padrão se não existirem)
-                close_price = safe_float(row.get('Close', 0))
-                chart_data['datasets']['banda_superior_2sigma'].append(
-                    safe_float(row.get('banda_superior_2sigma', close_price * 1.05))
-                )
-                chart_data['datasets']['banda_inferior_2sigma'].append(
-                    safe_float(row.get('banda_inferior_2sigma', close_price * 0.95))
-                )
-                chart_data['datasets']['banda_superior_4sigma'].append(
-                    safe_float(row.get('banda_superior_4sigma', close_price * 1.10))
-                )
-                chart_data['datasets']['banda_inferior_4sigma'].append(
-                    safe_float(row.get('banda_inferior_4sigma', close_price * 0.90))
-                )
-                chart_data['datasets']['linha_central'].append(
-                    safe_float(row.get('linha_central', close_price))
-                )
+            # Bandas de volatilidade
+            fig.add_trace(go.Scatter(
+                x=df_plot['Date'],
+                y=df_plot['banda_superior_2sigma'],
+                mode='lines',
+                name='Banda Superior 2σ',
+                line=dict(color='#FF6B6B', width=2),
+                opacity=0.9
+            ))
             
-            self.logger.info(f"Dados do gráfico gerados: {len(chart_data['labels'])} pontos")
-            return chart_data
+            fig.add_trace(go.Scatter(
+                x=df_plot['Date'],
+                y=df_plot['banda_inferior_2sigma'],
+                mode='lines',
+                name='Banda Inferior 2σ',
+                line=dict(color='#4ECDC4', width=2),
+                opacity=0.9
+            ))
+            
+            fig.add_trace(go.Scatter(
+                x=df_plot['Date'],
+                y=df_plot['banda_superior_4sigma'],
+                mode='lines',
+                name='Banda Superior 4σ',
+                line=dict(color='#FF4757', width=1.5, dash='dash'),
+                opacity=0.7
+            ))
+            
+            fig.add_trace(go.Scatter(
+                x=df_plot['Date'],
+                y=df_plot['banda_inferior_4sigma'],
+                mode='lines',
+                name='Banda Inferior 4σ',
+                line=dict(color='#2ED573', width=1.5, dash='dash'),
+                opacity=0.7
+            ))
+            
+            # Linha central
+            fig.add_trace(go.Scatter(
+                x=df_plot['Date'],
+                y=df_plot['linha_central'],
+                mode='lines',
+                name='Linha Central',
+                line=dict(color='black', width=2)
+            ))
+            
+            
+            # Layout
+            fig.update_layout(
+                title=f'{ticker_display} - Bandas de Volatilidade',
+                xaxis_title='Data',
+                yaxis_title='Preço (R$)' if '.SA' in ticker else 'Preço (USD)',
+                width=None,                                 # ← MUDE AQUI (era 1200)
+                height=None,                                # ← MUDE AQUI (era 700)
+                autosize=True,                              # ← ADICIONE ESTA LINHA
+                showlegend=False,
+                xaxis=dict(
+                    type='date',
+                    rangeslider=dict(visible=False),
+                    gridcolor='rgba(255,255,255,0.1)',
+                    showgrid=True,
+                    tickcolor='rgba(255,255,255,0.7)',
+                    tickfont=dict(color='rgba(255,255,255,0.8)')
+                ),
+                yaxis=dict(
+                    side='right',
+                    gridcolor='rgba(255,255,255,0.1)',
+                    showgrid=True,
+                    tickcolor='rgba(255,255,255,0.7)',
+                    tickfont=dict(color='rgba(255,255,255,0.8)')
+                ),
+                plot_bgcolor='rgba(255,255,255,0.05)',
+                paper_bgcolor='rgba(34,34,34,0.2)',
+                font=dict(color='rgba(255,255,255,0.9)'),
+                margin=dict(l=50, r=50, t=80, b=50)        # ← ADICIONE ESTA LINHA para margens
+            )
+            
+            return fig.to_html(include_plotlyjs='cdn')
             
         except Exception as e:
-            self.logger.error(f"Erro ao gerar dados do gráfico: {e}")
-            import traceback
-            traceback.print_exc()
-            
-            # Retornar dados mínimos em caso de erro
-            return {
-                'labels': ['2025-07-11'],
-                'datasets': {
-                    'candlestick': {'data': [{'x': '2025-07-11', 'o': 30, 'h': 35, 'l': 28, 'c': 32}]},
-                    'banda_superior_2sigma': [35],
-                    'banda_inferior_2sigma': [29],
-                    'banda_superior_4sigma': [38],
-                    'banda_inferior_4sigma': [26],
-                    'linha_central': [32],
-                    'prices': [32]
-                },
-                'config': {'title': 'Erro ao carregar dados', 'yAxisLabel': 'Preço'}
-            }
+            self.logger.error(f"Erro ao gerar gráfico: {e}")
+            return f"<p>Erro ao gerar gráfico: {e}</p>"
     
     def get_analysis_summary(self, ticker: str, period: str = "6mo") -> Dict:
         """Análise completa do ticker"""
@@ -506,8 +505,8 @@ class VolatilityRegimesService:
             # Gerar sinais
             signals = self.get_current_signals(data, search_ticker)
             
-            # Gerar dados do gráfico Chart.js
-            chart_data = self.generate_chart_data(data, search_ticker)
+            # Gerar gráfico HTML
+            chart_html = self.generate_plotly_chart(data, search_ticker)
             
             # Estatísticas atuais
             latest = data.iloc[-1]
@@ -569,8 +568,8 @@ class VolatilityRegimesService:
                     for _, row in data.tail(50).iterrows()
                 ],
                 
-                # Dados do gráfico Chart.js
-                'chart_data_full': chart_data,
+                # Gráfico HTML
+                'chart_html': chart_html,
                 
                 'success': True
             }
