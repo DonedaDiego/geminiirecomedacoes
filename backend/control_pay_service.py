@@ -12,17 +12,14 @@ import os
 SMTP_SERVER = "smtp.titan.email"
 SMTP_PORT = 465
 SMTP_USER = os.environ.get('EMAIL_USER', 'contato@geminii.com.br')
-SMTP_PASSWORD = os.environ.get('EMAIL_PASSWORD', '#Giminii#')
+SMTP_PASSWORD = os.environ.get('EMAIL_PASSWORD', '#Geminii20')
 
 # ===== CONTROLE DE RATE LIMITING =====
 email_rate_limit_cache = {}
-MAX_EMAILS_PER_USER_PER_DAY = 3
+MAX_EMAILS_PER_USER_PER_DAY = 10
 RATE_LIMIT_CACHE_HOURS = 24
 
 def check_email_rate_limit(user_email, email_type='renewal'):
-    """
-    Verificar se usuário não excedeu limite de emails por dia
-    """
     try:
         now = datetime.now(timezone.utc)
         cache_key = f"{user_email}_{email_type}_{now.strftime('%Y-%m-%d')}"

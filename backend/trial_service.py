@@ -278,25 +278,15 @@ def get_all_trial_users():
         return {'success': False, 'error': f'Erro ao buscar usuários em trial: {str(e)}'}
 
 def process_expired_trials():
-    """
-    Processar todos os trials expirados (job automático)
-    """
+
     try:
-        
-        print("📧 Enviando avisos de trial expirando...")
-        warnings_result = send_trial_expiring_warnings()
-        if warnings_result['success']:
-            print(f"   ✅ {warnings_result['emails_sent']} emails enviados")
-        else:
-            print(f"   ❌ Erro nos avisos: {warnings_result['error']}")
-                
         conn = get_db_connection()
         if not conn:
             return {'success': False, 'error': 'Erro de conexão com banco'}
         
         cursor = conn.cursor()
         
-        # Buscar trials expirados
+        # 🔥 PRIMEIRO: Buscar trials expirados
         cursor.execute("""
             SELECT id, name, email 
             FROM users 
@@ -307,30 +297,32 @@ def process_expired_trials():
         
         expired_users = cursor.fetchall()
         
-        if not expired_users:
-            cursor.close()
-            conn.close()
-            return {
-                'success': True,
-                'message': 'Nenhum trial expirado encontrado',
-                'processed_count': 0
-            }
+        # 🔥 SEGUNDO: Fazer downgrade dos expirados
+        if expired_users:
+            cursor.execute("""
+                UPDATE users 
+                SET plan_id = 3, plan_name = 'Básico', user_type = 'regular',
+                    plan_expires_at = NULL, updated_at = CURRENT_TIMESTAMP
+                WHERE user_type = 'trial' 
+                AND plan_expires_at IS NOT NULL 
+                AND plan_expires_at < NOW()
+            """)
+            
+            processed_count = cursor.rowcount
+            conn.commit()
+        else:
+            processed_count = 0
         
-        # Fazer downgrade de todos os expirados
-        cursor.execute("""
-            UPDATE users 
-            SET plan_id = 3, plan_name = 'Básico', user_type = 'regular',
-                plan_expires_at = NULL, updated_at = CURRENT_TIMESTAMP
-            WHERE user_type = 'trial' 
-            AND plan_expires_at IS NOT NULL 
-            AND plan_expires_at < NOW()
-        """)
-        
-        processed_count = cursor.rowcount
-        
-        conn.commit()
         cursor.close()
         conn.close()
+        
+        # 🔥 TERCEIRO: Enviar avisos para os que ainda estão ativos
+        print("📧 Enviando avisos de trial expirando...")
+        warnings_result = send_trial_expiring_warnings()
+        if warnings_result['success']:
+            print(f"   ✅ {warnings_result['emails_sent']} emails enviados")
+        else:
+            print(f"   ❌ Erro nos avisos: {warnings_result['error']}")
         
         # Limpar cache de todos os usuários processados
         for user_id, name, email in expired_users:
@@ -345,7 +337,7 @@ def process_expired_trials():
         
     except Exception as e:
         return {'success': False, 'error': f'Erro ao processar trials expirados: {str(e)}'}
-
+    
 def get_trial_stats():
     """
     Estatísticas dos trials (para dashboard admin)

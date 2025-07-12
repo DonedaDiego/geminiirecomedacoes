@@ -21,7 +21,7 @@ class EmailService:
         self.from_name = 'Geminii Tech'
         self.base_url = os.environ.get('BASE_URL', 'https://app-geminii.railway.app')  
         
-        # MODO TESTE - Para desenvolvimento sem SMTP
+        
         self.test_mode = False  # Sempre usar SMTP real com suas credenciais
 
     def send_email(self, to_email, subject, html_content, text_content=None):

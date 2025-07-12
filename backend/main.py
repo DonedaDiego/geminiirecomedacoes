@@ -215,9 +215,7 @@ if EMAIL_AVAILABLE and email_bp:
     except Exception as e:
         print(f"❌ Erro ao registrar email blueprint: {e}")
         EMAIL_AVAILABLE = False
-
-
-# ===== INICIALIZAÇÃO =====
+        
 def initialize_database():
     """🔥 Inicializar banco e sistema de email"""
     try:
@@ -230,8 +228,13 @@ def initialize_database():
         else:
             print("⚠️ Falha na inicialização do sistema de email")
         
+        # 🔥 ADICIONAR ESTA LINHA AQUI
+        start_payment_scheduler()
+        print("✅ Payment scheduler inicializado!")
+        
     except Exception as e:
         print(f"⚠️ Erro ao verificar banco: {e}")
+
 
 # ===== ROTAS HTML =====
 

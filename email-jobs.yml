@@ -1,0 +1,28 @@
+name: Email Jobs - Trial e Renovação
+on:
+  schedule:
+    # 9h Brasil (12h UTC) - Manhã
+    - cron: '0 12 * * *'
+    # 22h Brasil (01h UTC do dia seguinte) - Noite  
+    - cron: '0 1 * * *'
+  
+  # Permite execução manual no GitHub
+  workflow_dispatch:
+
+jobs:
+  email-notifications:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📧 Enviar Avisos de Renovação
+        run: |
+          echo "🔄 Enviando avisos de renovação..."
+          curl -X POST https://app-geminii.railway.app/api/subscriptions/cron/send-warnings || echo "❌ Falha nos avisos"
+          
+      - name: 🎯 Processar Trials Expirados  
+        run: |
+          echo "🔄 Processando trials expirados..."
+          curl -X POST https://app-geminii.railway.app/api/subscriptions/cron/process-expired || echo "❌ Falha no processamento"
+          
+      - name: ✅ Jobs Concluídos
+        run: |
+          echo "🎉 Verificações de email concluídas!"
