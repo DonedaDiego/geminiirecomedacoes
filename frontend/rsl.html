@@ -65,14 +65,9 @@
       margin: 0 auto;
     }
     
-    .quadrant-label {
-      position: absolute;
-      font-size: 12px;
-      font-weight: 600;
-      color: rgba(255, 255, 255, 0.7);
-      padding: 4px 8px;
-      background: rgba(0, 0, 0, 0.5);
-      border-radius: 4px;
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
     }
     
     .setor-stats {
@@ -159,7 +154,6 @@
       background: rgba(186, 57, 175, 0.7);
     }
 
-    /* Neon Logo Effect */
     .neon-logo {
       transition: all 0.3s ease;
       border-radius: 4px;
@@ -176,7 +170,6 @@
       transform: scale(1.1);
     }
 
-    /* Navbar Effects */
     nav:hover {
       background: rgba(186, 57, 175, 0.05);
       border-color: rgba(186, 57, 175, 0.3);
@@ -210,8 +203,7 @@
           <a href="/dashboard" class="hover:text-white transition-colors">Dashboard</a>
           <span class="text-white font-medium">RSL Radar</span>
           <a href="monitor-basico.html" class="hover:text-white transition-colors">Monitor Beta</a>
-          <a href="/sup_res_vol" class="hover:text-white transition-colors">Suporte e Resistência</a>
-
+          <a href="sup_res_vol.html" class="hover:text-white transition-colors">Suporte e Resistência</a>
         </div>
         <div class="flex items-center space-x-3 ml-8">
           <div id="apiStatus" class="w-8 h-8 bg-green-500 bg-opacity-10 border border-green-500 border-opacity-30 rounded-full flex items-center justify-center relative">
@@ -242,24 +234,20 @@
         <div class="radar-card p-6 mb-8">
           <div class="flex flex-col md:flex-row gap-4 items-center justify-between">
             <div class="flex gap-3 flex-wrap">
-              <select id="periodoSelect" class="px-4 py-2 bg-white bg-opacity-10 border border-white border-opacity-20 rounded-lg text-white focus:outline-none focus:border-geminii backdrop-blur-sm">
-                <option value="1mo">Período: 1 mês</option>
-                <option value="3mo">Período: 3 meses</option>
-                <option value="6mo">Período: 6 meses</option>
-                <option value="1y" selected>Período: 1 ano</option>
-              </select>
-              
               <select id="metricaSelect" class="px-4 py-2 bg-white bg-opacity-10 border border-white border-opacity-20 rounded-lg text-white focus:outline-none focus:border-geminii backdrop-blur-sm">
                 <option value="rsl" selected>RSL vs Volatilidade</option>
                 <option value="performance">Performance vs Volatilidade</option>
               </select>
+              
+              <div class="px-4 py-2 bg-white bg-opacity-5 border border-white border-opacity-20 rounded-lg text-gray-400 text-sm">
+                <i class="fas fa-calendar-alt mr-2"></i>Período: 1 ano (252 dias)
+              </div>
             </div>
             
             <div class="flex gap-3">
               <button id="atualizarBtn" class="px-6 py-2 bg-gradient-to-r from-pink-500 to-purple-600 hover:shadow-lg rounded-lg transition-all font-medium">
                 <i class="fas fa-sync-alt mr-2"></i>Atualizar
               </button>
-      
             </div>
           </div>
         </div>
@@ -278,27 +266,6 @@
           
           <div class="relative">
             <canvas id="radarChart" width="800" height="600"></canvas>
-            
-            <!-- Quadrant Labels -->
-            <div class="quadrant-label" style="top: 20px; left: 20px; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); color: #10b981;">
-              <i class="fas fa-gem"></i> IDEAL<br>
-              <small style="font-size: 10px; opacity: 0.8;">Alto RSL • Baixa Volatilidade</small>
-            </div>
-
-            <div class="quadrant-label" style="top: 20px; right: 20px; background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); color: #f59e0b;">
-              <i class="fas fa-rocket"></i> AGRESSIVO<br>
-              <small style="font-size: 10px; opacity: 0.8;">Alto RSL • Alta Volatilidade</small>
-            </div>
-
-            <div class="quadrant-label" style="bottom: 20px; left: 20px; background: rgba(107, 114, 128, 0.1); border: 1px solid rgba(107, 114, 128, 0.3); color: #9ca3af;">
-              <i class="fas fa-shield-alt"></i> DEFENSIVO<br>
-              <small style="font-size: 10px; opacity: 0.8;">Baixo RSL • Baixa Volatilidade</small>
-            </div>
-
-            <div class="quadrant-label" style="bottom: 20px; right: 20px; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); color: #f87171;">
-              <i class="fas fa-exclamation-triangle"></i> RISCO<br>
-              <small style="font-size: 10px; opacity: 0.8;">Baixo RSL • Alta Volatilidade</small>
-            </div>
           </div>
         </div>
 
@@ -321,18 +288,14 @@
     
     // Elementos DOM
     const atualizarBtn = document.getElementById('atualizarBtn');
-    const exportarBtn = document.getElementById('exportarBtn');
-    const periodoSelect = document.getElementById('periodoSelect');
     const metricaSelect = document.getElementById('metricaSelect');
     const statusMsg = document.getElementById('statusMsg');
     const totalSetores = document.getElementById('totalSetores');
     const totalEmpresas = document.getElementById('totalEmpresas');
     const setorStats = document.getElementById('setorStats');
     
-    // Navigation
-    function navigateHome() {
-      window.location.href = '/dashboard.html';
-    }
+    // Período fixo em 1 ano
+    const PERIODO_FIXO = '1y';
     
     // Funções utilitárias
     function showStatus(message, type = 'info') {
@@ -346,13 +309,12 @@
       setTimeout(() => statusMsg.classList.add('hidden'), 4000);
     }
     
-    // ✅ FUNÇÃO ATUALIZADA: Buscar dados do radar usando nova API RSL
+    // Buscar dados do radar usando nova API RSL
     async function fetchRadarSetores() {
       try {
-        const periodo = periodoSelect.value;
-        showStatus(`Carregando dados RSL dos setores (${periodo})...`, 'info');
+        showStatus(`Carregando dados RSL dos setores (1 ano)...`, 'info');
         
-        const response = await fetch(`${API_BASE}/radar-setores?period=${periodo}`);
+        const response = await fetch(`${API_BASE}/radar-setores?period=${PERIODO_FIXO}`);
         const data = await response.json();
         
         if (data.success && data.data) {
@@ -368,7 +330,7 @@
       }
     }
     
-    // ✅ FUNÇÃO SIMPLIFICADA: Buscar dados dos setores usando nova API
+    // Buscar dados dos setores usando nova API
     async function fetchSetoresData() {
       try {
         const radarData = await fetchRadarSetores();
@@ -396,7 +358,7 @@
       }
     }
     
-    // ✅ FUNÇÃO ATUALIZADA: Criar gráfico com RSL
+    // Criar gráfico com RSL e marcação d'água
     function createRadarChart(data) {
       const ctx = document.getElementById('radarChart').getContext('2d');
       
@@ -427,9 +389,80 @@
         pointHoverRadius: 12
       }];
       
+      // Plugin customizado para quadrantes
+      const quadrantPlugin = {
+        id: 'quadrants',
+        beforeDraw: function(chart) {
+          const ctx = chart.ctx;
+          const chartArea = chart.chartArea;
+          const scales = chart.scales;
+          
+          // Encontrar o ponto zero nos eixos
+          const zeroX = scales.x.getPixelForValue(0);
+          const zeroY = scales.y.getPixelForValue(25); // Volatilidade de referência 25%
+          
+          // Salvar estado do contexto
+          ctx.save();
+          
+          // Definir quadrantes com cores suaves
+          const quadrants = [
+            { x: chartArea.left, y: chartArea.top, width: zeroX - chartArea.left, height: zeroY - chartArea.top, color: 'rgba(107, 114, 128, 0.03)' },
+            { x: zeroX, y: chartArea.top, width: chartArea.right - zeroX, height: zeroY - chartArea.top, color: 'rgba(16, 185, 129, 0.05)' },
+            { x: chartArea.left, y: zeroY, width: zeroX - chartArea.left, height: chartArea.bottom - zeroY, color: 'rgba(239, 68, 68, 0.03)' },
+            { x: zeroX, y: zeroY, width: chartArea.right - zeroX, height: chartArea.bottom - zeroY, color: 'rgba(245, 158, 11, 0.04)' }
+          ];
+          
+          // Desenhar quadrantes
+          quadrants.forEach(quad => {
+            ctx.fillStyle = quad.color;
+            ctx.fillRect(quad.x, quad.y, quad.width, quad.height);
+          });
+          
+          // Desenhar cruz central suave
+          ctx.strokeStyle = 'rgba(186, 57, 175, 0.2)';
+          ctx.lineWidth = 1;
+          ctx.setLineDash([5, 5]);
+          
+          // Linha vertical (RSL = 0)
+          ctx.beginPath();
+          ctx.moveTo(zeroX, chartArea.top);
+          ctx.lineTo(zeroX, chartArea.bottom);
+          ctx.stroke();
+          
+          // Linha horizontal (Volatilidade = 25%)
+          ctx.beginPath();
+          ctx.moveTo(chartArea.left, zeroY);
+          ctx.lineTo(chartArea.right, zeroY);
+          ctx.stroke();
+          
+          ctx.setLineDash([]);
+          
+          // Adicionar labels como marcação d'água
+          ctx.font = '12px Inter';
+          ctx.textAlign = 'center';
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
+          
+          // IDEAL (superior direito)
+          ctx.fillText('💎 IDEAL', chartArea.right - 60, chartArea.top + 25);
+          
+          // AGRESSIVO (inferior direito) 
+          ctx.fillText('🚀 AGRESSIVO', chartArea.right - 60, chartArea.bottom - 15);
+          
+          // DEFENSIVO (superior esquerdo)
+          ctx.fillText('🛡️ DEFENSIVO', chartArea.left + 60, chartArea.top + 25);
+          
+          // RISCO (inferior esquerdo)
+          ctx.fillText('⚠️ RISCO', chartArea.left + 60, chartArea.bottom - 15);
+          
+          // Restaurar estado do contexto
+          ctx.restore();
+        }
+      };
+      
       currentChart = new Chart(ctx, {
         type: 'scatter',
         data: { datasets },
+        plugins: [quadrantPlugin],
         options: {
           responsive: true,
           maintainAspectRatio: false,
@@ -541,7 +574,7 @@
       });
     }
     
-    // ✅ FUNÇÃO OTIMIZADA: Expandir setor usando API RSL
+    // Expandir setor usando API RSL
     async function toggleSetorExpansion(setorId) {
       const empresasSection = document.getElementById(`empresas-${setorId}`);
       const chevron = document.getElementById(`chevron-${setorId}`);
@@ -573,9 +606,7 @@
           
           console.log('📂 Expandindo setor:', setor.setor);
           
-          // ✅ USAR DADOS RSL JÁ CALCULADOS (vem da API /radar-setores)
           if (setor.detalhes_empresas && setor.detalhes_empresas.length > 0) {
-            // Usar dados RSL que já temos
             const empresas = setor.detalhes_empresas;
             
             let empresasHTML = `
@@ -610,7 +641,6 @@
             empresasList.innerHTML = `<div class="empresas-scroll">${empresasHTML}</div>`;
             
           } else {
-            // Se não tem dados RSL, buscar lista básica de empresas do setor
             showStatus(`Carregando empresas de ${setor.setor}...`, 'info');
             
             const response = await fetch(`${API_BASE}/setor/${encodeURIComponent(setor.setor)}`);
@@ -650,9 +680,7 @@
             }
           }
           
-          // Expandir com altura dinâmica
           empresasSection.style.maxHeight = Math.min(empresasSection.scrollHeight, 450) + 'px';
-          
           showStatus(`✅ Dados carregados para ${setor.setor}`, 'success');
           
         } catch (error) {
@@ -671,7 +699,7 @@
       }
     }
     
-    // ✅ FUNÇÃO ATUALIZADA: Criar cards com dados RSL
+    // Criar cards com dados RSL
     function createStatsCards(data) {
       const sortedData = [...data].sort((a, b) => b.rsl - a.rsl);
       
@@ -715,7 +743,6 @@
             </div>
           </div>
           
-          <!-- Taxa de Sucesso -->
           ${setor.has_real_data ? `
             <div class="mt-2 text-xs text-gray-400">
               Taxa de sucesso: ${setor.taxa_sucesso}% • Dados: ${setor.has_real_data ? 'Reais' : 'Simulados'}
@@ -726,7 +753,6 @@
             <div class="progress-fill" style="width: ${Math.max(0, Math.min(100, (setor.rsl + 10) * 5))}%"></div>
           </div>
           
-          <!-- Seção Expansível de Empresas -->
           <div class="empresas-section mt-4" id="empresas-${setor.id}" style="max-height: 0;">
             <div class="border-t border-white border-opacity-20 pt-4">
               <h4 class="text-sm font-semibold text-white mb-3 flex items-center gap-2">
@@ -768,33 +794,8 @@
       }
     }
     
-    // Exportar dados
-    function exportarDados() {
-      if (setoresData.length === 0) {
-        showStatus('❌ Nenhum dado para exportar', 'error');
-        return;
-      }
-      
-      const csv = [
-        'Setor,RSL,Volatilidade,Empresas,EmpresasComRSL,TaxaSucesso,DadosReais',
-        ...setoresData.map(s => `${s.setor},${s.rsl.toFixed(2)},${s.volatilidade.toFixed(2)},${s.empresas},${s.empresas_com_dados},${s.taxa_sucesso},${s.has_real_data}`)
-      ].join('\n');
-      
-      const blob = new Blob([csv], { type: 'text/csv' });
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `radar-setores-rsl-${new Date().toISOString().split('T')[0]}.csv`;
-      a.click();
-      window.URL.revokeObjectURL(url);
-      
-      showStatus('✅ Dados RSL exportados com sucesso!', 'success');
-    }
-    
     // Event Listeners
     atualizarBtn.addEventListener('click', atualizarDados);
-    exportarBtn.addEventListener('click', exportarDados);
-    periodoSelect.addEventListener('change', atualizarDados);
     metricaSelect.addEventListener('change', () => {
       if (setoresData.length > 0) {
         createRadarChart(setoresData);
@@ -808,14 +809,12 @@
       atualizarDados();
     });
     
-    // Auto-refresh a cada 15 minutos (RSL demora mais para calcular)
+    // Auto-refresh a cada 15 minutos
     setInterval(atualizarDados, 900000);
     
-    // ✅ FUNÇÃO GLOBAL PARA EXPANSÃO
+    // Função global para expansão
     window.toggleSetorExpansion = toggleSetorExpansion;
-    window.navigateHome = navigateHome;
     
-    // ✅ LOG DE DEBUG
     console.log('🔧 Sistema RSL com API integrada inicializado com sucesso!');
   </script>
 </body>

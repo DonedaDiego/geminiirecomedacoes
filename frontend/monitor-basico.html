@@ -105,6 +105,22 @@
     .period-tab:not(.active):hover {
       background: rgba(255, 255, 255, 0.1);
     }
+
+    .ranking-item {
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .ranking-item:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(186, 57, 175, 0.2);
+    }
+
+    .chart-container {
+      position: relative;
+      height: 300px;
+      width: 100%;
+    }
   </style>
 </head>
 <body class="text-white">
@@ -141,39 +157,29 @@
           <span class="text-white font-light">Beta</span>
         </h1>
         <p class="text-neutral-300 text-lg max-w-2xl mx-auto">
-          Análise Beta multi-período: entenda a sensibilidade de ações aos movimentos do índice IBOVESPA para decisões mais assertivas
+          Análise Beta completa: sensibilidade, correlação e ranking automático para decisões de investimento mais assertivas
         </p>
       </div>
 
-      <!-- Controles -->
+      <!-- Controles Simplificados -->
       <div class="beta-card p-6 mb-8">
-        <div class="flex flex-col md:flex-row gap-4 items-center justify-between">
-          <div class="flex gap-3 flex-wrap items-center">
+        <div class="flex flex-col md:flex-row gap-4 items-center justify-center">
+          <div class="flex gap-3 items-center">
             <input 
               id="stockInput" 
               type="text" 
               placeholder="Digite o código da ação (ex: PETR4)" 
-              class="px-4 py-2 bg-white bg-opacity-10 border border-white border-opacity-20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-geminii backdrop-blur-sm"
+              class="px-6 py-3 bg-white bg-opacity-10 border border-white border-opacity-20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-geminii backdrop-blur-sm text-lg"
             >
-            <button id="analyzeBtn" class="px-6 py-2 bg-gradient-to-r from-pink-500 to-purple-600 hover:shadow-lg rounded-lg transition-all font-medium">
-              <i class="fas fa-chart-line mr-2"></i>Analisar Beta
-            </button>
-          </div>
-          
-          <div class="flex gap-3">
-            <button id="rankingBtn" class="px-4 py-2 bg-white bg-opacity-10 hover:bg-opacity-20 rounded-lg transition-all font-medium backdrop-blur-sm border border-white border-opacity-20">
-              <i class="fas fa-trophy mr-2"></i>Ranking
-            </button>
-            <button id="ibovBtn" class="px-4 py-2 bg-blue-600 bg-opacity-20 hover:bg-opacity-30 rounded-lg transition-all font-medium border border-blue-500 border-opacity-30">
-              <i class="fas fa-chart-area mr-2"></i>IBOV + Preços
+            <button id="analyzeBtn" class="px-8 py-3 bg-gradient-to-r from-pink-500 to-purple-600 hover:shadow-lg rounded-lg transition-all font-medium text-lg">
+              <i class="fas fa-chart-line mr-2"></i>Analisar Completo
             </button>
           </div>
         </div>
       </div>
 
-  
-      <!-- Card YouTube - Inserir onde desejar (sugestão: após o disclaimer) -->
-      <div class="beta-card p-6 mb-8">
+      <!-- Card YouTube -->
+      <!-- <div class="beta-card p-6 mb-8">
         <div class="flex items-center gap-4">
           <div class="w-16 h-16 bg-red-600 bg-opacity-20 border border-red-500 border-opacity-30 rounded-full flex items-center justify-center flex-shrink-0">
             <i class="fab fa-youtube text-red-500 text-2xl"></i>
@@ -193,7 +199,7 @@
             </a>
           </div>
         </div>
-      </div>
+      </div> -->
 
       <!-- Status -->
       <div id="statusMsg" class="mb-6 p-4 rounded-lg hidden backdrop-blur-sm"></div>
@@ -216,91 +222,101 @@
         </div>
       </div>
 
-      <!-- Grid Principal -->
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <!-- Grid Principal de Análise -->
+      <div id="analysisSection" class="hidden space-y-6">
         
-        <!-- Card de Análise Individual -->
-        <div id="betaAnalysis" class="beta-card p-6 hidden">
-          <div class="flex justify-between items-start mb-4">
-            <h3 id="analysisTitle" class="text-xl font-bold"></h3>
-            <span id="currentPrice" class="text-lg font-semibold text-geminii"></span>
-          </div>
+        <!-- Métricas Principais e Preço -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
           
-          <div id="betaMetrics" class="space-y-4">
-            <!-- Métricas serão inseridas aqui -->
-          </div>
-          
-          <div class="mt-6">
-            <canvas id="betaChart" width="400" height="200"></canvas>
-          </div>
-        </div>
-
-        <!-- Card de Comparação Beta -->
-        <div id="betaComparison" class="beta-card p-6 hidden">
-          <h3 class="text-xl font-bold mb-4">Análise Beta por Período</h3>
-          <div class="mb-4">
-            <canvas id="comparisonChart" width="400" height="300"></canvas>
-          </div>
-        </div>
-      </div>
-
-      <!-- Ranking de Ações -->
-      <div id="rankingSection" class="mt-8">
-        <div class="beta-card p-6">
-          <h3 class="text-xl font-bold mb-6 text-center">Ranking Beta - Ações Populares</h3>
-          <div id="rankingGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <div class="text-center py-8 col-span-full">
-              <div class="spinner mx-auto mb-4"></div>
-              <p class="text-gray-400">Carregando ranking...</p>
+          <!-- Card de Análise Individual -->
+          <div id="betaAnalysis" class="beta-card p-6 lg:col-span-2">
+            <div class="flex justify-between items-start mb-6">
+              <h3 id="analysisTitle" class="text-2xl font-bold"></h3>
+              <div class="text-right">
+                <div id="currentPrice" class="text-2xl font-semibold text-geminii"></div>
+                <div id="priceChange" class="text-sm"></div>
+              </div>
+            </div>
+            
+            <div id="betaMetrics" class="space-y-4">
+              <!-- Métricas serão inseridas aqui -->
             </div>
           </div>
-          <div class="mt-4 text-center">
-            <p class="text-xs text-gray-400">
-              <i class="fas fa-info-circle mr-1"></i>
-              Clique em uma ação do ranking para analisá-la
-            </p>
+
+          <!-- Card de Informações Rápidas -->
+          <div class="beta-card p-6">
+            <h3 class="text-xl font-bold mb-4 text-center">
+              <i class="fas fa-info-circle text-blue-400 mr-2"></i>
+              Resumo Executivo
+            </h3>
+            <div id="executiveSummary" class="space-y-4">
+              <!-- Resumo será inserido aqui -->
+            </div>
           </div>
         </div>
-      </div>
 
-      <!-- IBOVESPA Info e Preços do Ativo -->
-      <div id="ibovSection" class="mt-8 hidden">
+        <!-- Gráficos -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
           
-          <!-- Card IBOVESPA -->
+          <!-- Gráfico de Preços Normalizados -->
+          <div class="beta-card p-6">
+            <h3 class="text-xl font-bold mb-4">
+              <i class="fas fa-chart-line text-green-400 mr-2"></i>
+              Desempenho Normalizado (%)
+            </h3>
+            <div class="chart-container">
+              <canvas id="betaChart"></canvas>
+            </div>
+          </div>
+
+          <!-- Gráfico de Beta por Período -->
+          <div class="beta-card p-6">
+            <h3 class="text-xl font-bold mb-4">
+              <i class="fas fa-chart-bar text-purple-400 mr-2"></i>
+              Evolução do Beta
+            </h3>
+            <div class="chart-container">
+              <canvas id="betaEvolutionChart"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Ranking e Dados do Mercado -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          
+          <!-- Ranking Automático -->
+          <div class="beta-card p-6">
+            <h3 class="text-xl font-bold mb-6 text-center">
+              <i class="fas fa-trophy text-yellow-400 mr-2"></i>
+              Ranking Beta - Ações Populares
+            </h3>
+            <div id="rankingGrid" class="space-y-3">
+              <div class="text-center py-8">
+                <div class="spinner mx-auto mb-4"></div>
+                <p class="text-gray-400">Carregando ranking...</p>
+              </div>
+            </div>
+            <div class="mt-4 text-center">
+              <p class="text-xs text-gray-400">
+                <i class="fas fa-info-circle mr-1"></i>
+                Clique em uma ação do ranking para analisá-la
+              </p>
+            </div>
+          </div>
+
+          <!-- Dados IBOVESPA -->
           <div class="beta-card p-6">
             <h3 class="text-xl font-bold mb-6 text-center">
               <i class="fas fa-chart-area text-yellow-500 mr-2"></i>
-              IBOVESPA - Índice de Referência
+              IBOVESPA - Referência
             </h3>
-            <div class="mb-6">
-              <div id="ibovMetrics" class="space-y-3">
-                <!-- Métricas do IBOV -->
+            <div id="ibovMetrics" class="space-y-4">
+              <div class="text-center py-8">
+                <div class="spinner mx-auto mb-4"></div>
+                <p class="text-gray-400">Carregando IBOV...</p>
               </div>
             </div>
-            <div>
-              <h4 class="text-lg font-semibold mb-4">Gráfico Histórico</h4>
-              <canvas id="ibovChart" width="400" height="200"></canvas>
-            </div>
           </div>
-
-          <!-- Card Preços do Ativo -->
-          <div class="beta-card p-6">
-            <h3 class="text-xl font-bold mb-6 text-center">
-              <i class="fas fa-coins text-green-500 mr-2"></i>
-              <span id="stockPricesTitle">Preços do Ativo</span>
-            </h3>
-            <div class="mb-6">
-              <div id="stockPricesMetrics" class="space-y-3">
-                <!-- Métricas de preços -->
-              </div>
-            </div>
-            <div>
-              <h4 class="text-lg font-semibold mb-4">Evolução de Preços</h4>
-              <canvas id="stockPricesChart" width="400" height="200"></canvas>
-            </div>
-          </div>
-
         </div>
       </div>
     </div>
@@ -309,26 +325,21 @@
   <script>
     // Configurações
     const API_BASE = window.location.origin + '/api/beta';
-    let currentPeriod = 'short';
+    let currentPeriod = 'long'; // Começar com longo prazo
     let currentAnalysis = null;
     
     // Elementos DOM
     const stockInput = document.getElementById('stockInput');
     const analyzeBtn = document.getElementById('analyzeBtn');
-    const rankingBtn = document.getElementById('rankingBtn');
-    const ibovBtn = document.getElementById('ibovBtn');
     const statusMsg = document.getElementById('statusMsg');
     const periodSelector = document.getElementById('periodSelector');
+    const analysisSection = document.getElementById('analysisSection');
     const betaAnalysis = document.getElementById('betaAnalysis');
-    const betaComparison = document.getElementById('betaComparison');
-    const rankingSection = document.getElementById('rankingSection');
-    const ibovSection = document.getElementById('ibovSection');
+    const rankingGrid = document.getElementById('rankingGrid');
     
     // Charts
     let betaChart = null;
-    let comparisonChart = null;
-    let ibovChart = null;
-    let stockPricesChart = null;
+    let betaEvolutionChart = null;
     
     // Funções utilitárias
     function showStatus(message, type = 'info') {
@@ -372,16 +383,12 @@
         
         if (currentAnalysis) {
           updateBetaDisplay(currentAnalysis);
-          // Atualizar também os dados IBOV se já estiverem carregados
-          if (!ibovSection.classList.contains('hidden')) {
-            fetchIbovData();
-          }
         }
       });
     });
     
-    // Analisar Beta de uma ação
-    async function analyzeBeta() {
+    // Análise completa (Beta + Ranking + IBOV)
+    async function analyzeComplete() {
       const symbol = stockInput.value.trim().toUpperCase();
       
       if (!symbol) {
@@ -390,25 +397,36 @@
       }
       
       setLoading(analyzeBtn, true);
-      showStatus('Analisando Beta... Isso pode levar alguns segundos', 'info');
+      showStatus('Realizando análise completa... Isso pode levar alguns segundos', 'info');
       
       try {
+        // Analisar Beta da ação
         const response = await fetch(`${API_BASE}/analyze/${symbol}`);
         const data = await response.json();
         
         if (data.success) {
           currentAnalysis = data.data;
+          
+          // Mostrar seções
           periodSelector.classList.remove('hidden');
-          betaAnalysis.classList.remove('hidden');
-          betaComparison.classList.remove('hidden');
+          analysisSection.classList.remove('hidden');
+          
+          // Atualizar displays
           updateBetaDisplay(data.data);
-          updateComparisonChart(data.data);
-          showStatus(`Análise Beta de ${symbol} concluída!`, 'success');
+          updateBetaEvolutionChart(data.data);
+          
+          // Carregar dados complementares
+          await Promise.all([
+            fetchRanking(),
+            fetchIbovData()
+          ]);
+          
+          showStatus(`Análise completa de ${symbol} concluída!`, 'success');
         } else {
           showStatus(data.error, 'error');
         }
       } catch (error) {
-        showStatus('Erro ao analisar Beta', 'error');
+        showStatus('Erro ao realizar análise completa', 'error');
         console.error(error);
       }
       
@@ -425,29 +443,34 @@
       }
       
       // Título e preço
-      document.getElementById('analysisTitle').textContent = `${analysisData.symbol} - Beta ${currentPeriod.toUpperCase()}`;
+      document.getElementById('analysisTitle').textContent = `${analysisData.symbol}`;
       
       if (analysisData.current_data) {
         document.getElementById('currentPrice').textContent = formatCurrency(analysisData.current_data.current_price);
+        
+        const changePercent = analysisData.current_data.change_percent || 0;
+        const changeElement = document.getElementById('priceChange');
+        changeElement.textContent = `${changePercent >= 0 ? '+' : ''}${changePercent.toFixed(2)}% hoje`;
+        changeElement.className = `text-sm ${changePercent >= 0 ? 'text-green-400' : 'text-red-400'}`;
       }
       
-      // Métricas
+      // Métricas detalhadas
       const betaMetrics = document.getElementById('betaMetrics');
       betaMetrics.innerHTML = `
-        <div class="grid grid-cols-2 gap-4">
-          <div class="bg-white bg-opacity-5 p-4 rounded-lg">
-            <div class="text-sm text-gray-400">Beta</div>
-            <div class="text-2xl font-bold">${periodData.beta.toFixed(3)}</div>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div class="bg-white bg-opacity-5 p-4 rounded-lg text-center">
+            <div class="text-sm text-gray-400">Beta ${currentPeriod.charAt(0).toUpperCase() + currentPeriod.slice(1)}</div>
+            <div class="text-3xl font-bold text-purple-400">${periodData.beta.toFixed(3)}</div>
             ${getBetaBadge(periodData.interpretation)}
           </div>
           
-          <div class="bg-white bg-opacity-5 p-4 rounded-lg">
-            <div class="text-sm text-gray-400">Correlação (R²)</div>
-            <div class="text-xl font-bold">${(periodData.r_squared * 100).toFixed(1)}%</div>
-            <div class="text-xs text-gray-400">vs IBOVESPA</div>
+          <div class="bg-white bg-opacity-5 p-4 rounded-lg text-center">
+            <div class="text-sm text-gray-400">Correlação</div>
+            <div class="text-2xl font-bold">${(periodData.r_squared * 100).toFixed(1)}%</div>
+            <div class="text-xs text-gray-400">R² vs IBOV</div>
           </div>
           
-          <div class="bg-white bg-opacity-5 p-4 rounded-lg">
+          <div class="bg-white bg-opacity-5 p-4 rounded-lg text-center">
             <div class="text-sm text-gray-400">Retorno Ação</div>
             <div class="text-xl font-bold ${periodData.stock_return >= 0 ? 'text-green-400' : 'text-red-400'}">
               ${periodData.stock_return >= 0 ? '+' : ''}${periodData.stock_return.toFixed(2)}%
@@ -455,7 +478,7 @@
             <div class="text-xs text-gray-400">${periodData.days} dias</div>
           </div>
           
-          <div class="bg-white bg-opacity-5 p-4 rounded-lg">
+          <div class="bg-white bg-opacity-5 p-4 rounded-lg text-center">
             <div class="text-sm text-gray-400">Retorno IBOV</div>
             <div class="text-xl font-bold ${periodData.market_return >= 0 ? 'text-green-400' : 'text-red-400'}">
               ${periodData.market_return >= 0 ? '+' : ''}${periodData.market_return.toFixed(2)}%
@@ -464,22 +487,59 @@
           </div>
         </div>
         
-        <div class="mt-4 p-4 bg-white bg-opacity-5 rounded-lg">
+        <div class="mt-6 p-4 bg-white bg-opacity-5 rounded-lg">
           <div class="text-sm text-gray-400 mb-2">Interpretação</div>
           <div class="text-white">${periodData.interpretation.description}</div>
         </div>
       `;
+
+      // Resumo executivo
+      updateExecutiveSummary(analysisData, periodData);
       
-      // Gráfico de preços
+      // Gráfico de preços normalizados
       updateBetaChart(periodData);
     }
-    
-    // Atualizar gráfico de comparação Beta
-    function updateComparisonChart(analysisData) {
-      const ctx = document.getElementById('comparisonChart').getContext('2d');
+
+    // Atualizar resumo executivo
+    function updateExecutiveSummary(analysisData, periodData) {
+      const executiveSummary = document.getElementById('executiveSummary');
       
-      if (comparisonChart) {
-        comparisonChart.destroy();
+      const riskLevel = periodData.interpretation.risk_level;
+      const beta = periodData.beta;
+      
+      let recommendation = '';
+      if (beta < 0.8) {
+        recommendation = 'Ação defensiva, ideal para portfólios conservadores';
+      } else if (beta > 1.2) {
+        recommendation = 'Ação agressiva, alta sensibilidade ao mercado';
+      } else {
+        recommendation = 'Ação equilibrada, acompanha o mercado';
+      }
+
+      executiveSummary.innerHTML = `
+        <div class="bg-white bg-opacity-5 p-3 rounded-lg">
+          <div class="text-sm text-gray-400">Perfil de Risco</div>
+          <div class="font-semibold text-lg">${riskLevel}</div>
+        </div>
+        
+        <div class="bg-white bg-opacity-5 p-3 rounded-lg">
+          <div class="text-sm text-gray-400">Recomendação</div>
+          <div class="text-sm">${recommendation}</div>
+        </div>
+        
+        <div class="bg-white bg-opacity-5 p-3 rounded-lg">
+          <div class="text-sm text-gray-400">Volatilidade</div>
+          <div class="font-semibold">${(periodData.stock_volatility * 100).toFixed(2)}%</div>
+        </div>
+      `;
+    }
+
+    // Gráfico de evolução do Beta
+    function updateBetaEvolutionChart(analysisData) {
+      const ctx = document.getElementById('betaEvolutionChart').getContext('2d');
+      
+      if (betaEvolutionChart) {
+        betaEvolutionChart.destroy();
       }
       
       const periods = ['short', 'medium', 'long'];
@@ -487,29 +547,37 @@
       const betas = periods.map(period => 
         analysisData.periods[period] ? analysisData.periods[period].beta : 0
       );
+      const correlations = periods.map(period => 
+        analysisData.periods[period] ? analysisData.periods[period].r_squared * 100 : 0
+      );
       
-      comparisonChart = new Chart(ctx, {
-        type: 'bar',
+      betaEvolutionChart = new Chart(ctx, {
+        type: 'line',
         data: {
           labels: periodLabels,
           datasets: [{
             label: 'Beta',
             data: betas,
-            backgroundColor: [
-              'rgba(186, 57, 175, 0.8)',
-              'rgba(217, 70, 239, 0.8)',
-              'rgba(168, 85, 247, 0.8)'
-            ],
-            borderColor: [
-              '#ba39af',
-              '#d946ef',
-              '#a855f7'
-            ],
-            borderWidth: 2
+            borderColor: '#ba39af',
+            backgroundColor: 'rgba(186, 57, 175, 0.1)',
+            borderWidth: 3,
+            fill: false,
+            tension: 0.4,
+            yAxisID: 'y'
+          }, {
+            label: 'Correlação (%)',
+            data: correlations,
+            borderColor: '#f59e0b',
+            backgroundColor: 'rgba(245, 158, 11, 0.1)',
+            borderWidth: 2,
+            fill: false,
+            tension: 0.4,
+            yAxisID: 'y1'
           }]
         },
         options: {
           responsive: true,
+          maintainAspectRatio: false,
           plugins: {
             legend: {
               labels: { color: 'white' }
@@ -521,9 +589,28 @@
               grid: { color: 'rgba(255,255,255,0.1)' }
             },
             y: {
+              type: 'linear',
+              display: true,
+              position: 'left',
               ticks: { color: 'white' },
               grid: { color: 'rgba(255,255,255,0.1)' },
-              beginAtZero: true
+              title: {
+                display: true,
+                text: 'Beta',
+                color: 'white'
+              }
+            },
+            y1: {
+              type: 'linear',
+              display: true,
+              position: 'right',
+              ticks: { color: 'white' },
+              grid: { drawOnChartArea: false },
+              title: {
+                display: true,
+                text: 'Correlação (%)',
+                color: 'white'
+              }
             }
           }
         }
@@ -553,11 +640,11 @@
         data: {
           labels: periodData.chart_data.dates,
           datasets: [{
-            label: 'Ação (%)',
+            label: `${currentAnalysis.symbol} (%)`,
             data: stockNormalized,
             borderColor: '#ba39af',
             backgroundColor: 'rgba(186, 57, 175, 0.1)',
-            borderWidth: 2,
+            borderWidth: 3,
             fill: false,
             tension: 0.4
           }, {
@@ -572,6 +659,7 @@
         },
         options: {
           responsive: true,
+          maintainAspectRatio: false,
           plugins: {
             legend: {
               labels: { color: 'white' }
@@ -605,241 +693,100 @@
     
     // Buscar ranking
     async function fetchRanking() {
-      setLoading(rankingBtn, true);
-      
       try {
         const response = await fetch(`${API_BASE}/ranking`);
         const data = await response.json();
         
         if (data.success) {
           displayRanking(data.data);
-          showStatus('Ranking carregado!', 'success');
-        } else {
-          showStatus('Erro ao carregar ranking', 'error');
         }
       } catch (error) {
-        showStatus('Erro ao carregar ranking', 'error');
-        console.error(error);
+        console.error('Erro ao carregar ranking:', error);
       }
-      
-      setLoading(rankingBtn, false);
     }
     
     // Exibir ranking
     function displayRanking(rankingData) {
       const rankingGrid = document.getElementById('rankingGrid');
       
-      rankingGrid.innerHTML = rankingData.map((stock, index) => `
-        <div class="bg-white bg-opacity-5 p-4 rounded-lg border border-white border-opacity-10 hover:bg-opacity-10 transition-all cursor-pointer"
-             onclick="stockInput.value='${stock.symbol}'; analyzeBeta();">
-          <div class="flex justify-between items-start mb-2">
-            <div class="text-lg font-bold">#${index + 1} ${stock.symbol}</div>
-            <div class="text-2xl font-bold">${stock.beta.toFixed(3)}</div>
+      rankingGrid.innerHTML = rankingData.slice(0, 8).map((stock, index) => `
+        <div class="ranking-item bg-white bg-opacity-5 p-3 rounded-lg border border-white border-opacity-10 hover:bg-opacity-10 transition-all cursor-pointer flex items-center justify-between"
+             onclick="stockInput.value='${stock.symbol}'; analyzeComplete();">
+          <div class="flex items-center gap-3">
+            <div class="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
+              ${index + 1}
+            </div>
+            <div>
+              <div class="font-bold text-white">${stock.symbol}</div>
+              <div class="text-xs text-gray-400">${stock.interpretation.classification}</div>
+            </div>
           </div>
-          ${getBetaBadge(stock.interpretation)}
+          <div class="text-right">
+            <div class="text-lg font-bold text-purple-400">${stock.beta.toFixed(3)}</div>
+            <div class="text-xs" style="color: ${stock.interpretation.color}">${stock.interpretation.risk_level}</div>
+          </div>
         </div>
       `).join('');
     }
     
     // Buscar dados IBOV
     async function fetchIbovData() {
-      setLoading(ibovBtn, true);
-      showStatus('Carregando dados do IBOVESPA...', 'info');
-      
       try {
         const response = await fetch(`${API_BASE}/ibov-data?period=252`);
         const data = await response.json();
         
         if (data.success) {
           displayIbovData(data.data);
-          ibovSection.classList.remove('hidden');
-          showStatus('Dados do IBOVESPA carregados!', 'success');
-        } else {
-          showStatus('Erro ao carregar dados do IBOVESPA', 'error');
         }
       } catch (error) {
-        showStatus('Erro ao carregar dados do IBOVESPA', 'error');
-        console.error(error);
+        console.error('Erro ao carregar dados do IBOVESPA:', error);
       }
-      
-      setLoading(ibovBtn, false);
     }
     
-    // Exibir dados IBOV e preços do ativo
-    async function displayIbovData(ibovData) {
-      // Atualizar título com símbolo do ativo atual
-      if (currentAnalysis) {
-        document.getElementById('stockPricesTitle').textContent = `Preços ${currentAnalysis.symbol}`;
-      }
-
-      // Métricas IBOV
+    // Exibir dados IBOV
+    function displayIbovData(ibovData) {
       const ibovMetrics = document.getElementById('ibovMetrics');
       ibovMetrics.innerHTML = `
-        <div class="bg-white bg-opacity-5 p-4 rounded-lg">
-          <div class="text-sm text-gray-400">Último Preço</div>
-          <div class="text-2xl font-bold">${ibovData.last_price.toLocaleString('pt-BR')} pts</div>
-        </div>
-        
-        <div class="bg-white bg-opacity-5 p-4 rounded-lg">
-          <div class="text-sm text-gray-400">Retorno do Período</div>
-          <div class="text-xl font-bold ${ibovData.period_return >= 0 ? 'text-green-400' : 'text-red-400'}">
-            ${ibovData.period_return >= 0 ? '+' : ''}${ibovData.period_return.toFixed(2)}%
-          </div>
-        </div>
-        
-        <div class="bg-white bg-opacity-5 p-4 rounded-lg">
-          <div class="text-sm text-gray-400">Volatilidade</div>
-          <div class="text-lg font-bold">Alta</div>
-        </div>
-      `;
-
-      // Métricas do ativo atual
-      if (currentAnalysis && currentAnalysis.current_data) {
-        const currentData = currentAnalysis.current_data;
-        const periodData = currentAnalysis.periods[currentPeriod];
-        
-        const stockMetrics = document.getElementById('stockPricesMetrics');
-        stockMetrics.innerHTML = `
-          <div class="bg-white bg-opacity-5 p-4 rounded-lg">
-            <div class="text-sm text-gray-400">Preço Atual</div>
-            <div class="text-2xl font-bold">${formatCurrency(currentData.current_price)}</div>
+        <div class="grid grid-cols-1 gap-4">
+          <div class="bg-white bg-opacity-5 p-4 rounded-lg text-center">
+            <div class="text-sm text-gray-400">Último Preço</div>
+            <div class="text-2xl font-bold text-yellow-400">${ibovData.last_price.toLocaleString('pt-BR')} pts</div>
           </div>
           
-          <div class="bg-white bg-opacity-5 p-4 rounded-lg">
-            <div class="text-sm text-gray-400">Variação do Dia</div>
-            <div class="text-xl font-bold ${currentData.change >= 0 ? 'text-green-400' : 'text-red-400'}">
-              ${currentData.change >= 0 ? '+' : ''}${currentData.change_percent.toFixed(2)}%
+          <div class="bg-white bg-opacity-5 p-4 rounded-lg text-center">
+            <div class="text-sm text-gray-400">Retorno Anual</div>
+            <div class="text-xl font-bold ${ibovData.period_return >= 0 ? 'text-green-400' : 'text-red-400'}">
+              ${ibovData.period_return >= 0 ? '+' : ''}${ibovData.period_return.toFixed(2)}%
             </div>
           </div>
           
-          <div class="bg-white bg-opacity-5 p-4 rounded-lg">
-            <div class="text-sm text-gray-400">Volume</div>
-            <div class="text-lg font-bold">${currentData.volume.toLocaleString('pt-BR')}</div>
+          <div class="bg-white bg-opacity-5 p-4 rounded-lg text-center">
+            <div class="text-sm text-gray-400">Status Mercado</div>
+            <div class="text-sm font-semibold ${ibovData.period_return >= 0 ? 'text-green-400' : 'text-red-400'}">
+              ${ibovData.period_return >= 0 ? 'Alta' : 'Baixa'}
+            </div>
           </div>
-        `;
-
-        // Gráfico de preços do ativo
-        updateStockPricesChart(periodData);
-      }
-      
-      // Gráfico IBOV
-      const ctx = document.getElementById('ibovChart').getContext('2d');
-      
-      if (ibovChart) {
-        ibovChart.destroy();
-      }
-      
-      ibovChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: ibovData.dates.slice(-30), // Últimos 30 dias
-          datasets: [{
-            label: 'IBOVESPA',
-            data: ibovData.prices.slice(-30),
-            borderColor: '#f59e0b',
-            backgroundColor: 'rgba(245, 158, 11, 0.1)',
-            borderWidth: 2,
-            fill: true,
-            tension: 0.4
-          }]
-        },
-        options: {
-          responsive: true,
-          plugins: {
-            legend: {
-              labels: { color: 'white' }
-            }
-          },
-          scales: {
-            x: {
-              ticks: { color: 'white' },
-              grid: { color: 'rgba(255,255,255,0.1)' }
-            },
-            y: {
-              ticks: { 
-                color: 'white',
-                callback: function(value) {
-                  return value.toLocaleString('pt-BR') + ' pts';
-                }
-              },
-              grid: { color: 'rgba(255,255,255,0.1)' }
-            }
-          }
-        }
-      });
-    }
-
-    // Novo gráfico para preços do ativo
-    function updateStockPricesChart(periodData) {
-      const ctx = document.getElementById('stockPricesChart').getContext('2d');
-      
-      if (stockPricesChart) {
-        stockPricesChart.destroy();
-      }
-      
-      stockPricesChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: periodData.chart_data.dates.slice(-30), // Últimos 30 dias
-          datasets: [{
-            label: 'Preço de Fechamento',
-            data: periodData.chart_data.stock_prices.slice(-30),
-            borderColor: '#ba39af',
-            backgroundColor: 'rgba(186, 57, 175, 0.1)',
-            borderWidth: 2,
-            fill: true,
-            tension: 0.4
-          }]
-        },
-        options: {
-          responsive: true,
-          plugins: {
-            legend: {
-              labels: { color: 'white' }
-            }
-          },
-          scales: {
-            x: {
-              ticks: { color: 'white' },
-              grid: { color: 'rgba(255,255,255,0.1)' }
-            },
-            y: {
-              ticks: { 
-                color: 'white',
-                callback: function(value) {
-                  return formatCurrency(value);
-                }
-              },
-              grid: { color: 'rgba(255,255,255,0.1)' }
-            }
-          }
-        }
-      });
-    }
-    
-    // Analisar ação clicada no ranking
-    function analyzeStockFromRanking(symbol) {
-      stockInput.value = symbol;
-      showStatus(`Analisando ${symbol} do ranking...`, 'info');
-      analyzeBeta();
+          
+          <div class="bg-white bg-opacity-5 p-4 rounded-lg text-center">
+            <div class="text-sm text-gray-400">Referência Beta</div>
+            <div class="text-lg font-bold text-blue-400">1.000</div>
+            <div class="text-xs text-gray-400">Mercado Neutro</div>
+          </div>
+        </div>
+      `;
     }
     
     // Event Listeners
-    analyzeBtn.addEventListener('click', analyzeBeta);
-    rankingBtn.addEventListener('click', fetchRanking);
-    ibovBtn.addEventListener('click', fetchIbovData);
+    analyzeBtn.addEventListener('click', analyzeComplete);
     
     stockInput.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') analyzeBeta();
+      if (e.key === 'Enter') analyzeComplete();
     });
     
-    // Tornar função global para onclick
-    window.analyzeStockFromRanking = analyzeStockFromRanking;
-    
     // Inicialização
-    showStatus('Monitor Beta carregado! Digite um código de ação para começar.', 'info');
+    showStatus('Monitor Beta carregado! Digite um código de ação para análise completa.', 'info');
     
-    // Carregar ranking inicial
+    // Carregar ranking inicial automaticamente
     fetchRanking();
   </script>
 </body>

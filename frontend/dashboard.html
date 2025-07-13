@@ -533,8 +533,8 @@
                 <div onclick="showPremiumFeature('Volatilidade GARCH')" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white cursor-pointer">
                   <i class="fas fa-wave-square text-red-400 w-5"></i>
                   <div class="flex-1">
-                    <div class="font-medium">Volatilidade GARCH</div>
-                    <div class="text-xs text-gray-400">Modelos de Volatilidade</div>
+                    <div class="font-medium">Regressão Polinomial</div>
+                    <div class="text-xs text-gray-400">Análise Preditiva Avançada</div>
                   </div>
                   <span class="bg-red-600 text-white text-xs px-2 py-1 rounded-full font-bold">EM BREVE</span>
                 </div>
@@ -658,7 +658,7 @@
                   <i class="fas fa-calculator text-blue-400 w-5"></i>
                   <div>
                     <div class="font-medium">Beta Regression</div>
-                    <div class="text-xs text-gray-400">Regressão vs IBOVESPA</div>
+                    <div class="text-xs text-gray-400">Trading c/ beta-movel/div>
                   </div>
                 </a>
                 
@@ -682,8 +682,8 @@
                 <div onclick="showPremiumFeature('AutoML')" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white cursor-pointer">
                   <i class="fas fa-magic text-pink-400 w-5"></i>
                   <div class="flex-1">
-                    <div class="font-medium">AutoML</div>
-                    <div class="text-xs text-gray-400">Machine Learning Automatizado</div>
+                    <div class="font-medium">ML + IA </div>
+                    <div class="text-xs text-gray-400">Sensibilidade a notícias</div>
                   </div>
                   <span class="bg-red-600 text-white text-xs px-2 py-1 rounded-full font-bold">EM BREVE</span>
                 </div>
@@ -716,6 +716,8 @@
       console.log('✅ Dashboard inicializado!');
     }
 
+    
+
     // Try to load user data from localStorage as fallback
     function tryLoadFromLocalStorage() {
       try {
@@ -730,6 +732,46 @@
       } catch (error) {
         console.log('⚠️ Erro ao carregar dados do localStorage:', error);
       }
+    }
+
+    function calculateDaysRemaining(trialInfo, user) {
+      console.log('🔍 Calculando dias restantes...');
+      console.log('- trialInfo:', trialInfo);
+      console.log('- user.plan_expires_at:', user?.plan_expires_at);
+      
+      // 1. Tentar pegar dos dados do trial primeiro
+      if (trialInfo && typeof trialInfo.days_remaining === 'number' && trialInfo.days_remaining >= 0) {
+        console.log('✅ Usando days_remaining do trialInfo:', trialInfo.days_remaining);
+        return trialInfo.days_remaining;
+      }
+      
+      // 2. Calcular baseado na data de expiração do usuário
+      if (user && user.plan_expires_at) {
+        try {
+          const expiryDate = new Date(user.plan_expires_at);
+          const now = new Date();
+          const diffTime = expiryDate - now;
+          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+          const finalDays = Math.max(0, diffDays);
+          
+          console.log('✅ Calculado da data de expiração:', finalDays);
+          console.log('- Data de expiração:', expiryDate);
+          console.log('- Data atual:', now);
+          
+          return finalDays;
+        } catch (error) {
+          console.error('❌ Erro ao calcular data:', error);
+        }
+      }
+      
+      // 3. Se é trial mas sem dados, assumir expirado
+      if (user && user.user_type === 'trial') {
+        console.log('⚠️ Trial sem data de expiração - assumindo 0');
+        return 0;
+      }
+      
+      console.log('❌ Nenhum dado de trial encontrado - retornando 0');
+      return 0;
     }
 
     // Check authentication
@@ -775,11 +817,12 @@
             }
             // Ou verificar se user_type é 'trial'
             else if (currentUser.user_type === 'trial') {
+              const calculatedDays = calculateDaysRemaining(null, currentUser);
               trialInfo = {
                 is_trial: true,
-                trial_expired: false,
-                days_remaining: 15, // valor padrão
-                expires_at: null
+                trial_expired: calculatedDays <= 0,
+                days_remaining: calculatedDays,
+                expires_at: currentUser.plan_expires_at
               };
             }
           }
@@ -945,7 +988,7 @@
       // ✅ TRIAL ATIVO DETECTADO
       console.log('🎉 Trial ativo detectado!');
       
-      const daysLeft = trialInfo ? trialInfo.days_remaining || 15 : 15;
+      const daysLeft = calculateDaysRemaining(trialInfo, currentUser);
       const expiresAt = trialInfo ? trialInfo.expires_at : null;
       
       // MOSTRAR BANNER

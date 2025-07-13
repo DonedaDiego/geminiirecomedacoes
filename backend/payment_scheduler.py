@@ -21,7 +21,6 @@ class PaymentScheduler:
             print("⚠️ Scheduler já está rodando")
             return
         
-        print("🚀 Iniciando Payment Scheduler...")
         
         # Configurar jobs
         self.setup_jobs()
@@ -31,12 +30,7 @@ class PaymentScheduler:
         self.scheduler_thread = threading.Thread(target=self.run_scheduler, daemon=True)
         self.scheduler_thread.start()
         
-        print("✅ Payment Scheduler iniciado com sucesso!")
-        print("📅 Jobs configurados:")
-        print("   - Processar expirados: Todo dia às 02:00")
-        print("   - Enviar avisos: Todo dia às 10:00")
-        print("   - Processar trials: Todo dia às 03:00")
-        print("   - Verificação integridade: Segundas às 09:00")
+
     
     def setup_jobs(self):
         """Configurar os jobs do scheduler"""
