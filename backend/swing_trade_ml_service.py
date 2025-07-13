@@ -678,8 +678,8 @@ Sinal histórico: {'COMPRA' if historical_prediction == 1 else 'VENDA'}
                     font=dict(color='rgb(200, 200, 250)', size=24)
                 ),
                 showlegend=True,
-                width=1200,  # MESMO TAMANHO do MetaTrader
-                height=600,  # MESMO TAMANHO do MetaTrader
+                width=1200,  
+                height=600,  
                 legend=dict(
                     bgcolor='rgba(27, 27, 50, 0.8)',
                     bordercolor='rgba(70, 70, 120, 0.8)',

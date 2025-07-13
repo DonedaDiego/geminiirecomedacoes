@@ -196,6 +196,73 @@
     .mes-out { background: rgba(255, 159, 132, 0.2) !important; border-color: rgba(255, 159, 132, 0.4) !important; }
     .mes-nov { background: rgba(132, 99, 255, 0.2) !important; border-color: rgba(132, 99, 255, 0.4) !important; }
     .mes-dez { background: rgba(255, 206, 84, 0.2) !important; border-color: rgba(255, 206, 84, 0.4) !important; }
+
+    /* Novos estilos para gráficos individuais */
+    .chart-grid {
+      display: grid;
+      gap: 24px;
+      margin-top: 20px;
+    }
+
+    .chart-grid.single {
+      grid-template-columns: 1fr;
+    }
+
+    .chart-grid.double {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .chart-grid.triple {
+      grid-template-columns: repeat(3, 1fr);
+    }
+
+    .chart-grid.quad {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    @media (max-width: 1024px) {
+      .chart-grid.triple {
+        grid-template-columns: 1fr 1fr;
+      }
+      .chart-grid.quad {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .chart-grid.double,
+      .chart-grid.triple,
+      .chart-grid.quad {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .individual-chart {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 16px;
+      padding: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      min-height: 500px;
+    }
+
+    .chart-title {
+      color: white;
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid rgba(99, 102, 241, 0.3);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .chart-stats {
+      display: flex;
+      gap: 16px;
+      font-size: 12px;
+      color: #9ca3af;
+    }
   </style>
 </head>
 <body class="min-h-screen">
@@ -238,7 +305,7 @@
           </div>
           <div class="bg-gradient-to-r from-primary/10 to-secondary/10 rounded-xl p-6 mt-8">
             <p class="text-gray-300 text-lg">
-              <strong>Exclusivo Premium:</strong> Compare volumes de calls e puts em diferentes vencimentos lado a lado
+              <strong>Exclusivo Pro:</strong> Compare volumes de calls e puts em diferentes vencimentos lado a lado
             </p>
           </div>
         </div>
@@ -371,14 +438,14 @@
           <!-- Cards serão inseridos aqui -->
         </div>
 
-        <!-- Charts Container -->
+        <!-- Charts Container - NOVO LAYOUT ADAPTATIVO -->
         <div class="card rounded-2xl p-8 fade-in">
           <h2 class="text-2xl font-bold text-white mb-6 flex items-center">
             <i class="fas fa-chart-bar text-primary mr-3"></i>
-            Gráficos Hunter Walls
+            Gráficos Walls
           </h2>
-          <div id="chartsContainer" class="chart-container">
-            <!-- Gráficos serão inseridos aqui -->
+          <div id="chartsContainer" class="chart-grid">
+            <!-- Gráficos individuais serão inseridos aqui -->
           </div>
         </div>
 
@@ -435,9 +502,9 @@
 
     // Initialize page
     async function initPage() {
-      console.log(' Inicializando Hunter Walls...');
+      console.log('🎯 Inicializando Hunter Walls...');
       await checkAuth();
-      console.log(' Hunter Walls inicializado!');
+      console.log('✅ Hunter Walls inicializado!');
     }
 
     // Check authentication
@@ -737,15 +804,70 @@
       }
     }
 
-    // Display results
+    // Gerar dados mock para demonstração
+    function generateMockData(grupos) {
+      const strikes = [];
+      for (let i = 25; i <= 40; i += 0.25) {
+        strikes.push(i);
+      }
+
+      const chartData = {};
+      grupos.forEach((grupo, index) => {
+        const nomeGrupo = grupo.join(',');
+        const callsVolumes = strikes.map(() => -Math.floor(Math.random() * 5000));
+        const putsVolumes = strikes.map(() => Math.floor(Math.random() * 5000));
+        
+        chartData[nomeGrupo] = {
+          labels: strikes.map(s => `R$ ${s.toFixed(2)}`),
+          calls_volumes: callsVolumes,
+          puts_volumes: putsVolumes,
+          strikes_values: strikes
+        };
+      });
+
+      return {
+        ticker_info: {
+          ticker: currentTicker,
+          current_price: 32.63,
+          name: 'Empresa Exemplo'
+        },
+        chart_data: chartData,
+        summary: {
+          total_volume: 150000,
+          total_calls: 75000,
+          total_puts: 75000,
+          percent_calls: '50.0',
+          percent_puts: '50.0',
+          put_call_ratio_geral: '1.00',
+          grupos: grupos.map((grupo, index) => ({
+            nome: grupo.join(','),
+            total_volume: 50000,
+            total_calls: 25000,
+            total_puts: 25000,
+            put_call_ratio: '1.00',
+            percent_of_total: '33.3',
+            top_calls: [
+              { symbol: `${currentTicker}${grupo[0]}32`, strike: 32.00, volume: 5000 },
+              { symbol: `${currentTicker}${grupo[0]}33`, strike: 33.00, volume: 4500 }
+            ],
+            top_puts: [
+              { symbol: `${currentTicker}${grupo[0]}31`, strike: 31.00, volume: 4800 },
+              { symbol: `${currentTicker}${grupo[0]}32`, strike: 32.00, volume: 4200 }
+            ]
+          }))
+        }
+      };
+    }
+
+    // Display results com layout adaptativo
     function displayResults(data) {
       console.log('📊 Exibindo resultados:', data);
       
       // Summary cards
       displaySummaryCards(data.summary);
       
-      // Charts
-      displayCharts(data.chart_data, data.ticker_info);
+      // Charts com novo layout
+      displayChartsAdaptive(data.chart_data, data.ticker_info);
       
       // Detailed summary
       displayDetailedSummary(data.summary);
@@ -824,8 +946,8 @@
       `;
     }
 
-    // Display charts com fundo transparente e adaptativo
-    function displayCharts(chartData, tickerInfo) {
+    // NOVO: Display charts com layout adaptativo individual
+    function displayChartsAdaptive(chartData, tickerInfo) {
       const container = document.getElementById('chartsContainer');
       
       // Limpar container
@@ -834,29 +956,61 @@
       const grupos = Object.keys(chartData);
       const numGrupos = grupos.length;
       
-      // Calcular layout adaptativo
-      let cols, rows;
-      if (numGrupos === 1) {
-        cols = 1;
-        rows = 1;
-      } else if (numGrupos === 2) {
-        cols = 2;
-        rows = 1;
-      } else {
-        cols = Math.min(3, numGrupos);
-        rows = Math.ceil(numGrupos / cols);
-      }
+      // Definir classe CSS baseada no número de grupos
+      let gridClass = 'single';
+      if (numGrupos === 2) gridClass = 'double';
+      else if (numGrupos === 3) gridClass = 'triple';
+      else if (numGrupos >= 4) gridClass = 'quad';
       
-      // Preparar dados para Plotly
-      const traces = [];
-      const subplotTitles = [];
+      container.className = `chart-grid ${gridClass}`;
       
+      // Criar um gráfico individual para cada grupo
       grupos.forEach((nomeGrupo, index) => {
         const dados = chartData[nomeGrupo];
-        const row = Math.floor(index / cols) + 1;
-        const col = (index % cols) + 1;
         
-        subplotTitles.push(nomeGrupo);
+        // Extrair letras do nome do grupo (ex: "Grupo 1 (G,S)" -> "G,S")
+        let letrasGrupo = nomeGrupo;
+        const match = nomeGrupo.match(/\(([^)]+)\)/);
+        if (match) {
+          letrasGrupo = match[1]; // Extrai as letras entre parênteses
+        }
+        
+        // Determinar o mês correspondente
+        const primeiraLetra = letrasGrupo.split(',')[0];
+        const mesInfo = mesesMap[primeiraLetra];
+        const mesNome = mesInfo ? mesInfo.mes : letrasGrupo;
+        
+        // Container individual do gráfico
+        const chartDiv = document.createElement('div');
+        chartDiv.className = 'individual-chart';
+        
+        // Calcular maiores volumes
+        const maxCallsVolume = Math.abs(Math.min(...dados.calls_volumes));
+        const maxPutsVolume = Math.max(...dados.puts_volumes);
+        
+        // Encontrar strikes com maiores volumes
+        const maxCallsIndex = dados.calls_volumes.findIndex(v => Math.abs(v) === maxCallsVolume);
+        const maxPutsIndex = dados.puts_volumes.findIndex(v => v === maxPutsVolume);
+        
+        const maxCallsStrike = dados.strikes_values[maxCallsIndex];
+        const maxPutsStrike = dados.strikes_values[maxPutsIndex];
+        
+        chartDiv.innerHTML = `
+          <div class="chart-title">
+            <span>${mesNome} (${letrasGrupo})</span>
+            <div class="chart-stats">
+              <span title="Maior volume de calls: R$ ${maxCallsStrike?.toFixed(2)}">🔵 Calls: ${maxCallsVolume.toLocaleString()}</span>
+              <span title="Maior volume de puts: R$ ${maxPutsStrike?.toFixed(2)}">🟠 Puts: ${maxPutsVolume.toLocaleString()}</span>
+              <span class="text-yellow-400" title="Strike com maior volume total">📈 Maior: R$ ${encontrarMaiorVolumeStrike(dados)}</span>
+            </div>
+          </div>
+          <div id="chart-${index}" style="height: 450px;"></div>
+        `;
+        
+        container.appendChild(chartDiv);
+        
+        // Preparar dados para este gráfico específico
+        const traces = [];
         
         // CALLS trace
         traces.push({
@@ -864,12 +1018,8 @@
           orientation: 'h',
           y: dados.labels,
           x: dados.calls_volumes,
-          name: index === 0 ? 'CALLS' : '',
+          name: 'CALLS',
           marker: { color: '#0099ff' },
-          showlegend: index === 0,
-          legendgroup: 'calls',
-          xaxis: `x${index + 1}`,
-          yaxis: `y${index + 1}`,
           hovertemplate: '<b>CALLS</b><br>Strike: %{y}<br>Volume: %{text}<extra></extra>',
           text: dados.calls_volumes.map(v => Math.abs(v).toLocaleString())
         });
@@ -880,12 +1030,8 @@
           orientation: 'h',
           y: dados.labels,
           x: dados.puts_volumes,
-          name: index === 0 ? 'PUTS' : '',
+          name: 'PUTS',
           marker: { color: '#ff6600' },
-          showlegend: index === 0,
-          legendgroup: 'puts',
-          xaxis: `x${index + 1}`,
-          yaxis: `y${index + 1}`,
           hovertemplate: '<b>PUTS</b><br>Strike: %{y}<br>Volume: %{x:,}<extra></extra>'
         });
         
@@ -914,67 +1060,73 @@
                 width: 3,
                 dash: 'dash'
               },
-              name: index === 0 ? `Preço: R$ ${precoAtual.toFixed(2)}` : '',
-              showlegend: index === 0,
-              legendgroup: 'preco',
-              xaxis: `x${index + 1}`,
-              yaxis: `y${index + 1}`,
+              name: `Preço: R$ ${precoAtual.toFixed(2)}`,
               hovertemplate: `<b>Preço Atual</b><br>R$ ${precoAtual.toFixed(2)}<extra></extra>`
             });
           }
         }
-      });
-      
-      // Layout adaptativo
-      const height = numGrupos === 1 ? 600 : Math.max(500, 350 * rows);
-      
-      const layout = {
-        title: {
-          text: `Preço Atual:  ${tickerInfo.current_price.toFixed(2)}`,
-          font: { size: numGrupos === 1 ? 24 : 20, color: 'white' },
-          x: 0.5
-        },
-        template: 'plotly_dark',
-        height: height,
-        margin: { l: 80, r: 80, t: 120, b: 80 },
-        grid: { rows: rows, columns: cols, pattern: 'independent' },
-        legend: {
-          orientation: 'h',
-          yanchor: 'bottom',
-          y: 1.02,
-          xanchor: 'center',
-          x: 0.5,
-          font: { color: 'white' }
-        },
-        paper_bgcolor: 'transparent',
-        plot_bgcolor: 'transparent'
-      };
-      
-      // Configurar eixos para cada subplot
-      grupos.forEach((_, index) => {
-        const axisNum = index + 1;
         
-        layout[`xaxis${axisNum}`] = {
-          title: '← CALLS | PUTS →',
-          tickfont: { color: 'lightgray' },
-          titlefont: { color: 'white' },
-          gridcolor: 'rgba(255,255,255,0.1)'
+        // Layout para este gráfico específico
+        const layout = {
+          title: {
+            text: `Preço Atual: R$ ${tickerInfo.current_price.toFixed(2)}`,
+            font: { size: 16, color: 'white' },
+            x: 0.5
+          },
+          template: 'plotly_dark',
+          height: 450,
+          margin: { l: 80, r: 40, t: 60, b: 60 },
+          xaxis: {
+            title: '← CALLS | PUTS →',
+            tickfont: { color: 'lightgray', size: 10 },
+            titlefont: { color: 'white', size: 12 },
+            gridcolor: 'rgba(255,255,255,0.1)'
+          },
+          yaxis: {
+            title: 'Strike',
+            tickfont: { color: 'lightgray', size: 10 },
+            titlefont: { color: 'white', size: 12 },
+            gridcolor: 'rgba(255,255,255,0.1)'
+          },
+          legend: {
+            orientation: 'h',
+            yanchor: 'bottom',
+            y: 1.02,
+            xanchor: 'center',
+            x: 0.5,
+            font: { color: 'white', size: 10 }
+          },
+          paper_bgcolor: 'transparent',
+          plot_bgcolor: 'transparent'
         };
         
-        layout[`yaxis${axisNum}`] = {
-          title: axisNum === 1 || (axisNum - 1) % cols === 0 ? 'Strike' : '',
-          tickfont: { color: 'lightgray' },
-          titlefont: { color: 'white' },
-          gridcolor: 'rgba(255,255,255,0.1)'
-        };
+        // Criar gráfico individual
+        setTimeout(() => {
+          Plotly.newPlot(`chart-${index}`, traces, layout, {
+            responsive: true,
+            displayModeBar: true,
+            modeBarButtonsToRemove: ['pan2d', 'lasso2d', 'select2d']
+          });
+        }, index * 100); // Pequeno delay para renderização suave
+      });
+    }
+
+    // Função auxiliar para encontrar strike com maior volume total
+    function encontrarMaiorVolumeStrike(dados) {
+      let maiorVolume = 0;
+      let strikeIndex = 0;
+      
+      dados.calls_volumes.forEach((callsVol, index) => {
+        const putsVol = dados.puts_volumes[index] || 0;
+        const volumeTotal = Math.abs(callsVol) + putsVol;
+        
+        if (volumeTotal > maiorVolume) {
+          maiorVolume = volumeTotal;
+          strikeIndex = index;
+        }
       });
       
-      // Criar gráfico
-      Plotly.newPlot(container, traces, layout, {
-        responsive: true,
-        displayModeBar: true,
-        modeBarButtonsToRemove: ['pan2d', 'lasso2d', 'select2d']
-      });
+      return dados.strikes_values[strikeIndex]?.toFixed(2) || '0.00';
     }
 
     // Display detailed summary
@@ -988,7 +1140,7 @@
             <table class="w-full border-collapse">
               <thead>
                 <tr class="bg-gray-700">
-                  <th class="border border-gray-600 px-4 py-3 text-left text-white">Grupo</th>
+                  <th class="border border-gray-600 px-4 py-3 text-left text-white">Mês</th>
                   <th class="border border-gray-600 px-4 py-3 text-right text-white">Volume Total</th>
                   <th class="border border-gray-600 px-4 py-3 text-right text-white">Calls</th>
                   <th class="border border-gray-600 px-4 py-3 text-right text-white">Puts</th>
@@ -1000,16 +1152,28 @@
       `;
       
       summary.grupos.forEach(grupo => {
+        // Extrair letras do nome do grupo
+        let letrasGrupo = grupo.nome;
+        const match = grupo.nome.match(/\(([^)]+)\)/);
+        if (match) {
+          letrasGrupo = match[1]; // Extrai as letras entre parênteses
+        }
+        
+        // Determinar o mês correspondente
+        const primeiraLetra = letrasGrupo.split(',')[0];
+        const mesInfo = mesesMap[primeiraLetra];
+        const mesNome = mesInfo ? `${mesInfo.mes} (${letrasGrupo})` : letrasGrupo;
+        
         let rowColor = 'bg-gray-800';
-        if (grupo.put_call_ratio > 1.2) {
+        if (parseFloat(grupo.put_call_ratio) > 1.2) {
           rowColor = 'bg-red-900/30';
-        } else if (grupo.put_call_ratio < 0.8) {
+        } else if (parseFloat(grupo.put_call_ratio) < 0.8) {
           rowColor = 'bg-green-900/30';
         }
         
         html += `
           <tr class="${rowColor}">
-            <td class="border border-gray-600 px-4 py-3 text-white font-semibold">${grupo.nome}</td>
+            <td class="border border-gray-600 px-4 py-3 text-white font-semibold">${mesNome}</td>
             <td class="border border-gray-600 px-4 py-3 text-right text-white">${grupo.total_volume.toLocaleString()}</td>
             <td class="border border-gray-600 px-4 py-3 text-right text-blue-400">${grupo.total_calls.toLocaleString()}</td>
             <td class="border border-gray-600 px-4 py-3 text-right text-orange-400">${grupo.total_puts.toLocaleString()}</td>
@@ -1026,13 +1190,25 @@
         </div>
         
         <div class="space-y-6">
-          <h3 class="text-xl font-bold text-white"> Top Opções por Grupo</h3>
+          <h3 class="text-xl font-bold text-white">🏆 Top Opções por Grupo</h3>
       `;
       
       summary.grupos.forEach(grupo => {
+        // Extrair letras do nome do grupo
+        let letrasGrupo = grupo.nome;
+        const match = grupo.nome.match(/\(([^)]+)\)/);
+        if (match) {
+          letrasGrupo = match[1]; // Extrai as letras entre parênteses
+        }
+        
+        // Determinar o mês correspondente
+        const primeiraLetra = letrasGrupo.split(',')[0];
+        const mesInfo = mesesMap[primeiraLetra];
+        const mesNome = mesInfo ? `${mesInfo.mes} (${letrasGrupo})` : letrasGrupo;
+        
         html += `
           <div class="bg-gray-800/50 rounded-lg p-6">
-            <h4 class="text-lg font-semibold text-white mb-4">${grupo.nome}</h4>
+            <h4 class="text-lg font-semibold text-white mb-4">${mesNome}</h4>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <h5 class="text-blue-400 font-semibold mb-2">🔵 Top Calls</h5>

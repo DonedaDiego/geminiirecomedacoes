@@ -427,9 +427,9 @@ class VolatilityRegimesService:
                 title=f'{ticker_display} - Bandas de Volatilidade',
                 xaxis_title='Data',
                 yaxis_title='Preço (R$)' if '.SA' in ticker else 'Preço (USD)',
-                width=None,                                 # ← MUDE AQUI (era 1200)
-                height=None,                                # ← MUDE AQUI (era 700)
-                autosize=True,                              # ← ADICIONE ESTA LINHA
+                width=None,                                 
+                height=None,                                
+                autosize=True,                              
                 showlegend=False,
                 xaxis=dict(
                     type='date',
@@ -449,7 +449,7 @@ class VolatilityRegimesService:
                 plot_bgcolor='rgba(255,255,255,0.05)',
                 paper_bgcolor='rgba(34,34,34,0.2)',
                 font=dict(color='rgba(255,255,255,0.9)'),
-                margin=dict(l=50, r=50, t=80, b=50)        # ← ADICIONE ESTA LINHA para margens
+                margin=dict(l=50, r=50, t=80, b=50)        
             )
             
             return fig.to_html(include_plotlyjs='cdn')

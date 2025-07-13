@@ -6,6 +6,9 @@ from database import get_db_connection
 from email_service import email_service
 from trial_service import create_trial_user
 from control_pay_service import check_user_subscription_status
+from database import get_db_connection  # ← ADICIONAR ESTA LINHA
+from trial_service import downgrade_user_trial
+
 
 # Blueprint
 auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
@@ -565,7 +568,7 @@ def reset_password():
 
 @auth_bp.route('/verify', methods=['GET'])
 def verify_token():
-    """🔥 Verificar token JWT com informações de subscription/trial"""
+    """🔥 Verificar token JWT com informações de subscription/trial + DOWNGRADE AUTOMÁTICO"""
     try:
         auth_header = request.headers.get('Authorization')
         
@@ -587,6 +590,72 @@ def verify_token():
                 print(f"❌ Erro ao verificar subscription: {subscription_status}")
                 return jsonify({'success': False, 'error': 'Erro ao verificar status da conta'}), 500
             
+            # 🔥 DOWNGRADE AUTOMÁTICO - TRIAL EXPIRADO
+            subscription_data = subscription_status.get('subscription', {})
+            if subscription_data.get('status') == 'trial_expired':
+                print(f"🔄 Trial expirado detectado para usuário {user_id} - fazendo downgrade automático...")
+                
+                try:
+                    downgrade_result = downgrade_user_trial(user_id)
+                    
+                    if downgrade_result.get('success', False):
+                        print(f"✅ Downgrade de trial realizado para usuário {user_id}")
+                        # Re-verificar status após downgrade
+                        subscription_status = check_user_subscription_status(user_id)
+                    else:
+                        print(f"❌ Erro no downgrade de trial: {downgrade_result.get('error')}")
+                
+                except Exception as downgrade_error:
+                    print(f"❌ Erro na função de downgrade de trial: {downgrade_error}")
+                    # Continuar mesmo se downgrade falhar
+            
+            # 🔥 NOVO: DOWNGRADE AUTOMÁTICO - PAGAMENTO EXPIRADO
+            elif subscription_data.get('status') == 'paid_expired':
+                print(f"🔄 Pagamento expirado detectado para usuário {user_id} - fazendo downgrade automático...")
+                
+                try:
+                    conn = get_db_connection()
+                    if conn:
+                        cursor = conn.cursor()
+                        
+                        # Verificar se realmente está expirado
+                        cursor.execute("""
+                            SELECT plan_id, plan_name, plan_expires_at
+                            FROM users 
+                            WHERE id = %s 
+                            AND plan_expires_at IS NOT NULL 
+                            AND plan_expires_at < NOW()
+                            AND user_type != 'trial'
+                            AND plan_id IN (1, 2)
+                        """, (user_id,))
+                        
+                        expired_user = cursor.fetchone()
+                        
+                        if expired_user:
+                            # Fazer downgrade individual
+                            cursor.execute("""
+                                UPDATE users 
+                                SET plan_id = 3, 
+                                    plan_name = 'Básico',
+                                    plan_expires_at = NULL,
+                                    updated_at = CURRENT_TIMESTAMP
+                                WHERE id = %s
+                            """, (user_id,))
+                            
+                            conn.commit()
+                            print(f"✅ Downgrade de pagamento realizado para usuário {user_id}")
+                            
+                            # Re-verificar status após downgrade
+                            subscription_status = check_user_subscription_status(user_id)
+                        
+                        cursor.close()
+                        conn.close()
+                
+                except Exception as downgrade_error:
+                    print(f"❌ Erro na função de downgrade de pagamento: {downgrade_error}")
+                    # Continuar mesmo se downgrade falhar
+            
+            # 🔥 BUSCAR DADOS ATUALIZADOS DO USUÁRIO
             conn = get_db_connection()
             if not conn:
                 print("❌ Erro de conexão com banco")
@@ -608,7 +677,7 @@ def verify_token():
             
             user_id, name, email, plan_id, plan_name, user_type, email_confirmed = user
             
-            # 🔥 EXTRAIR DADOS DA SUBSCRIPTION
+            # 🔥 EXTRAIR DADOS DA SUBSCRIPTION (atualizados após possível downgrade)
             subscription_data = subscription_status.get('subscription', {})
             user_data = subscription_status.get('user', {})
             
@@ -644,15 +713,15 @@ def verify_token():
                     'trial_expired': True,
                     'message': 'Trial expirado'
                 }
-            elif subscription_data.get('status') == 'active':
+            elif subscription_data.get('status') == 'paid_active':
                 response_data['subscription_info'] = {
                     'is_paid': True,
                     'status': 'active',
                     'expires_at': subscription_data.get('expires_at'),
-                    'days_until_renewal': subscription_data.get('days_until_renewal', 0),
+                    'days_until_renewal': subscription_data.get('days_remaining', 0),
                     'plan_name': user_data.get('plan_name', plan_name)
                 }
-            elif subscription_data.get('status') == 'expired':
+            elif subscription_data.get('status') == 'paid_expired':
                 response_data['subscription_info'] = {
                     'is_paid': False,
                     'status': 'expired',
@@ -673,7 +742,7 @@ def verify_token():
         import traceback
         traceback.print_exc()
         return jsonify({'success': False, 'error': f'Erro interno: {str(e)}'}), 500
-
+    
 @auth_bp.route('/logout', methods=['POST'])
 def logout():
     """🔥 Logout do usuário"""

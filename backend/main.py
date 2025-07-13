@@ -30,6 +30,7 @@ from arbitragem_puts_routes import arbitragem_puts_bp
 from box_3_routes import box3_bp
 from amplitude_routes import amplitude_bp
 from payment_scheduler import start_payment_scheduler
+from screening_routes import screening_bp
 
 from dotenv import load_dotenv
 
@@ -111,7 +112,13 @@ except Exception as e:
     print(f"❌ Erro ao carregar auth blueprint: {e}")
     AUTH_AVAILABLE = False
 
-
+try:
+    app.register_blueprint(screening_bp, url_prefix='/screening')
+    print("✅ Blueprint Screening registrado!")
+except ImportError as e:
+    print(f"⚠️ Screening routes não disponível: {e}")
+except Exception as e:
+    print(f"❌ Erro ao carregar screening blueprint: {e}")
 
 
 # ===== REGISTRAR BLUEPRINTS =====
@@ -280,10 +287,8 @@ def sobre():
 @app.route('/monitor-basico')
 @app.route('/monitor-basico.html')
 def monitor_basico():
-    try:
-        return send_from_directory('../frontend', 'monitor-basico.html')
-    except:
-        return "<h1>Monitor Básico - Em construção</h1>"
+        return send_from_directory('../frontend/', 'monitor-basico.html')
+
 
 @app.route('/rsl')
 @app.route('/rsl.html')
