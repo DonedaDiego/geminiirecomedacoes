@@ -20,19 +20,6 @@ logger = logging.getLogger(__name__)
 def calcular_rendimento_liquido_cdi(taxa_cdi_mensal: float, meses: float) -> Tuple[float, float]:
     """
     Calcula o rendimento líquido do CDI considerando IR
-    
-    Args:
-        taxa_cdi_mensal: Taxa CDI mensal em %
-        meses: Número de meses
-        
-    Returns:
-        Tuple com (rendimento_liquido, aliquota_ir)
-        
-    Alíquotas de IR para renda fixa:
-    - Até 180 dias: 22.5% de IR
-    - 181 a 360 dias: 20% de IR
-    - 361 a 720 dias: 17.5% de IR  
-    - Acima de 720 dias: 15% de IR
     """
     dias = meses * 30  # Aproximação de 30 dias por mês
     
@@ -57,14 +44,12 @@ def calcular_rendimento_liquido_cdi(taxa_cdi_mensal: float, meses: float) -> Tup
 class ArbitragemPutsService:
     """
     Serviço especializado para screening de arbitragem de puts
+    COMPATÍVEL com arbitragem_puts_routes.py
     """
     
     def __init__(self, config_path: Optional[str] = None):
         """
         Inicializa o serviço de arbitragem de puts
-        
-        Args:
-            config_path: Caminho opcional para arquivo de configuração
         """
         self.session = self._criar_sessao_http()
         self.token_acesso = self._carregar_token(config_path)
@@ -94,17 +79,14 @@ class ArbitragemPutsService:
         return session
     
     def _carregar_token(self, config_path: Optional[str] = None) -> str:
-        """
-        Carrega token da OpLab de diferentes fontes
-        
-        Args:
-            config_path: Caminho específico para o arquivo de config
-            
-        Returns:
-            Token de acesso ou string vazia se não encontrar
-        """
         try:
-            # Lista de caminhos para tentar
+            # 🔥 PRIORIDADE 1: VARIÁVEL DE AMBIENTE (RAILWAY)
+            token_env = os.getenv('OPLAB_TOKEN') or os.getenv('OPLAB_ACCESS_TOKEN')
+            if token_env:
+                logger.info("✅ Token OpLab carregado de variável de ambiente")
+                return token_env
+            
+            # 🔥 PRIORIDADE 2: ARQUIVO CONFIG (LOCAL)
             caminhos_config = []
             
             if config_path:
@@ -120,33 +102,26 @@ class ArbitragemPutsService:
             
             for caminho in caminhos_config:
                 if os.path.exists(caminho):
-                    logger.info(f"Carregando config de: {caminho}")
+                    logger.info(f"📁 Carregando config de: {caminho}")
                     with open(caminho, 'r', encoding='utf-8') as f:
                         config = json.load(f)
                         
                     # Tentar diferentes chaves possíveis
                     for key in ['token', 'oplab_token', 'access_token']:
                         if key in config and config[key]:
-                            logger.info("Token OpLab carregado com sucesso")
+                            logger.info("✅ Token OpLab carregado de arquivo config")
                             return config[key]
             
-            logger.warning("Nenhum token OpLab encontrado")
+            logger.warning("⚠️ Nenhum token OpLab encontrado")
             return ""
             
         except Exception as e:
-            logger.error(f"Erro ao carregar token: {e}")
+            logger.error(f"❌ Erro ao carregar token: {e}")
             return ""
     
     def _obter_preco_ativo_yfinance(self, simbolo: str, usar_cache: bool = True) -> Optional[float]:
         """
         Obtém preço do ativo usando yfinance com cache otimizado
-        
-        Args:
-            simbolo: Código do ativo
-            usar_cache: Se deve usar cache (padrão: True)
-            
-        Returns:
-            Preço do ativo ou None se não encontrar
         """
         try:
             # Verificar cache (válido por 5 minutos)
@@ -199,12 +174,6 @@ class ArbitragemPutsService:
     def _obter_dados_opcoes(self, simbolo: str) -> Optional[List[Dict]]:
         """
         Obtém dados de opções da OpLab com tratamento de erro melhorado
-        
-        Args:
-            simbolo: Código do ativo
-            
-        Returns:
-            Lista de opções ou None se erro
         """
         if not self.token_acesso:
             logger.warning(f"Token OpLab não configurado para {simbolo}")
@@ -239,12 +208,6 @@ class ArbitragemPutsService:
     def _calcular_meses_ate_vencimento(self, data_vencimento: Union[str, datetime]) -> float:
         """
         Calcula meses até vencimento com tratamento robusto de datas
-        
-        Args:
-            data_vencimento: Data de vencimento (string ou datetime)
-            
-        Returns:
-            Número de meses até vencimento (mínimo 0.1)
         """
         try:
             if isinstance(data_vencimento, str):
@@ -277,14 +240,6 @@ class ArbitragemPutsService:
     def _aplicar_filtros_avancados(self, df_puts: pd.DataFrame, preco_ativo: float, filtros: Dict) -> pd.DataFrame:
         """
         Aplica filtros avançados nos dados de puts
-        
-        Args:
-            df_puts: DataFrame com dados das puts
-            preco_ativo: Preço atual do ativo
-            filtros: Dicionário com filtros a aplicar
-            
-        Returns:
-            DataFrame filtrado
         """
         df_filtrado = df_puts.copy()
         
@@ -325,7 +280,8 @@ class ArbitragemPutsService:
         except Exception as e:
             logger.error(f"Erro ao aplicar filtros avançados: {e}")
             return df_puts  # Retorna dados originais em caso de erro
-    
+
+    # 🔥 MÉTODO PRINCIPAL PARA ARBITRAGEM PUTS
     def executar_screening(self, 
                           simbolos: List[str] = None,
                           lista_predefinida: str = None,
@@ -335,17 +291,7 @@ class ArbitragemPutsService:
                           filtros: Dict = None) -> Dict:
         """
         Executa screening de arbitragem de puts
-        
-        Args:
-            simbolos: Lista de símbolos para análise (opcional)
-            lista_predefinida: Nome da lista predefinida (opcional)
-            taxa_cdi_mensal: Taxa CDI mensal em %
-            volume_min: Volume mínimo
-            rentabilidade_min: Rentabilidade mínima em %
-            filtros: Filtros adicionais
-        
-        Returns:
-            Dict com resultados do screening
+        COMPATÍVEL com arbitragem_puts_routes.py
         """
         start_time = time.time()
         
@@ -441,7 +387,6 @@ class ArbitragemPutsService:
             logger.info(f"   • Ativos processados: {ativos_processados}")
             logger.info(f"   • Ativos com erro: {ativos_com_erro}")
             logger.info(f"   • Total de oportunidades: {len(todas_oportunidades)}")
-            logger.info(f"   • Ativos com oportunidades: {len(resultados_por_ativo)}")
             
             return {
                 'success': True,
@@ -590,7 +535,7 @@ class ArbitragemPutsService:
     def get_listas_predefinidas(self) -> Dict[str, List[str]]:
         """Retorna listas predefinidas de ativos com opções líquidas"""
         return {
-            'liquidas_opcoes':  [
+            'ibov':  [
                 "ABEV3", "ALOS3", "ASAI3", "AURE3", "AZUL4", "AZZA3", "BBAS3", "BBDC3", "BBDC4", "BBSE3", 
                 "BEEF3", "BPAC11", "BRAP4", "BRAV3", "BRFS3", "BRKM5", "B3SA3", "CMIG4", "CMIN3", "COGN3",
                 "CPFE3", "CPLE6", "CSAN3", "CSNA3", "CXSE3", "CYRE3", "DIRR3", "EGIE3", "ELET3", "ELET6", 
@@ -617,5 +562,5 @@ class ArbitragemPutsService:
             'cache_hits': sum(1 for t in self.ultimo_update_cache.values() if time.time() - t < 300)
         }
 
-# Instância global do serviço
+# 🔥 INSTÂNCIA GLOBAL COMPATÍVEL COM arbitragem_puts_routes.py
 arbitragem_puts_service = ArbitragemPutsService()

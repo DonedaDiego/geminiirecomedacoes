@@ -112,13 +112,18 @@ except Exception as e:
     print(f"❌ Erro ao carregar auth blueprint: {e}")
     AUTH_AVAILABLE = False
 
+SCREENING_AVAILABLE = False
 try:
+    from screening_routes import screening_bp
     app.register_blueprint(screening_bp, url_prefix='/screening')
+    SCREENING_AVAILABLE = True
     print("✅ Blueprint Screening registrado!")
 except ImportError as e:
     print(f"⚠️ Screening routes não disponível: {e}")
+    SCREENING_AVAILABLE = False
 except Exception as e:
     print(f"❌ Erro ao carregar screening blueprint: {e}")
+    SCREENING_AVAILABLE = False
 
 
 # ===== REGISTRAR BLUEPRINTS =====
