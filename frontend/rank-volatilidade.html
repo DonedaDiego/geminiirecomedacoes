@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Ranking Volatilidade Implícita - Geminii Tech</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
   <script>
     tailwind.config = {
       theme: {
@@ -24,7 +25,6 @@
   </script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     body { 
       font-family: 'Inter', sans-serif; 
@@ -55,107 +55,6 @@
       transition: all 0.3s ease;
     }
 
-    .metric-card:hover {
-      background: rgba(255, 255, 255, 0.08);
-      border-color: rgba(186, 57, 175, 0.3);
-    }
-
-    .top-highlight {
-      background: linear-gradient(135deg, rgba(186, 57, 175, 0.2), rgba(139, 92, 246, 0.2));
-      border-color: #ba39af;
-    }
-
-    .loading {
-      opacity: 0.6;
-      pointer-events: none;
-    }
-
-    .spinner {
-      border: 2px solid rgba(255, 255, 255, 0.1);
-      border-radius: 50%;
-      border-top: 2px solid #ba39af;
-      width: 20px;
-      height: 20px;
-      animation: spin 1s linear infinite;
-      display: inline-block;
-    }
-
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-
-    .rank-table {
-      overflow-x: auto;
-      border-radius: 12px;
-      background: rgba(255, 255, 255, 0.03);
-    }
-
-    .rank-table table {
-      width: 100%;
-      border-collapse: collapse;
-    }
-
-    .rank-table th,
-    .rank-table td {
-      padding: 12px;
-      text-align: left;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    }
-
-    .rank-table th {
-      background: rgba(255, 255, 255, 0.05);
-      font-weight: 600;
-      color: #ba39af;
-    }
-
-    .rank-table .rank-1 { color: #ffd700; font-weight: bold; }
-    .rank-table .rank-2 { color: #c0c0c0; font-weight: bold; }
-    .rank-table .rank-3 { color: #cd7f32; font-weight: bold; }
-
-    .iv-high { color: #ef4444; font-weight: 600; }
-    .iv-medium { color: #f59e0b; font-weight: 600; }
-    .iv-low { color: #10b981; font-weight: 600; }
-
-    .volume-high { color: #8b5cf6; }
-    .volume-medium { color: #06b6d4; }
-    .volume-low { color: #6b7280; }
-
-    .chart-container {
-      position: relative;
-      height: 400px;
-      width: 100%;
-    }
-
-    .filter-tabs {
-      display: flex;
-      gap: 1rem;
-      margin-bottom: 2rem;
-      flex-wrap: wrap;
-    }
-
-    .filter-tab {
-      padding: 0.75rem 1.5rem;
-      border-radius: 25px;
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      color: #d1d5db;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      font-weight: 500;
-    }
-
-    .filter-tab:hover {
-      background: rgba(255, 255, 255, 0.1);
-      border-color: rgba(186, 57, 175, 0.3);
-    }
-
-    .filter-tab.active {
-      background: linear-gradient(135deg, #ba39af, #8b5cf6);
-      border-color: #ba39af;
-      color: white;
-    }
-
     .pulse-glow {
       animation: pulseGlow 2s ease-in-out infinite alternate;
     }
@@ -165,20 +64,96 @@
       to { box-shadow: 0 0 30px rgba(186, 57, 175, 0.6); }
     }
 
-    .status-critical { color: #ef4444; }
-    .status-high { color: #f59e0b; }
-    .status-medium { color: #3b82f6; }
-    .status-low { color: #10b981; }
+    .chart-container {
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 12px;
+      padding: 1rem;
+      margin: 1rem 0;
+      height: 400px;
+    }
 
-    .percentil-critical { color: #ef4444; font-weight: 600; }
-    .percentil-high { color: #f59e0b; font-weight: 600; }
-    .percentil-medium { color: #3b82f6; font-weight: 600; }
-    .percentil-low { color: #10b981; font-weight: 600; }
+    .search-input {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      color: white;
+      width: 100%;
+      transition: all 0.3s ease;
+    }
 
-    .ratio-critical { color: #ef4444; font-weight: 600; }
-    .ratio-high { color: #f59e0b; font-weight: 600; }
-    .ratio-medium { color: #3b82f6; font-weight: 600; }
-    .ratio-low { color: #10b981; font-weight: 600; }
+    .search-input:focus {
+      outline: none;
+      border-color: #ba39af;
+      box-shadow: 0 0 0 2px rgba(186, 57, 175, 0.2);
+    }
+
+    .search-input::placeholder {
+      color: rgba(255, 255, 255, 0.5);
+    }
+
+    .search-result {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      padding: 1rem;
+      margin: 0.5rem 0;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .search-result:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: #ba39af;
+    }
+
+    .loading {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 200px;
+    }
+
+    .spinner {
+      border: 2px solid rgba(255, 255, 255, 0.1);
+      border-radius: 50%;
+      border-top: 2px solid #ba39af;
+      width: 30px;
+      height: 30px;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .data-status {
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .data-status.real {
+      background: rgba(34, 197, 94, 0.2);
+      color: #22c55e;
+      border: 1px solid rgba(34, 197, 94, 0.3);
+    }
+
+    .data-status.mock {
+      background: rgba(251, 191, 36, 0.2);
+      color: #fbbf24;
+      border: 1px solid rgba(251, 191, 36, 0.3);
+    }
+
+    .data-status.error {
+      background: rgba(239, 68, 68, 0.2);
+      color: #ef4444;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
   </style>
 </head>
 <body class="text-white">
@@ -195,9 +170,9 @@
         <span class="text-white font-medium">Rank IV</span>
       </div>
       <div class="flex items-center space-x-3 ml-8">
-        <div id="apiStatus" class="w-8 h-8 bg-green-500 bg-opacity-10 border border-green-500 border-opacity-30 rounded-full flex items-center justify-center relative">
-          <i class="fas fa-chart-line text-green-500 text-xs"></i>
-          <div class="absolute -top-1 -right-1 w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+        <div id="apiStatus" class="w-8 h-8 bg-red-500 bg-opacity-10 border border-red-500 border-opacity-30 rounded-full flex items-center justify-center relative">
+          <i class="fas fa-chart-line text-red-500 text-xs"></i>
+          <div class="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
         </div>
       </div>
     </div>
@@ -213,18 +188,16 @@
           <span style="color: #ba39af; font-weight: 900;">Ranking</span>
           <span class="text-white font-light">Volatilidade Implícita</span>
         </h1>
-        <p class="text-neutral-300 text-lg max-w-2xl mx-auto">
+        <p class="text-neutral-300 text-lg max-w-2xl mx-auto mb-4">
           Análise completa das oportunidades em opções por volatilidade implícita
         </p>
-      </div>
-
-      <!-- Status Banner -->
-      <div id="statusBanner" class="rank-card mb-8 text-center hidden">
-        <div class="flex items-center justify-center gap-3 mb-3">
-          <div class="spinner"></div>
-          <span class="text-lg font-semibold">Carregando dados...</span>
+        <!-- Status dos dados -->
+        <div class="flex justify-center">
+          <div id="dataStatus" class="data-status error">
+            <i class="fas fa-spinner fa-spin mr-2"></i>
+            Carregando dados...
+          </div>
         </div>
-        <p class="text-gray-400">Buscando dados atualizados do mercado</p>
       </div>
 
       <!-- Top 5 Cards - IV Alta e Baixa -->
@@ -244,7 +217,9 @@
           <p class="text-gray-300 mb-4">Ideal para vendedores de opções - prêmios elevados</p>
           
           <div id="topIvAlta" class="space-y-3">
-            <!-- Top 5 IV alta será carregado aqui -->
+            <div class="loading">
+              <div class="spinner"></div>
+            </div>
           </div>
           
           <div class="mt-4 p-3 bg-red-500 bg-opacity-10 border border-red-500 border-opacity-30 rounded-lg">
@@ -269,7 +244,9 @@
           <p class="text-gray-300 mb-4">Ideal para compradores de opções - prêmios baixos</p>
           
           <div id="topIvBaixa" class="space-y-3">
-            <!-- Top 5 IV baixa será carregado aqui -->
+            <div class="loading">
+              <div class="spinner"></div>
+            </div>
           </div>
           
           <div class="mt-4 p-3 bg-green-500 bg-opacity-10 border border-green-500 border-opacity-30 rounded-lg">
@@ -282,81 +259,99 @@
 
       </div>
 
-      <!-- Filtros -->
+      <!-- Consulta Individual -->
       <div class="rank-card mb-8">
-        <h3 class="text-xl font-bold mb-4">
-          <i class="fas fa-filter mr-2 text-purple-400"></i>
-          Visualizações Disponíveis
+        <h3 class="text-2xl font-bold mb-4">
+          <i class="fas fa-search mr-2 text-blue-400"></i>
+          Consulta Individual de Ação
         </h3>
-        
-        <div class="filter-tabs">
-          <div class="filter-tab active" onclick="selectFilter('iv_atual')" id="tab-iv_atual">
-            <i class="fas fa-chart-line mr-2"></i>
-            IV Atual
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <input 
+              type="text" 
+              id="searchInput" 
+              class="search-input" 
+              placeholder="Digite o código da ação (ex: PETR4, VALE3, ITUB4...)"
+              onkeyup="searchStock(event)"
+            >
+            <div id="searchResults" class="mt-4"></div>
           </div>
-          <div class="filter-tab" onclick="selectFilter('iv_vs_6m')" id="tab-iv_vs_6m">
-            <i class="fas fa-chart-bar mr-2"></i>
-            IV vs 6M Máximo
-          </div>
-          <div class="filter-tab" onclick="selectFilter('iv_percentil')" id="tab-iv_percentil">
-            <i class="fas fa-percentage mr-2"></i>
-            IV Percentil
-          </div>
-          <div class="filter-tab" onclick="selectFilter('iv_vs_volume')" id="tab-iv_vs_volume">
-            <i class="fas fa-chart-scatter mr-2"></i>
-            IV vs Volume
+          <div id="stockDetails" class="space-y-4">
+            <p class="text-gray-400">Digite o código de uma ação para ver os detalhes</p>
           </div>
         </div>
       </div>
 
-      <!-- Painel Principal -->
-      <div class="rank-card mb-8">
-        <div class="flex justify-between items-center mb-6">
-          <h3 class="text-2xl font-bold" id="mainTitle">
-            <i class="fas fa-trophy mr-2 text-yellow-400"></i>
-            Ranking por Volatilidade Implícita Atual
-          </h3>
-          <div class="flex gap-2">
-            <button onclick="refreshData()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm transition-colors">
-              <i class="fas fa-sync-alt mr-1"></i>
-              Atualizar
-            </button>
+      <!-- Painel de Gráficos -->
+      <div class="rank-card">
+        <h2 class="text-3xl font-bold mb-6 text-center">
+          <i class="fas fa-chart-bar mr-2 text-purple-400"></i>
+          Painel de Ranking - Ações com Opções (Volatilidade Implícita)
+        </h2>
+
+        <!-- Grid de 4 Gráficos -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          
+          <!-- Gráfico 1: IV Atual -->
+          <div class="chart-container">
+            <h3 class="text-xl font-bold mb-4 text-center text-blue-400">
+              Volatilidade Implícita Atual (%)
+            </h3>
+            <div id="chart1" class="w-full h-full">
+              <div class="loading">
+                <div class="spinner"></div>
+              </div>
+            </div>
           </div>
+
+          <!-- Gráfico 2: IV Atual vs IV 6M Max -->
+          <div class="chart-container">
+            <h3 class="text-xl font-bold mb-4 text-center text-green-400">
+              IV Atual vs IV 6M Máximo
+            </h3>
+            <div id="chart2" class="w-full h-full">
+              <div class="loading">
+                <div class="spinner"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Gráfico 3: Percentil IV 6M -->
+          <div class="chart-container">
+            <h3 class="text-xl font-bold mb-4 text-center text-orange-400">
+              Percentil IV 6M (%)
+            </h3>
+            <div id="chart3" class="w-full h-full">
+              <div class="loading">
+                <div class="spinner"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Gráfico 4: IV vs Volume -->
+          <div class="chart-container">
+            <h3 class="text-xl font-bold mb-4 text-center text-purple-400">
+              IV Atual vs Volume Financeiro
+            </h3>
+            <div id="chart4" class="w-full h-full">
+              <div class="loading">
+                <div class="spinner"></div>
+              </div>
+            </div>
+          </div>
+
         </div>
 
-        <!-- Estatísticas Rápidas -->
-        <div id="quickStats" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          <!-- Estatísticas serão carregadas aqui -->
-        </div>
-
-        <!-- Conteúdo Principal -->
-        <div id="mainContent">
-          <!-- Conteúdo principal será carregado aqui -->
-        </div>
-      </div>
-
-      <!-- Gráfico de Dispersão IV vs Volume -->
-      <div id="scatterSection" class="rank-card mb-8" style="display: none;">
-        <h3 class="text-2xl font-bold mb-6">
-          <i class="fas fa-chart-scatter mr-2 text-blue-400"></i>
-          Volatilidade Implícita vs Volume Financeiro
-        </h3>
-        <div class="chart-container">
-          <canvas id="scatterChart"></canvas>
-        </div>
-        <div class="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
-          <div class="metric-card">
-            <div class="text-lg font-bold text-blue-400" id="scatterHighVolume">--</div>
-            <div class="text-sm text-gray-400">Alto Volume + Alta IV</div>
-          </div>
-          <div class="metric-card">
-            <div class="text-lg font-bold text-green-400" id="scatterLowVolume">--</div>
-            <div class="text-sm text-gray-400">Baixo Volume + Baixa IV</div>
-          </div>
-          <div class="metric-card">
-            <div class="text-lg font-bold text-purple-400" id="scatterCorrelation">--</div>
-            <div class="text-sm text-gray-400">Correlação IV-Volume</div>
-          </div>
+        <!-- Controles -->
+        <div class="mt-6 flex justify-center">
+          <button 
+            onclick="refreshAllData()" 
+            id="refreshButton"
+            class="px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 rounded-lg text-white font-semibold transition-all duration-300 transform hover:scale-105"
+          >
+            <i class="fas fa-sync-alt mr-2"></i>
+            Atualizar Dados
+          </button>
         </div>
       </div>
 
@@ -365,111 +360,226 @@
 
   <script>
     // Estado da aplicação
-    let currentFilter = 'iv_atual';
     let currentData = {};
-    let scatterChart = null;
-    
-    // Elementos DOM
-    const statusBanner = document.getElementById('statusBanner');
-    const mainContent = document.getElementById('mainContent');
-    const mainTitle = document.getElementById('mainTitle');
-    const quickStats = document.getElementById('quickStats');
-    const scatterSection = document.getElementById('scatterSection');
+    let allStocks = [];
+    let dataSource = 'loading'; // 'real', 'mock', 'error'
+    let isLoading = false;
     
     // API Endpoints
     const API_BASE = '/api/rank';
     
     // Inicialização
     document.addEventListener('DOMContentLoaded', function() {
-      console.log('🚀 Ranking Volatilidade Implícita carregado');
-      loadInitialData();
-      checkApiHealth();
+      console.log('🚀 Ranking Volatilidade Implícita iniciado');
+      
+      // Carregar dados reais primeiro
+      loadAllData();
+      
+      // Adicionar event listener para ESC
+      document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape') {
+          closeStockPopup();
+        }
+      });
     });
+    
+    // Função principal para carregar todos os dados
+    async function loadAllData() {
+      if (isLoading) return;
+      
+      isLoading = true;
+      updateDataStatus('loading');
+      updateRefreshButton(true);
+      
+      console.log('🔄 Tentando carregar dados da API...');
+      
+      try {
+        // Primeiro verifica se a API está funcionando
+        const healthCheck = await checkApiHealth();
+        
+        if (healthCheck) {
+          // Tenta carregar todos os dados da API
+          const results = await Promise.allSettled([
+            loadTopIV('alta'),
+            loadTopIV('baixa'),
+            loadRankingData()
+          ]);
+          
+          // Verifica se pelo menos um endpoint funcionou
+          const successCount = results.filter(r => r.status === 'fulfilled' && r.value === true).length;
+          
+          if (successCount > 0) {
+            console.log('✅ Dados reais carregados da API');
+            dataSource = 'real';
+            updateDataStatus('real');
+            renderCharts();
+          } else {
+            throw new Error('Nenhum endpoint da API funcionou');
+          }
+        } else {
+          throw new Error('API não está respondendo');
+        }
+        
+      } catch (error) {
+        console.log('⚠️ Erro ao carregar dados da API:', error.message);
+        console.log('🔄 Carregando dados de fallback...');
+        
+        // Carrega dados mock apenas como último recurso
+        loadMockData();
+        dataSource = 'mock';
+        updateDataStatus('mock');
+      } finally {
+        isLoading = false;
+        updateRefreshButton(false);
+      }
+    }
     
     // Verificar saúde da API
     async function checkApiHealth() {
       try {
-        const response = await fetch(`${API_BASE}/health`);
+        const response = await fetch(`${API_BASE}/health`, {
+          method: 'GET',
+          timeout: 5000
+        });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+        
         const data = await response.json();
         
         const statusEl = document.getElementById('apiStatus');
         if (data.status === 'OK') {
           statusEl.className = 'w-8 h-8 bg-green-500 bg-opacity-10 border border-green-500 border-opacity-30 rounded-full flex items-center justify-center relative';
-          console.log('✅ API de Ranking funcionando:', data.message);
-        } else {
-          statusEl.className = 'w-8 h-8 bg-red-500 bg-opacity-10 border border-red-500 border-opacity-30 rounded-full flex items-center justify-center relative';
-          console.warn('⚠️ API com problemas:', data.message);
+          statusEl.innerHTML = '<i class="fas fa-chart-line text-green-500 text-xs"></i><div class="absolute -top-1 -right-1 w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>';
+          console.log('✅ API funcionando:', data.message);
+          return true;
         }
+        
+        return false;
       } catch (error) {
-        console.error('❌ Erro ao verificar API:', error);
+        console.log('❌ API Health Check falhou:', error.message);
         const statusEl = document.getElementById('apiStatus');
         statusEl.className = 'w-8 h-8 bg-red-500 bg-opacity-10 border border-red-500 border-opacity-30 rounded-full flex items-center justify-center relative';
+        statusEl.innerHTML = '<i class="fas fa-exclamation-triangle text-red-500 text-xs"></i><div class="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>';
+        return false;
       }
     }
     
-    // Carregar dados iniciais
-    async function loadInitialData() {
-      showLoading();
-      
-      try {
-        // Carregar dados principais
-        await Promise.all([
-          loadRankingData('iv_atual'),
-          loadTopIV('alta'),
-          loadTopIV('baixa'),
-          loadQuickStats()
-        ]);
-        
-        console.log('✅ Dados iniciais carregados');
-      } catch (error) {
-        console.error('❌ Erro ao carregar dados iniciais:', error);
-        showError('Erro ao carregar dados iniciais');
-      }
-      
-      hideLoading();
-    }
-    
-    // Mostrar loading
-    function showLoading() {
-      statusBanner.classList.remove('hidden');
-      statusBanner.className = 'rank-card mb-8 text-center';
-      const spinner = document.querySelector('#statusBanner .spinner');
-      const text = document.querySelector('#statusBanner span');
-      if (spinner) spinner.style.display = 'inline-block';
-      if (text) text.textContent = 'Carregando dados...';
-    }
-    
-    // Esconder loading
-    function hideLoading() {
-      statusBanner.classList.add('hidden');
-    }
-    
-    // Mostrar erro
-    function showError(message) {
-      statusBanner.classList.remove('hidden');
-      statusBanner.className = 'rank-card mb-8 text-center bg-red-500 bg-opacity-10 border-red-500 border-opacity-30';
-      const spinner = document.querySelector('#statusBanner .spinner');
-      const text = document.querySelector('#statusBanner span');
-      const subtext = document.querySelector('#statusBanner p');
-      
-      if (spinner) spinner.style.display = 'none';
-      if (text) text.textContent = 'Erro';
-      if (subtext) subtext.textContent = message;
-    }
-    
-    // Carregar Top 5 IV
+    // Carregar Top 5 IV da API
     async function loadTopIV(tipo) {
       try {
-        const response = await fetch(`${API_BASE}/top-iv?tipo=${tipo}&quantidade=5`);
+        const response = await fetch(`${API_BASE}/top-iv?tipo=${tipo}&quantidade=5`, {
+          method: 'GET',
+          timeout: 10000
+        });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+        
         const data = await response.json();
         
-        if (data.success) {
+        if (data.success && data.top_acoes && data.top_acoes.length > 0) {
           renderTopIV(tipo, data.top_acoes);
+          console.log(`✅ Top IV ${tipo} carregado da API:`, data.top_acoes.length, 'ações');
+          return true;
         } else {
-          console.error(`Erro ao carregar top IV ${tipo}:`, data.error);
+          throw new Error('Dados inválidos da API');
         }
       } catch (error) {
-        console.error(`Erro ao buscar top IV ${tipo}:`, error);
+        console.log(`❌ Erro ao carregar top IV ${tipo}:`, error.message);
+        return false;
+      }
+    }
+    
+    // Carregar dados de ranking da API
+    async function loadRankingData() {
+      try {
+        const response = await fetch(`${API_BASE}/iv-ranking?top_n=50`, {
+          method: 'GET',
+          timeout: 15000
+        });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        if (data.success && data.rankings && data.rankings.iv_atual) {
+          currentData = data;
+          allStocks = data.rankings.iv_atual;
+          console.log('✅ Ranking carregado da API:', allStocks.length, 'ações');
+          return true;
+        } else {
+          throw new Error('Dados de ranking inválidos');
+        }
+      } catch (error) {
+        console.log('❌ Erro ao carregar ranking:', error.message);
+        return false;
+      }
+    }
+    
+    // Carregar dados mock apenas como fallback
+    function loadMockData() {
+      console.log('📊 Carregando dados mock de fallback...');
+      
+      // DADOS MOCK MÍNIMOS - apenas para desenvolvimento
+      const mockStocks = [
+        { symbol: 'PETR4', name: 'PETROBRAS PN', iv_current: 65.2, close: 32.45, volume: 15000000, financial_volume: 487350000, variation: 2.1, iv_6m_percentile: 85.3, iv_6m_max: 78.9 },
+        { symbol: 'VALE3', name: 'VALE ON', iv_current: 58.7, close: 68.22, volume: 12500000, financial_volume: 852750000, variation: -1.4, iv_6m_percentile: 72.1, iv_6m_max: 81.2 },
+        { symbol: 'ITUB4', name: 'ITAU UNIBANCO PN', iv_current: 52.3, close: 26.18, volume: 8900000, financial_volume: 233002000, variation: 0.8, iv_6m_percentile: 68.9, iv_6m_max: 76.1 },
+        { symbol: 'BBDC4', name: 'BRADESCO PN', iv_current: 49.8, close: 14.25, volume: 7200000, financial_volume: 102600000, variation: -0.3, iv_6m_percentile: 65.4, iv_6m_max: 76.2 },
+        { symbol: 'ABEV3', name: 'AMBEV S/A ON', iv_current: 47.1, close: 11.89, volume: 6800000, financial_volume: 80852000, variation: 1.7, iv_6m_percentile: 61.8, iv_6m_max: 76.3 },
+        { symbol: 'MGLU3', name: 'MAGAZINE LUIZA ON', iv_current: 25.6, close: 8.47, volume: 9100000, financial_volume: 77077000, variation: 3.2, iv_6m_percentile: 28.2, iv_6m_max: 78.4 },
+        { symbol: 'WEGE3', name: 'WEG ON', iv_current: 23.2, close: 45.67, volume: 4200000, financial_volume: 191814000, variation: -0.9, iv_6m_percentile: 25.7, iv_6m_max: 77.6 },
+        { symbol: 'B3SA3', name: 'B3 ON', iv_current: 21.8, close: 11.23, volume: 5800000, financial_volume: 65134000, variation: 0.5, iv_6m_percentile: 23.1, iv_6m_max: 78.9 }
+      ];
+      
+      allStocks = mockStocks;
+      
+      // Renderizar dados mock
+      renderTopIV('alta', mockStocks.slice(0, 5));
+      renderTopIV('baixa', mockStocks.slice(-3));
+      renderCharts();
+    }
+    
+    // Atualizar status dos dados
+    function updateDataStatus(status) {
+      const statusEl = document.getElementById('dataStatus');
+      
+      switch(status) {
+        case 'loading':
+          statusEl.className = 'data-status error';
+          statusEl.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Carregando dados...';
+          break;
+        case 'real':
+          statusEl.className = 'data-status real';
+          statusEl.innerHTML = '<i class="fas fa-check mr-2"></i>Dados em tempo real';
+          break;
+        case 'mock':
+          statusEl.className = 'data-status mock';
+          statusEl.innerHTML = '<i class="fas fa-exclamation-triangle mr-2"></i>Dados de demonstração';
+          break;
+        case 'error':
+          statusEl.className = 'data-status error';
+          statusEl.innerHTML = '<i class="fas fa-times mr-2"></i>Erro ao carregar';
+          break;
+      }
+    }
+    
+    // Atualizar botão de refresh
+    function updateRefreshButton(loading) {
+      const button = document.getElementById('refreshButton');
+      if (loading) {
+        button.disabled = true;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Atualizando...';
+        button.className = 'px-6 py-3 bg-gray-500 rounded-lg text-white font-semibold opacity-50 cursor-not-allowed';
+      } else {
+        button.disabled = false;
+        button.innerHTML = '<i class="fas fa-sync-alt mr-2"></i>Atualizar Dados';
+        button.className = 'px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 rounded-lg text-white font-semibold transition-all duration-300 transform hover:scale-105';
       }
     }
     
@@ -486,7 +596,7 @@
       const colorClass = tipo === 'alta' ? 'text-red-400' : 'text-green-400';
       
       container.innerHTML = acoes.map((acao, index) => `
-        <div class="flex items-center justify-between p-3 bg-white bg-opacity-5 rounded-lg hover:bg-opacity-10 transition-colors">
+        <div class="flex items-center justify-between p-3 bg-white bg-opacity-5 rounded-lg hover:bg-opacity-10 transition-colors cursor-pointer" onclick="showStockDetails('${acao.symbol}')">
           <div class="flex items-center gap-3">
             <div class="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center font-bold text-sm">
               ${index + 1}
@@ -504,636 +614,600 @@
       `).join('');
     }
     
-    // Carregar estatísticas rápidas
-    async function loadQuickStats() {
-      try {
-        const response = await fetch(`${API_BASE}/estatisticas`);
-        const data = await response.json();
-        
-        if (data.success) {
-          renderQuickStats(data);
-        }
-      } catch (error) {
-        console.error('Erro ao carregar estatísticas:', error);
+    // Buscar ação
+    function searchStock(event) {
+      const query = event.target.value.trim().toUpperCase();
+      const resultsContainer = document.getElementById('searchResults');
+      
+      if (query.length < 2) {
+        resultsContainer.innerHTML = '';
+        return;
       }
+
+      console.log('🔍 Buscando:', query, 'em', allStocks.length, 'ações');
+
+      const results = allStocks.filter(stock => 
+        stock.symbol.toUpperCase().includes(query) || 
+        (stock.name && stock.name.toUpperCase().includes(query))
+      );
+
+      console.log('📊 Resultados encontrados:', results.length);
+
+      if (results.length === 0) {
+        resultsContainer.innerHTML = '<p class="text-gray-400">Nenhuma ação encontrada</p>';
+        return;
+      }
+
+      resultsContainer.innerHTML = results.slice(0, 5).map(stock => `
+        <div class="search-result" onclick="showStockDetails('${stock.symbol}')">
+          <div class="flex justify-between items-center">
+            <div>
+              <div class="font-semibold text-white">${stock.symbol}</div>
+              <div class="text-sm text-gray-400">${stock.name || 'N/A'}</div>
+            </div>
+            <div class="text-right">
+              <div class="font-bold text-purple-400">${stock.iv_current?.toFixed(2) || '0.00'}%</div>
+              <div class="text-xs text-gray-400">R$ ${(stock.close || 0).toFixed(2)}</div>
+            </div>
+          </div>
+        </div>
+      `).join('');
     }
     
-    // Renderizar estatísticas rápidas
-    function renderQuickStats(data) {
-      const stats = data.estatisticas_iv || {};
+    // Mostrar detalhes da ação em popup
+    function showStockDetails(symbol) {
+      const stock = allStocks.find(s => s.symbol === symbol);
       
-      quickStats.innerHTML = `
-        <div class="metric-card text-center">
-          <div class="text-2xl font-bold text-blue-400">${data.total_acoes_processadas || 0}</div>
-          <div class="text-sm text-gray-400">Ações Analisadas</div>
-        </div>
-        <div class="metric-card text-center">
-          <div class="text-2xl font-bold text-purple-400">${stats.iv_media?.toFixed(2) || '0.00'}%</div>
-          <div class="text-sm text-gray-400">IV Média</div>
-        </div>
-        <div class="metric-card text-center">
-          <div class="text-2xl font-bold text-red-400">${stats.iv_max?.toFixed(2) || '0.00'}%</div>
-          <div class="text-sm text-gray-400">IV Máxima</div>
-        </div>
-        <div class="metric-card text-center">
-          <div class="text-2xl font-bold text-green-400">${stats.iv_min?.toFixed(2) || '0.00'}%</div>
-          <div class="text-sm text-gray-400">IV Mínima</div>
+      if (!stock) {
+        alert('Ação não encontrada');
+        return;
+      }
+
+      // Limpar campo de busca
+      document.getElementById('searchInput').value = '';
+      document.getElementById('searchResults').innerHTML = '';
+
+      // Criar popup
+      createStockPopup(stock);
+    }
+
+    // Criar popup detalhado da ação
+    function createStockPopup(stock) {
+      // Calcular dados adicionais
+      const ivRatio = stock.iv_6m_max > 0 ? (stock.iv_current / stock.iv_6m_max) : 0;
+      const position = allStocks.findIndex(s => s.symbol === stock.symbol) + 1;
+      const analysis = getDetailedAnalysis(stock);
+      const recommendation = getRecommendation(stock);
+
+      // Criar overlay
+      const overlay = document.createElement('div');
+      overlay.className = 'fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center p-4';
+      overlay.onclick = (e) => {
+        if (e.target === overlay) closeStockPopup();
+      };
+
+      // Criar popup
+      const popup = document.createElement('div');
+      popup.className = 'bg-gray-900 rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto';
+      popup.style.background = 'linear-gradient(135deg, rgba(26,26,26,0.95) 0%, rgba(45,45,45,0.95) 100%)';
+      popup.style.backdropFilter = 'blur(20px)';
+      popup.style.border = '1px solid rgba(186, 57, 175, 0.3)';
+
+      popup.innerHTML = `
+        <div class="p-6">
+          <!-- Header -->
+          <div class="flex justify-between items-center mb-6">
+            <div class="flex items-center gap-4">
+              <div class="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center font-bold text-lg">
+                #${position}
+              </div>
+              <div>
+                <h2 class="text-3xl font-bold text-white">${stock.symbol}</h2>
+                <p class="text-gray-400">${stock.name || 'N/A'}</p>
+              </div>
+            </div>
+            <button onclick="closeStockPopup()" class="w-10 h-10 bg-red-500 bg-opacity-20 hover:bg-opacity-30 rounded-full flex items-center justify-center text-red-400 hover:text-red-300 transition-colors">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+
+          <!-- Métricas Principais -->
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            <div class="bg-white bg-opacity-5 rounded-lg p-4 text-center">
+              <div class="text-2xl font-bold text-purple-400">${stock.iv_current?.toFixed(2) || '0.00'}%</div>
+              <div class="text-sm text-gray-400">IV Atual</div>
+            </div>
+            <div class="bg-white bg-opacity-5 rounded-lg p-4 text-center">
+              <div class="text-2xl font-bold text-blue-400">R$ ${(stock.close || 0).toFixed(2)}</div>
+              <div class="text-sm text-gray-400">Preço Atual</div>
+            </div>
+            <div class="bg-white bg-opacity-5 rounded-lg p-4 text-center">
+              <div class="text-xl font-bold ${(stock.variation || 0) >= 0 ? 'text-green-400' : 'text-red-400'}">${(stock.variation || 0).toFixed(2)}%</div>
+              <div class="text-sm text-gray-400">Variação Dia</div>
+            </div>
+            <div class="bg-white bg-opacity-5 rounded-lg p-4 text-center">
+              <div class="text-xl font-bold text-orange-400">${stock.iv_6m_percentile?.toFixed(1) || 'N/A'}%</div>
+              <div class="text-sm text-gray-400">Percentil 6M</div>
+            </div>
+          </div>
+
+          <!-- Análise de Volatilidade -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div class="bg-white bg-opacity-5 rounded-lg p-4">
+              <h3 class="text-lg font-bold text-white mb-4">
+                <i class="fas fa-chart-line mr-2 text-purple-400"></i>
+                Análise de Volatilidade
+              </h3>
+              <div class="space-y-3">
+                <div class="flex justify-between">
+                  <span class="text-gray-400">IV Atual:</span>
+                  <span class="text-white font-semibold">${stock.iv_current?.toFixed(2) || '0.00'}%</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-gray-400">IV 6M Máximo:</span>
+                  <span class="text-white font-semibold">${stock.iv_6m_max?.toFixed(2) || '0.00'}%</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-gray-400">Ratio IV/Máx:</span>
+                  <span class="text-white font-semibold">${(ivRatio * 100).toFixed(1)}%</span>
+                </div>
+                <div class="mt-4">
+                  <div class="text-sm text-gray-400 mb-2">Nível de IV (6M)</div>
+                  <div class="w-full bg-gray-700 rounded-full h-3">
+                    <div class="bg-gradient-to-r from-green-500 via-yellow-500 to-red-500 h-3 rounded-full" style="width: ${Math.min(stock.iv_6m_percentile || 0, 100)}%"></div>
+                  </div>
+                  <div class="text-xs text-gray-400 mt-1">${stock.iv_6m_percentile?.toFixed(1) || '0'}% do range 6M</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="bg-white bg-opacity-5 rounded-lg p-4">
+              <h3 class="text-lg font-bold text-white mb-4">
+                <i class="fas fa-chart-bar mr-2 text-blue-400"></i>
+                Volume e Liquidez
+              </h3>
+              <div class="space-y-3">
+                <div class="flex justify-between">
+                  <span class="text-gray-400">Volume:</span>
+                  <span class="text-white font-semibold">${(stock.volume || 0).toLocaleString()}</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-gray-400">Vol. Financeiro:</span>
+                  <span class="text-white font-semibold">R$ ${(stock.financial_volume || 0).toLocaleString('pt-BR', {minimumFractionDigits: 0, maximumFractionDigits: 0})}</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-gray-400">Posição Ranking:</span>
+                  <span class="text-white font-semibold">#${position} de ${allStocks.length}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Recomendação -->
+          <div class="bg-gradient-to-r from-purple-500 to-pink-500 bg-opacity-10 border border-purple-500 border-opacity-30 rounded-lg p-4 mb-6">
+            <h3 class="text-lg font-bold text-white mb-3">
+              <i class="fas fa-lightbulb mr-2 text-yellow-400"></i>
+              Recomendação Estratégica
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <div class="text-sm text-gray-300 mb-2">Estratégia Sugerida:</div>
+                <div class="text-lg font-semibold ${recommendation.strategy === 'VENDA' ? 'text-red-400' : recommendation.strategy === 'COMPRA' ? 'text-green-400' : 'text-yellow-400'}">${recommendation.strategy}</div>
+              </div>
+              <div>
+                <div class="text-sm text-gray-300 mb-2">Nível de Confiança:</div>
+                <div class="text-lg font-semibold text-purple-400">${recommendation.confidence}</div>
+              </div>
+            </div>
+            <div class="mt-3 text-sm text-gray-300">${recommendation.reason}</div>
+          </div>
+
+          <!-- Análise Detalhada -->
+          <div class="bg-white bg-opacity-5 rounded-lg p-4">
+            <h3 class="text-lg font-bold text-white mb-3">
+              <i class="fas fa-brain mr-2 text-green-400"></i>
+              Análise Detalhada
+            </h3>
+            <div class="text-sm text-gray-300 leading-relaxed">${analysis}</div>
+          </div>
+
+          <!-- Rodapé -->
+          <div class="mt-6 text-center">
+            <button onclick="closeStockPopup()" class="px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 rounded-lg text-white font-semibold transition-all duration-300 transform hover:scale-105">
+              <i class="fas fa-check mr-2"></i>
+              Entendido
+            </button>
+          </div>
         </div>
       `;
+
+      overlay.appendChild(popup);
+      document.body.appendChild(overlay);
+      overlay.id = 'stock-popup-overlay';
+
+      // Animação de entrada
+      popup.style.opacity = '0';
+      popup.style.transform = 'scale(0.9)';
+      
+      setTimeout(() => {
+        popup.style.transition = 'all 0.3s ease';
+        popup.style.opacity = '1';
+        popup.style.transform = 'scale(1)';
+      }, 10);
     }
-    
-    // Selecionar filtro
-    function selectFilter(filter) {
-      // Atualizar visual dos tabs
-      document.querySelectorAll('.filter-tab').forEach(tab => {
-        tab.classList.remove('active');
-      });
-      const activeTab = document.getElementById(`tab-${filter}`);
-      if (activeTab) activeTab.classList.add('active');
-      
-      currentFilter = filter;
-      
-      // Carregar dados do filtro
-      loadRankingData(filter);
-      
-      // Atualizar título
-      updateMainTitle(filter);
-      
-      // Mostrar/esconder seções específicas
-      if (filter === 'iv_vs_volume') {
-        scatterSection.style.display = 'block';
-        loadScatterData();
-      } else {
-        scatterSection.style.display = 'none';
+
+    // Fechar popup
+    function closeStockPopup() {
+      const overlay = document.getElementById('stock-popup-overlay');
+      if (overlay) {
+        const popup = overlay.querySelector('div');
+        popup.style.opacity = '0';
+        popup.style.transform = 'scale(0.9)';
+        
+        setTimeout(() => {
+          overlay.remove();
+        }, 300);
       }
     }
+
+    // Análise detalhada da ação
+    function getDetailedAnalysis(stock) {
+      const iv = stock.iv_current || 0;
+      const percentil = stock.iv_6m_percentile || 0;
+      const ivMax = stock.iv_6m_max || 0;
+      const ratio = ivMax > 0 ? (iv / ivMax) : 0;
+      const volume = stock.financial_volume || 0;
+
+      let analysis = `A ação ${stock.symbol} apresenta volatilidade implícita de ${iv.toFixed(2)}%, `;
+      
+      // Análise do percentil
+      if (percentil > 80) {
+        analysis += `posicionada no percentil ${percentil.toFixed(1)}% (extremamente alta). `;
+      } else if (percentil > 60) {
+        analysis += `posicionada no percentil ${percentil.toFixed(1)}% (alta). `;
+      } else if (percentil > 40) {
+        analysis += `posicionada no percentil ${percentil.toFixed(1)}% (moderada). `;
+      } else {
+        analysis += `posicionada no percentil ${percentil.toFixed(1)}% (baixa). `;
+      }
+
+      // Análise do ratio
+      if (ratio > 0.9) {
+        analysis += `A IV atual está muito próxima do máximo de 6 meses (${(ratio * 100).toFixed(1)}%), indicando prêmios elevados. `;
+      } else if (ratio > 0.7) {
+        analysis += `A IV atual representa ${(ratio * 100).toFixed(1)}% do máximo de 6 meses, em nível alto. `;
+      } else if (ratio > 0.5) {
+        analysis += `A IV atual representa ${(ratio * 100).toFixed(1)}% do máximo de 6 meses, em nível moderado. `;
+      } else {
+        analysis += `A IV atual representa apenas ${(ratio * 100).toFixed(1)}% do máximo de 6 meses, em nível baixo. `;
+      }
+
+      // Análise de liquidez
+      if (volume > 50000000) {
+        analysis += `O volume financeiro de R$ ${volume.toLocaleString('pt-BR')} indica excelente liquidez. `;
+      } else if (volume > 10000000) {
+        analysis += `O volume financeiro de R$ ${volume.toLocaleString('pt-BR')} indica boa liquidez. `;
+      } else {
+        analysis += `O volume financeiro de R$ ${volume.toLocaleString('pt-BR')} indica liquidez limitada. `;
+      }
+
+      return analysis;
+    }
+
+    // Obter recomendação estratégica
+    function getRecommendation(stock) {
+      const iv = stock.iv_current || 0;
+      const percentil = stock.iv_6m_percentile || 0;
+      const ratio = stock.iv_6m_max > 0 ? (stock.iv_current / stock.iv_6m_max) : 0;
+      const volume = stock.financial_volume || 0;
+
+      let strategy, confidence, reason;
+
+      // Lógica de recomendação
+      if (percentil > 75 && ratio > 0.8 && volume > 10000000) {
+        strategy = 'VENDA';
+        confidence = 'Alta';
+        reason = 'IV no percentil alto com boa liquidez. Ideal para vendas de opções aproveitando prêmios elevados.';
+      } else if (percentil < 30 && ratio < 0.5 && volume > 5000000) {
+        strategy = 'COMPRA';
+        confidence = 'Alta';
+        reason = 'IV no percentil baixo com liquidez adequada. Oportunidade para compra de opções com prêmios atrativos.';
+      } else if (percentil > 60) {
+        strategy = 'VENDA';
+        confidence = 'Média';
+        reason = 'IV elevada sugere oportunidade de venda, mas verificar liquidez e contexto de mercado.';
+      } else if (percentil < 40) {
+        strategy = 'COMPRA';
+        confidence = 'Média';
+        reason = 'IV baixa pode ser oportunidade de compra, mas avaliar expectativas de movimento.';
+      } else {
+        strategy = 'NEUTRO';
+        confidence = 'Baixa';
+        reason = 'IV em nível neutro. Aguardar sinais mais claros ou focar em outras oportunidades.';
+      }
+
+      return { strategy, confidence, reason };
+    }
     
-    // Atualizar título principal
-    function updateMainTitle(filter) {
-      const titles = {
-        'iv_atual': '🏆 Ranking por Volatilidade Implícita Atual',
-        'iv_vs_6m': '📊 IV Atual vs IV 6M Máximo',
-        'iv_percentil': '📈 Ranking por Percentil de IV',
-        'iv_vs_volume': '💹 IV vs Volume Financeiro'
+    // Renderizar gráficos
+    function renderCharts() {
+      if (!allStocks || allStocks.length === 0) {
+        console.log('❌ Sem dados para gráficos');
+        return;
+      }
+      
+      console.log('📊 Renderizando gráficos com', allStocks.length, 'ações');
+      const top20 = allStocks.slice(0, 20);
+      
+      // Gráfico 1: IV Atual
+      renderChart1(top20);
+      
+      // Gráfico 2: IV Atual vs IV 6M Max
+      renderChart2(top20);
+      
+      // Gráfico 3: Percentil IV 6M
+      renderChart3(top20);
+      
+      // Gráfico 4: IV vs Volume
+      renderChart4(top20);
+    }
+    
+    // Gráfico 1: IV Atual (barras)
+    function renderChart1(data) {
+      console.log('📊 Renderizando Chart 1 com', data.length, 'itens');
+      
+      const symbols = data.map(item => item.symbol);
+      const ivValues = data.map(item => item.iv_current || 0);
+      
+      const trace = {
+        x: symbols,
+        y: ivValues,
+        type: 'bar',
+        marker: {
+          color: 'rgba(135, 206, 235, 0.7)',
+          line: {
+            color: 'rgba(135, 206, 235, 1)',
+            width: 1
+          }
+        },
+        text: ivValues.map(v => `${v.toFixed(1)}%`),
+        textposition: 'auto',
+        textfont: {
+          color: 'white'
+        }
       };
       
-      const title = titles[filter] || titles['iv_atual'];
-      mainTitle.innerHTML = `<i class="fas fa-trophy mr-2 text-yellow-400"></i>${title}`;
-    }
-    
-    // Carregar dados de ranking
-    async function loadRankingData(filter) {
-      try {
-        showLoading();
-        
-        let endpoint = '';
-        const params = 'top_n=20';
-        
-        switch (filter) {
-          case 'iv_atual':
-            endpoint = `${API_BASE}/iv-ranking?rank_by=iv_current&${params}`;
-            break;
-          case 'iv_vs_6m':
-            endpoint = `${API_BASE}/iv-6m-comparison?${params}`;
-            break;
-          case 'iv_percentil':
-            endpoint = `${API_BASE}/iv-percentil?${params}`;
-            break;
-          case 'iv_vs_volume':
-            endpoint = `${API_BASE}/iv-vs-volume?${params}`;
-            break;
-          default:
-            endpoint = `${API_BASE}/iv-ranking?rank_by=iv_current&${params}`;
-        }
-        
-        const response = await fetch(endpoint);
-        const data = await response.json();
-        
-        if (data.success) {
-          currentData[filter] = data;
-          renderMainContent(filter, data);
-        } else {
-          showError(data.error || 'Erro ao carregar dados');
-        }
-        
-      } catch (error) {
-        console.error(`Erro ao carregar dados ${filter}:`, error);
-        showError('Erro de conexão');
-      }
-      
-      hideLoading();
-    }
-    
-    // Renderizar conteúdo principal
-    function renderMainContent(filter, data) {
-      switch (filter) {
-        case 'iv_atual':
-          renderIVAtualTable(data);
-          break;
-        case 'iv_vs_6m':
-          renderIVComparison(data);
-          break;
-        case 'iv_percentil':
-          renderIVPercentil(data);
-          break;
-        case 'iv_vs_volume':
-          renderIVVolume(data);
-          break;
-        default:
-          renderIVAtualTable(data);
-      }
-    }
-    
-    // Renderizar tabela IV Atual
-    function renderIVAtualTable(data) {
-      const ranking = data.rankings?.iv_atual || [];
-      
-      if (ranking.length === 0) {
-        mainContent.innerHTML = '<p class="text-center text-gray-500">Nenhum dado disponível</p>';
-        return;
-      }
-      
-      mainContent.innerHTML = `
-        <div class="rank-table">
-          <table>
-            <thead>
-              <tr>
-                <th>Posição</th>
-                <th>Ativo</th>
-                <th>Nome</th>
-                <th>IV Atual</th>
-                <th>Preço</th>
-                <th>Volume</th>
-                <th>Volume Financeiro</th>
-                <th>Variação</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${ranking.map(item => `
-                <tr>
-                  <td class="rank-${item.posicao <= 3 ? item.posicao : ''}">#${item.posicao}</td>
-                  <td class="font-bold text-white">${item.symbol}</td>
-                  <td class="text-gray-300">${item.name || 'N/A'}</td>
-                  <td class="${getIVClass(item.iv_current)}">${item.iv_current?.toFixed(2) || '0.00'}%</td>
-                  <td>R$ ${(item.close || 0).toFixed(2)}</td>
-                  <td class="${getVolumeClass(item.volume)}">${formatNumber(item.volume || 0)}</td>
-                  <td class="${getVolumeClass(item.financial_volume)}">${formatCurrency(item.financial_volume || 0)}</td>
-                  <td class="${item.variation >= 0 ? 'text-green-400' : 'text-red-400'}">${(item.variation || 0).toFixed(2)}%</td>
-                </tr>
-              `).join('')}
-            </tbody>
-          </table>
-        </div>
-      `;
-    }
-    
-    // Renderizar comparação IV
-    function renderIVComparison(data) {
-      const comparison = data.comparison_data || [];
-      
-      if (comparison.length === 0) {
-        mainContent.innerHTML = '<p class="text-center text-gray-500">Nenhum dado disponível</p>';
-        return;
-      }
-      
-      mainContent.innerHTML = `
-        <div class="mb-4">
-          <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-            <div class="metric-card text-center">
-              <div class="text-lg font-bold text-blue-400">${data.estatisticas?.ratio_medio?.toFixed(2) || '0.00'}</div>
-              <div class="text-sm text-gray-400">Ratio Médio</div>
-            </div>
-            <div class="metric-card text-center">
-              <div class="text-lg font-bold text-red-400">${data.estatisticas?.acoes_perto_maximo || 0}</div>
-              <div class="text-sm text-gray-400">Perto do Máximo</div>
-            </div>
-            <div class="metric-card text-center">
-              <div class="text-lg font-bold text-yellow-400">${data.estatisticas?.acoes_alto || 0}</div>
-              <div class="text-sm text-gray-400">Alto</div>
-            </div>
-            <div class="metric-card text-center">
-              <div class="text-lg font-bold text-green-400">${data.estatisticas?.acoes_baixo || 0}</div>
-              <div class="text-sm text-gray-400">Baixo</div>
-            </div>
-          </div>
-        </div>
-        
-        <div class="rank-table">
-          <table>
-            <thead>
-              <tr>
-                <th>Ativo</th>
-                <th>IV Atual</th>
-                <th>IV 6M Max</th>
-                <th>Ratio</th>
-                <th>Status</th>
-                <th>Preço</th>
-                <th>Volume Financeiro</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${comparison.map(item => `
-                <tr>
-                  <td class="font-bold text-white">${item.symbol}</td>
-                  <td class="${getIVClass(item.iv_current)}">${item.iv_current?.toFixed(2) || '0.00'}%</td>
-                  <td class="text-gray-300">${item.iv_6m_max?.toFixed(2) || '0.00'}%</td>
-                  <td class="${getRatioClass(item.ratio)}">${(item.ratio_percent || 0).toFixed(1)}%</td>
-                  <td class="${getStatusClass(item.status)}">${item.status}</td>
-                  <td>R$ ${(item.close || 0).toFixed(2)}</td>
-                  <td class="${getVolumeClass(item.financial_volume)}">${formatCurrency(item.financial_volume || 0)}</td>
-                </tr>
-              `).join('')}
-            </tbody>
-          </table>
-        </div>
-      `;
-    }
-    
-    // Renderizar IV Percentil
-    function renderIVPercentil(data) {
-      const ranking = data.ranking || [];
-      const categorias = data.resumo_categorias || {};
-      
-      if (ranking.length === 0) {
-        mainContent.innerHTML = '<p class="text-center text-gray-500">Nenhum dado disponível</p>';
-        return;
-      }
-      
-      mainContent.innerHTML = `
-        <div class="mb-6">
-          <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-            <div class="metric-card text-center">
-              <div class="text-lg font-bold text-red-400">${categorias.criticos || 0}</div>
-              <div class="text-sm text-gray-400">Críticos (>80%)</div>
-            </div>
-            <div class="metric-card text-center">
-              <div class="text-lg font-bold text-orange-400">${categorias.altos || 0}</div>
-              <div class="text-sm text-gray-400">Altos (60-80%)</div>
-            </div>
-            <div class="metric-card text-center">
-              <div class="text-lg font-bold text-yellow-400">${categorias.medios || 0}</div>
-              <div class="text-sm text-gray-400">Médios (40-60%)</div>
-            </div>
-            <div class="metric-card text-center">
-              <div class="text-lg font-bold text-green-400">${categorias.baixos || 0}</div>
-              <div class="text-sm text-gray-400">Baixos (<40%)</div>
-            </div>
-          </div>
-        </div>
-        
-        <div class="rank-table">
-          <table>
-            <thead>
-              <tr>
-                <th>Posição</th>
-                <th>Ativo</th>
-                <th>IV Atual</th>
-                <th>Percentil 6M</th>
-                <th>Categoria</th>
-                <th>Preço</th>
-                <th>Volume</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${ranking.map((item, index) => {
-                const percentil = item.iv_6m_percentile || 0;
-                return `
-                  <tr>
-                    <td class="rank-${index < 3 ? index + 1 : ''}">#${index + 1}</td>
-                    <td class="font-bold text-white">${item.symbol}</td>
-                    <td class="${getIVClass(item.iv_current)}">${item.iv_current?.toFixed(2) || '0.00'}%</td>
-                    <td class="${getPercentilClass(percentil)}">${percentil.toFixed(1)}%</td>
-                    <td class="${getPercentilCategoryClass(percentil)}">${getPercentilCategory(percentil)}</td>
-                    <td>R$ ${(item.close || 0).toFixed(2)}</td>
-                    <td class="${getVolumeClass(item.volume)}">${formatNumber(item.volume || 0)}</td>
-                  </tr>
-                `;
-              }).join('')}
-            </tbody>
-          </table>
-        </div>
-      `;
-    }
-    
-    // Renderizar IV vs Volume
-    function renderIVVolume(data) {
-      const scatterData = data.scatter_data || [];
-      
-      if (scatterData.length === 0) {
-        mainContent.innerHTML = '<p class="text-center text-gray-500">Nenhum dado disponível</p>';
-        return;
-      }
-      
-      mainContent.innerHTML = `
-        <div class="rank-table">
-          <table>
-            <thead>
-              <tr>
-                <th>Ativo</th>
-                <th>IV Atual</th>
-                <th>Volume Financeiro</th>
-                <th>Preço</th>
-                <th>Variação</th>
-                <th>Classificação</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${scatterData.map(item => `
-                <tr>
-                  <td class="font-bold text-white">${item.symbol}</td>
-                  <td class="${getIVClass(item.iv_current)}">${item.iv_current?.toFixed(2) || '0.00'}%</td>
-                  <td class="${getVolumeClass(item.financial_volume)}">${formatCurrency(item.financial_volume || 0)}</td>
-                  <td>R$ ${(item.close || 0).toFixed(2)}</td>
-                  <td class="${item.variation >= 0 ? 'text-green-400' : 'text-red-400'}">${(item.variation || 0).toFixed(2)}%</td>
-                  <td class="${getIVVolumeClass(item)}">${getIVVolumeLabel(item)}</td>
-                </tr>
-              `).join('')}
-            </tbody>
-          </table>
-        </div>
-      `;
-    }
-    
-    // Carregar dados do scatter plot
-    async function loadScatterData() {
-      try {
-        const response = await fetch(`${API_BASE}/iv-vs-volume?top_n=30`);
-        const data = await response.json();
-        
-        if (data.success) {
-          renderScatterChart(data.scatter_data);
-          updateScatterStats(data.scatter_data);
-        }
-      } catch (error) {
-        console.error('Erro ao carregar dados do scatter:', error);
-      }
-    }
-    
-    // Renderizar gráfico de dispersão
-    function renderScatterChart(scatterData) {
-      const ctx = document.getElementById('scatterChart');
-      if (!ctx) return;
-      
-      const context = ctx.getContext('2d');
-      
-      // Destruir gráfico anterior se existir
-      if (scatterChart) {
-        scatterChart.destroy();
-      }
-      
-      const chartData = scatterData.map(item => ({
-        x: item.financial_volume || 0,
-        y: item.iv_current || 0,
-        label: item.symbol
-      }));
-      
-      scatterChart = new Chart(context, {
-        type: 'scatter',
-        data: {
-          datasets: [{
-            label: 'IV vs Volume',
-            data: chartData,
-            backgroundColor: 'rgba(186, 57, 175, 0.6)',
-            borderColor: 'rgba(186, 57, 175, 1)',
-            borderWidth: 2,
-            pointRadius: 6,
-            pointHoverRadius: 8
-          }]
+      const layout = {
+        title: {
+          text: 'Volatilidade Implícita Atual (%)',
+          font: { color: 'white' }
         },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: {
-              labels: {
-                color: '#ffffff'
-              }
-            },
-            tooltip: {
-              backgroundColor: 'rgba(0, 0, 0, 0.8)',
-              titleColor: '#ffffff',
-              bodyColor: '#ffffff',
-              callbacks: {
-                title: function(context) {
-                  return context[0].raw.label;
-                },
-                label: function(context) {
-                  return [
-                    `IV: ${context.parsed.y.toFixed(2)}%`,
-                    `Volume: ${formatCurrency(context.parsed.x)}`
-                  ];
-                }
-              }
-            }
+        xaxis: {
+          tickangle: -45,
+          color: 'white',
+          gridcolor: 'rgba(255,255,255,0.1)'
+        },
+        yaxis: {
+          title: 'IV Atual (%)',
+          color: 'white',
+          gridcolor: 'rgba(255,255,255,0.1)'
+        },
+        plot_bgcolor: 'rgba(0,0,0,0)',
+        paper_bgcolor: 'rgba(0,0,0,0)',
+        font: { color: 'white' },
+        margin: { l: 50, r: 50, t: 80, b: 100 }
+      };
+      
+      const config = {
+        responsive: true,
+        displayModeBar: false
+      };
+      
+      Plotly.newPlot('chart1', [trace], layout, config);
+    }
+    
+    // Gráfico 2: IV Atual vs IV 6M Max (barras agrupadas)
+    function renderChart2(data) {
+      console.log('📊 Renderizando Chart 2 com', data.length, 'itens');
+      
+      const symbols = data.map(item => item.symbol);
+      const ivCurrent = data.map(item => item.iv_current || 0);
+      const iv6mMax = data.map(item => item.iv_6m_max || 0);
+      
+      const trace1 = {
+        x: symbols,
+        y: ivCurrent,
+        name: 'IV Atual',
+        type: 'bar',
+        marker: { color: 'rgba(255, 99, 132, 0.7)' }
+      };
+      
+      const trace2 = {
+        x: symbols,
+        y: iv6mMax,
+        name: 'IV 6M Max',
+        type: 'bar',
+        marker: { color: 'rgba(144, 238, 144, 0.7)' }
+      };
+      
+      const layout = {
+        title: {
+          text: 'IV Atual vs IV 6M Máximo',
+          font: { color: 'white' }
+        },
+        xaxis: {
+          tickangle: -45,
+          color: 'white',
+          gridcolor: 'rgba(255,255,255,0.1)'
+        },
+        yaxis: {
+          title: 'IV (%)',
+          color: 'white',
+          gridcolor: 'rgba(255,255,255,0.1)'
+        },
+        plot_bgcolor: 'rgba(0,0,0,0)',
+        paper_bgcolor: 'rgba(0,0,0,0)',
+        font: { color: 'white' },
+        legend: { font: { color: 'white' } },
+        margin: { l: 50, r: 50, t: 80, b: 100 }
+      };
+      
+      const config = {
+        responsive: true,
+        displayModeBar: false
+      };
+      
+      Plotly.newPlot('chart2', [trace1, trace2], layout, config);
+    }
+    
+    // Gráfico 3: Percentil IV 6M (barras coloridas)
+    function renderChart3(data) {
+      console.log('📊 Renderizando Chart 3 com', data.length, 'itens');
+      
+      const symbols = data.map(item => item.symbol);
+      const percentiles = data.map(item => item.iv_6m_percentile || 0);
+      
+      const colors = percentiles.map(p => {
+        if (p > 80) return 'rgba(239, 68, 68, 0.7)'; // Vermelho
+        if (p > 60) return 'rgba(245, 158, 11, 0.7)'; // Laranja
+        if (p > 40) return 'rgba(255, 255, 0, 0.7)'; // Amarelo
+        return 'rgba(16, 185, 129, 0.7)'; // Verde
+      });
+      
+      const trace = {
+        x: symbols,
+        y: percentiles,
+        type: 'bar',
+        marker: { color: colors },
+        text: percentiles.map(p => `${p.toFixed(1)}%`),
+        textposition: 'auto',
+        textfont: { color: 'white' }
+      };
+      
+      const layout = {
+        title: {
+          text: 'Percentil IV 6M (%)',
+          font: { color: 'white' }
+        },
+        xaxis: {
+          tickangle: -45,
+          color: 'white',
+          gridcolor: 'rgba(255,255,255,0.1)'
+        },
+        yaxis: {
+          title: 'Percentil (%)',
+          color: 'white',
+          gridcolor: 'rgba(255,255,255,0.1)'
+        },
+        plot_bgcolor: 'rgba(0,0,0,0)',
+        paper_bgcolor: 'rgba(0,0,0,0)',
+        font: { color: 'white' },
+        margin: { l: 50, r: 50, t: 80, b: 100 },
+        shapes: [
+          {
+            type: 'line',
+            x0: 0,
+            x1: 1,
+            xref: 'paper',
+            y0: 80,
+            y1: 80,
+            line: { color: 'red', width: 2, dash: 'dash' }
           },
-          scales: {
-            x: {
-              type: 'logarithmic',
-              title: {
-                display: true,
-                text: 'Volume Financeiro (R$)',
-                color: '#ffffff'
-              },
-              ticks: {
-                color: '#cccccc',
-                callback: function(value) {
-                  return formatCurrency(value);
-                }
-              },
-              grid: {
-                color: 'rgba(255, 255, 255, 0.1)'
-              }
-            },
-            y: {
-              title: {
-                display: true,
-                text: 'Volatilidade Implícita (%)',
-                color: '#ffffff'
-              },
-              ticks: {
-                color: '#cccccc'
-              },
-              grid: {
-                color: 'rgba(255, 255, 255, 0.1)'
-              }
-            }
+          {
+            type: 'line',
+            x0: 0,
+            x1: 1,
+            xref: 'paper',
+            y0: 20,
+            y1: 20,
+            line: { color: 'green', width: 2, dash: 'dash' }
           }
-        }
-      });
-    }
-    
-    // Atualizar estatísticas do scatter
-    function updateScatterStats(scatterData) {
-      if (!scatterData || scatterData.length === 0) return;
+        ]
+      };
       
-      // Calcular correlação simples
-      const volumes = scatterData.map(item => item.financial_volume || 0);
-      const ivs = scatterData.map(item => item.iv_current || 0);
+      const config = {
+        responsive: true,
+        displayModeBar: false
+      };
       
-      const correlation = calculateCorrelation(volumes, ivs);
+      Plotly.newPlot('chart3', [trace], layout, config);
+    }
+    
+    // Gráfico 4: IV vs Volume (scatter)
+    function renderChart4(data) {
+      console.log('📊 Renderizando Chart 4 com', data.length, 'itens');
       
-      // Contar categorias
-      let highVolumeHighIV = 0;
-      let lowVolumeLowIV = 0;
+      const volumes = data.map(item => item.financial_volume || 0);
+      const ivValues = data.map(item => item.iv_current || 0);
+      const symbols = data.map(item => item.symbol);
       
-      const sortedVolumes = [...volumes].sort((a, b) => a - b);
-      const sortedIVs = [...ivs].sort((a, b) => a - b);
-      const medianVolume = sortedVolumes[Math.floor(sortedVolumes.length / 2)];
-      const medianIV = sortedIVs[Math.floor(sortedIVs.length / 2)];
+      const trace = {
+        x: volumes,
+        y: ivValues,
+        mode: 'markers+text',
+        type: 'scatter',
+        marker: {
+          color: 'rgba(128, 0, 128, 0.6)',
+          size: 10,
+          line: {
+            color: 'rgba(128, 0, 128, 1)',
+            width: 2
+          }
+        },
+        text: symbols,
+        textposition: 'top center',
+        textfont: { color: 'white', size: 10 }
+      };
       
-      scatterData.forEach(item => {
-        const vol = item.financial_volume || 0;
-        const iv = item.iv_current || 0;
-        
-        if (vol > medianVolume && iv > medianIV) highVolumeHighIV++;
-        if (vol < medianVolume && iv < medianIV) lowVolumeLowIV++;
-      });
+      const layout = {
+        title: {
+          text: 'IV Atual vs Volume Financeiro',
+          font: { color: 'white' }
+        },
+        xaxis: {
+          title: 'Volume Financeiro (R$)',
+          type: 'log',
+          color: 'white',
+          gridcolor: 'rgba(255,255,255,0.1)'
+        },
+        yaxis: {
+          title: 'IV Atual (%)',
+          color: 'white',
+          gridcolor: 'rgba(255,255,255,0.1)'
+        },
+        plot_bgcolor: 'rgba(0,0,0,0)',
+        paper_bgcolor: 'rgba(0,0,0,0)',
+        font: { color: 'white' },
+        margin: { l: 50, r: 50, t: 80, b: 100 }
+      };
       
-      const highVolumeEl = document.getElementById('scatterHighVolume');
-      const lowVolumeEl = document.getElementById('scatterLowVolume');
-      const correlationEl = document.getElementById('scatterCorrelation');
+      const config = {
+        responsive: true,
+        displayModeBar: false
+      };
       
-      if (highVolumeEl) highVolumeEl.textContent = highVolumeHighIV;
-      if (lowVolumeEl) lowVolumeEl.textContent = lowVolumeLowIV;
-      if (correlationEl) correlationEl.textContent = correlation.toFixed(3);
+      Plotly.newPlot('chart4', [trace], layout, config);
     }
     
-    // Calcular correlação
-    function calculateCorrelation(x, y) {
-      const n = x.length;
-      if (n === 0) return 0;
-      
-      const sumX = x.reduce((a, b) => a + b, 0);
-      const sumY = y.reduce((a, b) => a + b, 0);
-      const sumXY = x.reduce((total, xi, i) => total + xi * y[i], 0);
-      const sumX2 = x.reduce((total, xi) => total + xi * xi, 0);
-      const sumY2 = y.reduce((total, yi) => total + yi * yi, 0);
-      
-      const numerator = n * sumXY - sumX * sumY;
-      const denominator = Math.sqrt((n * sumX2 - sumX * sumX) * (n * sumY2 - sumY * sumY));
-      
-      return denominator === 0 ? 0 : numerator / denominator;
+    // Atualizar todos os dados
+    async function refreshAllData() {
+      console.log('🔄 Refresh manual iniciado...');
+      await loadAllData();
     }
     
-    // Funções auxiliares para classes CSS
-    function getIVClass(iv) {
-      if (iv >= 60) return 'iv-high';
-      if (iv >= 40) return 'iv-medium';
-      return 'iv-low';
-    }
-    
-    function getVolumeClass(volume) {
-      if (volume >= 10000000) return 'volume-high';
-      if (volume >= 1000000) return 'volume-medium';
-      return 'volume-low';
-    }
-    
-    function getRatioClass(ratio) {
-      if (ratio >= 0.9) return 'ratio-critical';
-      if (ratio >= 0.7) return 'ratio-high';
-      if (ratio >= 0.5) return 'ratio-medium';
-      return 'ratio-low';
-    }
-    
-    function getStatusClass(status) {
-      switch (status) {
-        case 'Perto do máximo': return 'status-critical';
-        case 'Alto': return 'status-high';
-        case 'Médio': return 'status-medium';
-        case 'Baixo': return 'status-low';
-        default: return 'text-gray-400';
-      }
-    }
-    
-    function getPercentilClass(percentil) {
-      if (percentil >= 80) return 'percentil-critical';
-      if (percentil >= 60) return 'percentil-high';
-      if (percentil >= 40) return 'percentil-medium';
-      return 'percentil-low';
-    }
-    
-    function getPercentilCategory(percentil) {
-      if (percentil >= 80) return 'Crítico';
-      if (percentil >= 60) return 'Alto';
-      if (percentil >= 40) return 'Médio';
-      return 'Baixo';
-    }
-    
-    function getPercentilCategoryClass(percentil) {
-      if (percentil >= 80) return 'text-red-400';
-      if (percentil >= 60) return 'text-orange-400';
-      if (percentil >= 40) return 'text-yellow-400';
-      return 'text-green-400';
-    }
-    
-    function getIVVolumeClass(item) {
-      const iv = item.iv_current || 0;
-      const volume = item.financial_volume || 0;
-      
-      if (iv > 50 && volume > 1000000) return 'text-purple-400';
-      if (iv < 30 && volume < 100000) return 'text-green-400';
-      if (iv > 40) return 'text-orange-400';
-      return 'text-blue-400';
-    }
-    
-    function getIVVolumeLabel(item) {
-      const iv = item.iv_current || 0;
-      const volume = item.financial_volume || 0;
-      
-      if (iv > 50 && volume > 1000000) return 'Alta IV + Alto Volume';
-      if (iv < 30 && volume < 100000) return 'Baixa IV + Baixo Volume';
-      if (iv > 40) return 'Alta IV';
-      return 'Padrão';
-    }
-    
-    // Funções de formatação
-    function formatNumber(num) {
-      if (num >= 1000000) {
-        return (num / 1000000).toFixed(1) + 'M';
-      }
-      if (num >= 1000) {
-        return (num / 1000).toFixed(1) + 'K';
-      }
-      return num.toLocaleString('pt-BR');
-    }
-    
-    function formatCurrency(value) {
-      if (value >= 1000000000) {
-        return 'R$ ' + (value / 1000000000).toFixed(1) + 'B';
-      }
-      if (value >= 1000000) {
-        return 'R$ ' + (value / 1000000).toFixed(1) + 'M';
-      }
-      if (value >= 1000) {
-        return 'R$ ' + (value / 1000).toFixed(1) + 'K';
-      }
-      return 'R$ ' + value.toLocaleString('pt-BR', {
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0
-      });
-    }
-    
-    // Função para atualizar dados
-    function refreshData() {
-      console.log('🔄 Atualizando dados...');
-      loadInitialData();
-    }
-    
-    // Event listeners globais
-    window.selectFilter = selectFilter;
-    window.refreshData = refreshData;
-    
-    // Auto-refresh a cada 5 minutos
+    // Auto-refresh a cada 5 minutos (apenas se dados são reais)
     setInterval(() => {
-      console.log('🔄 Auto-refresh...');
-      loadInitialData();
+      if (dataSource === 'real') {
+        console.log('🔄 Auto-refresh dos dados reais...');
+        loadAllData();
+      }
     }, 5 * 60 * 1000);
     
     // Detectar mudanças de visibilidade da página
     document.addEventListener('visibilitychange', function() {
-      if (!document.hidden) {
-        console.log('🔄 Página visível - atualizando dados...');
-        loadInitialData();
+      if (!document.hidden && dataSource === 'real') {
+        console.log('🔄 Página visível - atualizando dados reais...');
+        loadAllData();
       }
     });
   </script>
