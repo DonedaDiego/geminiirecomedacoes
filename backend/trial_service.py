@@ -420,20 +420,134 @@ def get_trial_days_remaining(user_id):
 
 def can_access_premium_features(user_id):
     """
-    Verificar se usuário pode acessar recursos Premium
+    🔥 VERIFICAÇÃO DIRETA NO BANCO - NÃO DEPENDER APENAS DO CONTROL_PAY_SERVICE
     """
-    from control_pay_service import check_user_subscription_status
-    status = check_user_subscription_status(user_id)
-    return status.get('access_permissions', {}).get('can_access_premium', False)
+    try:
+        print(f"🔍 Verificando acesso Premium para user_id: {user_id}")
+        
+        conn = get_db_connection()
+        if not conn:
+            print("❌ Erro de conexão com banco")
+            return False
+            
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            SELECT plan_id, user_type, plan_expires_at, plan_name, email
+            FROM users WHERE id = %s
+        """, (user_id,))
+        
+        user = cursor.fetchone()
+        cursor.close()
+        conn.close()
+        
+        if not user:
+            print(f"❌ Usuário {user_id} não encontrado")
+            return False
+            
+        plan_id, user_type, plan_expires_at, plan_name, email = user
+        
+        print(f"📊 Dados do usuário: plan_id={plan_id}, user_type={user_type}, plan_name={plan_name}, email={email}")
+        
+        # 🔥 REGRA 1: Se é regular com plano básico, NEGAR SEMPRE
+        if user_type == 'regular' and plan_id == 3:
+            print(f"❌ ACESSO NEGADO: Usuário regular com plano básico")
+            return False
+            
+        # 🔥 REGRA 2: Se é trial, verificar se não expirou
+        if user_type == 'trial':
+            if plan_expires_at and plan_expires_at < datetime.now(timezone.utc):
+                print(f"❌ ACESSO NEGADO: Trial expirado em {plan_expires_at}")
+                return False
+            else:
+                print(f"✅ ACESSO LIBERADO: Trial ainda válido até {plan_expires_at}")
+                return plan_id == 2  # Só Premium trial
+        
+        # 🔥 REGRA 3: Para usuários pagantes, verificar plano
+        if user_type in ['regular', 'pro', 'premium']:
+            has_access = plan_id == 2  # Apenas Premium
+            print(f"{'✅' if has_access else '❌'} ACESSO {'LIBERADO' if has_access else 'NEGADO'}: Usuário pagante com plan_id={plan_id}")
+            return has_access
+            
+        # 🔥 REGRA 4: Admin sempre tem acesso
+        if user_type in ['admin', 'master']:
+            print(f"✅ ACESSO LIBERADO: Usuário admin")
+            return True
+        
+        print(f"❌ ACESSO NEGADO: Caso não coberto - user_type={user_type}, plan_id={plan_id}")
+        return False
+        
+    except Exception as e:
+        print(f"❌ Erro na verificação Premium: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
 
 def can_access_pro_features(user_id):
     """
-    Verificar se usuário pode acessar recursos Pro
+    🔥 VERIFICAÇÃO DIRETA NO BANCO PARA RECURSOS PRO
     """
-    from control_pay_service import check_user_subscription_status
-    status = check_user_subscription_status(user_id)
-    return status.get('access_permissions', {}).get('can_access_pro', False)
-
+    try:
+        print(f"🔍 Verificando acesso Pro para user_id: {user_id}")
+        
+        conn = get_db_connection()
+        if not conn:
+            print("❌ Erro de conexão com banco")
+            return False
+            
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            SELECT plan_id, user_type, plan_expires_at, plan_name, email
+            FROM users WHERE id = %s
+        """, (user_id,))
+        
+        user = cursor.fetchone()
+        cursor.close()
+        conn.close()
+        
+        if not user:
+            print(f"❌ Usuário {user_id} não encontrado")
+            return False
+            
+        plan_id, user_type, plan_expires_at, plan_name, email = user
+        
+        print(f"📊 Dados do usuário: plan_id={plan_id}, user_type={user_type}, plan_name={plan_name}, email={email}")
+        
+        # 🔥 REGRA 1: Se é regular com plano básico, NEGAR SEMPRE
+        if user_type == 'regular' and plan_id == 3:
+            print(f"❌ ACESSO NEGADO: Usuário regular com plano básico")
+            return False
+            
+        # 🔥 REGRA 2: Se é trial, verificar se não expirou
+        if user_type == 'trial':
+            if plan_expires_at and plan_expires_at < datetime.now(timezone.utc):
+                print(f"❌ ACESSO NEGADO: Trial expirado em {plan_expires_at}")
+                return False
+            else:
+                print(f"✅ ACESSO LIBERADO: Trial ainda válido até {plan_expires_at}")
+                return plan_id in [1, 2]  # Pro ou Premium trial
+        
+        # 🔥 REGRA 3: Para usuários pagantes, verificar plano
+        if user_type in ['regular', 'pro', 'premium']:
+            has_access = plan_id in [1, 2]  # Pro ou Premium
+            print(f"{'✅' if has_access else '❌'} ACESSO {'LIBERADO' if has_access else 'NEGADO'}: Usuário pagante com plan_id={plan_id}")
+            return has_access
+            
+        # 🔥 REGRA 4: Admin sempre tem acesso
+        if user_type in ['admin', 'master']:
+            print(f"✅ ACESSO LIBERADO: Usuário admin")
+            return True
+        
+        print(f"❌ ACESSO NEGADO: Caso não coberto - user_type={user_type}, plan_id={plan_id}")
+        return False
+        
+    except Exception as e:
+        print(f"❌ Erro na verificação Pro: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
+    
 def send_trial_expiring_email(user_info, days_remaining):
     try:
         from email_service import email_service

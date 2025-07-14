@@ -1190,33 +1190,58 @@
       let hasAccess = false;
       let requiredPlanName = '';
       
-      // 🔥 VERIFICAR SE USUÁRIO TEM TRIAL ATIVO
-      const hasActiveTrial = trialInfo && trialInfo.is_trial && !trialInfo.trial_expired;
-      
-      // Definir acesso baseado no recurso
-      if (featureName === 'Long & Short' || featureName === 'Hunter Walls' || 
-          featureName === 'screening' || featureName === 'Volume Profile' || 
-          featureName === 'IV Scanner' || featureName === 'Options Flow' ||
-          featureName === 'Regimes de Volatilidade' || featureName === 'Regressão Linear' ||
-          featureName === 'Volatilidade GARCH') {
-        hasAccess = (userPlanId === 1 || userPlanId === 2) || hasActiveTrial;
+      console.log(`🔍 Verificando acesso: ${featureName}`, {
+        userPlanId,
+        userType,
+        trialInfo
+      });
+    
+      // 🔥 REGRA CRÍTICA: Se user_type é 'regular' e plan_id é 3 (Básico), NEGAR SEMPRE
+      if (userType === 'regular' && userPlanId === 3) {
+        console.log('❌ Usuário regular com plano básico - acesso negado');
+        hasAccess = false;
+        requiredPlanName = 'Pro'; // Padrão
+      }
+      // VERIFICAÇÃO PARA RECURSOS PRO
+      else if (['Long & Short', 'Hunter Walls', 'Regimes de Volatilidade', 
+                'Regressão Linear', 'Volatilidade GARCH', 'screening', 
+                'Volume Profile', 'IV Scanner', 'Options Flow'].includes(featureName)) {
+        
+        // Só permite se NÃO for regular básico
+        hasAccess = (userPlanId === 1 || userPlanId === 2) && userType !== 'regular';
         requiredPlanName = 'Pro';
+        
+        // EXCEÇÃO: Trial Premium ainda ativo
+        if (userType === 'trial' && userPlanId === 2) {
+          const hasValidTrial = trialInfo && trialInfo.is_trial && !trialInfo.trial_expired;
+          hasAccess = hasValidTrial;
+          console.log(`🔍 Trial Pro check: ${hasValidTrial}`, trialInfo);
+        }
       }
-      
-      if (featureName === 'Smart Carteiras' || featureName === 'Machine Learning') {
-        hasAccess = (userPlanId === 2) || hasActiveTrial;
+      // VERIFICAÇÃO PARA RECURSOS PREMIUM
+      else if (['Smart Carteiras', 'Machine Learning', 'Pattern Recognition', 'AutoML'].includes(featureName)) {
+        
+        // Só permite se NÃO for regular básico
+        hasAccess = (userPlanId === 2) && userType !== 'regular';
         requiredPlanName = 'Premium';
+        
+        // EXCEÇÃO: Trial Premium ainda ativo
+        if (userType === 'trial' && userPlanId === 2) {
+          const hasValidTrial = trialInfo && trialInfo.is_trial && !trialInfo.trial_expired;
+          hasAccess = hasValidTrial;
+          console.log(`🔍 Trial Premium check: ${hasValidTrial}`, trialInfo);
+        }
       }
-
-      // Recursos GRÁTIS
-      if (featureName === 'Suporte e Resistência' || featureName === 'Radar Financeiro') {
+      // RECURSOS GRÁTIS
+      else if (['Suporte e Resistência', 'Radar Financeiro'].includes(featureName)) {
         hasAccess = true;
         requiredPlanName = 'Grátis';
       }
     
-      // Se tem acesso, permitir
+      console.log(`✅ Resultado verificação: ${hasAccess} para ${featureName}`);
+    
+      // SE TEM ACESSO, PERMITIR
       if (hasAccess) {
-        
         // REDIRECIONAMENTOS CORRETOS
         if (featureName === 'Long & Short') {
           window.location.href = 'long-short.html';
@@ -1238,29 +1263,29 @@
           toggleMLDropdown();
           return;
         }
-
+    
         // Funcionalidades GRÁTIS futuras
         if (featureName === 'Suporte e Resistência') {
           alert(`🏭 Análise Setorial\n\nComparativo por Setores da Economia!\n\nEm breve será implementado.`);
           return;
         }
-
+    
         if (featureName === 'Radar Financeiro') {
           alert(`📡 Radar Financeiro\n\nIndicadores Fundamentalistas Completos!\n\nEm breve será implementado.`);
           return;
         }
-
+    
         // Funcionalidades PRO futuras
         if (featureName === 'Regimes de Volatilidade') {
           alert(`📊 Regimes de Volatilidade\n\nRegimes de Volatilidade!\n\nEm breve será implementado.`);
           return;
         }
-
+    
         if (featureName === 'Regressão Linear') {
           alert(`📈 Regressão Linear\n\nAnálise Preditiva Avançada!\n\nEm breve será implementado.`);
           return;
         }
-
+    
         if (featureName === 'Volatilidade GARCH') {
           alert(`📊 Volatilidade GARCH\n\nModelos Avançados de Volatilidade!\n\nEm breve será implementado.`);
           return;
@@ -1271,22 +1296,22 @@
           alert(`📊 Greeks Monitor\n\nMonitoramento completo de Delta, Gamma, Theta e Vega!\n\nEm breve será implementado.`);
           return;
         }
-
+    
         if (featureName === 'Volume Profile') {
           alert(`📈 Volume Profile\n\nAnálise avançada de Volume por Preço!\n\nEm breve será implementado.`);
           return;
         }
-
+    
         if (featureName === 'IV Scanner') {
           alert(`🔍 IV Scanner\n\nScanner inteligente de Volatilidade Implícita!\n\nEm breve será implementado.`);
           return;
         }
-
+    
         if (featureName === 'Options Flow') {
           alert(`📊 Options Flow\n\nFluxo de Opções em Tempo Real!\n\nEm breve será implementado.`);
           return;
         }
-
+    
         // Recursos EM BREVE para ML
         if (featureName === 'Pattern Recognition') {
           alert(`👁️ Pattern Recognition\n\nReconhecimento de Padrões Avançado!\n\nEm breve será implementado.`);
@@ -1308,9 +1333,9 @@
         
         let message = `💎 Recurso ${requiredPlanName}\n\n${featureName} está disponível apenas para planos ${requiredPlanName} ou superior.\n\nSeu plano atual: ${currentPlanName}\nPlano necessário: ${requiredPlanName}`;
         
-        // 🔥 MENSAGEM ESPECIAL SE TRIAL EXPIROU
-        if (trialInfo && trialInfo.trial_expired) {
-          message += `\n\n⏰ Seu trial Premium expirou! Você já teve acesso a este recurso.\n\nQue tal reativar?`;
+        // MENSAGEM ESPECIAL SE TRIAL EXPIROU
+        if (userType === 'regular' && userPlanId === 3) {
+          message += `\n\n⏰ Parece que seu trial expirou e você foi movido para o plano Básico.\n\nQue tal fazer upgrade?`;
         }
         
         message += `\n\nDeseja fazer upgrade agora?`;

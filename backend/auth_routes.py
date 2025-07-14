@@ -566,9 +566,10 @@ def reset_password():
 
 # ===== ROTAS DE VERIFICAÇÃO =====
 
+
 @auth_bp.route('/verify', methods=['GET'])
 def verify_token():
-    """🔥 Verificar token JWT com informações de subscription/trial + DOWNGRADE AUTOMÁTICO"""
+    """🔥 Verificar token JWT com downgrade automático e verificação rigorosa"""
     try:
         auth_header = request.headers.get('Authorization')
         
@@ -583,79 +584,9 @@ def verify_token():
             payload = jwt.decode(token, current_app.config['SECRET_KEY'], algorithms=['HS256'])
             user_id = payload['user_id']
             
-            # 🔥 VERIFICAR STATUS DA SUBSCRIPTION/TRIAL
-            subscription_status = check_user_subscription_status(user_id)
+            print(f"🔍 Verificando token para user_id: {user_id}")
             
-            if not subscription_status.get('success', False):
-                print(f"❌ Erro ao verificar subscription: {subscription_status}")
-                return jsonify({'success': False, 'error': 'Erro ao verificar status da conta'}), 500
-            
-            # 🔥 DOWNGRADE AUTOMÁTICO - TRIAL EXPIRADO
-            subscription_data = subscription_status.get('subscription', {})
-            if subscription_data.get('status') == 'trial_expired':
-                print(f"🔄 Trial expirado detectado para usuário {user_id} - fazendo downgrade automático...")
-                
-                try:
-                    downgrade_result = downgrade_user_trial(user_id)
-                    
-                    if downgrade_result.get('success', False):
-                        print(f"✅ Downgrade de trial realizado para usuário {user_id}")
-                        # Re-verificar status após downgrade
-                        subscription_status = check_user_subscription_status(user_id)
-                    else:
-                        print(f"❌ Erro no downgrade de trial: {downgrade_result.get('error')}")
-                
-                except Exception as downgrade_error:
-                    print(f"❌ Erro na função de downgrade de trial: {downgrade_error}")
-                    # Continuar mesmo se downgrade falhar
-            
-            # 🔥 NOVO: DOWNGRADE AUTOMÁTICO - PAGAMENTO EXPIRADO
-            elif subscription_data.get('status') == 'paid_expired':
-                print(f"🔄 Pagamento expirado detectado para usuário {user_id} - fazendo downgrade automático...")
-                
-                try:
-                    conn = get_db_connection()
-                    if conn:
-                        cursor = conn.cursor()
-                        
-                        # Verificar se realmente está expirado
-                        cursor.execute("""
-                            SELECT plan_id, plan_name, plan_expires_at
-                            FROM users 
-                            WHERE id = %s 
-                            AND plan_expires_at IS NOT NULL 
-                            AND plan_expires_at < NOW()
-                            AND user_type != 'trial'
-                            AND plan_id IN (1, 2)
-                        """, (user_id,))
-                        
-                        expired_user = cursor.fetchone()
-                        
-                        if expired_user:
-                            # Fazer downgrade individual
-                            cursor.execute("""
-                                UPDATE users 
-                                SET plan_id = 3, 
-                                    plan_name = 'Básico',
-                                    plan_expires_at = NULL,
-                                    updated_at = CURRENT_TIMESTAMP
-                                WHERE id = %s
-                            """, (user_id,))
-                            
-                            conn.commit()
-                            print(f"✅ Downgrade de pagamento realizado para usuário {user_id}")
-                            
-                            # Re-verificar status após downgrade
-                            subscription_status = check_user_subscription_status(user_id)
-                        
-                        cursor.close()
-                        conn.close()
-                
-                except Exception as downgrade_error:
-                    print(f"❌ Erro na função de downgrade de pagamento: {downgrade_error}")
-                    # Continuar mesmo se downgrade falhar
-            
-            # 🔥 BUSCAR DADOS ATUALIZADOS DO USUÁRIO
+            # 🔥 PRIMEIRO: BUSCAR DADOS REAIS DO BANCO
             conn = get_db_connection()
             if not conn:
                 print("❌ Erro de conexão com banco")
@@ -663,25 +594,63 @@ def verify_token():
             
             cursor = conn.cursor()
             cursor.execute("""
-                SELECT id, name, email, plan_id, plan_name, user_type, email_confirmed
+                SELECT id, name, email, plan_id, plan_name, user_type, 
+                       plan_expires_at, email_confirmed, created_at
                 FROM users WHERE id = %s
             """, (user_id,))
             
             user = cursor.fetchone()
-            cursor.close()
-            conn.close()
             
             if not user:
+                cursor.close()
+                conn.close()
                 print(f"❌ Usuário não encontrado no banco: {user_id}")
                 return jsonify({'success': False, 'error': 'Usuário não encontrado'}), 401
             
-            user_id, name, email, plan_id, plan_name, user_type, email_confirmed = user
+            user_id, name, email, plan_id, plan_name, user_type, plan_expires_at, email_confirmed, created_at = user
             
-            # 🔥 EXTRAIR DADOS DA SUBSCRIPTION (atualizados após possível downgrade)
-            subscription_data = subscription_status.get('subscription', {})
-            user_data = subscription_status.get('user', {})
+            print(f"📊 Dados do banco: plan_id={plan_id}, user_type={user_type}, plan_name={plan_name}")
             
-            # 🔥 PREPARAR RESPOSTA COM SUBSCRIPTION INFO
+            # 🔥 SEGUNDO: VERIFICAR SE TRIAL PRECISA SER REBAIXADO
+            needs_downgrade = False
+            
+            if user_type == 'trial' and plan_expires_at:
+                if plan_expires_at < datetime.now(timezone.utc):
+                    print(f"⏰ Trial expirado detectado: {plan_expires_at}")
+                    needs_downgrade = True
+            
+            # 🔥 TERCEIRO: FAZER DOWNGRADE SE NECESSÁRIO
+            if needs_downgrade:
+                print(f"🔄 Fazendo downgrade automático para user_id: {user_id}")
+                
+                try:
+                    from trial_service import downgrade_user_trial
+                    downgrade_result = downgrade_user_trial(user_id)
+                    
+                    if downgrade_result.get('success', False):
+                        print(f"✅ Downgrade realizado com sucesso")
+                        
+                        # 🔥 BUSCAR DADOS ATUALIZADOS DO BANCO
+                        cursor.execute("""
+                            SELECT id, name, email, plan_id, plan_name, user_type, 
+                                   plan_expires_at, email_confirmed, created_at
+                            FROM users WHERE id = %s
+                        """, (user_id,))
+                        
+                        updated_user = cursor.fetchone()
+                        if updated_user:
+                            user_id, name, email, plan_id, plan_name, user_type, plan_expires_at, email_confirmed, created_at = updated_user
+                            print(f"📊 Dados atualizados: plan_id={plan_id}, user_type={user_type}, plan_name={plan_name}")
+                    else:
+                        print(f"❌ Erro no downgrade: {downgrade_result.get('error')}")
+                
+                except Exception as downgrade_error:
+                    print(f"❌ Erro na função de downgrade: {downgrade_error}")
+            
+            cursor.close()
+            conn.close()
+            
+            # 🔥 QUARTO: PREPARAR RESPOSTA BASEADA NO ESTADO REAL
             response_data = {
                 'success': True,
                 'data': {
@@ -689,44 +658,50 @@ def verify_token():
                         'id': user_id,
                         'name': name,
                         'email': email,
-                        'plan_id': user_data.get('plan_id', plan_id),
-                        'plan_name': user_data.get('plan_name', plan_name),
-                        'user_type': user_data.get('user_type', user_type),
+                        'plan_id': plan_id,
+                        'plan_name': plan_name,
+                        'user_type': user_type,
                         'email_confirmed': email_confirmed
                     }
                 }
             }
             
-            # 🔥 ADICIONAR TRIAL/SUBSCRIPTION INFO
-            if subscription_data.get('is_trial', False):
-                response_data['trial_info'] = {
-                    'is_trial': True,
-                    'expires_at': subscription_data.get('expires_at'),
-                    'days_remaining': subscription_data.get('days_remaining', 0),
-                    'hours_remaining': subscription_data.get('hours_remaining', 0),
-                    'urgency_level': 'high' if subscription_data.get('days_remaining', 0) <= 3 else 'medium' if subscription_data.get('days_remaining', 0) <= 7 else 'low',
-                    'message': subscription_data.get('message', 'Trial ativo')
-                }
-            elif subscription_data.get('status') == 'trial_expired':
-                response_data['trial_info'] = {
-                    'is_trial': False,
-                    'trial_expired': True,
-                    'message': 'Trial expirado'
-                }
-            elif subscription_data.get('status') == 'paid_active':
+            # 🔥 QUINTO: ADICIONAR TRIAL INFO APENAS SE REALMENTE FOR TRIAL ATIVO
+            if user_type == 'trial' and plan_expires_at:
+                time_remaining = plan_expires_at - datetime.now(timezone.utc)
+                days_remaining = max(0, time_remaining.days)
+                hours_remaining = max(0, time_remaining.seconds // 3600)
+                
+                if days_remaining > 0:  # Apenas se ainda não expirou
+                    response_data['trial_info'] = {
+                        'is_trial': True,
+                        'trial_expired': False,
+                        'days_remaining': days_remaining,
+                        'hours_remaining': hours_remaining,
+                        'expires_at': plan_expires_at.isoformat(),
+                        'urgency_level': 'high' if days_remaining <= 3 else 'medium' if days_remaining <= 7 else 'low',
+                        'message': f'Trial {plan_name} ativo - {days_remaining} dias restantes'
+                    }
+                else:
+                    # Trial expirado mas ainda não foi rebaixado
+                    response_data['trial_info'] = {
+                        'is_trial': False,
+                        'trial_expired': True,
+                        'message': 'Trial expirado'
+                    }
+            
+            # 🔥 SEXTO: ADICIONAR SUBSCRIPTION INFO PARA PAGANTES
+            elif user_type in ['regular', 'pro', 'premium'] and plan_id in [1, 2]:
                 response_data['subscription_info'] = {
                     'is_paid': True,
                     'status': 'active',
-                    'expires_at': subscription_data.get('expires_at'),
-                    'days_until_renewal': subscription_data.get('days_remaining', 0),
-                    'plan_name': user_data.get('plan_name', plan_name)
+                    'plan_name': plan_name,
+                    'plan_id': plan_id
                 }
-            elif subscription_data.get('status') == 'paid_expired':
-                response_data['subscription_info'] = {
-                    'is_paid': False,
-                    'status': 'expired',
-                    'message': 'Assinatura expirada'
-                }
+            
+            # 🔥 SÉTIMO: ADICIONAR LOGS PARA DEBUG
+            print(f"✅ Resposta final: user_type={user_type}, plan_id={plan_id}")
+            print(f"📤 Enviando trial_info: {response_data.get('trial_info', 'None')}")
             
             return jsonify(response_data), 200
             
