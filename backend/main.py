@@ -31,6 +31,9 @@ from box_3_routes import box3_bp
 from amplitude_routes import amplitude_bp
 from payment_scheduler import start_payment_scheduler
 from screening_routes import screening_bp
+from calc_routes import calc_bp
+from rank_routes import get_rank_blueprint
+
 
 from dotenv import load_dotenv
 
@@ -126,6 +129,13 @@ except Exception as e:
     SCREENING_AVAILABLE = False
 
 
+try:
+    rank_bp = get_rank_blueprint()
+    app.register_blueprint(rank_bp)
+    print("✅ Blueprint Ranking registrado!")
+except Exception as e:
+    print(f"❌ Erro ao registrar ranking blueprint: {e}")
+
 # ===== REGISTRAR BLUEPRINTS =====
 
 # Blueprints existentes
@@ -157,7 +167,7 @@ app.register_blueprint(amplitude_bp)
 app.register_blueprint(get_scheduler_blueprint())
 control_pay_bp = get_control_pay_blueprint()
 app.register_blueprint(control_pay_bp)
-
+app.register_blueprint(calc_bp)
 
 CORS(app, 
      origins=['*'],
@@ -336,10 +346,8 @@ def analises():
 @app.route('/relatorios')
 @app.route('/relatorios.html')
 def relatorios():
-    try:
-        return send_from_directory('../frontend', 'relatorios.html')
-    except:
-        return "<h1>Relatórios - Em construção</h1>"
+    return send_from_directory('../frontend', 'relatorios.html')
+
     
 @app.route('/opcoes')
 @app.route('/opcoes.html')
@@ -380,6 +388,18 @@ def Screening():
 @app.route('/amplitude.html')  # Adicionar esta linha
 def ampli():
     return send_from_directory('../frontend', 'amplitude.html')
+
+
+@app.route('/calculadora')
+@app.route('/calculadora.html')
+def calculadora_page():
+    return send_from_directory('../frontend', 'calculadora.html')
+
+
+@app.route('/rank-volatilidade')
+@app.route('/rank-volatilidade.html')
+def rank_volatilidade():
+    return send_from_directory('../frontend', 'rank-volatilidade.html')
 
 # ===== PÁGINAS DE RETORNO DO PAGAMENTO =====
 
@@ -575,6 +595,8 @@ def status():
     mp_status = {"success": MP_AVAILABLE, "message": "Blueprint carregado" if MP_AVAILABLE else "Não disponível"}
     admin_status = {"success": ADMIN_AVAILABLE, "message": "Blueprint carregado" if ADMIN_AVAILABLE else "Não disponível"}
     carrossel_status = {"success": CARROSSEL_AVAILABLE, "message": "Blueprint carregado" if CARROSSEL_AVAILABLE else "Não disponível"}
+    screening_status = {"success": SCREENING_AVAILABLE, "message": "Blueprint carregado" if SCREENING_AVAILABLE else "Não disponível"}
+    
     
     return jsonify({
         'message': 'API Flask Online!',
@@ -582,9 +604,10 @@ def status():
         'database': 'Connected',
         'mercadopago': mp_status,
         'admin': admin_status,
-        'carrossel': carrossel_status
+        'carrossel': carrossel_status,
+        'screening': screening_status,
+        
     })
-
 @app.route('/api/test-db')
 def test_db():
     """Testar conexão com banco"""

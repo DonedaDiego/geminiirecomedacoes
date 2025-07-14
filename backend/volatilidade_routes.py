@@ -12,15 +12,6 @@ volatilidade_bp = Blueprint('volatilidade', __name__)
 
 @volatilidade_bp.route('/api/volatilidade/analise', methods=['POST'])
 def analise_volatilidade():
-    """
-    Endpoint para análise completa de volatilidade de ações
-    
-    Parâmetros esperados no JSON:
-    - ticker: código da ação (ex: 'PETR4')
-    - year: ano para análise (ex: '2024')
-    - inicio: data de início (opcional, padrão: '2020-01-01')
-    - fim: data de fim (opcional, padrão: '2025-12-31')
-    """
     try:
         # Obter dados do request
         data = request.get_json()

@@ -3,12 +3,13 @@ on:
   schedule:
     # 9h Brasil (12h UTC) - Manhã
     - cron: '0 12 * * *'
+    # 15h Brasil (18h UTC) - Tarde
+    - cron: '0 18 * * *'
     # 22h Brasil (01h UTC do dia seguinte) - Noite  
     - cron: '0 1 * * *'
   
   # Permite execução manual no GitHub
   workflow_dispatch:
-
 jobs:
   email-notifications:
     runs-on: ubuntu-latest
