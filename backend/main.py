@@ -3,43 +3,50 @@ import jwt
 from flask_cors import CORS
 from datetime import datetime, timedelta, timezone
 import os
+
 from database import get_db_connection
-import mercadopago_service
-from trial_routes import get_trial_blueprint
-from control_pay_routes import get_control_pay_blueprint
-from scheduler_routes import get_scheduler_blueprint
 
-from beta_routes import beta_bp
-from long_short_routes import long_short_bp
-from rsl_routes import get_rsl_blueprint
-from recommendations_routes import get_recommendations_blueprint
-from mercadopago_routes import get_mercadopago_blueprint
-from opcoes_routes import opcoes_bp
-from swing_trade_ml_routes import get_swing_trade_ml_blueprint
-from beta_regression_routes import beta_regression_bp
-from atsmom_routes import register_atsmom_routes
-from chart_ativos_routes import chart_ativos_bp
-from carrossel_yfinance_routes import get_carrossel_blueprint
-from recommendations_routes_free import get_recommendations_free_blueprint
-from volatilidade_routes import volatilidade_bp
-from email_routes import get_email_blueprint 
-from vol_regimes_routes import vol_regimes_bp
-from coupons_service import get_coupons_blueprint, get_validate_blueprint
-from control_pay_routes import get_control_pay_blueprint
-from arbitragem_puts_routes import arbitragem_puts_bp
-from box_3_routes import box3_bp
-from amplitude_routes import amplitude_bp
-from payment_scheduler import start_payment_scheduler
-from screening_routes import screening_bp
-from calc_routes import calc_bp
-from rank_routes import get_rank_blueprint
+#carteiras
+from carteiras.recommendations_routes_free import get_recommendations_free_blueprint
+from carteiras.chart_ativos_routes import chart_ativos_bp
+
+#gratis
+from gratis.beta_routes import beta_bp
+from gratis.rsl_routes import get_rsl_blueprint
+from gratis.amplitude_routes import amplitude_bp
+from gratis.vol_regimes_routes import vol_regimes_bp
+from gratis.carrossel_yfinance_routes import get_carrossel_blueprint
 
 
-from dotenv import load_dotenv
+### Pro
+from pro.long_short_routes import long_short_bp
+from pro.opcoes_routes import opcoes_bp
+from pro.arbitragem_puts_routes import arbitragem_puts_bp
+from pro.calc_routes import calc_bp
+from pro.box_3_routes import box3_bp
+from pro.rank_routes import get_rank_blueprint
+from pro.screening_routes import screening_bp
+
+## premium
+from premium.swing_trade_ml_routes import get_swing_trade_ml_blueprint
+from premium.beta_regression_routes import beta_regression_bp
+from premium.atsmom_routes import register_atsmom_routes
+
+# administração
+from pag.control_pay_routes import get_control_pay_blueprint
+from pag.mercadopago_routes import get_mercadopago_blueprint
+from pag.payment_scheduler import start_payment_scheduler
+from pag.scheduler_routes import get_scheduler_blueprint
+from pag.trial_routes import get_trial_blueprint
+
+from emails.coupons_service import get_coupons_blueprint, get_validate_blueprint
+from emails.email_routes import get_email_blueprint 
+from emails.email_service import setup_email_system
 
 
-from email_service import setup_email_system
 from auth_routes import get_auth_blueprint
+from carteiras.recommendation_routes import get_recommendations_blueprint
+from dotenv import load_dotenv
 
 load_dotenv()
 if not os.getenv('JWT_SECRET'):
@@ -117,7 +124,7 @@ except Exception as e:
 
 SCREENING_AVAILABLE = False
 try:
-    from screening_routes import screening_bp
+    from backend.pro.screening_routes import screening_bp
     app.register_blueprint(screening_bp, url_prefix='/screening')
     SCREENING_AVAILABLE = True
     print("✅ Blueprint Screening registrado!")
@@ -154,7 +161,6 @@ app.register_blueprint(beta_regression_bp, url_prefix='/beta_regression')
 app.register_blueprint(chart_ativos_bp)
 register_atsmom_routes(app)
 recommendations_free_bp = get_recommendations_free_blueprint()
-app.register_blueprint(volatilidade_bp)
 app.register_blueprint(recommendations_free_bp)
 trial_bp = get_trial_blueprint()
 app.register_blueprint(trial_bp)
@@ -207,7 +213,7 @@ if AUTH_AVAILABLE and auth_bp:
         AUTH_AVAILABLE = False
 # Newsletter
 try:
-    from newsletter_routes import get_newsletter_blueprint
+    from backend.emails.newsletter_routes import get_newsletter_blueprint
     newsletter_bp = get_newsletter_blueprint()
     app.register_blueprint(newsletter_bp)
     

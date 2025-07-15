@@ -3,11 +3,11 @@ import jwt
 import hashlib
 from datetime import datetime, timezone, timedelta
 from database import get_db_connection
-from email_service import email_service
-from trial_service import create_trial_user
-from control_pay_service import check_user_subscription_status
+from emails.email_service import email_service
+from pag.trial_service import create_trial_user
+from pag.control_pay_service import check_user_subscription_status
 from database import get_db_connection  # ← ADICIONAR ESTA LINHA
-from trial_service import downgrade_user_trial
+from pag.trial_service import downgrade_user_trial
 
 
 # Blueprint
