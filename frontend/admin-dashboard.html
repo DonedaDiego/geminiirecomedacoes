@@ -1839,7 +1839,14 @@
       
       await checkAdminAuth();
       await loadDashboardStats();
-
+      
+      // ✅ ADICIONAR: Carregar dados das abas se já estiver numa específica
+      const currentHash = window.location.hash.replace('#', '') || 'dashboard';
+      if (currentHash === 'opcoes') {
+        loadOpcoesRecommendations();
+        loadOpcoesStats();
+      }
+    
       loadRecentActivity(); 
       
       // Set default dates
@@ -3236,8 +3243,19 @@
       if (sectionName === 'payments') initPaymentsSection();
       if (sectionName === 'recommendationsFree') loadRecommendationsFree();
       if (sectionName === 'opcoes') {
-        loadOpcoesRecommendations();
-        loadOpcoesStats();
+        
+        if (adminToken) {
+          loadOpcoesRecommendations();
+          loadOpcoesStats();
+        } else {
+          
+          setTimeout(() => {
+            if (adminToken) {
+              loadOpcoesRecommendations();
+              loadOpcoesStats();
+            }
+          }, 1000);
+        }
       }
 
 
@@ -3834,6 +3852,12 @@
     }
 
     async function loadOpcoesRecommendations() {
+      // ✅ ADICIONAR ESTA VERIFICAÇÃO
+      if (!adminToken) {
+        console.log('⚠️ Token não disponível ainda, aguardando...');
+        return;
+      }
+      
       console.log('🔄 Carregando recomendações de opções...');
       
       try {

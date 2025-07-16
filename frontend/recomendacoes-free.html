@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Recomendações Free - Geminii Tech</title>
+  <title>Recomendações de Opções - Geminii Tech</title>
+  
+  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation"></script>
   <script>
     tailwind.config = {
       theme: {
@@ -24,9 +24,18 @@
       }
     }
   </script>
+  
+  <!-- Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Font Awesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
   <style>
+    * {
+      scroll-behavior: smooth;
+    }
+    
     body {
       font-family: 'Inter', sans-serif;
       background: #0f0f0f;
@@ -41,7 +50,7 @@
     }
     
     .card:hover {
-      transform: translateY(-2px);
+      transform: translateY(-4px);
       box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
       border-color: rgba(255, 255, 255, 0.2);
     }
@@ -52,47 +61,18 @@
       border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     }
     
-    .recommendation-card {
-      background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.05));
-      border: 1px solid rgba(99, 102, 241, 0.2);
-      backdrop-filter: blur(20px);
-      transition: all 0.3s ease;
+    .spinner {
+      border: 3px solid rgba(255, 255, 255, 0.1);
+      border-radius: 50%;
+      border-top: 3px solid #8b5cf6;
+      width: 32px;
+      height: 32px;
+      animation: spin 1s linear infinite;
     }
     
-    .recommendation-card:hover {
-      background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(139, 92, 246, 0.08));
-      border-color: rgba(99, 102, 241, 0.3);
-      transform: translateY(-2px);
-    }
-    
-    .buy-signal {
-      background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(16, 185, 129, 0.05));
-      border-color: rgba(16, 185, 129, 0.3);
-    }
-    
-    .sell-signal {
-      background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(239, 68, 68, 0.05));
-      border-color: rgba(239, 68, 68, 0.3);
-    }
-    
-    .pulse-glow {
-      animation: pulseGlow 2s ease-in-out infinite alternate;
-    }
-    
-    @keyframes pulseGlow {
-      from { box-shadow: 0 0 20px rgba(186, 57, 175, 0.3); }
-      to { box-shadow: 0 0 30px rgba(186, 57, 175, 0.6); }
-    }
-    
-    .loading-skeleton {
-      background: linear-gradient(90deg, #1a1a1a 25%, #2a2a2a 50%, #1a1a1a 75%);
-      background-size: 400% 100%;
-      animation: skeleton-loading 1.4s ease-in-out infinite;
-    }
-
-    @keyframes skeleton-loading {
-      0% { background-position: 100% 50%; }
-      100% { background-position: 0 50%; }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
     }
     
     .fade-in {
@@ -104,1074 +84,853 @@
       to { opacity: 1; transform: translateY(0); }
     }
 
-    .status-badge {
-      padding: 0.25rem 0.75rem;
-      border-radius: 9999px;
-      font-size: 0.75rem;
-      font-weight: 600;
-      text-transform: uppercase;
+    .option-card {
+      background: linear-gradient(135deg, rgba(186, 57, 175, 0.1), rgba(139, 92, 246, 0.1));
+      border: 1px solid rgba(186, 57, 175, 0.3);
+      transition: all 0.3s ease;
     }
 
-    .status-ativa {
-      background-color: rgba(16, 185, 129, 0.2);
+    .option-card:hover {
+      border-color: rgba(186, 57, 175, 0.6);
+      box-shadow: 0 10px 30px rgba(186, 57, 175, 0.2);
+    }
+
+    .status-active {
+      background: rgba(16, 185, 129, 0.2);
       color: #10b981;
       border: 1px solid rgba(16, 185, 129, 0.3);
     }
 
-    .status-ganho {
-      background-color: rgba(34, 197, 94, 0.2);
-      color: #22c55e;
-      border: 1px solid rgba(34, 197, 94, 0.3);
+    .status-finished-gain {
+      background: rgba(59, 130, 246, 0.2);
+      color: #3b82f6;
+      border: 1px solid rgba(59, 130, 246, 0.3);
     }
 
-    .status-perda {
-      background-color: rgba(239, 68, 68, 0.2);
+    .status-finished-stop {
+      background: rgba(239, 68, 68, 0.2);
       color: #ef4444;
       border: 1px solid rgba(239, 68, 68, 0.3);
     }
 
-    .error-card {
-      background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(220, 38, 38, 0.05));
-      border: 1px solid rgba(239, 68, 68, 0.3);
+    .status-finished-expiry {
+      background: rgba(245, 158, 11, 0.2);
+      color: #f59e0b;
+      border: 1px solid rgba(245, 158, 11, 0.3);
     }
 
-    .retry-btn {
-      background: linear-gradient(135deg, #6366f1, #8b5cf6);
-      transition: all 0.3s ease;
+    .tab-active {
+      border-bottom: 2px solid #ba39af;
+      color: #ba39af;
+      font-weight: 600;
     }
 
-    .retry-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 10px 25px rgba(99, 102, 241, 0.3);
-    }
-
-    /* 🔥 NOVOS ESTILOS PARA UPDATE INDICATOR */
-    .update-indicator {
-      animation: pulse 2s infinite;
-    }
-
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.5; }
-    }
-
-    .price-updated {
-      position: relative;
-    }
-
-    .price-updated::after {
-      content: '';
-      position: absolute;
-      top: -2px;
-      right: -2px;
-      width: 6px;
-      height: 6px;
-      background: #10b981;
-      border-radius: 50%;
-      animation: pulse 2s infinite;
+    .filter-active {
+      background: #ba39af;
+      color: white;
     }
   </style>
 </head>
-<body class="min-h-screen text-white">
+<body class="min-h-screen">
   
   <!-- Navigation -->
-  <nav class="navbar fixed top-0 left-0 right-0 z-50 px-6 py-4">
-    <div class="max-w-7xl mx-auto flex items-center justify-between">
-      <div class="flex items-center space-x-8">
-        <div class="flex items-center space-x-3">
-          <img src="assets/logo.png" alt="Geminii Logo" class="w-8 h-8 rounded-lg">
-          <span class="text-xl font-bold text-white">Geminii</span>
-        </div>
-        <div class="hidden md:flex items-center space-x-6">
-          <a href="dashboard.html" class="text-gray-300 hover:text-primary transition-colors">Dashboard</a>
-          <a href="recomendacoes-free.html" class="text-primary font-medium">Recomendações Free</a>
-        </div>
+  <nav class="fixed top-6 left-1/2 transform -translate-x-1/2 z-50 bg-opacity-5 border-opacity-10 bg-white border-white border rounded-full px-4 py-3 shadow-xl backdrop-blur-md">
+    <div class="flex items-center justify-between">
+      <div class="flex items-center">
+        <img src="logo.png" alt="Geminii Logo" class="w-6 h-6 cursor-pointer" onclick="window.location.href='/'">
       </div>
-      
-      <div class="flex items-center space-x-4">
-        <div id="connectionStatus" class="flex items-center space-x-2">
-          <div class="w-2 h-2 bg-success rounded-full animate-pulse"></div>
-          <span class="text-sm text-gray-300">Online</span>
+      <div class="hidden md:flex items-center space-x-6 text-xs text-gray-300 ml-8">
+        <a href="/dashboard" class="hover:text-white transition-colors">Dashboard</a>
+        <a href="/analises" class="hover:text-white transition-colors">Carteiras</a>
+        <span class="text-white font-medium">Opções</span>
+      </div>
+      <div class="flex items-center space-x-3 ml-8">
+        <div id="apiStatus" class="w-8 h-8 bg-green-500 bg-opacity-10 border border-green-500 border-opacity-30 rounded-full flex items-center justify-center relative">
+          <i class="fas fa-chart-area text-green-500 text-xs"></i>
+          <div class="absolute -top-1 -right-1 w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
         </div>
-        <!-- 🔥 BOTÃO DE ATUALIZAÇÃO MANUAL -->
-        <button onclick="refreshRecommendations()" class="bg-primary hover:bg-primary/80 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
-          <i class="fas fa-sync mr-2"></i>Atualizar
-        </button>
-        <button onclick="logout()" class="bg-red-50 hover:bg-red-100 text-red-600 px-4 py-2 rounded-lg text-sm font-medium transition-colors">
-          Sair
-        </button>
       </div>
     </div>
   </nav>
 
   <!-- Main Content -->
-  <main class="pt-24 px-6 pb-12">
+  <main class="pt-20 px-6 pb-12">
     <div class="max-w-7xl mx-auto">
       
-      <!-- Header -->
-      <div class="card rounded-2xl p-8 mb-8 fade-in">
-        <div class="flex flex-col lg:flex-row items-center justify-between gap-6">
-          <div>
-            <h1 class="text-3xl font-bold text-white mb-2">
-              <i class="fas fa-brain text-geminii mr-3"></i>
-              Recomendações Free Mensais
-            </h1>
-            <p class="text-gray-300">
-              Análises geradas por Machine Learning com dados reais do mercado
-            </p>
-          </div>
-          <div class="flex items-center gap-4">
-            <div class="text-center">
-              <div class="text-sm text-gray-400">Última Atualização</div>
-              <div id="lastUpdate" class="text-lg font-semibold text-white">--</div>
-            </div>
-            <div class="text-center">
-              <div class="text-sm text-gray-400">Próxima em</div>
-              <div id="nextUpdate" class="text-lg font-semibold text-accent">--</div>
-            </div>
-            <!-- 🔥 INDICADOR DE AUTO-UPDATE -->
-            <div class="text-center">
-              <div class="text-sm text-gray-400">Auto-Update</div>
-              <div id="autoUpdateStatus" class="text-sm font-semibold text-success">
-                <i class="fas fa-play mr-1"></i>Ativo
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Stats Cards -->
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-        <div class="card rounded-xl p-6 fade-in">
-          <div class="flex items-center justify-between">
-            <div>
-              <div class="text-2xl font-bold text-white" id="totalRecommendations">0</div>
-              <div class="text-sm text-gray-400">Recomendações Ativas</div>
-            </div>
-            <div class="w-12 h-12 bg-primary/20 rounded-lg flex items-center justify-center">
-              <i class="fas fa-chart-line text-primary"></i>
-            </div>
-          </div>
-        </div>
-        
-        <div class="card rounded-xl p-6 fade-in">
-          <div class="flex items-center justify-between">
-            <div>
-              <div class="text-2xl font-bold text-success" id="buySignals">0</div>
-              <div class="text-sm text-gray-400">Sinais de Compra</div>
-            </div>
-            <div class="w-12 h-12 bg-success/20 rounded-lg flex items-center justify-center">
-              <i class="fas fa-arrow-up text-success"></i>
-            </div>
-          </div>
-        </div>
-        
-        <div class="card rounded-xl p-6 fade-in">
-          <div class="flex items-center justify-between">
-            <div>
-              <div class="text-2xl font-bold text-danger" id="sellSignals">0</div>
-              <div class="text-sm text-gray-400">Sinais de Venda</div>
-            </div>
-            <div class="w-12 h-12 bg-danger/20 rounded-lg flex items-center justify-center">
-              <i class="fas fa-arrow-down text-danger"></i>
-            </div>
-          </div>
-        </div>
-        
-        <div class="card rounded-xl p-6 fade-in">
-          <div class="flex items-center justify-between">
-            <div>
-              <div class="text-2xl font-bold text-warning" id="successRate">--</div>
-              <div class="text-sm text-gray-400">Taxa de Acerto</div>
-            </div>
-            <div class="w-12 h-12 bg-warning/20 rounded-lg flex items-center justify-center">
-              <i class="fas fa-percentage text-warning"></i>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Active Recommendations -->
+      <!-- Page Header -->
       <div class="mb-8">
-        <h2 class="text-2xl font-bold text-white mb-6">
-          <i class="fas fa-robot mr-2 text-geminii"></i>
-          Recomendações Ativas
-          <!-- 🔥 INDICADOR DE PERFORMANCE EM TEMPO REAL -->
-          <span class="text-sm text-gray-400 ml-2">
-            <i class="fas fa-wifi text-success"></i> Performance em tempo real
-          </span>
-        </h2>
-        
-        <div id="recommendationsContainer" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <!-- Loading skeleton -->
-          <div class="recommendation-card rounded-xl p-6 loading-skeleton h-96"></div>
-          <div class="recommendation-card rounded-xl p-6 loading-skeleton h-96"></div>
+        <h1 class="text-4xl font-bold text-white mb-2 flex items-center">
+          <i class="fas fa-chart-area text-geminii mr-4"></i>
+          Recomendações de Opções
+        </h1>
+        <p class="text-gray-300 text-lg">Análises e recomendações especializadas para operações com opções</p>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <div class="mb-8">
+        <div class="flex space-x-1 bg-gray-800 bg-opacity-50 rounded-lg p-1">
+          <button id="monthlyTab" onclick="switchTab('monthly')" class="tab-active flex-1 py-3 px-4 text-sm font-medium rounded-lg transition-all">
+            <i class="fas fa-calendar-day mr-2"></i>
+            Recomendações do Mês
+          </button>
+          <button id="yearlyTab" onclick="switchTab('yearly')" class="flex-1 py-3 px-4 text-sm font-medium text-gray-400 hover:text-white rounded-lg transition-all">
+            <i class="fas fa-chart-line mr-2"></i>
+            Acumulado 2025
+          </button>
         </div>
       </div>
 
-      <!-- Historical Performance -->
-      <div class="card rounded-2xl p-8">
-        <h2 class="text-2xl font-bold text-white mb-6">
-          <i class="fas fa-history mr-2 text-primary"></i>
-          Histórico de Performance
-        </h2>
-        
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div class="col-span-2">
-            <canvas id="performanceChart" height="300"></canvas>
-          </div>
-          <div class="space-y-4">
-            <div class="bg-white/5 rounded-lg p-4">
-              <h3 class="text-lg font-semibold text-white mb-3">Estatísticas do Mês</h3>
-              <div class="space-y-2">
-                <div class="flex justify-between">
-                  <span class="text-gray-400">Recomendações Fechadas:</span>
-                  <span class="text-white font-medium" id="closedRecommendations">0</span>
-                </div>
-                <div class="flex justify-between">
-                  <span class="text-gray-400">Ganho Médio:</span>
-                  <span class="text-success font-medium" id="avgGain">+0%</span>
-                </div>
-                <div class="flex justify-between">
-                  <span class="text-gray-400">Perda Média:</span>
-                  <span class="text-danger font-medium" id="avgLoss">-0%</span>
-                </div>
-                <div class="flex justify-between">
-                  <span class="text-gray-400">Profit Factor:</span>
-                  <span class="text-white font-medium" id="profitFactor">0.0</span>
-                </div>
+      <!-- Filters -->
+      <div class="mb-6">
+        <div class="flex flex-wrap gap-3">
+          <button id="filterAll" onclick="setFilter('all')" class="filter-active px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+            Todas
+          </button>
+          <button id="filterActive" onclick="setFilter('ATIVA')" class="bg-gray-700 text-gray-300 hover:bg-gray-600 hover:text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+            Ativas
+          </button>
+          <button id="filterGain" onclick="setFilter('FINALIZADA_GANHO')" class="bg-gray-700 text-gray-300 hover:bg-gray-600 hover:text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+            Ganhos
+          </button>
+          <button id="filterStop" onclick="setFilter('FINALIZADA_STOP')" class="bg-gray-700 text-gray-300 hover:bg-gray-600 hover:text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+            Stops
+          </button>
+          <button id="filterExpiry" onclick="setFilter('FINALIZADA_VENCIMENTO')" class="bg-gray-700 text-gray-300 hover:bg-gray-600 hover:text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+            Vencimentos
+          </button>
+        </div>
+      </div>
+
+      <!-- Monthly Section -->
+      <div id="monthlySection">
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          <div class="card rounded-xl p-6">
+            <div class="flex items-center justify-between mb-3">
+              <div class="w-12 h-12 bg-green-500 bg-opacity-20 rounded-lg flex items-center justify-center">
+                <i class="fas fa-chart-line text-green-500 text-xl"></i>
               </div>
+              <span class="text-xs text-gray-400">Este mês</span>
             </div>
-            
-            <div class="bg-white/5 rounded-lg p-4">
-              <h3 class="text-lg font-semibold text-white mb-3">Melhor Performance</h3>
-              <div id="bestPerformance" class="text-center py-4">
-                <div class="text-2xl font-bold text-success">--</div>
-                <div class="text-sm text-gray-400">Aguardando dados</div>
+            <div class="text-2xl font-bold text-white" id="monthlyTotal">0</div>
+            <div class="text-sm text-gray-400">Total de Recomendações</div>
+          </div>
+
+          <div class="card rounded-xl p-6">
+            <div class="flex items-center justify-between mb-3">
+              <div class="w-12 h-12 bg-blue-500 bg-opacity-20 rounded-lg flex items-center justify-center">
+                <i class="fas fa-play text-blue-500 text-xl"></i>
               </div>
+              <span class="text-xs text-gray-400">Ativos</span>
+            </div>
+            <div class="text-2xl font-bold text-blue-400" id="monthlyActive">0</div>
+            <div class="text-sm text-gray-400">Em Andamento</div>
+          </div>
+
+          <div class="card rounded-xl p-6">
+            <div class="flex items-center justify-between mb-3">
+              <div class="w-12 h-12 bg-green-500 bg-opacity-20 rounded-lg flex items-center justify-center">
+                <i class="fas fa-thumbs-up text-green-500 text-xl"></i>
+              </div>
+              <span class="text-xs text-gray-400">Sucesso</span>
+            </div>
+            <div class="text-2xl font-bold text-green-400" id="monthlyWins">0</div>
+            <div class="text-sm text-gray-400">Operações no Ganho</div>
+          </div>
+
+          <div class="card rounded-xl p-6">
+            <div class="flex items-center justify-between mb-3">
+              <div class="w-12 h-12 bg-purple-500 bg-opacity-20 rounded-lg flex items-center justify-center">
+                <i class="fas fa-percentage text-purple-500 text-xl"></i>
+              </div>
+              <span class="text-xs text-gray-400">Taxa</span>
+            </div>
+            <div class="text-2xl font-bold text-purple-400" id="monthlyWinRate">0%</div>
+            <div class="text-sm text-gray-400">Taxa de Acerto</div>
+          </div>
+        </div>
+
+        <!-- Monthly Recommendations Container -->
+        <div id="monthlyRecommendations">
+          <!-- Loading inicial -->
+          <div class="card rounded-2xl p-8">
+            <div class="text-center py-12">
+              <div class="spinner mx-auto mb-4"></div>
+              <p class="text-gray-300">Carregando recomendações do mês...</p>
             </div>
           </div>
         </div>
       </div>
+
+      <!-- Yearly Section -->
+      <div id="yearlySection" class="hidden">
+        <!-- Yearly Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
+          <div class="card rounded-xl p-6">
+            <div class="flex items-center justify-between mb-3">
+              <div class="w-12 h-12 bg-blue-500 bg-opacity-20 rounded-lg flex items-center justify-center">
+                <i class="fas fa-calendar text-blue-500 text-xl"></i>
+              </div>
+              <span class="text-xs text-gray-400">2025</span>
+            </div>
+            <div class="text-2xl font-bold text-white" id="yearlyTotal">0</div>
+            <div class="text-sm text-gray-400">Total Acumulado</div>
+          </div>
+
+          <div class="card rounded-xl p-6">
+            <div class="flex items-center justify-between mb-3">
+              <div class="w-12 h-12 bg-green-500 bg-opacity-20 rounded-lg flex items-center justify-center">
+                <i class="fas fa-trophy text-green-500 text-xl"></i>
+              </div>
+              <span class="text-xs text-gray-400">Ganhos</span>
+            </div>
+            <div class="text-2xl font-bold text-green-400" id="yearlyWins">0</div>
+            <div class="text-sm text-gray-400">Operações Ganhadoras</div>
+          </div>
+
+          <div class="card rounded-xl p-6">
+            <div class="flex items-center justify-between mb-3">
+              <div class="w-12 h-12 bg-red-500 bg-opacity-20 rounded-lg flex items-center justify-center">
+                <i class="fas fa-times text-red-500 text-xl"></i>
+              </div>
+              <span class="text-xs text-gray-400">Perdas</span>
+            </div>
+            <div class="text-2xl font-bold text-red-400" id="yearlyLosses">0</div>
+            <div class="text-sm text-gray-400">Stops + Vencimentos</div>
+          </div>
+
+          <div class="card rounded-xl p-6">
+            <div class="flex items-center justify-between mb-3">
+              <div class="w-12 h-12 bg-purple-500 bg-opacity-20 rounded-lg flex items-center justify-center">
+                <i class="fas fa-chart-pie text-purple-500 text-xl"></i>
+              </div>
+              <span class="text-xs text-gray-400">Taxa</span>
+            </div>
+            <div class="text-2xl font-bold text-purple-400" id="yearlyWinRate">0%</div>
+            <div class="text-sm text-gray-400">Taxa de Acerto</div>
+          </div>
+
+          <div class="card rounded-xl p-6">
+            <div class="flex items-center justify-between mb-3">
+              <div class="w-12 h-12 bg-yellow-500 bg-opacity-20 rounded-lg flex items-center justify-center">
+                <i class="fas fa-coins text-yellow-500 text-xl"></i>
+              </div>
+              <span class="text-xs text-gray-400">Performance</span>
+            </div>
+            <div class="text-2xl font-bold text-yellow-400" id="yearlyPerformance">0%</div>
+            <div class="text-sm text-gray-400">Retorno Médio</div>
+          </div>
+        </div>
+
+        <!-- Yearly Recommendations Container -->
+        <div id="yearlyRecommendations">
+          <!-- Loading inicial -->
+          <div class="card rounded-2xl p-8">
+            <div class="text-center py-12">
+              <div class="spinner mx-auto mb-4"></div>
+              <p class="text-gray-300">Carregando dados do ano...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
     </div>
   </main>
 
-  <!-- Modal para Detalhes -->
-  <div id="detailsModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden">
-    <div class="flex items-center justify-center min-h-screen p-4">
-      <div class="bg-gray-900 rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-        <div class="p-6 border-b border-gray-800">
-          <div class="flex items-center justify-between">
-            <h3 class="text-2xl font-bold text-white">Detalhes da Recomendação</h3>
-            <button onclick="closeModal()" class="text-gray-400 hover:text-white">
-              <i class="fas fa-times text-xl"></i>
-            </button>
-          </div>
-        </div>
-        <div id="modalContent" class="p-6">
-          <!-- Content will be loaded here -->
-        </div>
-      </div>
-    </div>
-  </div>
-
   <script>
     // ===== VARIÁVEIS GLOBAIS =====
-    let recommendations = [];
-    let allRecommendations = [];
-    let performanceChart = null;
     let userToken = null;
     let currentUser = null;
-    let retryCount = 0;
-    const MAX_RETRIES = 3;
-
-    // 🔥 NOVAS VARIÁVEIS PARA AUTO-UPDATE
-    let autoUpdateInterval = null;
-    let lastUpdateTime = null;
-    const UPDATE_INTERVAL = 5 * 60 * 1000; // 5 minutos
+    let currentTab = 'monthly';
+    let currentFilter = 'all';
+    let allRecommendations = [];
 
     // ===== INICIALIZAÇÃO =====
-    async function init() {
-      console.log('🚀 Inicializando Recomendações Free...');
+    document.addEventListener('DOMContentLoaded', async function() {
+      console.log('🚀 Inicializando Opções...');
       
-      userToken = localStorage.getItem('geminii_token');
+      if (!checkAuth()) return;
+      
+      await loadRecommendations();
+      
+      console.log('✅ Opções inicializado!');
+    });
+
+    // ===== AUTENTICAÇÃO =====
+    function checkAuth() {
+      userToken = localStorage.getItem('geminii_token') || localStorage.getItem('authToken');
+      const userData = localStorage.getItem('geminii_user');
+      
       if (!userToken) {
-        console.log('❌ Token não encontrado - redirecionando para login');
+        console.log('❌ Token não encontrado');
         window.location.href = '/login.html';
-        return;
+        return false;
       }
-
-      console.log('✅ Token encontrado');
       
+      if (userData) {
+        try {
+          currentUser = JSON.parse(userData);
+          console.log('✅ Usuário logado:', currentUser.name);
+        } catch (error) {
+          console.error('Erro ao parsear dados do usuário:', error);
+        }
+      }
+      
+      return true;
+    }
+
+    // ===== CARREGAR RECOMENDAÇÕES =====
+    async function loadRecommendations() {
       try {
-        await verifyAuthWithRetry();
-        await loadRecommendationsWithRetry();
-        initPerformanceChart();
-        updateTimers();
+        console.log('🚀 Iniciando carregamento de recomendações...');
+        showLoading();
         
-        // 🔥 INICIAR AUTO-UPDATE
-        startAutoUpdate();
-        
-        setInterval(updateTimers, 60000);
-        setInterval(checkConnection, 30000);
-        
-        console.log('✅ Inicialização concluída com sucesso!');
-      } catch (error) {
-        console.error('❌ Erro na inicialização:', error);
-        showGlobalError('Erro na inicialização. Tentando novamente...');
-        setTimeout(() => window.location.reload(), 3000);
-      }
-    }
-
-    // ===== VERIFICAR AUTENTICAÇÃO =====
-    async function verifyAuthWithRetry(attempt = 1) {
-      try {
-        console.log(`🔍 Verificando autenticação (tentativa ${attempt})...`);
-        
-        const response = await fetch('/auth/verify', {
-          headers: { 
-            'Authorization': `Bearer ${userToken}`,
-            'Content-Type': 'application/json'
-          },
-          cache: 'no-cache'
-        });
-
-        console.log('📡 Status da verificação:', response.status);
-
-        if (response.status === 401 || response.status === 403) {
-          throw new Error('Token inválido ou expirado');
-        }
-
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}`);
-        }
-
-        const result = await response.json();
-        if (!result.success) {
-          throw new Error('Verificação falhou: ' + (result.error || 'Erro desconhecido'));
-        }
-
-        currentUser = result.data.user;
-        console.log('✅ Usuário autenticado:', currentUser.name);
-        updateConnectionStatus(true);
-        
-        return result;
-      } catch (error) {
-        console.error(`❌ Erro na verificação (tentativa ${attempt}):`, error);
-        updateConnectionStatus(false);
-        
-        if (error.message.includes('Token inválido') || error.message.includes('expirado')) {
-          console.log('🚪 Token inválido - fazendo logout...');
-          logout();
-          return;
-        }
-        
-        if (attempt < MAX_RETRIES) {
-          console.log(`🔄 Tentando novamente em 2 segundos...`);
-          await new Promise(resolve => setTimeout(resolve, 2000));
-          return verifyAuthWithRetry(attempt + 1);
-        }
-        
-        throw error;
-      }
-    }
-
-    // 🔥 FUNÇÃO DE ATUALIZAÇÃO DE PREÇOS (NOVA)
-    async function updateCurrentPrices() {
-      console.log('💰 Atualizando preços atuais...');
-      
-      try {
-        const response = await fetch('/api/recommendations/free/update-prices', {
-          method: 'POST',
-          headers: { 
-            'Authorization': `Bearer ${userToken}`,
-            'Content-Type': 'application/json'
-          },
-          cache: 'no-cache'
-        });
-
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}`);
-        }
-
-        const result = await response.json();
-        
-        if (result.success) {
-          console.log('✅ Preços atualizados:', result.message);
-          
-          // Atualizar dados locais
-          if (result.recommendations) {
-            recommendations = result.recommendations.filter(r => r.status === 'ATIVA');
-            allRecommendations = result.recommendations;
-            
-            // Atualizar UI
-            displayRecommendations();
-            updateStats();
-            updatePerformanceChart();
-            
-            lastUpdateTime = new Date();
-            updateLastUpdateDisplay();
-            
-            // Mostrar feedback visual sutil (apenas em auto-update)
-            if (!event || !event.target) {
-              showPriceUpdateFeedback();
-            }
-          }
-          
-          return result;
-        } else {
-          throw new Error(result.error);
-        }
-        
-      } catch (error) {
-        console.error('❌ Erro ao atualizar preços:', error);
-        return { success: false, error: error.message };
-      }
-    }
-
-    // 🔥 FUNÇÃO PARA INICIAR AUTO-UPDATE
-    function startAutoUpdate() {
-      if (autoUpdateInterval) {
-        clearInterval(autoUpdateInterval);
-      }
-      
-      console.log(`🔄 Iniciando auto-update a cada ${UPDATE_INTERVAL / 1000 / 60} minutos`);
-      
-      autoUpdateInterval = setInterval(async () => {
-        console.log('⏰ Auto-update disparado');
-        await updateCurrentPrices();
-      }, UPDATE_INTERVAL);
-
-      // Atualizar status visual
-      updateAutoUpdateStatus(true);
-    }
-
-    // 🔥 FUNÇÃO PARA PARAR AUTO-UPDATE
-    function stopAutoUpdate() {
-      if (autoUpdateInterval) {
-        clearInterval(autoUpdateInterval);
-        autoUpdateInterval = null;
-        console.log('⏹️ Auto-update parado');
-        updateAutoUpdateStatus(false);
-      }
-    }
-
-    // 🔥 ATUALIZAR STATUS DO AUTO-UPDATE
-    function updateAutoUpdateStatus(isActive) {
-      const statusEl = document.getElementById('autoUpdateStatus');
-      if (statusEl) {
-        if (isActive) {
-          statusEl.innerHTML = '<i class="fas fa-play mr-1"></i>Ativo';
-          statusEl.className = 'text-sm font-semibold text-success';
-        } else {
-          statusEl.innerHTML = '<i class="fas fa-pause mr-1"></i>Pausado';
-          statusEl.className = 'text-sm font-semibold text-warning';
-        }
-      }
-    }
-
-    // ===== CARREGAR RECOMENDAÇÕES COM AUTO-UPDATE =====
-    async function loadRecommendationsWithRetry(attempt = 1) {
-      console.log(`📡 Carregando recomendações (tentativa ${attempt})...`);
-      
-      try {
-        // 🔥 USAR ENDPOINT CORRETO COM AUTO-UPDATE
-        const response = await fetch('/api/recommendations/free/all', {
-          headers: { 
-            'Authorization': `Bearer ${userToken}`,
-            'Content-Type': 'application/json'
-          },
-          cache: 'no-cache'
-        });
-
-        console.log('📊 Status da resposta:', response.status, response.statusText);
-
-        if (response.status === 401) {
-          console.log('🔑 Token expirado - tentando renovar...');
-          await verifyAuthWithRetry();
-          if (attempt < MAX_RETRIES) {
-            return loadRecommendationsWithRetry(attempt + 1);
-          }
-        }
-
-        if (!response.ok) {
-          throw new Error(`Erro HTTP ${response.status}: ${response.statusText}`);
-        }
-
-        const result = await response.json();
-        console.log('📄 Resultado da API recebido');
-        
-        if (result.success) {
-          allRecommendations = result.recommendations || [];
-          console.log(`📈 Total de recomendações: ${allRecommendations.length}`);
-          
-          recommendations = allRecommendations.filter(r => r.status === 'ATIVA');
-          console.log(`🎯 Recomendações ativas: ${recommendations.length}`);
-          
-          displayRecommendations();
-          updateStats();
-          updatePerformanceChart();
-          updateConnectionStatus(true);
-          
-          lastUpdateTime = new Date();
-          updateLastUpdateDisplay();
-          
-          return result;
-        } else {
-          throw new Error(result.error || 'Erro desconhecido da API');
-        }
-      } catch (error) {
-        console.error(`❌ Erro ao carregar recomendações (tentativa ${attempt}):`, error);
-        updateConnectionStatus(false);
-        
-        if (attempt < MAX_RETRIES) {
-          console.log(`🔄 Tentando novamente em 3 segundos...`);
-          await new Promise(resolve => setTimeout(resolve, 3000));
-          return loadRecommendationsWithRetry(attempt + 1);
-        }
-        
-        showError(error.message || 'Erro de conexão. Verifique sua internet e tente novamente.');
-        throw error;
-      }
-    }
-
-    // ===== REFRESH MANUAL COMPLETO =====
-    async function refreshRecommendations() {
-      const btn = event.target.closest('button');
-      const originalText = btn.innerHTML;
-      
-      btn.disabled = true;
-      btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Atualizando...';
-      
-      try {
-        retryCount = 0;
-        
-        // 🔥 USAR ENDPOINT DE REFRESH COMPLETO
-        console.log('🔄 Refresh completo...');
-        const response = await fetch('/api/recommendations/free/refresh', {
-          method: 'POST',
-          headers: { 
+        // Tentar buscar recomendações ativas primeiro
+        console.log('📡 Fazendo requisição para /api/opcoes/public/active...');
+        let response = await fetch('/api/opcoes/public/active', {
+          headers: {
             'Authorization': `Bearer ${userToken}`,
             'Content-Type': 'application/json'
           }
         });
         
+        console.log('📥 Resposta ativas:', response.status, response.statusText);
+        
         if (!response.ok) {
-          throw new Error(`HTTP ${response.status}`);
+          if (response.status === 401) {
+            console.log('🔒 Token expirado, redirecionando...');
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('geminii_token');
+            window.location.href = '/login.html';
+            return;
+          }
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
         
-        const result = await response.json();
+        let data = await response.json();
+        console.log('📊 Dados ativas recebidos:', data);
         
-        if (result.success) {
-          // Atualizar dados
-          allRecommendations = result.recommendations || [];
-          recommendations = allRecommendations.filter(r => r.status === 'ATIVA');
+        let activeRecs = [];
+        if (data.success && data.recommendations && Array.isArray(data.recommendations)) {
+          activeRecs = data.recommendations;
+          console.log('✅ Recomendações ativas processadas:', activeRecs.length);
+        } else {
+          console.warn('⚠️ Resposta de ativas inválida:', data);
+        }
+        
+        // Buscar recomendações recentes (incluindo finalizadas)
+        console.log('📡 Fazendo requisição para /api/opcoes/public/recent...');
+        response = await fetch('/api/opcoes/public/recent', {
+          headers: {
+            'Authorization': `Bearer ${userToken}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        console.log('📥 Resposta recentes:', response.status, response.statusText);
+        
+        let recentRecs = [];
+        if (response.ok) {
+          data = await response.json();
+          console.log('📊 Dados recentes recebidos:', data);
           
-          // Atualizar UI
-          displayRecommendations();
-          updateStats();
-          updatePerformanceChart();
-          
-          lastUpdateTime = new Date();
-          updateLastUpdateDisplay();
-          
-          // Show success feedback
-          btn.innerHTML = '<i class="fas fa-check mr-2"></i>Atualizado!';
-          
-          if (result.price_update_success) {
-            showToast('✅ Preços e dados atualizados com sucesso!', 'success');
+          if (data.success && data.recommendations && Array.isArray(data.recommendations)) {
+            recentRecs = data.recommendations;
+            console.log('✅ Recomendações recentes processadas:', recentRecs.length);
           } else {
-            showToast('⚠️ Dados recarregados, mas alguns preços podem estar desatualizados', 'warning');
+            console.warn('⚠️ Resposta de recentes inválida:', data);
           }
         } else {
-          throw new Error(result.error);
+          console.warn('⚠️ Falha ao carregar recentes:', response.status);
         }
         
-        setTimeout(() => {
-          btn.innerHTML = originalText;
-          btn.disabled = false;
-        }, 2000);
+        // Combinar e evitar duplicatas
+        console.log('🔄 Combinando dados...');
+        allRecommendations = [...activeRecs];
         
-      } catch (error) {
-        console.error('Erro ao atualizar:', error);
-        btn.innerHTML = '<i class="fas fa-exclamation-triangle mr-2"></i>Erro';
-        showToast('❌ Erro ao atualizar: ' + error.message, 'error');
-        
-        setTimeout(() => {
-          btn.innerHTML = originalText;
-          btn.disabled = false;
-        }, 3000);
-      }
-    }
-
-    // ===== ATUALIZAR STATUS DA CONEXÃO =====
-    function updateConnectionStatus(isOnline) {
-      const statusEl = document.getElementById('connectionStatus');
-      if (!statusEl) return;
-      
-      if (isOnline) {
-        statusEl.innerHTML = `
-          <div class="w-2 h-2 bg-success rounded-full animate-pulse"></div>
-          <span class="text-sm text-gray-300">Online</span>
-        `;
-      } else {
-        statusEl.innerHTML = `
-          <div class="w-2 h-2 bg-danger rounded-full animate-pulse"></div>
-          <span class="text-sm text-gray-300">Offline</span>
-        `;
-      }
-    }
-
-    // ===== VERIFICAR CONEXÃO =====
-    async function checkConnection() {
-      try {
-        const response = await fetch('/auth/verify', {
-          headers: { 'Authorization': `Bearer ${userToken}` },
-          cache: 'no-cache'
+        recentRecs.forEach(rec => {
+          const exists = allRecommendations.find(r => 
+            r.ticker_opcao === rec.ticker_opcao && 
+            r.data_recomendacao === rec.data_recomendacao
+          );
+          
+          if (!exists) {
+            allRecommendations.push(rec);
+          }
         });
-        updateConnectionStatus(response.ok);
+        
+        console.log(`📈 Total combinado: ${allRecommendations.length} recomendações`);
+        
+        // Debug: verificar estrutura dos dados
+        if (allRecommendations.length > 0) {
+          console.log('🔍 Primeira recomendação (debug):', JSON.stringify(allRecommendations[0], null, 2));
+          
+          // Verificar se todas têm status
+          const semStatus = allRecommendations.filter(r => !r.status);
+          if (semStatus.length > 0) {
+            console.error('❌ Recomendações sem status:', semStatus.length);
+            console.error('❌ Exemplos sem status:', semStatus.slice(0, 3));
+          }
+        }
+        
+        if (allRecommendations.length === 0) {
+          console.log('📭 Nenhuma recomendação encontrada');
+          showNoData();
+        } else {
+          console.log('🎯 Processando dados...');
+          updateStats();
+          displayRecommendations();
+          console.log('✅ Dados processados com sucesso!');
+        }
+        
       } catch (error) {
-        updateConnectionStatus(false);
+        console.error('❌ Erro ao carregar recomendações:', error);
+        console.error('❌ Stack trace:', error.stack);
+        showError(error.message);
       }
     }
 
-    // ===== EXIBIR RECOMENDAÇÕES COM INDICADORES DE UPDATE =====
-    function displayRecommendations() {
-      const container = document.getElementById('recommendationsContainer');
+    // ===== SWITCH TABS =====
+    function switchTab(tab) {
+      currentTab = tab;
       
-      if (!recommendations || recommendations.length === 0) {
-        container.innerHTML = `
-          <div class="col-span-2 text-center py-12">
-            <i class="fas fa-inbox text-6xl text-gray-600 mb-4"></i>
-            <p class="text-xl text-gray-400">Nenhuma recomendação ativa no momento</p>
-            <p class="text-sm text-gray-500 mt-2">Novas recomendações são geradas mensalmente</p>
-            <button onclick="refreshRecommendations()" class="mt-4 retry-btn text-white px-6 py-3 rounded-lg font-medium">
-              <i class="fas fa-sync mr-2"></i>Tentar Novamente
-            </button>
-          </div>
-        `;
-        return;
+      // Update tab styles
+      document.getElementById('monthlyTab').classList.remove('tab-active');
+      document.getElementById('yearlyTab').classList.remove('tab-active');
+      document.getElementById('monthlyTab').classList.add('text-gray-400');
+      document.getElementById('yearlyTab').classList.add('text-gray-400');
+      
+      if (tab === 'monthly') {
+        document.getElementById('monthlyTab').classList.add('tab-active');
+        document.getElementById('monthlyTab').classList.remove('text-gray-400');
+        document.getElementById('monthlySection').classList.remove('hidden');
+        document.getElementById('yearlySection').classList.add('hidden');
+      } else {
+        document.getElementById('yearlyTab').classList.add('tab-active');
+        document.getElementById('yearlyTab').classList.remove('text-gray-400');
+        document.getElementById('monthlySection').classList.add('hidden');
+        document.getElementById('yearlySection').classList.remove('hidden');
       }
-
-      console.log('🎨 Exibindo recomendações:', recommendations.length);
-      container.innerHTML = recommendations.map(rec => createRecommendationCard(rec)).join('');
       
-      setTimeout(loadMiniCharts, 100);
+      updateStats();
+      displayRecommendations();
     }
 
-    // ===== CRIAR CARD DE RECOMENDAÇÃO COM PERFORMANCE REAL =====
-    function createRecommendationCard(rec) {
-      const isCompra = rec.action === 'COMPRA';
-      const cardClass = isCompra ? 'buy-signal' : 'sell-signal';
-      const actionIcon = isCompra ? 'fa-arrow-trend-up' : 'fa-arrow-trend-down';
-      const actionColor = isCompra ? 'text-success' : 'text-danger';
+    // ===== SET FILTER =====
+    function setFilter(filter) {
+      currentFilter = filter;
       
-      // 🔥 USAR DADOS REAIS DO BACKEND (JÁ ATUALIZADOS)
-      const currentPrice = rec.current_price || rec.entry_price;
-      const performance = rec.performance || 0; // Performance já calculada no backend
-      const potentialProfit = ((rec.target_price - rec.entry_price) / rec.entry_price * 100);
-      const risk = Math.abs((rec.entry_price - rec.stop_loss) / rec.entry_price * 100);
-      const riskReward = risk > 0 ? (Math.abs(potentialProfit) / risk) : 0;
-
-      // 🔥 INDICADOR DE ATUALIZAÇÃO RECENTE
-      const isRecentUpdate = lastUpdateTime && (new Date() - lastUpdateTime) < (10 * 60 * 1000); // 10 min
-      const updateIndicator = isRecentUpdate ? 
-        '<div class="absolute top-2 right-2 w-3 h-3 bg-green-400 rounded-full animate-pulse" title="Preços atualizados recentemente"></div>' : '';
-
-      return `
-        <div class="recommendation-card ${cardClass} rounded-xl p-6 fade-in cursor-pointer relative" onclick="showDetails('${rec.id}')">
-          ${updateIndicator}
-          
-          <div class="flex items-center justify-between mb-4">
-            <div class="flex items-center gap-3">
-              <div class="w-12 h-12 bg-white/10 rounded-lg flex items-center justify-center">
-                <i class="fas ${actionIcon} ${actionColor} text-xl"></i>
-              </div>
-              <div>
-                <h3 class="text-xl font-bold text-white">${rec.ticker}</h3>
-                <p class="text-sm text-gray-400">${rec.company_name || 'Ação Brasileira'}</p>
-              </div>
-            </div>
-            <div class="text-right">
-              <span class="status-badge status-ativa">
-                ${rec.action}
-              </span>
-              <div class="text-xs text-gray-400 mt-1">${formatDate(rec.created_at)}</div>
-            </div>
-          </div>
-
-          <div class="grid grid-cols-2 gap-4 mb-4">
-            <div>
-              <p class="text-sm text-gray-400">Preço Entrada</p>
-              <p class="text-lg font-semibold text-white">R$ ${rec.entry_price.toFixed(2)}</p>
-            </div>
-            <div>
-              <p class="text-sm text-gray-400">Preço Atual</p>
-              <p class="text-lg font-semibold ${performance >= 0 ? 'text-success' : 'text-danger'} ${isRecentUpdate ? 'price-updated' : ''}">
-                R$ ${currentPrice.toFixed(2)}
-                ${isRecentUpdate ? '<span class="text-xs ml-1">📈</span>' : ''}
-              </p>
-            </div>
-            <div>
-              <p class="text-sm text-gray-400">Alvo</p>
-              <p class="text-lg font-semibold text-accent">R$ ${rec.target_price.toFixed(2)}</p>
-            </div>
-            <div>
-              <p class="text-sm text-gray-400">Stop Loss</p>
-              <p class="text-lg font-semibold text-warning">R$ ${rec.stop_loss.toFixed(2)}</p>
-            </div>
-          </div>
-
-          <div class="flex items-center justify-between text-sm mb-4">
-            <div class="flex items-center gap-4">
-              <span class="text-gray-400">
-                <i class="fas fa-chart-line mr-1"></i>
-                Performance: <span class="${performance >= 0 ? 'text-success' : 'text-danger'} font-medium">
-                  ${performance >= 0 ? '+' : ''}${performance.toFixed(2)}%
-                </span>
-              </span>
-              <span class="text-gray-400">
-                <i class="fas fa-target mr-1"></i>
-                Potencial: <span class="${potentialProfit >= 0 ? 'text-success' : 'text-danger'} font-medium">
-                  ${potentialProfit >= 0 ? '+' : ''}${potentialProfit.toFixed(2)}%
-                </span>
-              </span>
-            </div>
-          </div>
-
-          <div class="flex items-center justify-between text-sm">
-            <span class="text-gray-400">
-              <i class="fas fa-shield-alt mr-1"></i>
-              R/R: <span class="text-white font-medium">1:${riskReward.toFixed(1)}</span>
-            </span>
-            <span class="text-gray-400">
-              <i class="fas fa-brain mr-1"></i>
-              Confiança: <span class="text-white font-medium">${rec.confidence || 85}%</span>
-            </span>
-          </div>
-
-          <div class="mt-4 pt-4 border-t border-white/10">
-            <canvas id="miniChart${rec.id}" height="80"></canvas>
-          </div>
-        </div>
-      `;
+      // Update filter styles - VERSÃO SIMPLIFICADA
+      document.querySelectorAll('[id^="filter"]').forEach(btn => {
+        btn.classList.remove('filter-active');
+        btn.classList.add('bg-gray-700', 'text-gray-300');
+      });
+      
+      // Mapeamento direto dos filtros
+      const filterMapping = {
+        'all': 'filterAll',
+        'ATIVA': 'filterActive', 
+        'FINALIZADA_GANHO': 'filterGain',
+        'FINALIZADA_STOP': 'filterStop',
+        'FINALIZADA_VENCIMENTO': 'filterExpiry'
+      };
+      
+      const targetButton = document.getElementById(filterMapping[filter]);
+      if (targetButton) {
+        targetButton.classList.add('filter-active');
+        targetButton.classList.remove('bg-gray-700', 'text-gray-300');
+      }
+      
+      displayRecommendations();
     }
 
-    // ===== CARREGAR MINI CHARTS =====
-    function loadMiniCharts() {
-      recommendations.forEach(rec => {
-        const canvas = document.getElementById(`miniChart${rec.id}`);
-        if (canvas) {
-          const ctx = canvas.getContext('2d');
-          
-          new Chart(ctx, {
-            type: 'line',
-            data: {
-              labels: ['', '', '', '', '', '', ''],
-              datasets: [{
-                data: generateMiniChartData(rec),
-                borderColor: rec.action === 'COMPRA' ? '#10b981' : '#ef4444',
-                borderWidth: 2,
-                tension: 0.4,
-                pointRadius: 0,
-                fill: true,
-                backgroundColor: rec.action === 'COMPRA' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)'
-              }]
-            },
-            options: {
-              responsive: true,
-              maintainAspectRatio: false,
-              plugins: {
-                legend: { display: false },
-                tooltip: { enabled: false }
-              },
-              scales: {
-                x: { display: false },
-                y: { display: false }
-              }
+    // ===== UPDATE STATS =====
+    function updateStats() {
+      try {
+        console.log('🔄 Atualizando estatísticas...');
+        console.log('📊 Total de recomendações:', allRecommendations.length);
+        
+        // Debug: verificar estrutura dos dados
+        if (allRecommendations.length > 0) {
+          console.log('📋 Exemplo de recomendação:', allRecommendations[0]);
+          allRecommendations.forEach((rec, index) => {
+            if (!rec.status) {
+              console.warn(`⚠️ Recomendação ${index} sem status:`, rec);
             }
           });
         }
-      });
+        
+        const now = new Date();
+        const currentMonth = now.getMonth();
+        const currentYear = now.getFullYear();
+        
+        let monthlyData = allRecommendations.filter(rec => {
+          if (!rec.data_recomendacao) return false;
+          const recDate = new Date(rec.data_recomendacao);
+          return recDate.getMonth() === currentMonth && recDate.getFullYear() === currentYear;
+        });
+        
+        let yearlyData = allRecommendations.filter(rec => {
+          if (!rec.data_recomendacao) return false;
+          const recDate = new Date(rec.data_recomendacao);
+          return recDate.getFullYear() === currentYear;
+        });
+        
+        console.log('📅 Dados mensais:', monthlyData.length);
+        console.log('📆 Dados anuais:', yearlyData.length);
+        
+        // Monthly stats - VERSÃO MAIS SEGURA
+        const monthlyTotal = monthlyData.length;
+        const monthlyActive = monthlyData.filter(r => r.status === 'ATIVA').length;
+        const monthlyWins = monthlyData.filter(r => r.status === 'FINALIZADA_GANHO').length;
+        
+        // ✅ MÉTODO MAIS SEGURO PARA CONTAR FINALIZADAS
+        const monthlyFinished = monthlyData.filter(r => {
+          const status = r.status || '';
+          return status === 'FINALIZADA_GANHO' || 
+                 status === 'FINALIZADA_STOP' || 
+                 status === 'FINALIZADA_VENCIMENTO' || 
+                 status === 'FINALIZADA_MANUAL';
+        }).length;
+        
+        const monthlyWinRate = monthlyFinished > 0 ? (monthlyWins / monthlyFinished * 100) : 0;
+        
+        // Yearly stats - VERSÃO MAIS SEGURA
+        const yearlyTotal = yearlyData.length;
+        const yearlyWins = yearlyData.filter(r => r.status === 'FINALIZADA_GANHO').length;
+        const yearlyLosses = yearlyData.filter(r => r.status === 'FINALIZADA_STOP' || r.status === 'FINALIZADA_VENCIMENTO').length;
+        
+        // ✅ MÉTODO MAIS SEGURO PARA CONTAR FINALIZADAS
+        const yearlyFinished = yearlyData.filter(r => {
+          const status = r.status || '';
+          return status === 'FINALIZADA_GANHO' || 
+                 status === 'FINALIZADA_STOP' || 
+                 status === 'FINALIZADA_VENCIMENTO' || 
+                 status === 'FINALIZADA_MANUAL';
+        }).length;
+        
+        const yearlyWinRateVal = yearlyFinished > 0 ? (yearlyWins / yearlyFinished * 100) : 0;
+        
+        // Calcular performance média - VERSÃO MAIS SEGURA
+        const finishedWithPerformance = yearlyData.filter(r => {
+          return r.performance != null && r.performance !== undefined && !isNaN(parseFloat(r.performance));
+        });
+        
+        const yearlyAvgPerformance = finishedWithPerformance.length > 0 ? 
+          finishedWithPerformance.reduce((sum, r) => sum + parseFloat(r.performance), 0) / finishedWithPerformance.length : 0;
+        
+        console.log('📈 Estatísticas calculadas:', {
+          monthlyTotal, monthlyActive, monthlyWins, monthlyWinRate,
+          yearlyTotal, yearlyWins, yearlyLosses, yearlyWinRateVal, yearlyAvgPerformance
+        });
+        
+        // Update UI
+        document.getElementById('monthlyTotal').textContent = monthlyTotal;
+        document.getElementById('monthlyActive').textContent = monthlyActive;
+        document.getElementById('monthlyWins').textContent = monthlyWins;
+        document.getElementById('monthlyWinRate').textContent = `${monthlyWinRate.toFixed(1)}%`;
+        
+        document.getElementById('yearlyTotal').textContent = yearlyTotal;
+        document.getElementById('yearlyWins').textContent = yearlyWins;
+        document.getElementById('yearlyLosses').textContent = yearlyLosses;
+        document.getElementById('yearlyWinRate').textContent = `${yearlyWinRateVal.toFixed(1)}%`;
+        document.getElementById('yearlyPerformance').textContent = `${yearlyAvgPerformance.toFixed(1)}%`;
+        
+        console.log('✅ Estatísticas atualizadas com sucesso!');
+        
+      } catch (error) {
+        console.error('❌ Erro em updateStats:', error);
+        console.error('Stack trace:', error.stack);
+        
+        // Valores padrão em caso de erro
+        document.getElementById('monthlyTotal').textContent = '0';
+        document.getElementById('monthlyActive').textContent = '0';
+        document.getElementById('monthlyWins').textContent = '0';
+        document.getElementById('monthlyWinRate').textContent = '0%';
+        
+        document.getElementById('yearlyTotal').textContent = '0';
+        document.getElementById('yearlyWins').textContent = '0';
+        document.getElementById('yearlyLosses').textContent = '0';
+        document.getElementById('yearlyWinRate').textContent = '0%';
+        document.getElementById('yearlyPerformance').textContent = '0%';
+      }
     }
 
-    // ===== GERAR DADOS PARA MINI CHART =====
-    function generateMiniChartData(rec) {
-      const basePrice = rec.entry_price;
-      const currentPrice = rec.current_price || rec.entry_price;
-      const trend = rec.action === 'COMPRA' ? 1 : -1;
-      const volatility = 0.015;
+    // ===== DISPLAY RECOMMENDATIONS =====
+    function displayRecommendations() {
+      const now = new Date();
+      const currentMonth = now.getMonth();
+      const currentYear = now.getFullYear();
       
-      return Array.from({length: 7}, (_, i) => {
-        const progress = i / 6;
-        const trendPrice = basePrice + ((currentPrice - basePrice) * progress);
-        const randomFactor = (Math.random() - 0.5) * volatility * basePrice;
-        return Math.max(0, trendPrice + randomFactor);
-      });
-    }
-
-    // ===== MOSTRAR DETALHES NO MODAL =====
-    function showDetails(recId) {
-      const rec = recommendations.find(r => r.id == recId);
-      if (!rec) return;
-
-      const modal = document.getElementById('detailsModal');
-      const content = document.getElementById('modalContent');
-
-      const currentPrice = rec.current_price || rec.entry_price;
-      const performance = rec.performance || 0; // Performance real do backend
-      const potentialProfit = ((rec.target_price - rec.entry_price) / rec.entry_price * 100);
-      const distanceToTarget = ((rec.target_price - currentPrice) / currentPrice * 100);
-      const distanceToStop = Math.abs((currentPrice - rec.stop_loss) / currentPrice * 100);
-
-      content.innerHTML = `
-        <div class="space-y-6">
-          <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <div class="bg-white/5 rounded-lg p-4">
-              <p class="text-sm text-gray-400">Ativo</p>
-              <p class="text-xl font-bold text-white">${rec.ticker}</p>
-            </div>
-            <div class="bg-white/5 rounded-lg p-4">
-              <p class="text-sm text-gray-400">Ação</p>
-              <p class="text-xl font-bold ${rec.action === 'COMPRA' ? 'text-success' : 'text-danger'}">${rec.action}</p>
-            </div>
-            <div class="bg-white/5 rounded-lg p-4">
-              <p class="text-sm text-gray-400">Status</p>
-              <p class="text-xl font-bold text-accent">${rec.status}</p>
-            </div>
-            <div class="bg-white/5 rounded-lg p-4">
-              <p class="text-sm text-gray-400">Duração</p>
-              <p class="text-xl font-bold text-white">${calculateDuration(rec.created_at)}</p>
+      let filteredData = allRecommendations;
+      
+      // Filter by tab
+      if (currentTab === 'monthly') {
+        filteredData = filteredData.filter(rec => {
+          const recDate = new Date(rec.data_recomendacao);
+          return recDate.getMonth() === currentMonth && recDate.getFullYear() === currentYear;
+        });
+      } else {
+        filteredData = filteredData.filter(rec => {
+          const recDate = new Date(rec.data_recomendacao);
+          return recDate.getFullYear() === currentYear;
+        });
+      }
+      
+      // Filter by status
+      if (currentFilter !== 'all') {
+        filteredData = filteredData.filter(rec => rec.status === currentFilter);
+      }
+      
+      const containerId = currentTab === 'monthly' ? 'monthlyRecommendations' : 'yearlyRecommendations';
+      const container = document.getElementById(containerId);
+      
+      if (filteredData.length === 0) {
+        container.innerHTML = `
+          <div class="card rounded-2xl p-8">
+            <div class="text-center py-12">
+              <i class="fas fa-chart-area text-5xl text-gray-400 mb-4"></i>
+              <h3 class="text-xl font-bold mb-2 text-gray-300">Nenhuma recomendação encontrada</h3>
+              <p class="text-gray-400 mb-4">Não há recomendações para o filtro selecionado.</p>
+              <button onclick="setFilter('all')" class="bg-geminii hover:bg-purple-700 px-6 py-2 rounded-lg text-white">
+                <i class="fas fa-filter mr-1"></i>Ver Todas
+              </button>
             </div>
           </div>
-
-          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div class="bg-white/5 rounded-lg p-4">
-              <h4 class="text-lg font-semibold text-white mb-3">Parâmetros da Operação</h4>
-              <div class="space-y-2">
-                <div class="flex justify-between">
-                  <span class="text-gray-400">Entrada:</span>
-                  <span class="text-white font-medium">R$ ${rec.entry_price.toFixed(2)}</span>
+        `;
+        return;
+      }
+      
+      // Sort by date (most recent first)
+      filteredData.sort((a, b) => new Date(b.data_recomendacao) - new Date(a.data_recomendacao));
+      
+      let html = `<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">`;
+      
+      filteredData.forEach(rec => {
+        // ✅ CORRIGIDO: Verificar se todas as propriedades existem antes de usar
+        const isActive = rec.status === 'ATIVA';
+        const vencimentoDate = rec.vencimento ? new Date(rec.vencimento) : new Date();
+        const today = new Date();
+        const daysToExpiry = Math.ceil((vencimentoDate - today) / (1000 * 60 * 60 * 24));
+        
+        const statusClass = getStatusClass(rec.status || 'ATIVA');
+        const statusText = getStatusText(rec.status || 'ATIVA');
+        const statusIcon = getStatusIcon(rec.status || 'ATIVA');
+        
+        // ✅ CORRIGIDO: Verificar se valores existem antes de usar parseFloat
+        const strike = parseFloat(rec.strike || 0);
+        const valorEntrada = parseFloat(rec.valor_entrada || 0);
+        const stop = parseFloat(rec.stop || 0);
+        const gain = parseFloat(rec.gain || 0);
+        const gainParcial = rec.gain_parcial ? parseFloat(rec.gain_parcial) : null;
+        const performance = rec.performance != null ? parseFloat(rec.performance) : null;
+        const resultadoFinal = rec.resultado_final ? parseFloat(rec.resultado_final) : null;
+        
+        html += `
+          <div class="option-card rounded-xl p-6 fade-in">
+            <!-- Header -->
+            <div class="flex items-center justify-between mb-4">
+              <div class="flex items-center space-x-3">
+                <div class="w-12 h-12 rounded-lg bg-gradient-to-r from-geminii to-purple-600 flex items-center justify-center">
+                  <i class="fas fa-chart-area text-white text-lg"></i>
                 </div>
-                <div class="flex justify-between">
-                  <span class="text-gray-400">Alvo:</span>
-                  <span class="text-accent font-medium">R$ ${rec.target_price.toFixed(2)}</span>
-                </div>
-                <div class="flex justify-between">
-                  <span class="text-gray-400">Stop Loss:</span>
-                  <span class="text-warning font-medium">R$ ${rec.stop_loss.toFixed(2)}</span>
-                </div>
-                <div class="flex justify-between">
-                  <span class="text-gray-400">Confiança:</span>
-                  <span class="text-white font-medium">${rec.confidence || 85}%</span>
-                </div>
-              </div>
-            </div>
-
-            <div class="bg-white/5 rounded-lg p-4">
-              <h4 class="text-lg font-semibold text-white mb-3">Performance Atual</h4>
-              <div class="space-y-2">
-                <div class="flex justify-between">
-                  <span class="text-gray-400">Preço Atual:</span>
-                  <span class="text-white font-medium">R$ ${currentPrice.toFixed(2)} 
-                    ${lastUpdateTime && (new Date() - lastUpdateTime) < (10 * 60 * 1000) ? '<span class="text-green-400 text-xs ml-1">📈</span>' : ''}
-                  </span>
-                </div>
-                <div class="flex justify-between">
-                  <span class="text-gray-400">Performance:</span>
-                  <span class="${performance >= 0 ? 'text-success' : 'text-danger'} font-medium">
-                    ${performance >= 0 ? '+' : ''}${performance.toFixed(2)}%
-                  </span>
-                </div>
-                <div class="flex justify-between">
-                  <span class="text-gray-400">Dist. do Alvo:</span>
-                  <span class="text-white font-medium">${distanceToTarget.toFixed(2)}%</span>
-                </div>
-                <div class="flex justify-between">
-                  <span class="text-gray-400">Dist. do Stop:</span>
-                  <span class="text-white font-medium">${distanceToStop.toFixed(2)}%</span>
+                <div>
+                  <h3 class="text-xl font-bold text-white">${rec.ticker_opcao || 'N/A'}</h3>
+                  <p class="text-sm text-gray-400">${rec.ativo_spot || 'N/A'} • Strike: R$ ${strike.toFixed(2)}</p>
                 </div>
               </div>
+              <div class="text-right">
+                <div class="px-3 py-1 rounded-full text-xs font-medium ${statusClass} mb-2">
+                  <i class="${statusIcon} mr-1"></i>${statusText}
+                </div>
+                ${isActive && daysToExpiry <= 7 ? `
+                  <div class="px-2 py-1 bg-red-600 bg-opacity-20 border border-red-500 rounded text-xs text-red-400">
+                    <i class="fas fa-exclamation-triangle mr-1"></i>
+                    ${daysToExpiry} dia${daysToExpiry !== 1 ? 's' : ''}
+                  </div>
+                ` : ''}
+              </div>
             </div>
-          </div>
-
-          <div class="bg-white/5 rounded-lg p-4">
-            <h4 class="text-lg font-semibold text-white mb-3">Análise da Recomendação</h4>
-            <p class="text-gray-300">${rec.reason || 'Recomendação gerada por algoritmos de Machine Learning considerando padrões históricos, momentum e indicadores técnicos avançados.'}</p>
             
-            ${lastUpdateTime ? `
-              <div class="mt-3 pt-3 border-t border-gray-700">
-                <p class="text-xs text-gray-500">
-                  <i class="fas fa-clock mr-1"></i>
-                  Performance atualizada em tempo real • Última atualização: ${formatDateTime(lastUpdateTime)}
-                </p>
+            <!-- Price Grid -->
+            <div class="grid grid-cols-2 gap-4 mb-4">
+              <div class="bg-gray-800 bg-opacity-50 rounded-lg p-3 text-center">
+                <div class="text-xs text-gray-400 mb-1">Entrada</div>
+                <div class="text-lg font-bold text-blue-400">R$ ${valorEntrada.toFixed(2)}</div>
+              </div>
+              <div class="bg-gray-800 bg-opacity-50 rounded-lg p-3 text-center">
+                <div class="text-xs text-gray-400 mb-1">Stop</div>
+                <div class="text-lg font-bold text-red-400">R$ ${stop.toFixed(2)}</div>
+              </div>
+              <div class="bg-gray-800 bg-opacity-50 rounded-lg p-3 text-center">
+                <div class="text-xs text-gray-400 mb-1">Gain</div>
+                <div class="text-lg font-bold text-green-400">R$ ${gain.toFixed(2)}</div>
+              </div>
+              <div class="bg-gray-800 bg-opacity-50 rounded-lg p-3 text-center">
+                <div class="text-xs text-gray-400 mb-1">Vencimento</div>
+                <div class="text-lg font-bold ${daysToExpiry <= 7 && isActive ? 'text-red-400' : 'text-white'}">
+                  ${formatDate(rec.vencimento)}
+                </div>
+                ${isActive ? `<div class="text-xs text-gray-400">${daysToExpiry}d restantes</div>` : ''}
+              </div>
+            </div>
+            
+            ${gainParcial ? `
+              <div class="mb-4 p-3 bg-yellow-600 bg-opacity-20 border border-yellow-500 border-opacity-30 rounded-lg">
+                <div class="flex items-center text-yellow-300 text-sm">
+                  <i class="fas fa-star mr-2"></i>
+                  Gain Parcial: R$ ${gainParcial.toFixed(2)}
+                </div>
               </div>
             ` : ''}
+            
+            <!-- Performance (se finalizada) -->
+            ${performance !== null ? `
+              <div class="mb-4 p-3 ${performance >= 0 ? 'bg-green-600' : 'bg-red-600'} bg-opacity-20 border ${performance >= 0 ? 'border-green-500' : 'border-red-500'} border-opacity-30 rounded-lg">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center ${performance >= 0 ? 'text-green-300' : 'text-red-300'} text-sm">
+                    <i class="fas ${performance >= 0 ? 'fa-trending-up' : 'fa-trending-down'} mr-2"></i>
+                    Performance Final
+                  </div>
+                  <div class="text-lg font-bold ${performance >= 0 ? 'text-green-400' : 'text-red-400'}">
+                    ${performance >= 0 ? '+' : ''}${performance.toFixed(2)}%
+                  </div>
+                </div>
+                ${resultadoFinal ? `
+                  <div class="text-xs ${performance >= 0 ? 'text-green-300' : 'text-red-300'} mt-1">
+                    Resultado: R$ ${resultadoFinal.toFixed(2)}
+                  </div>
+                ` : ''}
+              </div>
+            ` : ''}
+            
+            <!-- Informações Adicionais -->
+            <div class="space-y-2 text-sm">
+              <div class="flex justify-between">
+                <span class="text-gray-400">Data da Recomendação:</span>
+                <span class="text-white">${formatDate(rec.data_recomendacao)}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-400">Vencimento:</span>
+                <span class="text-white">${formatDate(rec.vencimento)}</span>
+              </div>
+              ${isActive ? `
+                <div class="flex justify-between">
+                  <span class="text-gray-400">Dias para Vencimento:</span>
+                  <span class="${daysToExpiry <= 7 ? 'text-red-400' : daysToExpiry <= 15 ? 'text-yellow-400' : 'text-green-400'} font-semibold">
+                    ${daysToExpiry} dias
+                  </span>
+                </div>
+              ` : ''}
+            </div>
+            
+            <!-- Footer -->
+            <div class="mt-4 pt-3 border-t border-gray-700 flex items-center justify-between">
+              <div class="text-xs text-gray-500">
+                ${rec.created_at ? `Criado: ${formatDateTime(rec.created_at)}` : ''}
+              </div>
+              <div class="text-xs ${isActive ? 'text-green-400' : 'text-gray-400'}">
+                ${isActive ? '🟢 Em Andamento' : '⚪ Finalizada'}
+              </div>
+            </div>
+          </div>
+        `;
+      });
+      
+      html += '</div>';
+      
+      // Adicionar resumo no final - ✅ CORRIGIDO: Verificar status antes de usar
+      html += `
+        <div class="card rounded-xl p-6 mt-8">
+          <h4 class="text-white font-semibold mb-4 flex items-center">
+            <i class="fas fa-chart-pie text-geminii mr-2"></i>
+            Resumo do Período (${filteredData.length} recomendações)
+          </h4>
+          
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div class="text-center">
+              <div class="text-2xl font-bold text-green-400">
+                ${filteredData.filter(r => r.status === 'FINALIZADA_GANHO').length}
+              </div>
+              <div class="text-sm text-gray-400">Ganhos</div>
+            </div>
+            <div class="text-center">
+              <div class="text-2xl font-bold text-red-400">
+                ${filteredData.filter(r => r.status === 'FINALIZADA_STOP').length}
+              </div>
+              <div class="text-sm text-gray-400">Stops</div>
+            </div>
+            <div class="text-center">
+              <div class="text-2xl font-bold text-orange-400">
+                ${filteredData.filter(r => r.status === 'FINALIZADA_VENCIMENTO').length}
+              </div>
+              <div class="text-sm text-gray-400">Vencimentos</div>
+            </div>
+            <div class="text-center">
+              <div class="text-2xl font-bold text-blue-400">
+                ${filteredData.filter(r => r.status === 'ATIVA').length}
+              </div>
+              <div class="text-sm text-gray-400">Ativas</div>
+            </div>
           </div>
         </div>
       `;
-
-      modal.classList.remove('hidden');
-    }
-
-    // ===== FECHAR MODAL =====
-    function closeModal() {
-      document.getElementById('detailsModal').classList.add('hidden');
-    }
-
-    // ===== ATUALIZAR ESTATÍSTICAS =====
-    function updateStats() {
-      const activeCount = recommendations.length;
-      const buyCount = recommendations.filter(r => r.action === 'COMPRA').length;
-      const sellCount = recommendations.filter(r => r.action === 'VENDA').length;
       
-      document.getElementById('totalRecommendations').textContent = activeCount;
-      document.getElementById('buySignals').textContent = buyCount;
-      document.getElementById('sellSignals').textContent = sellCount;
-
-      calculateSuccessRate();
+      container.innerHTML = html;
     }
 
-    // ===== CALCULAR TAXA DE SUCESSO =====
-    function calculateSuccessRate() {
+    // ===== UTILITY FUNCTIONS =====
+    function getStatusClass(status) {
+      const classes = {
+        'ATIVA': 'status-active',
+        'FINALIZADA_GANHO': 'status-finished-gain',
+        'FINALIZADA_STOP': 'status-finished-stop',
+        'FINALIZADA_VENCIMENTO': 'status-finished-expiry',
+        'FINALIZADA_MANUAL': 'bg-gray-600 bg-opacity-20 text-gray-400 border border-gray-600'
+      };
+      return classes[status] || 'bg-gray-600 bg-opacity-20 text-gray-400 border border-gray-600';
+    }
+
+    function getStatusText(status) {
+      const texts = {
+        'ATIVA': 'Ativa',
+        'FINALIZADA_GANHO': 'Ganho',
+        'FINALIZADA_STOP': 'Stop Loss',
+        'FINALIZADA_VENCIMENTO': 'Vencimento',
+        'FINALIZADA_MANUAL': 'Manual'
+      };
+      return texts[status] || status;
+    }
+
+    function getStatusIcon(status) {
+      const icons = {
+        'ATIVA': 'fas fa-play',
+        'FINALIZADA_GANHO': 'fas fa-check',
+        'FINALIZADA_STOP': 'fas fa-times',
+        'FINALIZADA_VENCIMENTO': 'fas fa-calendar-times',
+        'FINALIZADA_MANUAL': 'fas fa-hand-paper'
+      };
+      return icons[status] || 'fas fa-question';
+    }
+
+    function formatDate(dateString) {
+      if (!dateString) return 'N/A';
       try {
-        const closedRecs = allRecommendations.filter(r => r.status && r.status.startsWith('FINALIZADA'));
-        const wins = closedRecs.filter(r => r.status === 'FINALIZADA_GANHO');
-        const losses = closedRecs.filter(r => r.status === 'FINALIZADA_PERDA');
-        
-        const successRate = closedRecs.length > 0 ? (wins.length / closedRecs.length * 100) : 0;
-        const avgGain = wins.length > 0 ? wins.reduce((sum, r) => sum + (r.performance || 0), 0) / wins.length : 0;
-        const avgLoss = losses.length > 0 ? losses.reduce((sum, r) => sum + (r.performance || 0), 0) / losses.length : 0;
-        const profitFactor = Math.abs(avgLoss) > 0 ? Math.abs(avgGain / avgLoss) : 0;
-        
-        document.getElementById('successRate').textContent = `${successRate.toFixed(1)}%`;
-        document.getElementById('closedRecommendations').textContent = closedRecs.length;
-        document.getElementById('avgGain').textContent = `+${Math.abs(avgGain).toFixed(2)}%`;
-        document.getElementById('avgLoss').textContent = `${avgLoss.toFixed(2)}%`;
-        document.getElementById('profitFactor').textContent = profitFactor.toFixed(2);
-        
-        if (wins.length > 0) {
-          const bestWin = wins.reduce((best, current) => 
-            (current.performance || 0) > (best.performance || 0) ? current : best
-          );
-          
-          document.getElementById('bestPerformance').innerHTML = `
-            <div class="text-2xl font-bold text-success">${bestWin.ticker}</div>
-            <div class="text-lg text-success">+${(bestWin.performance || 0).toFixed(2)}%</div>
-            <div class="text-sm text-gray-400">${formatDate(bestWin.created_at)}</div>
-          `;
-        }
+        return new Date(dateString).toLocaleDateString('pt-BR');
       } catch (error) {
-        console.error('Erro ao calcular estatísticas:', error);
+        return 'Data inválida';
       }
     }
 
-    // ===== INICIALIZAR GRÁFICO DE PERFORMANCE =====
-    function initPerformanceChart() {
-      const ctx = document.getElementById('performanceChart').getContext('2d');
-      
-      performanceChart = new Chart(ctx, {
-        type: 'bar',
-        data: {
-          labels: [],
-          datasets: [{
-            label: 'Performance (%)',
-            data: [],
-            backgroundColor: [],
-            borderColor: [],
-            borderWidth: 1
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: { display: false }
-          },
-          scales: {
-            x: {
-              grid: { color: 'rgba(255, 255, 255, 0.1)' },
-              ticks: { color: '#9ca3af' }
-            },
-            y: {
-              grid: { color: 'rgba(255, 255, 255, 0.1)' },
-              ticks: { 
-                color: '#9ca3af',
-                callback: function(value) {
-                  return value + '%';
-                }
-              }
-            }
-          }
-        }
-      });
-    }
-
-    // ===== ATUALIZAR GRÁFICO DE PERFORMANCE =====
-    function updatePerformanceChart() {
+    function formatDateTime(dateString) {
+      if (!dateString) return 'N/A';
       try {
-        const closedRecs = allRecommendations.filter(r => 
-          r.status && r.status.startsWith('FINALIZADA') && r.performance !== undefined
-        );
-        
-        const recentClosed = closedRecs.slice(-10);
-        
-        if (recentClosed.length > 0) {
-          performanceChart.data.labels = recentClosed.map(d => d.ticker);
-          performanceChart.data.datasets[0].data = recentClosed.map(d => d.performance || 0);
-          performanceChart.data.datasets[0].backgroundColor = recentClosed.map(d => 
-            (d.performance || 0) >= 0 ? 'rgba(16, 185, 129, 0.6)' : 'rgba(239, 68, 68, 0.6)'
-          );
-          performanceChart.data.datasets[0].borderColor = recentClosed.map(d => 
-            (d.performance || 0) >= 0 ? '#10b981' : '#ef4444'
-          );
-        }
-        
-        performanceChart.update();
+        return new Date(dateString).toLocaleString('pt-BR');
       } catch (error) {
-        console.error('Erro ao atualizar gráfico de performance:', error);
+        return 'Data inválida';
       }
     }
 
-    // ===== ATUALIZAR TIMERS =====
-    function updateTimers() {
-      const now = new Date();
-      const lastUpdate = new Date(now.getFullYear(), now.getMonth(), 1);
-      const nextUpdate = new Date(now.getFullYear(), now.getMonth() + 1, 1);
-      
-      document.getElementById('lastUpdate').textContent = formatDate(lastUpdate);
-      
-      const daysUntilNext = Math.ceil((nextUpdate - now) / (1000 * 60 * 60 * 24));
-      document.getElementById('nextUpdate').textContent = `${daysUntilNext} dias`;
-    }
-
-    // 🔥 MOSTRAR FEEDBACK DE ATUALIZAÇÃO DE PREÇOS
-    function showPriceUpdateFeedback() {
-      const indicator = document.createElement('div');
-      indicator.className = 'fixed top-20 right-4 bg-success text-white px-4 py-2 rounded-lg shadow-lg z-50 transition-all duration-300';
-      indicator.innerHTML = '<i class="fas fa-check mr-2"></i>Preços atualizados';
-      
-      document.body.appendChild(indicator);
-      
-      setTimeout(() => {
-        indicator.style.opacity = '0';
-        setTimeout(() => {
-          if (document.body.contains(indicator)) {
-            document.body.removeChild(indicator);
-          }
-        }, 300);
-      }, 2000);
-    }
-
-    // 🔥 ATUALIZAR DISPLAY DO ÚLTIMO UPDATE
-    function updateLastUpdateDisplay() {
-      const lastUpdateEl = document.getElementById('lastUpdate');
-      if (lastUpdateEl && lastUpdateTime) {
-        lastUpdateEl.textContent = new Date(lastUpdateTime).toLocaleTimeString('pt-BR');
-      }
-    }
-
-    // ===== MOSTRAR TOAST =====
     function showToast(message, type = 'info') {
       const colors = {
         success: 'bg-green-500',
@@ -1181,7 +940,7 @@
       };
       
       const toast = document.createElement('div');
-      toast.className = `fixed top-20 right-4 ${colors[type]} text-white px-6 py-3 rounded-lg shadow-lg z-50 transition-all duration-300`;
+      toast.className = `fixed top-4 right-4 ${colors[type]} text-white px-6 py-3 rounded-lg shadow-lg z-50 transition-all duration-300`;
       toast.textContent = message;
 
       document.body.appendChild(toast);
@@ -1193,135 +952,74 @@
             document.body.removeChild(toast);
           }
         }, 300);
-      }, 4000);
+      }, 3000);
     }
 
-    // ===== MOSTRAR ERRO GLOBAL =====
-    function showGlobalError(message) {
-      const container = document.getElementById('recommendationsContainer');
-      container.innerHTML = `
-        <div class="col-span-2 error-card rounded-xl p-8 text-center">
-          <i class="fas fa-exclamation-triangle text-6xl text-danger mb-4"></i>
-          <h3 class="text-xl font-bold text-white mb-2">Erro de Conexão</h3>
-          <p class="text-gray-300 mb-4">${message}</p>
-          <div class="space-y-2 text-sm text-gray-400 mb-6">
-            <p>• Verifique sua conexão com a internet</p>
-            <p>• O servidor pode estar temporariamente indisponível</p>
-            <p>• Sua sessão pode ter expirado</p>
+    // ===== UI STATES =====
+    function showLoading() {
+      const monthlyContainer = document.getElementById('monthlyRecommendations');
+      const yearlyContainer = document.getElementById('yearlyRecommendations');
+      
+      const loadingHTML = `
+        <div class="card rounded-2xl p-8">
+          <div class="text-center py-12">
+            <div class="spinner mx-auto mb-4"></div>
+            <p class="text-gray-300">Carregando recomendações...</p>
           </div>
-          <div class="flex gap-4 justify-center">
-            <button onclick="refreshRecommendations()" class="retry-btn text-white px-6 py-3 rounded-lg font-medium">
-              <i class="fas fa-sync mr-2"></i>Tentar Novamente
-            </button>
-            <button onclick="window.location.reload()" class="bg-gray-600 hover:bg-gray-500 text-white px-6 py-3 rounded-lg font-medium">
-              <i class="fas fa-refresh mr-2"></i>Recarregar Página
+        </div>
+      `;
+      
+      monthlyContainer.innerHTML = loadingHTML;
+      yearlyContainer.innerHTML = loadingHTML;
+    }
+
+    function showNoData() {
+      const monthlyContainer = document.getElementById('monthlyRecommendations');
+      const yearlyContainer = document.getElementById('yearlyRecommendations');
+      
+      const noDataHTML = `
+        <div class="card rounded-2xl p-8">
+          <div class="text-center py-12">
+            <i class="fas fa-chart-area text-5xl text-gray-400 mb-4"></i>
+            <h3 class="text-xl font-bold mb-2 text-gray-300">Nenhuma recomendação disponível</h3>
+            <p class="text-gray-400 mb-4">Ainda não há recomendações de opções cadastradas.</p>
+            <div class="flex justify-center space-x-4">
+              <a href="/planos.html" class="bg-gradient-to-r from-geminii to-purple-600 hover:from-purple-700 hover:to-pink-700 px-6 py-2 rounded-lg text-white font-medium">
+                <i class="fas fa-crown mr-2"></i>Fazer Upgrade
+              </a>
+              <button onclick="loadRecommendations()" class="bg-gray-700 hover:bg-gray-600 px-6 py-2 rounded-lg text-white">
+                <i class="fas fa-refresh mr-1"></i>Atualizar
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+      
+      monthlyContainer.innerHTML = noDataHTML;
+      yearlyContainer.innerHTML = noDataHTML;
+    }
+
+    function showError(message) {
+      const monthlyContainer = document.getElementById('monthlyRecommendations');
+      const yearlyContainer = document.getElementById('yearlyRecommendations');
+      
+      const errorHTML = `
+        <div class="card rounded-2xl p-8">
+          <div class="text-center py-12">
+            <i class="fas fa-exclamation-triangle text-5xl text-danger mb-4"></i>
+            <h3 class="text-xl font-bold mb-2 text-red-400">Erro ao carregar</h3>
+            <p class="text-gray-400 mb-4">${message}</p>
+            <button onclick="loadRecommendations()" class="bg-geminii hover:bg-purple-700 px-6 py-2 rounded-lg text-white">
+              <i class="fas fa-refresh mr-1"></i>Tentar Novamente
             </button>
           </div>
         </div>
       `;
+      
+      monthlyContainer.innerHTML = errorHTML;
+      yearlyContainer.innerHTML = errorHTML;
     }
 
-    // ===== MOSTRAR ERRO =====
-    function showError(message = 'Erro ao carregar recomendações') {
-      const container = document.getElementById('recommendationsContainer');
-      container.innerHTML = `
-        <div class="col-span-2 text-center py-12">
-          <i class="fas fa-exclamation-triangle text-6xl text-danger mb-4"></i>
-          <p class="text-xl text-gray-400">${message}</p>
-          <p class="text-sm text-gray-500 mt-2">Verifique sua conexão e tente novamente</p>
-          <button onclick="refreshRecommendations()" class="mt-4 retry-btn text-white px-6 py-2 rounded-lg">
-            <i class="fas fa-sync mr-2"></i>Tentar Novamente
-          </button>
-        </div>
-      `;
-    }
-
-    // ===== FUNÇÕES UTILITÁRIAS =====
-    function formatDate(dateString) {
-      if (!dateString) return '--';
-      return new Date(dateString).toLocaleDateString('pt-BR');
-    }
-
-    function formatDateTime(dateString) {
-      if (!dateString) return '--';
-      return new Date(dateString).toLocaleString('pt-BR');
-    }
-
-    function calculateDuration(startDate) {
-      if (!startDate) return '--';
-      const start = new Date(startDate);
-      const now = new Date();
-      const days = Math.floor((now - start) / (1000 * 60 * 60 * 24));
-      return `${days} dias`;
-    }
-
-    // ===== LOGOUT =====
-    function logout() {
-      localStorage.removeItem('geminii_token');
-      localStorage.removeItem('geminii_user');
-      window.location.href = '/';
-    }
-
-    // ===== EVENT LISTENERS =====
-    document.addEventListener('DOMContentLoaded', function() {
-      console.log('📄 DOM carregado - inicializando...');
-      init();
-    });
-
-    window.addEventListener('load', function() {
-      console.log('🎯 Window loaded - verificando inicialização...');
-      if (!userToken) {
-        init();
-      }
-    });
-
-    // 🔥 GERENCIAR AUTO-UPDATE BASEADO NA VISIBILIDADE DA PÁGINA
-    document.addEventListener('visibilitychange', () => {
-      if (document.hidden) {
-        stopAutoUpdate();
-        console.log('📱 Página oculta - pausando auto-update');
-      } else {
-        startAutoUpdate();
-        console.log('👁️ Página visível - retomando auto-update');
-        // Atualizar imediatamente quando voltar a ser visível
-        setTimeout(updateCurrentPrices, 1000);
-      }
-    });
-
-    // Handle online/offline events
-    window.addEventListener('online', function() {
-      console.log('🌐 Conexão restaurada');
-      updateConnectionStatus(true);
-      startAutoUpdate();
-      refreshRecommendations();
-    });
-
-    window.addEventListener('offline', function() {
-      console.log('📡 Conexão perdida');
-      updateConnectionStatus(false);
-      stopAutoUpdate();
-    });
-
-    // Cleanup when leaving page
-    window.addEventListener('beforeunload', () => {
-      stopAutoUpdate();
-    });
-
-    // 🔥 FUNÇÕES DE DEBUG (DESENVOLVIMENTO)
-    window.debugInfo = function() {
-      console.log('🔍 Debug Info:');
-      console.log('Token:', userToken ? 'Present' : 'Missing');
-      console.log('User:', currentUser);
-      console.log('Recommendations:', recommendations.length);
-      console.log('All Recommendations:', allRecommendations.length);
-      console.log('Auto-Update Active:', !!autoUpdateInterval);
-      console.log('Last Update:', lastUpdateTime);
-    };
-
-    window.forceUpdate = function() {
-      console.log('🔄 Forçando atualização...');
-      updateCurrentPrices();
-    };
   </script>
 </body>
 </html>

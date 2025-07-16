@@ -199,10 +199,11 @@ def get_active_opcoes_recommendations():
             
         cursor = conn.cursor()
         
+        # ✅ CORRIGIR: ADICIONAR CAMPO STATUS
         cursor.execute('''
             SELECT 
                 ativo_spot, ticker_opcao, strike, valor_entrada, 
-                vencimento, data_recomendacao, stop, gain, gain_parcial
+                vencimento, data_recomendacao, stop, gain, gain_parcial, status
             FROM opcoes_recommendations 
             WHERE status = 'ATIVA' AND is_active = true
             ORDER BY data_recomendacao DESC
@@ -220,8 +221,10 @@ def get_active_opcoes_recommendations():
                 'data_recomendacao': row[5].isoformat() if row[5] else None,
                 'stop': float(row[6]) if row[6] else 0,
                 'gain': float(row[7]) if row[7] else 0,
-                'gain_parcial': float(row[8]) if row[8] else None
+                'gain_parcial': float(row[8]) if row[8] else None,
+                'status': row[9]  
             })
+    
         
         cursor.close()
         conn.close()

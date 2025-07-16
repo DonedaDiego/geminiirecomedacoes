@@ -108,8 +108,13 @@ def get_all_opcoes_recommendations_service():
             ORDER BY created_at DESC
         ''')
         
+                
+        rows = cursor.fetchall()
+                
         recommendations = []
-        for row in cursor.fetchall():
+        for i, row in enumerate(rows):
+            print(f"📋 Row {i}: {row}")  # ✅ LOG CADA LINHA
+            
             recommendations.append({
                 'id': row[0],
                 'ativo_spot': row[1],
@@ -121,12 +126,13 @@ def get_all_opcoes_recommendations_service():
                 'stop': float(row[7]) if row[7] else 0,
                 'gain': float(row[8]) if row[8] else 0,
                 'gain_parcial': float(row[9]) if row[9] else None,
-                'status': row[10],
+                'status': row[10],  
                 'created_at': row[11].isoformat() if row[11] else None,
                 'updated_at': row[12].isoformat() if row[12] else None,
                 'is_active': row[13]
             })
         
+                
         cursor.close()
         conn.close()
         
