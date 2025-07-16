@@ -9,6 +9,7 @@ from database import get_db_connection
 #carteiras
 from carteiras.recommendations_routes_free import get_recommendations_free_blueprint
 from carteiras.chart_ativos_routes import chart_ativos_bp
+from carteiras.recommendation_opcoes_routes import get_opcoes_recommendations_blueprint
 
 #gratis
 from gratis.beta_routes import beta_bp
@@ -38,6 +39,7 @@ from pag.mercadopago_routes import get_mercadopago_blueprint
 from pag.payment_scheduler import start_payment_scheduler
 from pag.scheduler_routes import get_scheduler_blueprint
 from pag.trial_routes import get_trial_blueprint
+
 
 from emails.coupons_service import get_coupons_blueprint, get_validate_blueprint
 from emails.email_routes import get_email_blueprint 
@@ -174,6 +176,8 @@ app.register_blueprint(get_scheduler_blueprint())
 control_pay_bp = get_control_pay_blueprint()
 app.register_blueprint(control_pay_bp)
 app.register_blueprint(calc_bp)
+opcoes_recommendations_bp = get_opcoes_recommendations_blueprint()
+app.register_blueprint(opcoes_recommendations_bp)
 
 CORS(app, 
      origins=['*'],
@@ -247,10 +251,12 @@ if EMAIL_AVAILABLE and email_bp:
 def initialize_database():
     """🔥 Inicializar banco e sistema de email"""
     try:
-        from database import setup_enhanced_database
+        from database import setup_enhanced_database, create_opcoes_recommendations_table
         setup_enhanced_database()
         
-        # 🔥 INICIALIZAR SISTEMA DE EMAIL
+        create_opcoes_recommendations_table()
+        
+        
         if setup_email_system():
             print("✅ Sistema de email inicializado!")
         else:
@@ -406,6 +412,11 @@ def calculadora_page():
 @app.route('/rank-volatilidade.html')
 def rank_volatilidade():
     return send_from_directory('../frontend', 'rank-volatilidade.html')
+
+@app.route('/opcoes-recomendacoes')
+@app.route('/opcoes-recomendacoes.html')
+def opcoes_recomendacoes_page():
+    return send_from_directory('../frontend', 'opcoes-recomendacoes.html')
 
 # ===== PÁGINAS DE RETORNO DO PAGAMENTO =====
 

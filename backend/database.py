@@ -449,27 +449,54 @@ def create_initial_admin():
         print(f"❌ Erro ao criar admin: {e}")
         return False
 
-def setup_enhanced_database():
-    """🔥 Configurar banco SINCRONIZADO com MercadoPago Service"""
-    
-    
-    if test_connection():
-        create_plans_table()
-        create_users_table()
-        update_users_table_for_service()
+def create_opcoes_recommendations_table():
+    """Criar tabela de recomendações de opções"""
+    try:
+        conn = get_db_connection()
+        if not conn:
+            return False
+            
+        cursor = conn.cursor()
         
-        create_payments_table()
-        create_payment_history()
-        create_password_reset_table()
-        create_coupons_table()
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS opcoes_recommendations (
+                id SERIAL PRIMARY KEY,
+                ativo_spot VARCHAR(10) NOT NULL,
+                ticker_opcao VARCHAR(20) NOT NULL,
+                strike DECIMAL(10,2) NOT NULL,
+                valor_entrada DECIMAL(10,2) NOT NULL,
+                vencimento DATE NOT NULL,
+                data_recomendacao DATE NOT NULL,
+                stop DECIMAL(10,2) NOT NULL,
+                gain DECIMAL(10,2) NOT NULL,
+                gain_parcial DECIMAL(10,2),
+                status VARCHAR(20) DEFAULT 'ATIVA',
+                resultado_final DECIMAL(10,2),
+                performance DECIMAL(10,4),
+                created_by INTEGER,
+                is_active BOOLEAN DEFAULT true,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        """)
         
-        create_portfolio_tables()  
-        create_email_confirmations_table() 
-        create_initial_admin()
+        # Criar índices
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_opcoes_recommendations_ativo ON opcoes_recommendations(ativo_spot)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_opcoes_recommendations_ticker ON opcoes_recommendations(ticker_opcao)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_opcoes_recommendations_status ON opcoes_recommendations(status)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_opcoes_recommendations_vencimento ON opcoes_recommendations(vencimento)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_opcoes_recommendations_data_rec ON opcoes_recommendations(data_recomendacao)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_opcoes_recommendations_active ON opcoes_recommendations(is_active)")
         
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        print("✅ Tabela opcoes_recommendations criada com sucesso!")
         return True
-    else:
-        print("❌ Falha na configuração do banco")
+        
+    except Exception as e:
+        print(f"❌ Erro ao criar tabela opcoes_recommendations: {e}")
         return False
 
 def verify_service_compatibility():
@@ -831,7 +858,30 @@ def get_portfolio_assets(portfolio_name):
         print(f"❌ Erro em get_portfolio_assets: {e}")
         return []
   
-
+def setup_enhanced_database():
+    """🔥 Configurar banco SINCRONIZADO com MercadoPago Service"""
+    
+    
+    if test_connection():
+        create_plans_table()
+        create_users_table()
+        update_users_table_for_service()
+        
+        create_payments_table()
+        create_payment_history()
+        create_password_reset_table()
+        create_coupons_table()
+        
+        create_portfolio_tables()  
+        create_email_confirmations_table() 
+        create_opcoes_recommendations_table()
+        create_initial_admin()
+        
+        return True
+    else:
+        print("❌ Falha na configuração do banco")
+        return False
+    
 if __name__ == "__main__":
     print("=" * 60)
     

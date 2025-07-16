@@ -624,6 +624,20 @@
             <span class="absolute top-3 right-3 bg-secondary text-white text-xs px-2 py-1 rounded-full font-bold">PREMIUM</span>
           </div>
 
+          <!-- PREMIUM - Opções Recomendações -->
+          <div onclick="showPremiumFeature('Opções Recomendações')" class="bg-gradient-to-r from-cyan-500/10 to-cyan-500/5 hover:from-cyan-500/20 hover:to-cyan-500/10 border border-cyan-500/20 rounded-xl p-4 transition-all group cursor-pointer relative">
+            <div class="flex items-center gap-3">
+              <div class="w-12 h-12 bg-cyan-500/20 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                <i class="fas fa-chart-pie text-cyan-400 text-lg"></i>
+              </div>
+              <div>
+                <h3 class="font-semibold text-white">Opções Recomendações</h3>
+                <p class="text-sm text-gray-300">Swing Trade + IA para Opções</p>
+              </div>
+            </div>
+            <span class="absolute top-3 right-3 bg-secondary text-white text-xs px-2 py-1 rounded-full font-bold">PREMIUM</span>
+          </div>
+
           <!-- PREMIUM - Machine Learning com Submenu -->
           <div class="relative">
             <div 
@@ -715,8 +729,6 @@
       
       console.log('✅ Dashboard inicializado!');
     }
-
-    
 
     // Try to load user data from localStorage as fallback
     function tryLoadFromLocalStorage() {
@@ -1178,171 +1190,152 @@
       if (nextUpdateEl) nextUpdateEl.textContent = '--';
     }
 
-    // Show premium feature dialog
+    // 🎯 FUNÇÃO SUPER SIMPLIFICADA DE VERIFICAÇÃO DE ACESSO
+    function getUserAccessLevel() {
+      if (!currentUser) return 'NONE';
+      
+      const userType = currentUser.user_type || 'regular';
+      const planId = currentUser.plan_id || 3;
+      
+      // Se é trial ativo, tem acesso total
+      if (userType === 'trial') {
+        const hasValidTrial = trialInfo && trialInfo.is_trial && !trialInfo.trial_expired;
+        if (hasValidTrial) return 'PREMIUM';
+        return 'BASIC'; // Trial expirado
+      }
+      
+      // Usuário regular: verificar plan_id
+      if (planId === 3) return 'BASIC';      // Básico
+      if (planId === 1) return 'PRO';        // Pro
+      if (planId === 2) return 'PREMIUM';    // Premium
+      
+      return 'BASIC'; // Padrão
+    }
+
+    // 🚀 DEFINIR RECURSOS POR NÍVEL (FÁCIL DE ADICIONAR NOVOS)
+    const FEATURES_BY_LEVEL = {
+      // GRÁTIS - Todos podem acessar
+      FREE: [
+        'Suporte e Resistência', 
+        'Radar Financeiro'
+      ],
+      
+      // PRO - Precisa de plano Pro ou Premium (ou trial ativo)
+      PRO: [
+        'Long & Short', 
+        'Hunter Walls', 
+        'Regimes de Volatilidade',
+        'Regressão Linear', 
+        'Volatilidade GARCH', 
+        'screening',
+        'Volume Profile', 
+        'IV Scanner', 
+        'Options Flow'
+      ],
+      
+      // PREMIUM - Precisa de plano Premium (ou trial ativo)
+      PREMIUM: [
+        'Smart Carteiras', 
+        'Opções Recomendações', 
+        'Machine Learning',
+        'Pattern Recognition', 
+        'AutoML'
+      ]
+    };
+
+    // 🎯 FUNÇÃO LIMPA DE VERIFICAÇÃO DE ACESSO
     function showPremiumFeature(featureName) {
       if (!currentUser) {
-        console.log('⚠️ Usuário não disponível para verificar plano');
+        console.log('⚠️ Usuário não disponível');
         return;
       }
-    
-      const userPlanId = currentUser.plan_id || 3;
-      const userType = currentUser.user_type || 'regular';
-      let hasAccess = false;
-      let requiredPlanName = '';
       
-      console.log(`🔍 Verificando acesso: ${featureName}`, {
-        userPlanId,
-        userType,
-        trialInfo
-      });
-    
-      // 🔥 REGRA CRÍTICA: Se user_type é 'regular' e plan_id é 3 (Básico), NEGAR SEMPRE
-      if (userType === 'regular' && userPlanId === 3) {
-        console.log('❌ Usuário regular com plano básico - acesso negado');
-        hasAccess = false;
-        requiredPlanName = 'Pro'; // Padrão
-      }
-      // VERIFICAÇÃO PARA RECURSOS PRO
-      else if (['Long & Short', 'Hunter Walls', 'Regimes de Volatilidade', 
-                'Regressão Linear', 'Volatilidade GARCH', 'screening', 
-                'Volume Profile', 'IV Scanner', 'Options Flow'].includes(featureName)) {
-        
-        // Só permite se NÃO for regular básico
-        hasAccess = (userPlanId === 1 || userPlanId === 2) && userType !== 'regular';
-        requiredPlanName = 'Pro';
-        
-        // EXCEÇÃO: Trial Premium ainda ativo
-        if (userType === 'trial' && userPlanId === 2) {
-          const hasValidTrial = trialInfo && trialInfo.is_trial && !trialInfo.trial_expired;
-          hasAccess = hasValidTrial;
-          console.log(`🔍 Trial Pro check: ${hasValidTrial}`, trialInfo);
-        }
-      }
-      // VERIFICAÇÃO PARA RECURSOS PREMIUM
-      else if (['Smart Carteiras', 'Machine Learning', 'Pattern Recognition', 'AutoML'].includes(featureName)) {
-        
-        // Só permite se NÃO for regular básico
-        hasAccess = (userPlanId === 2) && userType !== 'regular';
-        requiredPlanName = 'Premium';
-        
-        // EXCEÇÃO: Trial Premium ainda ativo
-        if (userType === 'trial' && userPlanId === 2) {
-          const hasValidTrial = trialInfo && trialInfo.is_trial && !trialInfo.trial_expired;
-          hasAccess = hasValidTrial;
-          console.log(`🔍 Trial Premium check: ${hasValidTrial}`, trialInfo);
-        }
-      }
-      // RECURSOS GRÁTIS
-      else if (['Suporte e Resistência', 'Radar Financeiro'].includes(featureName)) {
-        hasAccess = true;
-        requiredPlanName = 'Grátis';
-      }
-    
-      console.log(`✅ Resultado verificação: ${hasAccess} para ${featureName}`);
-    
-      // SE TEM ACESSO, PERMITIR
+      const userAccessLevel = getUserAccessLevel();
+      console.log(`🔍 Verificando acesso: ${featureName} | Nível do usuário: ${userAccessLevel}`);
+      
+      // Determinar qual nível o recurso precisa
+      let requiredLevel = 'PREMIUM'; // Padrão
+      if (FEATURES_BY_LEVEL.FREE.includes(featureName)) requiredLevel = 'FREE';
+      else if (FEATURES_BY_LEVEL.PRO.includes(featureName)) requiredLevel = 'PRO';
+      else if (FEATURES_BY_LEVEL.PREMIUM.includes(featureName)) requiredLevel = 'PREMIUM';
+      
+      // Verificar se tem acesso
+      const hasAccess = checkAccess(userAccessLevel, requiredLevel);
+      console.log(`✅ Resultado: ${hasAccess} (precisa: ${requiredLevel}, tem: ${userAccessLevel})`);
+      
       if (hasAccess) {
-        // REDIRECIONAMENTOS CORRETOS
-        if (featureName === 'Long & Short') {
-          window.location.href = 'long-short.html';
-          return;
-        }
-        
-        if (featureName === 'Hunter Walls') {
-          window.location.href = 'opcoes.html';
-          return;
-        }
-    
-        if (featureName === 'Smart Carteiras') {
-          window.location.href = 'analises.html';
-          return;
-        }
-    
-        // Machine Learning abre dropdown
-        if (featureName === 'Machine Learning') {
-          toggleMLDropdown();
-          return;
-        }
-    
-        // Funcionalidades GRÁTIS futuras
-        if (featureName === 'Suporte e Resistência') {
-          alert(`🏭 Análise Setorial\n\nComparativo por Setores da Economia!\n\nEm breve será implementado.`);
-          return;
-        }
-    
-        if (featureName === 'Radar Financeiro') {
-          alert(`📡 Radar Financeiro\n\nIndicadores Fundamentalistas Completos!\n\nEm breve será implementado.`);
-          return;
-        }
-    
-        // Funcionalidades PRO futuras
-        if (featureName === 'Regimes de Volatilidade') {
-          alert(`📊 Regimes de Volatilidade\n\nRegimes de Volatilidade!\n\nEm breve será implementado.`);
-          return;
-        }
-    
-        if (featureName === 'Regressão Linear') {
-          alert(`📈 Regressão Linear\n\nAnálise Preditiva Avançada!\n\nEm breve será implementado.`);
-          return;
-        }
-    
-        if (featureName === 'Volatilidade GARCH') {
-          alert(`📊 Volatilidade GARCH\n\nModelos Avançados de Volatilidade!\n\nEm breve será implementado.`);
-          return;
-        }
-    
-        // Recursos EM BREVE para Opções
-        if (featureName === 'screening') {
-          alert(`📊 Greeks Monitor\n\nMonitoramento completo de Delta, Gamma, Theta e Vega!\n\nEm breve será implementado.`);
-          return;
-        }
-    
-        if (featureName === 'Volume Profile') {
-          alert(`📈 Volume Profile\n\nAnálise avançada de Volume por Preço!\n\nEm breve será implementado.`);
-          return;
-        }
-    
-        if (featureName === 'IV Scanner') {
-          alert(`🔍 IV Scanner\n\nScanner inteligente de Volatilidade Implícita!\n\nEm breve será implementado.`);
-          return;
-        }
-    
-        if (featureName === 'Options Flow') {
-          alert(`📊 Options Flow\n\nFluxo de Opções em Tempo Real!\n\nEm breve será implementado.`);
-          return;
-        }
-    
-        // Recursos EM BREVE para ML
-        if (featureName === 'Pattern Recognition') {
-          alert(`👁️ Pattern Recognition\n\nReconhecimento de Padrões Avançado!\n\nEm breve será implementado.`);
-          return;
-        }
-    
-        if (featureName === 'AutoML') {
-          alert(`🪄 AutoML\n\nMachine Learning Automatizado!\n\nEm breve será implementado.`);
-          return;
-        }
-                
-        // Para outros recursos ainda não implementados
-        alert(`🎉 ${featureName}\n\nFuncionalidade disponível em seu plano!\nEm breve será implementada.`);
-        
+        // ✅ TEM ACESSO - EXECUTAR AÇÃO
+        executeFeatureAction(featureName);
       } else {
-        // USUÁRIO NÃO TEM ACESSO - Mostrar upgrade
-        const planNames = { 3: 'Básico', 1: 'Pro', 2: 'Premium' };
-        const currentPlanName = currentUser.plan_name || planNames[userPlanId] || 'Básico';
-        
-        let message = `💎 Recurso ${requiredPlanName}\n\n${featureName} está disponível apenas para planos ${requiredPlanName} ou superior.\n\nSeu plano atual: ${currentPlanName}\nPlano necessário: ${requiredPlanName}`;
-        
-        // MENSAGEM ESPECIAL SE TRIAL EXPIROU
-        if (userType === 'regular' && userPlanId === 3) {
-          message += `\n\n⏰ Parece que seu trial expirou e você foi movido para o plano Básico.\n\nQue tal fazer upgrade?`;
-        }
-        
-        message += `\n\nDeseja fazer upgrade agora?`;
-        
-        if (confirm(message)) {
-          window.location.href = '/planos.html';
-        }
+        // ❌ NÃO TEM ACESSO - MOSTRAR UPGRADE
+        showUpgradeDialog(featureName, requiredLevel, userAccessLevel);
+      }
+    }
+
+    // 🔑 VERIFICAR SE O NÍVEL DO USUÁRIO TEM ACESSO AO RECURSO
+    function checkAccess(userLevel, requiredLevel) {
+      if (requiredLevel === 'FREE') return true; // Todos têm acesso ao grátis
+      if (requiredLevel === 'PRO') return ['PRO', 'PREMIUM'].includes(userLevel);
+      if (requiredLevel === 'PREMIUM') return userLevel === 'PREMIUM';
+      return false;
+    }
+
+    // 🚀 EXECUTAR AÇÃO DO RECURSO
+    function executeFeatureAction(featureName) {
+      // REDIRECIONAMENTOS DIRETOS
+      const redirects = {
+        'Long & Short': 'long-short.html',
+        'Hunter Walls': 'opcoes.html',
+        'Smart Carteiras': 'analises.html',
+        'Opções Recomendações': 'opcoes-recomendacoes.html'
+      };
+      
+      if (redirects[featureName]) {
+        window.location.href = redirects[featureName];
+        return;
+      }
+      
+      // DROPDOWNS
+      if (featureName === 'Machine Learning') {
+        toggleMLDropdown();
+        return;
+      }
+      
+      // RECURSOS EM DESENVOLVIMENTO
+      const comingSoonMessages = {
+        'Suporte e Resistência': '🏭 Análise Setorial\n\nComparativo por Setores da Economia!',
+        'Radar Financeiro': '📡 Radar Financeiro\n\nIndicadores Fundamentalistas Completos!',
+        'Regimes de Volatilidade': '📊 Regimes de Volatilidade\n\nAnálise avançada de regimes!',
+        'Regressão Linear': '📈 Regressão Linear\n\nAnálise Preditiva Avançada!',
+        'Volatilidade GARCH': '📊 Volatilidade GARCH\n\nModelos Avançados de Volatilidade!',
+        'screening': '📊 Greeks Monitor\n\nMonitoramento completo de Delta, Gamma, Theta e Vega!',
+        'Volume Profile': '📈 Volume Profile\n\nAnálise avançada de Volume por Preço!',
+        'IV Scanner': '🔍 IV Scanner\n\nScanner inteligente de Volatilidade Implícita!',
+        'Options Flow': '📊 Options Flow\n\nFluxo de Opções em Tempo Real!',
+        'Pattern Recognition': '👁️ Pattern Recognition\n\nReconhecimento de Padrões Avançado!',
+        'AutoML': '🪄 AutoML\n\nMachine Learning Automatizado!'
+      };
+      
+      const message = comingSoonMessages[featureName] || `🎉 ${featureName}\n\nFuncionalidade disponível em seu plano!`;
+      alert(`${message}\n\nEm breve será implementado.`);
+    }
+
+    // 💎 MOSTRAR DIALOG DE UPGRADE
+    function showUpgradeDialog(featureName, requiredLevel, userLevel) {
+      const levelNames = { 'BASIC': 'Básico', 'PRO': 'Pro', 'PREMIUM': 'Premium' };
+      const currentPlanName = levelNames[userLevel] || 'Básico';
+      const requiredPlanName = levelNames[requiredLevel] || 'Premium';
+      
+      let message = `💎 Recurso ${requiredPlanName}\n\n${featureName} está disponível apenas para planos ${requiredPlanName} ou superior.\n\nSeu plano atual: ${currentPlanName}\nPlano necessário: ${requiredPlanName}`;
+      
+      if (userLevel === 'BASIC') {
+        message += `\n\n🚀 Faça upgrade e tenha acesso a dezenas de recursos avançados!`;
+      }
+      
+      message += `\n\nDeseja fazer upgrade agora?`;
+      
+      if (confirm(message)) {
+        window.location.href = '/planos.html';
       }
     }
 
@@ -1493,7 +1486,7 @@
     window.toggleOpcoesDropdown = toggleOpcoesDropdown;
     window.toggleGratisDropdown = toggleGratisDropdown;
     window.toggleProDropdown = toggleProDropdown;
-    window.dismissTrialBanner = dismissTrialBanner; // 🔥 NOVA FUNÇÃO GLOBAL
+    window.dismissTrialBanner = dismissTrialBanner;
 
     // Initialize when page loads
     document.addEventListener('DOMContentLoaded', initDashboard);

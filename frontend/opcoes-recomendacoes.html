@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Recomendações de Opções - Geminii Tech</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#6366f1',
+            secondary: '#8b5cf6',
+            accent: '#06b6d4',
+            success: '#10b981',
+            warning: '#f59e0b',
+            danger: '#ef4444',
+            geminii: '#ba39af'
+          }
+        }
+      }
+    }
+  </script>
+  
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <style>
+    * {
+      scroll-behavior: smooth;
+    }
+    
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #0f0f0f;
+    }
+    
+    .card {
+      background: rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      transition: all 0.3s ease;
+    }
+    
+    .card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+    
+    .navbar {
+      background: rgba(15, 15, 15, 0.95);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .spinner {
+      border: 3px solid rgba(255, 255, 255, 0.1);
+      border-radius: 50%;
+      border-top: 3px solid #8b5cf6;
+      width: 32px;
+      height: 32px;
+      animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    .fade-in {
+      animation: fadeIn 0.5s ease-in;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .option-card {
+      background: linear-gradient(135deg, rgba(186, 57, 175, 0.1), rgba(139, 92, 246, 0.1));
+      border: 1px solid rgba(186, 57, 175, 0.3);
+      transition: all 0.3s ease;
+    }
+
+    .option-card:hover {
+      border-color: rgba(186, 57, 175, 0.6);
+      box-shadow: 0 10px 30px rgba(186, 57, 175, 0.2);
+    }
+
+    .status-active {
+      background: rgba(16, 185, 129, 0.2);
+      color: #10b981;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .status-finished-gain {
+      background: rgba(59, 130, 246, 0.2);
+      color: #3b82f6;
+      border: 1px solid rgba(59, 130, 246, 0.3);
+    }
+
+    .status-finished-stop {
+      background: rgba(239, 68, 68, 0.2);
+      color: #ef4444;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    .status-finished-expiry {
+      background: rgba(245, 158, 11, 0.2);
+      color: #f59e0b;
+      border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+
+    .tab-active {
+      border-bottom: 2px solid #ba39af;
+      color: #ba39af;
+      font-weight: 600;
+    }
+
+    .filter-active {
+      background: #ba39af;
+      color: white;
+    }
+  </style>
+</head>
+<body class="min-h-screen">
+  
+  <!-- Navigation -->
+  <nav class="fixed top-6 left-1/2 transform -translate-x-1/2 z-50 bg-opacity-5 border-opacity-10 bg-white border-white border rounded-full px-4 py-3 shadow-xl backdrop-blur-md">
+    <div class="flex items-center justify-between">
+      <div class="flex items-center">
+        <img src="logo.png" alt="Geminii Logo" class="w-6 h-6 cursor-pointer" onclick="window.location.href='/'">
+      </div>
+      <div class="hidden md:flex items-center space-x-6 text-xs text-gray-300 ml-8">
+        <a href="/dashboard" class="hover:text-white transition-colors">Dashboard</a>
+        <a href="/analises" class="hover:text-white transition-colors">Carteiras</a>
+        <span class="text-white font-medium">Opções</span>
+      </div>
+      <div class="flex items-center space-x-3 ml-8">
+        <div id="apiStatus" class="w-8 h-8 bg-green-500 bg-opacity-10 border border-green-500 border-opacity-30 rounded-full flex items-center justify-center relative">
+          <i class="fas fa-chart-area text-green-500 text-xs"></i>
+          <div class="absolute -top-1 -right-1 w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <main class="pt-20 px-6 pb-12">
+    <div class="max-w-7xl mx-auto">
+      
+      <!-- Page Header -->
+      <div class="mb-8">
+        <h1 class="text-4xl font-bold text-white mb-2 flex items-center">
+          <i class="fas fa-chart-area text-geminii mr-4"></i>
+          Recomendações de Opções
+        </h1>
+        <p class="text-gray-300 text-lg">Análises e recomendações especializadas para operações com opções</p>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <div class="mb-8">
+        <div class="flex space-x-1 bg-gray-800 bg-opacity-50 rounded-lg p-1">
+          <button id="monthlyTab" onclick="switchTab('monthly')" class="tab-active flex-1 py-3 px-4 text-sm font-medium rounded-lg transition-all">
+            <i class="fas fa-calendar-day mr-2"></i>
+            Recomendações do Mês
+          </button>
+          <button id="yearlyTab" onclick="switchTab('yearly')" class="flex-1 py-3 px-4 text-sm font-medium text-gray-400 hover:text-white rounded-lg transition-all">
+            <i class="fas fa-chart-line mr-2"></i>
+            Acumulado 2025
+          </button>
+        </div>
+      </div>
+
+      <!-- Filters -->
+      <div class="mb-6">
+        <div class="flex flex-wrap gap-3">
+          <button id="filterAll" onclick="setFilter('all')" class="filter-active px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+            Todas
+          </button>
+          <button id="filterActive" onclick="setFilter('ATIVA')" class="bg-gray-700 text-gray-300 hover:bg-gray-600 hover:text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+            Ativas
+          </button>
+          <button id="filterGain" onclick="setFilter('FINALIZADA_GANHO')" class="bg-gray-700 text-gray-300 hover:bg-gray-600 hover:text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+            Ganhos
+          </button>
+          <button id="filterStop" onclick="setFilter('FINALIZADA_STOP')" class="bg-gray-700 text-gray-300 hover:bg-gray-600 hover:text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+            Stops
+          </button>
+          <button id="filterExpiry" onclick="setFilter('FINALIZADA_VENCIMENTO')" class="bg-gray-700 text-gray-300 hover:bg-gray-600 hover:text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+            Vencimentos
+          </button>
+        </div>
+      </div>
+
+      <!-- Monthly Section -->
+      <div id="monthlySection">
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          <div class="card rounded-xl p-6">
+            <div class="flex items-center justify-between mb-3">
+              <div class="w-12 h-12 bg-green-500 bg-opacity-20 rounded-lg flex items-center justify-center">
+                <i class="fas fa-chart-line text-green-500 text-xl"></i>
+              </div>
+              <span class="text-xs text-gray-400">Este mês</span>
+            </div>
+            <div class="text-2xl font-bold text-white" id="monthlyTotal">0</div>
+            <div class="text-sm text-gray-400">Total de Recomendações</div>
+          </div>
+
+          <div class="card rounded-xl p-6">
+            <div class="flex items-center justify-between mb-3">
+              <div class="w-12 h-12 bg-blue-500 bg-opacity-20 rounded-lg flex items-center justify-center">
+                <i class="fas fa-play text-blue-500 text-xl"></i>
+              </div>
+              <span class="text-xs text-gray-400">Ativos</span>
+            </div>
+            <div class="text-2xl font-bold text-blue-400" id="monthlyActive">0</div>
+            <div class="text-sm text-gray-400">Em Andamento</div>
+          </div>
+
+          <div class="card rounded-xl p-6">
+            <div class="flex items-center justify-between mb-3">
+              <div class="w-12 h-12 bg-green-500 bg-opacity-20 rounded-lg flex items-center justify-center">
+                <i class="fas fa-thumbs-up text-green-500 text-xl"></i>
+              </div>
+              <span class="text-xs text-gray-400">Sucesso</span>
+            </div>
+            <div class="text-2xl font-bold text-green-400" id="monthlyWins">0</div>
+            <div class="text-sm text-gray-400">Operações no Ganho</div>
+          </div>
+
+          <div class="card rounded-xl p-6">
+            <div class="flex items-center justify-between mb-3">
+              <div class="w-12 h-12 bg-purple-500 bg-opacity-20 rounded-lg flex items-center justify-center">
+                <i class="fas fa-percentage text-purple-500 text-xl"></i>
+              </div>
+              <span class="text-xs text-gray-400">Taxa</span>
+            </div>
+            <div class="text-2xl font-bold text-purple-400" id="monthlyWinRate">0%</div>
+            <div class="text-sm text-gray-400">Taxa de Acerto</div>
+          </div>
+        </div>
+
+        <!-- Monthly Recommendations Container -->
+        <div id="monthlyRecommendations">
+          <!-- Loading inicial -->
+          <div class="card rounded-2xl p-8">
+            <div class="text-center py-12">
+              <div class="spinner mx-auto mb-4"></div>
+              <p class="text-gray-300">Carregando recomendações do mês...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Yearly Section -->
+      <div id="yearlySection" class="hidden">
+        <!-- Yearly Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
+          <div class="card rounded-xl p-6">
+            <div class="flex items-center justify-between mb-3">
+              <div class="w-12 h-12 bg-blue-500 bg-opacity-20 rounded-lg flex items-center justify-center">
+                <i class="fas fa-calendar text-blue-500 text-xl"></i>
+              </div>
+              <span class="text-xs text-gray-400">2025</span>
+            </div>
+            <div class="text-2xl font-bold text-white" id="yearlyTotal">0</div>
+            <div class="text-sm text-gray-400">Total Acumulado</div>
+          </div>
+
+          <div class="card rounded-xl p-6">
+            <div class="flex items-center justify-between mb-3">
+              <div class="w-12 h-12 bg-green-500 bg-opacity-20 rounded-lg flex items-center justify-center">
+                <i class="fas fa-trophy text-green-500 text-xl"></i>
+              </div>
+              <span class="text-xs text-gray-400">Ganhos</span>
+            </div>
+            <div class="text-2xl font-bold text-green-400" id="yearlyWins">0</div>
+            <div class="text-sm text-gray-400">Operações Ganhadoras</div>
+          </div>
+
+          <div class="card rounded-xl p-6">
+            <div class="flex items-center justify-between mb-3">
+              <div class="w-12 h-12 bg-red-500 bg-opacity-20 rounded-lg flex items-center justify-center">
+                <i class="fas fa-times text-red-500 text-xl"></i>
+              </div>
+              <span class="text-xs text-gray-400">Perdas</span>
+            </div>
+            <div class="text-2xl font-bold text-red-400" id="yearlyLosses">0</div>
+            <div class="text-sm text-gray-400">Stops + Vencimentos</div>
+          </div>
+
+          <div class="card rounded-xl p-6">
+            <div class="flex items-center justify-between mb-3">
+              <div class="w-12 h-12 bg-purple-500 bg-opacity-20 rounded-lg flex items-center justify-center">
+                <i class="fas fa-chart-pie text-purple-500 text-xl"></i>
+              </div>
+              <span class="text-xs text-gray-400">Taxa</span>
+            </div>
+            <div class="text-2xl font-bold text-purple-400" id="yearlyWinRate">0%</div>
+            <div class="text-sm text-gray-400">Taxa de Acerto</div>
+          </div>
+
+          <div class="card rounded-xl p-6">
+            <div class="flex items-center justify-between mb-3">
+              <div class="w-12 h-12 bg-yellow-500 bg-opacity-20 rounded-lg flex items-center justify-center">
+                <i class="fas fa-coins text-yellow-500 text-xl"></i>
+              </div>
+              <span class="text-xs text-gray-400">Performance</span>
+            </div>
+            <div class="text-2xl font-bold text-yellow-400" id="yearlyPerformance">0%</div>
+            <div class="text-sm text-gray-400">Retorno Médio</div>
+          </div>
+        </div>
+
+        <!-- Yearly Recommendations Container -->
+        <div id="yearlyRecommendations">
+          <!-- Loading inicial -->
+          <div class="card rounded-2xl p-8">
+            <div class="text-center py-12">
+              <div class="spinner mx-auto mb-4"></div>
+              <p class="text-gray-300">Carregando dados do ano...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <script>
+    // ===== VARIÁVEIS GLOBAIS =====
+    let userToken = null;
+    let currentUser = null;
+    let currentTab = 'monthly';
+    let currentFilter = 'all';
+    let allRecommendations = [];
+
+    // ===== INICIALIZAÇÃO =====
+    document.addEventListener('DOMContentLoaded', async function() {
+      console.log('🚀 Inicializando Opções...');
+      
+      if (!checkAuth()) return;
+      
+      await loadRecommendations();
+      
+      console.log('✅ Opções inicializado!');
+    });
+
+    // ===== AUTENTICAÇÃO =====
+    function checkAuth() {
+      userToken = localStorage.getItem('geminii_token') || localStorage.getItem('authToken');
+      const userData = localStorage.getItem('geminii_user');
+      
+      if (!userToken) {
+        console.log('❌ Token não encontrado');
+        window.location.href = '/login.html';
+        return false;
+      }
+      
+      if (userData) {
+        try {
+          currentUser = JSON.parse(userData);
+          console.log('✅ Usuário logado:', currentUser.name);
+        } catch (error) {
+          console.error('Erro ao parsear dados do usuário:', error);
+        }
+      }
+      
+      return true;
+    }
+
+    // ===== CARREGAR RECOMENDAÇÕES =====
+    async function loadRecommendations() {
+      try {
+        showLoading();
+        
+        // Tentar buscar recomendações ativas primeiro
+        let response = await fetch('/api/opcoes/public/active', {
+          headers: {
+            'Authorization': `Bearer ${userToken}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        if (!response.ok) {
+          if (response.status === 401) {
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('geminii_token');
+            window.location.href = '/login.html';
+            return;
+          }
+          throw new Error(`HTTP ${response.status}`);
+        }
+        
+        let data = await response.json();
+        let activeRecs = data.success && data.recommendations ? data.recommendations : [];
+        
+        // Buscar recomendações recentes (incluindo finalizadas)
+        response = await fetch('/api/opcoes/public/recent', {
+          headers: {
+            'Authorization': `Bearer ${userToken}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        if (response.ok) {
+          data = await response.json();
+          let recentRecs = data.success && data.recommendations ? data.recommendations : [];
+          
+          // Combinar e evitar duplicatas
+          allRecommendations = [...activeRecs];
+          recentRecs.forEach(rec => {
+            if (!allRecommendations.find(r => r.ticker_opcao === rec.ticker_opcao && r.data_recomendacao === rec.data_recomendacao)) {
+              allRecommendations.push(rec);
+            }
+          });
+        } else {
+          allRecommendations = activeRecs;
+        }
+        
+        console.log(`📊 ${allRecommendations.length} recomendações carregadas`);
+        
+        if (allRecommendations.length === 0) {
+          showNoData();
+        } else {
+          updateStats();
+          displayRecommendations();
+        }
+        
+      } catch (error) {
+        console.error('❌ Erro ao carregar recomendações:', error);
+        showError(error.message);
+      }
+    }
+
+    // ===== SWITCH TABS =====
+    function switchTab(tab) {
+      currentTab = tab;
+      
+      // Update tab styles
+      document.getElementById('monthlyTab').classList.remove('tab-active');
+      document.getElementById('yearlyTab').classList.remove('tab-active');
+      document.getElementById('monthlyTab').classList.add('text-gray-400');
+      document.getElementById('yearlyTab').classList.add('text-gray-400');
+      
+      if (tab === 'monthly') {
+        document.getElementById('monthlyTab').classList.add('tab-active');
+        document.getElementById('monthlyTab').classList.remove('text-gray-400');
+        document.getElementById('monthlySection').classList.remove('hidden');
+        document.getElementById('yearlySection').classList.add('hidden');
+      } else {
+        document.getElementById('yearlyTab').classList.add('tab-active');
+        document.getElementById('yearlyTab').classList.remove('text-gray-400');
+        document.getElementById('monthlySection').classList.add('hidden');
+        document.getElementById('yearlySection').classList.remove('hidden');
+      }
+      
+      updateStats();
+      displayRecommendations();
+    }
+
+    // ===== SET FILTER =====
+    function setFilter(filter) {
+      currentFilter = filter;
+      
+      // Update filter styles - VERSÃO SIMPLIFICADA
+      document.querySelectorAll('[id^="filter"]').forEach(btn => {
+        btn.classList.remove('filter-active');
+        btn.classList.add('bg-gray-700', 'text-gray-300');
+      });
+      
+      // Mapeamento direto dos filtros
+      const filterMapping = {
+        'all': 'filterAll',
+        'ATIVA': 'filterActive', 
+        'FINALIZADA_GANHO': 'filterGain',
+        'FINALIZADA_STOP': 'filterStop',
+        'FINALIZADA_VENCIMENTO': 'filterExpiry'
+      };
+      
+      const targetButton = document.getElementById(filterMapping[filter]);
+      if (targetButton) {
+        targetButton.classList.add('filter-active');
+        targetButton.classList.remove('bg-gray-700', 'text-gray-300');
+      }
+      
+      displayRecommendations();
+    }
+
+    // ===== UPDATE STATS =====
+    function updateStats() {
+      const now = new Date();
+      const currentMonth = now.getMonth();
+      const currentYear = now.getFullYear();
+      
+      let monthlyData = allRecommendations.filter(rec => {
+        const recDate = new Date(rec.data_recomendacao);
+        return recDate.getMonth() === currentMonth && recDate.getFullYear() === currentYear;
+      });
+      
+      let yearlyData = allRecommendations.filter(rec => {
+        const recDate = new Date(rec.data_recomendacao);
+        return recDate.getFullYear() === currentYear;
+      });
+      
+      // Monthly stats
+      const monthlyTotal = monthlyData.length;
+      const monthlyActive = monthlyData.filter(r => r.status === 'ATIVA').length;
+      const monthlyWins = monthlyData.filter(r => r.status === 'FINALIZADA_GANHO').length;
+      const monthlyFinished = monthlyData.filter(r => r.status.startsWith('FINALIZADA')).length;
+      const monthlyWinRate = monthlyFinished > 0 ? (monthlyWins / monthlyFinished * 100) : 0;
+      
+      // Yearly stats
+      const yearlyTotal = yearlyData.length;
+      const yearlyWins = yearlyData.filter(r => r.status === 'FINALIZADA_GANHO').length;
+      const yearlyLosses = yearlyData.filter(r => r.status === 'FINALIZADA_STOP' || r.status === 'FINALIZADA_VENCIMENTO').length;
+      const yearlyFinished = yearlyData.filter(r => r.status.startsWith('FINALIZADA')).length;
+      const yearlyWinRateVal = yearlyFinished > 0 ? (yearlyWins / yearlyFinished * 100) : 0;
+      
+      // Calcular performance média
+      const finishedWithPerformance = yearlyData.filter(r => r.performance != null);
+      const yearlyAvgPerformance = finishedWithPerformance.length > 0 ? 
+        finishedWithPerformance.reduce((sum, r) => sum + r.performance, 0) / finishedWithPerformance.length : 0;
+      
+      // Update UI
+      document.getElementById('monthlyTotal').textContent = monthlyTotal;
+      document.getElementById('monthlyActive').textContent = monthlyActive;
+      document.getElementById('monthlyWins').textContent = monthlyWins;
+      document.getElementById('monthlyWinRate').textContent = `${monthlyWinRate.toFixed(1)}%`;
+      
+      document.getElementById('yearlyTotal').textContent = yearlyTotal;
+      document.getElementById('yearlyWins').textContent = yearlyWins;
+      document.getElementById('yearlyLosses').textContent = yearlyLosses;
+      document.getElementById('yearlyWinRate').textContent = `${yearlyWinRateVal.toFixed(1)}%`;
+      document.getElementById('yearlyPerformance').textContent = `${yearlyAvgPerformance.toFixed(1)}%`;
+    }
+
+    // ===== DISPLAY RECOMMENDATIONS =====
+    function displayRecommendations() {
+      const now = new Date();
+      const currentMonth = now.getMonth();
+      const currentYear = now.getFullYear();
+      
+      let filteredData = allRecommendations;
+      
+      // Filter by tab
+      if (currentTab === 'monthly') {
+        filteredData = filteredData.filter(rec => {
+          const recDate = new Date(rec.data_recomendacao);
+          return recDate.getMonth() === currentMonth && recDate.getFullYear() === currentYear;
+        });
+      } else {
+        filteredData = filteredData.filter(rec => {
+          const recDate = new Date(rec.data_recomendacao);
+          return recDate.getFullYear() === currentYear;
+        });
+      }
+      
+      // Filter by status
+      if (currentFilter !== 'all') {
+        filteredData = filteredData.filter(rec => rec.status === currentFilter);
+      }
+      
+      const containerId = currentTab === 'monthly' ? 'monthlyRecommendations' : 'yearlyRecommendations';
+      const container = document.getElementById(containerId);
+      
+      if (filteredData.length === 0) {
+        container.innerHTML = `
+          <div class="card rounded-2xl p-8">
+            <div class="text-center py-12">
+              <i class="fas fa-chart-area text-5xl text-gray-400 mb-4"></i>
+              <h3 class="text-xl font-bold mb-2 text-gray-300">Nenhuma recomendação encontrada</h3>
+              <p class="text-gray-400 mb-4">Não há recomendações para o filtro selecionado.</p>
+              <button onclick="setFilter('all')" class="bg-geminii hover:bg-purple-700 px-6 py-2 rounded-lg text-white">
+                <i class="fas fa-filter mr-1"></i>Ver Todas
+              </button>
+            </div>
+          </div>
+        `;
+        return;
+      }
+      
+      // Sort by date (most recent first)
+      filteredData.sort((a, b) => new Date(b.data_recomendacao) - new Date(a.data_recomendacao));
+      
+      let html = `<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">`;
+      
+      filteredData.forEach(rec => {
+        const isActive = rec.status === 'ATIVA';
+        const vencimentoDate = new Date(rec.vencimento);
+        const today = new Date();
+        const daysToExpiry = Math.ceil((vencimentoDate - today) / (1000 * 60 * 60 * 24));
+        
+        const statusClass = getStatusClass(rec.status);
+        const statusText = getStatusText(rec.status);
+        const statusIcon = getStatusIcon(rec.status);
+        
+        html += `
+          <div class="option-card rounded-xl p-6 fade-in">
+            <!-- Header -->
+            <div class="flex items-center justify-between mb-4">
+              <div class="flex items-center space-x-3">
+                <div class="w-12 h-12 rounded-lg bg-gradient-to-r from-geminii to-purple-600 flex items-center justify-center">
+                  <i class="fas fa-chart-area text-white text-lg"></i>
+                </div>
+                <div>
+                  <h3 class="text-xl font-bold text-white">${rec.ticker_opcao}</h3>
+                  <p class="text-sm text-gray-400">${rec.ativo_spot} • Strike: R$ ${parseFloat(rec.strike).toFixed(2)}</p>
+                </div>
+              </div>
+              <div class="text-right">
+                <div class="px-3 py-1 rounded-full text-xs font-medium ${statusClass} mb-2">
+                  <i class="${statusIcon} mr-1"></i>${statusText}
+                </div>
+                ${isActive && daysToExpiry <= 7 ? `
+                  <div class="px-2 py-1 bg-red-600 bg-opacity-20 border border-red-500 rounded text-xs text-red-400">
+                    <i class="fas fa-exclamation-triangle mr-1"></i>
+                    ${daysToExpiry} dia${daysToExpiry !== 1 ? 's' : ''}
+                  </div>
+                ` : ''}
+              </div>
+            </div>
+            
+            <!-- Price Grid -->
+            <div class="grid grid-cols-2 gap-4 mb-4">
+              <div class="bg-gray-800 bg-opacity-50 rounded-lg p-3 text-center">
+                <div class="text-xs text-gray-400 mb-1">Entrada</div>
+                <div class="text-lg font-bold text-blue-400">R$ ${parseFloat(rec.valor_entrada).toFixed(2)}</div>
+              </div>
+              <div class="bg-gray-800 bg-opacity-50 rounded-lg p-3 text-center">
+                <div class="text-xs text-gray-400 mb-1">Stop</div>
+                <div class="text-lg font-bold text-red-400">R$ ${parseFloat(rec.stop).toFixed(2)}</div>
+              </div>
+              <div class="bg-gray-800 bg-opacity-50 rounded-lg p-3 text-center">
+                <div class="text-xs text-gray-400 mb-1">Gain</div>
+                <div class="text-lg font-bold text-green-400">R$ ${parseFloat(rec.gain).toFixed(2)}</div>
+              </div>
+              <div class="bg-gray-800 bg-opacity-50 rounded-lg p-3 text-center">
+                <div class="text-xs text-gray-400 mb-1">Vencimento</div>
+                <div class="text-lg font-bold ${daysToExpiry <= 7 && isActive ? 'text-red-400' : 'text-white'}">
+                  ${formatDate(rec.vencimento)}
+                </div>
+                ${isActive ? `<div class="text-xs text-gray-400">${daysToExpiry}d restantes</div>` : ''}
+              </div>
+            </div>
+            
+            ${rec.gain_parcial ? `
+              <div class="mb-4 p-3 bg-yellow-600 bg-opacity-20 border border-yellow-500 border-opacity-30 rounded-lg">
+                <div class="flex items-center text-yellow-300 text-sm">
+                  <i class="fas fa-star mr-2"></i>
+                  Gain Parcial: R$ ${parseFloat(rec.gain_parcial).toFixed(2)}
+                </div>
+              </div>
+            ` : ''}
+            
+            <!-- Performance (se finalizada) -->
+            ${rec.performance !== null && rec.performance !== undefined ? `
+              <div class="mb-4 p-3 ${rec.performance >= 0 ? 'bg-green-600' : 'bg-red-600'} bg-opacity-20 border ${rec.performance >= 0 ? 'border-green-500' : 'border-red-500'} border-opacity-30 rounded-lg">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center ${rec.performance >= 0 ? 'text-green-300' : 'text-red-300'} text-sm">
+                    <i class="fas ${rec.performance >= 0 ? 'fa-trending-up' : 'fa-trending-down'} mr-2"></i>
+                    Performance Final
+                  </div>
+                  <div class="text-lg font-bold ${rec.performance >= 0 ? 'text-green-400' : 'text-red-400'}">
+                    ${rec.performance >= 0 ? '+' : ''}${parseFloat(rec.performance).toFixed(2)}%
+                  </div>
+                </div>
+                ${rec.resultado_final ? `
+                  <div class="text-xs ${rec.performance >= 0 ? 'text-green-300' : 'text-red-300'} mt-1">
+                    Resultado: R$ ${parseFloat(rec.resultado_final).toFixed(2)}
+                  </div>
+                ` : ''}
+              </div>
+            ` : ''}
+            
+            <!-- Informações Adicionais -->
+            <div class="space-y-2 text-sm">
+              <div class="flex justify-between">
+                <span class="text-gray-400">Data da Recomendação:</span>
+                <span class="text-white">${formatDate(rec.data_recomendacao)}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-400">Vencimento:</span>
+                <span class="text-white">${formatDate(rec.vencimento)}</span>
+              </div>
+              ${isActive ? `
+                <div class="flex justify-between">
+                  <span class="text-gray-400">Dias para Vencimento:</span>
+                  <span class="${daysToExpiry <= 7 ? 'text-red-400' : daysToExpiry <= 15 ? 'text-yellow-400' : 'text-green-400'} font-semibold">
+                    ${daysToExpiry} dias
+                  </span>
+                </div>
+              ` : ''}
+            </div>
+            
+            <!-- Footer -->
+            <div class="mt-4 pt-3 border-t border-gray-700 flex items-center justify-between">
+              <div class="text-xs text-gray-500">
+                ${rec.created_at ? `Criado: ${formatDateTime(rec.created_at)}` : ''}
+              </div>
+              <div class="text-xs ${isActive ? 'text-green-400' : 'text-gray-400'}">
+                ${isActive ? '🟢 Em Andamento' : '⚪ Finalizada'}
+              </div>
+            </div>
+          </div>
+        `;
+      });
+      
+      html += '</div>';
+      
+      // Adicionar resumo no final
+      html += `
+        <div class="card rounded-xl p-6 mt-8">
+          <h4 class="text-white font-semibold mb-4 flex items-center">
+            <i class="fas fa-chart-pie text-geminii mr-2"></i>
+            Resumo do Período (${filteredData.length} recomendações)
+          </h4>
+          
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div class="text-center">
+              <div class="text-2xl font-bold text-green-400">
+                ${filteredData.filter(r => r.status === 'FINALIZADA_GANHO').length}
+              </div>
+              <div class="text-sm text-gray-400">Ganhos</div>
+            </div>
+            <div class="text-center">
+              <div class="text-2xl font-bold text-red-400">
+                ${filteredData.filter(r => r.status === 'FINALIZADA_STOP').length}
+              </div>
+              <div class="text-sm text-gray-400">Stops</div>
+            </div>
+            <div class="text-center">
+              <div class="text-2xl font-bold text-orange-400">
+                ${filteredData.filter(r => r.status === 'FINALIZADA_VENCIMENTO').length}
+              </div>
+              <div class="text-sm text-gray-400">Vencimentos</div>
+            </div>
+            <div class="text-center">
+              <div class="text-2xl font-bold text-blue-400">
+                ${filteredData.filter(r => r.status === 'ATIVA').length}
+              </div>
+              <div class="text-sm text-gray-400">Ativas</div>
+            </div>
+          </div>
+        </div>
+      `;
+      
+      container.innerHTML = html;
+    }
+
+    // ===== UTILITY FUNCTIONS =====
+    function getStatusClass(status) {
+      const classes = {
+        'ATIVA': 'status-active',
+        'FINALIZADA_GANHO': 'status-finished-gain',
+        'FINALIZADA_STOP': 'status-finished-stop',
+        'FINALIZADA_VENCIMENTO': 'status-finished-expiry',
+        'FINALIZADA_MANUAL': 'bg-gray-600 bg-opacity-20 text-gray-400 border border-gray-600'
+      };
+      return classes[status] || 'bg-gray-600 bg-opacity-20 text-gray-400 border border-gray-600';
+    }
+
+    function getStatusText(status) {
+      const texts = {
+        'ATIVA': 'Ativa',
+        'FINALIZADA_GANHO': 'Ganho',
+        'FINALIZADA_STOP': 'Stop Loss',
+        'FINALIZADA_VENCIMENTO': 'Vencimento',
+        'FINALIZADA_MANUAL': 'Manual'
+      };
+      return texts[status] || status;
+    }
+
+    function getStatusIcon(status) {
+      const icons = {
+        'ATIVA': 'fas fa-play',
+        'FINALIZADA_GANHO': 'fas fa-check',
+        'FINALIZADA_STOP': 'fas fa-times',
+        'FINALIZADA_VENCIMENTO': 'fas fa-calendar-times',
+        'FINALIZADA_MANUAL': 'fas fa-hand-paper'
+      };
+      return icons[status] || 'fas fa-question';
+    }
+
+    function formatDate(dateString) {
+      if (!dateString) return 'N/A';
+      return new Date(dateString).toLocaleDateString('pt-BR');
+    }
+
+    function formatDateTime(dateString) {
+      if (!dateString) return 'N/A';
+      return new Date(dateString).toLocaleString('pt-BR');
+    }
+
+    function showToast(message, type = 'info') {
+      const colors = {
+        success: 'bg-green-500',
+        error: 'bg-red-500',
+        info: 'bg-blue-500',
+        warning: 'bg-yellow-500'
+      };
+      
+      const toast = document.createElement('div');
+      toast.className = `fixed top-4 right-4 ${colors[type]} text-white px-6 py-3 rounded-lg shadow-lg z-50 transition-all duration-300`;
+      toast.textContent = message;
+
+      document.body.appendChild(toast);
+
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        setTimeout(() => {
+          if (document.body.contains(toast)) {
+            document.body.removeChild(toast);
+          }
+        }, 300);
+      }, 3000);
+    }
+
+    // ===== UI STATES =====
+    function showLoading() {
+      const monthlyContainer = document.getElementById('monthlyRecommendations');
+      const yearlyContainer = document.getElementById('yearlyRecommendations');
+      
+      const loadingHTML = `
+        <div class="card rounded-2xl p-8">
+          <div class="text-center py-12">
+            <div class="spinner mx-auto mb-4"></div>
+            <p class="text-gray-300">Carregando recomendações...</p>
+          </div>
+        </div>
+      `;
+      
+      monthlyContainer.innerHTML = loadingHTML;
+      yearlyContainer.innerHTML = loadingHTML;
+    }
+
+    function showNoData() {
+      const monthlyContainer = document.getElementById('monthlyRecommendations');
+      const yearlyContainer = document.getElementById('yearlyRecommendations');
+      
+      const noDataHTML = `
+        <div class="card rounded-2xl p-8">
+          <div class="text-center py-12">
+            <i class="fas fa-chart-area text-5xl text-gray-400 mb-4"></i>
+            <h3 class="text-xl font-bold mb-2 text-gray-300">Nenhuma recomendação disponível</h3>
+            <p class="text-gray-400 mb-4">Ainda não há recomendações de opções cadastradas.</p>
+            <div class="flex justify-center space-x-4">
+              <a href="/planos.html" class="bg-gradient-to-r from-geminii to-purple-600 hover:from-purple-700 hover:to-pink-700 px-6 py-2 rounded-lg text-white font-medium">
+                <i class="fas fa-crown mr-2"></i>Fazer Upgrade
+              </a>
+              <button onclick="loadRecommendations()" class="bg-gray-700 hover:bg-gray-600 px-6 py-2 rounded-lg text-white">
+                <i class="fas fa-refresh mr-1"></i>Atualizar
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+      
+      monthlyContainer.innerHTML = noDataHTML;
+      yearlyContainer.innerHTML = noDataHTML;
+    }
+
+    function showError(message) {
+      const monthlyContainer = document.getElementById('monthlyRecommendations');
+      const yearlyContainer = document.getElementById('yearlyRecommendations');
+      
+      const errorHTML = `
+        <div class="card rounded-2xl p-8">
+          <div class="text-center py-12">
+            <i class="fas fa-exclamation-triangle text-5xl text-danger mb-4"></i>
+            <h3 class="text-xl font-bold mb-2 text-red-400">Erro ao carregar</h3>
+            <p class="text-gray-400 mb-4">${message}</p>
+            <button onclick="loadRecommendations()" class="bg-geminii hover:bg-purple-700 px-6 py-2 rounded-lg text-white">
+              <i class="fas fa-refresh mr-1"></i>Tentar Novamente
+            </button>
+          </div>
+        </div>
+      `;
+      
+      monthlyContainer.innerHTML = errorHTML;
+      yearlyContainer.innerHTML = errorHTML;
+    }
+
+  </script>
+</body>
+</html>
