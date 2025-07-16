@@ -419,11 +419,15 @@ def generate_recommendations():
 @recommendations_free_bp.route('/admin/close/<int:rec_id>', methods=['POST'])
 @require_admin
 def close_recommendation(rec_id):
-    """Encerrar uma recomendação manualmente"""
+    """Encerrar uma recomendação manualmente - VERSÃO CORRIGIDA"""
     try:
         data = request.get_json()
         status = data.get('status', 'FINALIZADA_MANUAL')
         final_price = data.get('final_price')
+        
+        print(f"🔄 Encerrando recomendação {rec_id}")
+        print(f"📊 Status: {status}")
+        print(f"💰 Preço final: {final_price} (tipo: {type(final_price)})")
         
         from database import get_db_connection
         conn = get_db_connection()
@@ -446,15 +450,22 @@ def close_recommendation(rec_id):
         
         entry_price, action = rec
         
-        # Calcular performance final
-        if final_price:
-            performance = ((final_price - entry_price) / entry_price * 100)
-            if action == 'VENDA':
-                performance = -performance
-        else:
-            performance = 0
+        # ✅ CONVERSÃO EXPLÍCITA PARA EVITAR CONFLITO DE TIPOS
+        entry_price_float = float(entry_price)
+        final_price_float = float(final_price) if final_price else entry_price_float
         
-        # Atualizar recomendação
+        print(f"🔢 Entry price (convertido): {entry_price_float}")
+        print(f"🔢 Final price (convertido): {final_price_float}")
+        
+        # Calcular performance - USANDO APENAS FLOAT
+        if action == 'COMPRA':
+            performance = ((final_price_float - entry_price_float) / entry_price_float * 100)
+        else:  # VENDA
+            performance = ((entry_price_float - final_price_float) / entry_price_float * 100)
+        
+        print(f"📈 Performance calculada: {performance}%")
+        
+        # Atualizar recomendação - USANDO VALORES CONVERTIDOS
         cursor.execute("""
             UPDATE recommendations_free
             SET status = %s, 
@@ -465,8 +476,8 @@ def close_recommendation(rec_id):
             WHERE id = %s
         """, (
             status,
-            final_price or entry_price,
-            performance,
+            final_price_float,  # ✅ Usar float convertido
+            round(performance, 2),  # ✅ Arredondar para evitar problemas
             datetime.now(timezone.utc),
             datetime.now(timezone.utc),
             rec_id
@@ -476,13 +487,19 @@ def close_recommendation(rec_id):
         cursor.close()
         conn.close()
         
+        print(f"✅ Recomendação {rec_id} encerrada com sucesso")
+        
         return jsonify({
             'success': True,
             'message': 'Recomendação encerrada com sucesso',
-            'performance': performance
+            'performance': round(performance, 2)
         })
         
     except Exception as e:
+        print(f"❌ Erro ao encerrar recomendação {rec_id}: {e}")
+        import traceback
+        traceback.print_exc()
+        
         return jsonify({
             'success': False,
             'error': f'Erro ao encerrar recomendação: {str(e)}'

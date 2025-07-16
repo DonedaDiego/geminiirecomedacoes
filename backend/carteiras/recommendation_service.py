@@ -1,4 +1,4 @@
-# recommendation_service.py - SERVIÇOS DE RECOMENDAÇÕES
+# recommendation_service.py - SERVIÇOS DE RECOMENDAÇÕES - VERSÃO CORRIGIDA
 
 from database import get_db_connection
 from datetime import datetime
@@ -10,80 +10,80 @@ import os
 COMPANY_INFO = {
     "VALE3": {
         "name": "Vale",
-        "description": "Fundada em 1942, a Vale é uma das maiores mineradoras do mundo, com forte atuação em minério de ferro, níquel e logística. Sua presença global e importância para a balança comercial brasileira a tornam estratégica, embora esteja sujeita à volatilidade das commodities e a riscos ambientais.",
+        "description": "Fundada em 1942, a Vale é uma das maiores mineradoras do mundo, com forte atuação em minério de ferro, níquel e logística.",
         "sector": "Mineração",
         "founded": 1942
     },
     "ITUB4": {
         "name": "Itaú Unibanco",
-        "description": "Resultado da fusão entre Itaú e Unibanco em 2008, tornou-se o maior banco privado do Brasil. É reconhecido por sua sólida governança, foco em eficiência operacional e forte atuação em varejo bancário, crédito e gestão de ativos.",
+        "description": "Maior banco privado do Brasil, reconhecido por sua governança e eficiência operacional.",
         "sector": "Financeiro",
         "founded": 2008
     },
     "PETR4": {
         "name": "Petrobras",
-        "description": "Criada em 1953, a Petrobras é a maior empresa de energia do Brasil. Atua nos segmentos de exploração, produção, refino e distribuição de petróleo e gás. Apesar do histórico de interferência política, é referência mundial em exploração em águas profundas.",
+        "description": "Maior empresa de energia do Brasil, líder em exploração em águas profundas.",
         "sector": "Energia",
         "founded": 1953
     },
     "BBDC4": {
         "name": "Bradesco",
-        "description": "Fundado em 1943, o Bradesco é um dos maiores bancos privados do Brasil. Reconhecido por sua ampla rede de agências e forte presença no varejo, oferece serviços bancários completos e tem estratégia focada em transformação digital.",
+        "description": "Um dos maiores bancos privados do Brasil, com ampla rede de agências.",
         "sector": "Financeiro", 
         "founded": 1943
     },
     "ABEV3": {
         "name": "Ambev",
-        "description": "A Ambev é uma das maiores cervejarias do mundo, controlada pela Anheuser-Busch InBev. No Brasil, domina o mercado de bebidas com marcas como Skol, Brahma e Antarctica, além de atuar em refrigerantes e água.",
+        "description": "Uma das maiores cervejarias do mundo, domina o mercado brasileiro de bebidas.",
         "sector": "Bebidas",
         "founded": 1999
     },
     "WEGE3": {
         "name": "WEG",
-        "description": "Fundada em 1961, a WEG é líder brasileira em motores elétricos e automação industrial. Reconhecida pela qualidade e inovação, exporta para mais de 135 países e é referência em eficiência energética.",
+        "description": "Líder brasileira em motores elétricos e automação industrial.",
         "sector": "Industrial",
         "founded": 1961
     },
     "MGLU3": {
         "name": "Magazine Luiza",
-        "description": "Varejista brasileira fundada em 1957, revolucionou o setor com sua estratégia omnichannel. Conhecida pela inovação em e-commerce e marketplace, é uma das principais empresas de varejo do país.",
+        "description": "Varejista brasileira pioneira em estratégia omnichannel e e-commerce.",
         "sector": "Varejo",
         "founded": 1957
     },
     # BDRs Americanas
     "AAPL34": {
         "name": "Apple Inc.",
-        "description": "Fundada em 1976, a Apple é uma das maiores empresas de tecnologia do mundo. Líder em smartphones (iPhone), computadores (Mac) e serviços digitais, é reconhecida pela inovação e design premium.",
+        "description": "Líder mundial em tecnologia, conhecida por iPhone, Mac e serviços digitais.",
         "sector": "Tecnologia",
         "founded": 1976
     },
     "MSFT34": {
         "name": "Microsoft",
-        "description": "Criada em 1975, a Microsoft é líder em software empresarial, computação em nuvem (Azure) e produtividade. Domina o mercado de sistemas operacionais e tem forte crescimento em cloud computing.",
+        "description": "Líder em software empresarial, computação em nuvem e produtividade.",
         "sector": "Tecnologia",
         "founded": 1975
     },
     "GOOGL34": {
         "name": "Alphabet (Google)",
-        "description": "A Alphabet, holding do Google fundada em 2015, domina o mercado de buscas online e publicidade digital. Também atua em computação em nuvem, inteligência artificial e veículos autônomos.",
+        "description": "Domina buscas online, publicidade digital e computação em nuvem.",
         "sector": "Tecnologia",
         "founded": 2015
     },
     "AMZO34": {
         "name": "Amazon",
-        "description": "Fundada em 1994, a Amazon revolucionou o e-commerce e é líder em computação em nuvem (AWS). Atua também em logística, streaming de vídeo e inteligência artificial.",
+        "description": "Líder em e-commerce mundial e computação em nuvem (AWS).",
         "sector": "E-commerce",
         "founded": 1994
     },
     "TSLA34": {
         "name": "Tesla",
-        "description": "Fundada em 2003, a Tesla é pioneira em veículos elétricos e armazenamento de energia. Liderada por Elon Musk, é referência em inovação automotiva e sustentabilidade.",
+        "description": "Pioneira em veículos elétricos e armazenamento de energia.",
         "sector": "Automotivo",
         "founded": 2003
     },
     "NVDC34": {
         "name": "NVIDIA",
-        "description": "Fundada em 1993, a NVIDIA é líder mundial em processadores gráficos (GPUs) e computação acelerada. Tornou-se essencial para inteligência artificial, games e data centers.",
+        "description": "Líder mundial em GPUs e computação acelerada, essencial para IA.",
         "sector": "Semicondutores",
         "founded": 1993
     }
@@ -97,12 +97,13 @@ def verify_token(token):
         secret_key = os.environ.get('SECRET_KEY', 'geminii-secret-2024')
         payload = jwt.decode(token, secret_key, algorithms=['HS256'])
         return payload
-    except:
+    except Exception as e:
+        print(f"Token verification error: {e}")
         return None
 
 def get_company_info(ticker):
     """Buscar informações da empresa pelo ticker"""
-    return COMPANY_INFO.get(ticker, {
+    return COMPANY_INFO.get(ticker.upper(), {
         "name": ticker,
         "description": "Informações não disponíveis para este ativo.",
         "sector": "N/A",
@@ -112,7 +113,7 @@ def get_company_info(ticker):
 # ===== SERVIÇOS DE RECOMENDAÇÕES =====
 
 def get_admin_portfolio_recommendations_service(portfolio_name):
-    """Buscar recomendações de uma carteira (Admin) - COM INFO DAS EMPRESAS"""
+    """Buscar recomendações de uma carteira (Admin)"""
     try:
         conn = get_db_connection()
         if not conn:
@@ -145,7 +146,6 @@ def get_admin_portfolio_recommendations_service(portfolio_name):
                 'price_target': float(row[6]) if row[6] else None,
                 'current_price': float(row[7]) if row[7] else None,
                 'is_active': row[8],
-                # ✅ NOVAS INFORMAÇÕES DA EMPRESA
                 'company_name': company_info['name'],
                 'company_description': company_info['description'],
                 'company_sector': company_info['sector'],
@@ -188,8 +188,9 @@ def add_portfolio_recommendation_service(data, admin_id):
         cursor.execute('''
             INSERT INTO portfolio_recommendations 
             (portfolio_name, ticker, action_type, target_weight, 
-             recommendation_date, reason, price_target, current_price, created_by)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+             recommendation_date, reason, price_target, current_price, 
+             created_by, is_active)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, true)
         ''', (
             data['portfolio'],
             data['ticker'].upper(),
@@ -227,7 +228,7 @@ def update_portfolio_recommendation_service(data):
             
         cursor = conn.cursor()
         
-        # Construir query dinâmica baseada nos campos fornecidos
+        # Construir query dinâmica
         update_fields = []
         update_values = []
         
@@ -365,7 +366,7 @@ def generate_rebalance_recommendations_service(portfolio, reason, admin_user_id)
         cursor.execute("""
             SELECT ticker, current_price, target_price, weight
             FROM portfolio_assets 
-            WHERE portfolio_name = %s
+            WHERE portfolio_name = %s AND is_active = true
         """, (portfolio,))
         
         assets = cursor.fetchall()
@@ -390,7 +391,7 @@ def generate_rebalance_recommendations_service(portfolio, reason, admin_user_id)
             cursor.execute("""
                 SELECT id FROM portfolio_recommendations 
                 WHERE portfolio_name = %s AND ticker = %s AND action_type = 'SELL'
-                AND recommendation_date >= %s
+                AND recommendation_date >= %s AND is_active = true
             """, (portfolio, ticker, today))
             
             existing_rec = cursor.fetchone()
@@ -400,9 +401,9 @@ def generate_rebalance_recommendations_service(portfolio, reason, admin_user_id)
                 cursor.execute("""
                     INSERT INTO portfolio_recommendations 
                     (portfolio_name, ticker, action_type, target_weight, 
-                     recommendation_date, price_target, reason, created_by)
-                    VALUES (%s, %s, 'SELL', 0, %s, %s, %s, %s)
-                """, (portfolio, ticker, today, target_price, reason, admin_user_id))
+                     recommendation_date, price_target, current_price, reason, created_by, is_active)
+                    VALUES (%s, %s, 'SELL', 0, %s, %s, %s, %s, %s, true)
+                """, (portfolio, ticker, today, target_price, current_price, reason, admin_user_id))
                 
                 recommendations_created += 1
         
@@ -418,20 +419,21 @@ def generate_rebalance_recommendations_service(portfolio, reason, admin_user_id)
         }
         
     except Exception as e:
+        print(f"Error generating rebalance: {e}")
         return {'success': False, 'error': str(e)}
 
 def get_user_portfolios_service(user_id):
-    """Buscar carteiras que o usuário tem acesso (ADMIN TEM ACESSO TOTAL)"""
+    """Buscar carteiras que o usuário tem acesso"""
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
         
-        # ✅ VERIFICAR SE É ADMIN PRIMEIRO
+        # Verificar se é admin
         cursor.execute("SELECT user_type FROM users WHERE id = %s", (user_id,))
         user_result = cursor.fetchone()
         
         if user_result and user_result[0] in ['admin', 'master']:
-            # 🔥 ADMIN TEM ACESSO TOTAL - TODAS AS CARTEIRAS
+            # Admin tem acesso total
             cursor.execute("""
                 SELECT name, display_name, description, created_at
                 FROM portfolios 
@@ -449,7 +451,7 @@ def get_user_portfolios_service(user_id):
                 })
                 
         else:
-            # 👤 USUÁRIO NORMAL - APENAS CARTEIRAS LIBERADAS
+            # Usuário normal - apenas carteiras liberadas
             cursor.execute("""
                 SELECT up.portfolio_name, p.display_name, p.description, up.granted_at
                 FROM user_portfolios up
@@ -476,6 +478,7 @@ def get_user_portfolios_service(user_id):
         }
         
     except Exception as e:
+        print(f"Error getting user portfolios: {e}")
         return {'success': False, 'error': str(e)}
 
 def get_user_portfolio_recommendations_detailed_service(portfolio_name, user_id):
@@ -484,13 +487,13 @@ def get_user_portfolio_recommendations_detailed_service(portfolio_name, user_id)
         conn = get_db_connection()
         cursor = conn.cursor()
         
-        # ✅ VERIFICAR SE É ADMIN
+        # Verificar se é admin
         cursor.execute("SELECT user_type FROM users WHERE id = %s", (user_id,))
         user_result = cursor.fetchone()
         is_admin = user_result and user_result[0] in ['admin', 'master']
         
         if not is_admin:
-            # VERIFICAR ACESSO PARA USUÁRIOS NORMAIS
+            # Verificar acesso para usuários normais
             cursor.execute("""
                 SELECT id FROM user_portfolios 
                 WHERE user_id = %s AND portfolio_name = %s AND is_active = true
@@ -501,7 +504,7 @@ def get_user_portfolio_recommendations_detailed_service(portfolio_name, user_id)
                 conn.close()
                 return {'success': False, 'error': 'Acesso negado a esta carteira'}
         
-        # ADMIN OU USUÁRIO COM ACESSO - BUSCAR RECOMENDAÇÕES
+        # Buscar recomendações
         cursor.execute("""
             SELECT 
                 ticker, action_type, target_weight, 
@@ -540,6 +543,7 @@ def get_user_portfolio_recommendations_detailed_service(portfolio_name, user_id)
         }
         
     except Exception as e:
+        print(f"Error getting detailed recommendations: {e}")
         return {'success': False, 'error': str(e)}
 
 def get_user_portfolio_assets_service(portfolio_name, user_id):
@@ -548,13 +552,13 @@ def get_user_portfolio_assets_service(portfolio_name, user_id):
         conn = get_db_connection()
         cursor = conn.cursor()
         
-        # ✅ VERIFICAR SE É ADMIN
+        # Verificar se é admin
         cursor.execute("SELECT user_type FROM users WHERE id = %s", (user_id,))
         user_result = cursor.fetchone()
         is_admin = user_result and user_result[0] in ['admin', 'master']
         
         if not is_admin:
-            # VERIFICAR ACESSO PARA USUÁRIOS NORMAIS
+            # Verificar acesso para usuários normais
             cursor.execute("""
                 SELECT id FROM user_portfolios 
                 WHERE user_id = %s AND portfolio_name = %s AND is_active = true
@@ -565,7 +569,7 @@ def get_user_portfolio_assets_service(portfolio_name, user_id):
                 conn.close()
                 return {'success': False, 'error': 'Acesso negado a esta carteira'}
         
-        # ADMIN OU USUÁRIO COM ACESSO - BUSCAR ATIVOS
+        # Buscar ativos
         cursor.execute("""
             SELECT ticker, weight, sector, entry_price, current_price, target_price, entry_date
             FROM portfolio_assets 
@@ -578,7 +582,7 @@ def get_user_portfolio_assets_service(portfolio_name, user_id):
         
         for row in cursor.fetchall():
             ticker = row[0]
-            weight = float(row[1])
+            weight = float(row[1]) if row[1] else 0
             company_info = get_company_info(ticker)
             
             assets.append({
@@ -606,6 +610,7 @@ def get_user_portfolio_assets_service(portfolio_name, user_id):
         }
         
     except Exception as e:
+        print(f"Error getting user assets: {e}")
         return {'success': False, 'error': str(e)}
 
 def get_admin_stats_service():
@@ -617,24 +622,24 @@ def get_admin_stats_service():
             
         cursor = conn.cursor()
         
-        # Total de usuários
+        # Total de usuários (excluindo admins)
         cursor.execute("SELECT COUNT(*) FROM users WHERE user_type != 'admin'")
         total_users = cursor.fetchone()[0]
         
-        # Usuários premium (não básico)
-        cursor.execute("SELECT COUNT(*) FROM users WHERE plan_id > 1 AND user_type != 'admin'")
+        # Usuários premium (plano > 3 = básico)
+        cursor.execute("SELECT COUNT(*) FROM users WHERE plan_id < 3 AND user_type != 'admin'")
         premium_users = cursor.fetchone()[0]
         
-        # Cupons ativos
-        cursor.execute("SELECT COUNT(*) FROM coupons WHERE is_active = true")
+        # Cupons ativos - usando OR para compatibilidade
+        cursor.execute("SELECT COUNT(*) FROM coupons WHERE (is_active = true OR active = true)")
         active_coupons = cursor.fetchone()[0]
         
         # Total de recomendações ativas
         cursor.execute("SELECT COUNT(*) FROM portfolio_recommendations WHERE is_active = true")
         total_recommendations = cursor.fetchone()[0]
         
-        # Receita mensal estimada (simulada)
-        monthly_revenue = premium_users * 50  # Estimativa básica
+        # Receita mensal estimada
+        monthly_revenue = premium_users * 75  # Estimativa
         
         cursor.close()
         conn.close()

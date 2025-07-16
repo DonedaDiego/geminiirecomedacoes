@@ -74,34 +74,18 @@ def require_token(f):
         return f(*args, **kwargs)
     return decorated_function
 
-# ===== ADMIN ENDPOINTS =====
+# ===== ROTAS DE RECOMENDAÇÕES =====
 
 @recommendations_bp.route('/admin/portfolio/<portfolio_name>/recommendations', methods=['GET'])
 @require_admin
 def get_admin_portfolio_recommendations(portfolio_name):
-    """Buscar recomendações de uma carteira (Admin) - COM INFO DAS EMPRESAS"""
+    """Buscar recomendações de uma carteira (Admin)"""
     result = get_admin_portfolio_recommendations_service(portfolio_name)
     
     if result['success']:
         return jsonify(result)
     else:
         return jsonify(result), 500
-    
-@recommendations_bp.route('/company-info/<ticker>', methods=['GET'])
-@require_token
-def get_company_info_endpoint(ticker):
-    """Buscar informações de uma empresa específica"""
-    try:
-        company_info = get_company_info(ticker.upper())
-        
-        return jsonify({
-            'success': True,
-            'ticker': ticker.upper(),
-            'company': company_info
-        })
-        
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500    
 
 @recommendations_bp.route('/admin/portfolio/add-recommendation', methods=['POST'])
 @require_admin
@@ -164,34 +148,6 @@ def delete_portfolio_recommendation():
         print(f"Error deleting recommendation: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
-# ===== USER ENDPOINTS =====
-
-@recommendations_bp.route('/portfolio/<portfolio_name>/recommendations', methods=['GET'])
-@require_token
-def get_user_portfolio_recommendations(portfolio_name):
-    """Endpoint público para usuários verem recomendações"""
-    result = get_user_portfolio_recommendations_service(portfolio_name)
-    
-    if result['success']:
-        return jsonify(result)
-    else:
-        return jsonify(result), 500
-
-# ===== ADMIN STATS =====
-
-@recommendations_bp.route('/admin/stats', methods=['GET'])
-@require_admin
-def get_admin_stats():
-    """Buscar estatísticas do admin dashboard"""
-    result = get_admin_stats_service()
-    
-    if result['success']:
-        return jsonify(result)
-    else:
-        return jsonify(result), 500
-
-# ===== ROTAS DE PORTFOLIO =====
-
 @recommendations_bp.route('/admin/portfolio/generate-rebalance', methods=['POST'])
 @require_admin
 def generate_rebalance_recommendations():
@@ -217,14 +173,293 @@ def generate_rebalance_recommendations():
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
-# ===== ENDPOINTS PARA USUÁRIOS FINAIS =====
+# ===== ROTAS DE ATIVOS =====
+
+@recommendations_bp.route('/admin/portfolio/add-asset', methods=['POST'])
+@require_admin
+def add_portfolio_asset():
+    """Adicionar ativo a uma carteira"""
+    try:
+        data = request.get_json()
+        
+        # Validar dados obrigatórios
+        required_fields = ['portfolio', 'ticker', 'weight', 'sector', 'entry_price', 'target_price', 'entry_date']
+        for field in required_fields:
+            if field not in data:
+                return jsonify({'success': False, 'error': f'Campo {field} é obrigatório'}), 400
+        
+        # Verificar se peso está dentro dos limites
+        if data['weight'] <= 0 or data['weight'] > 100:
+            return jsonify({'success': False, 'error': 'Peso deve estar entre 0 e 100'}), 400
+        
+        conn = get_db_connection()
+        if not conn:
+            return jsonify({'success': False, 'error': 'Erro de conexão'}), 500
+            
+        cursor = conn.cursor()
+        
+        # Verificar se ativo já existe na carteira
+        cursor.execute("""
+            SELECT id FROM portfolio_assets 
+            WHERE portfolio_name = %s AND ticker = %s AND is_active = true
+        """, (data['portfolio'], data['ticker'].upper()))
+        
+        if cursor.fetchone():
+            cursor.close()
+            conn.close()
+            return jsonify({'success': False, 'error': f'Ativo {data["ticker"]} já existe nesta carteira'}), 400
+        
+        # Inserir novo ativo
+        cursor.execute("""
+            INSERT INTO portfolio_assets 
+            (portfolio_name, ticker, weight, sector, entry_price, current_price, target_price, entry_date, is_active)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, true)
+        """, (
+            data['portfolio'],
+            data['ticker'].upper(),
+            data['weight'],
+            data['sector'],
+            data['entry_price'],
+            data.get('current_price', data['entry_price']),
+            data['target_price'],
+            data['entry_date']
+        ))
+        
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        return jsonify({
+            'success': True,
+            'message': f'Ativo {data["ticker"]} adicionado com sucesso à carteira {data["portfolio"]}!'
+        })
+        
+    except Exception as e:
+        print(f"Error adding asset: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@recommendations_bp.route('/admin/portfolio/<portfolio_name>/assets', methods=['GET'])
+@require_admin
+def get_portfolio_assets(portfolio_name):
+    """Buscar ativos de uma carteira"""
+    try:
+        conn = get_db_connection()
+        if not conn:
+            return jsonify({'success': False, 'error': 'Erro de conexão'}), 500
+            
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            SELECT id, ticker, weight, sector, entry_price, current_price, target_price, entry_date, created_at
+            FROM portfolio_assets 
+            WHERE portfolio_name = %s AND is_active = true
+            ORDER BY weight DESC
+        """, (portfolio_name,))
+        
+        assets = []
+        total_weight = 0
+        
+        for row in cursor.fetchall():
+            asset = {
+                'id': row[0],
+                'ticker': row[1],
+                'weight': float(row[2]) if row[2] else 0,
+                'sector': row[3],
+                'entry_price': float(row[4]) if row[4] else 0,
+                'current_price': float(row[5]) if row[5] else 0,
+                'target_price': float(row[6]) if row[6] else 0,
+                'entry_date': row[7].isoformat() if row[7] else None,
+                'created_at': row[8].isoformat() if row[8] else None
+            }
+            assets.append(asset)
+            total_weight += asset['weight']
+        
+        cursor.close()
+        conn.close()
+        
+        return jsonify({
+            'success': True,
+            'assets': assets,
+            'total_weight': total_weight,
+            'portfolio_name': portfolio_name
+        })
+        
+    except Exception as e:
+        print(f"Error getting assets: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@recommendations_bp.route('/admin/portfolio/remove-asset', methods=['DELETE'])
+@require_admin
+def remove_portfolio_asset():
+    """Remover ativo de uma carteira"""
+    try:
+        data = request.get_json()
+        
+        if 'id' not in data:
+            return jsonify({'success': False, 'error': 'ID do ativo é obrigatório'}), 400
+        
+        conn = get_db_connection()
+        if not conn:
+            return jsonify({'success': False, 'error': 'Erro de conexão'}), 500
+            
+        cursor = conn.cursor()
+        
+        # Verificar se ativo existe
+        cursor.execute("SELECT ticker FROM portfolio_assets WHERE id = %s", (data['id'],))
+        asset = cursor.fetchone()
+        
+        if not asset:
+            cursor.close()
+            conn.close()
+            return jsonify({'success': False, 'error': 'Ativo não encontrado'}), 404
+        
+        # Marcar como inativo
+        cursor.execute("""
+            UPDATE portfolio_assets 
+            SET is_active = false, updated_at = CURRENT_TIMESTAMP
+            WHERE id = %s
+        """, (data['id'],))
+        
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        return jsonify({
+            'success': True,
+            'message': f'Ativo {asset[0]} removido com sucesso!'
+        })
+        
+    except Exception as e:
+        print(f"Error removing asset: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@recommendations_bp.route('/admin/portfolio/update-asset', methods=['PUT'])
+@require_admin
+def update_portfolio_asset():
+    """Atualizar ativo de uma carteira"""
+    try:
+        data = request.get_json()
+        
+        if 'id' not in data:
+            return jsonify({'success': False, 'error': 'ID do ativo é obrigatório'}), 400
+        
+        conn = get_db_connection()
+        if not conn:
+            return jsonify({'success': False, 'error': 'Erro de conexão'}), 500
+            
+        cursor = conn.cursor()
+        
+        # Construir query dinâmica
+        update_fields = []
+        update_values = []
+        
+        updatable_fields = ['weight', 'sector', 'entry_price', 'current_price', 'target_price', 'entry_date']
+        for field in updatable_fields:
+            if field in data:
+                update_fields.append(f"{field} = %s")
+                update_values.append(data[field])
+        
+        if not update_fields:
+            cursor.close()
+            conn.close()
+            return jsonify({'success': False, 'error': 'Nenhum campo para atualizar'}), 400
+        
+        update_fields.append("updated_at = CURRENT_TIMESTAMP")
+        update_values.append(data['id'])
+        
+        query = f"""
+            UPDATE portfolio_assets 
+            SET {', '.join(update_fields)}
+            WHERE id = %s
+        """
+        
+        cursor.execute(query, update_values)
+        conn.commit()
+        
+        if cursor.rowcount == 0:
+            cursor.close()
+            conn.close()
+            return jsonify({'success': False, 'error': 'Ativo não encontrado'}), 404
+        
+        cursor.close()
+        conn.close()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Ativo atualizado com sucesso!'
+        })
+        
+    except Exception as e:
+        print(f"Error updating asset: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@recommendations_bp.route('/admin/portfolio/clear-assets', methods=['DELETE'])
+@require_admin
+def clear_portfolio_assets():
+    """Limpar todos os ativos de uma carteira"""
+    try:
+        data = request.get_json()
+        
+        if 'portfolio' not in data:
+            return jsonify({'success': False, 'error': 'Nome da carteira é obrigatório'}), 400
+        
+        conn = get_db_connection()
+        if not conn:
+            return jsonify({'success': False, 'error': 'Erro de conexão'}), 500
+            
+        cursor = conn.cursor()
+        
+        # Contar ativos antes de remover
+        cursor.execute("""
+            SELECT COUNT(*) FROM portfolio_assets 
+            WHERE portfolio_name = %s AND is_active = true
+        """, (data['portfolio'],))
+        
+        count = cursor.fetchone()[0]
+        
+        if count == 0:
+            cursor.close()
+            conn.close()
+            return jsonify({'success': False, 'error': 'Nenhum ativo encontrado nesta carteira'}), 400
+        
+        # Marcar todos como inativos
+        cursor.execute("""
+            UPDATE portfolio_assets 
+            SET is_active = false, updated_at = CURRENT_TIMESTAMP
+            WHERE portfolio_name = %s AND is_active = true
+        """, (data['portfolio'],))
+        
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        return jsonify({
+            'success': True,
+            'message': f'{count} ativos removidos da carteira {data["portfolio"]}!'
+        })
+        
+    except Exception as e:
+        print(f"Error clearing assets: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+# ===== ROTAS DE USUÁRIO =====
+
+@recommendations_bp.route('/portfolio/<portfolio_name>/recommendations', methods=['GET'])
+@require_token
+def get_user_portfolio_recommendations(portfolio_name):
+    """Endpoint público para usuários verem recomendações"""
+    result = get_user_portfolio_recommendations_service(portfolio_name)
+    
+    if result['success']:
+        return jsonify(result)
+    else:
+        return jsonify(result), 500
 
 @recommendations_bp.route('/user/my-portfolios', methods=['GET'])
 @require_token
 def get_user_portfolios():
-    """Buscar carteiras que o usuário tem acesso (ADMIN TEM ACESSO TOTAL)"""
+    """Buscar carteiras que o usuário tem acesso"""
     try:
-        # Extrair user_id do token
         auth_header = request.headers.get('Authorization')
         token = auth_header.replace('Bearer ', '')
         user_data = verify_token(token)
@@ -281,6 +516,35 @@ def get_user_portfolio_assets(portfolio_name):
         
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
+
+# ===== ROTAS AUXILIARES =====
+
+@recommendations_bp.route('/company-info/<ticker>', methods=['GET'])
+@require_token
+def get_company_info_endpoint(ticker):
+    """Buscar informações de uma empresa específica"""
+    try:
+        company_info = get_company_info(ticker.upper())
+        
+        return jsonify({
+            'success': True,
+            'ticker': ticker.upper(),
+            'company': company_info
+        })
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@recommendations_bp.route('/admin/stats', methods=['GET'])
+@require_admin
+def get_admin_stats():
+    """Buscar estatísticas do admin dashboard"""
+    result = get_admin_stats_service()
+    
+    if result['success']:
+        return jsonify(result)
+    else:
+        return jsonify(result), 500
 
 def get_recommendations_blueprint():
     """Retorna o blueprint configurado"""

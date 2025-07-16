@@ -4032,11 +4032,55 @@ function displayUsers(users) {
 
       // Close recommendation
       async function closeRecommendationFree(recId) {
-        const finalPrice = prompt('Digite o preço final da operação (R$):');
-        if (!finalPrice || isNaN(finalPrice)) return;
+        // ✅ BUSCAR DADOS DA RECOMENDAÇÃO PRIMEIRO
+        let recommendation = null;
         
-        const isWin = confirm('A operação foi lucrativa?\n\nOK = Ganho | Cancelar = Perda');
+        try {
+          // Encontrar a recomendação na lista atual
+          const recommendationsList = document.getElementById('recommendationsList');
+          const allRecommendations = Array.from(recommendationsList.querySelectorAll('[data-rec-id]'));
+          
+          // Se não conseguir pela interface, buscar via API
+          const response = await fetch('/api/recommendations/admin/all', {
+            headers: { 'Authorization': `Bearer ${adminToken}` }
+          });
+          
+          if (response.ok) {
+            const result = await response.json();
+            if (result.success) {
+              recommendation = result.recommendations.find(r => r.id === recId);
+            }
+          }
+          
+          if (!recommendation) {
+            alert('❌ Não foi possível encontrar os dados da recomendação');
+            return;
+          }
+          
+        } catch (error) {
+          console.error('Erro ao buscar dados da recomendação:', error);
+          alert('❌ Erro ao buscar dados da recomendação');
+          return;
+        }
+        
+        // ✅ USAR PREÇO ATUAL AUTOMATICAMENTE
+        const currentPrice = recommendation.current_price;
+        const entryPrice = recommendation.entry_price;
+        const performance = ((currentPrice - entryPrice) / entryPrice * 100);
+        
+        // ✅ DETERMINAR AUTOMATICAMENTE SE FOI GANHO OU PERDA
+        const isWin = performance > 0;
         const status = isWin ? 'FINALIZADA_GANHO' : 'FINALIZADA_PERDA';
+        
+        // ✅ CONFIRMAÇÃO MAIS CLARA
+        const confirmMessage = `Encerrar recomendação ${recommendation.ticker}?\n\n` +
+          `💰 Preço de Entrada: R$ ${entryPrice.toFixed(2)}\n` +
+          `📈 Preço Atual: R$ ${currentPrice.toFixed(2)}\n` +
+          `📊 Performance: ${performance >= 0 ? '+' : ''}${performance.toFixed(2)}%\n` +
+          `🏆 Resultado: ${isWin ? 'GANHO' : 'PERDA'}\n\n` +
+          `Confirma o encerramento?`;
+        
+        if (!confirm(confirmMessage)) return;
         
         try {
           const response = await fetch(`/api/recommendations/admin/close/${recId}`, {
@@ -4047,14 +4091,20 @@ function displayUsers(users) {
             },
             body: JSON.stringify({
               status: status,
-              final_price: parseFloat(finalPrice)
+              final_price: currentPrice // ✅ USA PREÇO ATUAL AUTOMATICAMENTE
             })
           });
           
           const result = await response.json();
           
           if (result.success) {
-            alert(`✅ Recomendação encerrada!\n\nPerformance: ${result.performance.toFixed(2)}%`);
+            const resultIcon = isWin ? '🎉' : '😔';
+            const resultText = isWin ? 'Parabéns pelo ganho!' : 'Operação encerrada';
+            
+            alert(`✅ Recomendação encerrada com sucesso! ${resultIcon}\n\n` +
+                  `${recommendation.ticker}: ${resultText}\n` +
+                  `Performance Final: ${result.performance.toFixed(2)}%`);
+            
             loadRecommendationsFree();
           } else {
             alert('❌ ' + result.error);

@@ -332,7 +332,7 @@ class RecommendationsServiceFree:
     
     @staticmethod
     def update_current_prices():
-        """Atualizar preços atuais das recomendações ativas"""
+        """Atualizar preços atuais das recomendações ativas - VERSÃO CORRIGIDA"""
         try:
             recommendations = RecommendationsServiceFree.get_active_recommendations()
             
@@ -349,35 +349,68 @@ class RecommendationsServiceFree:
                 
                 try:
                     stock = yf.Ticker(symbol)
-                    current_price = float(stock.history(period='1d')['Close'].iloc[-1])
+                    hist = stock.history(period='1d')
                     
-                    # Calcular performance
-                    performance = ((current_price - rec['entry_price']) / rec['entry_price'] * 100)
-                    if rec['action'] == 'VENDA':
-                        performance = -performance
+                    if hist.empty:
+                        print(f"⚠️ Nenhum dado encontrado para {ticker}")
+                        continue
+                        
+                    current_price = float(hist['Close'].iloc[-1])
+                    
+                    # ✅ CONVERSÕES EXPLÍCITAS PARA EVITAR CONFLITO DE TIPOS
+                    entry_price_float = float(rec['entry_price'])
+                    target_price_float = float(rec['target_price'])
+                    stop_loss_float = float(rec['stop_loss'])
+                    
+                    print(f"🔄 Atualizando {ticker}: R$ {current_price}")
+                    
+                    # Calcular performance - USANDO APENAS FLOAT
+                    if rec['action'] == 'COMPRA':
+                        performance = ((current_price - entry_price_float) / entry_price_float * 100)
+                    else:  # VENDA
+                        performance = ((entry_price_float - current_price) / entry_price_float * 100)
                     
                     # Verificar se atingiu alvo ou stop
                     status = rec['status']
                     if rec['action'] == 'COMPRA':
-                        if current_price >= rec['target_price']:
+                        if current_price >= target_price_float:
                             status = 'FINALIZADA_GANHO'
-                        elif current_price <= rec['stop_loss']:
+                        elif current_price <= stop_loss_float:
                             status = 'FINALIZADA_PERDA'
                     else:  # VENDA
-                        if current_price <= rec['target_price']:
+                        if current_price <= target_price_float:
                             status = 'FINALIZADA_GANHO'
-                        elif current_price >= rec['stop_loss']:
+                        elif current_price >= stop_loss_float:
                             status = 'FINALIZADA_PERDA'
                     
-                    # Atualizar no banco
+                    # ✅ ATUALIZAR NO BANCO COM VALORES CONVERTIDOS
                     cursor.execute("""
                         UPDATE recommendations_free
-                        SET current_price = %s, performance = %s, status = %s, updated_at = %s
+                        SET current_price = %s, 
+                            performance = %s, 
+                            status = %s, 
+                            updated_at = %s
                         WHERE id = %s
-                    """, (current_price, performance, status, datetime.now(timezone.utc), rec['id']))
+                    """, (
+                        current_price,  # ✅ Já é float
+                        round(performance, 2),  # ✅ Arredondar para evitar problemas
+                        status, 
+                        datetime.now(timezone.utc), 
+                        rec['id']
+                    ))
+                    
+                    if status != rec['status']:
+                        print(f"🎯 {ticker} mudou status: {rec['status']} → {status}")
+                        # Se mudou para finalizada, definir closed_at
+                        if status.startswith('FINALIZADA'):
+                            cursor.execute("""
+                                UPDATE recommendations_free
+                                SET closed_at = %s
+                                WHERE id = %s
+                            """, (datetime.now(timezone.utc), rec['id']))
                     
                 except Exception as e:
-                    print(f"Erro ao atualizar {ticker}: {e}")
+                    print(f"❌ Erro ao atualizar {ticker}: {e}")
                     continue
             
             conn.commit()
@@ -387,7 +420,7 @@ class RecommendationsServiceFree:
             return True
             
         except Exception as e:
-            print(f"Erro ao atualizar preços: {e}")
+            print(f"❌ Erro geral ao atualizar preços: {e}")
             return False
     
     @staticmethod
