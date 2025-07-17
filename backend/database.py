@@ -104,13 +104,16 @@ def create_plans_table():
         
         cursor.execute("""
             INSERT INTO plans (id, name, display_name, price_monthly, price_annual, description, features) VALUES
-            (1, 'pro', 'Pro', 69.90, 650.00, 'Para quem já investe e quer se posicionar melhor', 
+            (1, 'pro', 'Pro', 110.00, 1100.00, 'Para quem já investe e quer se posicionar melhor', 
             ARRAY['Monitor avançado de ações', 'RSL e análise técnica avançada', 'Backtests automáticos', 'Alertas via WhatsApp', 'Dados históricos ilimitados', 'API para desenvolvedores']),
-            (2, 'premium', 'Premium', 89.00, 800.00, 'Para investidores experientes que querem diferenciais', 
+            
+            (2, 'premium', 'Premium', 160.00, 1530.00, 'Para investidores experientes que querem diferenciais', 
             ARRAY['Tudo do Pro +', 'Long & Short strategies', 'IA para recomendações', 'Consultoria personalizada', 'Acesso prioritário', 'Relatórios exclusivos']),
+            
             (3, 'basico', 'Básico', 0.00, 0.00, 'Acesso básico ao sistema', 
             ARRAY['Acesso básico ao sistema', 'Dados limitados', 'Funcionalidades essenciais']);
         """)
+
 
 
         

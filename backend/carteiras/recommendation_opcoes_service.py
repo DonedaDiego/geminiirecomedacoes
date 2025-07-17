@@ -90,7 +90,7 @@ def create_opcoes_recommendation_service(data, admin_id):
         return {'success': False, 'error': str(e)}
 
 def get_all_opcoes_recommendations_service():
-    """Buscar todas as recomendações de opções"""
+    """Buscar todas as recomendações de opções - VERSÃO CORRIGIDA"""
     try:
         conn = get_db_connection()
         if not conn:
@@ -98,19 +98,19 @@ def get_all_opcoes_recommendations_service():
             
         cursor = conn.cursor()
         
+        # ✅ ADICIONAR PERFORMANCE E RESULTADO_FINAL NA QUERY
         cursor.execute('''
             SELECT 
                 id, ativo_spot, ticker_opcao, strike, valor_entrada, 
                 vencimento, data_recomendacao, stop, gain, gain_parcial,
-                status, created_at, updated_at, is_active
+                status, created_at, updated_at, is_active, performance, resultado_final
             FROM opcoes_recommendations 
             WHERE is_active = true
             ORDER BY created_at DESC
         ''')
         
-                
         rows = cursor.fetchall()
-                
+        
         recommendations = []
         for i, row in enumerate(rows):
             print(f"📋 Row {i}: {row}")  # ✅ LOG CADA LINHA
@@ -129,10 +129,11 @@ def get_all_opcoes_recommendations_service():
                 'status': row[10],  
                 'created_at': row[11].isoformat() if row[11] else None,
                 'updated_at': row[12].isoformat() if row[12] else None,
-                'is_active': row[13]
+                'is_active': row[13],
+                'performance': float(row[14]) if row[14] else None,  # ✅ ADICIONAR
+                'resultado_final': float(row[15]) if row[15] else None  # ✅ ADICIONAR
             })
         
-                
         cursor.close()
         conn.close()
         
@@ -142,8 +143,11 @@ def get_all_opcoes_recommendations_service():
         }
         
     except Exception as e:
-        print(f"Error getting opcoes recommendations: {e}")
+        print(f"❌ Erro ao buscar recomendações: {e}")
         return {'success': False, 'error': str(e)}
+
+
+print("✅ Funções corrigidas!")
 
 def update_opcoes_recommendation_service(data):
     """Atualizar recomendação de opção existente"""
@@ -249,8 +253,11 @@ def delete_opcoes_recommendation_service(recommendation_id):
         return {'success': False, 'error': str(e)}
 
 def close_opcoes_recommendation_service(recommendation_id, status, resultado_final=None):
-    """Fechar recomendação de opção com resultado"""
+    """Fechar recomendação de opção com resultado - VERSÃO CORRIGIDA"""
     try:
+        print(f"🔄 Fechando recomendação ID: {recommendation_id}")
+        print(f"📋 Status: {status}, Resultado: {resultado_final}")
+        
         if not recommendation_id:
             return {'success': False, 'error': 'ID da recomendação é obrigatório'}
         
@@ -278,10 +285,20 @@ def close_opcoes_recommendation_service(recommendation_id, status, resultado_fin
         
         ativo_spot, ticker_opcao, valor_entrada, stop, gain = recommendation
         
+        # ✅ CORREÇÃO: Converter para float para evitar erro de tipos
+        valor_entrada_float = float(valor_entrada) if valor_entrada else 0.0
+        
         # Calcular performance se resultado_final foi fornecido
         performance = None
         if resultado_final:
-            performance = ((resultado_final - valor_entrada) / valor_entrada) * 100
+            try:
+                # ✅ GARANTIR QUE AMBOS SÃO FLOAT
+                resultado_final_float = float(resultado_final)
+                performance = ((resultado_final_float - valor_entrada_float) / valor_entrada_float) * 100
+                print(f"📊 Performance calculada: {performance:.2f}%")
+            except (ValueError, ZeroDivisionError) as calc_error:
+                print(f"❌ Erro no cálculo da performance: {calc_error}")
+                performance = 0.0
         
         # Atualizar status da recomendação
         cursor.execute('''
@@ -291,18 +308,29 @@ def close_opcoes_recommendation_service(recommendation_id, status, resultado_fin
         ''', (status, resultado_final, performance, recommendation_id))
         
         conn.commit()
+        
+        if cursor.rowcount == 0:
+            cursor.close()
+            conn.close()
+            return {'success': False, 'error': 'Nenhuma recomendação foi atualizada'}
+        
         cursor.close()
         conn.close()
+        
+        print(f"✅ Recomendação {recommendation_id} fechada com sucesso!")
         
         return {
             'success': True,
             'message': f'Recomendação {ticker_opcao} finalizada com sucesso!',
-            'performance': performance
+            'performance': round(performance, 2) if performance is not None else None,
+            'resultado_final': float(resultado_final) if resultado_final else None
         }
         
     except Exception as e:
-        print(f"Error closing opcoes recommendation: {e}")
-        return {'success': False, 'error': str(e)}
+        print(f"❌ Erro ao fechar recomendação: {e}")
+        import traceback
+        traceback.print_exc()
+        return {'success': False, 'error': f'Erro interno: {str(e)}'}
 
 def get_opcoes_stats_service():
     """Buscar estatísticas das recomendações de opções"""

@@ -1339,8 +1339,16 @@
     let selectedPortfolio = null;
 
 
+    // ✅ FUNÇÃO CORRIGIDA SEM ERRO DE SINTAXE
     function displayOpcoesRecommendations(recommendations) {
+      console.log('🎨 Exibindo recomendações:', recommendations);
+      
       const container = document.getElementById('opcoesRecommendationsList');
+      
+      if (!container) {
+        console.error('❌ Container opcoesRecommendationsList não encontrado!');
+        return;
+      }
       
       if (!recommendations || recommendations.length === 0) {
         container.innerHTML = `
@@ -1355,103 +1363,171 @@
         `;
         return;
       }
-    
-      container.innerHTML = recommendations.map(rec => {
-        const isActive = rec.status === 'ATIVA';
-        const statusColor = getOpcoesStatusColor(rec.status);
-        const statusText = getOpcoesStatusText(rec.status);
-        
-        // Calcular dias para vencimento
-        const vencimentoDate = new Date(rec.vencimento);
-        const today = new Date();
-        const daysToExpiry = Math.ceil((vencimentoDate - today) / (1000 * 60 * 60 * 24));
-        
-        return `
-          <div class="border border-gray-600 rounded-lg p-4 hover:border-geminii transition-all duration-300">
-            <!-- Header da Recomendação -->
-            <div class="flex items-center justify-between mb-3">
-              <div class="flex items-center gap-3">
-                <div class="w-12 h-12 rounded-lg flex items-center justify-center ${isActive ? 'bg-green-600' : 'bg-gray-600'}">
-                  <i class="fas fa-chart-area text-white text-lg"></i>
+
+      try {
+        container.innerHTML = recommendations.map(rec => {
+          console.log('🔍 Processando recomendação:', rec);
+          
+          // ✅ VERIFICAR SE OS CAMPOS EXISTEM E CONVERTER CORRETAMENTE
+          const id = rec.id || 0;
+          const ativoSpot = rec.ativo_spot || '';
+          const tickerOpcao = rec.ticker_opcao || '';
+          const strike = parseFloat(rec.strike) || 0;
+          const valorEntrada = parseFloat(rec.valor_entrada) || 0;
+          const vencimento = rec.vencimento || '';
+          const dataRecomendacao = rec.data_recomendacao || '';
+          const stop = parseFloat(rec.stop) || 0;
+          const gain = parseFloat(rec.gain) || 0;
+          const gainParcial = rec.gain_parcial ? parseFloat(rec.gain_parcial) : null;
+          const status = rec.status || 'ATIVA';
+          const createdAt = rec.created_at || '';
+          const performance = rec.performance ? parseFloat(rec.performance) : null;
+          const resultadoFinal = rec.resultado_final ? parseFloat(rec.resultado_final) : null;
+          
+          const isActive = status === 'ATIVA';
+          
+          // ✅ CALCULAR DIAS PARA VENCIMENTO
+          let daysToExpiry = 0;
+          let vencimentoFormatted = 'N/A';
+          
+          if (vencimento) {
+            try {
+              const vencimentoDate = new Date(vencimento);
+              const today = new Date();
+              daysToExpiry = Math.ceil((vencimentoDate - today) / (1000 * 60 * 60 * 24));
+              vencimentoFormatted = vencimentoDate.toLocaleDateString('pt-BR');
+            } catch (e) {
+              console.error('Erro ao processar data de vencimento:', e);
+            }
+          }
+          
+          // ✅ FORMATEAR DATA DE RECOMENDAÇÃO
+          let dataRecomendacaoFormatted = 'N/A';
+          if (dataRecomendacao) {
+            try {
+              dataRecomendacaoFormatted = new Date(dataRecomendacao).toLocaleDateString('pt-BR');
+            } catch (e) {
+              console.error('Erro ao processar data de recomendação:', e);
+            }
+          }
+          
+          // ✅ CLASSES DE STATUS
+          const statusClass = getOpcoesStatusColor(status);
+          const statusText = getOpcoesStatusText(status);
+          
+          return `
+            <div class="border border-gray-600 rounded-lg p-4 hover:border-geminii transition-all duration-300">
+              <!-- Header da Recomendação -->
+              <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center gap-3">
+                  <div class="w-12 h-12 rounded-lg flex items-center justify-center ${isActive ? 'bg-green-600' : 'bg-gray-600'}">
+                    <i class="fas fa-chart-area text-white text-lg"></i>
+                  </div>
+                  <div>
+                    <h4 class="text-xl font-bold text-white">${tickerOpcao}</h4>
+                    <p class="text-sm text-gray-400">${ativoSpot} • Strike: R$ ${strike.toFixed(2)}</p>
+                  </div>
                 </div>
-                <div>
-                  <h4 class="text-xl font-bold text-white">${rec.ticker_opcao}</h4>
-                  <p class="text-sm text-gray-400">${rec.ativo_spot} - Strike: R$ ${rec.strike.toFixed(2)}</p>
+                <div class="text-right">
+                  <span class="px-3 py-1 rounded-full text-xs font-medium ${statusClass}">${statusText}</span>
+                  <div class="text-xs text-gray-400 mt-1">${dataRecomendacaoFormatted}</div>
                 </div>
               </div>
-              <div class="text-right">
-                <span class="px-3 py-1 rounded-full text-xs font-medium ${statusColor}">${statusText}</span>
-                <div class="text-xs text-gray-400 mt-1">${formatDate(rec.data_recomendacao)}</div>
+              
+              <!-- Grid de Informações -->
+              <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm mb-4">
+                <div class="text-center bg-gray-800 bg-opacity-30 rounded-lg p-3">
+                  <div class="text-xs text-gray-400 mb-1">Entrada</div>
+                  <div class="font-bold text-blue-400">R$ ${valorEntrada.toFixed(2)}</div>
+                </div>
+                <div class="text-center bg-gray-800 bg-opacity-30 rounded-lg p-3">
+                  <div class="text-xs text-gray-400 mb-1">Stop</div>
+                  <div class="font-bold text-red-400">R$ ${stop.toFixed(2)}</div>
+                </div>
+                <div class="text-center bg-gray-800 bg-opacity-30 rounded-lg p-3">
+                  <div class="text-xs text-gray-400 mb-1">Gain</div>
+                  <div class="font-bold text-green-400">R$ ${gain.toFixed(2)}</div>
+                </div>
+                <div class="text-center bg-gray-800 bg-opacity-30 rounded-lg p-3">
+                  <div class="text-xs text-gray-400 mb-1">Vencimento</div>
+                  <div class="font-bold ${daysToExpiry <= 7 && isActive ? 'text-red-400' : 'text-white'}">
+                    ${vencimentoFormatted}
+                  </div>
+                  ${isActive && daysToExpiry > 0 ? `<div class="text-xs text-gray-400">${daysToExpiry}d</div>` : ''}
+                </div>
               </div>
-            </div>
-            
-            <!-- Grid de Informações -->
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm mb-4">
-              <div class="text-center bg-gray-800 bg-opacity-30 rounded-lg p-3">
-                <div class="text-xs text-gray-400 mb-1">Entrada</div>
-                <div class="font-bold text-blue-400">R$ ${rec.valor_entrada.toFixed(2)}</div>
-              </div>
-              <div class="text-center bg-gray-800 bg-opacity-30 rounded-lg p-3">
-                <div class="text-xs text-gray-400 mb-1">Stop</div>
-                <div class="font-bold text-red-400">R$ ${rec.stop.toFixed(2)}</div>
-              </div>
-              <div class="text-center bg-gray-800 bg-opacity-30 rounded-lg p-3">
-                <div class="text-xs text-gray-400 mb-1">Gain</div>
-                <div class="font-bold text-green-400">R$ ${rec.gain.toFixed(2)}</div>
-              </div>
-              <div class="text-center bg-gray-800 bg-opacity-30 rounded-lg p-3">
-                <div class="text-xs text-gray-400 mb-1">Vencimento</div>
-                <div class="font-bold ${daysToExpiry <= 7 ? 'text-red-400' : 'text-white'}">${daysToExpiry}d</div>
-              </div>
-            </div>
-            
-            <!-- Vencimento e Performance -->
-            <div class="flex items-center justify-between mb-3">
-              <div class="text-sm">
-                <span class="text-gray-400">Vencimento:</span>
-                <span class="text-white font-medium">${formatDate(rec.vencimento)}</span>
-              </div>
-              ${rec.performance !== null ? `
-                <div class="text-sm">
-                  <span class="text-gray-400">Performance:</span>
-                  <span class="font-bold ${rec.performance >= 0 ? 'text-green-400' : 'text-red-400'}">
-                    ${rec.performance >= 0 ? '+' : ''}${rec.performance.toFixed(2)}%
-                  </span>
+              
+              <!-- Gain Parcial (se existir) -->
+              ${gainParcial ? `
+                <div class="mb-3 p-2 bg-yellow-600 bg-opacity-20 rounded-lg">
+                  <div class="text-xs text-yellow-300 text-center">
+                    <i class="fas fa-star mr-1"></i>
+                    Gain Parcial: R$ ${gainParcial.toFixed(2)}
+                  </div>
                 </div>
               ` : ''}
-            </div>
-            
-            ${rec.gain_parcial ? `
-              <div class="mb-3 p-2 bg-yellow-600 bg-opacity-20 rounded-lg">
-                <div class="text-xs text-yellow-300">Gain Parcial: R$ ${rec.gain_parcial.toFixed(2)}</div>
-              </div>
-            ` : ''}
-            
-            <!-- Ações -->
-            <div class="flex items-center justify-between pt-3 border-t border-gray-700">
-              <div class="text-xs text-gray-500">
-                ID: ${rec.id} | Criado: ${formatDate(rec.created_at)}
-              </div>
-              <div class="flex gap-2">
-                ${isActive ? `
-                  <button onclick="closeOpcoesRecommendation(${rec.id})" 
-                          class="bg-orange-600 hover:bg-orange-700 px-3 py-1 rounded text-xs font-medium transition-colors">
-                    <i class="fas fa-times mr-1"></i>Encerrar
+              
+              <!-- Performance (se finalizada) -->
+              ${performance !== null ? `
+                <div class="mb-3 p-3 ${performance >= 0 ? 'bg-green-600' : 'bg-red-600'} bg-opacity-20 border ${performance >= 0 ? 'border-green-500' : 'border-red-500'} border-opacity-30 rounded-lg">
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-center ${performance >= 0 ? 'text-green-300' : 'text-red-300'} text-sm">
+                      <i class="fas ${performance >= 0 ? 'fa-trending-up' : 'fa-trending-down'} mr-2"></i>
+                      Performance Final
+                    </div>
+                    <div class="text-lg font-bold ${performance >= 0 ? 'text-green-400' : 'text-red-400'}">
+                      ${performance >= 0 ? '+' : ''}${performance.toFixed(2)}%
+                    </div>
+                  </div>
+                  ${resultadoFinal ? `
+                    <div class="text-xs ${performance >= 0 ? 'text-green-300' : 'text-red-300'} mt-1">
+                      Resultado: R$ ${resultadoFinal.toFixed(2)}
+                    </div>
+                  ` : ''}
+                </div>
+              ` : ''}
+              
+              <!-- Ações -->
+              <div class="flex items-center justify-between pt-3 border-t border-gray-700">
+                <div class="text-xs text-gray-500">
+                  ID: ${id} | Vencimento: ${vencimentoFormatted}
+                </div>
+                <div class="flex gap-2">
+                  ${isActive ? `
+                    <button onclick="closeOpcoesRecommendation(${id})" 
+                            class="bg-orange-600 hover:bg-orange-700 px-3 py-1 rounded text-xs font-medium transition-colors">
+                      <i class="fas fa-times mr-1"></i>Encerrar
+                    </button>
+                  ` : ''}
+                  <button onclick="editOpcoesRecommendation(${id})" 
+                          class="bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded text-xs font-medium transition-colors">
+                    <i class="fas fa-edit mr-1"></i>Editar
                   </button>
-                ` : ''}
-                <button onclick="editOpcoesRecommendation(${rec.id})" 
-                        class="bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded text-xs font-medium transition-colors">
-                  <i class="fas fa-edit mr-1"></i>Editar
-                </button>
-                <button onclick="deleteOpcoesRecommendation(${rec.id})" 
-                        class="bg-red-600 hover:bg-red-700 px-3 py-1 rounded text-xs font-medium transition-colors">
-                  <i class="fas fa-trash mr-1"></i>Remover
-                </button>
+                  <button onclick="deleteOpcoesRecommendation(${id})" 
+                          class="bg-red-600 hover:bg-red-700 px-3 py-1 rounded text-xs font-medium transition-colors">
+                    <i class="fas fa-trash mr-1"></i>Remover
+                  </button>
+                </div>
               </div>
             </div>
+          `;
+        }).join('');
+        
+        console.log('✅ Recomendações exibidas com sucesso');
+        
+      } catch (error) {
+        console.error('❌ Erro ao gerar HTML:', error);
+        container.innerHTML = `
+          <div class="text-center py-8">
+            <i class="fas fa-exclamation-triangle text-4xl text-red-500 mb-4"></i>
+            <p class="text-red-400 text-lg mb-2">Erro ao exibir recomendações</p>
+            <p class="text-gray-400 text-sm mb-4">${error.message}</p>
+            <button onclick="loadOpcoesRecommendations()" class="bg-red-600 hover:bg-red-700 py-2 px-4 rounded-lg text-sm">
+              <i class="fas fa-sync mr-1"></i>Tentar Novamente
+            </button>
           </div>
         `;
-      }).join('');
+      }
     }
 
     async function createOpcoesRecommendation() {
@@ -3259,65 +3335,326 @@
       }
 
 
-  async function closeOpcoesRecommendation(id) {
-    if (!confirm('Encerrar esta recomendação de opção?')) return;
-    
-    try {
-      const response = await fetch(`/api/opcoes/admin/close/${id}`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${adminToken}`,
-          'Content-Type': 'application/json'
+      async function closeOpcoesRecommendation(id) {
+        console.log(`🔄 Encerrando recomendação de opção ID: ${id}`);
+        
+        // Buscar dados da recomendação primeiro
+        const recCard = document.querySelector(`[data-rec-id="${id}"]`);
+        let recData = null;
+        
+        try {
+          // Buscar dados atuais da recomendação
+          const response = await fetch('/api/opcoes/admin/all', {
+            headers: { 'Authorization': `Bearer ${adminToken}` }
+          });
+          
+          if (response.ok) {
+            const result = await response.json();
+            if (result.success) {
+              recData = result.recommendations.find(r => r.id === id);
+            }
+          }
+          
+          if (!recData) {
+            alert('❌ Não foi possível encontrar os dados da recomendação');
+            return;
+          }
+          
+          // Determinar automaticamente o tipo de encerramento
+          const valorEntrada = parseFloat(recData.valor_entrada);
+          const precoAtual = valorEntrada; // Por enquanto, usar entrada como atual
+          const stop = parseFloat(recData.stop);
+          const gain = parseFloat(recData.gain);
+          
+          // Mostrar modal de encerramento
+          const modalHTML = `
+            <div id="closeModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+              <div class="bg-gray-900 rounded-xl max-w-md w-full mx-4 p-6 border border-gray-700">
+                <h3 class="text-xl font-bold text-white mb-4">Encerrar Recomendação</h3>
+                
+                <div class="mb-4">
+                  <h4 class="text-lg font-semibold text-white">${recData.ticker_opcao}</h4>
+                  <p class="text-gray-400">${recData.ativo_spot} • Strike: R$ ${parseFloat(recData.strike).toFixed(2)}</p>
+                </div>
+                
+                <div class="mb-4 space-y-2">
+                  <div class="flex justify-between">
+                    <span class="text-gray-400">Entrada:</span>
+                    <span class="text-white">R$ ${valorEntrada.toFixed(2)}</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-gray-400">Stop:</span>
+                    <span class="text-red-400">R$ ${stop.toFixed(2)}</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-gray-400">Gain:</span>
+                    <span class="text-green-400">R$ ${gain.toFixed(2)}</span>
+                  </div>
+                </div>
+                
+                <div class="mb-4">
+                  <label class="block text-sm text-gray-300 mb-2">Preço Final (R$):</label>
+                  <input type="number" id="precoFinal" 
+                         value="${valorEntrada.toFixed(2)}" 
+                         step="0.01" min="0"
+                         class="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white">
+                </div>
+                
+                <div class="mb-4">
+                  <label class="block text-sm text-gray-300 mb-2">Motivo do Encerramento:</label>
+                  <select id="motivoEncerramento" class="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white">
+                    <option value="FINALIZADA_GANHO">Gain Atingido</option>
+                    <option value="FINALIZADA_STOP">Stop Loss</option>
+                    <option value="FINALIZADA_VENCIMENTO">Vencimento</option>
+                    <option value="FINALIZADA_MANUAL">Encerramento Manual</option>
+                  </select>
+                </div>
+                
+                <div class="flex gap-3">
+                  <button onclick="closeModal()" 
+                          class="flex-1 bg-gray-600 hover:bg-gray-700 py-2 px-4 rounded-lg text-white">
+                    Cancelar
+                  </button>
+                  <button onclick="confirmCloseRecommendation(${id})" 
+                          class="flex-1 bg-red-600 hover:bg-red-700 py-2 px-4 rounded-lg text-white">
+                    Encerrar
+                  </button>
+                </div>
+              </div>
+            </div>
+          `;
+          
+          document.body.insertAdjacentHTML('beforeend', modalHTML);
+          
+        } catch (error) {
+          console.error('❌ Erro ao buscar dados da recomendação:', error);
+          alert('❌ Erro ao buscar dados da recomendação');
         }
-      });
-      
-      const result = await response.json();
-      
-      if (result.success) {
-        alert('✅ Recomendação encerrada com sucesso!');
-        loadOpcoesRecommendations();
-        loadOpcoesStats();
-      } else {
-        alert('❌ ' + result.error);
+      }
+
+      async function confirmCloseRecommendation(id) {
+        const precoFinal = parseFloat(document.getElementById('precoFinal').value);
+        const motivo = document.getElementById('motivoEncerramento').value;
+        
+        if (!precoFinal || precoFinal <= 0) {
+          alert('❌ Digite um preço final válido');
+          return;
+        }
+        
+        try {
+          const response = await fetch(`/api/opcoes/admin/close/${id}`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${adminToken}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              status: motivo,
+              resultado_final: precoFinal
+            })
+          });
+          
+          const result = await response.json();
+          
+          if (result.success) {
+            alert(`✅ Recomendação encerrada com sucesso!\n\nPerformance: ${result.performance?.toFixed(2)}%`);
+            closeModal();
+            loadOpcoesRecommendations();
+            loadOpcoesStats();
+          } else {
+            alert('❌ Erro: ' + result.error);
+          }
+          
+        } catch (error) {
+          console.error('❌ Erro ao encerrar recomendação:', error);
+          alert('❌ Erro de conexão');
+        }
+      }
+
+
+      async function editOpcoesRecommendation(id) {
+        console.log(`✏️ Editando recomendação ID: ${id}`);
+        
+        try {
+          // Buscar dados atuais da recomendação
+          const response = await fetch('/api/opcoes/admin/all', {
+            headers: { 'Authorization': `Bearer ${adminToken}` }
+          });
+          
+          if (response.ok) {
+            const result = await response.json();
+            if (result.success) {
+              const recData = result.recommendations.find(r => r.id === id);
+              
+              if (recData) {
+                // Preencher formulário de edição
+                document.getElementById('opcaoAtivoSpot').value = recData.ativo_spot;
+                document.getElementById('opcaoTicker').value = recData.ticker_opcao;
+                document.getElementById('opcaoStrike').value = recData.strike;
+                document.getElementById('opcaoValorEntrada').value = recData.valor_entrada;
+                document.getElementById('opcaoVencimento').value = recData.vencimento;
+                document.getElementById('opcaoDataRecomendacao').value = recData.data_recomendacao;
+                document.getElementById('opcaoStop').value = recData.stop;
+                document.getElementById('opcaoGain').value = recData.gain;
+                
+                if (recData.gain_parcial) {
+                  document.getElementById('opcaoGainParcial').value = recData.gain_parcial;
+                }
+                
+                // Marcar como modo edição
+                const form = document.getElementById('opcoesRecommendationForm');
+                form.dataset.editingId = id;
+                
+                // Mudar botão para "Atualizar"
+                const submitBtn = form.querySelector('button[type="submit"]');
+                submitBtn.innerHTML = '<i class="fas fa-save mr-1"></i>Atualizar Recomendação';
+                submitBtn.classList.remove('bg-geminii', 'hover:bg-purple-700');
+                submitBtn.classList.add('bg-orange-600', 'hover:bg-orange-700');
+                
+                // Scroll para o formulário
+                form.scrollIntoView({ behavior: 'smooth' });
+                
+                alert(`✅ Dados da recomendação ${recData.ticker_opcao} carregados para edição!`);
+              }
+            }
+          }
+          
+        } catch (error) {
+          console.error('❌ Erro ao buscar dados para edição:', error);
+          alert('❌ Erro ao carregar dados para edição');
+        }
       }
       
-    } catch (error) {
-      console.error('Erro ao encerrar recomendação:', error);
-      alert('❌ Erro de conexão');
-    }
-  }
-
-  async function editOpcoesRecommendation(id) {
-    alert(`Editar recomendação de opção ID: ${id}\n\n(Função será implementada em breve)`);
-  }
-
-  async function deleteOpcoesRecommendation(id) {
-    if (!confirm('Remover esta recomendação de opção permanentemente?')) return;
-    
-    try {
-      const response = await fetch(`/api/opcoes/admin/delete/${id}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${adminToken}`,
-          'Content-Type': 'application/json'
+      // ✅ FUNÇÃO PARA REMOVER RECOMENDAÇÃO
+      async function deleteOpcoesRecommendation(id) {
+        console.log(`🗑️ Removendo recomendação ID: ${id}`);
+        
+        if (!confirm('⚠️ Tem certeza que deseja remover esta recomendação?\n\nEsta ação não pode ser desfeita!')) {
+          return;
         }
-      });
-      
-      const result = await response.json();
-      
-      if (result.success) {
-        alert('✅ Recomendação removida com sucesso!');
-        loadOpcoesRecommendations();
-        loadOpcoesStats();
-      } else {
-        alert('❌ Erro de conexão');
+        
+        try {
+          const response = await fetch(`/api/opcoes/admin/delete/${id}`, {
+            method: 'DELETE',
+            headers: {
+              'Authorization': `Bearer ${adminToken}`,
+              'Content-Type': 'application/json'
+            }
+          });
+          
+          const result = await response.json();
+          
+          if (result.success) {
+            alert('✅ Recomendação removida com sucesso!');
+            loadOpcoesRecommendations();
+            loadOpcoesStats();
+          } else {
+            alert('❌ Erro: ' + result.error);
+          }
+          
+        } catch (error) {
+          console.error('❌ Erro ao remover recomendação:', error);
+          alert('❌ Erro de conexão');
+        }
       }
       
-    } catch (error) {
-      console.error('Erro ao remover recomendação:', error);
-      alert('❌ Erro de conexão');
-    }
-  }   
+      // ✅ FUNÇÃO PARA FECHAR MODAL
+      function closeModal() {
+        const modal = document.getElementById('closeModal');
+        if (modal) {
+          modal.remove();
+        }
+      }
+      
+      // ✅ MODIFICAR A FUNÇÃO DE CRIAÇÃO PARA SUPORTAR EDIÇÃO
+      document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('opcoesRecommendationForm');
+        
+        if (form) {
+          form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const isEditing = this.dataset.editingId;
+            const submitBtn = this.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = isEditing ? 
+              '<i class="fas fa-spinner fa-spin mr-1"></i>Atualizando...' : 
+              '<i class="fas fa-spinner fa-spin mr-1"></i>Criando...';
+            
+            try {
+              const formData = {
+                ativo_spot: document.getElementById('opcaoAtivoSpot').value.toUpperCase().trim(),
+                ticker_opcao: document.getElementById('opcaoTicker').value.toUpperCase().trim(),
+                strike: parseFloat(document.getElementById('opcaoStrike').value),
+                valor_entrada: parseFloat(document.getElementById('opcaoValorEntrada').value),
+                vencimento: document.getElementById('opcaoVencimento').value,
+                data_recomendacao: document.getElementById('opcaoDataRecomendacao').value,
+                stop: parseFloat(document.getElementById('opcaoStop').value),
+                gain: parseFloat(document.getElementById('opcaoGain').value),
+                gain_parcial: document.getElementById('opcaoGainParcial').value ? 
+                              parseFloat(document.getElementById('opcaoGainParcial').value) : null
+              };
+              
+              let url, method;
+              
+              if (isEditing) {
+                formData.id = parseInt(isEditing);
+                url = '/api/opcoes/admin/update';
+                method = 'PUT';
+              } else {
+                url = '/api/opcoes/admin/create';
+                method = 'POST';
+              }
+              
+              const response = await fetch(url, {
+                method: method,
+                headers: {
+                  'Authorization': `Bearer ${adminToken}`,
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(formData)
+              });
+              
+              const result = await response.json();
+              
+              if (result.success) {
+                alert(isEditing ? '✅ Recomendação atualizada com sucesso!' : '✅ Recomendação criada com sucesso!');
+                
+                // Limpar formulário
+                this.reset();
+                
+                // Remover modo edição
+                delete this.dataset.editingId;
+                
+                // Restaurar botão original
+                submitBtn.innerHTML = '<i class="fas fa-plus mr-1"></i>Criar Recomendação';
+                submitBtn.classList.remove('bg-orange-600', 'hover:bg-orange-700');
+                submitBtn.classList.add('bg-geminii', 'hover:bg-purple-700');
+                
+                // Definir datas padrão
+                const today = new Date().toISOString().split('T')[0];
+                document.getElementById('opcaoDataRecomendacao').value = today;
+                
+                // Recarregar lista
+                loadOpcoesRecommendations();
+                loadOpcoesStats();
+                
+              } else {
+                alert('❌ Erro: ' + result.error);
+              }
+              
+            } catch (error) {
+              console.error('❌ Erro ao processar recomendação:', error);
+              alert('❌ Erro de conexão');
+            } finally {
+              submitBtn.disabled = false;
+              submitBtn.innerHTML = originalText;
+            }
+          });
+        }
+      });
 
       // Variáveis para pagamentos
       let currentPaymentsPage = 1;
@@ -3852,35 +4189,51 @@
     }
 
     async function loadOpcoesRecommendations() {
-      // ✅ ADICIONAR ESTA VERIFICAÇÃO
+      console.log('🔄 Carregando recomendações de opções...');
+      
       if (!adminToken) {
-        console.log('⚠️ Token não disponível ainda, aguardando...');
+        console.log('⚠️ Token não disponível');
+        showOpcoesError('Token de administrador não encontrado');
         return;
       }
       
-      console.log('🔄 Carregando recomendações de opções...');
-      
       try {
+        console.log('📡 Fazendo requisição para /api/opcoes/admin/all...');
+        
         const response = await fetch('/api/opcoes/admin/all', {
-          headers: { 'Authorization': `Bearer ${adminToken}` }
+          headers: {
+            'Authorization': `Bearer ${adminToken}`,
+            'Content-Type': 'application/json'
+          }
         });
     
-        if (response.ok) {
-          const result = await response.json();
-          if (result.success) {
-            console.log(`✅ ${result.recommendations.length} recomendações de opções carregadas`);
-            displayOpcoesRecommendations(result.recommendations);
-          } else {
-            console.error('Erro da API:', result.error);
-            showOpcoesError(result.error);
-          }
-        } else {
-          console.error('Erro HTTP:', response.status);
-          showOpcoesError(`Erro ${response.status}: ${response.statusText}`);
+        console.log('📊 Status da resposta:', response.status);
+    
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
+    
+        const result = await response.json();
+        console.log('📄 Resposta da API:', result);
+    
+        if (result.success) {
+          console.log(`✅ ${result.recommendations?.length || 0} recomendações recebidas`);
+          
+          // ✅ ADICIONAR LOGS DETALHADOS
+          if (result.recommendations && result.recommendations.length > 0) {
+            console.log('🔍 Primeira recomendação:', result.recommendations[0]);
+            console.log('🔍 Campos disponíveis:', Object.keys(result.recommendations[0]));
+          }
+          
+          displayOpcoesRecommendations(result.recommendations || []);
+        } else {
+          console.error('❌ API retornou erro:', result.error);
+          showOpcoesError(result.error || 'Erro desconhecido da API');
+        }
+    
       } catch (error) {
-        console.error('Erro de conexão:', error);
-        showOpcoesError('Erro de conexão com o servidor');
+        console.error('❌ Erro completo:', error);
+        showOpcoesError(`Erro ao carregar recomendações: ${error.message}`);
       }
     }
     
@@ -4698,7 +5051,282 @@ function displayUsers(users) {
     }
 
 
+    window.closeOpcoesRecommendation = async function(id) {
+      console.log(`🔄 Encerrando recomendação de opção ID: ${id}`);
+      
+      // Buscar dados da recomendação primeiro
+      let recData = null;
+      
+      try {
+        const response = await fetch('/api/opcoes/admin/all', {
+          headers: { 'Authorization': `Bearer ${adminToken}` }
+        });
+        
+        if (response.ok) {
+          const result = await response.json();
+          if (result.success) {
+            recData = result.recommendations.find(r => r.id === id);
+          }
+        }
+        
+        if (!recData) {
+          alert('❌ Não foi possível encontrar os dados da recomendação');
+          return;
+        }
+        
+        // Mostrar modal de encerramento
+        const modalHTML = `
+          <div id="closeModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div class="bg-gray-900 rounded-xl max-w-md w-full mx-4 p-6 border border-gray-700">
+              <h3 class="text-xl font-bold text-white mb-4">Encerrar Recomendação</h3>
+              
+              <div class="mb-4">
+                <h4 class="text-lg font-semibold text-white">${recData.ticker_opcao}</h4>
+                <p class="text-gray-400">${recData.ativo_spot} • Strike: R$ ${parseFloat(recData.strike).toFixed(2)}</p>
+              </div>
+              
+              <div class="mb-4">
+                <label class="block text-sm text-gray-300 mb-2">Preço Final (R$):</label>
+                <input type="number" id="precoFinal" 
+                       value="${parseFloat(recData.valor_entrada).toFixed(2)}" 
+                       step="0.01" min="0"
+                       class="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white">
+              </div>
+              
+              <div class="mb-4">
+                <label class="block text-sm text-gray-300 mb-2">Motivo do Encerramento:</label>
+                <select id="motivoEncerramento" class="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white">
+                  <option value="FINALIZADA_GANHO">Gain Atingido</option>
+                  <option value="FINALIZADA_STOP">Stop Loss</option>
+                  <option value="FINALIZADA_VENCIMENTO">Vencimento</option>
+                  <option value="FINALIZADA_MANUAL">Encerramento Manual</option>
+                </select>
+              </div>
+              
+              <div class="flex gap-3">
+                <button onclick="closeModal()" 
+                        class="flex-1 bg-gray-600 hover:bg-gray-700 py-2 px-4 rounded-lg text-white">
+                  Cancelar
+                </button>
+                <button onclick="confirmCloseRecommendation(${id})" 
+                        class="flex-1 bg-red-600 hover:bg-red-700 py-2 px-4 rounded-lg text-white">
+                  Encerrar
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+        
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
+        
+      } catch (error) {
+        console.error('❌ Erro ao buscar dados da recomendação:', error);
+        alert('❌ Erro ao buscar dados da recomendação');
+      }
+    };
     
+    // ✅ CONFIRMAR ENCERRAMENTO
+    window.confirmCloseRecommendation = async function(id) {
+      const precoFinal = parseFloat(document.getElementById('precoFinal').value);
+      const motivo = document.getElementById('motivoEncerramento').value;
+      
+      if (!precoFinal || precoFinal <= 0) {
+        alert('❌ Digite um preço final válido');
+        return;
+      }
+      
+      try {
+        console.log('🔄 Enviando requisição para encerrar...');
+        
+        const response = await fetch(`/api/opcoes/admin/close/${id}`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${adminToken}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            status: motivo,
+            resultado_final: precoFinal
+          })
+        });
+        
+        const result = await response.json();
+        console.log('📊 Resposta da API:', result);
+        
+        if (result.success) {
+          // ✅ FECHAR MODAL PRIMEIRO
+          const modal = document.getElementById('closeModal');
+          if (modal) {
+            modal.remove();
+          }
+          
+          // ✅ MOSTRAR SUCESSO
+          const performanceText = result.performance ? `Performance: ${result.performance.toFixed(2)}%` : 'Encerrada com sucesso';
+          alert(`✅ Recomendação encerrada com sucesso!\n\n${performanceText}`);
+          
+          // ✅ RECARREGAR DADOS
+          try {
+            if (typeof loadOpcoesRecommendations === 'function') {
+              await loadOpcoesRecommendations();
+            }
+            if (typeof loadOpcoesStats === 'function') {
+              await loadOpcoesStats();
+            }
+          } catch (reloadError) {
+            console.log('⚠️ Erro ao recarregar dados:', reloadError);
+            // Forçar reload da página se não conseguir recarregar
+            window.location.reload();
+          }
+          
+        } else {
+          alert('❌ Erro: ' + (result.error || 'Erro desconhecido'));
+        }
+        
+      } catch (error) {
+        console.error('❌ Erro ao encerrar recomendação:', error);
+        alert('❌ Erro de conexão. Tente novamente.');
+      }
+    };
+    
+    // ✅ FUNÇÃO PARA REMOVER RECOMENDAÇÃO (CORRIGIDA)
+    window.deleteOpcoesRecommendation = async function(id) {
+      console.log(`🗑️ Removendo recomendação ID: ${id}`);
+      
+      if (!confirm('⚠️ Tem certeza que deseja remover esta recomendação?\n\nEsta ação não pode ser desfeita!')) {
+        return;
+      }
+      
+      try {
+        const response = await fetch(`/api/opcoes/admin/delete/${id}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${adminToken}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+          alert('✅ Recomendação removida com sucesso!');
+          loadOpcoesRecommendations();
+          loadOpcoesStats();
+        } else {
+          alert('❌ Erro: ' + result.error);
+        }
+        
+      } catch (error) {
+        console.error('❌ Erro ao remover recomendação:', error);
+        alert('❌ Erro de conexão');
+      }
+    };
+    
+    // ✅ FUNÇÃO PARA FECHAR MODAL
+    window.closeModal = function() {
+      const modal = document.getElementById('closeModal');
+      if (modal) {
+        modal.remove();
+        console.log('✅ Modal fechado com sucesso');
+
+      }
+    };
+    
+    // ✅ MODIFICAR O EVENT LISTENER DO FORMULÁRIO PARA SUPORTAR EDIÇÃO
+    document.addEventListener('DOMContentLoaded', function() {
+      const form = document.getElementById('opcoesRecommendationForm');
+      
+      if (form) {
+        // Remover listeners existentes
+        const newForm = form.cloneNode(true);
+        form.parentNode.replaceChild(newForm, form);
+        
+        // Adicionar novo listener
+        newForm.addEventListener('submit', async function(e) {
+          e.preventDefault();
+          
+          const isEditing = this.dataset.editingId;
+          const submitBtn = this.querySelector('button[type="submit"]');
+          const originalText = submitBtn.innerHTML;
+          
+          submitBtn.disabled = true;
+          submitBtn.innerHTML = isEditing ? 
+            '<i class="fas fa-spinner fa-spin mr-1"></i>Atualizando...' : 
+            '<i class="fas fa-spinner fa-spin mr-1"></i>Criando...';
+          
+          try {
+            const formData = {
+              ativo_spot: document.getElementById('opcaoAtivoSpot').value.toUpperCase().trim(),
+              ticker_opcao: document.getElementById('opcaoTicker').value.toUpperCase().trim(),
+              strike: parseFloat(document.getElementById('opcaoStrike').value),
+              valor_entrada: parseFloat(document.getElementById('opcaoValorEntrada').value),
+              vencimento: document.getElementById('opcaoVencimento').value,
+              data_recomendacao: document.getElementById('opcaoDataRecomendacao').value,
+              stop: parseFloat(document.getElementById('opcaoStop').value),
+              gain: parseFloat(document.getElementById('opcaoGain').value),
+              gain_parcial: document.getElementById('opcaoGainParcial').value ? 
+                            parseFloat(document.getElementById('opcaoGainParcial').value) : null
+            };
+            
+            let url, method;
+            
+            if (isEditing) {
+              formData.id = parseInt(isEditing);
+              url = '/api/opcoes/admin/update';
+              method = 'PUT';
+            } else {
+              url = '/api/opcoes/admin/create';
+              method = 'POST';
+            }
+            
+            const response = await fetch(url, {
+              method: method,
+              headers: {
+                'Authorization': `Bearer ${adminToken}`,
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify(formData)
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+              alert(isEditing ? '✅ Recomendação atualizada com sucesso!' : '✅ Recomendação criada com sucesso!');
+              
+              // Limpar formulário
+              this.reset();
+              
+              // Remover modo edição
+              delete this.dataset.editingId;
+              
+              // Restaurar botão original
+              submitBtn.innerHTML = '<i class="fas fa-plus mr-1"></i>Criar Recomendação';
+              submitBtn.classList.remove('bg-orange-600', 'hover:bg-orange-700');
+              submitBtn.classList.add('bg-geminii', 'hover:bg-purple-700');
+              
+              // Definir datas padrão
+              const today = new Date().toISOString().split('T')[0];
+              document.getElementById('opcaoDataRecomendacao').value = today;
+              
+              // Recarregar lista
+              loadOpcoesRecommendations();
+              loadOpcoesStats();
+              
+            } else {
+              alert('❌ Erro: ' + result.error);
+            }
+            
+          } catch (error) {
+            console.error('❌ Erro ao processar recomendação:', error);
+            alert('❌ Erro de conexão');
+          } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalText;
+          }
+        });
+      }
+    });
+    
+    console.log('✅ Funções de opções corrigidas e carregadas!');
 
 
     // Logout
@@ -4722,6 +5350,19 @@ function displayUsers(users) {
     window.closeQuickRebalance = closeQuickRebalance;
     window.createPortfolioRecommendation = createPortfolioRecommendation;
     window.showSuccessToast = showSuccessToast;
+
+    window.closeOpcoesRecommendation = closeOpcoesRecommendation;
+    window.confirmCloseRecommendation = confirmCloseRecommendation;
+    window.editOpcoesRecommendation = editOpcoesRecommendation;
+    window.deleteOpcoesRecommendation = deleteOpcoesRecommendation;
+    window.closeModal = closeModal;
+
+
+    window.loadOpcoesRecommendations = loadOpcoesRecommendations;
+    window.displayOpcoesRecommendations = displayOpcoesRecommendations;
+    window.getOpcoesStatusColor = getOpcoesStatusColor;
+    window.getOpcoesStatusText = getOpcoesStatusText;
+    window.showOpcoesError = showOpcoesError;
   </script>
 </body>
 </html>
