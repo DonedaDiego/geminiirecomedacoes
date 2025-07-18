@@ -19,6 +19,7 @@ from gratis.vol_regimes_routes import vol_regimes_bp
 from gratis.carrossel_yfinance_routes import get_carrossel_blueprint
 
 
+
 ### Pro
 from pro.long_short_routes import long_short_bp
 from pro.opcoes_routes import opcoes_bp
@@ -27,6 +28,7 @@ from pro.calc_routes import calc_bp
 from pro.box_3_routes import box3_bp
 from pro.rank_routes import get_rank_blueprint
 from pro.screening_routes import screening_bp
+from pro.bandas_pro_routes import bandas_pro_bp
 
 ## premium
 from premium.swing_trade_ml_routes import get_swing_trade_ml_blueprint
@@ -178,6 +180,7 @@ app.register_blueprint(control_pay_bp)
 app.register_blueprint(calc_bp)
 opcoes_recommendations_bp = get_opcoes_recommendations_blueprint()
 app.register_blueprint(opcoes_recommendations_bp)
+app.register_blueprint(bandas_pro_bp)
 
 CORS(app, 
      origins=['*'],
@@ -417,6 +420,14 @@ def rank_volatilidade():
 @app.route('/opcoes-recomendacoes.html')
 def opcoes_recomendacoes_page():
     return send_from_directory('../frontend', 'opcoes-recomendacoes.html')
+
+
+@app.route('/regimes-pro.html')
+@app.route('/regimes-pro.html')
+def regimes():
+    return send_from_directory('../frontend', 'regimes-pro.html')
+
+
 
 # ===== PÁGINAS DE RETORNO DO PAGAMENTO =====
 

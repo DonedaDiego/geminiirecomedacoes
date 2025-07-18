@@ -124,6 +124,62 @@
       animation: pulseGlow 2s ease-in-out infinite alternate;
     }
     
+    /* Footer Styles */
+    .newsletter-input:focus {
+      border-color: #ba39af;
+      box-shadow: 
+        0 0 10px rgba(186, 57, 175, 0.3),
+        0 0 20px rgba(186, 57, 175, 0.1);
+    }
+
+    .newsletter-btn:hover {
+      box-shadow: 
+        0 10px 25px -5px rgba(0, 0, 0, 0.1),
+        0 0 15px rgba(186, 57, 175, 0.2);
+    }
+
+    .social-icon {
+      width: 48px;
+      height: 48px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: rgba(255, 255, 255, 0.7);
+      font-size: 20px;
+      transition: all 0.3s ease;
+      backdrop-filter: blur(10px);
+    }
+
+    .social-icon:hover {
+      color: #ba39af;
+      border-color: #ba39af;
+      background: rgba(186, 57, 175, 0.1);
+      box-shadow: 
+        0 0 15px rgba(186, 57, 175, 0.3),
+        0 0 30px rgba(186, 57, 175, 0.1);
+      transform: translateY(-3px) scale(1.1);
+    }
+
+    .footer-link {
+      color: rgba(255, 255, 255, 0.6);
+      text-decoration: none;
+      font-size: 14px;
+      transition: all 0.3s ease;
+    }
+
+    .footer-link:hover {
+      color: #ba39af;
+      text-shadow: 0 0 8px rgba(186, 57, 175, 0.5);
+    }
+
+    .hero-section {
+      padding-top: 100px;
+    }
+
+
     @keyframes pulseGlow {
       from { box-shadow: 0 0 20px rgba(138, 43, 226, 0.3); }
       to { box-shadow: 0 0 30px rgba(138, 43, 226, 0.6); }
@@ -580,13 +636,12 @@
                   </div>
                 </div>
                 
-                <div onclick="window.location.href='calculadora.html'" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white cursor-pointer">
-                  <i class="fas fa-calculator text-green-400 w-5"></i>
+                <div onclick="window.location.href='regimes-pro.html'" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white cursor-pointer">
+                  <i class="fas fa-chart-area text-purple-400 w-5"></i>
                   <div class="flex-1">
-                    <div class="font-medium">Calculadora de Volatilidade</div>
-                    <div class="text-xs text-gray-400">Preço teórico, gregas, pontos gain/stop</div>
+                    <div class="font-medium">Bandas de Volatilidade Pro</div>
+                    <div class="text-xs text-gray-400">GARCH + XGBoost + Validação IV</div>
                   </div>
-                  
                 </div>
                 
                 <div onclick="window.location.href='rank-volatilidade.html'" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white cursor-pointer">
@@ -1225,6 +1280,7 @@
         'Long & Short', 
         'Hunter Walls', 
         'Regimes de Volatilidade',
+        'Bandas de Volatilidade Pro',
         'Regressão Linear', 
         'Volatilidade GARCH', 
         'screening',
@@ -1286,6 +1342,7 @@
       const redirects = {
         'Long & Short': 'long-short.html',
         'Hunter Walls': 'opcoes.html',
+        'Bandas de Volatilidade Pro': 'regimes-pro.html',
         'Smart Carteiras': 'analises.html',
         'Opções Recomendações': 'opcoes-recomendacoes.html'
       };
@@ -1491,5 +1548,217 @@
     // Initialize when page loads
     document.addEventListener('DOMContentLoaded', initDashboard);
   </script>
+  <footer class="relative z-10 bg-black bg-opacity-60 backdrop-blur-md border-t border-white border-opacity-10">
+    <div class="max-w-6xl mx-auto px-6 py-12">
+      <!-- Newsletter Section -->
+      <div class="text-center mb-8">
+        <h3 class="text-xl font-medium text-white mb-4">Fique por dentro das oportunidades</h3>
+        <p class="text-neutral-300 mb-6 max-w-xl mx-auto">
+          Receba análises exclusivas e insights sobre as melhores oportunidades na bolsa brasileira.
+        </p>
+        
+        <button id="newsletterBtn" class="newsletter-btn px-8 py-4 bg-white text-black font-medium rounded-full hover:bg-gray-200 transition-all duration-300 shadow-lg hover:shadow-xl text-lg">
+          📧 Receber Análises Gratuitas
+        </button>
+      </div>
+
+      <!-- Modal Newsletter -->
+      <div id="newsletterModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-gray-900 rounded-2xl max-w-md w-full p-6 border border-gray-700 relative animate-modal">
+          <!-- Close Button -->
+          <button onclick="closeNewsletterModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors">
+            <i class="fas fa-times text-xl"></i>
+          </button>
+          
+          <!-- Header -->
+          <div class="text-center mb-6">
+            <div class="w-16 h-16 bg-gradient-to-r from-geminii to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
+              <i class="fas fa-chart-line text-white text-2xl"></i>
+            </div>
+            <h3 class="text-2xl font-bold text-white mb-2">Análises Exclusivas</h3>
+            <p class="text-gray-300 text-sm">Receba insights sobre as melhores oportunidades do mercado financeiro</p>
+          </div>
+
+          <!-- Form -->
+          <form id="newsletterForm" onsubmit="submitNewsletterForm(event)">
+            <!-- Nome Completo -->
+            <div class="mb-4">
+              <label class="block text-white text-sm font-medium mb-2">
+                Nome Completo <span class="text-red-500">*</span>
+              </label>
+              <input 
+                type="text" 
+                id="modalName"
+                name="name"
+                required
+                class="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-geminii focus:bg-gray-750 transition-all"
+                placeholder="Seu nome completo"
+              >
+            </div>
+
+            <!-- E-mail -->
+            <div class="mb-4">
+              <label class="block text-white text-sm font-medium mb-2">
+                E-mail <span class="text-red-500">*</span>
+              </label>
+              <input 
+                type="email" 
+                id="modalEmail"
+                name="email"
+                required
+                class="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-geminii focus:bg-gray-750 transition-all"
+                placeholder="seu@email.com"
+              >
+            </div>
+
+            <!-- Onde nos conheceu -->
+            <div class="mb-6">
+              <label class="block text-white text-sm font-medium mb-2">
+                Onde nos conheceu? <span class="text-red-500">*</span>
+              </label>
+              <select 
+                id="modalSource"
+                name="source"
+                required
+                class="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-geminii transition-all"
+              >
+                <option value="">Selecione uma opção</option>
+                <option value="Google">Google</option>
+                <option value="Instagram">Instagram</option>
+                <option value="Facebook">Facebook</option>
+                <option value="YouTube">YouTube</option>
+                <option value="LinkedIn">LinkedIn</option>
+                <option value="Indicação de amigo">Indicação de amigo</option>
+                <option value="Outro">Outro</option>
+              </select>
+            </div>
+
+            <!-- Submit Button -->
+            <button 
+              type="submit" 
+              id="modalSubmitBtn"
+              class="w-full bg-gradient-to-r from-geminii to-purple-600 hover:from-purple-700 hover:to-pink-700 text-white font-semibold py-3 rounded-lg transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <i class="fas fa-envelope mr-2"></i>
+              Receber Análises Exclusivas
+            </button>
+          </form>
+
+          <!-- Benefits -->
+          <div class="mt-6 pt-4 border-t border-gray-700">
+            <p class="text-gray-400 text-xs text-center mb-3">Você receberá:</p>
+            <div class="grid grid-cols-2 gap-2 text-xs">
+              <div class="flex items-center gap-2 text-gray-300">
+                <i class="fas fa-check text-green-500"></i>
+                <span>Análises semanais</span>
+              </div>
+              <div class="flex items-center gap-2 text-gray-300">
+                <i class="fas fa-check text-green-500"></i>
+                <span>Oportunidades em primeira mão</span>
+              </div>
+              <div class="flex items-center gap-2 text-gray-300">
+                <i class="fas fa-check text-green-500"></i>
+                <span>Insights de mercado</span>
+              </div>
+              <div class="flex items-center gap-2 text-gray-300">
+                <i class="fas fa-check text-green-500"></i>
+                <span>100% gratuito</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Social Media -->
+      <div class="flex justify-center gap-6 mb-8">
+        <a href="https://youtube.com/@geminiiresearch?si=SKM462RGWl0aYs18?sub_confirmation=1" class="social-icon" title="YouTube">
+          <i class="fab fa-youtube"></i>
+        </a>
+        <a href="https://www.instagram.com/geminiiresearch" class="social-icon" title="Instagram">
+          <i class="fab fa-instagram"></i>
+        </a>
+        <a href="https://www.linkedin.com/company/geminii-research/" class="social-icon" title="LinkedIn">
+          <i class="fab fa-linkedin"></i>
+        </a>
+        <a href="https://t.me/geminiireserach" class="social-icon" title="Telegram">
+          <i class="fab fa-telegram"></i>
+        </a>
+      </div>
+
+      <!-- Footer Links -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+        <!-- Links Principais -->
+        <div class="text-center md:text-left">
+          <h4 class="text-white font-medium mb-4">Navegação</h4>
+          <div class="flex flex-wrap justify-center md:justify-start gap-6">
+            <a href="/planos" class="footer-link">Planos</a>
+            <a href="/sobre" class="footer-link">Sobre</a>
+            <a href="/contato" class="footer-link">Contato</a>
+          </div>
+        </div>
+
+        <!-- Links Institucionais -->
+        <div class="text-center md:text-right">
+          <h4 class="text-white font-medium mb-4">Institucional</h4>
+          <div class="flex flex-wrap justify-center md:justify-end gap-6">
+            <a href="/politica-de-privacidade" class="footer-link">Política de Privacidade</a>
+            <a href="/termos-de-uso" class="footer-link">Termos de Uso</a>
+            <a href="/politicas-internas" class="footer-link">Políticas Internas</a>
+            <a href="/compliance" class="footer-link">Compliance</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Disclaimer Legal -->
+      <div class="bg-gray-900 bg-opacity-40 backdrop-blur-sm border border-gray-700 border-opacity-50 rounded-2xl p-6 mb-8">
+        <div class="text-center mb-4">
+          <h4 class="text-white font-medium mb-2 flex items-center justify-center gap-2">
+            
+            Avisos Legais e Responsabilidades
+          </h4>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-xs text-gray-300">
+          <!-- Natureza do Serviço -->
+          <div>
+            <h5 class="text-white font-medium mb-2 text-sm">NATUREZA DO SERVIÇO</h5>
+            <p class="leading-relaxed">
+              Este aplicativo é desenvolvido pela <strong class="text-geminii">Geminii Research Ltda</strong>, empresa credenciada pela <strong>APIMEC</strong> como Analista de Valores Mobiliários. Fornece ferramentas de análise técnica para fins <strong>educativos e informativos</strong>.
+            </p>
+          </div>
+
+          <!-- Riscos -->
+          <div>
+            <h5 class="text-white font-medium mb-2 text-sm">RISCOS ENVOLVIDOS</h5>
+            <ul class="space-y-1 leading-relaxed">
+              <li>• Operações com valores mobiliários envolvem <strong>riscos de perda</strong></li>
+              <li>• Análise técnica <strong>não garante</strong> resultados futuros</li>
+              <li>• Trading automatizado pode <strong>amplificar perdas</strong></li>
+              <li>• Mercado futuro pode resultar em <strong>perdas superiores ao capital</strong></li>
+            </ul>
+          </div>
+
+          <!-- Responsabilidade -->
+          <div>
+            <h5 class="text-white font-medium mb-2 text-sm">RESPONSABILIDADE</h5>
+            <p class="leading-relaxed">
+              Decisões de investimento são de <strong>responsabilidade exclusiva do usuário</strong>. Recomendamos <strong>consulta a profissionais qualificados</strong> antes de qualquer operação financeira.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Copyright e Informações Legais -->
+      <div class="text-center pt-6 border-t border-white border-opacity-10">
+        <p class="text-neutral-400 text-sm mb-2">
+          © 2024 Geminii Research. Todos os direitos reservados.
+        </p>
+        <p class="text-neutral-500 text-xs">
+          Rua Major Virgolino Esmanhotto, n° 50 ⚫ Geminii Research CNPJ: 60.897.331/0001-06
+        </p>
+      </div>
+
+    </div>
+  </footer>
 </body>
 </html>

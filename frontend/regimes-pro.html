@@ -1,0 +1,949 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bandas de Volatilidade Pro - Geminii Tech</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            dark: '#000000',
+            light: '#ffffff',
+            subtle: 'rgba(255,255,255,0.1)',
+            geminii: '#ba39af'
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    body { 
+      font-family: 'Inter', sans-serif; 
+      background: linear-gradient(135deg, #0c0c0c 0%, #1a1a1a 100%);
+      min-height: 100vh;
+    }
+    
+    .vol-card {
+      background: rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 16px;
+      transition: all 0.3s ease;
+    }
+    
+    .vol-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 20px 40px rgba(186, 57, 175, 0.15);
+      border-color: rgba(186, 57, 175, 0.3);
+    }
+    
+    .loading {
+      opacity: 0.6;
+      pointer-events: none;
+    }
+    
+    .spinner {
+      border: 2px solid rgba(255, 255, 255, 0.1);
+      border-radius: 50%;
+      border-top: 2px solid #ba39af;
+      width: 20px;
+      height: 20px;
+      animation: spin 1s linear infinite;
+      display: inline-block;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .dark-select {
+      background-color: rgba(30, 30, 30, 0.9);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: white;
+      backdrop-filter: blur(10px);
+    }
+
+    .dark-select option {
+      background-color: #1a1a1a;
+      color: white;
+      padding: 8px;
+    }
+
+    .dark-select:focus {
+      outline: none;
+      border-color: #ba39af;
+      box-shadow: 0 0 0 2px rgba(186, 57, 175, 0.2);
+    }
+
+    .signal-indicator {
+      display: inline-flex;
+      align-items: center;
+      padding: 12px 20px;
+      border-radius: 25px;
+      font-size: 14px;
+      font-weight: 700;
+      border: 1px solid;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      animation: pulse 2s infinite;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .signal-buy-volatility {
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: white;
+      border-color: #10b981;
+      box-shadow: 0 0 30px rgba(16, 185, 129, 0.4);
+    }
+    
+    .signal-sell-volatility {
+      background: linear-gradient(135deg, #ef4444, #dc2626);
+      color: white;
+      border-color: #ef4444;
+      box-shadow: 0 0 30px rgba(239, 68, 68, 0.4);
+    }
+    
+    .signal-put-bias {
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      color: white;
+      border-color: #f59e0b;
+      box-shadow: 0 0 30px rgba(245, 158, 11, 0.4);
+    }
+    
+    .signal-call-bias {
+      background: linear-gradient(135deg, #3b82f6, #2563eb);
+      color: white;
+      border-color: #3b82f6;
+      box-shadow: 0 0 30px rgba(59, 130, 246, 0.4);
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+
+    .metric-card {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      padding: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      transition: all 0.3s ease;
+    }
+
+    .metric-card:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(186, 57, 175, 0.3);
+    }
+
+    .confidence-bar {
+      width: 100%;
+      height: 8px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+      overflow: hidden;
+      margin-top: 8px;
+    }
+
+    .confidence-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #ba39af, #e879f9);
+      border-radius: 4px;
+      transition: width 0.5s ease;
+    }
+
+    .reasoning-item {
+      display: flex;
+      align-items: center;
+      padding: 8px 12px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 8px;
+      margin-bottom: 6px;
+      border-left: 3px solid #ba39af;
+    }
+
+    .chart-container {
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 8px;
+      padding: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .chart-container > div {
+      width: 100% !important;
+      height: 100% !important;
+    }
+
+    .iv-status-confiavel {
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, transparent 100%);
+      border-left: 4px solid #10b981;
+    }
+
+    .iv-status-neutro {
+      background: linear-gradient(135deg, rgba(245, 158, 11, 0.2) 0%, transparent 100%);
+      border-left: 4px solid #f59e0b;
+    }
+
+    .iv-status-suspeito {
+      background: linear-gradient(135deg, rgba(239, 68, 68, 0.2) 0%, transparent 100%);
+      border-left: 4px solid #ef4444;
+    }
+
+    .pro-badge {
+      background: linear-gradient(135deg, #ba39af, #e879f9);
+      color: white;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+  </style>
+</head>
+<body class="text-white">
+  
+  <!-- Navbar -->
+  <nav class="fixed top-6 left-1/2 transform -translate-x-1/2 z-50 bg-opacity-5 border-opacity-10 bg-white border-white border rounded-full px-4 py-3 shadow-xl backdrop-blur-md">
+    <div class="flex items-center justify-between">
+      <div class="flex items-center">
+        <img src="logo.png" alt="Geminii Logo" class="w-6 h-6 cursor-pointer" onclick="window.location.href='/'">
+      </div>
+      <div class="hidden md:flex items-center space-x-6 text-xs text-gray-300 ml-8">
+        <a href="/dashboard" class="hover:text-white transition-colors">Dashboard</a>
+        <a href="/long-short.html" class="hover:text-white transition-colors">Long & Short</a>
+        <span class="text-white font-medium">Bandas Pro</span>
+      </div>
+      <div class="flex items-center space-x-3 ml-8">
+        <div id="apiStatus" class="w-8 h-8 bg-green-500 bg-opacity-10 border border-green-500 border-opacity-30 rounded-full flex items-center justify-center relative">
+          <i class="fas fa-chart-line text-green-500 text-xs"></i>
+          <div class="absolute -top-1 -right-1 w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Content -->
+  <div class="pt-32 pb-16">
+    <div class="max-w-7xl mx-auto px-6">
+      
+      <!-- Header -->
+      <div class="text-center mb-12">
+        <h1 class="text-4xl md:text-5xl font-bold mb-4">
+          <span style="color: #ba39af; font-weight: 900;">Bandas de Volatilidade</span>
+          <span class="text-white font-light">Pro</span>
+          <span class="pro-badge ml-3">IV Validation</span>
+        </h1>
+        <p class="text-neutral-300 text-lg max-w-3xl mx-auto">
+          Sistema híbrido avançado GARCH + XGBoost com validação de volatilidade implícita via OpLab.
+          Análise completa com score de confiança baseado em IV Rank, Spread e HV/IV Ratio.
+        </p>
+      </div>
+
+      <!-- Controles -->
+      <div class="vol-card p-6 mb-8">
+        <div class="flex flex-col md:flex-row gap-4 items-center justify-center">
+          <div class="flex gap-3 flex-wrap items-center">
+            <input 
+              id="stockInput" 
+              type="text" 
+              placeholder="Digite o código da ação (ex: PETR4)" 
+              class="px-4 py-2 bg-white bg-opacity-10 border border-white border-opacity-20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-geminii backdrop-blur-sm"
+            >
+            <button id="analyzeBtn" class="px-6 py-2 bg-gradient-to-r from-pink-500 to-purple-600 hover:shadow-lg rounded-lg transition-all font-medium">
+              <i class="fas fa-brain mr-2"></i>Analisar Pro
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Status -->
+      <div id="statusMsg" class="mb-6 p-4 rounded-lg hidden backdrop-blur-sm"></div>
+
+      <!-- Sinal Principal -->
+      <div id="mainSignal" class="mb-8 hidden">
+        <div class="vol-card p-8">
+          <div class="text-center">
+            <h3 class="text-2xl font-bold mb-6">
+              <i class="fas fa-bullseye mr-3"></i>Sinal de Trading Pro
+            </h3>
+            <div id="signalIndicator" class="inline-block mb-6">
+              <!-- Preenchido via JS -->
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mt-6">
+              <div class="metric-card">
+                <div class="text-sm text-gray-400 mb-1">Estratégia</div>
+                <div id="recommendedStrategy" class="text-lg font-bold text-white">--</div>
+              </div>
+              <div class="metric-card">
+                <div class="text-sm text-gray-400 mb-1">Confiança Original</div>
+                <div id="signalConfidence" class="text-lg font-bold text-white">--</div>
+                <div class="confidence-bar">
+                  <div id="confidenceFill" class="confidence-fill" style="width: 0%"></div>
+                </div>
+              </div>
+              <div class="metric-card">
+                <div class="text-sm text-gray-400 mb-1">Confiança Ajustada IV</div>
+                <div id="ivAdjustedConfidence" class="text-lg font-bold text-geminii">--</div>
+                <div class="confidence-bar">
+                  <div id="ivConfidenceFill" class="confidence-fill" style="width: 0%"></div>
+                </div>
+              </div>
+              <div class="metric-card">
+                <div class="text-sm text-gray-400 mb-1">
+                  Preço Atual 
+                  <i class="fas fa-circle text-green-400 text-xs ml-1 animate-pulse" title="Tempo real"></i>
+                </div>
+                <div id="currentPrice" class="text-lg font-bold text-white">--</div>
+              </div>
+              <div class="metric-card">
+                <div class="text-sm text-gray-400 mb-1">Última Atualização</div>
+                <div id="lastUpdate" class="text-sm font-bold text-white">--</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Seção IV Validation -->
+      <div id="ivSection" class="mb-8 hidden">
+        <div class="vol-card p-6">
+          <h3 class="text-xl font-bold mb-4">
+            <i class="fas fa-shield-alt text-geminii mr-2"></i>
+            Validação de Volatilidade Implícita
+            <span class="pro-badge ml-2">OpLab</span>
+          </h3>
+          
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            
+            <!-- Score IV -->
+            <div id="ivScoreCard" class="metric-card">
+              <div class="flex justify-between items-center mb-3">
+                <span class="text-lg font-semibold">Score de Confiança</span>
+                <span class="text-3xl font-bold" id="ivScore">--</span>
+              </div>
+              <div class="flex items-center mb-2">
+                <span class="text-sm text-gray-400 mr-2">Status:</span>
+                <span id="ivStatus" class="font-medium">--</span>
+              </div>
+              <div class="text-xs text-gray-500" id="ivRecommendation">--</div>
+            </div>
+
+            <!-- Métricas IV -->
+            <div class="metric-card">
+              <h4 class="text-lg font-semibold mb-3">Métricas OpLab</h4>
+              <div class="grid grid-cols-2 gap-3 text-sm">
+                <div>
+                  <div class="text-gray-400">IV Atual</div>
+                  <div class="text-white font-medium" id="ivCurrent">--</div>
+                </div>
+                <div>
+                  <div class="text-gray-400">IV Rank 1Y</div>
+                  <div class="text-blue-400 font-medium" id="ivRank">--</div>
+                </div>
+                <div>
+                  <div class="text-gray-400">EWMA</div>
+                  <div class="text-orange-400 font-medium" id="ewmaCurrent">--</div>
+                </div>
+                <div>
+                  <div class="text-gray-400">HV 5d</div>
+                  <div class="text-green-400 font-medium" id="hvCurrent">--</div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+          
+          <!-- Detalhes IV -->
+          <div class="mt-4">
+            <h4 class="text-lg font-semibold mb-3">Análise Detalhada</h4>
+            <div id="ivDetailsList" class="space-y-2">
+              <!-- Preenchido via JS -->
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Métricas das Bandas -->
+      <div id="bandsSection" class="mb-8 hidden">
+        <div class="vol-card p-6">
+          <h3 class="text-xl font-bold mb-4">
+            <i class="fas fa-chart-area text-blue-400 mr-2"></i>
+            Bandas de Volatilidade Híbridas
+          </h3>
+          
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            
+            <!-- Volatilidade Atual -->
+            <div class="metric-card">
+              <h4 class="text-lg font-semibold mb-3">Volatilidade</h4>
+              <div class="space-y-2 text-sm">
+                <div class="flex justify-between">
+                  <span class="text-gray-400">GARCH:</span>
+                  <span class="text-white font-medium" id="garchVol">--</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-gray-400">XGBoost:</span>
+                  <span class="text-blue-400 font-medium" id="xgbVol">--</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-gray-400">Híbrida:</span>
+                  <span class="text-geminii font-medium" id="hybridVol">--</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-gray-400">Regime:</span>
+                  <span class="text-orange-400 font-medium" id="volRegime">--</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Bandas 2σ -->
+            <div class="metric-card">
+              <h4 class="text-lg font-semibold mb-3">Bandas 2σ</h4>
+              <div class="space-y-2 text-sm">
+                <div class="flex justify-between">
+                  <span class="text-gray-400">Superior:</span>
+                  <span class="text-red-400 font-medium" id="bandaSup2">--</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-gray-400">Central:</span>
+                  <span class="text-white font-medium" id="linhaCentral">--</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-gray-400">Inferior:</span>
+                  <span class="text-green-400 font-medium" id="bandaInf2">--</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-gray-400">Posição:</span>
+                  <span class="text-yellow-400 font-medium" id="bandPosition">--</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Bandas 4σ -->
+            <div class="metric-card">
+              <h4 class="text-lg font-semibold mb-3">Bandas 4σ</h4>
+              <div class="space-y-2 text-sm">
+                <div class="flex justify-between">
+                  <span class="text-gray-400">Superior:</span>
+                  <span class="text-red-400 font-medium" id="bandaSup4">--</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-gray-400">Inferior:</span>
+                  <span class="text-green-400 font-medium" id="bandaInf4">--</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-gray-400">Trend:</span>
+                  <span class="text-blue-400 font-medium" id="trendRegime">--</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-gray-400">Distância Central:</span>
+                  <span class="text-purple-400 font-medium" id="priceVsCentral">--</span>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- Gráfico das Bandas -->
+      <div id="bandsChartSection" class="mb-8 hidden">
+        <div class="vol-card p-6">
+          <h4 class="text-xl font-bold mb-4 text-white">
+            <i class="fas fa-chart-line mr-2"></i>Bandas de Volatilidade Híbridas + IV
+          </h4>
+          <div class="chart-container" style="height: 400px;">
+            <div id="bandsChart" style="width: 100%; height: 100%;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Seção Geminii Flow -->
+      <div id="geminiiFlowSection" class="mb-8 hidden">
+        <div class="vol-card p-6">
+          <div class="flex items-center justify-between mb-6">
+            <h3 class="text-xl font-bold">
+              <i class="fas fa-wave-square text-cyan-400 mr-2"></i>
+              Geminii Flow Tracker
+              <span class="pro-badge ml-2">Gamma</span>
+            </h3>
+            <div class="text-sm text-gray-400">
+              Fluxo de Opções + Análise de Gamma
+            </div>
+          </div>
+          
+          <!-- Métricas do Flow -->
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            <div class="metric-card">
+              <div class="text-sm text-gray-400 mb-1">Call Flow</div>
+              <div id="callFlow" class="text-lg font-bold text-green-400">--</div>
+            </div>
+            <div class="metric-card">
+              <div class="text-sm text-gray-400 mb-1">Put Flow</div>
+              <div id="putFlow" class="text-lg font-bold text-red-400">--</div>
+            </div>
+            <div class="metric-card">
+              <div class="text-sm text-gray-400 mb-1">Net Flow</div>
+              <div id="netFlow" class="text-lg font-bold text-white">--</div>
+            </div>
+            <div class="metric-card">
+              <div class="text-sm text-gray-400 mb-1">Sentimento</div>
+              <div id="flowSentiment" class="text-lg font-bold text-cyan-400">--</div>
+            </div>
+          </div>
+          
+          <!-- Gráfico do Flow -->
+          <div class="chart-container" style="height: 400px;">
+            <div id="flowChart" style="width: 100%; height: 100%;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Raciocínio do Sinal -->
+      <div id="reasoningSection" class="mb-8 hidden">
+        <div class="vol-card p-6">
+          <h3 class="text-xl font-bold mb-4">
+            <i class="fas fa-lightbulb text-yellow-400 mr-2"></i>
+            Por que este sinal?
+          </h3>
+          <div id="reasoningList" class="space-y-3">
+            <!-- Preenchido via JS -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Screener Results -->
+      <div id="screenerSection" class="mb-8 hidden">
+        <!-- REMOVIDO - Não será usado -->
+      </div>
+
+    </div>
+  </div>
+
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  <script>
+    // Configurações
+    const API_BASE = window.location.origin + '/api/bandas-pro';
+    
+    // Elementos DOM
+    const stockInput = document.getElementById('stockInput');
+    const analyzeBtn = document.getElementById('analyzeBtn');
+    const statusMsg = document.getElementById('statusMsg');
+    const mainSignal = document.getElementById('mainSignal');
+    const ivSection = document.getElementById('ivSection');
+    const bandsSection = document.getElementById('bandsSection');
+    const bandsChartSection = document.getElementById('bandsChartSection');
+    const geminiiFlowSection = document.getElementById('geminiiFlowSection');
+    const reasoningSection = document.getElementById('reasoningSection');
+    
+    // Traduções para português
+    const translations = {
+      'BUY_VOLATILITY': 'COMPRAR VOLATILIDADE',
+      'SELL_VOLATILITY': 'VENDER VOLATILIDADE', 
+      'PUT_BIAS': 'VIÉS DE QUEDA',
+      'CALL_BIAS': 'VIÉS DE ALTA',
+      'HOLD': 'AGUARDAR',
+      'CONFIÁVEL': 'CONFIÁVEL',
+      'NEUTRO': 'NEUTRO',
+      'SUSPEITO': 'SUSPEITO',
+      'INDISPONÍVEL': 'INDISPONÍVEL',
+      'High': 'Alta',
+      'Low': 'Baixa',
+      'Bull': 'Alta',
+      'Bear': 'Baixa',
+      'Long Straddle': 'Long Straddle',
+      'Iron Condor': 'Iron Condor',
+      'Put Spread': 'Put Spread',
+      'Call Spread': 'Call Spread'
+    };
+    
+    function translate(text) {
+      return translations[text] || text;
+    }
+    
+    // Funções utilitárias
+    function showStatus(message, type = 'info') {
+      const bgClass = type === 'success' ? 'bg-green-600 bg-opacity-20 border-green-500 border-opacity-30' : 
+                     type === 'error' ? 'bg-red-600 bg-opacity-20 border-red-500 border-opacity-30' : 
+                     'bg-blue-600 bg-opacity-20 border-blue-500 border-opacity-30';
+      
+      statusMsg.className = `mb-6 p-4 rounded-lg border backdrop-blur-sm ${bgClass}`;
+      statusMsg.textContent = message;
+      statusMsg.classList.remove('hidden');
+      
+      setTimeout(() => statusMsg.classList.add('hidden'), 5000);
+    }
+    
+    function formatCurrency(value) {
+      return new Intl.NumberFormat('pt-BR', {
+        style: 'currency',
+        currency: 'BRL'
+      }).format(value);
+    }
+    
+    function formatPercent(value) {
+      return new Intl.NumberFormat('pt-BR', {
+        style: 'percent',
+        minimumFractionDigits: 1,
+        maximumFractionDigits: 1
+      }).format(value / 100);
+    }
+
+    function formatNumber(value, withSign = false) {
+      if (typeof value !== 'number') return '--';
+      
+      const sign = withSign && value > 0 ? '+' : '';
+      
+      if (Math.abs(value) >= 1000000) {
+        return sign + (value / 1000000).toFixed(1) + 'M';
+      } else if (Math.abs(value) >= 1000) {
+        return sign + (value / 1000).toFixed(1) + 'K';
+      } else {
+        return sign + value.toFixed(0);
+      }
+    }
+    
+    function setLoading(button, loading) {
+      if (loading) {
+        button.classList.add('loading');
+        button.innerHTML = '<span class="spinner mr-2"></span>Analisando Pro...';
+      } else {
+        button.classList.remove('loading');
+        button.innerHTML = '<i class="fas fa-brain mr-2"></i>Analisar Pro';
+      }
+    }
+    
+    // Testar conectividade da API
+    async function testAPI() {
+      try {
+        const response = await fetch(`${API_BASE}/health`);
+        const data = await response.json();
+        
+        if (response.ok) {
+          document.getElementById('apiStatus').className = 'w-8 h-8 bg-green-500 bg-opacity-10 border border-green-500 border-opacity-30 rounded-full flex items-center justify-center relative';
+          return true;
+        } else {
+          throw new Error('API retornou erro');
+        }
+      } catch (error) {
+        document.getElementById('apiStatus').className = 'w-8 h-8 bg-red-500 bg-opacity-10 border border-red-500 border-opacity-30 rounded-full flex items-center justify-center relative';
+        return false;
+      }
+    }
+    
+    // Analisar ação individual
+    async function analyzeStock() {
+      const symbol = stockInput.value.trim().toUpperCase();
+      const period = '1y'; // FIXO EM 1 ANO
+      
+      if (!symbol) {
+        showStatus('Digite o código de uma ação', 'error');
+        return;
+      }
+      
+      const cleanSymbol = symbol.replace('.SA', '');
+      
+      setLoading(analyzeBtn, true);
+      showStatus('Executando análise Pro com validação IV...', 'info');
+      
+      try {
+        const url = `${API_BASE}/analyze/${cleanSymbol}?period=${period}`;
+        const response = await fetch(url);
+        const data = await response.json();
+        
+        if (response.ok && data.success) {
+          await displayAnalysis(data);
+          showStatus(`Análise Pro de ${cleanSymbol} concluída! IV Score: ${data.iv_validation.score}/100`, 'success');
+        } else {
+          const errorMsg = data.error || `Erro HTTP ${response.status}`;
+          showStatus(errorMsg, 'error');
+        }
+      } catch (error) {
+        showStatus('Erro ao conectar com o servidor', 'error');
+      }
+      
+      setLoading(analyzeBtn, false);
+    }
+    
+    // FUNÇÃO REMOVIDA - Não há mais screener
+    
+    // Buscar dados do Geminii Flow
+    async function loadGeminiiFlow(ticker) {
+      try {
+        console.log('🌊 Carregando Geminii Flow para', ticker);
+        
+        // Tentar endpoint do flow (ajuste conforme sua estrutura backend)
+        const response = await fetch(`${window.location.origin}/api/flow/${ticker}?days=30`);
+        const data = await response.json();
+        
+        if (response.ok && data.success) {
+          displayGeminiiFlow(data);
+          return true;
+        } else {
+          console.log('❌ Erro no flow:', data.error);
+          return false;
+        }
+      } catch (error) {
+        console.error('❌ Erro ao carregar flow:', error);
+        return false;
+      }
+    }
+
+    // Exibir dados do Geminii Flow
+    function displayGeminiiFlow(flowData) {
+      const analysis = flowData.analysis || {};
+      const chartHtml = flowData.chart_html || '';
+      
+      // Atualizar métricas
+      document.getElementById('callFlow').textContent = formatNumber(analysis.total_call_flow || 0);
+      document.getElementById('putFlow').textContent = formatNumber(analysis.total_put_flow || 0);
+      document.getElementById('netFlow').textContent = formatNumber(analysis.net_flow || 0, true);
+      document.getElementById('flowSentiment').textContent = analysis.sentiment || '--';
+      
+      // Exibir gráfico do flow
+      const flowChart = document.getElementById('flowChart');
+      if (chartHtml && chartHtml.trim() !== '') {
+        flowChart.innerHTML = chartHtml;
+        console.log('✅ Gráfico do flow carregado');
+      } else {
+        flowChart.innerHTML = '<div class="flex items-center justify-center h-full text-gray-400">Dados de flow não disponíveis</div>';
+      }
+      
+      // Mostrar seção
+      geminiiFlowSection.classList.remove('hidden');
+    }
+    
+    // Exibir análise individual
+    async function displayAnalysis(data) {
+      const metrics = data.metrics;
+      const signal = data.trading_signal;
+      const ivValidation = data.iv_validation;
+      
+      // Sinal principal
+      displayMainSignal(signal, data.current_price, data.last_update);
+      
+      // IV Validation
+      displayIVValidation(ivValidation);
+      
+      // Métricas das bandas
+      displayBandsMetrics(metrics);
+      
+      // Raciocínio
+      displayReasoning(signal.reasoning || []);
+      
+      // Gráfico das bandas
+      if (data.chart_html) {
+        displayBandsChart(data.chart_html);
+      }
+      
+      // Carregar Geminii Flow
+      const ticker = data.ticker;
+      if (ticker) {
+        await loadGeminiiFlow(ticker);
+      }
+      
+      // Mostrar seções
+      mainSignal.classList.remove('hidden');
+      ivSection.classList.remove('hidden');
+      bandsSection.classList.remove('hidden');
+      bandsChartSection.classList.remove('hidden');
+      reasoningSection.classList.remove('hidden');
+    }
+        
+    // Exibir sinal principal
+    function displayMainSignal(signal, price, lastUpdate) {
+      const signalIndicator = document.getElementById('signalIndicator');
+      
+      let signalClass = 'signal-hold';
+      let signalIcon = 'fas fa-pause';
+      let signalText = translate(signal.signal);
+      
+      switch (signal.signal) {
+        case 'BUY_VOLATILITY':
+          signalClass = 'signal-buy-volatility';
+          signalIcon = 'fas fa-arrow-up';
+          break;
+        case 'SELL_VOLATILITY':
+          signalClass = 'signal-sell-volatility';
+          signalIcon = 'fas fa-arrow-down';
+          break;
+        case 'PUT_BIAS':
+          signalClass = 'signal-put-bias';
+          signalIcon = 'fas fa-chevron-down';
+          break;
+        case 'CALL_BIAS':
+          signalClass = 'signal-call-bias';
+          signalIcon = 'fas fa-chevron-up';
+          break;
+      }
+      
+      signalIndicator.innerHTML = `
+        <div class="signal-indicator ${signalClass}">
+          <i class="${signalIcon} mr-2"></i>
+          ${signalText}
+        </div>
+      `;
+      
+      document.getElementById('recommendedStrategy').textContent = translate(signal.strategy) || '--';
+      document.getElementById('signalConfidence').textContent = `${signal.confidence || 0}%`;
+      document.getElementById('confidenceFill').style.width = `${signal.confidence || 0}%`;
+      document.getElementById('ivAdjustedConfidence').textContent = `${signal.iv_adjusted_confidence || 0}%`;
+      document.getElementById('ivConfidenceFill').style.width = `${signal.iv_adjusted_confidence || 0}%`;
+      document.getElementById('currentPrice').textContent = formatCurrency(price || 0);
+      document.getElementById('lastUpdate').textContent = lastUpdate ? new Date(lastUpdate).toLocaleString('pt-BR') : '--';
+    }
+    
+    // Exibir validação IV
+    function displayIVValidation(ivData) {
+      const ivScoreCard = document.getElementById('ivScoreCard');
+      const status = ivData.status || 'INDISPONÍVEL';
+      
+      ivScoreCard.className = `metric-card iv-status-${status.toLowerCase()}`;
+      
+      document.getElementById('ivScore').textContent = `${ivData.score || 0}/100`;
+      document.getElementById('ivStatus').textContent = translate(status);
+      document.getElementById('ivRecommendation').textContent = ivData.recommendation || '--';
+      
+      const rawData = ivData.raw_data || {};
+      document.getElementById('ivCurrent').textContent = rawData.iv_current ? 
+        formatPercent(rawData.iv_current * 100) : '--';
+      document.getElementById('ivRank').textContent = rawData.iv_rank_1y ? 
+        formatPercent(rawData.iv_rank_1y * 100) : '--';
+      document.getElementById('ewmaCurrent').textContent = rawData.ewma_current ? 
+        formatPercent(rawData.ewma_current * 100) : '--';
+      document.getElementById('hvCurrent').textContent = rawData.stdv_5d ? 
+        formatPercent(rawData.stdv_5d * 100) : '--';
+      
+      const ivDetailsList = document.getElementById('ivDetailsList');
+      const details = ivData.details || [];
+      
+      ivDetailsList.innerHTML = details.map(detail => `
+        <div class="reasoning-item">
+          <i class="fas fa-info-circle text-geminii mr-3"></i>
+          <span>${detail}</span>
+        </div>
+      `).join('');
+    }
+    
+    // Exibir métricas das bandas
+    function displayBandsMetrics(metrics) {
+      const volatility = metrics.volatility || {};
+      const bands = metrics.bands || {};
+      const position = metrics.position || {};
+      
+      document.getElementById('garchVol').textContent = volatility.garch ? 
+        formatPercent(volatility.garch * 100) : '--';
+      document.getElementById('xgbVol').textContent = volatility.xgb ? 
+        formatPercent(volatility.xgb * 100) : '--';
+      document.getElementById('hybridVol').textContent = volatility.hybrid ? 
+        formatPercent(volatility.hybrid * 100) : '--';
+      document.getElementById('volRegime').textContent = translate(volatility.regime) || '--';
+      
+      document.getElementById('bandaSup2').textContent = bands.superior_2sigma ? 
+        formatCurrency(bands.superior_2sigma) : '--';
+      document.getElementById('linhaCentral').textContent = bands.linha_central ? 
+        formatCurrency(bands.linha_central) : '--';
+      document.getElementById('bandaInf2').textContent = bands.inferior_2sigma ? 
+        formatCurrency(bands.inferior_2sigma) : '--';
+      document.getElementById('bandPosition').textContent = position.description ? 
+        position.description.split(' - ')[1] || position.description : '--';
+      
+      document.getElementById('bandaSup4').textContent = bands.superior_4sigma ? 
+        formatCurrency(bands.superior_4sigma) : '--';
+      document.getElementById('bandaInf4').textContent = bands.inferior_4sigma ? 
+        formatCurrency(bands.inferior_4sigma) : '--';
+      document.getElementById('trendRegime').textContent = translate(position.trend_regime) || '--';
+      document.getElementById('priceVsCentral').textContent = '--';
+    }
+    
+    // Exibir gráfico das bandas
+    function displayBandsChart(chartHtml) {
+      const bandsChart = document.getElementById('bandsChart');
+      
+      if (!chartHtml || chartHtml.trim() === '') {
+        bandsChart.innerHTML = '<div class="flex items-center justify-center h-full text-gray-400">Gráfico não disponível</div>';
+        return;
+      }
+      
+      try {
+        bandsChart.innerHTML = chartHtml;
+        console.log('✅ Gráfico das bandas carregado');
+      } catch (error) {
+        console.error('❌ Erro ao carregar gráfico das bandas:', error);
+        bandsChart.innerHTML = '<div class="flex items-center justify-center h-full text-gray-400">Erro ao carregar gráfico</div>';
+      }
+    }
+    
+    // Exibir raciocínio
+    function displayReasoning(reasoning) {
+      const reasoningList = document.getElementById('reasoningList');
+      
+      if (!reasoning || reasoning.length === 0) {
+        reasoningList.innerHTML = '<div class="reasoning-item"><i class="fas fa-info-circle text-geminii mr-3"></i><span>Análise em andamento...</span></div>';
+        return;
+      }
+      
+      reasoningList.innerHTML = reasoning.map(reason => `
+        <div class="reasoning-item">
+          <i class="fas fa-check-circle text-geminii mr-3"></i>
+          <span>${reason}</span>
+        </div>
+      `).join('');
+    }
+    
+    // FUNÇÃO REMOVIDA - Não há mais screener
+    
+    // Funções auxiliares
+    function getSignalColor(signal) {
+      switch (signal) {
+        case 'BUY_VOLATILITY': return 'green';
+        case 'SELL_VOLATILITY': return 'red';
+        case 'PUT_BIAS': return 'orange';
+        case 'CALL_BIAS': return 'blue';
+        default: return 'gray';
+      }
+    }
+    
+    function loadTicker(ticker) {
+      stockInput.value = ticker;
+      analyzeStock();
+    }
+    
+    // Event Listeners
+    analyzeBtn.addEventListener('click', analyzeStock);
+    
+    stockInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') analyzeStock();
+    });
+    
+    // Inicialização
+    async function initialize() {
+      const apiConnected = await testAPI();
+      
+      if (apiConnected) {
+        showStatus('Sistema Pro com validação IV carregado! Digite uma ação ou execute o rastreador.', 'info');
+      } else {
+        showStatus('Aviso: Erro na conectividade da API Pro. Verifique se o servidor está rodando.', 'error');
+      }
+      
+      setTimeout(() => {
+        stockInput.value = 'PETR4';
+      }, 1000);
+    }
+    
+    initialize();
+  </script>
+</body>
+</html>
