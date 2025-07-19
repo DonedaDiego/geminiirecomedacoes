@@ -64,9 +64,9 @@ def get_all_recommendations_public():
     try:
         # 🔥 AUTO-UPDATE: Atualizar preços automaticamente
         try:
-            print("🔄 Auto-update de preços no endpoint /free/all...")
+            
             RecommendationsServiceFree.update_current_prices()
-            print("✅ Auto-update concluído")
+            
         except Exception as update_error:
             print(f"⚠️ Erro no auto-update (continuando): {update_error}")
         

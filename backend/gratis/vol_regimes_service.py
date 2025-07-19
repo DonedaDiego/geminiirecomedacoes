@@ -65,7 +65,7 @@ class VolatilityRegimesService:
         else:
             return value
     
-    def get_stock_data(self, ticker: str, period: str = "6mo") -> Optional[pd.DataFrame]:
+    def get_stock_data(self, ticker: str, period: str = "2y") -> Optional[pd.DataFrame]:
         try:
             # Lógica de ticker melhorada
             if not ticker.endswith('.SA') and not ticker.startswith('^'):
@@ -458,7 +458,7 @@ class VolatilityRegimesService:
             self.logger.error(f"Erro ao gerar gráfico: {e}")
             return f"<p>Erro ao gerar gráfico: {e}</p>"
     
-    def get_analysis_summary(self, ticker: str, period: str = "6mo") -> Dict:
+    def get_analysis_summary(self, ticker: str, period: str = "2y") -> Dict:
         """Análise completa do ticker"""
         try:
             # Processar ticker corretamente
@@ -476,24 +476,58 @@ class VolatilityRegimesService:
             if len(data) < 50:
                 return {'error': f'Dados insuficientes ({len(data)} registros). Mínimo 50.', 'success': False}
             
-            # Buscar preço atual/corrente em tempo real
+            # ===== FIX: BUSCAR ÚLTIMO PREÇO DE FORMA CONSISTENTE =====
             try:
-                stock = yf.Ticker(search_ticker)
-                current_data = stock.history(period="1d", interval="1m")
+                import pytz
+                from datetime import datetime
                 
-                if not current_data.empty:
-                    current_price = float(current_data['Close'].iloc[-1])
-                    last_update_time = current_data.index[-1]
-                    self.logger.info(f"Preço corrente obtido: {current_price} às {last_update_time}")
+                # Timezone de São Paulo
+                sp_tz = pytz.timezone('America/Sao_Paulo')
+                now_sp = datetime.now(sp_tz)
+                
+                self.logger.info(f"🕐 HORÁRIO SP: {now_sp.strftime('%Y-%m-%d %H:%M:%S %Z')}")
+                
+                # 1. PRIMEIRO: Tentar dados mais recentes (1 dia)
+                self.logger.info("📡 Buscando dados mais recentes...")
+                recent_data = yf.download(
+                    search_ticker, 
+                    period="5d",  # Últimos 5 dias para garantir
+                    interval='1d',
+                    progress=False,
+                    threads=False,
+                    auto_adjust=True,
+                    prepost=False,
+                    repair=True
+                )
+                
+                if hasattr(recent_data.columns, 'get_level_values') and search_ticker in recent_data.columns.get_level_values(1):
+                    recent_data = recent_data.xs(search_ticker, axis=1, level=1)
+                
+                if not recent_data.empty:
+                    recent_data.reset_index(inplace=True)
+                    current_price = float(recent_data['Close'].iloc[-1])
+                    last_date = recent_data['Date'].iloc[-1]
+                    self.logger.info(f"✅ ÚLTIMO FECHAMENTO: R$ {current_price:.4f} em {last_date}")
+                    
+                    # Verificar se é o fechamento mais recente possível
+                    if last_date.date() >= (now_sp.date() - pd.Timedelta(days=1)):
+                        self.logger.info("✅ DADOS ATUALIZADOS - Usando fechamento recente")
+                        last_update_time = last_date
+                    else:
+                        self.logger.warning(f"⚠️ DADOS ANTIGOS - Último: {last_date.date()}, Hoje: {now_sp.date()}")
+                        last_update_time = last_date
                 else:
+                    # Fallback para dados históricos
                     current_price = float(data['Close'].iloc[-1])
                     last_update_time = data['Date'].iloc[-1]
-                    self.logger.warning(f"Usando último fechamento histórico: {current_price}")
-                    
+                    self.logger.warning(f"⚠️ USANDO DADOS HISTÓRICOS: R$ {current_price:.4f}")
+                
             except Exception as e:
+                # Fallback final - usar dados históricos
                 current_price = float(data['Close'].iloc[-1])
                 last_update_time = data['Date'].iloc[-1]
-                self.logger.warning(f"Erro ao buscar preço corrente, usando fechamento: {current_price} - {e}")
+                self.logger.error(f"❌ ERRO ao buscar dados recentes: {e}")
+                self.logger.info(f"🔄 FALLBACK: R$ {current_price:.4f} (dados históricos)")
             
             # Processar dados através do pipeline
             data = self.calculate_base_volatility(data)
@@ -502,8 +536,18 @@ class VolatilityRegimesService:
             data = self.create_hybrid_model(data)
             data = self.create_bands(data)
             
+            # ===== FIX: USAR O PREÇO MAIS RECENTE PARA SINAIS =====
+            # Atualizar o último registro com o preço mais recente
+            if 'current_price' in locals():
+                data.loc[data.index[-1], 'Close'] = current_price
+                self.logger.info(f"🔄 PREÇO ATUALIZADO no DataFrame: R$ {current_price:.4f}")
+            
             # Gerar sinais
             signals = self.get_current_signals(data, search_ticker)
+            
+            # ===== FIX: GARANTIR QUE O PREÇO NO SINAL ESTÁ CORRETO =====
+            signals['price'] = current_price
+            self.logger.info(f"🎯 PREÇO FINAL nos SINAIS: R$ {signals['price']:.4f}")
             
             # Gerar gráfico HTML
             chart_html = self.generate_plotly_chart(data, search_ticker)
@@ -574,7 +618,7 @@ class VolatilityRegimesService:
                 'success': True
             }
             
-            self.logger.info(f"Análise concluída para {clean_ticker}: {signals['signal']} - Preço corrente: R$ {current_price:.2f}")
+            self.logger.info(f"✅ Análise concluída para {clean_ticker}: {signals['signal']} - Preço: R$ {current_price:.2f}")
             return summary
             
         except Exception as e:

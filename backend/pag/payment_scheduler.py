@@ -18,7 +18,7 @@ class PaymentScheduler:
     def start(self):
         """Iniciar o scheduler"""
         if self.running:
-            print("⚠️ Scheduler já está rodando")
+            
             return
         
         

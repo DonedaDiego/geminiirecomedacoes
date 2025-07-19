@@ -1068,12 +1068,10 @@ email_service = EmailService()
 # FUNÇÃO DE SETUP
 def setup_email_system():
     """🚀 Configurar sistema de email"""
-    print("🚀 Configurando sistema de email...")
+    
     
     if email_service.setup_tables():
-        print("✅ Sistema de email configurado!")
-        print("📧 MODO SMTP CORPORATIVO ativo - Emails via Titan")
-        print("🛡️ SISTEMA ANTI-SPAM ativado")
+    
         return True
     else:
         print("❌ Falha na configuração")

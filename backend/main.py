@@ -28,7 +28,7 @@ from pro.calc_routes import calc_bp
 from pro.box_3_routes import box3_bp
 from pro.rank_routes import get_rank_blueprint
 from pro.screening_routes import screening_bp
-from pro.bandas_pro_routes import bandas_pro_bp
+from pro.bandas_pro_routes import get_bandas_pro_blueprint
 
 ## premium
 from premium.swing_trade_ml_routes import get_swing_trade_ml_blueprint
@@ -65,7 +65,7 @@ app.config['MAIL_SERVER'] = 'smtp.titan.email'
 app.config['MAIL_PORT'] = 465
 app.config['MAIL_USE_SSL'] = True
 app.config['MAIL_USERNAME'] = os.environ.get('EMAIL_USER', 'contato@geminii.com.br')
-app.config['MAIL_PASSWORD'] = os.environ.get('EMAIL_PASSWORD', '#Giminii#')
+app.config['MAIL_PASSWORD'] = os.environ.get('EMAIL_PASSWORD', '#Geminii20')
 
 # ===== CONFIGURAÇÃO BLUEPRINTS EXISTENTES =====
 
@@ -89,7 +89,7 @@ try:
     from admin_routes import get_admin_blueprint
     admin_bp = get_admin_blueprint()
     ADMIN_AVAILABLE = True
-    print("✅ Blueprint Admin carregado com sucesso!")
+    
 except ImportError as e:
     print(f"⚠️ Admin routes não disponível: {e}")
     ADMIN_AVAILABLE = False
@@ -105,7 +105,7 @@ try:
     carrossel_bp = get_carrossel_blueprint()
     CARROSSEL_AVAILABLE = True
 except ImportError as e:
-    print(f"⚠️ Carrossel não disponível: {e}")
+    
     CARROSSEL_AVAILABLE = False
 except Exception as e:
     print(f"❌ Erro ao carregar Carrossel: {e}")
@@ -118,7 +118,7 @@ auth_bp = None
 try:
     auth_bp = get_auth_blueprint()
     AUTH_AVAILABLE = True
-    print("✅ Blueprint Auth carregado com sucesso!")
+    
 except ImportError as e:
     print(f"⚠️ Auth routes não disponível: {e}")
     AUTH_AVAILABLE = False
@@ -131,7 +131,7 @@ try:
     from backend.pro.screening_routes import screening_bp
     app.register_blueprint(screening_bp, url_prefix='/screening')
     SCREENING_AVAILABLE = True
-    print("✅ Blueprint Screening registrado!")
+    
 except ImportError as e:
     print(f"⚠️ Screening routes não disponível: {e}")
     SCREENING_AVAILABLE = False
@@ -143,7 +143,7 @@ except Exception as e:
 try:
     rank_bp = get_rank_blueprint()
     app.register_blueprint(rank_bp)
-    print("✅ Blueprint Ranking registrado!")
+    
 except Exception as e:
     print(f"❌ Erro ao registrar ranking blueprint: {e}")
 
@@ -180,7 +180,7 @@ app.register_blueprint(control_pay_bp)
 app.register_blueprint(calc_bp)
 opcoes_recommendations_bp = get_opcoes_recommendations_blueprint()
 app.register_blueprint(opcoes_recommendations_bp)
-app.register_blueprint(bandas_pro_bp)
+app.register_blueprint(get_bandas_pro_blueprint())
 
 CORS(app, 
      origins=['*'],
@@ -192,12 +192,12 @@ CORS(app,
 # Blueprints condicionais
 if MP_AVAILABLE and mercadopago_bp:
     app.register_blueprint(mercadopago_bp)
-    print("✅ Blueprint Mercado Pago registrado!")
+    
 
 if ADMIN_AVAILABLE and admin_bp:
     try:
         app.register_blueprint(admin_bp)
-        print("✅ Blueprint Admin registrado!")
+        
     except Exception as e:
         print(f"❌ Erro ao registrar admin blueprint: {e}")
         ADMIN_AVAILABLE = False
@@ -205,7 +205,7 @@ if ADMIN_AVAILABLE and admin_bp:
 if CARROSSEL_AVAILABLE and carrossel_bp:
     try:
         app.register_blueprint(carrossel_bp)
-        print("✅ Blueprint Carrossel registrado!")
+        
     except Exception as e:
         print(f"❌ Erro ao registrar carrossel blueprint: {e}")
         CARROSSEL_AVAILABLE = False
@@ -214,7 +214,7 @@ if CARROSSEL_AVAILABLE and carrossel_bp:
 if AUTH_AVAILABLE and auth_bp:
     try:
         app.register_blueprint(auth_bp)
-        print("✅ Blueprint Auth registrado!")
+        
     except Exception as e:
         print(f"❌ Erro ao registrar auth blueprint: {e}")
         AUTH_AVAILABLE = False
