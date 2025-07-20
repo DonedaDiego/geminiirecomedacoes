@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Análise de Volatilidade Implícita - Geminii Tech</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            dark: '#000000',
+            light: '#ffffff',
+            subtle: 'rgba(255,255,255,0.1)',
+            geminii: '#ba39af'
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    body { 
+      font-family: 'Inter', sans-serif; 
+      background: linear-gradient(135deg, #0c0c0c 0%, #1a1a1a 100%);
+      min-height: 100vh;
+    }
+    
+    .vi-card {
+      background: rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 16px;
+      transition: all 0.3s ease;
+    }
+    
+    .vi-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 20px 40px rgba(186, 57, 175, 0.15);
+      border-color: rgba(186, 57, 175, 0.3);
+    }
+    
+    .loading {
+      opacity: 0.6;
+      pointer-events: none;
+    }
+    
+    .spinner {
+      border: 2px solid rgba(255, 255, 255, 0.1);
+      border-radius: 50%;
+      border-top: 2px solid #ba39af;
+      width: 20px;
+      height: 20px;
+      animation: spin 1s linear infinite;
+      display: inline-block;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .dark-select {
+      background-color: rgba(30, 30, 30, 0.9);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: white;
+      backdrop-filter: blur(10px);
+    }
+
+    .dark-select option {
+      background-color: #1a1a1a;
+      color: white;
+      padding: 8px;
+    }
+
+    .dark-select:focus {
+      outline: none;
+      border-color: #ba39af;
+      box-shadow: 0 0 0 2px rgba(186, 57, 175, 0.2);
+    }
+
+    .signal-indicator {
+      display: inline-flex;
+      align-items: center;
+      padding: 16px 24px;
+      border-radius: 20px;
+      font-size: 16px;
+      font-weight: 700;
+      border: 2px solid;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+    }
+    
+    .signal-otimo {
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: white;
+      border-color: #10b981;
+      box-shadow: 0 0 30px rgba(16, 185, 129, 0.4);
+    }
+    
+    .signal-bom {
+      background: linear-gradient(135deg, #22c55e, #16a34a);
+      color: white;
+      border-color: #22c55e;
+      box-shadow: 0 0 30px rgba(34, 197, 94, 0.4);
+    }
+    
+    .signal-moderado {
+      background: linear-gradient(135deg, #eab308, #ca8a04);
+      color: white;
+      border-color: #eab308;
+      box-shadow: 0 0 30px rgba(234, 179, 8, 0.4);
+    }
+    
+    .signal-neutro {
+      background: linear-gradient(135deg, #6b7280, #4b5563);
+      color: white;
+      border-color: #6b7280;
+    }
+    
+    .signal-atencao {
+      background: linear-gradient(135deg, #f97316, #ea580c);
+      color: white;
+      border-color: #f97316;
+      box-shadow: 0 0 30px rgba(249, 115, 22, 0.4);
+    }
+    
+    .signal-cuidado {
+      background: linear-gradient(135deg, #ef4444, #dc2626);
+      color: white;
+      border-color: #ef4444;
+      box-shadow: 0 0 30px rgba(239, 68, 68, 0.4);
+    }
+    
+    .signal-risco {
+      background: linear-gradient(135deg, #b91c1c, #991b1b);
+      color: white;
+      border-color: #b91c1c;
+      box-shadow: 0 0 30px rgba(185, 28, 28, 0.6);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+
+    .metric-card {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      padding: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      transition: all 0.3s ease;
+    }
+
+    .metric-card:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(186, 57, 175, 0.3);
+    }
+
+    .chart-container {
+      height: 300px;
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 12px;
+      padding: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .chart-container > div {
+      width: 100% !important;
+      height: 100% !important;
+    }
+
+    .explanation-card {
+      background: linear-gradient(135deg, rgba(186, 57, 175, 0.1) 0%, rgba(147, 51, 234, 0.1) 100%);
+      border: 1px solid rgba(186, 57, 175, 0.3);
+    }
+
+    .progress-ring {
+      width: 120px;
+      height: 120px;
+      transform: rotate(-90deg);
+    }
+
+    .progress-ring-circle {
+      stroke: #4b5563;
+      stroke-width: 8;
+      fill: transparent;
+      r: 52;
+      cx: 60;
+      cy: 60;
+    }
+
+    .progress-ring-progress {
+      stroke: #ba39af;
+      stroke-width: 8;
+      fill: transparent;
+      r: 52;
+      cx: 60;
+      cy: 60;
+      stroke-dasharray: 326.72;
+      stroke-dashoffset: 326.72;
+      transition: stroke-dashoffset 0.5s ease-in-out;
+    }
+  </style>
+</head>
+<body class="text-white">
+  
+  <!-- Navbar -->
+  <nav class="fixed top-6 left-1/2 transform -translate-x-1/2 z-50 bg-opacity-5 border-opacity-10 bg-white border-white border rounded-full px-4 py-3 shadow-xl backdrop-blur-md">
+    <div class="flex items-center justify-between">
+      <div class="flex items-center">
+        <img src="logo.png" alt="Geminii Logo" class="w-6 h-6 cursor-pointer" onclick="window.location.href='/'">
+      </div>
+      <div class="hidden md:flex items-center space-x-6 text-xs text-gray-300 ml-8">
+        <a href="/dashboard" class="hover:text-white transition-colors">Dashboard</a>
+        <a href="opcoes.html" class="hover:text-white transition-colors">Hunter Walls</a>
+        <span class="text-white font-medium">Implícita Sigma</span>
+        <a href="regimes-pro.html" class="hover:text-white transition-colors">Hybrid Volatility Bands</a>
+        <a href="rank-volatilidade.html" class="hover:text-white transition-colors">IV Scanner</a>
+      </div>
+      <div class="flex items-center space-x-3 ml-8">
+        <div id="apiStatus" class="w-8 h-8 bg-green-500 bg-opacity-10 border border-green-500 border-opacity-30 rounded-full flex items-center justify-center relative">
+          <i class="fas fa-chart-line text-green-500 text-xs"></i>
+          <div class="absolute -top-1 -right-1 w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Content -->
+  <div class="pt-32 pb-16">
+    <div class="max-w-7xl mx-auto px-6">
+      
+      <!-- Header -->
+      <div class="text-center mb-12">
+        <h1 class="text-4xl md:text-5xl font-bold mb-4">
+          <span style="color: #ba39af; font-weight: 900;">Implícita Sigma</span>
+          <span class="text-white font-light">Implícita Pro</span>
+        </h1>
+        <p class="text-neutral-300 text-lg max-w-3xl mx-auto">
+          Sistema avançado de Monitor estratégico da volatilidade implícita, histórica e risco de gamma..
+        </p>
+      </div>
+
+      <!-- Controles -->
+      <div class="vi-card p-6 mb-8">
+        <div class="flex flex-col md:flex-row gap-4 items-center justify-center">
+          <div class="flex gap-3 flex-wrap items-center">
+            <input 
+              id="stockInput" 
+              type="text" 
+              placeholder="Digite o código da ação (ex: PETR4)" 
+              class="px-4 py-2 bg-white bg-opacity-10 border border-white border-opacity-20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-geminii backdrop-blur-sm"
+            >
+            <select id="periodSelect" class="dark-select px-4 py-2 rounded-lg">
+              <option value="126">6 meses</option>
+              <option value="252" selected>1 ano</option>
+              <option value="504">2 anos</option>
+            </select>
+            <button id="analyzeBtn" class="px-6 py-2 bg-gradient-to-r from-pink-500 to-purple-600 hover:shadow-lg rounded-lg transition-all font-medium">
+              <i class="fas fa-chart-area mr-2"></i>Analisar
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Status -->
+      <div id="statusMsg" class="mb-6 p-4 rounded-lg hidden backdrop-blur-sm"></div>
+
+      <!-- Sinal Principal -->
+      <div id="mainSignal" class="mb-8 hidden">
+        <div class="vi-card p-8">
+          <div class="text-center mb-8">
+            <h3 class="text-2xl font-bold mb-6 flex items-center">
+              <i class="fas fa-bullseye text-geminii mr-3"></i>Gamma Signal - Calls vs Puts
+            </h3>
+            <div id="signalIndicator" class="inline-block mb-6">
+              <!-- Preenchido via JS -->
+            </div>
+          </div>
+          
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div class="metric-card text-center">
+              <div class="text-sm text-gray-400 mb-2">Sinal Atual</div>
+              <div class="relative inline-block">
+                <svg class="progress-ring">
+                  <circle class="progress-ring-circle"></circle>
+                  <circle id="progressCircle" class="progress-ring-progress"></circle>
+                </svg>
+                <div class="absolute inset-0 flex items-center justify-center">
+                  <div class="text-center">
+                    <div id="signalValue" class="text-2xl font-bold text-white">--</div>
+                    <div class="text-xs text-gray-400">-100 a +100</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="metric-card">
+              <div class="text-sm text-gray-400 mb-1">Estratégia Recomendada</div>
+              <div id="recommendedStrategy" class="text-lg font-bold text-white mb-2">--</div>
+              <div id="strategyDescription" class="text-sm text-gray-300">--</div>
+            </div>
+            
+            <div class="metric-card">
+              <div class="text-sm text-gray-400 mb-1">
+                Preço Atual 
+                <i class="fas fa-circle text-green-400 text-xs ml-1 animate-pulse" title="Tempo real"></i>
+              </div>
+              <div id="currentPrice" class="text-2xl font-bold text-white mb-1">--</div>
+              <div class="text-sm text-gray-400">
+                Confiança: <span id="signalConfidence" class="text-white font-medium">--</span>
+              </div>
+            </div>
+            
+            <div class="metric-card">
+              <div class="text-sm text-gray-400 mb-1">Volatilidades</div>
+              <div class="space-y-2">
+                <div class="flex justify-between">
+                  <span class="text-sm text-gray-300">VI Média:</span>
+                  <span id="ivMean" class="text-sm font-medium text-orange-400">--</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-sm text-gray-300">Vol Hist:</span>
+                  <span id="volHistMean" class="text-sm font-medium text-green-400">--</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Gráficos -->
+      <div id="chartsSection" class="mb-8 hidden">
+        
+        <!-- Gráfico Principal - Preço -->
+        <div class="vi-card p-6 mb-6">
+          <h4 class="text-xl font-bold mb-4 text-white">
+            <i class="fas fa-chart-line mr-2"></i>Evolução do Preço
+          </h4>
+          <div class="chart-container" style="height: 350px;">
+            <div id="priceChart" style="width: 100%; height: 100%;"></div>
+          </div>
+        </div>
+
+        <!-- Gráfico VI vs Vol Histórica -->
+        <div class="vi-card p-6 mb-6">
+          <h4 class="text-xl font-bold mb-4 text-white">
+            <i class="fas fa-chart-area mr-2"></i>Volatilidade Implícita vs Histórica
+          </h4>
+          <div class="chart-container" style="height: 350px;">
+            <div id="volatilityChart" style="width: 100%; height: 100%;"></div>
+          </div>
+        </div>
+
+        <!-- Gráfico do Sinal com Zonas -->
+        <div class="vi-card p-6 mb-6">
+          <h4 class="text-xl font-bold mb-4 text-white">
+            <i class="fas fa-signal mr-2"></i>Gamma Signal - Calls vs Puts
+          </h4>
+          <div class="chart-container" style="height: 400px;">
+            <div id="signalChart" style="width: 100%; height: 100%;"></div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Screener Results - REMOVIDO -->
+
+      <!-- Card Explicativo -->
+      <div class="vi-card explanation-card p-8 mb-8">
+        <h2 class="text-2xl font-bold mb-6 text-center">
+          <i class="fas fa-graduation-cap text-geminii mr-3"></i>
+          Como Funciona o Sistema de Volatilidade Implícita Pro
+        </h2>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+          
+          <!-- VI vs Vol Histórica -->
+          <div class="space-y-4">
+            <div class="flex items-center mb-3">
+              <i class="fas fa-chart-line text-orange-400 text-xl mr-3"></i>
+              <h3 class="text-lg font-bold">VI vs Vol Histórica</h3>
+            </div>
+            <p class="text-gray-300 text-sm leading-relaxed mb-4">
+              Compara a <strong>Volatilidade Implícita</strong> atual das opções com a <strong>Volatilidade Histórica</strong> do ativo subjacente.
+            </p>
+            <div class="space-y-2 text-xs">
+              <div class="flex items-center">
+                <div class="w-3 h-3 bg-green-500 rounded mr-2"></div>
+                <span><strong>VI > Vol Hist:</strong> Volatilidade cara, ideal para vender</span>
+              </div>
+              <div class="flex items-center">
+                <div class="w-3 h-3 bg-red-500 rounded mr-2"></div>
+                <span><strong>VI < Vol Hist:</strong> Volatilidade barata, ideal para comprar</span>
+              </div>
+              <div class="flex items-center">
+                <div class="w-3 h-3 bg-gray-500 rounded mr-2"></div>
+                <span><strong>VI ≈ Vol Hist:</strong> Volatilidade em equilíbrio</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Análise de Gamma -->
+          <div class="space-y-4">
+            <div class="flex items-center mb-3">
+              <i class="fas fa-tachometer-alt text-blue-400 text-xl mr-3"></i>
+              <h3 class="text-lg font-bold">Sensibilidade Gamma</h3>
+            </div>
+            <p class="text-gray-300 text-sm leading-relaxed mb-4">
+              Analisa o <strong>Gamma</strong> médio das opções ATM para medir a aceleração do risco.
+            </p>
+            <div class="space-y-2 text-xs">
+              <div class="flex items-center">
+                <div class="w-3 h-3 bg-green-500 rounded mr-2"></div>
+                <span><strong>Gamma Baixo:</strong> Baixo risco, ideal para vender</span>
+              </div>
+              <div class="flex items-center">
+                <div class="w-3 h-3 bg-yellow-500 rounded mr-2"></div>
+                <span><strong>Gamma Médio:</strong> Risco moderado, cautela</span>
+              </div>
+              <div class="flex items-center">
+                <div class="w-3 h-3 bg-red-500 rounded mr-2"></div>
+                <span><strong>Gamma Alto:</strong> Alto risco, evitar vender</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Sinal Combinado -->
+          <div class="space-y-4">
+            <div class="flex items-center mb-3">
+              <i class="fas fa-bullseye text-purple-400 text-xl mr-3"></i>
+              <h3 class="text-lg font-bold">Sinal Combinado</h3>
+            </div>
+            <p class="text-gray-300 text-sm leading-relaxed mb-4">
+              Combina <strong>70% VI/Vol Hist</strong> + <strong>30% Gamma</strong> para gerar um sinal de -100 a +100.
+            </p>
+            <div class="space-y-2 text-xs">
+              <div class="flex items-center">
+                <div class="w-3 h-3 bg-green-500 rounded mr-2"></div>
+                <span><strong>+60 a +100:</strong> Excelente para vender volatilidade</span>
+              </div>
+              <div class="flex items-center">
+                <div class="w-3 h-3 bg-yellow-500 rounded mr-2"></div>
+                <span><strong>-10 a +60:</strong> Condições favoráveis</span>
+              </div>
+              <div class="flex items-center">
+                <div class="w-3 h-3 bg-red-500 rounded mr-2"></div>
+                <span><strong>-100 a -10:</strong> Cuidado, comprar volatilidade</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Estratégias -->
+        <div class="mt-8 pt-6 border-t border-gray-600">
+          <h3 class="text-xl font-bold mb-4 text-center">Estratégias Recomendadas por Faixa de Sinal</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            
+            <div class="bg-green-500 bg-opacity-10 border border-green-500 border-opacity-30 rounded-lg p-4">
+              <h4 class="font-bold text-green-400 mb-2">Sinal +60 a +100</h4>
+              <p class="text-xs text-gray-300 mb-2">FORTE ALTA</p>
+              <ul class="text-xs text-gray-400">
+                <li>• Calls agressivos</li>
+                <li>• Long positions</li>
+                <li>• Bull spreads</li>
+              </ul>
+            </div>
+
+            <div class="bg-yellow-500 bg-opacity-10 border border-yellow-500 border-opacity-30 rounded-lg p-4">
+              <h4 class="font-bold text-yellow-400 mb-2">Sinal +10 a +60</h4>
+              <p class="text-xs text-gray-300 mb-2">BIAS DE ALTA</p>
+              <ul class="text-xs text-gray-400">
+                <li>• Calls moderados</li>
+                <li>• Call spreads</li>
+                <li>• Covered calls</li>
+              </ul>
+            </div>
+
+            <div class="bg-orange-500 bg-opacity-10 border border-orange-500 border-opacity-30 rounded-lg p-4">
+              <h4 class="font-bold text-orange-400 mb-2">Sinal -60 a +10</h4>
+              <p class="text-xs text-gray-300 mb-2">BIAS DE BAIXA</p>
+              <ul class="text-xs text-gray-400">
+                <li>• Puts moderados</li>
+                <li>• Put spreads</li>
+                <li>• Protective puts</li>
+              </ul>
+            </div>
+
+            <div class="bg-red-500 bg-opacity-10 border border-red-500 border-opacity-30 rounded-lg p-4">
+              <h4 class="font-bold text-red-400 mb-2">Sinal -100 a -60</h4>
+              <p class="text-xs text-gray-300 mb-2">FORTE BAIXA</p>
+              <ul class="text-xs text-gray-400">
+                <li>• Puts agressivos</li>
+                <li>• Short positions</li>
+                <li>• Bear spreads</li>
+              </ul>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  <script>
+    // Configurações
+    const API_BASE = window.location.origin + '/api/vi';
+    
+    // Elementos DOM
+    const stockInput = document.getElementById('stockInput');
+    const periodSelect = document.getElementById('periodSelect');
+    const analyzeBtn = document.getElementById('analyzeBtn');
+    const statusMsg = document.getElementById('statusMsg');
+    const mainSignal = document.getElementById('mainSignal');
+    const chartsSection = document.getElementById('chartsSection');
+    
+    // Funções utilitárias
+    function showStatus(message, type = 'info') {
+      const bgClass = type === 'success' ? 'bg-green-600 bg-opacity-20 border-green-500 border-opacity-30' : 
+                     type === 'error' ? 'bg-red-600 bg-opacity-20 border-red-500 border-opacity-30' : 
+                     'bg-blue-600 bg-opacity-20 border-blue-500 border-opacity-30';
+      
+      statusMsg.className = `mb-6 p-4 rounded-lg border backdrop-blur-sm ${bgClass}`;
+      statusMsg.textContent = message;
+      statusMsg.classList.remove('hidden');
+      
+      setTimeout(() => statusMsg.classList.add('hidden'), 5000);
+    }
+    
+    function formatCurrency(value) {
+      return new Intl.NumberFormat('pt-BR', {
+        style: 'currency',
+        currency: 'BRL'
+      }).format(value);
+    }
+    
+    function setLoading(button, loading) {
+      if (loading) {
+        button.classList.add('loading');
+        button.innerHTML = '<span class="spinner mr-2"></span>Analisando...';
+      } else {
+        button.classList.remove('loading');
+        button.innerHTML = '<i class="fas fa-chart-area mr-2"></i>Analisar';
+      }
+    }
+    
+    // Testar conectividade da API
+    async function testAPI() {
+      try {
+        const response = await fetch(`${API_BASE}/health`);
+        const data = await response.json();
+        
+        if (response.ok) {
+          document.getElementById('apiStatus').className = 'w-8 h-8 bg-green-500 bg-opacity-10 border border-green-500 border-opacity-30 rounded-full flex items-center justify-center relative';
+          return true;
+        } else {
+          throw new Error('API retornou erro');
+        }
+      } catch (error) {
+        document.getElementById('apiStatus').className = 'w-8 h-8 bg-red-500 bg-opacity-10 border border-red-500 border-opacity-30 rounded-full flex items-center justify-center relative';
+        return false;
+      }
+    }
+    
+    // Analisar ação individual
+    async function analyzeStock() {
+      const symbol = stockInput.value.trim().toUpperCase();
+      const period = periodSelect.value;
+      
+      if (!symbol) {
+        showStatus('Digite o código de uma ação', 'error');
+        return;
+      }
+      
+      // Limpar ticker - remover .SA se presente
+      const cleanSymbol = symbol.replace('.SA', '');
+      
+      setLoading(analyzeBtn, true);
+      showStatus('Executando análise de volatilidade implícita...', 'info');
+      
+      try {
+        const url = `${API_BASE}/analyze/${cleanSymbol}?period_days=${period}`;
+        const response = await fetch(url);
+        const data = await response.json();
+        
+        if (response.ok && data.success) {
+          displayAnalysis(data);
+          showStatus(`Análise de ${cleanSymbol} concluída com sucesso!`, 'success');
+        } else {
+          const errorMsg = data.error || `Erro HTTP ${response.status}`;
+          showStatus(errorMsg, 'error');
+        }
+      } catch (error) {
+        showStatus('Erro ao conectar com o servidor', 'error');
+      }
+      
+      setLoading(analyzeBtn, false);
+    }
+    
+    // Screener removido - muito lento para produção
+    
+    // Exibir análise individual
+    function displayAnalysis(data) {
+      // Sinal principal
+      displayMainSignal(data);
+      
+      // Gráficos
+      if (data.chart_data) {
+        displayCharts(data);
+      }
+      
+      // Mostrar seções
+      mainSignal.classList.remove('hidden');
+      chartsSection.classList.remove('hidden');
+    }
+    
+    // Exibir sinal principal
+    function displayMainSignal(data) {
+      const signal = data.current_signal || 0;
+      const interpretation = data.signal_interpretation || {};
+      
+      // Determinar classe do sinal
+      let signalClass = 'signal-neutro';
+      if (signal >= 60) signalClass = 'signal-forte-alta';
+      else if (signal >= 30) signalClass = 'signal-alta';
+      else if (signal >= 10) signalClass = 'signal-leve-alta';
+      else if (signal >= -10) signalClass = 'signal-neutro';
+      else if (signal >= -30) signalClass = 'signal-leve-baixa';
+      else if (signal >= -60) signalClass = 'signal-baixa';
+      else signalClass = 'signal-forte-baixa';
+      
+      // Atualizar indicador do sinal
+      const signalIndicator = document.getElementById('signalIndicator');
+      signalIndicator.innerHTML = `
+        <div class="signal-indicator ${signalClass}">
+          <i class="fas fa-chart-line mr-2"></i>
+          ${interpretation.status || 'INDEFINIDO'}
+        </div>
+      `;
+      
+      // Atualizar progress ring
+      updateProgressRing(signal);
+      
+      // Dados complementares
+      document.getElementById('signalValue').textContent = signal.toFixed(1);
+      document.getElementById('recommendedStrategy').textContent = interpretation.recommendation || '--';
+      document.getElementById('strategyDescription').textContent = interpretation.description || '--';
+      document.getElementById('currentPrice').textContent = formatCurrency(data.current_price || 0);
+      document.getElementById('signalConfidence').textContent = interpretation.confidence || '--';
+      document.getElementById('ivMean').textContent = data.iv_mean ? `${data.iv_mean.toFixed(1)}%` : '--';
+      document.getElementById('volHistMean').textContent = data.vol_hist_mean ? `${data.vol_hist_mean.toFixed(1)}%` : '--';
+    }
+    
+    // Atualizar progress ring
+    function updateProgressRing(signal) {
+      const circle = document.getElementById('progressCircle');
+      const radius = 52;
+      const circumference = 2 * Math.PI * radius;
+      
+      // Normalizar sinal de -100/100 para 0-100%
+      const normalizedSignal = ((signal + 100) / 200) * 100;
+      const offset = circumference - (normalizedSignal / 100) * circumference;
+      
+      circle.style.strokeDashoffset = offset;
+      
+      // Cor baseada no sinal
+      if (signal >= 30) {
+        circle.style.stroke = '#10b981'; // Verde
+      } else if (signal >= -10) {
+        circle.style.stroke = '#eab308'; // Amarelo
+      } else {
+        circle.style.stroke = '#ef4444'; // Vermelho
+      }
+    }
+    
+    // Exibir gráficos
+    function displayCharts(data) {
+      if (!data.chart_data) return;
+      
+      const chartData = data.chart_data;
+      
+      // Configuração base dos gráficos
+      const baseConfig = {
+        responsive: true,
+        displayModeBar: false,
+        autosize: true
+      };
+      
+      const baseLayout = {
+        paper_bgcolor: 'transparent',
+        plot_bgcolor: 'transparent',
+        font: { color: 'white', size: 12 },
+        margin: { t: 20, r: 20, b: 40, l: 60 },
+        showlegend: true,
+        autosize: true,
+        xaxis: {
+          gridcolor: 'rgba(255,255,255,0.1)',
+          zerolinecolor: 'rgba(255,255,255,0.1)',
+          type: 'date'
+        },
+        yaxis: {
+          gridcolor: 'rgba(255,255,255,0.1)',
+          zerolinecolor: 'rgba(255,255,255,0.1)'
+        }
+      };
+      
+      // Aguardar renderização
+      setTimeout(() => {
+        
+        // 1. Gráfico de Preço (apenas preço)
+        if (chartData.prices) {
+          try {
+            const priceTrace = {
+              x: chartData.prices.dates,
+              y: chartData.prices.values,
+              type: 'scatter',
+              mode: 'lines',
+              name: 'Preço de Fechamento',
+              line: { color: '#1f77b4', width: 2 },
+              hovertemplate: '<b>Data:</b> %{x}<br><b>Preço:</b> R$ %{y:.2f}<extra></extra>'
+            };
+            
+            const priceLayout = {
+              ...baseLayout,
+              yaxis: {
+                ...baseLayout.yaxis,
+                title: 'Preço (R$)'
+              }
+            };
+            
+            Plotly.newPlot('priceChart', [priceTrace], priceLayout, baseConfig);
+          } catch (error) {
+            console.error('Erro no gráfico de preço:', error);
+          }
+        }
+        
+        // 2. Gráfico de Volatilidade (VI + Vol Histórica)
+        try {
+          const volatilityTraces = [];
+          
+          // VI Média
+          if (chartData.daily_metrics && chartData.daily_metrics.length > 0) {
+            const viData = chartData.daily_metrics.filter(d => d.iv_avg !== undefined && d.iv_avg !== null);
+            
+            if (viData.length > 0) {
+              volatilityTraces.push({
+                x: viData.map(d => d.date),
+                y: viData.map(d => d.iv_avg),
+                type: 'scatter',
+                mode: 'lines',
+                name: 'Volatilidade Implícita',
+                line: { color: '#ff7f0e', width: 2 },
+                hovertemplate: '<b>Data:</b> %{x}<br><b>VI:</b> %{y:.1f}%<extra></extra>'
+              });
+              
+              // Linha de média da VI
+              const ivMean = viData.reduce((sum, d) => sum + d.iv_avg, 0) / viData.length;
+              volatilityTraces.push({
+                x: [viData[0].date, viData[viData.length - 1].date],
+                y: [ivMean, ivMean],
+                type: 'scatter',
+                mode: 'lines',
+                name: `VI Média: ${ivMean.toFixed(1)}%`,
+                line: { color: '#ff7f0e', width: 1, dash: 'dot' },
+                showlegend: false,
+                hoverinfo: 'skip'
+              });
+            }
+          }
+          
+          // Vol Histórica
+          if (chartData.vol_hist && chartData.vol_hist.dates.length > 0) {
+            const volHistData = chartData.vol_hist.values.filter(v => v > 0);
+            if (volHistData.length > 0) {
+              volatilityTraces.push({
+                x: chartData.vol_hist.dates,
+                y: chartData.vol_hist.values,
+                type: 'scatter',
+                mode: 'lines',
+                name: 'Volatilidade Histórica (30d)',
+                line: { color: '#2ca02c', width: 2, dash: 'dash' },
+                hovertemplate: '<b>Data:</b> %{x}<br><b>Vol Hist:</b> %{y:.1f}%<extra></extra>'
+              });
+              
+              // Linha de média da Vol Histórica
+              const volHistMean = volHistData.reduce((sum, v) => sum + v, 0) / volHistData.length;
+              volatilityTraces.push({
+                x: [chartData.vol_hist.dates[0], chartData.vol_hist.dates[chartData.vol_hist.dates.length - 1]],
+                y: [volHistMean, volHistMean],
+                type: 'scatter',
+                mode: 'lines',
+                name: `Vol Hist Média: ${volHistMean.toFixed(1)}%`,
+                line: { color: '#2ca02c', width: 1, dash: 'dot' },
+                showlegend: false,
+                hoverinfo: 'skip'
+              });
+            }
+          }
+          
+          if (volatilityTraces.length > 0) {
+            const volatilityLayout = {
+              ...baseLayout,
+              yaxis: {
+                ...baseLayout.yaxis,
+                title: 'Volatilidade (%)'
+              }
+            };
+            
+            Plotly.newPlot('volatilityChart', volatilityTraces, volatilityLayout, baseConfig);
+          }
+        } catch (error) {
+          console.error('Erro no gráfico de volatilidade:', error);
+        }
+        
+        // 3. Gráfico do Sinal com Zonas Coloridas
+        if (chartData.daily_metrics && chartData.daily_metrics.length > 0) {
+          try {
+            const signalData = chartData.daily_metrics.filter(d => d.options_signal !== undefined);
+            
+            if (signalData.length > 0) {
+              // Cores dinâmicas baseadas no valor do sinal
+              const colors = signalData.map(d => {
+                const signal = d.options_signal;
+                if (signal >= 60) return '#00AA00';      // Verde forte - ÓTIMO
+                else if (signal >= 30) return '#66BB00'; // Verde - BOM
+                else if (signal >= 10) return '#99CC00'; // Verde claro - MODERADO
+                else if (signal >= -10) return '#CCCC00'; // Amarelo - NEUTRO
+                else if (signal >= -30) return '#FF9900'; // Laranja claro - ATENÇÃO
+                else if (signal >= -60) return '#FF6600'; // Laranja - CUIDADO
+                else return '#FF0000';                    // Vermelho - RISCO
+              });
+              
+              // Status text para hover
+              const statusText = signalData.map(d => {
+                const signal = d.options_signal;
+                if (signal >= 60) return 'ÓTIMO: VI alta + Baixa sensibilidade';
+                else if (signal >= 30) return 'BOM: VI favorável + Estabilidade';
+                else if (signal >= 10) return 'MODERADO: Condições equilibradas';
+                else if (signal >= -10) return 'NEUTRO: Aguardar melhor momento';
+                else if (signal >= -30) return 'ATENÇÃO: VI baixa + Gamma crescendo';
+                else if (signal >= -60) return 'CUIDADO: Ambiente de alta aceleração';
+                else return 'RISCO: VI baixa + Gamma muito alto';
+              });
+              
+              const signalTrace = {
+                x: signalData.map(d => d.date),
+                y: signalData.map(d => d.options_signal),
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: 'Gamma Signal',
+                line: { color: '#1f77b4', width: 3 },
+                marker: { 
+                  size: 6, 
+                  color: colors,
+                  line: { width: 1, color: 'white' }
+                },
+                text: statusText,
+                hovertemplate: '<b>Data:</b> %{x}<br><b>Gamma Signal:</b> %{y:.1f}<br><b>Status:</b> %{text}<extra></extra>'
+              };
+              
+              const signalLayout = {
+                ...baseLayout,
+                height: 380,
+                yaxis: {
+                  ...baseLayout.yaxis,
+                  title: 'Gamma Signal (-100 a +100)',
+                  range: [-100, 100],
+                  tickvals: [-100, -60, -30, 0, 30, 60, 100],
+                  ticktext: ['-100', '-60', '-30', '0', '+30', '+60', '+100']
+                },
+                shapes: [
+                  // Zonas coloridas de fundo
+                  { type: 'rect', x0: signalData[0].date, x1: signalData[signalData.length-1].date, y0: 60, y1: 100, fillcolor: 'rgba(34, 197, 94, 0.15)', layer: 'below', line: { width: 0 } },
+                  { type: 'rect', x0: signalData[0].date, x1: signalData[signalData.length-1].date, y0: 30, y1: 60, fillcolor: 'rgba(16, 185, 129, 0.15)', layer: 'below', line: { width: 0 } },
+                  { type: 'rect', x0: signalData[0].date, x1: signalData[signalData.length-1].date, y0: 10, y1: 30, fillcolor: 'rgba(132, 204, 22, 0.15)', layer: 'below', line: { width: 0 } },
+                  { type: 'rect', x0: signalData[0].date, x1: signalData[signalData.length-1].date, y0: -10, y1: 10, fillcolor: 'rgba(107, 114, 128, 0.15)', layer: 'below', line: { width: 0 } },
+                  { type: 'rect', x0: signalData[0].date, x1: signalData[signalData.length-1].date, y0: -30, y1: -10, fillcolor: 'rgba(249, 115, 22, 0.15)', layer: 'below', line: { width: 0 } },
+                  { type: 'rect', x0: signalData[0].date, x1: signalData[signalData.length-1].date, y0: -60, y1: -30, fillcolor: 'rgba(239, 68, 68, 0.15)', layer: 'below', line: { width: 0 } },
+                  { type: 'rect', x0: signalData[0].date, x1: signalData[signalData.length-1].date, y0: -100, y1: -60, fillcolor: 'rgba(220, 38, 38, 0.15)', layer: 'below', line: { width: 0 } },
+                  
+                  // Linhas de referência
+                  { type: 'line', x0: signalData[0].date, x1: signalData[signalData.length-1].date, y0: 60, y1: 60, line: { color: '#22c55e', width: 1, dash: 'dash' } },
+                  { type: 'line', x0: signalData[0].date, x1: signalData[signalData.length-1].date, y0: 30, y1: 30, line: { color: '#10b981', width: 1, dash: 'dash' } },
+                  { type: 'line', x0: signalData[0].date, x1: signalData[signalData.length-1].date, y0: 0, y1: 0, line: { color: 'gray', width: 1 } },
+                  { type: 'line', x0: signalData[0].date, x1: signalData[signalData.length-1].date, y0: -30, y1: -30, line: { color: '#ef4444', width: 1, dash: 'dash' } },
+                  { type: 'line', x0: signalData[0].date, x1: signalData[signalData.length-1].date, y0: -60, y1: -60, line: { color: '#dc2626', width: 1, dash: 'dash' } }
+                ],
+                annotations: [
+                  { x: signalData[Math.floor(signalData.length * 0.9)].date, y: 80, text: 'CALLS DOMINANDO (+60)', showarrow: false, font: { size: 10, color: '#22c55e' }, xanchor: 'left' },
+                  { x: signalData[Math.floor(signalData.length * 0.9)].date, y: 45, text: 'BIAS CALLS (+30)', showarrow: false, font: { size: 10, color: '#10b981' }, xanchor: 'left' },
+                  { x: signalData[Math.floor(signalData.length * 0.9)].date, y: 5, text: 'NEUTRO (0)', showarrow: false, font: { size: 10, color: 'gray' }, xanchor: 'left' },
+                  { x: signalData[Math.floor(signalData.length * 0.9)].date, y: -45, text: 'BIAS PUTS (-30)', showarrow: false, font: { size: 10, color: '#ef4444' }, xanchor: 'left' },
+                  { x: signalData[Math.floor(signalData.length * 0.9)].date, y: -80, text: 'PUTS DOMINANDO (-60)', showarrow: false, font: { size: 10, color: '#dc2626' }, xanchor: 'left' }
+                ]
+              };
+              
+              Plotly.newPlot('signalChart', [signalTrace], signalLayout, baseConfig);
+            }
+          } catch (error) {
+            console.error('Erro no gráfico de sinal:', error);
+          }
+        }
+        
+      }, 100);
+    }
+    
+    // Screener removido
+    
+    // Event Listeners
+    analyzeBtn.addEventListener('click', analyzeStock);
+    
+    stockInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') analyzeStock();
+    });
+    
+    // Inicialização
+    async function initialize() {
+      const apiConnected = await testAPI();
+      
+      if (apiConnected) {
+        showStatus('Sistema de Volatilidade Implícita Pro carregado! Digite uma ação para analisar.', 'info');
+      } else {
+        showStatus('Aviso: Erro na conectividade da API. Verifique se o servidor está rodando.', 'error');
+      }
+      
+      // Auto-load exemplo
+      setTimeout(() => {
+        stockInput.value = 'PETR4';
+      }, 1000);
+    }
+    
+    // Inicializar quando a página carregar
+    initialize();
+  </script>
+</body>
+</html>

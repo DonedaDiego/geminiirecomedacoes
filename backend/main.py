@@ -29,6 +29,7 @@ from pro.box_3_routes import box3_bp
 from pro.rank_routes import get_rank_blueprint
 from pro.screening_routes import screening_bp
 from pro.bandas_pro_routes import get_bandas_pro_blueprint
+from pro.vi_routes import get_vi_blueprint
 
 ## premium
 from premium.swing_trade_ml_routes import get_swing_trade_ml_blueprint
@@ -181,6 +182,8 @@ app.register_blueprint(calc_bp)
 opcoes_recommendations_bp = get_opcoes_recommendations_blueprint()
 app.register_blueprint(opcoes_recommendations_bp)
 app.register_blueprint(get_bandas_pro_blueprint())
+vi_bp = get_vi_blueprint()
+app.register_blueprint(vi_bp)
 
 CORS(app, 
      origins=['*'],
@@ -426,6 +429,11 @@ def opcoes_recomendacoes_page():
 @app.route('/regimes-pro.html')
 def regimes():
     return send_from_directory('../frontend', 'regimes-pro.html')
+
+@app.route('/vi-pro')
+@app.route('/vi-pro.html')
+def vi_pro_page():
+    return send_from_directory('../frontend', 'vi-pro.html')
 
 
 

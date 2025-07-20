@@ -278,7 +278,7 @@
   </nav>
 
   <!-- Main Content -->
-  <main class="pt-20 px-6 pb-12">
+  <main class="pt-20 px-6 pb-96">
     <div class="max-w-7xl mx-auto">
       
       <!-- 🔥 TRIAL BANNER (será mostrado se usuário estiver em trial) -->
@@ -628,11 +628,11 @@
                   </div>
                 </div>
                 
-                <div onclick="window.location.href='screening.html'" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white cursor-pointer">
+                <div onclick="window.location.href='vi-pro.html'" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white cursor-pointer">
                   <i class="fas fa-search text-purple-400 w-5"></i>
                   <div class="flex-1">
-                    <div class="font-medium">Screening</div>
-                    <div class="text-xs text-gray-400">Arbitragem, Box, Strangle, Collar</div>
+                    <div class="font-medium">Implícita Sigma</div>
+                    <div class="text-xs text-gray-400">Análise integrada de volatilidade implícita, histórica e risco de gamma</div>
                   </div>
                 </div>
                 
@@ -1284,6 +1284,7 @@
         'Regressão Linear', 
         'Volatilidade GARCH', 
         'screening',
+        'Implícita Sigma',
         'Volume Profile', 
         'IV Scanner', 
         'Options Flow'
@@ -1360,17 +1361,20 @@
       
       // RECURSOS EM DESENVOLVIMENTO
       const comingSoonMessages = {
-        'Suporte e Resistência': '🏭 Análise Setorial\n\nComparativo por Setores da Economia!',
-        'Radar Financeiro': '📡 Radar Financeiro\n\nIndicadores Fundamentalistas Completos!',
-        'Regimes de Volatilidade': '📊 Regimes de Volatilidade\n\nAnálise avançada de regimes!',
-        'Regressão Linear': '📈 Regressão Linear\n\nAnálise Preditiva Avançada!',
-        'Volatilidade GARCH': '📊 Volatilidade GARCH\n\nModelos Avançados de Volatilidade!',
-        'screening': '📊 Greeks Monitor\n\nMonitoramento completo de Delta, Gamma, Theta e Vega!',
-        'Volume Profile': '📈 Volume Profile\n\nAnálise avançada de Volume por Preço!',
-        'IV Scanner': '🔍 IV Scanner\n\nScanner inteligente de Volatilidade Implícita!',
-        'Options Flow': '📊 Options Flow\n\nFluxo de Opções em Tempo Real!',
-        'Pattern Recognition': '👁️ Pattern Recognition\n\nReconhecimento de Padrões Avançado!',
-        'AutoML': '🪄 AutoML\n\nMachine Learning Automatizado!'
+        'Suporte e Resistência': ' Análise Setorial\n\nComparativo por Setores da Economia!',
+        'Radar Financeiro': ' Radar Financeiro\n\nIndicadores Fundamentalistas Completos!',
+        'Regimes de Volatilidade': ' Regimes de Volatilidade\n\nAnálise avançada de regimes!',
+        'Regressão Linear': ' Regressão Linear\n\nAnálise Preditiva Avançada!',
+        'Volatilidade GARCH': ' Volatilidade GARCH\n\nModelos Avançados de Volatilidade!',
+        'screening': ' Greeks Monitor\n\nMonitoramento completo de Delta, Gamma, Theta e Vega!',
+        'Volume Profile': ' Volume Profile\n\nAnálise avançada de Volume por Preço!',
+        'IV Scanner': 'IV Scanner\n\nScanner inteligente de Volatilidade Implícita!',
+        'Options Flow': ' Options Flow\n\nFluxo de Opções em Tempo Real!',
+        'Pattern Recognition': ' Pattern Recognition\n\nReconhecimento de Padrões Avançado!',
+        'AutoML': '🪄 AutoML\n\nMachine Learning Automatizado!',
+        'Implícita Sigma': 'Implícita Sigma\n\nAnálise Integrada de Volatilidade Implícita, Histórica e Risco de Gamma!'
+
+
       };
       
       const message = comingSoonMessages[featureName] || `🎉 ${featureName}\n\nFuncionalidade disponível em seu plano!`;
