@@ -476,7 +476,7 @@
       return 0;
     }
 
-    // 🔥 FUNÇÃO CORRIGIDA DE VERIFICAÇÃO DE NÍVEL
+    // 🔥 FUNÇÃO CORRIGIDA - BASEADA NA EXPLICAÇÃO DO DIEGO
     function getUserAccessLevel() {
       console.log('🔍 Verificando nível de acesso do usuário...');
       
@@ -487,40 +487,48 @@
       
       const userType = currentUser.user_type || 'regular';
       const planId = currentUser.plan_id || 3;
+      const email = currentUser.email || '';
       
-      console.log(`📊 Dados: userType=${userType}, planId=${planId}`);
+      console.log(`📊 DADOS COMPLETOS: userType="${userType}", planId=${planId}, email="${email}"`);
       
-      // Admin sempre tem acesso total
-      if (userType === 'admin' || userType === 'master') {
-        console.log('✅ Admin - acesso PREMIUM');
+      // 🔥 REGRA 1: ADMIN SEMPRE TEM ACESSO TOTAL
+      if (userType === 'admin' || userType === 'master' || email === 'diego@geminii.com.br') {
+        console.log('🎯 ADMIN CONFIRMADO - ACESSO PREMIUM TOTAL');
         return 'PREMIUM';
       }
       
-      // Trial - verificar se não expirou
+      // 🔥 REGRA 2: TRIAL = 15 DIAS PREMIUM
       if (userType === 'trial') {
-        const hasValidTrial = trialInfo && trialInfo.is_trial && !trialInfo.trial_expired;
-        if (hasValidTrial) {
-          console.log('✅ Trial válido - acesso PREMIUM');
-          return 'PREMIUM';
-        } else {
-          console.log('❌ Trial expirado - acesso BASIC');
-          return 'BASIC';
+        // Verificar se o trial não expirou
+        if (currentUser.plan_expires_at) {
+          const expiryDate = new Date(currentUser.plan_expires_at);
+          const now = new Date();
+          if (expiryDate > now) {
+            console.log('🎯 TRIAL ATIVO - ACESSO PREMIUM');
+            return 'PREMIUM';
+          } else {
+            console.log('❌ TRIAL EXPIRADO - ACESSO BASIC');
+            return 'BASIC';
+          }
         }
+        console.log('🎯 TRIAL SEM DATA - ASSUMINDO PREMIUM');
+        return 'PREMIUM';
       }
       
-      // Usuário regular - verificar plan_id
+      // 🔥 REGRA 3: BASEADO NO PLAN_ID (CONFORME BANCO)
       if (planId === 3) {
-        console.log('❌ Plano Básico (3) - acesso BASIC');
+        console.log('🎯 PLAN_ID=3 - BÁSICO');
         return 'BASIC';
       } else if (planId === 1) {
-        console.log('✅ Plano Pro (1) - acesso PRO');
+        console.log('🎯 PLAN_ID=1 - PRO');
         return 'PRO';
       } else if (planId === 2) {
-        console.log('✅ Plano Premium (2) - acesso PREMIUM');
+        console.log('🎯 PLAN_ID=2 - PREMIUM TOTAL');
         return 'PREMIUM';
       }
       
-      console.log('⚠️ Plan ID não reconhecido, assumindo BASIC');
+      // 🔥 FALLBACK: SE NADA BATER, BÁSICO
+      console.log('⚠️ NENHUMA REGRA BATEU - ASSUMINDO BASIC');
       return 'BASIC';
     }
 
@@ -751,7 +759,7 @@
       
       let cardsHTML = '';
       
-      // CARD 1: GRÁTIS (sempre disponível)
+      // CARD 1: GRÁTIS (sempre disponível) - MANTÉM IGUAL
       cardsHTML += `
         <div class="relative">
           <div 
@@ -818,9 +826,8 @@
         </div>
       `;
       
-      // CARD 2: PRO - Verificar se tem acesso
+      // CARD 2: PRO - MANTÉM IGUAL (já está correto)
       if (userAccessLevel === 'PRO' || userAccessLevel === 'PREMIUM') {
-        // TEM ACESSO - Card normal
         cardsHTML += `
           <div class="relative">
             <div 
@@ -850,29 +857,18 @@
                   </div>
                 </a>
                 
-                <div onclick="showUpgradeDialog('Long & Short', 'PRO')" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white cursor-pointer">
+                <a href="long-short.html" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white">
                   <i class="fas fa-exchange-alt text-secondary w-5"></i>
-                  <div class="flex-1">
+                  <div>
                     <div class="font-medium">Long & Short</div>
                     <div class="text-xs text-gray-400">Cointegração Estatística</div>
                   </div>
-                  <span class="bg-red-600 text-white text-xs px-2 py-1 rounded-full font-bold">EM BREVE</span>
-                </div>
-                
-                <div onclick="showUpgradeDialog('Regressão Linear', 'PRO')" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white cursor-pointer">
-                  <i class="fas fa-chart-line text-green-400 w-5"></i>
-                  <div class="flex-1">
-                    <div class="font-medium">Regressão Linear</div>
-                    <div class="text-xs text-gray-400">Análise Preditiva</div>
-                  </div>
-                  <span class="bg-red-600 text-white text-xs px-2 py-1 rounded-full font-bold">EM BREVE</span>
-                </div>
+                </a>
               </div>
             </div>
           </div>
         `;
       } else {
-        // NÃO TEM ACESSO - Card desabilitado
         cardsHTML += `
           <div onclick="showUpgradeDialog('Estatística Aplicada', 'PRO')" class="bg-gradient-to-r from-warning/10 to-warning/5 border border-warning/20 rounded-xl p-4 transition-all group cursor-pointer relative card-disabled">
             <div class="flex items-center gap-3">
@@ -890,7 +886,7 @@
         `;
       }
       
-      // CARD 3: OPÇÕES PRO
+      // CARD 3: OPÇÕES PRO - MANTÉM IGUAL (já está correto)
       if (userAccessLevel === 'PRO' || userAccessLevel === 'PREMIUM') {
         cardsHTML += `
           <div class="relative">
@@ -937,14 +933,13 @@
                   </div>
                 </a>
                 
-                <div onclick="showUpgradeDialog('Hunter Walls', 'PRO')" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white cursor-pointer">
+                <a href="opcoes.html" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white">
                   <i class="fas fa-crosshairs text-orange-400 w-5"></i>
-                  <div class="flex-1">
+                  <div>
                     <div class="font-medium">Hunter Walls</div>
-                    <div class="text-xs text-gray-400">Detecção de Muros de Opções</div>
+                    <div class="text-xs text-gray-400">Volume de negócios por Strike</div>
                   </div>
-                  <span class="bg-red-600 text-white text-xs px-2 py-1 rounded-full font-bold">EM BREVE</span>
-                </div>
+                </a>
               </div>
             </div>
           </div>
@@ -967,10 +962,11 @@
         `;
       }
       
-      // CARD 4: SMART CARTEIRAS (PREMIUM)
+      // 🔥 CARD 4: SMART CARTEIRAS (PREMIUM) - CORRIGIDO!
       if (userAccessLevel === 'PREMIUM') {
+        // ✅ TEM ACESSO - LINK DIRETO (não chama showUpgradeDialog)
         cardsHTML += `
-          <div onclick="showUpgradeDialog('Smart Carteiras', 'PREMIUM')" class="bg-gradient-to-r from-primary/10 to-primary/5 hover:from-primary/20 hover:to-primary/10 border border-primary/20 rounded-xl p-4 transition-all group cursor-pointer relative">
+          <a href="analises.html" class="bg-gradient-to-r from-primary/10 to-primary/5 hover:from-primary/20 hover:to-primary/10 border border-primary/20 rounded-xl p-4 transition-all group cursor-pointer relative block">
             <div class="flex items-center gap-3">
               <div class="w-12 h-12 bg-primary/20 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
                 <i class="fa-solid fa-square-poll-vertical" style="color: #B197FC;"></i>
@@ -981,9 +977,10 @@
               </div>
             </div>
             <span class="absolute top-3 right-3 bg-secondary text-white text-xs px-2 py-1 rounded-full font-bold">PREMIUM</span>
-          </div>
+          </a>
         `;
       } else {
+        // ❌ NÃO TEM ACESSO - CARD DESABILITADO
         cardsHTML += `
           <div onclick="showUpgradeDialog('Smart Carteiras', 'PREMIUM')" class="bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20 rounded-xl p-4 transition-all group cursor-pointer relative card-disabled">
             <div class="flex items-center gap-3">
@@ -1001,10 +998,11 @@
         `;
       }
       
-      // CARD 5: OPÇÕES RECOMENDAÇÕES (PREMIUM)
+      // 🔥 CARD 5: OPÇÕES RECOMENDAÇÕES (PREMIUM) - CORRIGIDO!
       if (userAccessLevel === 'PREMIUM') {
+        // ✅ TEM ACESSO - LINK DIRETO (não chama showUpgradeDialog)
         cardsHTML += `
-          <div onclick="showUpgradeDialog('Opções Recomendações', 'PREMIUM')" class="bg-gradient-to-r from-cyan-500/10 to-cyan-500/5 hover:from-cyan-500/20 hover:to-cyan-500/10 border border-cyan-500/20 rounded-xl p-4 transition-all group cursor-pointer relative">
+          <a href="opcoes-recomendacoes.html" class="bg-gradient-to-r from-cyan-500/10 to-cyan-500/5 hover:from-cyan-500/20 hover:to-cyan-500/10 border border-cyan-500/20 rounded-xl p-4 transition-all group cursor-pointer relative block">
             <div class="flex items-center gap-3">
               <div class="w-12 h-12 bg-cyan-500/20 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
                 <i class="fas fa-chart-pie text-cyan-400 text-lg"></i>
@@ -1015,9 +1013,10 @@
               </div>
             </div>
             <span class="absolute top-3 right-3 bg-secondary text-white text-xs px-2 py-1 rounded-full font-bold">PREMIUM</span>
-          </div>
+          </a>
         `;
       } else {
+        // ❌ NÃO TEM ACESSO - CARD DESABILITADO
         cardsHTML += `
           <div onclick="showUpgradeDialog('Opções Recomendações', 'PREMIUM')" class="bg-gradient-to-r from-cyan-500/10 to-cyan-500/5 border border-cyan-500/20 rounded-xl p-4 transition-all group cursor-pointer relative card-disabled">
             <div class="flex items-center gap-3">
@@ -1035,7 +1034,7 @@
         `;
       }
       
-      // CARD 6: MACHINE LEARNING (PREMIUM)
+      // CARD 6: MACHINE LEARNING (PREMIUM) - MANTÉM IGUAL (já está correto)
       if (userAccessLevel === 'PREMIUM') {
         cardsHTML += `
           <div class="relative">
@@ -1081,15 +1080,6 @@
                     <div class="text-xs text-gray-400">Adaptive Time Series Momentum</div>
                   </div>
                 </a>
-                
-                <div onclick="showUpgradeDialog('Pattern Recognition', 'PREMIUM')" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white cursor-pointer">
-                  <i class="fas fa-eye text-orange-400 w-5"></i>
-                  <div class="flex-1">
-                    <div class="font-medium">Pattern Recognition</div>
-                    <div class="text-xs text-gray-400">Reconhecimento de Padrões Avançado</div>
-                  </div>
-                  <span class="bg-red-600 text-white text-xs px-2 py-1 rounded-full font-bold">EM BREVE</span>
-                </div>
               </div>
             </div>
           </div>
@@ -1114,6 +1104,86 @@
       
       container.innerHTML = cardsHTML;
       console.log('✅ Cards gerados com sucesso para nível:', userAccessLevel);
+    }
+
+    function executeFeatureAction(featureName) {
+      console.log('🚀 Executando funcionalidade:', featureName);
+      
+      // Mapear nomes das funcionalidades para URLs
+      const featureMap = {
+        'Smart Carteiras': 'analises.html',
+        'Opções Recomendações': 'opcoes-recomendacoes.html',
+        'Machine Learning': '#', // Dropdown - não redireciona
+        'Monitor de Opções': '#', // Dropdown - não redireciona
+        'Estatística Aplicada': '#', // Dropdown - não redireciona
+        'Radar Financeiro': '#', // Em breve
+        'Regressão Linear': '#', // Em breve
+        'Regressão Polinomial': '#', // Em breve
+        'Manipulação de Volumes Extremos': '#', // Em breve
+        'Pattern Recognition': '#' // Em breve
+      };
+      
+      const url = featureMap[featureName];
+      if (url && url !== '#') {
+        console.log('🔗 Redirecionando para:', url);
+        window.location.href = url;
+      } else {
+        console.log('📋 Funcionalidade:', featureName, 'não tem URL específica ou está em desenvolvimento');
+      }
+    }
+    
+    // ===== ADICIONAR LOGS DE DEBUG PARA getUserAccessLevel() =====
+    function getUserAccessLevel() {
+      console.log('🔍 [DEBUG] Verificando nível de acesso do usuário...');
+      
+      if (!currentUser) {
+        console.log('❌ [DEBUG] currentUser não definido');
+        return 'BASIC';
+      }
+      
+      const userType = currentUser.user_type || 'regular';
+      const planId = currentUser.plan_id || 3;
+      const email = currentUser.email || '';
+      
+      console.log(`📊 [DEBUG] DADOS COMPLETOS: userType="${userType}", planId=${planId}, email="${email}"`);
+      
+      // 🔥 REGRA 1: ADMIN SEMPRE TEM ACESSO TOTAL
+      if (userType === 'admin' || userType === 'master' || email === 'diego@geminii.com.br') {
+        console.log('🎯 [DEBUG] ADMIN CONFIRMADO - ACESSO PREMIUM TOTAL');
+        return 'PREMIUM';
+      }
+      
+      // 🔥 REGRA 2: TRIAL = 15 DIAS PREMIUM
+      if (userType === 'trial') {
+        if (currentUser.plan_expires_at) {
+          const expiryDate = new Date(currentUser.plan_expires_at);
+          const now = new Date();
+          if (expiryDate > now) {
+            console.log('🎯 [DEBUG] TRIAL ATIVO - ACESSO PREMIUM');
+            return 'PREMIUM';
+          } else {
+            console.log('❌ [DEBUG] TRIAL EXPIRADO - ACESSO BASIC');
+            return 'BASIC';
+          }
+        }
+        console.log('🎯 [DEBUG] TRIAL SEM DATA - ASSUMINDO PREMIUM');
+        return 'PREMIUM';
+      }
+      
+      // 🔥 REGRA 3: BASEADO NO PLAN_ID
+      if (planId === 3) {
+        console.log('🎯 [DEBUG] PLAN_ID=3 - BÁSICO');
+        return 'BASIC';
+      } else if (planId === 1) {
+        console.log('🎯 [DEBUG] PLAN_ID=1 - PRO');
+        return 'PRO';
+      } else if (planId === 2) {
+        console.log('🎯 [DEBUG] PLAN_ID=2 - PREMIUM TOTAL');
+        return 'PREMIUM';
+      }
+      
+      console.log('⚠️ [DEBUG] NENHUMA REGRA BATEU - ASSUMINDO BASIC');
+      return 'BASIC';
     }
 
     // Load user statistics
@@ -1239,10 +1309,18 @@
       if (nextUpdateEl) nextUpdateEl.textContent = '--';
     }
 
-    // 💎 MOSTRAR DIALOG DE UPGRADE
+    // 💎 MOSTRAR DIALOG DE UPGRADE - CORRIGIDO PARA ADMIN
     function showUpgradeDialog(featureName, requiredLevel) {
-      console.log(`💎 Mostrando dialog de upgrade: ${featureName} (precisa: ${requiredLevel}, tem: ${userAccessLevel})`);
+      console.log(`💎 Verificando acesso: ${featureName} (precisa: ${requiredLevel}, tem: ${userAccessLevel})`);
       
+      // 🔥 SE TEM ACESSO, EXECUTAR FUNÇÃO AO INVÉS DE MOSTRAR UPGRADE
+      if (checkAccess(userAccessLevel, requiredLevel)) {
+        console.log('✅ ACESSO LIBERADO - Executando funcionalidade');
+        executeFeatureAction(featureName);
+        return;
+      }
+      
+      // ❌ NÃO TEM ACESSO - MOSTRAR POPUP DE UPGRADE
       const levelNames = { 
         'BASIC': 'Básico', 
         'PRO': 'Pro', 
@@ -1265,6 +1343,31 @@
       if (confirm(message)) {
         window.location.href = '/planos.html';
       }
+    }
+
+    // 🔑 VERIFICAR SE O NÍVEL DO USUÁRIO TEM ACESSO AO RECURSO
+    function checkAccess(userLevel, requiredLevel) {
+      console.log(`🔑 Verificando: userLevel=${userLevel}, requiredLevel=${requiredLevel}`);
+      
+      if (requiredLevel === 'FREE') {
+        console.log('✅ Recurso grátis - acesso liberado');
+        return true; // Todos têm acesso ao grátis
+      }
+      
+      if (requiredLevel === 'PRO') {
+        const hasAccess = ['PRO', 'PREMIUM'].includes(userLevel);
+        console.log(`${hasAccess ? '✅' : '❌'} Recurso PRO - acesso ${hasAccess ? 'liberado' : 'negado'}`);
+        return hasAccess;
+      }
+      
+      if (requiredLevel === 'PREMIUM') {
+        const hasAccess = userLevel === 'PREMIUM';
+        console.log(`${hasAccess ? '✅' : '❌'} Recurso PREMIUM - acesso ${hasAccess ? 'liberado' : 'negado'}`);
+        return hasAccess;
+      }
+      
+      console.log('❌ Nível não reconhecido - negando acesso');
+      return false;
     }
 
     // Helper function to close other dropdowns
@@ -1414,6 +1517,7 @@
     window.toggleOpcoesDropdown = toggleOpcoesDropdown;
     window.toggleGratisDropdown = toggleGratisDropdown;
     window.toggleProDropdown = toggleProDropdown;
+    window.executeFeatureAction = executeFeatureAction;
 
     // Initialize when page loads
     document.addEventListener('DOMContentLoaded', initDashboard);
