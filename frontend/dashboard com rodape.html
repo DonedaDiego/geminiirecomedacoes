@@ -124,10 +124,67 @@
       animation: pulseGlow 2s ease-in-out infinite alternate;
     }
     
+    /* Footer Styles */
+    .newsletter-input:focus {
+      border-color: #ba39af;
+      box-shadow: 
+        0 0 10px rgba(186, 57, 175, 0.3),
+        0 0 20px rgba(186, 57, 175, 0.1);
+    }
+
+    .newsletter-btn:hover {
+      box-shadow: 
+        0 10px 25px -5px rgba(0, 0, 0, 0.1),
+        0 0 15px rgba(186, 57, 175, 0.2);
+    }
+
+    .social-icon {
+      width: 48px;
+      height: 48px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: rgba(255, 255, 255, 0.7);
+      font-size: 20px;
+      transition: all 0.3s ease;
+      backdrop-filter: blur(10px);
+    }
+
+    .social-icon:hover {
+      color: #ba39af;
+      border-color: #ba39af;
+      background: rgba(186, 57, 175, 0.1);
+      box-shadow: 
+        0 0 15px rgba(186, 57, 175, 0.3),
+        0 0 30px rgba(186, 57, 175, 0.1);
+      transform: translateY(-3px) scale(1.1);
+    }
+
+    .footer-link {
+      color: rgba(255, 255, 255, 0.6);
+      text-decoration: none;
+      font-size: 14px;
+      transition: all 0.3s ease;
+    }
+
+    .footer-link:hover {
+      color: #ba39af;
+      text-shadow: 0 0 8px rgba(186, 57, 175, 0.5);
+    }
+
+    .hero-section {
+      padding-top: 100px;
+    }
+
+
     @keyframes pulseGlow {
       from { box-shadow: 0 0 20px rgba(138, 43, 226, 0.3); }
       to { box-shadow: 0 0 30px rgba(138, 43, 226, 0.6); }
     }
+
 
     .trial-banner {
       background: linear-gradient(135deg, #8b5cf6, #6366f1);
@@ -151,6 +208,10 @@
       to { box-shadow: 0 0 25px rgba(239, 68, 68, 0.8); }
     }
     
+    .trial-expired {
+      background: linear-gradient(135deg, #6b7280, #4b5563);
+      border: 1px solid rgba(107, 114, 128, 0.3);
+    }
     .ml-card {
       background: linear-gradient(135deg, rgba(138, 43, 226, 0.1), rgba(147, 51, 234, 0.05));
       border: 1px solid rgba(138, 43, 226, 0.2);
@@ -164,6 +225,19 @@
       transform: translateY(-2px);
     }
 
+    .grid.grid-cols-1.md\\:grid-cols-2.lg\\:grid-cols-3 > div {
+      height: 100%;
+    }
+    
+    .grid.grid-cols-1.md\\:grid-cols-2.lg\\:grid-cols-3 > div > div {
+      height: 100%;
+      min-height: 120px; /* Altura mínima uniforme */
+    }
+
+    .grid.items-stretch > div > div {
+      height: 100%;
+      min-height: 120px;
+    }
     .dropdown a,
     .dropdown div {
       background-color: rgba(30, 30, 35, 0.6) !important;
@@ -172,18 +246,6 @@
     .dropdown a:hover,
     .dropdown div:hover {
       background-color: rgba(50, 50, 60, 0.8) !important;
-    }
-
-    /* Estilo para cards desabilitados */
-    .card-disabled {
-      opacity: 0.6;
-      filter: grayscale(0.5);
-      cursor: not-allowed !important;
-    }
-    
-    .card-disabled:hover {
-      transform: none !important;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3) !important;
     }
     
   </style>
@@ -219,7 +281,7 @@
   <main class="pt-20 px-6 pb-96">
     <div class="max-w-7xl mx-auto">
       
-      <!-- 🔥 TRIAL BANNER -->
+      <!-- 🔥 TRIAL BANNER (será mostrado se usuário estiver em trial) -->
       <div id="trialBanner" class="trial-banner rounded-2xl p-6 mb-6 fade-in hidden">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-4">
@@ -241,6 +303,8 @@
           <div class="text-white/80 text-sm" id="trialExpiryText">
             Expira em: <span id="trialExpiryDate" class="font-semibold">--</span>
           </div>
+          <div class="flex gap-3">
+        </div>
         </div>
       </div>
 
@@ -275,6 +339,7 @@
           </div>
           
           <div class="flex flex-col gap-3">
+            <!-- 🔥 BOTÃO DINÂMICO BASEADO NO TRIAL -->
             <a href="planos.html" id="upgradeButton" class="btn-primary px-6 py-3 rounded-xl font-semibold inline-block text-center">
               <i class="fas fa-crown mr-2"></i>Fazer Upgrade
             </a>
@@ -406,8 +471,295 @@
           Ações Rápidas
         </h2>
         
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 items-stretch" id="quickActionsGrid">
-          <!-- Os cards serão gerados dinamicamente pelo JavaScript -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 items-stretch">
+          
+          <!-- GRÁTIS - Submenu -->
+          <div class="relative">
+            <div 
+              onclick="toggleGratisDropdown()"
+              class="bg-gradient-to-r from-success/10 to-success/5 hover:from-success/20 hover:to-success/10 border border-success/20 rounded-xl p-4 transition-all group cursor-pointer relative"
+            >
+              <div class="flex items-center gap-3">
+                <div class="w-12 h-12 bg-success/20 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <i class="fas fa-gift text-success text-lg"></i>
+                </div>
+                <div class="flex-1">
+                  <h3 class="font-semibold text-white">Fique à Vontade</h3>
+                  <p class="text-sm text-gray-300">Recursos Gratuitos</p>
+                </div>
+                <i class="fas fa-chevron-down text-gray-400 transition-transform duration-300" id="gratisChevron"></i>
+              </div>
+              <span class="absolute top-3 right-3 bg-green-500 text-white text-xs px-2 py-1 rounded-full font-bold">GRÁTIS</span>
+            </div>
+            
+            <!-- Submenu Dropdown Grátis -->
+            <div id="gratisDropdown" class="dropdown">
+              <div class="grid grid-cols-1 gap-2">
+                <a href="monitor-basico.html" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white">
+                  <i class="fas fa-chart-area text-success w-5"></i>
+                  <div>
+                    <div class="font-medium">Monitor Beta</div>
+                    <div class="text-xs text-gray-400">Análise vs IBOVESPA</div>
+                  </div>
+                </a>
+                
+                <a href="rsl.html" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white">
+                  <i class="fas fa-robot text-pink-400 w-5"></i>
+                  <div>
+                    <div class="font-medium">RSL Radar</div>
+                    <div class="text-xs text-gray-400">Momentum atual da empresa</div>
+                  </div>
+                </a>
+            
+                <a href="amplitude.html" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white">
+                  <i class="fas fa-chart-bar text-orange-400 w-5"></i>
+                  <div>
+                    <div class="font-medium">Amplitude</div>
+                    <div class="text-xs text-gray-400">Movimentação do Ativo</div>
+                  </div>
+                </a>
+                
+                <a href="sup_res_vol.html" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white">
+                  <i class="fas fa-chart-line text-blue-400 w-5"></i>
+                  <div>
+                    <div class="font-medium">Suporte e Resistência</div>
+                    <div class="text-xs text-gray-400">Com base em Volatilidade</div>
+                  </div>
+                </a>
+                
+                <div onclick="showPremiumFeature('Radar Financeiro')" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white cursor-pointer">
+                  <i class="fas fa-radar-chart text-cyan-400 w-5"></i>
+                  <div class="flex-1">
+                    <div class="font-medium">Radar Financeiro</div>
+                    <div class="text-xs text-gray-400">Indicadores Fundamentalistas</div>
+                  </div>
+                  <span class="bg-red-600 text-white text-xs px-2 py-1 rounded-full font-bold">EM BREVE</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- PRO - Submenu -->
+          <div class="relative">
+            <div 
+              onclick="toggleProDropdown()"
+              class="bg-gradient-to-r from-warning/10 to-warning/5 hover:from-warning/20 hover:to-warning/10 border border-warning/20 rounded-xl p-4 transition-all group cursor-pointer relative"
+            >
+              <div class="flex items-center gap-3">
+                <div class="w-12 h-12 bg-warning/20 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <i class="fas fa-chart-line text-warning text-lg"></i>
+                </div>
+                <div class="flex-1">
+                  <h3 class="font-semibold text-white">Estatística Aplicada</h3>
+                  <p class="text-sm text-gray-300">Análises Profissionais</p>
+                </div>
+                <i class="fas fa-chevron-down text-gray-400 transition-transform duration-300" id="proChevron"></i>
+              </div>
+              <span class="absolute top-3 right-3 bg-warning text-white text-xs px-2 py-1 rounded-full font-bold">PRO</span>
+            </div>
+            
+            <!-- Submenu Dropdown Pro -->
+            <div id="proDropdown" class="dropdown">
+              <div class="grid grid-cols-1 gap-2">
+                <div onclick="showPremiumFeature('Long & Short')" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white cursor-pointer">
+                  <i class="fas fa-exchange-alt text-secondary w-5"></i>
+                  <div>
+                    <div class="font-medium">Long & Short</div>
+                    <div class="text-xs text-gray-400">Cointegração Estatística</div>
+                  </div>
+                </div>
+                
+                <a href="regimes-volatilidade.html" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white">
+                  <i class="fas fa-brain text-purple-400 w-5"></i>
+                  <div>
+                    <div class="font-medium">Regimes de Volatilidade</div>
+                    <div class="text-xs text-gray-400">IA + 3 Indicadores Não Convencionais</div>
+                  </div>
+                </a>
+                
+                <div onclick="showPremiumFeature('Regressão Linear')" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white cursor-pointer">
+                  <i class="fas fa-chart-line text-green-400 w-5"></i>
+                  <div class="flex-1">
+                    <div class="font-medium">Regressão Linear</div>
+                    <div class="text-xs text-gray-400">Análise Preditiva</div>
+                  </div>
+                  <span class="bg-red-600 text-white text-xs px-2 py-1 rounded-full font-bold">EM BREVE</span>
+                </div>
+                
+                <div onclick="showPremiumFeature('Volatilidade GARCH')" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white cursor-pointer">
+                  <i class="fas fa-wave-square text-red-400 w-5"></i>
+                  <div class="flex-1">
+                    <div class="font-medium">Regressão Polinomial</div>
+                    <div class="text-xs text-gray-400">Análise Preditiva Avançada</div>
+                  </div>
+                  <span class="bg-red-600 text-white text-xs px-2 py-1 rounded-full font-bold">EM BREVE</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- PRO - Monitor de Opções com Submenu -->
+          <div class="relative">
+            <div 
+              onclick="toggleOpcoesDropdown()"
+              class="bg-gradient-to-r from-orange-500/10 to-orange-500/5 hover:from-orange-500/20 hover:to-orange-500/10 border border-orange-500/20 rounded-xl p-4 transition-all group cursor-pointer relative"
+            >
+              <div class="flex items-center gap-3">
+                <div class="w-12 h-12 bg-orange-500/20 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <i class="fas fa-chart-pie text-orange-400 text-lg"></i>
+                </div>
+                <div class="flex-1">
+                  <h3 class="font-semibold text-white">Monitor de Opções</h3>
+                  <p class="text-sm text-gray-300">Análise Completa + IA</p>
+                </div>
+                <i class="fas fa-chevron-down text-gray-400 transition-transform duration-300" id="opcoesChevron"></i>
+              </div>
+              <span class="absolute top-3 right-3 bg-warning text-white text-xs px-2 py-1 rounded-full font-bold">PRO</span>
+            </div>
+            
+            <!-- Submenu Dropdown Opções -->
+            <div id="opcoesDropdown" class="dropdown">
+              <div class="grid grid-cols-1 gap-2">
+                <div onclick="showPremiumFeature('Hunter Walls')" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white cursor-pointer">
+                  <i class="fas fa-crosshairs text-orange-400 w-5"></i>
+                  <div>
+                    <div class="font-medium">Hunter Walls</div>
+                    <div class="text-xs text-gray-400">Detecção de Muros de Opções</div>
+                  </div>
+                </div>
+                
+                <div onclick="window.location.href='vi-pro.html'" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white cursor-pointer">
+                  <i class="fas fa-search text-purple-400 w-5"></i>
+                  <div class="flex-1">
+                    <div class="font-medium">Implícita Sigma</div>
+                    <div class="text-xs text-gray-400">Análise integrada de volatilidade implícita, histórica e risco de gamma</div>
+                  </div>
+                </div>
+                
+                <div onclick="window.location.href='regimes-pro.html'" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white cursor-pointer">
+                  <i class="fas fa-chart-area text-purple-400 w-5"></i>
+                  <div class="flex-1">
+                    <div class="font-medium">Bandas de Volatilidade Pro</div>
+                    <div class="text-xs text-gray-400">GARCH + XGBoost + Validação IV</div>
+                  </div>
+                </div>
+                
+                <div onclick="window.location.href='rank-volatilidade.html'" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white cursor-pointer">
+                  <i class="fas fa-search text-green-400 w-5"></i>
+                  <div class="flex-1">
+                    <div class="font-medium">IV Scanner</div>
+                    <div class="text-xs text-gray-400">Scanner de Volatilidade Implícita</div>
+                  </div>
+                  
+                </div>
+                
+                <div onclick="showPremiumFeature('Options Flow')" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white cursor-pointer">
+                  <i class="fas fa-stream text-yellow-400 w-5"></i>
+                  <div class="flex-1">
+                    <div class="font-medium">Manipulação de Volumes</div>
+                    <div class="text-xs text-gray-400">Fluxo de Opções em Tempo Real</div>
+                  </div>
+                  <span class="bg-red-600 text-white text-xs px-2 py-1 rounded-full font-bold">EM BREVE</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- PREMIUM - Smart Carteiras -->
+          <div onclick="showPremiumFeature('Smart Carteiras')" class="bg-gradient-to-r from-primary/10 to-primary/5 hover:from-primary/20 hover:to-primary/10 border border-primary/20 rounded-xl p-4 transition-all group cursor-pointer relative">
+            <div class="flex items-center gap-3">
+              <div class="w-12 h-12 bg-primary/20 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                <i class="fa-solid fa-square-poll-vertical fa-beat-fade" style="color: #B197FC;"></i>
+              </div>
+              <div>
+                <h3 class="font-semibold text-white">Smart Carteiras</h3>
+                <p class="text-sm text-gray-300">Análises especializadas com Machine Learning</p>
+              </div>
+            </div>
+            <span class="absolute top-3 right-3 bg-secondary text-white text-xs px-2 py-1 rounded-full font-bold">PREMIUM</span>
+          </div>
+
+          <!-- PREMIUM - Opções Recomendações -->
+          <div onclick="showPremiumFeature('Opções Recomendações')" class="bg-gradient-to-r from-cyan-500/10 to-cyan-500/5 hover:from-cyan-500/20 hover:to-cyan-500/10 border border-cyan-500/20 rounded-xl p-4 transition-all group cursor-pointer relative">
+            <div class="flex items-center gap-3">
+              <div class="w-12 h-12 bg-cyan-500/20 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                <i class="fas fa-chart-pie text-cyan-400 text-lg"></i>
+              </div>
+              <div>
+                <h3 class="font-semibold text-white">Opções Recomendações</h3>
+                <p class="text-sm text-gray-300">Swing Trade + IA para Opções</p>
+              </div>
+            </div>
+            <span class="absolute top-3 right-3 bg-secondary text-white text-xs px-2 py-1 rounded-full font-bold">PREMIUM</span>
+          </div>
+
+          <!-- PREMIUM - Machine Learning com Submenu -->
+          <div class="relative">
+            <div 
+              onclick="toggleMLDropdown()"
+              class="bg-gradient-to-r from-purple-500/10 to-purple-500/5 hover:from-purple-500/20 hover:to-purple-500/10 border border-purple-500/20 rounded-xl p-4 transition-all group cursor-pointer relative"
+            >
+              <div class="flex items-center gap-3">
+                <div class="w-12 h-12 bg-purple-500/20 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <i class="fas fa-brain text-purple-400 text-lg"></i>
+                </div>
+                <div class="flex-1">
+                  <h3 class="font-semibold text-white">Machine Learning</h3>
+                  <p class="text-sm text-gray-300">IA Preditiva + Algoritmos</p>
+                </div>
+                <i class="fas fa-chevron-down text-gray-400 transition-transform duration-300" id="mlChevron"></i>
+              </div>
+              <span class="absolute top-3 right-3 bg-purple-600 text-white text-xs px-2 py-1 rounded-full font-bold">PREMIUM</span>
+            </div>
+            
+            <!-- Submenu Dropdown ML -->
+            <div id="mlDropdown" class="dropdown">
+              <div class="grid grid-cols-1 gap-2">
+                <a href="swing-trade-machine-learning.html" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white">
+                  <i class="fas fa-chart-line text-green-400 w-5"></i>
+                  <div>
+                    <div class="font-medium">Swing Trade ML</div>
+                    <div class="text-xs text-gray-400">IA Preditiva com Stops Dinâmicos</div>
+                  </div>
+                </a>
+                
+                <a href="beta-regression.html" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white">
+                  <i class="fas fa-calculator text-blue-400 w-5"></i>
+                  <div>
+                    <div class="font-medium">Beta Regression</div>
+                    <div class="text-xs text-gray-400">Trading c/ beta-movel</div>
+                  </div>
+                </a>
+                
+                <a href="atsmom.html" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white">
+                  <i class="fas fa-rocket text-purple-400 w-5"></i>
+                  <div>
+                    <div class="font-medium">ATSMOM</div>
+                    <div class="text-xs text-gray-400">Adaptive Time Series Momentum</div>
+                  </div>
+                </a>
+                
+                <div onclick="showPremiumFeature('Pattern Recognition')" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white cursor-pointer">
+                  <i class="fas fa-eye text-orange-400 w-5"></i>
+                  <div class="flex-1">
+                    <div class="font-medium">Pattern Recognition</div>
+                    <div class="text-xs text-gray-400">Reconhecimento de Padrões Avançado</div>
+                  </div>
+                  <span class="bg-red-600 text-white text-xs px-2 py-1 rounded-full font-bold">EM BREVE</span>
+                </div>
+                
+                <div onclick="showPremiumFeature('AutoML')" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white cursor-pointer">
+                  <i class="fas fa-magic text-pink-400 w-5"></i>
+                  <div class="flex-1">
+                    <div class="font-medium">ML + IA </div>
+                    <div class="text-xs text-gray-400">Sensibilidade a notícias</div>
+                  </div>
+                  <span class="bg-red-600 text-white text-xs px-2 py-1 rounded-full font-bold">EM BREVE</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
         </div>
       </div>
 
@@ -418,7 +770,6 @@
     let currentUser = null;
     let userToken = null;
     let trialInfo = null; 
-    let userAccessLevel = 'BASIC'; // Inicializar como BASIC
 
     // Initialize dashboard
     async function initDashboard() {
@@ -428,13 +779,13 @@
       await checkAuth();
       await loadUserStats();
       await loadFreeRecommendationsStatsWithRetry();
-      generateQuickActions(); // Gerar cards baseado no nível de acesso
       checkApiStatus();
       setInterval(checkApiStatus, 30000);
       
       console.log('✅ Dashboard inicializado!');
     }
 
+    // Try to load user data from localStorage as fallback
     function tryLoadFromLocalStorage() {
       try {
         const userData = localStorage.getItem('geminii_user');
@@ -452,76 +803,42 @@
 
     function calculateDaysRemaining(trialInfo, user) {
       console.log('🔍 Calculando dias restantes...');
+      console.log('- trialInfo:', trialInfo);
+      console.log('- user.plan_expires_at:', user?.plan_expires_at);
       
+      // 1. Tentar pegar dos dados do trial primeiro
       if (trialInfo && typeof trialInfo.days_remaining === 'number' && trialInfo.days_remaining >= 0) {
+        console.log('✅ Usando days_remaining do trialInfo:', trialInfo.days_remaining);
         return trialInfo.days_remaining;
       }
       
+      // 2. Calcular baseado na data de expiração do usuário
       if (user && user.plan_expires_at) {
         try {
           const expiryDate = new Date(user.plan_expires_at);
           const now = new Date();
           const diffTime = expiryDate - now;
           const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-          return Math.max(0, diffDays);
+          const finalDays = Math.max(0, diffDays);
+          
+          console.log('✅ Calculado da data de expiração:', finalDays);
+          console.log('- Data de expiração:', expiryDate);
+          console.log('- Data atual:', now);
+          
+          return finalDays;
         } catch (error) {
           console.error('❌ Erro ao calcular data:', error);
         }
       }
       
+      // 3. Se é trial mas sem dados, assumir expirado
       if (user && user.user_type === 'trial') {
+        console.log('⚠️ Trial sem data de expiração - assumindo 0');
         return 0;
       }
       
+      console.log('❌ Nenhum dado de trial encontrado - retornando 0');
       return 0;
-    }
-
-    // 🔥 FUNÇÃO CORRIGIDA DE VERIFICAÇÃO DE NÍVEL
-    function getUserAccessLevel() {
-      console.log('🔍 Verificando nível de acesso do usuário...');
-      
-      if (!currentUser) {
-        console.log('❌ currentUser não definido');
-        return 'BASIC';
-      }
-      
-      const userType = currentUser.user_type || 'regular';
-      const planId = currentUser.plan_id || 3;
-      
-      console.log(`📊 Dados: userType=${userType}, planId=${planId}`);
-      
-      // Admin sempre tem acesso total
-      if (userType === 'admin' || userType === 'master') {
-        console.log('✅ Admin - acesso PREMIUM');
-        return 'PREMIUM';
-      }
-      
-      // Trial - verificar se não expirou
-      if (userType === 'trial') {
-        const hasValidTrial = trialInfo && trialInfo.is_trial && !trialInfo.trial_expired;
-        if (hasValidTrial) {
-          console.log('✅ Trial válido - acesso PREMIUM');
-          return 'PREMIUM';
-        } else {
-          console.log('❌ Trial expirado - acesso BASIC');
-          return 'BASIC';
-        }
-      }
-      
-      // Usuário regular - verificar plan_id
-      if (planId === 3) {
-        console.log('❌ Plano Básico (3) - acesso BASIC');
-        return 'BASIC';
-      } else if (planId === 1) {
-        console.log('✅ Plano Pro (1) - acesso PRO');
-        return 'PRO';
-      } else if (planId === 2) {
-        console.log('✅ Plano Premium (2) - acesso PREMIUM');
-        return 'PREMIUM';
-      }
-      
-      console.log('⚠️ Plan ID não reconhecido, assumindo BASIC');
-      return 'BASIC';
     }
 
     // Check authentication
@@ -553,15 +870,20 @@
           userToken = token;
           currentUser = result.data.user;
           
+          // 🔥 CORREÇÃO: VERIFICAR MÚLTIPLAS ESTRUTURAS POSSÍVEIS
           trialInfo = result.trial_info || 
                       result.data.trial_info || 
                       result.data.trial || 
                       null;
           
+          // 🔥 SE AINDA NÃO ENCONTROU, VERIFICAR SE OS DADOS ESTÃO NO USER
           if (!trialInfo && currentUser) {
+            // Verificar se trial info está no objeto user
             if (currentUser.trial_info) {
               trialInfo = currentUser.trial_info;
-            } else if (currentUser.user_type === 'trial') {
+            }
+            // Ou verificar se user_type é 'trial'
+            else if (currentUser.user_type === 'trial') {
               const calculatedDays = calculateDaysRemaining(null, currentUser);
               trialInfo = {
                 is_trial: true,
@@ -572,12 +894,17 @@
             }
           }
           
-          // 🔥 CALCULAR NÍVEL DE ACESSO
-          userAccessLevel = getUserAccessLevel();
-          console.log('🎯 Nível de acesso definido:', userAccessLevel);
+          console.log('🔥 TRIAL INFO FINAL:', trialInfo);
+          console.log('🔥 USER TYPE:', currentUser.user_type);
+          console.log('🔥 PLAN ID:', currentUser.plan_id);
+          
+          window.trialInfo = trialInfo; // 🔥 TORNAR GLOBAL PARA DEBUG
+          
+          console.log('✅ Dados do usuário recebidos:', currentUser);
           
           localStorage.setItem('geminii_user', JSON.stringify(currentUser));
           updateUserInterface(currentUser);
+          console.log('🔥 EXECUTANDO updateTrialInterface com:', trialInfo);
           updateTrialInterface(trialInfo);
         } else {
           console.log('❌ Falha na verificação, limpando dados...');
@@ -595,9 +922,8 @@
             console.log('🔄 Usando dados do localStorage devido a erro de rede');
             currentUser = user;
             userToken = token;
-            userAccessLevel = getUserAccessLevel();
             updateUserInterface(user);
-            updateTrialInterface(null);
+            updateTrialInterface(null); // Esconder banner quando offline
             return;
           }
         } catch (e) {
@@ -614,7 +940,10 @@
     function updateUserInterface(user) {
       console.log('🎨 Atualizando interface do usuário com:', user);
       
-      if (!user) return;
+      if (!user) {
+        console.log('❌ Usuário é null/undefined');
+        return;
+      }
 
       const userInitialsEl = document.getElementById('userInitials');
       const userNameEl = document.getElementById('userName');
@@ -626,27 +955,38 @@
       if (user.name) {
         const initials = user.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
         
-        if (userInitialsEl) userInitialsEl.textContent = initials;
-        if (userNameEl) userNameEl.textContent = user.name;
+        if (userInitialsEl) {
+          userInitialsEl.textContent = initials;
+          console.log('✅ Iniciais atualizadas:', initials);
+        }
+        
+        if (userNameEl) {
+          userNameEl.textContent = user.name;
+          console.log('✅ Nome atualizado:', user.name);
+        }
       }
 
       if (user.email && userEmailEl) {
         userEmailEl.textContent = user.email;
+        console.log('✅ Email atualizado:', user.email);
       }
 
       if (planBadgeEl) {
         const planId = user.plan_id || 3;
         const userType = user.user_type || 'regular';
         
+        // 🔥 VERIFICAR SE É TRIAL
         if (userType === 'trial') {
           planBadgeEl.textContent = 'Premium Trial';
           planBadgeEl.style.background = '#7c3aed';
           planBadgeEl.style.color = 'white';
           
+          // Mostrar indicador de trial
           if (trialIndicatorEl) {
             trialIndicatorEl.style.display = 'inline-block';
           }
         } else {
+          // Usuário normal
           if (planId === 3) {
             planBadgeEl.textContent = 'Básico';
             planBadgeEl.style.background = '#4b5563';
@@ -661,21 +1001,28 @@
             planBadgeEl.style.color = 'white';
           }
           
+          // Esconder indicador de trial
           if (trialIndicatorEl) {
             trialIndicatorEl.style.display = 'none';
           }
         }
+        
+        console.log('✅ Plano atualizado:', planId, userType);
       }
 
       if (user.created_at && memberSinceEl) {
         const createdDate = new Date(user.created_at).toLocaleDateString('pt-BR');
         memberSinceEl.textContent = createdDate;
+        console.log('✅ Data de criação atualizada:', createdDate);
       }
+    
+      console.log('🎉 Interface do usuário atualizada com sucesso!');
     }
 
-    // Update trial interface
+    // 🔥 NOVA FUNÇÃO PARA ATUALIZAR INTERFACE DO TRIAL
     function updateTrialInterface(trialInfo) {
       console.log('🔥 updateTrialInterface chamado com:', trialInfo);
+      console.log('🔥 currentUser:', currentUser);
       
       const trialBannerEl = document.getElementById('trialBanner');
       const trialTitleEl = document.getElementById('trialTitle');
@@ -685,23 +1032,37 @@
       const trialExpiryDateEl = document.getElementById('trialExpiryDate');
       const upgradeButtonEl = document.getElementById('upgradeButton');
       
-      if (!trialBannerEl) return;
+      // VERIFICAR SE OS ELEMENTOS EXISTEM
+      if (!trialBannerEl) {
+        console.log('❌ Elemento trialBanner não encontrado no DOM');
+        return;
+      }
       
+      // 🔥 VERIFICAR SE É TRIAL ATRAVÉS DO USER_TYPE TAMBÉM
       const isTrialUser = currentUser && currentUser.user_type === 'trial';
       const hasTrialInfo = trialInfo && trialInfo.is_trial && !trialInfo.trial_expired;
       
+      console.log('🔥 isTrialUser:', isTrialUser);
+      console.log('🔥 hasTrialInfo:', hasTrialInfo);
+      
       if (!hasTrialInfo && !isTrialUser) {
+        console.log('❌ Trial não está ativo');
         trialBannerEl.style.display = 'none';
         trialBannerEl.classList.add('hidden');
         return;
       }
       
+      // ✅ TRIAL ATIVO DETECTADO
+      console.log('🎉 Trial ativo detectado!');
+      
       const daysLeft = calculateDaysRemaining(trialInfo, currentUser);
       const expiresAt = trialInfo ? trialInfo.expires_at : null;
       
+      // MOSTRAR BANNER
       trialBannerEl.style.display = 'block';
       trialBannerEl.classList.remove('hidden');
       
+      // DEFINIR CLASSE BASEADA NA URGÊNCIA
       if (daysLeft <= 1) {
         trialBannerEl.className = 'trial-urgent rounded-2xl p-6 mb-6 fade-in';
       } else if (daysLeft <= 3) {
@@ -710,6 +1071,7 @@
         trialBannerEl.className = 'trial-banner rounded-2xl p-6 mb-6 fade-in';
       }
       
+      // ATUALIZAR TEXTOS
       if (daysLeft <= 1) {
         if (trialTitleEl) trialTitleEl.textContent = '⚠️ Trial Premium Expirando Hoje!';
         if (trialSubtitleEl) trialSubtitleEl.textContent = 'Seu trial Premium expira hoje. Não perca o acesso aos recursos avançados!';
@@ -740,385 +1102,27 @@
           upgradeButtonEl.style.animation = 'none';
         }
       }
+      
+      console.log('✅ Interface do trial atualizada com sucesso!');
     }
 
-    // 🔥 GERAR CARDS DE AÇÕES RÁPIDAS BASEADO NO NÍVEL DE ACESSO
-    function generateQuickActions() {
-      console.log('🎯 Gerando cards de ações rápidas para nível:', userAccessLevel);
-      
-      const container = document.getElementById('quickActionsGrid');
-      if (!container) return;
-      
-      let cardsHTML = '';
-      
-      // CARD 1: GRÁTIS (sempre disponível)
-      cardsHTML += `
-        <div class="relative">
-          <div 
-            onclick="toggleGratisDropdown()"
-            class="bg-gradient-to-r from-success/10 to-success/5 hover:from-success/20 hover:to-success/10 border border-success/20 rounded-xl p-4 transition-all group cursor-pointer relative"
-          >
-            <div class="flex items-center gap-3">
-              <div class="w-12 h-12 bg-success/20 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
-                <i class="fas fa-gift text-success text-lg"></i>
-              </div>
-              <div class="flex-1">
-                <h3 class="font-semibold text-white">Fique à Vontade</h3>
-                <p class="text-sm text-gray-300">Recursos Gratuitos</p>
-              </div>
-              <i class="fas fa-chevron-down text-gray-400 transition-transform duration-300" id="gratisChevron"></i>
-            </div>
-            <span class="absolute top-3 right-3 bg-green-500 text-white text-xs px-2 py-1 rounded-full font-bold">GRÁTIS</span>
-          </div>
-          
-          <div id="gratisDropdown" class="dropdown">
-            <div class="grid grid-cols-1 gap-2">
-              <a href="monitor-basico.html" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white">
-                <i class="fas fa-chart-area text-success w-5"></i>
-                <div>
-                  <div class="font-medium">Monitor Beta</div>
-                  <div class="text-xs text-gray-400">Análise vs IBOVESPA</div>
-                </div>
-              </a>
-              
-              <a href="rsl.html" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white">
-                <i class="fas fa-robot text-pink-400 w-5"></i>
-                <div>
-                  <div class="font-medium">RSL Radar</div>
-                  <div class="text-xs text-gray-400">Momentum atual da empresa</div>
-                </div>
-              </a>
-          
-              <a href="amplitude.html" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white">
-                <i class="fas fa-chart-bar text-orange-400 w-5"></i>
-                <div>
-                  <div class="font-medium">Amplitude</div>
-                  <div class="text-xs text-gray-400">Movimentação do Ativo</div>
-                </div>
-              </a>
-              
-              <a href="sup_res_vol.html" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white">
-                <i class="fas fa-chart-line text-blue-400 w-5"></i>
-                <div>
-                  <div class="font-medium">Suporte e Resistência</div>
-                  <div class="text-xs text-gray-400">Com base em Volatilidade</div>
-                </div>
-              </a>
-              
-              <div onclick="showUpgradeDialog('Radar Financeiro', 'FREE')" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white cursor-pointer">
-                <i class="fas fa-radar-chart text-cyan-400 w-5"></i>
-                <div class="flex-1">
-                  <div class="font-medium">Radar Financeiro</div>
-                  <div class="text-xs text-gray-400">Indicadores Fundamentalistas</div>
-                </div>
-                <span class="bg-red-600 text-white text-xs px-2 py-1 rounded-full font-bold">EM BREVE</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      `;
-      
-      // CARD 2: PRO - Verificar se tem acesso
-      if (userAccessLevel === 'PRO' || userAccessLevel === 'PREMIUM') {
-        // TEM ACESSO - Card normal
-        cardsHTML += `
-          <div class="relative">
-            <div 
-              onclick="toggleProDropdown()"
-              class="bg-gradient-to-r from-warning/10 to-warning/5 hover:from-warning/20 hover:to-warning/10 border border-warning/20 rounded-xl p-4 transition-all group cursor-pointer relative"
-            >
-              <div class="flex items-center gap-3">
-                <div class="w-12 h-12 bg-warning/20 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
-                  <i class="fas fa-chart-line text-warning text-lg"></i>
-                </div>
-                <div class="flex-1">
-                  <h3 class="font-semibold text-white">Estatística Aplicada</h3>
-                  <p class="text-sm text-gray-300">Análises Profissionais</p>
-                </div>
-                <i class="fas fa-chevron-down text-gray-400 transition-transform duration-300" id="proChevron"></i>
-              </div>
-              <span class="absolute top-3 right-3 bg-warning text-white text-xs px-2 py-1 rounded-full font-bold">PRO</span>
-            </div>
-            
-            <div id="proDropdown" class="dropdown">
-              <div class="grid grid-cols-1 gap-2">
-                <a href="regimes-volatilidade.html" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white">
-                  <i class="fas fa-brain text-purple-400 w-5"></i>
-                  <div>
-                    <div class="font-medium">Regimes de Volatilidade</div>
-                    <div class="text-xs text-gray-400">IA + 3 Indicadores Não Convencionais</div>
-                  </div>
-                </a>
-                
-                <div onclick="showUpgradeDialog('Long & Short', 'PRO')" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white cursor-pointer">
-                  <i class="fas fa-exchange-alt text-secondary w-5"></i>
-                  <div class="flex-1">
-                    <div class="font-medium">Long & Short</div>
-                    <div class="text-xs text-gray-400">Cointegração Estatística</div>
-                  </div>
-                  <span class="bg-red-600 text-white text-xs px-2 py-1 rounded-full font-bold">EM BREVE</span>
-                </div>
-                
-                <div onclick="showUpgradeDialog('Regressão Linear', 'PRO')" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white cursor-pointer">
-                  <i class="fas fa-chart-line text-green-400 w-5"></i>
-                  <div class="flex-1">
-                    <div class="font-medium">Regressão Linear</div>
-                    <div class="text-xs text-gray-400">Análise Preditiva</div>
-                  </div>
-                  <span class="bg-red-600 text-white text-xs px-2 py-1 rounded-full font-bold">EM BREVE</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        `;
-      } else {
-        // NÃO TEM ACESSO - Card desabilitado
-        cardsHTML += `
-          <div onclick="showUpgradeDialog('Estatística Aplicada', 'PRO')" class="bg-gradient-to-r from-warning/10 to-warning/5 border border-warning/20 rounded-xl p-4 transition-all group cursor-pointer relative card-disabled">
-            <div class="flex items-center gap-3">
-              <div class="w-12 h-12 bg-warning/20 rounded-lg flex items-center justify-center">
-                <i class="fas fa-chart-line text-warning text-lg"></i>
-              </div>
-              <div class="flex-1">
-                <h3 class="font-semibold text-white">Estatística Aplicada</h3>
-                <p class="text-sm text-gray-300">Análises Profissionais</p>
-              </div>
-              <i class="fas fa-lock text-gray-400"></i>
-            </div>
-            <span class="absolute top-3 right-3 bg-warning text-white text-xs px-2 py-1 rounded-full font-bold">PRO</span>
-          </div>
-        `;
+    // 🔥 FUNÇÃO PARA DISPENSAR BANNER DE TRIAL
+    function dismissTrialBanner() {
+      const trialBannerEl = document.getElementById('trialBanner');
+      if (trialBannerEl) {
+        trialBannerEl.style.display = 'none';
+        
+        // Salvar preferência no localStorage (opcional)
+        localStorage.setItem('geminii_trial_banner_dismissed', 'true');
       }
-      
-      // CARD 3: OPÇÕES PRO
-      if (userAccessLevel === 'PRO' || userAccessLevel === 'PREMIUM') {
-        cardsHTML += `
-          <div class="relative">
-            <div 
-              onclick="toggleOpcoesDropdown()"
-              class="bg-gradient-to-r from-orange-500/10 to-orange-500/5 hover:from-orange-500/20 hover:to-orange-500/10 border border-orange-500/20 rounded-xl p-4 transition-all group cursor-pointer relative"
-            >
-              <div class="flex items-center gap-3">
-                <div class="w-12 h-12 bg-orange-500/20 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
-                  <i class="fas fa-chart-pie text-orange-400 text-lg"></i>
-                </div>
-                <div class="flex-1">
-                  <h3 class="font-semibold text-white">Monitor de Opções</h3>
-                  <p class="text-sm text-gray-300">Análise Completa + IA</p>
-                </div>
-                <i class="fas fa-chevron-down text-gray-400 transition-transform duration-300" id="opcoesChevron"></i>
-              </div>
-              <span class="absolute top-3 right-3 bg-warning text-white text-xs px-2 py-1 rounded-full font-bold">PRO</span>
-            </div>
-            
-            <div id="opcoesDropdown" class="dropdown">
-              <div class="grid grid-cols-1 gap-2">
-                <a href="vi-pro.html" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white">
-                  <i class="fas fa-search text-purple-400 w-5"></i>
-                  <div>
-                    <div class="font-medium">Implícita Sigma</div>
-                    <div class="text-xs text-gray-400">Análise integrada de volatilidade implícita</div>
-                  </div>
-                </a>
-                
-                <a href="regimes-pro.html" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white">
-                  <i class="fas fa-chart-area text-purple-400 w-5"></i>
-                  <div>
-                    <div class="font-medium">Bandas de Volatilidade Pro</div>
-                    <div class="text-xs text-gray-400">GARCH + XGBoost + Validação IV</div>
-                  </div>
-                </a>
-                
-                <a href="rank-volatilidade.html" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white">
-                  <i class="fas fa-search text-green-400 w-5"></i>
-                  <div>
-                    <div class="font-medium">IV Scanner</div>
-                    <div class="text-xs text-gray-400">Scanner de Volatilidade Implícita</div>
-                  </div>
-                </a>
-                
-                <div onclick="showUpgradeDialog('Hunter Walls', 'PRO')" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white cursor-pointer">
-                  <i class="fas fa-crosshairs text-orange-400 w-5"></i>
-                  <div class="flex-1">
-                    <div class="font-medium">Hunter Walls</div>
-                    <div class="text-xs text-gray-400">Detecção de Muros de Opções</div>
-                  </div>
-                  <span class="bg-red-600 text-white text-xs px-2 py-1 rounded-full font-bold">EM BREVE</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        `;
-      } else {
-        cardsHTML += `
-          <div onclick="showUpgradeDialog('Monitor de Opções', 'PRO')" class="bg-gradient-to-r from-orange-500/10 to-orange-500/5 border border-orange-500/20 rounded-xl p-4 transition-all group cursor-pointer relative card-disabled">
-            <div class="flex items-center gap-3">
-              <div class="w-12 h-12 bg-orange-500/20 rounded-lg flex items-center justify-center">
-                <i class="fas fa-chart-pie text-orange-400 text-lg"></i>
-              </div>
-              <div class="flex-1">
-                <h3 class="font-semibold text-white">Monitor de Opções</h3>
-                <p class="text-sm text-gray-300">Análise Completa + IA</p>
-              </div>
-              <i class="fas fa-lock text-gray-400"></i>
-            </div>
-            <span class="absolute top-3 right-3 bg-warning text-white text-xs px-2 py-1 rounded-full font-bold">PRO</span>
-          </div>
-        `;
-      }
-      
-      // CARD 4: SMART CARTEIRAS (PREMIUM)
-      if (userAccessLevel === 'PREMIUM') {
-        cardsHTML += `
-          <div onclick="showUpgradeDialog('Smart Carteiras', 'PREMIUM')" class="bg-gradient-to-r from-primary/10 to-primary/5 hover:from-primary/20 hover:to-primary/10 border border-primary/20 rounded-xl p-4 transition-all group cursor-pointer relative">
-            <div class="flex items-center gap-3">
-              <div class="w-12 h-12 bg-primary/20 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
-                <i class="fa-solid fa-square-poll-vertical" style="color: #B197FC;"></i>
-              </div>
-              <div>
-                <h3 class="font-semibold text-white">Smart Carteiras</h3>
-                <p class="text-sm text-gray-300">Análises especializadas com ML</p>
-              </div>
-            </div>
-            <span class="absolute top-3 right-3 bg-secondary text-white text-xs px-2 py-1 rounded-full font-bold">PREMIUM</span>
-          </div>
-        `;
-      } else {
-        cardsHTML += `
-          <div onclick="showUpgradeDialog('Smart Carteiras', 'PREMIUM')" class="bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20 rounded-xl p-4 transition-all group cursor-pointer relative card-disabled">
-            <div class="flex items-center gap-3">
-              <div class="w-12 h-12 bg-primary/20 rounded-lg flex items-center justify-center">
-                <i class="fa-solid fa-square-poll-vertical" style="color: #B197FC;"></i>
-              </div>
-              <div>
-                <h3 class="font-semibold text-white">Smart Carteiras</h3>
-                <p class="text-sm text-gray-300">Análises especializadas com ML</p>
-              </div>
-              <i class="fas fa-lock text-gray-400"></i>
-            </div>
-            <span class="absolute top-3 right-3 bg-secondary text-white text-xs px-2 py-1 rounded-full font-bold">PREMIUM</span>
-          </div>
-        `;
-      }
-      
-      // CARD 5: OPÇÕES RECOMENDAÇÕES (PREMIUM)
-      if (userAccessLevel === 'PREMIUM') {
-        cardsHTML += `
-          <div onclick="showUpgradeDialog('Opções Recomendações', 'PREMIUM')" class="bg-gradient-to-r from-cyan-500/10 to-cyan-500/5 hover:from-cyan-500/20 hover:to-cyan-500/10 border border-cyan-500/20 rounded-xl p-4 transition-all group cursor-pointer relative">
-            <div class="flex items-center gap-3">
-              <div class="w-12 h-12 bg-cyan-500/20 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
-                <i class="fas fa-chart-pie text-cyan-400 text-lg"></i>
-              </div>
-              <div>
-                <h3 class="font-semibold text-white">Opções Recomendações</h3>
-                <p class="text-sm text-gray-300">Swing Trade + IA para Opções</p>
-              </div>
-            </div>
-            <span class="absolute top-3 right-3 bg-secondary text-white text-xs px-2 py-1 rounded-full font-bold">PREMIUM</span>
-          </div>
-        `;
-      } else {
-        cardsHTML += `
-          <div onclick="showUpgradeDialog('Opções Recomendações', 'PREMIUM')" class="bg-gradient-to-r from-cyan-500/10 to-cyan-500/5 border border-cyan-500/20 rounded-xl p-4 transition-all group cursor-pointer relative card-disabled">
-            <div class="flex items-center gap-3">
-              <div class="w-12 h-12 bg-cyan-500/20 rounded-lg flex items-center justify-center">
-                <i class="fas fa-chart-pie text-cyan-400 text-lg"></i>
-              </div>
-              <div>
-                <h3 class="font-semibold text-white">Opções Recomendações</h3>
-                <p class="text-sm text-gray-300">Swing Trade + IA para Opções</p>
-              </div>
-              <i class="fas fa-lock text-gray-400"></i>
-            </div>
-            <span class="absolute top-3 right-3 bg-secondary text-white text-xs px-2 py-1 rounded-full font-bold">PREMIUM</span>
-          </div>
-        `;
-      }
-      
-      // CARD 6: MACHINE LEARNING (PREMIUM)
-      if (userAccessLevel === 'PREMIUM') {
-        cardsHTML += `
-          <div class="relative">
-            <div 
-              onclick="toggleMLDropdown()"
-              class="bg-gradient-to-r from-purple-500/10 to-purple-500/5 hover:from-purple-500/20 hover:to-purple-500/10 border border-purple-500/20 rounded-xl p-4 transition-all group cursor-pointer relative"
-            >
-              <div class="flex items-center gap-3">
-                <div class="w-12 h-12 bg-purple-500/20 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
-                  <i class="fas fa-brain text-purple-400 text-lg"></i>
-                </div>
-                <div class="flex-1">
-                  <h3 class="font-semibold text-white">Machine Learning</h3>
-                  <p class="text-sm text-gray-300">IA Preditiva + Algoritmos</p>
-                </div>
-                <i class="fas fa-chevron-down text-gray-400 transition-transform duration-300" id="mlChevron"></i>
-              </div>
-              <span class="absolute top-3 right-3 bg-purple-600 text-white text-xs px-2 py-1 rounded-full font-bold">PREMIUM</span>
-            </div>
-            
-            <div id="mlDropdown" class="dropdown">
-              <div class="grid grid-cols-1 gap-2">
-                <a href="swing-trade-machine-learning.html" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white">
-                  <i class="fas fa-chart-line text-green-400 w-5"></i>
-                  <div>
-                    <div class="font-medium">Swing Trade ML</div>
-                    <div class="text-xs text-gray-400">IA Preditiva com Stops Dinâmicos</div>
-                  </div>
-                </a>
-                
-                <a href="beta-regression.html" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white">
-                  <i class="fas fa-calculator text-blue-400 w-5"></i>
-                  <div>
-                    <div class="font-medium">Beta Regression</div>
-                    <div class="text-xs text-gray-400">Trading c/ beta-movel</div>
-                  </div>
-                </a>
-                
-                <a href="atsmom.html" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white">
-                  <i class="fas fa-rocket text-purple-400 w-5"></i>
-                  <div>
-                    <div class="font-medium">ATSMOM</div>
-                    <div class="text-xs text-gray-400">Adaptive Time Series Momentum</div>
-                  </div>
-                </a>
-                
-                <div onclick="showUpgradeDialog('Pattern Recognition', 'PREMIUM')" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white cursor-pointer">
-                  <i class="fas fa-eye text-orange-400 w-5"></i>
-                  <div class="flex-1">
-                    <div class="font-medium">Pattern Recognition</div>
-                    <div class="text-xs text-gray-400">Reconhecimento de Padrões Avançado</div>
-                  </div>
-                  <span class="bg-red-600 text-white text-xs px-2 py-1 rounded-full font-bold">EM BREVE</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        `;
-      } else {
-        cardsHTML += `
-          <div onclick="showUpgradeDialog('Machine Learning', 'PREMIUM')" class="bg-gradient-to-r from-purple-500/10 to-purple-500/5 border border-purple-500/20 rounded-xl p-4 transition-all group cursor-pointer relative card-disabled">
-            <div class="flex items-center gap-3">
-              <div class="w-12 h-12 bg-purple-500/20 rounded-lg flex items-center justify-center">
-                <i class="fas fa-brain text-purple-400 text-lg"></i>
-              </div>
-              <div class="flex-1">
-                <h3 class="font-semibold text-white">Machine Learning</h3>
-                <p class="text-sm text-gray-300">IA Preditiva + Algoritmos</p>
-              </div>
-              <i class="fas fa-lock text-gray-400"></i>
-            </div>
-            <span class="absolute top-3 right-3 bg-purple-600 text-white text-xs px-2 py-1 rounded-full font-bold">PREMIUM</span>
-          </div>
-        `;
-      }
-      
-      container.innerHTML = cardsHTML;
-      console.log('✅ Cards gerados com sucesso para nível:', userAccessLevel);
     }
 
     // Load user statistics
     async function loadUserStats() {
-      if (!userToken) return;
+      if (!userToken) {
+        console.log('⚠️ Token não disponível para carregar estatísticas');
+        return;
+      }
 
       try {
         const response = await fetch('/api/user/my-portfolios', {
@@ -1154,6 +1158,8 @@
           },
           cache: 'no-cache'
         });
+
+        console.log('📊 Status da resposta (recomendações):', response.status);
 
         if (response.status === 403) {
           console.log('🚫 Erro 403 nas recomendações - verificando auth...');
@@ -1239,28 +1245,155 @@
       if (nextUpdateEl) nextUpdateEl.textContent = '--';
     }
 
-    // 💎 MOSTRAR DIALOG DE UPGRADE
-    function showUpgradeDialog(featureName, requiredLevel) {
-      console.log(`💎 Mostrando dialog de upgrade: ${featureName} (precisa: ${requiredLevel}, tem: ${userAccessLevel})`);
+    // 🎯 FUNÇÃO SUPER SIMPLIFICADA DE VERIFICAÇÃO DE ACESSO
+    function getUserAccessLevel() {
+      if (!currentUser) return 'NONE';
       
-      const levelNames = { 
-        'BASIC': 'Básico', 
-        'PRO': 'Pro', 
-        'PREMIUM': 'Premium' 
-      };
+      const userType = currentUser.user_type || 'regular';
+      const planId = currentUser.plan_id || 3;
       
-      const currentPlanName = levelNames[userAccessLevel] || 'Básico';
-      const requiredPlanName = levelNames[requiredLevel] || 'Premium';
-      
-      let message = `💎 Recurso ${requiredPlanName}\n\n"${featureName}" está disponível apenas para usuários do plano ${requiredPlanName} ou superior.\n\n`;
-      message += `📋 Seu plano atual: ${currentPlanName}\n`;
-      message += `🎯 Plano necessário: ${requiredPlanName}\n\n`;
-      
-      if (userAccessLevel === 'BASIC') {
-        message += `🚀 Faça upgrade e tenha acesso a dezenas de recursos avançados de Machine Learning e análise técnica!\n\n`;
+      // Se é trial ativo, tem acesso total
+      if (userType === 'trial') {
+        const hasValidTrial = trialInfo && trialInfo.is_trial && !trialInfo.trial_expired;
+        if (hasValidTrial) return 'PREMIUM';
+        return 'BASIC'; // Trial expirado
       }
       
-      message += `Deseja fazer upgrade agora?`;
+      // Usuário regular: verificar plan_id
+      if (planId === 3) return 'BASIC';      // Básico
+      if (planId === 1) return 'PRO';        // Pro
+      if (planId === 2) return 'PREMIUM';    // Premium
+      
+      return 'BASIC'; // Padrão
+    }
+
+    // 🚀 DEFINIR RECURSOS POR NÍVEL (FÁCIL DE ADICIONAR NOVOS)
+    const FEATURES_BY_LEVEL = {
+      // GRÁTIS - Todos podem acessar
+      FREE: [
+        'Suporte e Resistência', 
+        'Radar Financeiro'
+      ],
+      
+      // PRO - Precisa de plano Pro ou Premium (ou trial ativo)
+      PRO: [
+        'Long & Short', 
+        'Hunter Walls', 
+        'Regimes de Volatilidade',
+        'Bandas de Volatilidade Pro',
+        'Regressão Linear', 
+        'Volatilidade GARCH', 
+        'screening',
+        'Implícita Sigma',
+        'Volume Profile', 
+        'IV Scanner', 
+        'Options Flow'
+      ],
+      
+      // PREMIUM - Precisa de plano Premium (ou trial ativo)
+      PREMIUM: [
+        'Smart Carteiras', 
+        'Opções Recomendações', 
+        'Machine Learning',
+        'Pattern Recognition', 
+        'AutoML'
+      ]
+    };
+
+    // 🎯 FUNÇÃO LIMPA DE VERIFICAÇÃO DE ACESSO
+    function showPremiumFeature(featureName) {
+      if (!currentUser) {
+        console.log('⚠️ Usuário não disponível');
+        return;
+      }
+      
+      const userAccessLevel = getUserAccessLevel();
+      console.log(`🔍 Verificando acesso: ${featureName} | Nível do usuário: ${userAccessLevel}`);
+      
+      // Determinar qual nível o recurso precisa
+      let requiredLevel = 'PREMIUM'; // Padrão
+      if (FEATURES_BY_LEVEL.FREE.includes(featureName)) requiredLevel = 'FREE';
+      else if (FEATURES_BY_LEVEL.PRO.includes(featureName)) requiredLevel = 'PRO';
+      else if (FEATURES_BY_LEVEL.PREMIUM.includes(featureName)) requiredLevel = 'PREMIUM';
+      
+      // Verificar se tem acesso
+      const hasAccess = checkAccess(userAccessLevel, requiredLevel);
+      console.log(`✅ Resultado: ${hasAccess} (precisa: ${requiredLevel}, tem: ${userAccessLevel})`);
+      
+      if (hasAccess) {
+        // ✅ TEM ACESSO - EXECUTAR AÇÃO
+        executeFeatureAction(featureName);
+      } else {
+        // ❌ NÃO TEM ACESSO - MOSTRAR UPGRADE
+        showUpgradeDialog(featureName, requiredLevel, userAccessLevel);
+      }
+    }
+
+    // 🔑 VERIFICAR SE O NÍVEL DO USUÁRIO TEM ACESSO AO RECURSO
+    function checkAccess(userLevel, requiredLevel) {
+      if (requiredLevel === 'FREE') return true; // Todos têm acesso ao grátis
+      if (requiredLevel === 'PRO') return ['PRO', 'PREMIUM'].includes(userLevel);
+      if (requiredLevel === 'PREMIUM') return userLevel === 'PREMIUM';
+      return false;
+    }
+
+    // 🚀 EXECUTAR AÇÃO DO RECURSO
+    function executeFeatureAction(featureName) {
+      // REDIRECIONAMENTOS DIRETOS
+      const redirects = {
+        'Long & Short': 'long-short.html',
+        'Hunter Walls': 'opcoes.html',
+        'Bandas de Volatilidade Pro': 'regimes-pro.html',
+        'Smart Carteiras': 'analises.html',
+        'Opções Recomendações': 'opcoes-recomendacoes.html'
+      };
+      
+      if (redirects[featureName]) {
+        window.location.href = redirects[featureName];
+        return;
+      }
+      
+      // DROPDOWNS
+      if (featureName === 'Machine Learning') {
+        toggleMLDropdown();
+        return;
+      }
+      
+      // RECURSOS EM DESENVOLVIMENTO
+      const comingSoonMessages = {
+        'Suporte e Resistência': ' Análise Setorial\n\nComparativo por Setores da Economia!',
+        'Radar Financeiro': ' Radar Financeiro\n\nIndicadores Fundamentalistas Completos!',
+        'Regimes de Volatilidade': ' Regimes de Volatilidade\n\nAnálise avançada de regimes!',
+        'Regressão Linear': ' Regressão Linear\n\nAnálise Preditiva Avançada!',
+        'Volatilidade GARCH': ' Volatilidade GARCH\n\nModelos Avançados de Volatilidade!',
+        'screening': ' Greeks Monitor\n\nMonitoramento completo de Delta, Gamma, Theta e Vega!',
+        'Volume Profile': ' Volume Profile\n\nAnálise avançada de Volume por Preço!',
+        'IV Scanner': 'IV Scanner\n\nScanner inteligente de Volatilidade Implícita!',
+        'Options Flow': ' Options Flow\n\nFluxo de Opções em Tempo Real!',
+        'Pattern Recognition': ' Pattern Recognition\n\nReconhecimento de Padrões Avançado!',
+        'AutoML': '🪄 AutoML\n\nMachine Learning Automatizado!',
+        'Implícita Sigma': 'Implícita Sigma\n\nAnálise Integrada de Volatilidade Implícita, Histórica e Risco de Gamma!'
+
+
+      };
+      
+      const message = comingSoonMessages[featureName] || `🎉 ${featureName}\n\nFuncionalidade disponível em seu plano!`;
+      alert(`${message}\n\nEm breve será implementado.`);
+    }
+
+    // 💎 MOSTRAR DIALOG DE UPGRADE
+    function showUpgradeDialog(featureName, requiredLevel, userLevel) {
+      const levelNames = { 'BASIC': 'Básico', 'PRO': 'Pro', 'PREMIUM': 'Premium' };
+      const currentPlanName = levelNames[userLevel] || 'Básico';
+      const requiredPlanName = levelNames[requiredLevel] || 'Premium';
+      
+      let message = `💎 Recurso ${requiredPlanName}\n\n${featureName} está disponível apenas para planos ${requiredPlanName} ou superior.\n\nSeu plano atual: ${currentPlanName}\nPlano necessário: ${requiredPlanName}`;
+      
+      if (userLevel === 'BASIC') {
+        message += `\n\n🚀 Faça upgrade e tenha acesso a dezenas de recursos avançados!`;
+      }
+      
+      message += `\n\nDeseja fazer upgrade agora?`;
       
       if (confirm(message)) {
         window.location.href = '/planos.html';
@@ -1409,16 +1542,16 @@
 
     // Make functions global
     window.logout = logout;
-    window.showUpgradeDialog = showUpgradeDialog;
+    window.showPremiumFeature = showPremiumFeature;
     window.toggleMLDropdown = toggleMLDropdown;
     window.toggleOpcoesDropdown = toggleOpcoesDropdown;
     window.toggleGratisDropdown = toggleGratisDropdown;
     window.toggleProDropdown = toggleProDropdown;
+    window.dismissTrialBanner = dismissTrialBanner;
 
     // Initialize when page loads
     document.addEventListener('DOMContentLoaded', initDashboard);
   </script>
-  
   <footer class="relative z-10 bg-black bg-opacity-60 backdrop-blur-md border-t border-white border-opacity-10">
     <div class="max-w-6xl mx-auto px-6 py-12">
       <!-- Newsletter Section -->
@@ -1431,6 +1564,113 @@
         <button id="newsletterBtn" class="newsletter-btn px-8 py-4 bg-white text-black font-medium rounded-full hover:bg-gray-200 transition-all duration-300 shadow-lg hover:shadow-xl text-lg">
           📧 Receber Análises Gratuitas
         </button>
+      </div>
+
+      <!-- Modal Newsletter -->
+      <div id="newsletterModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-gray-900 rounded-2xl max-w-md w-full p-6 border border-gray-700 relative animate-modal">
+          <!-- Close Button -->
+          <button onclick="closeNewsletterModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors">
+            <i class="fas fa-times text-xl"></i>
+          </button>
+          
+          <!-- Header -->
+          <div class="text-center mb-6">
+            <div class="w-16 h-16 bg-gradient-to-r from-geminii to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
+              <i class="fas fa-chart-line text-white text-2xl"></i>
+            </div>
+            <h3 class="text-2xl font-bold text-white mb-2">Análises Exclusivas</h3>
+            <p class="text-gray-300 text-sm">Receba insights sobre as melhores oportunidades do mercado financeiro</p>
+          </div>
+
+          <!-- Form -->
+          <form id="newsletterForm" onsubmit="submitNewsletterForm(event)">
+            <!-- Nome Completo -->
+            <div class="mb-4">
+              <label class="block text-white text-sm font-medium mb-2">
+                Nome Completo <span class="text-red-500">*</span>
+              </label>
+              <input 
+                type="text" 
+                id="modalName"
+                name="name"
+                required
+                class="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-geminii focus:bg-gray-750 transition-all"
+                placeholder="Seu nome completo"
+              >
+            </div>
+
+            <!-- E-mail -->
+            <div class="mb-4">
+              <label class="block text-white text-sm font-medium mb-2">
+                E-mail <span class="text-red-500">*</span>
+              </label>
+              <input 
+                type="email" 
+                id="modalEmail"
+                name="email"
+                required
+                class="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-geminii focus:bg-gray-750 transition-all"
+                placeholder="seu@email.com"
+              >
+            </div>
+
+            <!-- Onde nos conheceu -->
+            <div class="mb-6">
+              <label class="block text-white text-sm font-medium mb-2">
+                Onde nos conheceu? <span class="text-red-500">*</span>
+              </label>
+              <select 
+                id="modalSource"
+                name="source"
+                required
+                class="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-geminii transition-all"
+              >
+                <option value="">Selecione uma opção</option>
+                <option value="Google">Google</option>
+                <option value="Instagram">Instagram</option>
+                <option value="Facebook">Facebook</option>
+                <option value="YouTube">YouTube</option>
+                <option value="LinkedIn">LinkedIn</option>
+                <option value="Indicação de amigo">Indicação de amigo</option>
+                <option value="Outro">Outro</option>
+              </select>
+            </div>
+
+            <!-- Submit Button -->
+            <button 
+              type="submit" 
+              id="modalSubmitBtn"
+              class="w-full bg-gradient-to-r from-geminii to-purple-600 hover:from-purple-700 hover:to-pink-700 text-white font-semibold py-3 rounded-lg transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <i class="fas fa-envelope mr-2"></i>
+              Receber Análises Exclusivas
+            </button>
+          </form>
+
+          <!-- Benefits -->
+          <div class="mt-6 pt-4 border-t border-gray-700">
+            <p class="text-gray-400 text-xs text-center mb-3">Você receberá:</p>
+            <div class="grid grid-cols-2 gap-2 text-xs">
+              <div class="flex items-center gap-2 text-gray-300">
+                <i class="fas fa-check text-green-500"></i>
+                <span>Análises semanais</span>
+              </div>
+              <div class="flex items-center gap-2 text-gray-300">
+                <i class="fas fa-check text-green-500"></i>
+                <span>Oportunidades em primeira mão</span>
+              </div>
+              <div class="flex items-center gap-2 text-gray-300">
+                <i class="fas fa-check text-green-500"></i>
+                <span>Insights de mercado</span>
+              </div>
+              <div class="flex items-center gap-2 text-gray-300">
+                <i class="fas fa-check text-green-500"></i>
+                <span>100% gratuito</span>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Social Media -->
@@ -1477,6 +1717,7 @@
       <div class="bg-gray-900 bg-opacity-40 backdrop-blur-sm border border-gray-700 border-opacity-50 rounded-2xl p-6 mb-8">
         <div class="text-center mb-4">
           <h4 class="text-white font-medium mb-2 flex items-center justify-center gap-2">
+            
             Avisos Legais e Responsabilidades
           </h4>
         </div>
