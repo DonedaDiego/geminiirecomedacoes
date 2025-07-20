@@ -1,7 +1,6 @@
 import requests
 import pandas as pd
 import os
-import json
 from datetime import datetime
 
 class RankingService:
@@ -13,7 +12,7 @@ class RankingService:
             "Content-Type": "application/json"
         }
         
-        # Lista de ações com opções (do código original)
+        # Lista de ações com opções
         self.options_stocks = [
             'ABEV3', 'ALOS3', 'ASAI3', 'AURE3', 'AZUL4', 'AZZA3', 'B3SA3', 'BBAS3', 
             'BBDC3', 'BBDC4', 'BBSE3', 'BEEF3', 'BPAC11', 'BRAP4', 'BRAV3', 'BRFS3', 
@@ -31,40 +30,22 @@ class RankingService:
         print(f"📊 RankingService inicializado com {len(self.options_stocks)} ações")
     
     def _get_token(self):
+        """Busca token do .env ou Railway"""
         token = os.environ.get('OPLAB_TOKEN')
         if token:
             print("✅ Token OpLab da variável de ambiente")
             return token
         
-        # 2. Arquivo config.json
-        try:
-            config_paths = ['config.json', 'backend/config.json', '../config.json']
-            
-            for path in config_paths:
-                try:
-                    with open(path, 'r') as f:
-                        config = json.load(f)
-                        token = config.get('token') or config.get('oplab_token')
-                        if token:
-                            print(f"✅ Token OpLab do arquivo {path}")
-                            return token
-                except:
-                    continue
-        except:
-            pass
-        
-        # 3. Token padrão do código original
-        default_token = "Z0ZcoMO3V1kByWw4UWmnodYkZWrHs1vLCF3ry0ApsyYabWNV5jsiAQP6YOREHmPf--mQVXl2FfHYxRFCsA1qDtzw==--Y2Y3YTRmNGRjNzI5NTUzMDc3N2YwOTY2NDRhZjJjMDI="
-        print("⚠️ Usando token padrão")
-        return default_token
+        # Fallback se não encontrar (não deve acontecer em produção)
+        raise Exception("❌ Token OPLAB_TOKEN não encontrado nas variáveis de ambiente")
     
-    def fetch_data(self, rank_by="iv_current", sort="desc", limit=100):
+    def fetch_data(self, rank_by="iv_current", sort="desc", limit=150):
         """Busca dados do OpLab"""
         try:
             params = {
                 "rank_by": rank_by,
                 "sort": sort,
-                "limit": limit  # ← USAR O PARÂMETRO LIMIT
+                "limit": limit
             }
             
             print(f"🔍 Buscando dados: {rank_by} (limit: {limit})")
@@ -115,194 +96,203 @@ class RankingService:
             print(f"❌ Erro no processamento: {e}")
             return None
     
-    def create_ranking(self, df, top_n=20):
-        """Cria ranking principal"""
-        if df is None or df.empty:
-            return None
-        
-        ranking = []
-        for idx, (_, row) in enumerate(df.head(top_n).iterrows(), 1):
-            ranking.append({
-                'posicao': idx,
-                'symbol': row['symbol'],
-                'name': row.get('name', ''),
-                'iv_current': float(row.get('iv_current', 0)),
-                'close': float(row.get('close', 0)),
-                'volume': int(row.get('volume', 0)),
-                'financial_volume': float(row.get('financial_volume', 0)),
-                'variation': float(row.get('variation', 0)),
-                'iv_6m_percentile': float(row.get('iv_6m_percentile', 0)),
-                'iv_6m_max': float(row.get('iv_6m_max', 0))
-            })
-        
-        return ranking
-    
     def calculate_statistics(self, df):
-        """Calcula estatísticas básicas"""
+        """Calcula estatísticas da IV"""
         if df is None or df.empty:
             return {}
         
-    def calculate_statistics(self, df):
-        """Calcula estatísticas básicas"""
-        if df is None or df.empty:
-            return {}
-        
-        stats = {
-            'iv_media': float(df['iv_current'].mean()),
-            'iv_mediana': float(df['iv_current'].median()),
-            'iv_max': float(df['iv_current'].max()),
-            'iv_min': float(df['iv_current'].min()),
-            'iv_std': float(df['iv_current'].std()),
-            'total_acoes': len(df)
-        }
-        
-        return stats
-    
-    def get_top_iv(self, df, tipo='alta', quantidade=5):
-        """Busca top ações por IV alta/baixa"""
-        if df is None or df.empty:
-            return []
-        
-        if tipo == 'baixa':
-            df_sorted = df.sort_values('iv_current', ascending=True)
-        else:
-            df_sorted = df.sort_values('iv_current', ascending=False)
-        
-        top_list = []
-        for _, row in df_sorted.head(quantidade).iterrows():
-            top_list.append({
-                'symbol': row['symbol'],
-                'name': row.get('name', ''),
-                'iv_current': float(row.get('iv_current', 0)),
-                'close': float(row.get('close', 0))
-            })
-        
-        return top_list
-    
-    def get_scatter_data(self, df, top_n=30):
-        """Prepara dados para scatter plot IV vs Volume"""
-        if df is None or df.empty:
-            return []
-        
-        scatter_data = []
-        for _, row in df.head(top_n).iterrows():
-            scatter_data.append({
-                'symbol': row['symbol'],
-                'name': row.get('name', ''),
-                'iv_current': float(row.get('iv_current', 0)),
-                'financial_volume': float(row.get('financial_volume', 0)),
-                'close': float(row.get('close', 0)),
-                'variation': float(row.get('variation', 0))
-            })
-        
-        return scatter_data
-    
-    def get_comparison_data(self, df, top_n=20):
-        """Prepara dados para comparação IV atual vs 6M max"""
-        if df is None or df.empty:
-            return [], {}
-        
-        comparison_data = []
-        ratios = []
-        
-        for _, row in df.head(top_n).iterrows():
-            iv_atual = float(row.get('iv_current', 0))
-            iv_6m_max = float(row.get('iv_6m_max', 1))
-            ratio = (iv_atual / iv_6m_max) if iv_6m_max > 0 else 0
-            ratios.append(ratio)
-            
-            status = 'Perto do máximo' if ratio > 0.9 else \
-                     'Alto' if ratio > 0.7 else \
-                     'Médio' if ratio > 0.5 else 'Baixo'
-            
-            comparison_data.append({
-                'symbol': row['symbol'],
-                'name': row.get('name', ''),
-                'iv_current': iv_atual,
-                'iv_6m_max': iv_6m_max,
-                'ratio': ratio,
-                'ratio_percent': ratio * 100,
-                'status': status,
-                'close': float(row.get('close', 0)),
-                'financial_volume': float(row.get('financial_volume', 0))
-            })
-        
-        # Estatísticas dos ratios
-        stats = {
-            'ratio_medio': sum(ratios) / len(ratios) if ratios else 0,
-            'acoes_perto_maximo': len([r for r in ratios if r > 0.9]),
-            'acoes_alto': len([r for r in ratios if 0.7 < r <= 0.9]),
-            'acoes_baixo': len([r for r in ratios if r <= 0.5])
-        }
-        
-        return comparison_data, stats
-    
-    def get_full_analysis(self, rank_by="iv_current", top_n=20):
-        """Análise completa - método principal"""
         try:
-            print(f"🎯 Iniciando análise completa: {rank_by}")
-            
-            # AQUI: Buscar MAIS dados para permitir busca expandida
-            # Antes: data = self.fetch_data(rank_by=rank_by)
-            # Agora: Buscar 150 ações em vez de 100 (padrão)
-            data = self.fetch_data(rank_by=rank_by, limit=150)  # ← MUDANÇA AQUI
-            
-            if not data:
-                return {
-                    'success': False,
-                    'error': 'Erro ao buscar dados do OpLab'
-                }
-            
-            # Processar TODOS os dados (150 ações)
-            df = self.process_data(data)
-            if df is None:
-                return {
-                    'success': False,
-                    'error': 'Erro ao processar dados'
-                }
-            
-            # Retornar análise com TODOS os dados para busca
-            result = {
-                'success': True,
-                'timestamp': datetime.now().isoformat(),
-                'total_acoes': len(df),
-                'rankings': {},
-                'estatisticas': self.calculate_statistics(df),
-                'top_5': {}
+            stats = {}
+            if 'iv_current' in df.columns:
+                iv_data = df['iv_current'].dropna()
+                if len(iv_data) > 0:
+                    stats = {
+                        'iv_media': float(iv_data.mean()) if not pd.isna(iv_data.mean()) else 0.0,
+                        'iv_mediana': float(iv_data.median()) if not pd.isna(iv_data.median()) else 0.0,
+                        'iv_min': float(iv_data.min()) if not pd.isna(iv_data.min()) else 0.0,
+                        'iv_max': float(iv_data.max()) if not pd.isna(iv_data.max()) else 0.0,
+                        'iv_std': float(iv_data.std()) if not pd.isna(iv_data.std()) else 0.0
+                    }
+                else:
+                    stats = {
+                        'iv_media': 0.0,
+                        'iv_mediana': 0.0,
+                        'iv_min': 0.0,
+                        'iv_max': 0.0,
+                        'iv_std': 0.0
+                    }
+            return stats
+        except Exception as e:
+            print(f"❌ Erro no cálculo de estatísticas: {e}")
+            return {
+                'iv_media': 0.0,
+                'iv_mediana': 0.0,
+                'iv_min': 0.0,
+                'iv_max': 0.0,
+                'iv_std': 0.0
             }
-            
-            # Rankings principais - usar top_n para o ranking, mas manter todos os dados
-            result['rankings']['iv_atual'] = self.create_ranking(df, top_n)
-            
-            # NOVA: Adicionar TODOS os dados para busca no frontend
-            result['all_stocks'] = []
-            for idx, (_, row) in enumerate(df.iterrows(), 1):
-                result['all_stocks'].append({
+    
+    def _clean_numeric_value(self, value):
+        """Limpa valores numéricos - converte NaN, None, etc para 0"""
+        if value is None or pd.isna(value):
+            return 0.0
+        try:
+            return float(value)
+        except (ValueError, TypeError):
+            return 0.0
+    
+    def create_ranking(self, df, top_n):
+        """Cria ranking das ações"""
+        if df is None or df.empty:
+            return []
+        
+        try:
+            ranking = []
+            for idx, (_, row) in enumerate(df.head(top_n).iterrows(), 1):
+                ranking.append({
                     'posicao': idx,
                     'symbol': row['symbol'],
                     'name': row.get('name', ''),
-                    'iv_current': float(row.get('iv_current', 0)),
-                    'close': float(row.get('close', 0)),
-                    'volume': int(row.get('volume', 0)),
-                    'financial_volume': float(row.get('financial_volume', 0)),
-                    'variation': float(row.get('variation', 0)),
-                    'iv_6m_percentile': float(row.get('iv_6m_percentile', 0)),
-                    'iv_6m_max': float(row.get('iv_6m_max', 0))
+                    'iv_current': self._clean_numeric_value(row.get('iv_current')),
+                    'close': self._clean_numeric_value(row.get('close')),
+                    'volume': int(self._clean_numeric_value(row.get('volume'))),
+                    'financial_volume': max(1.0, self._clean_numeric_value(row.get('financial_volume'))),  # Mínimo 1 para log
+                    'variation': self._clean_numeric_value(row.get('variation')),
+                    'iv_6m_percentile': self._clean_numeric_value(row.get('iv_6m_percentile')),
+                    'iv_6m_max': self._clean_numeric_value(row.get('iv_6m_max'))
+                })
+            return ranking
+        except Exception as e:
+            print(f"❌ Erro na criação do ranking: {e}")
+            return []
+    
+    def get_top_iv(self, df, tipo, quantidade):
+        """Obtém top ações por IV alta ou baixa"""
+        if df is None or df.empty:
+            return []
+        
+        try:
+            if tipo.lower() == 'alta':
+                top_df = df.nlargest(quantidade, 'iv_current')
+            else:
+                top_df = df.nsmallest(quantidade, 'iv_current')
+            
+            result = []
+            for _, row in top_df.iterrows():
+                result.append({
+                    'symbol': row['symbol'],
+                    'name': row.get('name', ''),
+                    'iv_current': self._clean_numeric_value(row.get('iv_current')),
+                    'close': self._clean_numeric_value(row.get('close')),
+                    'variation': self._clean_numeric_value(row.get('variation'))
+                })
+            return result
+        except Exception as e:
+            print(f"❌ Erro no top IV: {e}")
+            return []
+    
+    def get_scatter_data(self, df, top_n):
+        """Dados para scatter plot IV vs Volume"""
+        if df is None or df.empty:
+            return []
+        
+        try:
+            scatter_data = []
+            for _, row in df.head(top_n).iterrows():
+                scatter_data.append({
+                    'symbol': row['symbol'],
+                    'iv_current': self._clean_numeric_value(row.get('iv_current')),
+                    'financial_volume': max(1.0, self._clean_numeric_value(row.get('financial_volume'))),  # Mínimo 1 para log
+                    'close': self._clean_numeric_value(row.get('close'))
+                })
+            return scatter_data
+        except Exception as e:
+            print(f"❌ Erro no scatter data: {e}")
+            return []
+    
+    def get_percentil_data(self, df, top_n):
+        """Dados de percentil IV 6M"""
+        if df is None or df.empty:
+            return [], {}
+        
+        try:
+            ranking = []
+            for _, row in df.head(top_n).iterrows():
+                percentil = self._clean_numeric_value(row.get('iv_6m_percentile'))
+                ranking.append({
+                    'symbol': row['symbol'],
+                    'iv_6m_percentile': percentil,
+                    'iv_current': self._clean_numeric_value(row.get('iv_current')),
+                    'categoria': self._get_percentil_category(percentil)
                 })
             
-            # Top 5 alta e baixa
-            result['top_5']['iv_alta'] = self.get_top_iv(df, 'alta', 5)
-            result['top_5']['iv_baixa'] = self.get_top_iv(df, 'baixa', 5)
+            # Resumo por categoria
+            categorias = {}
+            for item in ranking:
+                cat = item['categoria']
+                if cat not in categorias:
+                    categorias[cat] = 0
+                categorias[cat] += 1
             
-            print(f"✅ Análise completa criada: {len(df)} ações processadas")
-            return result
-            
+            return ranking, categorias
         except Exception as e:
-            print(f"❌ Erro na análise completa: {e}")
-            return {
-                'success': False,
-                'error': str(e)
-            }
+            print(f"❌ Erro no percentil data: {e}")
+            return [], {}
+    
+    def _get_percentil_category(self, percentil):
+        """Categoriza percentil"""
+        if percentil > 80:
+            return 'Muito Alto'
+        elif percentil > 60:
+            return 'Alto'
+        elif percentil > 40:
+            return 'Médio'
+        elif percentil > 20:
+            return 'Baixo'
+        else:
+            return 'Muito Baixo'
+    
+    def get_comparison_data(self, df, top_n):
+        """Dados de comparação IV atual vs 6M max"""
+        if df is None or df.empty:
+            return [], {}
+        
+        try:
+            comparison_data = []
+            ratios = []
+            
+            for _, row in df.head(top_n).iterrows():
+                iv_current = self._clean_numeric_value(row.get('iv_current'))
+                iv_6m_max = self._clean_numeric_value(row.get('iv_6m_max'))
+                
+                ratio = (iv_current / iv_6m_max * 100) if iv_6m_max > 0 else 0.0
+                ratios.append(ratio)
+                
+                comparison_data.append({
+                    'symbol': row['symbol'],
+                    'iv_current': iv_current,
+                    'iv_6m_max': iv_6m_max,
+                    'ratio': ratio
+                })
+            
+            # Estatísticas
+            if ratios:
+                stats = {
+                    'ratio_medio': sum(ratios) / len(ratios),
+                    'acima_media': len([r for r in ratios if r > 50]),
+                    'abaixo_media': len([r for r in ratios if r <= 50])
+                }
+            else:
+                stats = {
+                    'ratio_medio': 0.0,
+                    'acima_media': 0,
+                    'abaixo_media': 0
+                }
+            
+            return comparison_data, stats
+        except Exception as e:
+            print(f"❌ Erro no comparison data: {e}")
+            return [], {}
     
     def get_full_analysis(self, rank_by="iv_current", top_n=20):
         """Análise completa - método principal"""
@@ -310,7 +300,7 @@ class RankingService:
             print(f"🎯 Iniciando análise completa: {rank_by}")
             
             # Buscar dados
-            data = self.fetch_data(rank_by=rank_by)
+            data = self.fetch_data(rank_by=rank_by, limit=150)
             if not data:
                 return {
                     'success': False,
@@ -338,6 +328,22 @@ class RankingService:
             # Rankings principais
             result['rankings']['iv_atual'] = self.create_ranking(df, top_n)
             
+            # Adicionar TODOS os dados para busca no frontend
+            result['all_stocks'] = []
+            for idx, (_, row) in enumerate(df.iterrows(), 1):
+                result['all_stocks'].append({
+                    'posicao': idx,
+                    'symbol': row['symbol'],
+                    'name': row.get('name', ''),
+                    'iv_current': self._clean_numeric_value(row.get('iv_current')),
+                    'close': self._clean_numeric_value(row.get('close')),
+                    'volume': int(self._clean_numeric_value(row.get('volume'))),
+                    'financial_volume': max(1.0, self._clean_numeric_value(row.get('financial_volume'))),  # Mínimo 1 para log
+                    'variation': self._clean_numeric_value(row.get('variation')),
+                    'iv_6m_percentile': self._clean_numeric_value(row.get('iv_6m_percentile')),
+                    'iv_6m_max': self._clean_numeric_value(row.get('iv_6m_max'))
+                })
+            
             # Top 5 alta e baixa
             result['top_5']['iv_alta'] = self.get_top_iv(df, 'alta', 5)
             result['top_5']['iv_baixa'] = self.get_top_iv(df, 'baixa', 5)
@@ -352,7 +358,7 @@ class RankingService:
                 'error': str(e)
             }
 
-# Função standalone para uso direto
+# Função standalone
 def get_ranking_data(rank_by="iv_current", top_n=20):
     """Função standalone para obter ranking"""
     service = RankingService()
@@ -363,12 +369,12 @@ if __name__ == "__main__":
     resultado = get_ranking_data()
     
     if resultado['success']:
-        print(f"✅ Teste executado com sucesso!")
+        print(f"✅ Teste executado!")
         print(f"📊 {resultado['total_acoes']} ações analisadas")
         
-        if 'rankings' in resultado and 'iv_atual' in resultado['rankings']:
-            print(f"\n🏆 Top 5 IV Atual:")
+        if resultado['rankings']['iv_atual']:
+            print(f"\n🏆 Top 5:")
             for item in resultado['rankings']['iv_atual'][:5]:
                 print(f"   {item['posicao']}. {item['symbol']} - {item['iv_current']:.2f}%")
     else:
-        print(f"❌ Erro no teste: {resultado['error']}")
+        print(f"❌ Erro: {resultado['error']}")

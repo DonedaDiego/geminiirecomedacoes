@@ -58,8 +58,8 @@ def get_top_iv():
         
         print(f"🎯 Top IV {tipo}: {quantidade} ações")
         
-        # Buscar dados usando o serviço COM LIMIT MAIOR
-        data = ranking_service.fetch_data(limit=150)  # ← MUDANÇA AQUI
+        # Buscar dados usando o serviço
+        data = ranking_service.fetch_data(limit=150)
         if not data:
             return jsonify({
                 'success': False,
@@ -104,8 +104,8 @@ def get_iv_vs_volume():
         
         print(f"📊 IV vs Volume: top {top_n}")
         
-        # Buscar e processar dados usando o serviço COM LIMIT MAIOR
-        data = ranking_service.fetch_data(limit=150)  # ← MUDANÇA AQUI
+        # Buscar e processar dados usando o serviço
+        data = ranking_service.fetch_data(limit=150)
         if not data:
             return jsonify({
                 'success': False,
@@ -147,8 +147,8 @@ def get_iv_percentil():
         
         print(f"📊 IV Percentil: top {top_n}")
         
-        # Buscar dados específicos para percentil COM LIMIT MAIOR
-        data = ranking_service.fetch_data(rank_by='iv_6m_percentile', limit=150)  # ← MUDANÇA AQUI
+        # Buscar dados específicos para percentil
+        data = ranking_service.fetch_data(rank_by='iv_6m_percentile', limit=150)
         if not data:
             return jsonify({
                 'success': False,
@@ -191,8 +191,8 @@ def get_iv_6m_comparison():
         
         print(f"📊 IV 6M Comparison: top {top_n}")
         
-        # Buscar e processar dados COM LIMIT MAIOR
-        data = ranking_service.fetch_data(limit=150)  # ← MUDANÇA AQUI
+        # Buscar e processar dados
+        data = ranking_service.fetch_data(limit=150)
         if not data:
             return jsonify({
                 'success': False,

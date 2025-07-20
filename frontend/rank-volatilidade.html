@@ -47,63 +47,12 @@
       border-color: rgba(186, 57, 175, 0.3);
     }
 
-    .metric-card {
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 12px;
-      padding: 1.5rem;
-      transition: all 0.3s ease;
-    }
-
-    .pulse-glow {
-      animation: pulseGlow 2s ease-in-out infinite alternate;
-    }
-    
-    @keyframes pulseGlow {
-      from { box-shadow: 0 0 20px rgba(186, 57, 175, 0.3); }
-      to { box-shadow: 0 0 30px rgba(186, 57, 175, 0.6); }
-    }
-
     .chart-container {
       background: rgba(255, 255, 255, 0.03);
       border-radius: 12px;
       padding: 1rem;
       margin: 1rem 0;
       height: 400px;
-    }
-
-    .search-input {
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      border-radius: 8px;
-      padding: 0.75rem 1rem;
-      color: white;
-      transition: all 0.3s ease;
-    }
-
-    .search-input:focus {
-      outline: none;
-      border-color: #ba39af;
-      box-shadow: 0 0 0 2px rgba(186, 57, 175, 0.2);
-    }
-
-    .search-input::placeholder {
-      color: rgba(255, 255, 255, 0.5);
-    }
-
-    .search-result {
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 8px;
-      padding: 1rem;
-      margin: 0.5rem 0;
-      cursor: pointer;
-      transition: all 0.3s ease;
-    }
-
-    .search-result:hover {
-      background: rgba(255, 255, 255, 0.1);
-      border-color: #ba39af;
     }
 
     .loading {
@@ -172,99 +121,6 @@
         </p>
       </div>
 
-      <!-- Top 5 Cards - IV Alta e Baixa -->
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-        
-        <!-- Top 5 IV Alta -->
-        <div class="rank-card pulse-glow">
-          <div class="flex items-center justify-between mb-6">
-            <h2 class="text-2xl font-bold text-red-400">
-              <i class="fas fa-fire mr-2"></i>
-              Top 5 IV Mais Alta
-            </h2>
-            <span class="px-3 py-1 bg-red-500 bg-opacity-20 text-red-300 rounded-full text-sm font-semibold">
-              VENDAS
-            </span>
-          </div>
-          <p class="text-gray-300 mb-4">Ideal para vendedores de opções - prêmios elevados</p>
-          
-          <div id="topIvAlta" class="space-y-3">
-            <div class="loading">
-              <div class="spinner"></div>
-            </div>
-          </div>
-          
-          <div class="mt-4 p-3 bg-red-500 bg-opacity-10 border border-red-500 border-opacity-30 rounded-lg">
-            <p class="text-sm text-red-300">
-              <i class="fas fa-info-circle mr-2"></i>
-              <strong>Estratégia:</strong> Venda de opções com prêmios altos devido à alta volatilidade implícita
-            </p>
-          </div>
-        </div>
-
-        <!-- Top 5 IV Baixa -->
-        <div class="rank-card pulse-glow">
-          <div class="flex items-center justify-between mb-6">
-            <h2 class="text-2xl font-bold text-green-400">
-              <i class="fas fa-snowflake mr-2"></i>
-              Top 5 IV Mais Baixa
-            </h2>
-            <span class="px-3 py-1 bg-green-500 bg-opacity-20 text-green-300 rounded-full text-sm font-semibold">
-              COMPRAS
-            </span>
-          </div>
-          <p class="text-gray-300 mb-4">Ideal para compradores de opções - prêmios baixos</p>
-          
-          <div id="topIvBaixa" class="space-y-3">
-            <div class="loading">
-              <div class="spinner"></div>
-            </div>
-          </div>
-          
-          <div class="mt-4 p-3 bg-green-500 bg-opacity-10 border border-green-500 border-opacity-30 rounded-lg">
-            <p class="text-sm text-green-300">
-              <i class="fas fa-info-circle mr-2"></i>
-              <strong>Estratégia:</strong> Compra de opções com prêmios baixos devido à baixa volatilidade implícita
-            </p>
-          </div>
-        </div>
-
-      </div>
-
-      <!-- Consulta Individual -->
-      <div class="rank-card mb-8">
-        <h3 class="text-2xl font-bold mb-4">
-          <i class="fas fa-search mr-2 text-blue-400"></i>
-          Consulta Individual de Ação
-        </h3>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <div class="flex gap-2">
-              <input 
-                type="text" 
-                id="searchInput" 
-                class="search-input flex-1" 
-                placeholder="Digite o código da ação (ex: PETR4, VALE3, ITUB4...)"
-                onkeyup="searchStock(event)"
-                onkeydown="if(event.key==='Enter') searchAndShowStock()"
-              >
-              <button 
-                id="analyzeBtn"
-                onclick="searchAndShowStock()" 
-                class="px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 rounded-lg text-white font-semibold transition-all duration-300"
-              >
-                <i class="fas fa-search mr-1"></i>
-                Analisar
-              </button>
-            </div>
-            <div id="searchResults" class="mt-4"></div>
-          </div>
-          <div id="stockDetails" class="space-y-4">
-            <p class="text-gray-400">Digite o código de uma ação para ver os detalhes</p>
-          </div>
-        </div>
-      </div>
-
       <!-- Painel de Gráficos -->
       <div class="rank-card">
         <h2 class="text-3xl font-bold mb-6 text-center">
@@ -280,7 +136,9 @@
             <h3 class="text-xl font-bold mb-4 text-center text-blue-400">
               Volatilidade Implícita Atual (%)
             </h3>
-            <div id="chart1" class="w-full h-full"></div>
+            <div id="chart1" class="w-full h-full">
+              <div class="loading"><div class="spinner"></div></div>
+            </div>
           </div>
 
           <!-- Gráfico 2: IV Atual vs IV 6M Max -->
@@ -288,7 +146,9 @@
             <h3 class="text-xl font-bold mb-4 text-center text-green-400">
               IV Atual vs IV 6M Máximo
             </h3>
-            <div id="chart2" class="w-full h-full"></div>
+            <div id="chart2" class="w-full h-full">
+              <div class="loading"><div class="spinner"></div></div>
+            </div>
           </div>
 
           <!-- Gráfico 3: Percentil IV 6M -->
@@ -296,7 +156,9 @@
             <h3 class="text-xl font-bold mb-4 text-center text-orange-400">
               Percentil IV 6M (%)
             </h3>
-            <div id="chart3" class="w-full h-full"></div>
+            <div id="chart3" class="w-full h-full">
+              <div class="loading"><div class="spinner"></div></div>
+            </div>
           </div>
 
           <!-- Gráfico 4: IV vs Volume -->
@@ -304,7 +166,9 @@
             <h3 class="text-xl font-bold mb-4 text-center text-purple-400">
               IV Atual vs Volume Financeiro
             </h3>
-            <div id="chart4" class="w-full h-full"></div>
+            <div id="chart4" class="w-full h-full">
+              <div class="loading"><div class="spinner"></div></div>
+            </div>
           </div>
 
         </div>
@@ -313,7 +177,7 @@
         <div class="mt-6 flex justify-center">
           <button 
             id="refreshBtn"
-            onclick="refreshAllData()" 
+            onclick="loadAndRenderCharts()" 
             class="px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 rounded-lg text-white font-semibold transition-all duration-300 transform hover:scale-105"
           >
             <i class="fas fa-sync-alt mr-2"></i>
@@ -326,521 +190,347 @@
   </div>
 
   <script>
-    // Estado da aplicação
-    let currentData = {};
-    let allStocks = [];
-    let isLoading = false;
+    // Variáveis globais
+    let stocksData = [];
     
-    // API Endpoints
-    const API_BASE = '/api/rank';
+    // Lista de ações com opções (mesma do Python)
+    const optionsStocks = [
+      'ABEV3', 'ALOS3', 'ASAI3', 'AURE3', 'AZUL4', 'AZZA3', 'B3SA3', 'BBAS3', 
+      'BBDC3', 'BBDC4', 'BBSE3', 'BEEF3', 'BPAC11', 'BRAP4', 'BRAV3', 'BRFS3', 
+      'BRKM5', 'CMIG4', 'CMIN3', 'COGN3', 'CPFE3', 'CPLE6', 'CSAN3', 'CSNA3', 
+      'CVCB3', 'CXSE3', 'CYRE3', 'DIRR3', 'EGIE3', 'ELET3', 'ELET6', 'EMBR3', 
+      'ENEV3', 'ENGI11', 'EQTL3', 'FLRY3', 'GGBR4', 'GOAU4', 'HAPV3', 'HYPE3', 
+      'IGTI11', 'IRBR3', 'ISAE4', 'ITSA4', 'ITUB4', 'KLBN11', 'LREN3', 'MGLU3', 
+      'MOTV3', 'MRFG3', 'MRVE3', 'MULT3', 'NATU3', 'PCAR3', 'PETR3', 'PETR4', 
+      'PETZ3', 'POMO4', 'PRIO3', 'PSSA3', 'RADL3', 'RAIL3', 'RAIZ4', 'RDOR3', 
+      'RECV3', 'RENT3', 'SANB11', 'SBSP3', 'SLCE3', 'SMFT3', 'SMTO3', 'STBP3', 
+      'SUZB3', 'TAEE11', 'TIMS3', 'TOTS3', 'UGPA3', 'USIM5', 'VALE3', 'VAMO3', 
+      'VBBR3', 'VIVA3', 'VIVT3', 'WEGE3', 'YDUQ3'
+    ];
+    
+    // Função de debug
+    function debug(message) {
+      console.log(message);
+      const debugEl = document.getElementById('debug');
+      debugEl.innerHTML += message + '<br>';
+      debugEl.scrollTop = debugEl.scrollHeight;
+    }
     
     // Inicialização
     document.addEventListener('DOMContentLoaded', function() {
-      console.log('🚀 Ranking Volatilidade Implícita carregado');
-      loadInitialData();
-      checkApiHealth();
+      debug('🚀 Iniciando aplicação...');
+      debug(`📋 ${optionsStocks.length} ações monitoradas`);
+      loadAndRenderCharts();
     });
     
-    // Verificar saúde da API
-    async function checkApiHealth() {
+    // Carregar dados da API - REPLICANDO EXATAMENTE O PYTHON
+    async function loadAndRenderCharts() {
       try {
-        const response = await fetch(`${API_BASE}/health`);
-        const data = await response.json();
+        debug('🔄 Carregando dados da API...');
         
-        const statusEl = document.getElementById('apiStatus');
-        if (data.status === 'OK') {
-          statusEl.className = 'w-8 h-8 bg-green-500 bg-opacity-10 border border-green-500 border-opacity-30 rounded-full flex items-center justify-center relative';
-          console.log('✅ API funcionando:', data.message);
+        // Chamar a API que já existe
+        const response = await fetch('/api/rank/iv-ranking?top_n=20');
+        const apiData = await response.json();
+        
+        debug(`📡 API Response: ${response.status}`);
+        
+        if (!apiData.success) {
+          throw new Error(apiData.error || 'Erro na API');
+        }
+        
+        // Extrair dados - múltiplas tentativas como Python
+        let rawData = null;
+        if (apiData.rankings && apiData.rankings.iv_atual) {
+          rawData = apiData.rankings.iv_atual;
+          debug('✅ Usando dados de rankings.iv_atual');
+        } else if (apiData.all_stocks) {
+          rawData = apiData.all_stocks.slice(0, 20);
+          debug('✅ Usando dados de all_stocks');
+        } else if (Array.isArray(apiData.data)) {
+          rawData = apiData.data;
+          debug('✅ Usando dados diretos');
         } else {
-          statusEl.className = 'w-8 h-8 bg-red-500 bg-opacity-10 border border-red-500 border-opacity-30 rounded-full flex items-center justify-center relative';
-        }
-      } catch (error) {
-        console.error('❌ Erro API:', error);
-        const statusEl = document.getElementById('apiStatus');
-        statusEl.className = 'w-8 h-8 bg-red-500 bg-opacity-10 border border-red-500 border-opacity-30 rounded-full flex items-center justify-center relative';
-      }
-    }
-    
-    // Carregar dados iniciais
-    async function loadInitialData() {
-      if (isLoading) return;
-      
-      try {
-        isLoading = true;
-        
-        console.log('🔄 Carregando dados iniciais...');
-        
-        await Promise.all([
-          loadTopIV('alta'),
-          loadTopIV('baixa'),
-          loadRankingData()
-        ]);
-        
-        renderCharts();
-        console.log('✅ Dados carregados');
-      } catch (error) {
-        console.error('❌ Erro ao carregar dados:', error);
-        showError('Erro ao carregar dados. Tente novamente.');
-      } finally {
-        isLoading = false;
-      }
-    }
-    
-    // Carregar Top 5 IV
-    async function loadTopIV(tipo) {
-      try {
-        const response = await fetch(`${API_BASE}/top-iv?tipo=${tipo}&quantidade=5`);
-        const data = await response.json();
-        
-        if (data.success) {
-          renderTopIV(tipo, data.top_acoes);
-        } else {
-          console.error(`Erro top IV ${tipo}:`, data.error);
-        }
-      } catch (error) {
-        console.error(`Erro ao carregar top IV ${tipo}:`, error);
-        const containerId = tipo === 'alta' ? 'topIvAlta' : 'topIvBaixa';
-        document.getElementById(containerId).innerHTML = '<p class="text-red-400">Erro ao carregar dados</p>';
-      }
-    }
-    
-    // Carregar dados de ranking
-    async function loadRankingData() {
-      try {
-        // AQUI: Carrega 150 ações para busca, mas gráficos usam só 20
-        const response = await fetch(`${API_BASE}/iv-ranking?top_n=20&limit=150`);
-        const data = await response.json();
-        
-        if (data.success) {
-          currentData = data;
-          // USAR TODOS OS DADOS para busca (all_stocks se existir, senão usar rankings)
-          allStocks = data.all_stocks || data.rankings?.iv_atual || [];
-          console.log(`📊 ${allStocks.length} ações carregadas para busca (gráficos usam top 20)`);
-          
-          // IMPORTANTE: Garantir que temos dados para os gráficos
-          if (!data.rankings?.iv_atual || data.rankings.iv_atual.length === 0) {
-            console.log('⚠️ Usando all_stocks para gráficos também');
-            // Se não temos rankings separados, usar os primeiros 20 de all_stocks
-            currentData.rankings = {
-              iv_atual: allStocks.slice(0, 20)
-            };
-          }
-        } else {
-          console.error('Erro ranking:', data.error);
-          allStocks = [];
-        }
-      } catch (error) {
-        console.error('Erro ao carregar ranking:', error);
-        allStocks = [];
-      }
-    }
-    
-    // Renderizar Top 5 IV
-    function renderTopIV(tipo, acoes) {
-      const containerId = tipo === 'alta' ? 'topIvAlta' : 'topIvBaixa';
-      const container = document.getElementById(containerId);
-      
-      if (!acoes || acoes.length === 0) {
-        container.innerHTML = '<p class="text-gray-500">Nenhum dado disponível</p>';
-        return;
-      }
-      
-      const colorClass = tipo === 'alta' ? 'text-red-400' : 'text-green-400';
-      
-      container.innerHTML = acoes.map((acao, index) => `
-        <div class="flex items-center justify-between p-3 bg-white bg-opacity-5 rounded-lg hover:bg-opacity-10 transition-colors cursor-pointer" onclick="showStockDetails('${acao.symbol}')">
-          <div class="flex items-center gap-3">
-            <div class="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center font-bold text-sm">
-              ${index + 1}
-            </div>
-            <div>
-              <div class="font-semibold text-white">${acao.symbol}</div>
-              <div class="text-xs text-gray-400">${acao.name || 'N/A'}</div>
-            </div>
-          </div>
-          <div class="text-right">
-            <div class="font-bold ${colorClass}">${acao.iv_current?.toFixed(2) || '0.00'}%</div>
-            <div class="text-xs text-gray-400">R$ ${(acao.close || 0).toFixed(2)}</div>
-          </div>
-        </div>
-      `).join('');
-    }
-    
-    // Buscar ação (enquanto digita) - CORRIGIDO
-    function searchStock(event) {
-      const query = event.target.value.trim().toUpperCase();
-      const resultsContainer = document.getElementById('searchResults');
-      
-      if (query.length < 2) {
-        resultsContainer.innerHTML = '';
-        return;
-      }
-
-      // Verificar se temos dados carregados
-      if (!allStocks || allStocks.length === 0) {
-        resultsContainer.innerHTML = '<p class="text-yellow-400">⚠️ Dados ainda carregando...</p>';
-        return;
-      }
-
-      const results = allStocks.filter(stock => 
-        stock.symbol.includes(query) || (stock.name && stock.name.toUpperCase().includes(query))
-      );
-
-      if (results.length === 0) {
-        resultsContainer.innerHTML = `<p class="text-gray-400">Nenhuma ação encontrada para "${query}"</p>`;
-        return;
-      }
-
-      resultsContainer.innerHTML = results.slice(0, 5).map(stock => `
-        <div class="search-result" onclick="selectStock('${stock.symbol}')">
-          <div class="flex justify-between items-center">
-            <div>
-              <div class="font-semibold text-white">${stock.symbol}</div>
-              <div class="text-sm text-gray-400">${stock.name || 'N/A'}</div>
-            </div>
-            <div class="text-right">
-              <div class="font-bold text-purple-400">${stock.iv_current?.toFixed(2) || '0.00'}%</div>
-              <div class="text-xs text-gray-400">R$ ${(stock.close || 0).toFixed(2)}</div>
-            </div>
-          </div>
-        </div>
-      `).join('');
-    }
-
-    // Selecionar ação da lista - NOVO
-    function selectStock(symbol) {
-      document.getElementById('searchInput').value = symbol;
-      document.getElementById('searchResults').innerHTML = '';
-      showStockDetails(symbol);
-    }
-
-    // Buscar ação específica (botão) - CORRIGIDO
-    function searchAndShowStock() {
-      const query = document.getElementById('searchInput').value.trim().toUpperCase();
-      const analyzeBtn = document.getElementById('analyzeBtn');
-      
-      if (!query) {
-        showError('Digite o código de uma ação');
-        return;
-      }
-      
-      // Loading no botão
-      analyzeBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Analisando...';
-      analyzeBtn.disabled = true;
-      
-      try {
-        // Verificar se temos dados carregados
-        if (!allStocks || allStocks.length === 0) {
-          showError('Dados não carregados ainda. Aguarde...');
-          return;
+          throw new Error('Estrutura de dados não reconhecida');
         }
         
-        // Busca exata primeiro
-        let stock = allStocks.find(s => s.symbol === query);
-        
-        if (stock) {
-          showStockDetails(stock.symbol);
-          document.getElementById('searchResults').innerHTML = '';
-          return;
+        if (!rawData || rawData.length === 0) {
+          throw new Error('Nenhum dado retornado');
         }
         
-        // Busca parcial
-        const partialResults = allStocks.filter(s => 
-          s.symbol.includes(query) || (s.name && s.name.toUpperCase().includes(query))
-        );
+        // Processar dados EXATAMENTE como Python
+        stocksData = processStocksData(rawData);
+        debug(`✅ ${stocksData.length} ações processadas`);
         
-        if (partialResults.length === 1) {
-          showStockDetails(partialResults[0].symbol);
-          document.getElementById('searchResults').innerHTML = '';
-        } else if (partialResults.length > 1) {
-          // Mostrar opções na busca
-          const resultsContainer = document.getElementById('searchResults');
-          resultsContainer.innerHTML = `
-            <div class="mb-2">
-              <p class="text-yellow-400">Encontradas ${partialResults.length} ações com "${query}". Selecione uma:</p>
-            </div>
-            ${partialResults.slice(0, 5).map(stock => `
-              <div class="search-result" onclick="selectStock('${stock.symbol}')">
-                <div class="flex justify-between items-center">
-                  <div>
-                    <div class="font-semibold text-white">${stock.symbol}</div>
-                    <div class="text-sm text-gray-400">${stock.name || 'N/A'}</div>
-                  </div>
-                  <div class="text-right">
-                    <div class="font-bold text-purple-400">${stock.iv_current?.toFixed(2) || '0.00'}%</div>
-                    <div class="text-xs text-gray-400">R$ ${(stock.close || 0).toFixed(2)}</div>
-                  </div>
-                </div>
-              </div>
-            `).join('')}
-          `;
-        } else {
-          showError(`Ação "${query}" não encontrada`);
-        }
+        // Renderizar gráficos
+        renderAllCharts();
         
       } catch (error) {
-        console.error('Erro na busca:', error);
-        showError('Erro na busca. Tente novamente.');
-      } finally {
-        // Restaurar botão
-        setTimeout(() => {
-          analyzeBtn.innerHTML = '<i class="fas fa-search mr-1"></i> Analisar';
-          analyzeBtn.disabled = false;
-        }, 500);
+        debug(`❌ Erro: ${error.message}`);
+        showError(error.message);
       }
     }
     
-    // Mostrar detalhes da ação - MELHORADO
-    function showStockDetails(symbol) {
-      const stock = allStocks.find(s => s.symbol === symbol);
-      const container = document.getElementById('stockDetails');
-      
-      if (!stock) {
-        container.innerHTML = '<p class="text-red-400">❌ Ação não encontrada nos dados carregados</p>';
-        return;
+    // Função para limpar e validar valores numéricos
+    function cleanNumericValue(value) {
+      if (value === null || value === undefined || value === '' || isNaN(value)) {
+        return 0;
       }
-
-      const analysis = getAnalysis(stock);
-      const posicao = allStocks.findIndex(s => s.symbol === symbol) + 1;
-
-      container.innerHTML = `
-        <div class="bg-white bg-opacity-5 rounded-lg p-4">
-          <div class="flex justify-between items-center mb-4">
-            <h4 class="text-xl font-bold text-white">${stock.symbol}</h4>
-            <div class="text-right">
-              <span class="text-sm text-gray-400">${stock.name || 'N/A'}</span>
-              <div class="text-xs text-purple-400">#${posicao} no ranking</div>
-            </div>
-          </div>
-          
-          <div class="grid grid-cols-2 gap-4">
-            <div class="text-center">
-              <div class="text-2xl font-bold text-purple-400">${stock.iv_current?.toFixed(2) || '0.00'}%</div>
-              <div class="text-sm text-gray-400">IV Atual</div>
-            </div>
-            <div class="text-center">
-              <div class="text-2xl font-bold text-blue-400">R$ ${(stock.close || 0).toFixed(2)}</div>
-              <div class="text-sm text-gray-400">Preço</div>
-            </div>
-            <div class="text-center">
-              <div class="text-lg font-bold ${(stock.variation || 0) >= 0 ? 'text-green-400' : 'text-red-400'}">${(stock.variation || 0).toFixed(2)}%</div>
-              <div class="text-sm text-gray-400">Variação</div>
-            </div>
-            <div class="text-center">
-              <div class="text-lg font-bold text-orange-400">${stock.iv_6m_percentile?.toFixed(1) || 'N/A'}%</div>
-              <div class="text-sm text-gray-400">Percentil 6M</div>
-            </div>
-          </div>
-
-          <div class="mt-4 p-3 bg-purple-500 bg-opacity-10 border border-purple-500 border-opacity-30 rounded-lg">
-            <p class="text-sm text-purple-300">
-              <i class="fas fa-info-circle mr-2"></i>
-              <strong>Análise:</strong> ${analysis}
-            </p>
-          </div>
-        </div>
-      `;
-
-      console.log(`✅ Detalhes exibidos para ${symbol}`);
+      const num = parseFloat(value);
+      return isNaN(num) ? 0 : num;
     }
     
-    // Análise da ação
-    function getAnalysis(stock) {
-      const iv = stock.iv_current || 0;
-      const percentil = stock.iv_6m_percentile || 0;
+    // Processar dados - REPLICANDO PYTHON COM LIMPEZA DE DADOS
+    function processStocksData(data) {
+      debug('🔧 Processando dados...');
       
-      if (iv > 50 && percentil > 70) {
-        return 'IV alta com percentil elevado - Oportunidade para venda de opções';
-      } else if (iv < 30 && percentil < 30) {
-        return 'IV baixa com percentil baixo - Oportunidade para compra de opções';
-      } else if (iv > 40) {
-        return 'IV elevada - Considerar estratégias de venda';
-      } else {
-        return 'IV moderada - Monitorar tendência';
-      }
-    }
-
-    // Mostrar erro
-    function showError(message) {
-      const container = document.getElementById('stockDetails');
-      container.innerHTML = `<p class="text-red-400">❌ ${message}</p>`;
-    }
-    
-    // Renderizar gráficos
-    function renderCharts() {
-      console.log('🎨 Renderizando gráficos...');
-      console.log('currentData:', currentData);
-      console.log('allStocks length:', allStocks?.length);
-      
-      // Verificar se temos dados nos rankings para gráficos
-      if (!currentData?.rankings?.iv_atual || currentData.rankings.iv_atual.length === 0) {
-        console.log('⚠️ Sem dados no ranking, usando allStocks para gráficos');
-        if (allStocks && allStocks.length > 0) {
-          // Usar os primeiros 20 de allStocks para gráficos
-          const top20ForCharts = allStocks.slice(0, 20);
-          renderChartsWithData(top20ForCharts);
-        } else {
-          console.log('❌ Nenhum dado disponível para gráficos');
-          showNoDataCharts();
-        }
-        return;
-      }
-      
-      // Usar dados do ranking para gráficos (top 20)
-      const top20 = currentData.rankings.iv_atual || [];
-      console.log('📊 Usando ranking data:', top20.length, 'ações');
-      
-      if (top20.length === 0) {
-        console.log('❌ Ranking vazio');
-        showNoDataCharts();
-        return;
-      }
-      
-      renderChartsWithData(top20);
-    }
-    
-    // Função auxiliar para renderizar gráficos com dados
-    function renderChartsWithData(data) {
-      console.log('📊 Renderizando com', data.length, 'ações');
-      
-      // Gráfico 1: IV Atual
-      renderChart1(data);
-      
-      // Gráfico 2: IV Atual vs IV 6M Max
-      renderChart2(data);
-      
-      // Gráfico 3: Percentil IV 6M
-      renderChart3(data);
-      
-      // Gráfico 4: IV vs Volume
-      renderChart4(data);
-    }
-    
-    // Função para mostrar "sem dados" nos gráficos
-    function showNoDataCharts() {
-      ['chart1', 'chart2', 'chart3', 'chart4'].forEach(id => {
-        document.getElementById(id).innerHTML = '<div class="flex items-center justify-center h-full text-gray-400"><i class="fas fa-chart-line mr-2"></i>Carregando dados...</div>';
-      });
-    }
-    
-    // Gráfico 1: IV Atual (barras)
-    function renderChart1(data) {
-      const symbols = data.map(item => item.symbol);
-      const ivValues = data.map(item => item.iv_current || 0);
-      
-      const trace = {
-        x: symbols,
-        y: ivValues,
-        type: 'bar',
-        marker: {
-          color: 'rgba(135, 206, 235, 0.7)',
-          line: {
-            color: 'rgba(135, 206, 235, 1)',
-            width: 1
-          }
-        },
-        text: ivValues.map(v => `${v.toFixed(1)}%`),
-        textposition: 'auto',
-        textfont: {
-          color: 'white'
-        }
-      };
-      
-      const layout = {
-        title: {
-          text: 'Volatilidade Implícita Atual (%)',
-          font: { color: 'white' }
-        },
-        xaxis: {
-          tickangle: -45,
-          color: 'white',
-          gridcolor: 'rgba(255,255,255,0.1)'
-        },
-        yaxis: {
-          title: 'IV Atual (%)',
-          color: 'white',
-          gridcolor: 'rgba(255,255,255,0.1)'
-        },
-        plot_bgcolor: 'rgba(0,0,0,0)',
-        paper_bgcolor: 'rgba(0,0,0,0)',
-        font: { color: 'white' }
-      };
-      
-      Plotly.newPlot('chart1', [trace], layout, {responsive: true});
-    }
-    
-    // Gráfico 2: IV Atual vs IV 6M Max (barras agrupadas)
-    function renderChart2(data) {
-      const symbols = data.map(item => item.symbol);
-      const ivCurrent = data.map(item => item.iv_current || 0);
-      const iv6mMax = data.map(item => item.iv_6m_max || 0);
-      
-      const trace1 = {
-        x: symbols,
-        y: ivCurrent,
-        name: 'IV Atual',
-        type: 'bar',
-        marker: { color: 'rgba(255, 99, 132, 0.7)' }
-      };
-      
-      const trace2 = {
-        x: symbols,
-        y: iv6mMax,
-        name: 'IV 6M Max',
-        type: 'bar',
-        marker: { color: 'rgba(144, 238, 144, 0.7)' }
-      };
-      
-      const layout = {
-        title: {
-          text: 'IV Atual vs IV 6M Máximo',
-          font: { color: 'white' }
-        },
-        xaxis: {
-          tickangle: -45,
-          color: 'white'
-        },
-        yaxis: {
-          title: 'IV (%)',
-          color: 'white'
-        },
-        plot_bgcolor: 'rgba(0,0,0,0)',
-        paper_bgcolor: 'rgba(0,0,0,0)',
-        font: { color: 'white' },
-        legend: { font: { color: 'white' } }
-      };
-      
-      Plotly.newPlot('chart2', [trace1, trace2], layout, {responsive: true});
-    }
-    
-    // Gráfico 3: Percentil IV 6M (barras coloridas)
-    function renderChart3(data) {
-      const symbols = data.map(item => item.symbol);
-      const percentiles = data.map(item => item.iv_6m_percentile || 0);
-      
-      const colors = percentiles.map(p => {
-        if (p > 80) return 'rgba(239, 68, 68, 0.7)';
-        if (p > 60) return 'rgba(245, 158, 11, 0.7)';
-        if (p > 40) return 'rgba(255, 255, 0, 0.7)';
-        return 'rgba(16, 185, 129, 0.7)';
+      // Filtrar apenas ações com opções (como Python)
+      const filtered = data.filter(stock => {
+        return stock.symbol && optionsStocks.includes(stock.symbol);
       });
       
-      const trace = {
-        x: symbols,
-        y: percentiles,
-        type: 'bar',
-        marker: { color: colors },
-        text: percentiles.map(p => `${p.toFixed(1)}%`),
-        textposition: 'auto',
-        textfont: { color: 'white' }
-      };
+      debug(`🔍 ${filtered.length} ações filtradas (com opções)`);
+      
+      // Remover ações sem IV atual (como Python) E LIMPAR DADOS
+      const withIV = filtered.filter(stock => {
+        const iv = cleanNumericValue(stock.iv_current);
+        return iv > 0; // Só aceitar IV > 0
+      }).map(stock => {
+        // LIMPAR TODOS OS VALORES NUMÉRICOS
+        return {
+          ...stock,
+          iv_current: cleanNumericValue(stock.iv_current),
+          iv_6m_max: cleanNumericValue(stock.iv_6m_max),
+          iv_6m_percentile: cleanNumericValue(stock.iv_6m_percentile),
+          financial_volume: cleanNumericValue(stock.financial_volume) || 1, // Mínimo 1 para log
+          close: cleanNumericValue(stock.close),
+          variation: cleanNumericValue(stock.variation)
+        };
+      });
+      
+      debug(`📊 ${withIV.length} ações com IV válida e dados limpos`);
+      
+      // Ordenar por IV atual decrescente (como Python)
+      const sorted = withIV.sort((a, b) => {
+        return b.iv_current - a.iv_current;
+      });
+      
+      // Pegar top 20
+      const top20 = sorted.slice(0, 20);
+      
+      debug(`🏆 Top 20 selecionado`);
+      
+      // Log do primeiro item para debug
+      if (top20.length > 0) {
+        debug(`📋 Primeiro item: ${top20[0].symbol} - IV: ${top20[0].iv_current}%`);
+      }
+      
+      return top20;
+    }
+    
+    // Renderizar todos os gráficos
+    function renderAllCharts() {
+      if (!stocksData || stocksData.length === 0) {
+        showError('Nenhum dado para renderizar');
+        return;
+      }
+      
+      debug('🎨 Renderizando gráficos...');
+      
+      try {
+        renderChart1(); // IV Atual
+        renderChart2(); // IV Atual vs 6M Max
+        renderChart3(); // Percentil IV 6M
+        renderChart4(); // IV vs Volume
+        debug('✅ Todos os gráficos renderizados');
+      } catch (error) {
+        debug(`❌ Erro na renderização: ${error.message}`);
+      }
+    }
+    
+    // Gráfico 1: IV Atual (EXATAMENTE como Python)
+    function renderChart1() {
+      try {
+        const symbols = stocksData.map(item => item.symbol);
+        const ivValues = stocksData.map(item => item.iv_current); // Já está limpo
+        
+        const trace = {
+          x: symbols,
+          y: ivValues,
+          type: 'bar',
+          marker: {
+            color: 'skyblue',
+            opacity: 0.7
+          },
+          text: ivValues.map(v => `${v.toFixed(1)}%`),
+          textposition: 'auto'
+        };
+        
+        const layout = {
+          title: {
+            text: 'Volatilidade Implícita Atual (%)',
+            font: { color: 'white', weight: 'bold' }
+          },
+          xaxis: {
+            title: 'Ações',
+            tickangle: -45,
+            color: 'white',
+            gridcolor: 'rgba(255,255,255,0.1)'
+          },
+          yaxis: {
+            title: 'IV Atual (%)',
+            color: 'white',
+            gridcolor: 'rgba(255,255,255,0.1)'
+          },
+          plot_bgcolor: 'rgba(0,0,0,0)',
+          paper_bgcolor: 'rgba(0,0,0,0)',
+          font: { color: 'white' },
+          margin: { t: 50, b: 80, l: 60, r: 20 }
+        };
+        
+        Plotly.newPlot('chart1', [trace], layout, {responsive: true, displayModeBar: false});
+        debug('✅ Chart1 renderizado');
+      } catch (error) {
+        debug(`❌ Erro Chart1: ${error.message}`);
+        document.getElementById('chart1').innerHTML = '<div class="loading" style="color: #ff6b6b;">❌ Erro no gráfico 1</div>';
+      }
+    }
+    
+    // Gráfico 2: IV Atual vs IV 6M Max (EXATAMENTE como Python)
+    function renderChart2() {
+      try {
+        const symbols = stocksData.map(item => item.symbol);
+        const ivCurrent = stocksData.map(item => item.iv_current); // Já está limpo
+        const iv6mMax = stocksData.map(item => item.iv_6m_max); // Já está limpo
+        
+        const width = 0.35;
+        const x = symbols.map((_, i) => i);
+        
+        const trace1 = {
+          x: x.map(i => i - width/2),
+          y: ivCurrent,
+          name: 'IV Atual',
+          type: 'bar',
+          marker: { color: 'lightcoral', opacity: 0.7 },
+          width: width
+        };
+        
+        const trace2 = {
+          x: x.map(i => i + width/2),
+          y: iv6mMax,
+          name: 'IV 6M Max',
+          type: 'bar',
+          marker: { color: 'lightgreen', opacity: 0.7 },
+          width: width
+        };
+        
+        const layout = {
+          title: {
+            text: 'IV Atual vs IV 6M Máximo',
+            font: { color: 'white', weight: 'bold' }
+          },
+          xaxis: {
+            title: 'Ações',
+            tickvals: x,
+            ticktext: symbols,
+            tickangle: -45,
+            color: 'white',
+            gridcolor: 'rgba(255,255,255,0.1)'
+          },
+          yaxis: {
+            title: 'IV (%)',
+            color: 'white',
+            gridcolor: 'rgba(255,255,255,0.1)'
+          },
+          plot_bgcolor: 'rgba(0,0,0,0)',
+          paper_bgcolor: 'rgba(0,0,0,0)',
+          font: { color: 'white' },
+          legend: { font: { color: 'white' } },
+          margin: { t: 50, b: 80, l: 60, r: 20 }
+        };
+        
+        Plotly.newPlot('chart2', [trace1, trace2], layout, {responsive: true, displayModeBar: false});
+        debug('✅ Chart2 renderizado');
+      } catch (error) {
+        debug(`❌ Erro Chart2: ${error.message}`);
+        document.getElementById('chart2').innerHTML = '<div class="loading" style="color: #ff6b6b;">❌ Erro no gráfico 2</div>';
+      }
+    }
+    
+    // Gráfico 3: Percentil IV 6M (EXATAMENTE como Python)
+    function renderChart3() {
+      try {
+        const symbols = stocksData.map(item => item.symbol);
+        const percentiles = stocksData.map(item => item.iv_6m_percentile); // Já está limpo
+        
+        // Cores baseadas no percentil (como Python)
+        const colors = percentiles.map(p => {
+          if (p > 80) return 'red';
+          if (p > 60) return 'orange';
+          if (p > 40) return 'yellow';
+          return 'lightgreen';
+        });
+        
+        const trace = {
+          x: symbols,
+          y: percentiles,
+          type: 'bar',
+          marker: {
+            color: colors,
+            opacity: 0.7
+          }
+        };
+        
+        const layout = {
+          title: {
+            text: 'Percentil IV 6M (%)',
+            font: { color: 'white', weight: 'bold' }
+          },
+          xaxis: {
+            title: 'Ações',
+            tickangle: -45,
+            color: 'white',
+            gridcolor: 'rgba(255,255,255,0.1)'
+          },
+          yaxis: {
+            title: 'Percentil (%)',
+            color: 'white',
+            gridcolor: 'rgba(255,255,255,0.1)'
+          },
+          plot_bgcolor: 'rgba(0,0,0,0)',
+          paper_bgcolor: 'rgba(0,0,0,0)',
+          font: { color: 'white' },
+          shapes: [
+            {
+              type: 'line',
+              x0: 0, x1: 1, xref: 'paper',
+              y0: 80, y1: 80,
+              line: { color: 'red', width: 2, dash: 'dash' }
+            },
+            {
+              type: 'line',
+              x0: 0, x1: 1, xref: 'paper',
+              y0: 20, y1: 20,
+              line: { color: 'green', width: 2, dash: 'dash' }
+            }
+          ],
+          margin: { t: 50, b: 80, l: 60, r: 20 }
+        };
+        
+        Plotly.newPlot('chart3', [trace], layout, {responsive: true, displayModeBar: false});
+        debug('✅ Chart3 renderizado');
+      } catch (error) {
+        debug(`❌ Erro Chart3: ${error.message}`);
+        document.getElementById('chart3').innerHTML = '<div class="loading" style="color: #ff6b6b;">❌ Erro no gráfico 3</div>';
+      }
+    }
       
       const layout = {
         title: {
           text: 'Percentil IV 6M (%)',
-          font: { color: 'white' }
+          font: { color: 'white', weight: 'bold' }
         },
         xaxis: {
+          title: 'Ações',
           tickangle: -45,
           color: 'white'
         },
@@ -854,135 +544,123 @@
         shapes: [
           {
             type: 'line',
-            x0: 0,
-            x1: 1,
-            xref: 'paper',
-            y0: 80,
-            y1: 80,
+            x0: 0, x1: 1, xref: 'paper',
+            y0: 80, y1: 80,
             line: { color: 'red', width: 2, dash: 'dash' }
           },
           {
             type: 'line',
-            x0: 0,
-            x1: 1,
-            xref: 'paper',
-            y0: 20,
-            y1: 20,
+            x0: 0, x1: 1, xref: 'paper',
+            y0: 20, y1: 20,
             line: { color: 'green', width: 2, dash: 'dash' }
           }
-        ]
+        ],
+        margin: { t: 50, b: 80, l: 60, r: 20 }
       };
       
       Plotly.newPlot('chart3', [trace], layout, {responsive: true});
-    }
     
-    // Gráfico 4: IV vs Volume (scatter)
-    function renderChart4(data) {
-      const volumes = data.map(item => item.financial_volume || 0);
-      const ivValues = data.map(item => item.iv_current || 0);
-      const symbols = data.map(item => item.symbol);
-      
-      const trace = {
-        x: volumes,
-        y: ivValues,
-        mode: 'markers+text',
-        type: 'scatter',
-        marker: {
-          color: 'rgba(128, 0, 128, 0.6)',
-          size: 10,
-          line: {
-            color: 'rgba(128, 0, 128, 1)',
-            width: 2
-          }
-        },
-        text: symbols,
-        textposition: 'top center',
-        textfont: { color: 'white', size: 10 }
-      };
-      
-      const layout = {
-        title: {
-          text: 'IV Atual vs Volume Financeiro',
-          font: { color: 'white' }
-        },
-        xaxis: {
-          title: 'Volume Financeiro (R$)',
-          type: 'log',
-          color: 'white',
-          gridcolor: 'rgba(255,255,255,0.1)'
-        },
-        yaxis: {
-          title: 'IV Atual (%)',
-          color: 'white',
-          gridcolor: 'rgba(255,255,255,0.1)'
-        },
-        plot_bgcolor: 'rgba(0,0,0,0)',
-        paper_bgcolor: 'rgba(0,0,0,0)',
-        font: { color: 'white' }
-      };
-      
-      Plotly.newPlot('chart4', [trace], layout, {responsive: true});
-    }
     
-    // Atualizar todos os dados - CORRIGIDO
-    async function refreshAllData() {
-      if (isLoading) {
-        console.log('⚠️ Já está carregando...');
-        return;
-      }
-      
-      console.log('🔄 Atualizando dados...');
-      
-      const refreshBtn = document.getElementById('refreshBtn');
-      const refreshText = document.getElementById('refreshText');
-      
-      // Estado loading do botão
-      refreshBtn.disabled = true;
-      refreshBtn.classList.add('btn-loading');
-      refreshText.innerHTML = 'Atualizando...';
-      refreshBtn.querySelector('i').classList.add('fa-spin');
-      
+    // Gráfico 4: IV vs Volume (EXATAMENTE como Python)
+    function renderChart4() {
       try {
-        // Mostrar loading nos gráficos
-        ['chart1', 'chart2', 'chart3', 'chart4'].forEach(id => {
-          document.getElementById(id).innerHTML = '<div class="loading"><div class="spinner"></div></div>';
-        });
+        const volumes = stocksData.map(item => item.financial_volume); // Já está limpo (mínimo 1)
+        const ivValues = stocksData.map(item => item.iv_current); // Já está limpo
+        const symbols = stocksData.map(item => item.symbol);
         
-        // Mostrar loading nos cards top 5
-        ['topIvAlta', 'topIvBaixa'].forEach(id => {
-          document.getElementById(id).innerHTML = '<div class="loading"><div class="spinner"></div></div>';
-        });
+        const trace = {
+          x: volumes,
+          y: ivValues,
+          mode: 'markers+text',
+          type: 'scatter',
+          marker: {
+            color: 'purple',
+            size: 10,
+            opacity: 0.6
+          },
+          text: symbols,
+          textposition: 'top center',
+          textfont: { color: 'white', size: 8 }
+        };
         
-        // Limpar detalhes da ação
-        document.getElementById('stockDetails').innerHTML = '<p class="text-gray-400">Dados sendo atualizados...</p>';
+        const layout = {
+          title: {
+            text: 'IV Atual vs Volume Financeiro',
+            font: { color: 'white', weight: 'bold' }
+          },
+          xaxis: {
+            title: 'Volume Financeiro (R$)',
+            type: 'log',
+            color: 'white',
+            gridcolor: 'rgba(255,255,255,0.1)'
+          },
+          yaxis: {
+            title: 'IV Atual (%)',
+            color: 'white',
+            gridcolor: 'rgba(255,255,255,0.1)'
+          },
+          plot_bgcolor: 'rgba(0,0,0,0)',
+          paper_bgcolor: 'rgba(0,0,0,0)',
+          font: { color: 'white' },
+          margin: { t: 50, b: 80, l: 60, r: 20 }
+        };
         
-        // Recarregar dados
-        await loadInitialData();
-        
-        console.log('✅ Dados atualizados com sucesso');
-        
-        // Feedback visual de sucesso
-        refreshText.innerHTML = 'Atualizado!';
-        setTimeout(() => {
-          refreshText.innerHTML = 'Atualizar Dados';
-        }, 2000);
-        
+        Plotly.newPlot('chart4', [trace], layout, {responsive: true, displayModeBar: false});
+        debug('✅ Chart4 renderizado');
       } catch (error) {
-        console.error('❌ Erro na atualização:', error);
-        refreshText.innerHTML = 'Erro - Tente novamente';
+        debug(`❌ Erro Chart4: ${error.message}`);
+        document.getElementById('chart4').innerHTML = '<div class="loading" style="color: #ff6b6b;">❌ Erro no gráfico 4</div>';
+      }
+    }
+    
+    // Atualizar botão
+    function updateButtonState(loading) {
+      const btn = document.getElementById('refreshBtn');
+      const text = document.getElementById('refreshText');
+      const icon = btn.querySelector('i');
+      
+      if (loading) {
+        btn.disabled = true;
+        btn.classList.add('btn-loading');
+        text.innerHTML = 'Carregando...';
+        if (icon) icon.classList.add('fa-spin');
+      } else {
+        btn.disabled = false;
+        btn.classList.remove('btn-loading');
+        text.innerHTML = 'Atualizar Dados';
+        if (icon) icon.classList.remove('fa-spin');
+      }
+    }
+    
+    // Mostrar erro
+    function showError(message) {
+      ['chart1', 'chart2', 'chart3', 'chart4'].forEach(id => {
+        document.getElementById(id).innerHTML = `<div class="loading" style="color: #ff6b6b;">❌ ${message}</div>`;
+      });
+    }
+    
+    // Função de debug
+    function debug(message) {
+      console.log(message);
+    }
+    
+    // Verificar saúde da API
+    async function checkApiHealth() {
+      try {
+        const response = await fetch('/api/rank/health');
+        const data = await response.json();
         
-        // Restaurar após erro
-        setTimeout(() => {
-          refreshText.innerHTML = 'Atualizar Dados';
-        }, 3000);
-        
-      } finally {
-        // Restaurar botão
-        setTimeout(() => {
-          refreshBtn.disabled = false;
-          refreshBtn.classList.remove('btn-loading');
-          refreshBtn.querySelector('i').classList.remove('fa-spin');
-        }, 1000);
+        const statusEl = document.getElementById('apiStatus');
+        if (data.status === 'OK') {
+          statusEl.className = 'w-8 h-8 bg-green-500 bg-opacity-10 border border-green-500 border-opacity-30 rounded-full flex items-center justify-center relative';
+          debug('✅ API funcionando: ' + data.message);
+        } else {
+          statusEl.className = 'w-8 h-8 bg-red-500 bg-opacity-10 border border-red-500 border-opacity-30 rounded-full flex items-center justify-center relative';
+        }
+      } catch (error) {
+        debug('❌ Erro API: ' + error.message);
+        const statusEl = document.getElementById('apiStatus');
+        statusEl.className = 'w-8 h-8 bg-red-500 bg-opacity-10 border border-red-500 border-opacity-30 rounded-full flex items-center justify-center relative';
       }
     }
   </script>
