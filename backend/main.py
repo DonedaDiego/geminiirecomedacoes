@@ -15,7 +15,7 @@ from carteiras.recommendation_opcoes_routes import get_opcoes_recommendations_bl
 from gratis.beta_routes import beta_bp
 from gratis.rsl_routes import get_rsl_blueprint
 from gratis.amplitude_routes import amplitude_bp
-
+from gratis.formula_routes import formula_bp
 from gratis.carrossel_yfinance_routes import get_carrossel_blueprint
 
 
@@ -32,6 +32,8 @@ from pro.bandas_pro_routes import get_bandas_pro_blueprint
 from pro.vi_routes import get_vi_blueprint
 from pro.vol_regimes_routes import vol_regimes_bp
 from pro.regimes_volatilidade_routes import regimes_bp
+from pro.antifragil_routes import antifragil_bp
+
 
 ## premium
 from premium.swing_trade_ml_routes import get_swing_trade_ml_blueprint
@@ -187,6 +189,8 @@ app.register_blueprint(get_bandas_pro_blueprint())
 vi_bp = get_vi_blueprint()
 app.register_blueprint(vi_bp)
 app.register_blueprint(regimes_bp, url_prefix='/api/regimes')
+app.register_blueprint(formula_bp)
+app.register_blueprint(antifragil_bp)
 
 CORS(app, 
      origins=['*'],
@@ -437,6 +441,17 @@ def regimes():
 @app.route('/vi-pro.html')
 def vi_pro_page():
     return send_from_directory('../frontend', 'vi-pro.html')
+
+@app.route('/formula')
+@app.route('/formula.html')
+def formual_page():
+    return send_from_directory('../frontend', 'formula.html')
+
+
+@app.route('/antifragil')
+@app.route('/antifragil.html')
+def antifragil_page():
+    return send_from_directory('../frontend', 'antifragil.html')
 
 
 
