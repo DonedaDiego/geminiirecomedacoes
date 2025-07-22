@@ -275,7 +275,7 @@
           </div>
           
           <div class="flex flex-col gap-3">
-            <a href="planos.html" id="upgradeButton" class="btn-primary px-6 py-3 rounded-xl font-semibold inline-block text-center">
+            <a href="https://geminii.com.br/pagamentos-app" id="upgradeButton" class="btn-primary px-6 py-3 rounded-xl font-semibold inline-block text-center" target="_blank">
               <i class="fas fa-crown mr-2"></i>Fazer Upgrade
             </a>
           </div>
@@ -826,7 +826,69 @@
         </div>
       `;
       
-      // CARD 2: PRO - MANTÉM IGUAL (já está correto)
+      // CARD 2: ANÁLISE TÉCNICA CLÁSSICA (GRÁTIS) - NOVO CARD
+      cardsHTML += `
+        <div class="relative">
+          <div 
+            onclick="toggleAnaliseTecnicaDropdown()"
+            class="bg-gradient-to-r from-blue-500/10 to-blue-500/5 hover:from-blue-500/20 hover:to-blue-500/10 border border-blue-500/20 rounded-xl p-4 transition-all group cursor-pointer relative"
+          >
+            <div class="flex items-center gap-3">
+              <div class="w-12 h-12 bg-blue-500/20 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                <i class="fas fa-chart-line text-blue-400 text-lg"></i>
+              </div>
+              <div class="flex-1">
+                <h3 class="font-semibold text-white">Análise Técnica Clássica</h3>
+                <p class="text-sm text-gray-300">Indicadores Tradicionais</p>
+              </div>
+              <i class="fas fa-chevron-down text-gray-400 transition-transform duration-300" id="analiseTecnicaChevron"></i>
+            </div>
+            <span class="absolute top-3 right-3 bg-green-500 text-white text-xs px-2 py-1 rounded-full font-bold">GRÁTIS</span>
+          </div>
+          
+          <div id="analiseTecnicaDropdown" class="dropdown">
+            <div class="grid grid-cols-1 gap-2">
+              <div onclick="showUpgradeDialog('Momentum', 'FREE')" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white cursor-pointer">
+                <i class="fas fa-rocket text-purple-400 w-5"></i>
+                <div class="flex-1">
+                  <div class="font-medium">Momentum</div>
+                  <div class="text-xs text-gray-400">Análise de momentum clássica</div>
+                </div>
+                <span class="bg-red-600 text-white text-xs px-2 py-1 rounded-full font-bold">EM BREVE</span>
+              </div>
+              
+              <div onclick="showUpgradeDialog('Fórmula Mágica Joel Greenblatt', 'FREE')" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white cursor-pointer">
+                <i class="fas fa-magic text-yellow-400 w-5"></i>
+                <div class="flex-1">
+                  <div class="font-medium">Fórmula Mágica Joel Greenblatt</div>
+                  <div class="text-xs text-gray-400">Value investing estratégia</div>
+                </div>
+                <span class="bg-red-600 text-white text-xs px-2 py-1 rounded-full font-bold">EM BREVE</span>
+              </div>
+              
+              <div onclick="showUpgradeDialog('Inside Bar', 'FREE')" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white cursor-pointer">
+                <i class="fas fa-compress-alt text-green-400 w-5"></i>
+                <div class="flex-1">
+                  <div class="font-medium">Inside Bar</div>
+                  <div class="text-xs text-gray-400">Padrão de consolidação</div>
+                </div>
+                <span class="bg-red-600 text-white text-xs px-2 py-1 rounded-full font-bold">EM BREVE</span>
+              </div>
+              
+              <div onclick="showUpgradeDialog('Golden Cross', 'FREE')" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white cursor-pointer">
+                <i class="fas fa-plus text-orange-400 w-5"></i>
+                <div class="flex-1">
+                  <div class="font-medium">Golden Cross</div>
+                  <div class="text-xs text-gray-400">Cruzamento de médias móveis</div>
+                </div>
+                <span class="bg-red-600 text-white text-xs px-2 py-1 rounded-full font-bold">EM BREVE</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+      
+      // CARD 3: PRO - MANTÉM IGUAL (já está correto)
       if (userAccessLevel === 'PRO' || userAccessLevel === 'PREMIUM') {
         cardsHTML += `
           <div class="relative">
@@ -886,7 +948,7 @@
         `;
       }
       
-      // CARD 3: OPÇÕES PRO - MANTÉM IGUAL (já está correto)
+      // CARD 4: OPÇÕES PRO - MANTÉM IGUAL (já está correto)
       if (userAccessLevel === 'PRO' || userAccessLevel === 'PREMIUM') {
         cardsHTML += `
           <div class="relative">
@@ -962,74 +1024,82 @@
         `;
       }
       
-      // 🔥 CARD 4: SMART CARTEIRAS (PREMIUM) - CORRIGIDO!
-      if (userAccessLevel === 'PREMIUM') {
-        // ✅ TEM ACESSO - LINK DIRETO (não chama showUpgradeDialog)
+      // CARD 5: ANÁLISE PAPÉIS AMERICANOS (PRO) - NOVO CARD
+      if (userAccessLevel === 'PRO' || userAccessLevel === 'PREMIUM') {
         cardsHTML += `
-          <a href="analises.html" class="bg-gradient-to-r from-primary/10 to-primary/5 hover:from-primary/20 hover:to-primary/10 border border-primary/20 rounded-xl p-4 transition-all group cursor-pointer relative block">
-            <div class="flex items-center gap-3">
-              <div class="w-12 h-12 bg-primary/20 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
-                <i class="fa-solid fa-square-poll-vertical" style="color: #B197FC;"></i>
+          <div class="relative">
+            <div 
+              onclick="toggleAmericanosDropdown()"
+              class="bg-gradient-to-r from-red-500/10 to-red-500/5 hover:from-red-500/20 hover:to-red-500/10 border border-red-500/20 rounded-xl p-4 transition-all group cursor-pointer relative"
+            >
+              <div class="flex items-center gap-3">
+                <div class="w-12 h-12 bg-red-500/20 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <i class="fas fa-flag-usa text-red-400 text-lg"></i>
+                </div>
+                <div class="flex-1">
+                  <h3 class="font-semibold text-white">Análise Papéis Americanos</h3>
+                  <p class="text-sm text-gray-300">Mercado US + IA</p>
+                </div>
+                <i class="fas fa-chevron-down text-gray-400 transition-transform duration-300" id="americanosChevron"></i>
               </div>
-              <div>
-                <h3 class="font-semibold text-white">Smart Carteiras</h3>
-                <p class="text-sm text-gray-300">Análises especializadas com ML</p>
+              <span class="absolute top-3 right-3 bg-warning text-white text-xs px-2 py-1 rounded-full font-bold">PRO</span>
+            </div>
+            
+            <div id="americanosDropdown" class="dropdown">
+              <div class="grid grid-cols-1 gap-2">
+                <div onclick="showUpgradeDialog('Golden Cross US', 'PRO')" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white cursor-pointer">
+                  <i class="fas fa-plus text-orange-400 w-5"></i>
+                  <div class="flex-1">
+                    <div class="font-medium">Golden Cross US</div>
+                    <div class="text-xs text-gray-400">Cruzamento médias móveis - Nasdaq</div>
+                  </div>
+                  <span class="bg-red-600 text-white text-xs px-2 py-1 rounded-full font-bold">EM BREVE</span>
+                </div>
+                
+                <div onclick="showUpgradeDialog('Momentum US', 'PRO')" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white cursor-pointer">
+                  <i class="fas fa-rocket text-purple-400 w-5"></i>
+                  <div class="flex-1">
+                    <div class="font-medium">Momentum US</div>
+                    <div class="text-xs text-gray-400">Análise momentum S&P 500</div>
+                  </div>
+                  <span class="bg-red-600 text-white text-xs px-2 py-1 rounded-full font-bold">EM BREVE</span>
+                </div>
+                
+                <div onclick="showUpgradeDialog('Value Screening', 'PRO')" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white cursor-pointer">
+                  <i class="fas fa-search text-green-400 w-5"></i>
+                  <div class="flex-1">
+                    <div class="font-medium">Value Screening</div>
+                    <div class="text-xs text-gray-400">Scanner de valor US</div>
+                  </div>
+                  <span class="bg-red-600 text-white text-xs px-2 py-1 rounded-full font-bold">EM BREVE</span>
+                </div>
+                
+                <div onclick="showUpgradeDialog('Trend Following', 'PRO')" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white cursor-pointer">
+                  <i class="fas fa-chart-line text-blue-400 w-5"></i>
+                  <div class="flex-1">
+                    <div class="font-medium">Trend Following</div>
+                    <div class="text-xs text-gray-400">Seguimento de tendência US</div>
+                  </div>
+                  <span class="bg-red-600 text-white text-xs px-2 py-1 rounded-full font-bold">EM BREVE</span>
+                </div>
               </div>
             </div>
-            <span class="absolute top-3 right-3 bg-secondary text-white text-xs px-2 py-1 rounded-full font-bold">PREMIUM</span>
-          </a>
-        `;
-      } else {
-        // ❌ NÃO TEM ACESSO - CARD DESABILITADO
-        cardsHTML += `
-          <div onclick="showUpgradeDialog('Smart Carteiras', 'PREMIUM')" class="bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20 rounded-xl p-4 transition-all group cursor-pointer relative card-disabled">
-            <div class="flex items-center gap-3">
-              <div class="w-12 h-12 bg-primary/20 rounded-lg flex items-center justify-center">
-                <i class="fa-solid fa-square-poll-vertical" style="color: #B197FC;"></i>
-              </div>
-              <div>
-                <h3 class="font-semibold text-white">Smart Carteiras</h3>
-                <p class="text-sm text-gray-300">Análises especializadas com ML</p>
-              </div>
-              <i class="fas fa-lock text-gray-400"></i>
-            </div>
-            <span class="absolute top-3 right-3 bg-secondary text-white text-xs px-2 py-1 rounded-full font-bold">PREMIUM</span>
           </div>
         `;
-      }
-      
-      // 🔥 CARD 5: OPÇÕES RECOMENDAÇÕES (PREMIUM) - CORRIGIDO!
-      if (userAccessLevel === 'PREMIUM') {
-        // ✅ TEM ACESSO - LINK DIRETO (não chama showUpgradeDialog)
-        cardsHTML += `
-          <a href="opcoes-recomendacoes.html" class="bg-gradient-to-r from-cyan-500/10 to-cyan-500/5 hover:from-cyan-500/20 hover:to-cyan-500/10 border border-cyan-500/20 rounded-xl p-4 transition-all group cursor-pointer relative block">
-            <div class="flex items-center gap-3">
-              <div class="w-12 h-12 bg-cyan-500/20 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
-                <i class="fas fa-chart-pie text-cyan-400 text-lg"></i>
-              </div>
-              <div>
-                <h3 class="font-semibold text-white">Opções Recomendações</h3>
-                <p class="text-sm text-gray-300">Swing Trade + IA para Opções</p>
-              </div>
-            </div>
-            <span class="absolute top-3 right-3 bg-secondary text-white text-xs px-2 py-1 rounded-full font-bold">PREMIUM</span>
-          </a>
-        `;
       } else {
-        // ❌ NÃO TEM ACESSO - CARD DESABILITADO
         cardsHTML += `
-          <div onclick="showUpgradeDialog('Opções Recomendações', 'PREMIUM')" class="bg-gradient-to-r from-cyan-500/10 to-cyan-500/5 border border-cyan-500/20 rounded-xl p-4 transition-all group cursor-pointer relative card-disabled">
+          <div onclick="showUpgradeDialog('Análise Papéis Americanos', 'PRO')" class="bg-gradient-to-r from-red-500/10 to-red-500/5 border border-red-500/20 rounded-xl p-4 transition-all group cursor-pointer relative card-disabled">
             <div class="flex items-center gap-3">
-              <div class="w-12 h-12 bg-cyan-500/20 rounded-lg flex items-center justify-center">
-                <i class="fas fa-chart-pie text-cyan-400 text-lg"></i>
+              <div class="w-12 h-12 bg-red-500/20 rounded-lg flex items-center justify-center">
+                <i class="fas fa-flag-usa text-red-400 text-lg"></i>
               </div>
-              <div>
-                <h3 class="font-semibold text-white">Opções Recomendações</h3>
-                <p class="text-sm text-gray-300">Swing Trade + IA para Opções</p>
+              <div class="flex-1">
+                <h3 class="font-semibold text-white">Análise Papéis Americanos</h3>
+                <p class="text-sm text-gray-300">Mercado US + IA</p>
               </div>
               <i class="fas fa-lock text-gray-400"></i>
             </div>
-            <span class="absolute top-3 right-3 bg-secondary text-white text-xs px-2 py-1 rounded-full font-bold">PREMIUM</span>
+            <span class="absolute top-3 right-3 bg-warning text-white text-xs px-2 py-1 rounded-full font-bold">PRO</span>
           </div>
         `;
       }
@@ -1105,6 +1175,7 @@
       container.innerHTML = cardsHTML;
       console.log('✅ Cards gerados com sucesso para nível:', userAccessLevel);
     }
+
 
     function executeFeatureAction(featureName) {
       console.log('🚀 Executando funcionalidade:', featureName);
@@ -1372,8 +1443,8 @@
 
     // Helper function to close other dropdowns
     function closeOtherDropdowns(except) {
-      const allDropdowns = ['mlDropdown', 'opcoesDropdown', 'gratisDropdown', 'proDropdown'];
-      const allChevrons = ['mlChevron', 'opcoesChevron', 'gratisChevron', 'proChevron'];
+      const allDropdowns = ['mlDropdown', 'opcoesDropdown', 'gratisDropdown', 'proDropdown', 'analiseTecnicaDropdown', 'americanosDropdown'];
+      const allChevrons = ['mlChevron', 'opcoesChevron', 'gratisChevron', 'proChevron', 'analiseTecnicaChevron', 'americanosChevron'];
       
       allDropdowns.forEach((dropdownId, index) => {
         if (!except.includes(dropdownId)) {
@@ -1457,6 +1528,42 @@
       }
     }
 
+    function toggleAnaliseTecnicaDropdown() {
+      const dropdown = document.getElementById('analiseTecnicaDropdown');
+      const chevron = document.getElementById('analiseTecnicaChevron');
+      
+      closeOtherDropdowns(['analiseTecnicaDropdown']);
+      
+      if (dropdown && chevron) {
+        if (dropdown.classList.contains('show')) {
+          dropdown.classList.remove('show');
+          chevron.style.transform = 'rotate(0deg)';
+        } else {
+          dropdown.classList.add('show');
+          chevron.style.transform = 'rotate(180deg)';
+        }
+      }
+    }
+    
+    // NOVA FUNÇÃO - Toggle Análise Papéis Americanos Dropdown
+    function toggleAmericanosDropdown() {
+      const dropdown = document.getElementById('americanosDropdown');
+      const chevron = document.getElementById('americanosChevron');
+      
+      closeOtherDropdowns(['americanosDropdown']);
+      
+      if (dropdown && chevron) {
+        if (dropdown.classList.contains('show')) {
+          dropdown.classList.remove('show');
+          chevron.style.transform = 'rotate(0deg)';
+        } else {
+          dropdown.classList.add('show');
+          chevron.style.transform = 'rotate(180deg)';
+        }
+      }
+    }
+
+
     // Logout function
     async function logout() {
       try {
@@ -1517,6 +1624,8 @@
     window.toggleOpcoesDropdown = toggleOpcoesDropdown;
     window.toggleGratisDropdown = toggleGratisDropdown;
     window.toggleProDropdown = toggleProDropdown;
+    window.toggleAnaliseTecnicaDropdown = toggleAnaliseTecnicaDropdown;
+    window.toggleAmericanosDropdown = toggleAmericanosDropdown;
     window.executeFeatureAction = executeFeatureAction;
 
     // Initialize when page loads

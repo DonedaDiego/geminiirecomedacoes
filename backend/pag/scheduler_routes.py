@@ -306,22 +306,9 @@ def auto_start_scheduler():
     try:
         print("🚀 Auto-iniciando Payment Scheduler...")
         start_payment_scheduler()
-        print("✅ Payment Scheduler iniciado automaticamente!")
+        
     except Exception as e:
         print(f"❌ Erro ao auto-iniciar scheduler: {e}")
 
 # Iniciar automaticamente quando importado
 auto_start_scheduler()
-
-if __name__ == "__main__":
-    print("📅 Scheduler Routes - Sistema de controle do Payment Scheduler")
-    print("🔗 Rotas disponíveis:")
-    print("  - GET  /api/scheduler/status")
-    print("  - POST /api/scheduler/start")
-    print("  - POST /api/scheduler/stop") 
-    print("  - POST /api/scheduler/restart")
-    print("  - POST /api/scheduler/run-job")
-    print("  - POST /api/scheduler/run-all-jobs")
-    print("  - GET  /api/scheduler/jobs")
-    print("  - GET  /api/scheduler/logs")
-    print("  - GET  /api/scheduler/health")

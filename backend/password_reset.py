@@ -237,11 +237,11 @@ if __name__ == "__main__":
     print("🔧 Configurando sistema de recuperação de senha...")
     
     if create_password_reset_table():
-        print("✅ Sistema de recuperação configurado!")
+        
         
         # Teste básico
-        print("\n🧪 Teste básico:")
+        
         result = generate_reset_token("teste@exemplo.com")
-        print(f"Resultado: {result}")
+        
     else:
         print("❌ Falha na configuração")
