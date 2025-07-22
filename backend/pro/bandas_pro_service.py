@@ -190,7 +190,13 @@ class HybridVolatilityBands:
                 self.logger.error(f"Nenhum dado encontrado para {ticker}")
                 return None
             
-            # MESMA ordem de operações
+            self.df = self.df[(self.df['Open'] > 0) & 
+                          (self.df['High'] > 0) & 
+                          (self.df['Low'] > 0) & 
+                          (self.df['Close'] > 0)]
+        
+            
+        
             self.df.reset_index(inplace=True)
             self.df['Returns'] = self.df['Close'].pct_change()
             self.df['Log_Returns'] = np.log(self.df['Close'] / self.df['Close'].shift(1))

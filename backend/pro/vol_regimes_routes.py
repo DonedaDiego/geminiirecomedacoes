@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 from datetime import datetime
 import logging
-from gratis.vol_regimes_service import VolatilityRegimesService
+from pro.vol_regimes_service import VolatilityRegimesService
 
 # Criar blueprint
 vol_regimes_bp = Blueprint('vol_regimes', __name__, url_prefix='/api/volatility')
@@ -50,13 +50,7 @@ def health_check():
 
 @vol_regimes_bp.route('/analyze/<ticker>', methods=['GET'])
 def analyze_ticker(ticker):
-    """
-    Analisar um ticker específico com Bandas de Volatilidade Híbridas
-    
-    Parâmetros:
-    - ticker: Código da ação (ex: PETR4 ou PETR4.SA)
-    - period: Período de análise (1d, 5d, 1mo, 3mo, 6mo, 1y, 2y, 5y, 10y, ytd, max)
-    """
+
     try:
         # Parâmetros da query
         period = request.args.get('period', '6mo')

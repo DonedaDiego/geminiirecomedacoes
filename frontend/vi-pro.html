@@ -99,58 +99,31 @@
       box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
     }
     
-    .signal-otimo {
+    .signal-q4 {
       background: linear-gradient(135deg, #10b981, #059669);
       color: white;
       border-color: #10b981;
       box-shadow: 0 0 30px rgba(16, 185, 129, 0.4);
     }
     
-    .signal-bom {
+    .signal-q3 {
       background: linear-gradient(135deg, #22c55e, #16a34a);
       color: white;
       border-color: #22c55e;
       box-shadow: 0 0 30px rgba(34, 197, 94, 0.4);
     }
     
-    .signal-moderado {
-      background: linear-gradient(135deg, #eab308, #ca8a04);
-      color: white;
-      border-color: #eab308;
-      box-shadow: 0 0 30px rgba(234, 179, 8, 0.4);
-    }
-    
-    .signal-neutro {
+    .signal-q2 {
       background: linear-gradient(135deg, #6b7280, #4b5563);
       color: white;
       border-color: #6b7280;
     }
     
-    .signal-atencao {
-      background: linear-gradient(135deg, #f97316, #ea580c);
-      color: white;
-      border-color: #f97316;
-      box-shadow: 0 0 30px rgba(249, 115, 22, 0.4);
-    }
-    
-    .signal-cuidado {
+    .signal-q1 {
       background: linear-gradient(135deg, #ef4444, #dc2626);
       color: white;
       border-color: #ef4444;
       box-shadow: 0 0 30px rgba(239, 68, 68, 0.4);
-    }
-    
-    .signal-risco {
-      background: linear-gradient(135deg, #b91c1c, #991b1b);
-      color: white;
-      border-color: #b91c1c;
-      box-shadow: 0 0 30px rgba(185, 28, 28, 0.6);
-      animation: pulse 2s infinite;
-    }
-
-    @keyframes pulse {
-      0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.05); }
     }
 
     .metric-card {
@@ -212,6 +185,26 @@
       stroke-dashoffset: 326.72;
       transition: stroke-dashoffset 0.5s ease-in-out;
     }
+
+    .quartile-bar {
+      width: 100%;
+      height: 8px;
+      background: linear-gradient(to right, #ef4444 0%, #ef4444 25%, #6b7280 25%, #6b7280 50%, #22c55e 50%, #22c55e 75%, #10b981 75%, #10b981 100%);
+      border-radius: 4px;
+      position: relative;
+      margin: 10px 0;
+    }
+
+    .quartile-indicator {
+      position: absolute;
+      top: -2px;
+      width: 12px;
+      height: 12px;
+      background: white;
+      border: 2px solid #ba39af;
+      border-radius: 50%;
+      transform: translateX(-50%);
+    }
   </style>
 </head>
 <body class="text-white">
@@ -246,11 +239,10 @@
       <div class="text-center mb-12">
         <h1 class="text-4xl md:text-5xl font-bold mb-4">
           <span style="color: #ba39af; font-weight: 900;">Implícita Sigma</span>
-          <span class="text-white font-light">Implícita Pro</span>
+          <span class="text-white font-light">Quartis </span>
         </h1>
         <p class="text-neutral-300 text-lg max-w-3xl mx-auto">
-          Sistema avançado de Monitor estratégico da volatilidade implícita, histórica e risco de gamma..
-        </p>
+          Análise quantitativa avançada de volatilidade implícita através de quartis históricos para identificação de oportunidades de compra e venda de volatilidade no mercado de opçõe.
       </div>
 
       <!-- Controles -->
@@ -263,11 +255,9 @@
               placeholder="Digite o código da ação (ex: PETR4)" 
               class="px-4 py-2 bg-white bg-opacity-10 border border-white border-opacity-20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-geminii backdrop-blur-sm"
             >
-            <select id="periodSelect" class="dark-select px-4 py-2 rounded-lg">
-              <option value="126">6 meses</option>
-              <option value="252" selected>1 ano</option>
-              <option value="504">2 anos</option>
-            </select>
+            <div class="text-sm text-gray-400 bg-white bg-opacity-5 px-3 py-2 rounded-lg border border-white border-opacity-10">
+              <i class="fas fa-calendar-alt mr-2"></i>Análise: 1 ano (252 dias)
+            </div>
             <button id="analyzeBtn" class="px-6 py-2 bg-gradient-to-r from-pink-500 to-purple-600 hover:shadow-lg rounded-lg transition-all font-medium">
               <i class="fas fa-chart-area mr-2"></i>Analisar
             </button>
@@ -283,7 +273,7 @@
         <div class="vi-card p-8">
           <div class="text-center mb-8">
             <h3 class="text-2xl font-bold mb-6 flex items-center">
-              <i class="fas fa-bullseye text-geminii mr-3"></i>Gamma Signal - Calls vs Puts
+              <i class="fas fa-chart-bar text-geminii mr-3"></i>Análise de Quartis - Volatilidade Implícita
             </h3>
             <div id="signalIndicator" class="inline-block mb-6">
               <!-- Preenchido via JS -->
@@ -292,7 +282,7 @@
           
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <div class="metric-card text-center">
-              <div class="text-sm text-gray-400 mb-2">Sinal Atual</div>
+              <div class="text-sm text-gray-400 mb-2">Quartil Atual</div>
               <div class="relative inline-block">
                 <svg class="progress-ring">
                   <circle class="progress-ring-circle"></circle>
@@ -301,8 +291,20 @@
                 <div class="absolute inset-0 flex items-center justify-center">
                   <div class="text-center">
                     <div id="signalValue" class="text-2xl font-bold text-white">--</div>
-                    <div class="text-xs text-gray-400">-100 a +100</div>
+                    <div class="text-xs text-gray-400">Q1 a Q4</div>
                   </div>
+                </div>
+              </div>
+              <!-- Barra de Quartis -->
+              <div class="mt-4">
+                <div class="quartile-bar">
+                  <div id="quartileIndicator" class="quartile-indicator"></div>
+                </div>
+                <div class="flex justify-between text-xs text-gray-400 mt-1">
+                  <span>Q1</span>
+                  <span>Q2</span>
+                  <span>Q3</span>
+                  <span>Q4</span>
                 </div>
               </div>
             </div>
@@ -328,8 +330,12 @@
               <div class="text-sm text-gray-400 mb-1">Volatilidades</div>
               <div class="space-y-2">
                 <div class="flex justify-between">
+                  <span class="text-sm text-gray-300">VI Atual:</span>
+                  <span id="ivCurrent" class="text-sm font-medium text-orange-400">--</span>
+                </div>
+                <div class="flex justify-between">
                   <span class="text-sm text-gray-300">VI Média:</span>
-                  <span id="ivMean" class="text-sm font-medium text-orange-400">--</span>
+                  <span id="ivMean" class="text-sm font-medium text-orange-300">--</span>
                 </div>
                 <div class="flex justify-between">
                   <span class="text-sm text-gray-300">Vol Hist:</span>
@@ -364,10 +370,10 @@
           </div>
         </div>
 
-        <!-- Gráfico do Sinal com Zonas -->
+        <!-- Gráfico do Sinal com Quartis -->
         <div class="vi-card p-6 mb-6">
           <h4 class="text-xl font-bold mb-4 text-white">
-            <i class="fas fa-signal mr-2"></i>Gamma Signal - Calls vs Puts
+            <i class="fas fa-chart-bar mr-2"></i>Quartis da Volatilidade Implícita
           </h4>
           <div class="chart-container" style="height: 400px;">
             <div id="signalChart" style="width: 100%; height: 100%;"></div>
@@ -376,136 +382,117 @@
 
       </div>
 
-      <!-- Screener Results - REMOVIDO -->
-
       <!-- Card Explicativo -->
       <div class="vi-card explanation-card p-8 mb-8">
         <h2 class="text-2xl font-bold mb-6 text-center">
           <i class="fas fa-graduation-cap text-geminii mr-3"></i>
-          Como Funciona o Sistema de Volatilidade Implícita Pro
+          Como Funciona o Sistema de Quartis de Volatilidade Implícita
         </h2>
         
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
           
-          <!-- VI vs Vol Histórica -->
+          <!-- Explicação dos Quartis -->
           <div class="space-y-4">
             <div class="flex items-center mb-3">
-              <i class="fas fa-chart-line text-orange-400 text-xl mr-3"></i>
-              <h3 class="text-lg font-bold">VI vs Vol Histórica</h3>
+              <i class="fas fa-chart-bar text-blue-400 text-xl mr-3"></i>
+              <h3 class="text-lg font-bold">Análise por Quartis</h3>
             </div>
             <p class="text-gray-300 text-sm leading-relaxed mb-4">
-              Compara a <strong>Volatilidade Implícita</strong> atual das opções com a <strong>Volatilidade Histórica</strong> do ativo subjacente.
+              Dividimos o histórico de <strong>1 ano da Volatilidade Implícita</strong> em 4 quartis para identificar se a VI atual está cara ou barata.
             </p>
             <div class="space-y-2 text-xs">
               <div class="flex items-center">
                 <div class="w-3 h-3 bg-green-500 rounded mr-2"></div>
-                <span><strong>VI > Vol Hist:</strong> Volatilidade cara, ideal para vender</span>
+                <span><strong>Q4 (75-100%):</strong> VI muito alta - Ideal para VENDER volatilidade</span>
               </div>
               <div class="flex items-center">
-                <div class="w-3 h-3 bg-red-500 rounded mr-2"></div>
-                <span><strong>VI < Vol Hist:</strong> Volatilidade barata, ideal para comprar</span>
+                <div class="w-3 h-3 bg-green-300 rounded mr-2"></div>
+                <span><strong>Q3 (50-75%):</strong> VI alta - Favorável para vender</span>
               </div>
               <div class="flex items-center">
                 <div class="w-3 h-3 bg-gray-500 rounded mr-2"></div>
-                <span><strong>VI ≈ Vol Hist:</strong> Volatilidade em equilíbrio</span>
+                <span><strong>Q2 (25-50%):</strong> VI normal - Condições neutras</span>
+              </div>
+              <div class="flex items-center">
+                <div class="w-3 h-3 bg-red-500 rounded mr-2"></div>
+                <span><strong>Q1 (0-25%):</strong> VI baixa - Ideal para COMPRAR volatilidade</span>
               </div>
             </div>
           </div>
 
-          <!-- Análise de Gamma -->
+          <!-- Estratégias por Quartil -->
           <div class="space-y-4">
             <div class="flex items-center mb-3">
-              <i class="fas fa-tachometer-alt text-blue-400 text-xl mr-3"></i>
-              <h3 class="text-lg font-bold">Sensibilidade Gamma</h3>
+              <i class="fas fa-chess text-purple-400 text-xl mr-3"></i>
+              <h3 class="text-lg font-bold">Estratégias Recomendadas</h3>
             </div>
             <p class="text-gray-300 text-sm leading-relaxed mb-4">
-              Analisa o <strong>Gamma</strong> médio das opções ATM para medir a aceleração do risco.
+              Cada quartil sugere estratégias específicas baseadas no nível histórico da volatilidade implícita.
             </p>
             <div class="space-y-2 text-xs">
               <div class="flex items-center">
                 <div class="w-3 h-3 bg-green-500 rounded mr-2"></div>
-                <span><strong>Gamma Baixo:</strong> Baixo risco, ideal para vender</span>
+                <span><strong>Q4:</strong> Covered calls, iron condors, sell puts</span>
               </div>
               <div class="flex items-center">
-                <div class="w-3 h-3 bg-yellow-500 rounded mr-2"></div>
-                <span><strong>Gamma Médio:</strong> Risco moderado, cautela</span>
+                <div class="w-3 h-3 bg-green-300 rounded mr-2"></div>
+                <span><strong>Q3:</strong> Call spreads, put spreads, calendars</span>
               </div>
               <div class="flex items-center">
-                <div class="w-3 h-3 bg-red-500 rounded mr-2"></div>
-                <span><strong>Gamma Alto:</strong> Alto risco, evitar vender</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Sinal Combinado -->
-          <div class="space-y-4">
-            <div class="flex items-center mb-3">
-              <i class="fas fa-bullseye text-purple-400 text-xl mr-3"></i>
-              <h3 class="text-lg font-bold">Sinal Combinado</h3>
-            </div>
-            <p class="text-gray-300 text-sm leading-relaxed mb-4">
-              Combina <strong>70% VI/Vol Hist</strong> + <strong>30% Gamma</strong> para gerar um sinal de -100 a +100.
-            </p>
-            <div class="space-y-2 text-xs">
-              <div class="flex items-center">
-                <div class="w-3 h-3 bg-green-500 rounded mr-2"></div>
-                <span><strong>+60 a +100:</strong> Excelente para vender volatilidade</span>
-              </div>
-              <div class="flex items-center">
-                <div class="w-3 h-3 bg-yellow-500 rounded mr-2"></div>
-                <span><strong>-10 a +60:</strong> Condições favoráveis</span>
+                <div class="w-3 h-3 bg-gray-500 rounded mr-2"></div>
+                <span><strong>Q2:</strong> Estratégias neutras, aguardar</span>
               </div>
               <div class="flex items-center">
                 <div class="w-3 h-3 bg-red-500 rounded mr-2"></div>
-                <span><strong>-100 a -10:</strong> Cuidado, comprar volatilidade</span>
+                <span><strong>Q1:</strong> Long straddles, long strangles</span>
               </div>
             </div>
           </div>
 
         </div>
 
-        <!-- Estratégias -->
+        <!-- Detalhes dos Quartis -->
         <div class="mt-8 pt-6 border-t border-gray-600">
-          <h3 class="text-xl font-bold mb-4 text-center">Estratégias Recomendadas por Faixa de Sinal</h3>
+          <h3 class="text-xl font-bold mb-4 text-center">Interpretação dos Quartis</h3>
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             
             <div class="bg-green-500 bg-opacity-10 border border-green-500 border-opacity-30 rounded-lg p-4">
-              <h4 class="font-bold text-green-400 mb-2">Sinal +60 a +100</h4>
-              <p class="text-xs text-gray-300 mb-2">FORTE ALTA</p>
+              <h4 class="font-bold text-green-400 mb-2">Q4 - VI Muito Alta</h4>
+              <p class="text-xs text-gray-300 mb-2">Top 25% histórico</p>
               <ul class="text-xs text-gray-400">
-                <li>• Calls agressivos</li>
-                <li>• Long positions</li>
-                <li>• Bull spreads</li>
+                <li>• VI cara vs histórico</li>
+                <li>• Vender volatilidade</li>
+                <li>• Alto premio das opções</li>
               </ul>
             </div>
 
-            <div class="bg-yellow-500 bg-opacity-10 border border-yellow-500 border-opacity-30 rounded-lg p-4">
-              <h4 class="font-bold text-yellow-400 mb-2">Sinal +10 a +60</h4>
-              <p class="text-xs text-gray-300 mb-2">BIAS DE ALTA</p>
+            <div class="bg-green-300 bg-opacity-10 border border-green-300 border-opacity-30 rounded-lg p-4">
+              <h4 class="font-bold text-green-300 mb-2">Q3 - VI Alta</h4>
+              <p class="text-xs text-gray-300 mb-2">Entre 50-75%</p>
               <ul class="text-xs text-gray-400">
-                <li>• Calls moderados</li>
-                <li>• Call spreads</li>
-                <li>• Covered calls</li>
+                <li>• VI acima da mediana</li>
+                <li>• Bom para vender</li>
+                <li>• Premio elevado</li>
               </ul>
             </div>
 
-            <div class="bg-orange-500 bg-opacity-10 border border-orange-500 border-opacity-30 rounded-lg p-4">
-              <h4 class="font-bold text-orange-400 mb-2">Sinal -60 a +10</h4>
-              <p class="text-xs text-gray-300 mb-2">BIAS DE BAIXA</p>
+            <div class="bg-gray-500 bg-opacity-10 border border-gray-500 border-opacity-30 rounded-lg p-4">
+              <h4 class="font-bold text-gray-400 mb-2">Q2 - VI Normal</h4>
+              <p class="text-xs text-gray-300 mb-2">Entre 25-50%</p>
               <ul class="text-xs text-gray-400">
-                <li>• Puts moderados</li>
-                <li>• Put spreads</li>
-                <li>• Protective puts</li>
+                <li>• VI próxima da média</li>
+                <li>• Condições neutras</li>
+                <li>• Aguardar oportunidade</li>
               </ul>
             </div>
 
             <div class="bg-red-500 bg-opacity-10 border border-red-500 border-opacity-30 rounded-lg p-4">
-              <h4 class="font-bold text-red-400 mb-2">Sinal -100 a -60</h4>
-              <p class="text-xs text-gray-300 mb-2">FORTE BAIXA</p>
+              <h4 class="font-bold text-red-400 mb-2">Q1 - VI Baixa</h4>
+              <p class="text-xs text-gray-300 mb-2">Bottom 25% histórico</p>
               <ul class="text-xs text-gray-400">
-                <li>• Puts agressivos</li>
-                <li>• Short positions</li>
-                <li>• Bear spreads</li>
+                <li>• VI barata vs histórico</li>
+                <li>• Comprar volatilidade</li>
+                <li>• Premio baixo das opções</li>
               </ul>
             </div>
 
@@ -523,7 +510,6 @@
     
     // Elementos DOM
     const stockInput = document.getElementById('stockInput');
-    const periodSelect = document.getElementById('periodSelect');
     const analyzeBtn = document.getElementById('analyzeBtn');
     const statusMsg = document.getElementById('statusMsg');
     const mainSignal = document.getElementById('mainSignal');
@@ -580,18 +566,17 @@
     // Analisar ação individual
     async function analyzeStock() {
       const symbol = stockInput.value.trim().toUpperCase();
-      const period = periodSelect.value;
+      const period = 252; // Fixo em 1 ano
       
       if (!symbol) {
         showStatus('Digite o código de uma ação', 'error');
         return;
       }
       
-      // Limpar ticker - remover .SA se presente
       const cleanSymbol = symbol.replace('.SA', '');
       
       setLoading(analyzeBtn, true);
-      showStatus('Executando análise de volatilidade implícita...', 'info');
+      showStatus('Executando análise de volatilidade implícita por quartis (1 ano)...', 'info');
       
       try {
         const url = `${API_BASE}/analyze/${cleanSymbol}?period_days=${period}`;
@@ -612,19 +597,14 @@
       setLoading(analyzeBtn, false);
     }
     
-    // Screener removido - muito lento para produção
-    
     // Exibir análise individual
     function displayAnalysis(data) {
-      // Sinal principal
       displayMainSignal(data);
       
-      // Gráficos
       if (data.chart_data) {
         displayCharts(data);
       }
       
-      // Mostrar seções
       mainSignal.classList.remove('hidden');
       chartsSection.classList.remove('hidden');
     }
@@ -634,21 +614,18 @@
       const signal = data.current_signal || 0;
       const interpretation = data.signal_interpretation || {};
       
-      // Determinar classe do sinal
-      let signalClass = 'signal-neutro';
-      if (signal >= 60) signalClass = 'signal-forte-alta';
-      else if (signal >= 30) signalClass = 'signal-alta';
-      else if (signal >= 10) signalClass = 'signal-leve-alta';
-      else if (signal >= -10) signalClass = 'signal-neutro';
-      else if (signal >= -30) signalClass = 'signal-leve-baixa';
-      else if (signal >= -60) signalClass = 'signal-baixa';
-      else signalClass = 'signal-forte-baixa';
+      // Determinar classe do sinal baseado nos quartis
+      let signalClass = 'signal-q2';
+      if (signal >= 60) signalClass = 'signal-q4';
+      else if (signal >= 20) signalClass = 'signal-q3';
+      else if (signal >= -20) signalClass = 'signal-q2';
+      else signalClass = 'signal-q1';
       
       // Atualizar indicador do sinal
       const signalIndicator = document.getElementById('signalIndicator');
       signalIndicator.innerHTML = `
         <div class="signal-indicator ${signalClass}">
-          <i class="fas fa-chart-line mr-2"></i>
+          <i class="fas fa-chart-bar mr-2"></i>
           ${interpretation.status || 'INDEFINIDO'}
         </div>
       `;
@@ -656,14 +633,54 @@
       // Atualizar progress ring
       updateProgressRing(signal);
       
+      // Atualizar indicador de quartil na barra
+      updateQuartileIndicator(signal);
+      
       // Dados complementares
-      document.getElementById('signalValue').textContent = signal.toFixed(1);
+      document.getElementById('signalValue').textContent = getQuartileLabel(signal);
       document.getElementById('recommendedStrategy').textContent = interpretation.recommendation || '--';
       document.getElementById('strategyDescription').textContent = interpretation.description || '--';
       document.getElementById('currentPrice').textContent = formatCurrency(data.current_price || 0);
       document.getElementById('signalConfidence').textContent = interpretation.confidence || '--';
+      
+      // Volatilidade atual (último valor disponível)
+      let ivCurrent = '--';
+      if (data.chart_data && data.chart_data.daily_metrics) {
+        const lastMetric = data.chart_data.daily_metrics[data.chart_data.daily_metrics.length - 1];
+        if (lastMetric && lastMetric.iv_avg) {
+          ivCurrent = `${lastMetric.iv_avg.toFixed(1)}%`;
+        }
+      }
+      document.getElementById('ivCurrent').textContent = ivCurrent;
       document.getElementById('ivMean').textContent = data.iv_mean ? `${data.iv_mean.toFixed(1)}%` : '--';
       document.getElementById('volHistMean').textContent = data.vol_hist_mean ? `${data.vol_hist_mean.toFixed(1)}%` : '--';
+    }
+    
+    // Obter label do quartil
+    function getQuartileLabel(signal) {
+      if (signal >= 60) return 'Q4';
+      else if (signal >= 20) return 'Q3';
+      else if (signal >= -20) return 'Q2';
+      else return 'Q1';
+    }
+    
+    // Atualizar indicador de quartil na barra
+    function updateQuartileIndicator(signal) {
+      const indicator = document.getElementById('quartileIndicator');
+      
+      // Mapear sinal (-100 a +100) para posição na barra (0% a 100%)
+      let position;
+      if (signal >= 60) {
+        position = 87.5; // Centro do Q4
+      } else if (signal >= 20) {
+        position = 62.5; // Centro do Q3
+      } else if (signal >= -20) {
+        position = 37.5; // Centro do Q2
+      } else {
+        position = 12.5; // Centro do Q1
+      }
+      
+      indicator.style.left = `${position}%`;
     }
     
     // Atualizar progress ring
@@ -672,19 +689,30 @@
       const radius = 52;
       const circumference = 2 * Math.PI * radius;
       
-      // Normalizar sinal de -100/100 para 0-100%
-      const normalizedSignal = ((signal + 100) / 200) * 100;
-      const offset = circumference - (normalizedSignal / 100) * circumference;
+      // Normalizar sinal para quartis (0-100%)
+      let normalizedSignal;
+      if (signal >= 60) {
+        normalizedSignal = 87.5; // Q4
+      } else if (signal >= 20) {
+        normalizedSignal = 62.5; // Q3
+      } else if (signal >= -20) {
+        normalizedSignal = 37.5; // Q2
+      } else {
+        normalizedSignal = 12.5; // Q1
+      }
       
+      const offset = circumference - (normalizedSignal / 100) * circumference;
       circle.style.strokeDashoffset = offset;
       
-      // Cor baseada no sinal
-      if (signal >= 30) {
-        circle.style.stroke = '#10b981'; // Verde
-      } else if (signal >= -10) {
-        circle.style.stroke = '#eab308'; // Amarelo
+      // Cor baseada no quartil
+      if (signal >= 60) {
+        circle.style.stroke = '#10b981'; // Verde Q4
+      } else if (signal >= 20) {
+        circle.style.stroke = '#22c55e'; // Verde claro Q3
+      } else if (signal >= -20) {
+        circle.style.stroke = '#6b7280'; // Cinza Q2
       } else {
-        circle.style.stroke = '#ef4444'; // Vermelho
+        circle.style.stroke = '#ef4444'; // Vermelho Q1
       }
     }
     
@@ -694,7 +722,6 @@
       
       const chartData = data.chart_data;
       
-      // Configuração base dos gráficos
       const baseConfig = {
         responsive: true,
         displayModeBar: false,
@@ -719,10 +746,9 @@
         }
       };
       
-      // Aguardar renderização
       setTimeout(() => {
         
-        // 1. Gráfico de Preço (apenas preço)
+        // 1. Gráfico de Preço
         if (chartData.prices) {
           try {
             const priceTrace = {
@@ -749,11 +775,10 @@
           }
         }
         
-        // 2. Gráfico de Volatilidade (VI + Vol Histórica)
+        // 2. Gráfico de Volatilidade
         try {
           const volatilityTraces = [];
           
-          // VI Média
           if (chartData.daily_metrics && chartData.daily_metrics.length > 0) {
             const viData = chartData.daily_metrics.filter(d => d.iv_avg !== undefined && d.iv_avg !== null);
             
@@ -768,7 +793,6 @@
                 hovertemplate: '<b>Data:</b> %{x}<br><b>VI:</b> %{y:.1f}%<extra></extra>'
               });
               
-              // Linha de média da VI
               const ivMean = viData.reduce((sum, d) => sum + d.iv_avg, 0) / viData.length;
               volatilityTraces.push({
                 x: [viData[0].date, viData[viData.length - 1].date],
@@ -783,7 +807,6 @@
             }
           }
           
-          // Vol Histórica
           if (chartData.vol_hist && chartData.vol_hist.dates.length > 0) {
             const volHistData = chartData.vol_hist.values.filter(v => v > 0);
             if (volHistData.length > 0) {
@@ -795,19 +818,6 @@
                 name: 'Volatilidade Histórica (30d)',
                 line: { color: '#2ca02c', width: 2, dash: 'dash' },
                 hovertemplate: '<b>Data:</b> %{x}<br><b>Vol Hist:</b> %{y:.1f}%<extra></extra>'
-              });
-              
-              // Linha de média da Vol Histórica
-              const volHistMean = volHistData.reduce((sum, v) => sum + v, 0) / volHistData.length;
-              volatilityTraces.push({
-                x: [chartData.vol_hist.dates[0], chartData.vol_hist.dates[chartData.vol_hist.dates.length - 1]],
-                y: [volHistMean, volHistMean],
-                type: 'scatter',
-                mode: 'lines',
-                name: `Vol Hist Média: ${volHistMean.toFixed(1)}%`,
-                line: { color: '#2ca02c', width: 1, dash: 'dot' },
-                showlegend: false,
-                hoverinfo: 'skip'
               });
             }
           }
@@ -827,42 +837,36 @@
           console.error('Erro no gráfico de volatilidade:', error);
         }
         
-        // 3. Gráfico do Sinal com Zonas Coloridas
+        // 3. Gráfico dos Quartis
         if (chartData.daily_metrics && chartData.daily_metrics.length > 0) {
           try {
-            const signalData = chartData.daily_metrics.filter(d => d.options_signal !== undefined);
+            const quartileData = chartData.daily_metrics.filter(d => d.options_signal !== undefined);
             
-            if (signalData.length > 0) {
-              // Cores dinâmicas baseadas no valor do sinal
-              const colors = signalData.map(d => {
+            if (quartileData.length > 0) {
+              // Cores baseadas nos quartis
+              const colors = quartileData.map(d => {
                 const signal = d.options_signal;
-                if (signal >= 60) return '#00AA00';      // Verde forte - ÓTIMO
-                else if (signal >= 30) return '#66BB00'; // Verde - BOM
-                else if (signal >= 10) return '#99CC00'; // Verde claro - MODERADO
-                else if (signal >= -10) return '#CCCC00'; // Amarelo - NEUTRO
-                else if (signal >= -30) return '#FF9900'; // Laranja claro - ATENÇÃO
-                else if (signal >= -60) return '#FF6600'; // Laranja - CUIDADO
-                else return '#FF0000';                    // Vermelho - RISCO
+                if (signal >= 60) return '#10b981';      // Q4 - Verde
+                else if (signal >= 20) return '#22c55e'; // Q3 - Verde claro
+                else if (signal >= -20) return '#6b7280'; // Q2 - Cinza
+                else return '#ef4444';                    // Q1 - Vermelho
               });
               
               // Status text para hover
-              const statusText = signalData.map(d => {
+              const statusText = quartileData.map(d => {
                 const signal = d.options_signal;
-                if (signal >= 60) return 'ÓTIMO: VI alta + Baixa sensibilidade';
-                else if (signal >= 30) return 'BOM: VI favorável + Estabilidade';
-                else if (signal >= 10) return 'MODERADO: Condições equilibradas';
-                else if (signal >= -10) return 'NEUTRO: Aguardar melhor momento';
-                else if (signal >= -30) return 'ATENÇÃO: VI baixa + Gamma crescendo';
-                else if (signal >= -60) return 'CUIDADO: Ambiente de alta aceleração';
-                else return 'RISCO: VI baixa + Gamma muito alto';
+                if (signal >= 60) return 'Q4: VI muito alta - Vender volatilidade';
+                else if (signal >= 20) return 'Q3: VI alta - Favorável para vender';
+                else if (signal >= -20) return 'Q2: VI normal - Condições neutras';
+                else return 'Q1: VI baixa - Comprar volatilidade';
               });
               
-              const signalTrace = {
-                x: signalData.map(d => d.date),
-                y: signalData.map(d => d.options_signal),
+              const quartileTrace = {
+                x: quartileData.map(d => d.date),
+                y: quartileData.map(d => d.options_signal),
                 type: 'scatter',
                 mode: 'lines+markers',
-                name: 'Gamma Signal',
+                name: 'Quartil da VI',
                 line: { color: '#1f77b4', width: 3 },
                 marker: { 
                   size: 6, 
@@ -870,56 +874,48 @@
                   line: { width: 1, color: 'white' }
                 },
                 text: statusText,
-                hovertemplate: '<b>Data:</b> %{x}<br><b>Gamma Signal:</b> %{y:.1f}<br><b>Status:</b> %{text}<extra></extra>'
+                hovertemplate: '<b>Data:</b> %{x}<br><b>Quartil:</b> %{text}<extra></extra>'
               };
               
-              const signalLayout = {
+              const quartileLayout = {
                 ...baseLayout,
                 height: 380,
                 yaxis: {
                   ...baseLayout.yaxis,
-                  title: 'Gamma Signal (-100 a +100)',
+                  title: 'Quartil da VI',
                   range: [-100, 100],
-                  tickvals: [-100, -60, -30, 0, 30, 60, 100],
-                  ticktext: ['-100', '-60', '-30', '0', '+30', '+60', '+100']
+                  tickvals: [-75, -25, 25, 75],
+                  ticktext: ['Q1', 'Q2', 'Q3', 'Q4']
                 },
                 shapes: [
-                  // Zonas coloridas de fundo
-                  { type: 'rect', x0: signalData[0].date, x1: signalData[signalData.length-1].date, y0: 60, y1: 100, fillcolor: 'rgba(34, 197, 94, 0.15)', layer: 'below', line: { width: 0 } },
-                  { type: 'rect', x0: signalData[0].date, x1: signalData[signalData.length-1].date, y0: 30, y1: 60, fillcolor: 'rgba(16, 185, 129, 0.15)', layer: 'below', line: { width: 0 } },
-                  { type: 'rect', x0: signalData[0].date, x1: signalData[signalData.length-1].date, y0: 10, y1: 30, fillcolor: 'rgba(132, 204, 22, 0.15)', layer: 'below', line: { width: 0 } },
-                  { type: 'rect', x0: signalData[0].date, x1: signalData[signalData.length-1].date, y0: -10, y1: 10, fillcolor: 'rgba(107, 114, 128, 0.15)', layer: 'below', line: { width: 0 } },
-                  { type: 'rect', x0: signalData[0].date, x1: signalData[signalData.length-1].date, y0: -30, y1: -10, fillcolor: 'rgba(249, 115, 22, 0.15)', layer: 'below', line: { width: 0 } },
-                  { type: 'rect', x0: signalData[0].date, x1: signalData[signalData.length-1].date, y0: -60, y1: -30, fillcolor: 'rgba(239, 68, 68, 0.15)', layer: 'below', line: { width: 0 } },
-                  { type: 'rect', x0: signalData[0].date, x1: signalData[signalData.length-1].date, y0: -100, y1: -60, fillcolor: 'rgba(220, 38, 38, 0.15)', layer: 'below', line: { width: 0 } },
+                  // Zonas dos quartis
+                  { type: 'rect', x0: quartileData[0].date, x1: quartileData[quartileData.length-1].date, y0: 60, y1: 100, fillcolor: 'rgba(16, 185, 129, 0.15)', layer: 'below', line: { width: 0 } },
+                  { type: 'rect', x0: quartileData[0].date, x1: quartileData[quartileData.length-1].date, y0: 20, y1: 60, fillcolor: 'rgba(34, 197, 94, 0.15)', layer: 'below', line: { width: 0 } },
+                  { type: 'rect', x0: quartileData[0].date, x1: quartileData[quartileData.length-1].date, y0: -20, y1: 20, fillcolor: 'rgba(107, 114, 128, 0.15)', layer: 'below', line: { width: 0 } },
+                  { type: 'rect', x0: quartileData[0].date, x1: quartileData[quartileData.length-1].date, y0: -100, y1: -20, fillcolor: 'rgba(239, 68, 68, 0.15)', layer: 'below', line: { width: 0 } },
                   
-                  // Linhas de referência
-                  { type: 'line', x0: signalData[0].date, x1: signalData[signalData.length-1].date, y0: 60, y1: 60, line: { color: '#22c55e', width: 1, dash: 'dash' } },
-                  { type: 'line', x0: signalData[0].date, x1: signalData[signalData.length-1].date, y0: 30, y1: 30, line: { color: '#10b981', width: 1, dash: 'dash' } },
-                  { type: 'line', x0: signalData[0].date, x1: signalData[signalData.length-1].date, y0: 0, y1: 0, line: { color: 'gray', width: 1 } },
-                  { type: 'line', x0: signalData[0].date, x1: signalData[signalData.length-1].date, y0: -30, y1: -30, line: { color: '#ef4444', width: 1, dash: 'dash' } },
-                  { type: 'line', x0: signalData[0].date, x1: signalData[signalData.length-1].date, y0: -60, y1: -60, line: { color: '#dc2626', width: 1, dash: 'dash' } }
+                  // Linhas de separação dos quartis
+                  { type: 'line', x0: quartileData[0].date, x1: quartileData[quartileData.length-1].date, y0: 60, y1: 60, line: { color: '#10b981', width: 1, dash: 'dash' } },
+                  { type: 'line', x0: quartileData[0].date, x1: quartileData[quartileData.length-1].date, y0: 20, y1: 20, line: { color: '#22c55e', width: 1, dash: 'dash' } },
+                  { type: 'line', x0: quartileData[0].date, x1: quartileData[quartileData.length-1].date, y0: -20, y1: -20, line: { color: '#ef4444', width: 1, dash: 'dash' } }
                 ],
                 annotations: [
-                  { x: signalData[Math.floor(signalData.length * 0.9)].date, y: 80, text: 'CALLS DOMINANDO (+60)', showarrow: false, font: { size: 10, color: '#22c55e' }, xanchor: 'left' },
-                  { x: signalData[Math.floor(signalData.length * 0.9)].date, y: 45, text: 'BIAS CALLS (+30)', showarrow: false, font: { size: 10, color: '#10b981' }, xanchor: 'left' },
-                  { x: signalData[Math.floor(signalData.length * 0.9)].date, y: 5, text: 'NEUTRO (0)', showarrow: false, font: { size: 10, color: 'gray' }, xanchor: 'left' },
-                  { x: signalData[Math.floor(signalData.length * 0.9)].date, y: -45, text: 'BIAS PUTS (-30)', showarrow: false, font: { size: 10, color: '#ef4444' }, xanchor: 'left' },
-                  { x: signalData[Math.floor(signalData.length * 0.9)].date, y: -80, text: 'PUTS DOMINANDO (-60)', showarrow: false, font: { size: 10, color: '#dc2626' }, xanchor: 'left' }
+                  { x: quartileData[Math.floor(quartileData.length * 0.85)].date, y: 80, text: 'Q4 - VI MUITO ALTA', showarrow: false, font: { size: 10, color: '#10b981' }, xanchor: 'left' },
+                  { x: quartileData[Math.floor(quartileData.length * 0.85)].date, y: 40, text: 'Q3 - VI ALTA', showarrow: false, font: { size: 10, color: '#22c55e' }, xanchor: 'left' },
+                  { x: quartileData[Math.floor(quartileData.length * 0.85)].date, y: 0, text: 'Q2 - VI NORMAL', showarrow: false, font: { size: 10, color: '#6b7280' }, xanchor: 'left' },
+                  { x: quartileData[Math.floor(quartileData.length * 0.85)].date, y: -60, text: 'Q1 - VI BAIXA', showarrow: false, font: { size: 10, color: '#ef4444' }, xanchor: 'left' }
                 ]
               };
               
-              Plotly.newPlot('signalChart', [signalTrace], signalLayout, baseConfig);
+              Plotly.newPlot('signalChart', [quartileTrace], quartileLayout, baseConfig);
             }
           } catch (error) {
-            console.error('Erro no gráfico de sinal:', error);
+            console.error('Erro no gráfico de quartis:', error);
           }
         }
         
       }, 100);
     }
-    
-    // Screener removido
     
     // Event Listeners
     analyzeBtn.addEventListener('click', analyzeStock);
@@ -933,7 +929,7 @@
       const apiConnected = await testAPI();
       
       if (apiConnected) {
-        showStatus('Sistema de Volatilidade Implícita Pro carregado! Digite uma ação para analisar.', 'info');
+        showStatus('Sistema de Quartis de Volatilidade Implícita carregado! Digite uma ação para analisar.', 'info');
       } else {
         showStatus('Aviso: Erro na conectividade da API. Verifique se o servidor está rodando.', 'error');
       }

@@ -549,223 +549,45 @@ Sinal histórico: {'COMPRA' if historical_prediction == 1 else 'VENDA'}
         return analysis_text
 
     def create_chart(self, df, ticker, prediction_days):
-        """Cria o gráfico interativo - EXATAMENTE como o MetaTrader"""
-        print("Criando gráfico...")
+        """KILLER DEBUG - GRÁFICO MAIS BÁSICO POSSÍVEL"""
+        print("🔥 CRIANDO GRÁFICO KILLER DEBUG...")
         
         try:
-            # DEBUG: Verificar dados básicos
-            print(f"DEBUG: df.shape = {df.shape}")
-            print(f"DEBUG: df.columns = {df.columns.tolist()}")
-            print(f"DEBUG: prediction column exists = {'prediction' in df.columns}")
-            print(f"DEBUG: Close column exists = {'Close' in df.columns}")
-            
-            # Valores atuais
-            today_price = df['Close'].iloc[-1]
-            today_prediction = df['prediction'].iloc[-1]
-            current_atr = df['ATR'].iloc[-1]
-            current_vol = df['Volatility_60_Pct'].iloc[-1]
+            # ZERO FRESCURA - SÓ O BÁSICO
+            fig = go.Figure()
 
-            print(f"DEBUG: today_price = {today_price}")
-            print(f"DEBUG: today_prediction = {today_prediction}")
+            # SÓ UMA LINHA AZUL SIMPLES - NADA MAIS
+            fig.add_trace(go.Scatter(
+                x=df.index,
+                y=df['Close'],
+                mode='lines',
+                name='Preço',
+                line=dict(color='blue', width=1)
+            ))
 
-            # Cálculo dos níveis atuais
-            stop_loss = min(max(current_atr / today_price * self.ATR_FACTOR, self.MIN_STOP), self.MAX_STOP)
-            take_profit = min(max(current_vol * self.VOL_FACTOR, self.MIN_TAKE), self.MAX_TAKE)
-
-            if today_prediction == 1:
-                take_profit_price = today_price * (1 + take_profit)
-                stop_loss_price = today_price * (1 - stop_loss)
-            else:
-                take_profit_price = today_price * (1 - take_profit)
-                stop_loss_price = today_price * (1 + stop_loss)
-
-            print(f"DEBUG: stop_loss_price = {stop_loss_price}")
-            print(f"DEBUG: take_profit_price = {take_profit_price}")
-
-            # Criação do gráfico - EXATAMENTE como o MetaTrader
-            fig = make_subplots(
-                rows=2, cols=1, 
-                shared_xaxes=True,
-                vertical_spacing=0.05,
-                row_heights=[0.75, 0.25],
-                subplot_titles=('Preço, Previsões e Níveis', 'Sinais de Trading')
-            )
-
-            print("DEBUG: Subplots criados")
-
-            # Gráfico de preços - linha principal
-            fig.add_trace(
-                go.Scatter(
-                    x=df.index, 
-                    y=df['Close'],
-                    mode='lines',
-                    name='Preço',
-                    line=dict(color=self.cyberpunk_colors['neon_blue'], width=1)
-                ),
-                row=1, col=1
-            )
-
-            print("DEBUG: Linha de preço adicionada")
-
-            # Linhas coloridas das previsões - EXATAMENTE como o MetaTrader
-            print(f"DEBUG: Adicionando {len(df)} linhas coloridas...")
-            for i in range(1, min(len(df), 1000)):  # Limitar para não sobrecarregar
-                if i % 100 == 0:
-                    print(f"DEBUG: Processando linha {i}/{len(df)}")
-                
-                fig.add_trace(
-                    go.Scatter(
-                        x=[df.index[i-1], df.index[i]], 
-                        y=[df['Close'].iloc[i-1], df['Close'].iloc[i]],
-                        mode='lines',
-                        line=dict(color=df['color'].iloc[i], width=2),
-                        showlegend=False
-                    ),
-                    row=1, col=1
-                )
-
-            print("DEBUG: Linhas coloridas adicionadas")
-
-            # Níveis de stop e take atuais - EXATAMENTE como o MetaTrader
-            if today_prediction == 1:
-                fig.add_trace(
-                    go.Scatter(
-                        x=[df.index[-1], df.index[-1]],
-                        y=[today_price, take_profit_price],
-                        mode='lines',
-                        name='Take Profit',
-                        line=dict(color=self.cyberpunk_colors['neon_green'], width=2, dash='dash')
-                    ),
-                    row=1, col=1
-                )
-                fig.add_trace(
-                    go.Scatter(
-                        x=[df.index[-1], df.index[-1]],
-                        y=[today_price, stop_loss_price],
-                        mode='lines',
-                        name='Stop Loss',
-                        line=dict(color=self.cyberpunk_colors['neon_red'], width=2, dash='dash')
-                    ),
-                    row=1, col=1
-                )
-
-            print("DEBUG: Níveis de stop/take adicionados")
-
-            # Sinais - EXATAMENTE como o MetaTrader
-            fig.add_trace(
-                go.Scatter(
-                    x=df.index,
-                    y=df['prediction'],
-                    mode='lines',
-                    name='Sinais',
-                    line=dict(color=self.cyberpunk_colors['neon_purple'], width=1),
-                    fill='tozeroy',
-                    fillcolor=self.cyberpunk_colors['neon_purple'].replace('0.8', '0.2')
-                ),
-                row=2, col=1
-            )
-
-            print("DEBUG: Sinais adicionados")
-
-            # Layout - EXATAMENTE como o MetaTrader
+            # LAYOUT ULTRA BÁSICO
             fig.update_layout(
+                title=f'{ticker} - TEST KILLER',
                 template='plotly_dark',
-                plot_bgcolor='rgb(27, 27, 50)',
-                paper_bgcolor='rgb(27, 27, 50)',
-                font=dict(color='rgb(170, 170, 220)'),
-                title=dict(
-                    text=f'Análise Preditiva com Stops Dinâmicos - {ticker}',
-                    font=dict(color='rgb(200, 200, 250)', size=24)
-                ),
-                showlegend=True,
-                width=1200,  
-                height=600,  
-                legend=dict(
-                    bgcolor='rgba(27, 27, 50, 0.8)',
-                    bordercolor='rgba(70, 70, 120, 0.8)',
-                    borderwidth=1
-                )
+                autosize=True
             )
 
-            print("DEBUG: Layout configurado")
-
-            # Atualizar eixos - EXATAMENTE como o MetaTrader
-            for i in range(1, 3):
-                fig.update_xaxes(
-                    gridcolor='rgba(70, 70, 120, 0.2)',
-                    zerolinecolor='rgba(70, 70, 120, 0.2)',
-                    showgrid=True,
-                    gridwidth=1,
-                    row=i, col=1
-                )
-                
-                fig.update_yaxes(
-                    gridcolor='rgba(70, 70, 120, 0.2)',
-                    zerolinecolor='rgba(70, 70, 120, 0.2)',
-                    showgrid=True,
-                    gridwidth=1,
-                    row=i, col=1
-                )
-
-            # Títulos dos eixos - EXATAMENTE como o MetaTrader
-            fig.update_yaxes(title_text="Preço", row=1, col=1)
-            fig.update_yaxes(title_text="Sinal", row=2, col=1)
-
-            # Marca d'água - EXATAMENTE como o MetaTrader
-            fig.add_annotation(
-                text=f"Geminii Research - {datetime.now().strftime('%Y-%m-%d')}",
-                xref="paper",
-                yref="paper",
-                x=0.98,
-                y=0.02,
-                showarrow=False,
-                font=dict(size=10, color='rgba(170, 170, 220, 0.7)'),
-                opacity=0.7
-            )
-
-            # Anotação com métricas atuais - EXATAMENTE como o MetaTrader
-            fig.add_annotation(
-                text=f"Stop Loss: {stop_loss*100:.1f}%<br>Take Profit: {take_profit*100:.1f}%",
-                xref="paper",
-                yref="paper",
-                x=0.98,
-                y=0.98,
-                showarrow=False,
-                font=dict(size=12, color='rgba(170, 170, 220, 1)'),
-                bgcolor='rgba(27, 27, 50, 0.8)',
-                bordercolor='rgba(70, 70, 120, 0.8)',
-                borderwidth=1,
-                align='right'
-            )
-
-            print("DEBUG: Anotações adicionadas")
-
-            # Retornar HTML com configuração explícita
+            # SEM NADA DE ESPECIAL
+            print("🔥 HTML básico sendo gerado...")
+            
             html_output = fig.to_html(
                 include_plotlyjs='cdn',
-                div_id="trading-chart-mt5",
-                config={
-                    'displayModeBar': True,
-                    'displaylogo': False,
-                    'toImageButtonOptions': {
-                        'format': 'png',
-                        'filename': f'analise_{ticker}',
-                        'height': 600,
-                        'width': 1200,
-                        'scale': 1
-                    },
-                    'responsive': True
-                }
+                config={'responsive': True}
             )
             
-    
+            print(f"🔥 HTML gerado - tamanho: {len(html_output)} chars")
+            print("🔥 KILLER DEBUG - Se ainda tiver linha vermelha, o problema NÃO é no create_chart!")
+            
             return html_output
             
         except Exception as e:
-            print(f"ERRO DETALHADO no create_chart: {e}")
-            import traceback
-            traceback.print_exc()
-            return self.create_fallback_chart(df, ticker)
+            print(f"🔥 ERRO KILLER: {e}")
+            return f"<div style='color:white;'>ERRO KILLER: {str(e)}</div>"
 
     def create_fallback_chart(self, df, ticker):
         """Gráfico de emergência super simples"""

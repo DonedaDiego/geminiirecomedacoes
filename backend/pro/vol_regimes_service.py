@@ -82,6 +82,13 @@ class VolatilityRegimesService:
                 self.logger.error(f"Nenhum dado encontrado para {ticker}")
                 return None
             
+            data = data[(data['Open'] > 0) & 
+                    (data['High'] > 0) & 
+                    (data['Low'] > 0) & 
+                    (data['Close'] > 0)]
+            
+            
+            
             # Reset index e calcular retornos
             data.reset_index(inplace=True)
             data['Returns'] = data['Close'].pct_change()

@@ -1401,18 +1401,18 @@
       const currentPlanName = levelNames[userAccessLevel] || 'Básico';
       const requiredPlanName = levelNames[requiredLevel] || 'Premium';
       
-      let message = `💎 Recurso ${requiredPlanName}\n\n"${featureName}" está disponível apenas para usuários do plano ${requiredPlanName} ou superior.\n\n`;
-      message += `📋 Seu plano atual: ${currentPlanName}\n`;
-      message += `🎯 Plano necessário: ${requiredPlanName}\n\n`;
+      let message = `Recurso ${requiredPlanName}\n\n"${featureName}" está disponível apenas para usuários do plano ${requiredPlanName} ou superior.\n\n`;
+      message += `Seu plano atual: ${currentPlanName}\n`;
+      message += ` Plano necessário: ${requiredPlanName}\n\n`;
       
       if (userAccessLevel === 'BASIC') {
-        message += `🚀 Faça upgrade e tenha acesso a dezenas de recursos avançados de Machine Learning e análise técnica!\n\n`;
+        message += `Faça upgrade e tenha acesso a dezenas de recursos avançados de Machine Learning e análise técnica!\n\n`;
       }
       
       message += `Deseja fazer upgrade agora?`;
       
       if (confirm(message)) {
-        window.location.href = '/planos.html';
+        window.location.href = 'https://geminii.com.br/pagamentos-app/';
       }
     }
 
@@ -1421,19 +1421,19 @@
       console.log(`🔑 Verificando: userLevel=${userLevel}, requiredLevel=${requiredLevel}`);
       
       if (requiredLevel === 'FREE') {
-        console.log('✅ Recurso grátis - acesso liberado');
+        console.log(' Recurso grátis - acesso liberado');
         return true; // Todos têm acesso ao grátis
       }
       
       if (requiredLevel === 'PRO') {
         const hasAccess = ['PRO', 'PREMIUM'].includes(userLevel);
-        console.log(`${hasAccess ? '✅' : '❌'} Recurso PRO - acesso ${hasAccess ? 'liberado' : 'negado'}`);
+        console.log(`${hasAccess ? '' : '❌'} Recurso PRO - acesso ${hasAccess ? 'liberado' : 'negado'}`);
         return hasAccess;
       }
       
       if (requiredLevel === 'PREMIUM') {
         const hasAccess = userLevel === 'PREMIUM';
-        console.log(`${hasAccess ? '✅' : '❌'} Recurso PREMIUM - acesso ${hasAccess ? 'liberado' : 'negado'}`);
+        console.log(`${hasAccess ? '' : '❌'} Recurso PREMIUM - acesso ${hasAccess ? 'liberado' : 'negado'}`);
         return hasAccess;
       }
       
@@ -1668,7 +1668,7 @@
         <div class="text-center md:text-left">
           <h4 class="text-white font-medium mb-4">Navegação</h4>
           <div class="flex flex-wrap justify-center md:justify-start gap-6">
-            <a href="/planos" class="footer-link">Planos</a>
+            <a href="https://geminii.com.br/pagamentos-app/" class="footer-link">Planos</a>
             <a href="/sobre" class="footer-link">Sobre</a>
             <a href="/contato" class="footer-link">Contato</a>
           </div>

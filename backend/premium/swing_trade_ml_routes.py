@@ -97,8 +97,6 @@ def run_swing_trade_analysis():
                         'labels': last_252.index.strftime('%d/%m').tolist(),
                         'prices': last_252['Close'].round(2).tolist(),
                         'predictions': last_252['prediction'].tolist() if 'prediction' in last_252.columns else [],
-                        'stop_loss': last_252['Stop_Loss'].round(2).tolist() if 'Stop_Loss' in last_252.columns else [],
-                        'take_profit': last_252['Take_Profit'].round(2).tolist() if 'Take_Profit' in last_252.columns else [],
                         'colors': last_252['color'].tolist() if 'color' in last_252.columns else []
                     }
                     print(f"Dados do gráfico preparados: {len(chart_data['labels'])} pontos (252 dias)")
