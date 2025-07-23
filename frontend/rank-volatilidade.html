@@ -80,6 +80,22 @@
       opacity: 0.7;
       cursor: not-allowed;
     }
+    .chart-container .loading {
+      display: none !important;
+    }
+    
+    #chartPrecoStress .loading,
+    #chartPerformance .loading,
+    #chartIVMercado .loading,
+    #chartDistribuicao .loading {
+      display: none !important;
+    }
+    
+    /* Esconder loading quando gráfico Plotly está renderizado */
+    .js-plotly-plot ~ .loading,
+    .plotly-graph-div ~ .loading {
+      display: none !important;
+    }
   </style>
 </head>
 <body class="text-white">

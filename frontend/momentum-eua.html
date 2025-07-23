@@ -1,0 +1,1251 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Indicador Momentum EUA - Geminii Tech</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        dark: '#000000',
+        light: '#ffffff',
+        subtle: 'rgba(255,255,255,0.1)',
+        geminii: '#ba39af'
+      },
+      fontFamily: {
+        sans: ['Inter', 'sans-serif']
+      }
+    }
+  }
+}
+</script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+body { 
+  font-family: 'Inter', sans-serif; 
+  background: linear-gradient(135deg, #0c0c0c 0%, #1a1a1a 100%);
+  min-height: 100vh;
+}
+
+.rank-card {
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 20px;
+  padding: 2rem;
+  transition: all 0.3s ease;
+}
+
+.rank-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 20px 40px rgba(186, 57, 175, 0.15);
+  border-color: rgba(186, 57, 175, 0.3);
+}
+
+.chart-container {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 12px;
+  padding: 1rem;
+  margin: 1rem 0;
+  height: 400px;
+}
+
+.stats-card {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 1.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 200px;
+}
+
+.spinner {
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  border-top: 2px solid #ba39af;
+  width: 30px;
+  height: 30px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.btn-loading {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.table-container {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.ranking-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.ranking-table th,
+.ranking-table td {
+  padding: 12px;
+  text-align: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.ranking-table th {
+  background: rgba(186, 57, 175, 0.2);
+  font-weight: 600;
+  color: #ba39af;
+}
+
+.ranking-table tr:hover {
+  background: rgba(255, 255, 255, 0.05);
+  cursor: pointer;
+}
+
+.position-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  font-weight: bold;
+  color: white;
+}
+
+.position-1 { background: linear-gradient(135deg, #ffd700, #ff8c00); }
+.position-2 { background: linear-gradient(135deg, #c0c0c0, #808080); }
+.position-3 { background: linear-gradient(135deg, #cd7f32, #8b4513); }
+.position-other { background: linear-gradient(135deg, #ba39af, #8b2c7c); }
+
+/* Classificações de Momentum */
+.momentum-muito-forte { color: #10b981; font-weight: bold; }
+.momentum-forte { color: #84cc16; }
+.momentum-moderado { color: #6b7280; }
+.momentum-fraco { color: #f59e0b; }
+.momentum-muito-fraco { color: #ef4444; }
+
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0,0,0,0.8);
+  backdrop-filter: blur(5px);
+}
+
+.modal-content {
+  background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+  margin: 2% auto;
+  padding: 0;
+  border-radius: 20px;
+  width: 95%;
+  max-width: 1200px;
+  max-height: 95vh;
+  overflow-y: auto;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.modal-header {
+  background: linear-gradient(135deg, #ba39af, #8b2c7c);
+  padding: 1.5rem;
+  border-radius: 20px 20px 0 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.close {
+  color: white;
+  float: right;
+  font-size: 28px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.close:hover {
+  transform: scale(1.1);
+}
+
+.detail-section {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin: 1rem 0;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.momentum-badge {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+.badge-muito-forte { background: #10b981; color: white; }
+.badge-forte { background: #84cc16; color: white; }
+.badge-moderado { background: #6b7280; color: white; }
+.badge-fraco { background: #f59e0b; color: white; }
+.badge-muito-fraco { background: #ef4444; color: white; }
+
+/* Remover loading dos gráficos */
+.chart-container .loading {
+    display: none !important;
+  }
+  
+  #chartPrecoStress .loading,
+  #chartPerformance .loading,
+  #chartIVMercado .loading,
+  #chartDistribuicao .loading {
+    display: none !important;
+  }
+  .js-plotly-plot ~ .loading,
+  .plotly-graph-div ~ .loading {
+    display: none !important;
+  }
+</style>
+</head>
+<body class="text-white">
+
+<!-- Navbar -->
+<nav class="fixed top-6 left-1/2 transform -translate-x-1/2 z-50 bg-opacity-5 border-opacity-10 bg-white border-white border rounded-full px-4 py-3 shadow-xl backdrop-blur-md">
+<div class="flex items-center justify-between">
+  <div class="flex items-center">
+    <img src="logo.png" alt="Geminii Logo" class="w-6 h-6 cursor-pointer" onclick="window.location.href='/'">
+  </div>
+  <div class="hidden md:flex items-center space-x-6 text-xs text-gray-300 ml-8">
+    <a href="/dashboard" class="hover:text-white transition-colors">Dashboard</a>
+    <a href="golden_cross_eua.html" class="hover:text-white transition-colors">Golden Cross US</a>
+    <a href="" class="hover:text-white transition-colors">Value Screening</a>
+    <a href="" class="hover:text-white transition-colors">Trend Following</a>
+    <span class="text-white font-medium">Momentum US</span>
+  </div>
+  <div class="flex items-center space-x-3 ml-8">
+    <div id="apiStatus" class="w-8 h-8 bg-green-500 bg-opacity-10 border border-green-500 border-opacity-30 rounded-full flex items-center justify-center relative">
+      <i class="fas fa-rocket text-green-500 text-xs"></i>
+      <div class="absolute -top-1 -right-1 w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+    </div>
+  </div>
+</div>
+</nav>
+
+<!-- Content -->
+<div class="pt-32 pb-16">
+<div class="max-w-7xl mx-auto px-6">
+  
+  <!-- Header -->
+  <div class="text-center mb-8">
+    <h1 class="text-4xl md:text-5xl font-bold mb-4">
+      <span style="color: #ba39af; font-weight: 900;">Momentum</span>
+      <span class="text-white font-light">EUA</span>
+    </h1>
+    <p class="text-neutral-300 text-lg max-w-2xl mx-auto">
+      Análise de momentum baseada em ROC multi-período, volume e volatilidade das maiores empresas americanas
+    </p>
+  </div>
+
+  <!-- Estatísticas Gerais -->
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+    <div class="stats-card text-center">
+      <div class="text-2xl font-bold text-blue-400" id="totalEmpresas">50</div>
+      <div class="text-sm text-gray-400">Empresas Analisadas</div>
+    </div>
+    <div class="stats-card text-center">
+      <div class="text-2xl font-bold text-green-400" id="momentumForte">-</div>
+      <div class="text-sm text-gray-400">Momentum Forte</div>
+    </div>
+    <div class="stats-card text-center">
+      <div class="text-2xl font-bold text-purple-400" id="scoreMedia">-</div>
+      <div class="text-sm text-gray-400">Score Médio</div>
+    </div>
+    <div class="stats-card text-center">
+      <div class="text-2xl font-bold text-orange-400" id="acimaSMA50">-</div>
+      <div class="text-sm text-gray-400">Acima SMA 50</div>
+    </div>
+  </div>
+
+  <!-- Controles -->
+  <div class="rank-card mb-8">
+    <div class="flex flex-wrap gap-4 items-center justify-between">
+      <div class="flex gap-4 items-center">
+        <div>
+          <label class="block text-sm font-medium text-gray-300 mb-1">Limite</label>
+          <select id="limiteSelect" class="bg-gray-800 text-white rounded-lg px-3 py-2 border border-gray-600">
+            <option value="10">Top 10</option>
+            <option value="20" selected>Top 20</option>
+            <option value="30">Top 30</option>
+            <option value="50">Top 50</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-300 mb-1">Filtro por Setor</label>
+          <select id="setorSelect" class="bg-gray-800 text-white rounded-lg px-3 py-2 border border-gray-600">
+            <option value="">Todos os Setores</option>
+            <option value="Technology">Technology</option>
+            <option value="Financial Services">Financial Services</option>
+            <option value="Healthcare">Healthcare</option>
+            <option value="Consumer Cyclical">Consumer Cyclical</option>
+            <option value="Communication Services">Communication Services</option>
+            <option value="Industrials">Industrials</option>
+          </select>
+        </div>
+      </div>
+      <button 
+        id="atualizarBtn"
+        onclick="carregarRanking()" 
+        class="px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 rounded-lg text-white font-semibold transition-all duration-300 transform hover:scale-105"
+      >
+        <i class="fas fa-sync-alt mr-2"></i>
+        <span id="atualizarText">Atualizar Ranking</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Tabela de Ranking -->
+  <div class="rank-card mb-8">
+    <h2 class="text-3xl font-bold mb-6 text-center">
+      <i class="fas fa-rocket mr-2 text-purple-400"></i>
+      Ranking Momentum EUA
+    </h2>
+    
+    <div class="table-container">
+      <table class="ranking-table">
+        <thead>
+          <tr>
+            <th>Posição</th>
+            <th>Ativo</th>
+            <th>Score</th>
+            <th>Classificação</th>
+            <th>ROC 1M</th>
+            <th>ROC 3M</th>
+            <th>ROC 6M</th>
+            <th>Preço</th>
+            <th>SMA 50</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody id="rankingTableBody">
+          <tr>
+            <td colspan="10" class="loading">
+              <div class="spinner"></div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Classificações do Momentum -->
+  <div class="rank-card mb-8">
+    <h2 class="text-3xl font-bold mb-6 text-center">
+      <i class="fas fa-chart-line mr-2 text-blue-400"></i>
+      Sistema de Classificação
+    </h2>
+    
+    <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+      <div class="stats-card text-center border-l-4 border-green-500">
+        <div class="text-green-400 font-bold text-lg">≥ 80</div>
+        <div class="text-sm text-gray-300 mb-2">Muito Forte</div>
+        <div class="momentum-badge badge-muito-forte">Compra Forte</div>
+      </div>
+      <div class="stats-card text-center border-l-4 border-green-400">
+        <div class="text-green-300 font-bold text-lg">65-79</div>
+        <div class="text-sm text-gray-300 mb-2">Forte</div>
+        <div class="momentum-badge badge-forte">Compra</div>
+      </div>
+      <div class="stats-card text-center border-l-4 border-gray-500">
+        <div class="text-gray-400 font-bold text-lg">45-64</div>
+        <div class="text-sm text-gray-300 mb-2">Moderado</div>
+        <div class="momentum-badge badge-moderado">Neutro</div>
+      </div>
+      <div class="stats-card text-center border-l-4 border-yellow-500">
+        <div class="text-yellow-400 font-bold text-lg">25-44</div>
+        <div class="text-sm text-gray-300 mb-2">Fraco</div>
+        <div class="momentum-badge badge-fraco">Cuidado</div>
+      </div>
+      <div class="stats-card text-center border-l-4 border-red-500">
+        <div class="text-red-400 font-bold text-lg">&lt; 25</div>
+        <div class="text-sm text-gray-300 mb-2">Muito Fraco</div>
+        <div class="momentum-badge badge-muito-fraco">Evitar</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Metodologia -->
+  <div class="rank-card">
+    <h2 class="text-3xl font-bold mb-6 text-center">
+      <i class="fas fa-cogs mr-2 text-orange-400"></i>
+      Metodologia do Score
+    </h2>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+      <div>
+        <h3 class="text-xl font-bold mb-4 text-purple-400">
+          <i class="fas fa-percentage mr-2"></i>
+          Componentes do Score
+        </h3>
+        <div class="space-y-3">
+          <div class="flex justify-between items-center p-3 bg-gray-800 rounded-lg">
+            <span class="text-gray-300">ROC 1 Mês (21 dias)</span>
+            <span class="text-purple-400 font-bold">25%</span>
+          </div>
+          <div class="flex justify-between items-center p-3 bg-gray-800 rounded-lg">
+            <span class="text-gray-300">ROC 3 Meses (63 dias)</span>
+            <span class="text-purple-400 font-bold">25%</span>
+          </div>
+          <div class="flex justify-between items-center p-3 bg-gray-800 rounded-lg">
+            <span class="text-gray-300">ROC 6 Meses (126 dias)</span>
+            <span class="text-purple-400 font-bold">25%</span>
+          </div>
+          <div class="flex justify-between items-center p-3 bg-gray-800 rounded-lg">
+            <span class="text-gray-300">Aceleração Volume</span>
+            <span class="text-orange-400 font-bold">15%</span>
+          </div>
+          <div class="flex justify-between items-center p-3 bg-gray-800 rounded-lg">
+            <span class="text-gray-300">Volatilidade Negativa</span>
+            <span class="text-red-400 font-bold">10%</span>
+          </div>
+        </div>
+      </div>
+      
+      <div>
+        <h3 class="text-xl font-bold mb-4 text-blue-400">
+          <i class="fas fa-filter mr-2"></i>
+          Filtros e Ajustes
+        </h3>
+        <div class="space-y-4">
+          <div class="p-4 bg-blue-900/20 rounded-lg border border-blue-500/30">
+            <h4 class="font-semibold text-blue-400 mb-2">Filtro SMA 50</h4>
+            <p class="text-sm text-gray-300">Ações abaixo da média móvel de 50 dias têm score reduzido pela metade</p>
+          </div>
+          <div class="p-4 bg-green-900/20 rounded-lg border border-green-500/30">
+            <h4 class="font-semibold text-green-400 mb-2">Rate of Change (ROC)</h4>
+            <p class="text-sm text-gray-300">ROC = (Preço Atual - Preço N dias atrás) / Preço N dias atrás × 100</p>
+          </div>
+          <div class="p-4 bg-orange-900/20 rounded-lg border border-orange-500/30">
+            <h4 class="font-semibold text-orange-400 mb-2">Volume Aceleração</h4>
+            <p class="text-sm text-gray-300">Volume atual comparado à média móvel de 3 meses</p>
+          </div>
+          <div class="p-4 bg-red-900/20 rounded-lg border border-red-500/30">
+            <h4 class="font-semibold text-red-400 mb-2">Volatilidade Negativa</h4>
+            <p class="text-sm text-gray-300">Volatilidade calculada apenas nos dias de queda (menor = melhor)</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<!-- Modal de Detalhes -->
+<div id="detailModal" class="modal">
+<div class="modal-content">
+  <div class="modal-header">
+    <span class="close">&times;</span>
+    <h2 class="text-2xl font-bold text-white">
+      <i class="fas fa-rocket mr-2"></i>
+      Análise Detalhada: <span id="modalTicker">-</span>
+    </h2>
+    <p class="text-purple-100 mt-2">Análise completa de momentum multi-período</p>
+  </div>
+  
+  <div class="p-6">
+    
+    <!-- Métricas Principais -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+      <div class="stats-card text-center">
+        <div class="text-3xl font-bold" id="detailMomentumScore" style="color: #ba39af;">-</div>
+        <div class="text-sm text-gray-400">Momentum Score</div>
+      </div>
+      <div class="stats-card text-center">
+        <div class="text-2xl font-bold text-blue-400" id="detailPreco">-</div>
+        <div class="text-sm text-gray-400">Preço Atual</div>
+      </div>
+      <div class="stats-card text-center">
+        <div class="text-2xl font-bold text-green-400" id="detailROC1M">-</div>
+        <div class="text-sm text-gray-400">ROC 1 Mês</div>
+      </div>
+      <div class="stats-card text-center">
+        <div class="text-2xl font-bold text-orange-400" id="detailAceleracao">-</div>
+        <div class="text-sm text-gray-400">Aceleração Volume</div>
+      </div>
+    </div>
+
+    <!-- Classificação e Tendência -->
+    <div class="detail-section">
+      <h3 class="text-xl font-bold mb-4 text-purple-400">
+        <i class="fas fa-chart-line mr-2"></i>
+        Status do Momentum
+      </h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="text-center">
+          <div class="text-lg text-gray-400 mb-2">Classificação Atual</div>
+          <div id="detailClassificacao" class="text-2xl font-bold">-</div>
+        </div>
+        <div class="text-center">
+          <div class="text-lg text-gray-400 mb-2">Tendência</div>
+          <div id="detailTendencia" class="text-2xl font-bold">-</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Gráficos -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      
+      <!-- Gráfico 1: Preço + SMA + Score -->
+      <div class="chart-container">
+        <h3 class="text-lg font-bold mb-4 text-center text-blue-400">
+          Preço vs SMA 50 + Momentum Score
+        </h3>
+        <div id="chartPrecoMomentum" class="w-full h-full">
+          <div class="loading"><div class="spinner"></div></div>
+        </div>
+      </div>
+
+      <!-- Gráfico 2: ROCs Multi-período -->
+      <div class="chart-container">
+        <h3 class="text-lg font-bold mb-4 text-center text-green-400">
+          ROC Multi-período (1M, 3M, 6M)
+        </h3>
+        <div id="chartROCs" class="w-full h-full">
+          <div class="loading"><div class="spinner"></div></div>
+        </div>
+      </div>
+
+      <!-- Gráfico 3: Volume e Aceleração -->
+      <div class="chart-container">
+        <h3 class="text-lg font-bold mb-4 text-center text-orange-400">
+          Volume e Aceleração
+        </h3>
+        <div id="chartVolume" class="w-full h-full">
+          <div class="loading"><div class="spinner"></div></div>
+        </div>
+      </div>
+
+      <!-- Gráfico 4: Distribuição Momentum Score -->
+      <div class="chart-container">
+        <h3 class="text-lg font-bold mb-4 text-center text-purple-400">
+          Distribuição do Momentum Score
+        </h3>
+        <div id="chartDistribuicao" class="w-full h-full">
+          <div class="loading"><div class="spinner"></div></div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Estatísticas Detalhadas -->
+    <div class="detail-section mt-6">
+      <h3 class="text-xl font-bold mb-4 text-blue-400">
+        <i class="fas fa-chart-bar mr-2"></i>
+        Estatísticas Detalhadas
+      </h3>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div>
+          <h4 class="font-semibold text-green-400 mb-3">Rate of Change (ROC)</h4>
+          <div class="space-y-2 text-sm">
+            <div class="flex justify-between">
+              <span class="text-gray-400">ROC 1 Mês:</span>
+              <span id="detailROC1MFull" class="text-white">-</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-400">ROC 3 Meses:</span>
+              <span id="detailROC3M" class="text-white">-</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-400">ROC 6 Meses:</span>
+              <span id="detailROC6M" class="text-white">-</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-400">Retorno 7 dias:</span>
+              <span id="detailRetorno7D" class="text-blue-400">-</span>
+            </div>
+          </div>
+        </div>
+        <div>
+          <h4 class="font-semibold text-orange-400 mb-3">Volume e Volatilidade</h4>
+          <div class="space-y-2 text-sm">
+            <div class="flex justify-between">
+              <span class="text-gray-400">Aceleração Volume:</span>
+              <span id="detailAceleracaoFull" class="text-white">-</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-400">Volatilidade Negativa:</span>
+              <span id="detailVolNegativa" class="text-yellow-400">-</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-400">SMA 50:</span>
+              <span id="detailSMA50" class="text-blue-400">-</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-400">Acima SMA 50:</span>
+              <span id="detailAcimaSMA" class="text-green-400">-</span>
+            </div>
+          </div>
+        </div>
+        <div>
+          <h4 class="font-semibold text-purple-400 mb-3">Estatísticas do Período</h4>
+          <div class="space-y-2 text-sm">
+            <div class="flex justify-between">
+              <span class="text-gray-400">Score Médio:</span>
+              <span id="detailScoreMedio" class="text-white">-</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-400">Score Máximo:</span>
+              <span id="detailScoreMax" class="text-green-400">-</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-400">Score Mínimo:</span>
+              <span id="detailScoreMin" class="text-red-400">-</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-400">% Tempo SMA 50:</span>
+              <span id="detailPercentualSMA" class="text-blue-400">-</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</div>
+
+<script>
+// Variáveis globais
+let rankingData = [];
+let currentDetailData = null;
+
+// Inicialização
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('🚀 Iniciando Momentum EUA...');
+  carregarRanking();
+  verificarApiStatus();
+  
+  // Setup modal
+  setupModal();
+});
+
+// Setup do modal
+function setupModal() {
+  const modal = document.getElementById('detailModal');
+  const closeBtn = document.getElementsByClassName('close')[0];
+  
+  closeBtn.onclick = function() {
+    modal.style.display = 'none';
+  }
+  
+  window.onclick = function(event) {
+    if (event.target == modal) {
+      modal.style.display = 'none';
+    }
+  }
+}
+
+// Carregar ranking
+async function carregarRanking() {
+  try {
+    atualizarBotaoCarregando(true);
+    console.log('🔄 Carregando ranking momentum...');
+    
+    const limite = document.getElementById('limiteSelect').value;
+    const setor = document.getElementById('setorSelect').value;
+    
+    // Carregar estatísticas
+    try {
+      const statsResponse = await fetch('/api/momentum-us/estatisticas');
+      const statsData = await statsResponse.json();
+      
+      if (statsData.sucesso) {
+        atualizarEstatisticas(statsData.data);
+      }
+    } catch (e) {
+      console.warn('⚠️ Erro ao carregar estatísticas:', e);
+    }
+    
+    // Carregar ranking
+    const response = await fetch(`/api/momentum-us/ranking?limite=${limite}`);
+    const data = await response.json();
+    
+    console.log(`📡 API Response: ${response.status}`);
+    
+    if (!data.sucesso) {
+      throw new Error(data.erro || 'Erro na API');
+    }
+    
+    rankingData = data.data;
+    
+    // Filtrar por setor se selecionado
+    if (setor) {
+      rankingData = rankingData.filter(item => item.setor === setor);
+    }
+    
+    console.log(`✅ ${rankingData.length} ativos carregados`);
+    
+    atualizarTabelaRanking();
+    atualizarEstatisticasRanking(data.metadados);
+    
+  } catch (error) {
+    console.error('❌ Erro:', error.message);
+    mostrarErro(error.message);
+  } finally {
+    atualizarBotaoCarregando(false);
+  }
+}
+
+// Atualizar estatísticas gerais
+function atualizarEstatisticas(stats) {
+  try {
+    document.getElementById('totalEmpresas').textContent = stats.total_empresas_analisadas || 50;
+  } catch (error) {
+    console.warn('⚠️ Erro ao atualizar estatísticas:', error);
+  }
+}
+
+// Atualizar estatísticas do ranking
+function atualizarEstatisticasRanking(metadados) {
+  if (!metadados) return;
+  
+  document.getElementById('momentumForte').textContent = metadados.momentum_forte || 0;
+  document.getElementById('scoreMedia').textContent = metadados.score_medio ? metadados.score_medio.toFixed(1) : '-';
+  document.getElementById('acimaSMA50').textContent = metadados.acima_sma50 || 0;
+}
+
+// Atualizar tabela de ranking
+function atualizarTabelaRanking() {
+  const tbody = document.getElementById('rankingTableBody');
+  
+  if (!rankingData || rankingData.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="10" class="text-center text-gray-400">Nenhum dado disponível</td></tr>';
+    return;
+  }
+  
+  tbody.innerHTML = rankingData.map((ativo, index) => {
+    const posicao = ativo.posicao || (index + 1);
+    let badgeClass = 'position-other';
+    if (posicao === 1) badgeClass = 'position-1';
+    else if (posicao === 2) badgeClass = 'position-2';
+    else if (posicao === 3) badgeClass = 'position-3';
+    
+    // Classe de cor baseada na classificação
+    let momentumClass = 'momentum-moderado';
+    const classificacao = ativo.classificacao || '';
+    if (classificacao === 'MOMENTUM_MUITO_FORTE') momentumClass = 'momentum-muito-forte';
+    else if (classificacao === 'MOMENTUM_FORTE') momentumClass = 'momentum-forte';
+    else if (classificacao === 'MOMENTUM_FRACO') momentumClass = 'momentum-fraco';
+    else if (classificacao === 'MOMENTUM_MUITO_FRACO') momentumClass = 'momentum-muito-fraco';
+    
+    // Nome da classificação amigável
+    const classificacaoNome = {
+      'MOMENTUM_MUITO_FORTE': 'Muito Forte',
+      'MOMENTUM_FORTE': 'Forte',
+      'MOMENTUM_MODERADO': 'Moderado',
+      'MOMENTUM_FRACO': 'Fraco',
+      'MOMENTUM_MUITO_FRACO': 'Muito Fraco'
+    }[ativo.classificacao] || ativo.classificacao;
+    
+    // Ícone SMA 50
+    const smaIcon = ativo.acima_sma50 ? 
+      '<i class="fas fa-arrow-up text-green-400" title="Acima SMA 50"></i>' : 
+      '<i class="fas fa-arrow-down text-red-400" title="Abaixo SMA 50"></i>';
+    
+    return `
+      <tr onclick="abrirDetalhes('${ativo.ticker}')">
+        <td>
+          <span class="position-badge ${badgeClass}">${posicao}</span>
+        </td>
+        <td>
+          <div class="font-bold text-purple-400">${ativo.ticker}</div>
+          <div class="text-xs text-gray-400">${ativo.setor}</div>
+        </td>
+        <td class="font-bold text-white">${ativo.momentum_score ? ativo.momentum_score.toFixed(1) : '-'}</td>
+        <td class="${momentumClass}">${classificacaoNome}</td>
+        <td class="${ativo.roc_1m >= 0 ? 'text-green-400' : 'text-red-400'}">${ativo.roc_1m ? ativo.roc_1m.toFixed(1) + '%' : '-'}</td>
+        <td class="${ativo.roc_3m >= 0 ? 'text-green-400' : 'text-red-400'}">${ativo.roc_3m ? ativo.roc_3m.toFixed(1) + '%' : '-'}</td>
+        <td class="${ativo.roc_6m >= 0 ? 'text-green-400' : 'text-red-400'}">${ativo.roc_6m ? ativo.roc_6m.toFixed(1) + '%' : '-'}</td>
+        <td>${ativo.preco_atual ? ativo.preco_atual.toFixed(2) : '-'}</td>
+        <td>${smaIcon}</td>
+        <td>
+          <button 
+            onclick="event.stopPropagation(); abrirDetalhes('${ativo.ticker}')"
+            class="px-3 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm transition-colors"
+          >
+            <i class="fas fa-chart-line mr-1"></i>
+            Detalhes
+          </button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+// Abrir modal de detalhes
+async function abrirDetalhes(ticker) {
+  try {
+    console.log('🔍 Abrindo detalhes para:', ticker);
+    
+    // Mostrar modal
+    const modal = document.getElementById('detailModal');
+    modal.style.display = 'block';
+    
+    // Atualizar título
+    document.getElementById('modalTicker').textContent = ticker;
+    
+    // Resetar conteúdo
+    resetarModalContent();
+    
+    // Buscar dados detalhados
+    const response = await fetch(`/api/momentum-us/acao/${ticker}`);
+    const data = await response.json();
+    
+    if (!data.sucesso) {
+      throw new Error(data.erro || 'Erro ao buscar detalhes');
+    }
+    
+    currentDetailData = data.data;
+    console.log('✅ Dados detalhados carregados:', currentDetailData);
+    
+    // Atualizar modal com dados
+    atualizarModalContent(currentDetailData);
+    
+    // Renderizar gráficos
+    renderizarGraficosDetalhes(currentDetailData);
+    
+  } catch (error) {
+    console.error('❌ Erro ao abrir detalhes:', error);
+    // Mostrar erro no modal
+    document.getElementById('detailClassificacao').innerHTML = `
+      <div class="text-red-400">
+        <i class="fas fa-exclamation-triangle mr-2"></i>
+        Erro ao carregar dados: ${error.message}
+      </div>
+    `;
+  }
+}
+
+// Resetar conteúdo do modal
+function resetarModalContent() {
+  document.getElementById('detailMomentumScore').textContent = '-';
+  document.getElementById('detailPreco').textContent = '-';
+  document.getElementById('detailROC1M').textContent = '-';
+  document.getElementById('detailAceleracao').textContent = '-';
+  document.getElementById('detailClassificacao').textContent = '-';
+  document.getElementById('detailTendencia').textContent = '-';
+  
+  // Resetar gráficos
+  ['chartPrecoMomentum', 'chartROCs', 'chartVolume', 'chartDistribuicao'].forEach(id => {
+    document.getElementById(id).innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+  });
+}
+
+// Atualizar conteúdo do modal
+function atualizarModalContent(data) {
+  try {
+    // Métricas principais
+    document.getElementById('detailMomentumScore').textContent = `${data.momentum_score.toFixed(1)}`;
+    document.getElementById('detailPreco').textContent = `${data.preco_atual.toFixed(2)}`;
+    document.getElementById('detailROC1M').textContent = `${data.roc_1m.toFixed(1)}%`;
+    document.getElementById('detailAceleracao').textContent = `${data.aceleracao_volume.toFixed(2)}x`;
+    
+    // Classificação com cor
+    const classificacaoNome = {
+      'MOMENTUM_MUITO_FORTE': 'Muito Forte',
+      'MOMENTUM_FORTE': 'Forte',
+      'MOMENTUM_MODERADO': 'Moderado',
+      'MOMENTUM_FRACO': 'Fraco',
+      'MOMENTUM_MUITO_FRACO': 'Muito Fraco'
+    }[data.classificacao] || data.classificacao;
+    
+    let classColor = 'text-gray-400';
+    if (data.classificacao === 'MOMENTUM_MUITO_FORTE') classColor = 'text-green-500';
+    else if (data.classificacao === 'MOMENTUM_FORTE') classColor = 'text-green-400';
+    else if (data.classificacao === 'MOMENTUM_FRACO') classColor = 'text-yellow-400';
+    else if (data.classificacao === 'MOMENTUM_MUITO_FRACO') classColor = 'text-red-400';
+    
+    document.getElementById('detailClassificacao').innerHTML = `<span class="${classColor}">${classificacaoNome}</span>`;
+    
+    // Tendência
+    const tendenciaNome = {
+      'ACELERANDO_FORTE': 'Acelerando Forte',
+      'ACELERANDO': 'Acelerando',
+      'ESTAVEL': 'Estável',
+      'DESACELERANDO': 'Desacelerando',
+      'DESACELERANDO_FORTE': 'Desacelerando Forte'
+    }[data.tendencia_momentum] || data.tendencia_momentum;
+    
+    let tendColor = 'text-gray-400';
+    if (data.tendencia_momentum === 'ACELERANDO_FORTE') tendColor = 'text-green-500';
+    else if (data.tendencia_momentum === 'ACELERANDO') tendColor = 'text-green-400';
+    else if (data.tendencia_momentum === 'DESACELERANDO') tendColor = 'text-yellow-400';
+    else if (data.tendencia_momentum === 'DESACELERANDO_FORTE') tendColor = 'text-red-400';
+    
+    document.getElementById('detailTendencia').innerHTML = `<span class="${tendColor}">${tendenciaNome}</span>`;
+    
+    // Estatísticas detalhadas
+    document.getElementById('detailROC1MFull').textContent = `${data.roc_1m.toFixed(2)}%`;
+    document.getElementById('detailROC3M').textContent = `${data.roc_3m.toFixed(2)}%`;
+    document.getElementById('detailROC6M').textContent = `${data.roc_6m.toFixed(2)}%`;
+    document.getElementById('detailRetorno7D').textContent = `${data.retorno_7d.toFixed(2)}%`;
+    document.getElementById('detailAceleracaoFull').textContent = `${data.aceleracao_volume.toFixed(2)}x`;
+    document.getElementById('detailVolNegativa').textContent = `${data.volatilidade_negativa.toFixed(2)}%`;
+    document.getElementById('detailSMA50').textContent = `${data.sma_50.toFixed(2)}`;
+    document.getElementById('detailAcimaSMA').textContent = data.acima_sma50 ? 'SIM' : 'NÃO';
+    document.getElementById('detailScoreMedio').textContent = `${data.momentum_medio_periodo.toFixed(1)}`;
+    document.getElementById('detailScoreMax').textContent = `${data.momentum_max_periodo.toFixed(1)}`;
+    document.getElementById('detailScoreMin').textContent = `${data.momentum_min_periodo.toFixed(1)}`;
+    document.getElementById('detailPercentualSMA').textContent = `${data.percentual_acima_sma50.toFixed(1)}%`;
+    
+  } catch (error) {
+    console.error('❌ Erro ao atualizar modal:', error);
+  }
+}
+
+// Renderizar gráficos detalhados
+function renderizarGraficosDetalhes(data) {
+  try {
+    const chartData = data.chart_data;
+    if (!chartData) {
+      console.warn('⚠️ Dados de gráficos não disponíveis');
+      return;
+    }
+    
+    // Gráfico 1: Preço + SMA + Momentum Score
+    renderizarGraficoPrecoMomentum(chartData);
+    
+    // Gráfico 2: ROCs Multi-período
+    renderizarGraficoROCs(chartData);
+    
+    // Gráfico 3: Volume
+    renderizarGraficoVolume(chartData);
+    
+    // Gráfico 4: Distribuição
+    renderizarGraficoDistribuicao(chartData);
+    
+    console.log('✅ Gráficos detalhados renderizados');
+    
+  } catch (error) {
+    console.error('❌ Erro ao renderizar gráficos:', error);
+  }
+}
+
+// Gráfico: Preço + SMA + Momentum
+function renderizarGraficoPrecoMomentum(chartData) {
+  try {
+    if (!chartData.preco_momentum) return;
+    
+    const data = chartData.preco_momentum;
+    
+    const trace1 = {
+      x: data.dates,
+      y: data.precos,
+      type: 'scatter',
+      mode: 'lines',
+      name: 'Preço',
+      line: { color: '#3b82f6', width: 2 },
+      yaxis: 'y'
+    };
+    
+    const trace2 = {
+      x: data.dates,
+      y: data.sma_50,
+      type: 'scatter',
+      mode: 'lines',
+      name: 'SMA 50',
+      line: { color: '#f59e0b', width: 2 },
+      yaxis: 'y'
+    };
+    
+    const trace3 = {
+      x: data.dates,
+      y: data.momentum_score,
+      type: 'scatter',
+      mode: 'lines',
+      name: 'Momentum Score',
+      line: { color: '#ba39af', width: 2 },
+      yaxis: 'y2'
+    };
+    
+    const layout = {
+      title: { text: 'Preço vs SMA 50 + Momentum Score', font: { color: 'white' } },
+      xaxis: { title: 'Data', color: 'white', gridcolor: 'rgba(255,255,255,0.1)' },
+      yaxis: { 
+        title: 'Preço ($)', 
+        color: 'white', 
+        gridcolor: 'rgba(255,255,255,0.1)',
+        side: 'left'
+      },
+      yaxis2: {
+        title: 'Momentum Score',
+        color: 'white',
+        overlaying: 'y',
+        side: 'right'
+      },
+      plot_bgcolor: 'rgba(0,0,0,0)',
+      paper_bgcolor: 'rgba(0,0,0,0)',
+      font: { color: 'white' },
+      legend: { font: { color: 'white' } },
+      margin: { t: 50, b: 50, l: 60, r: 60 }
+    };
+    
+    Plotly.newPlot('chartPrecoMomentum', [trace1, trace2, trace3], layout, {responsive: true, displayModeBar: false});
+    
+  } catch (error) {
+    console.error('❌ Erro gráfico preço/momentum:', error);
+    document.getElementById('chartPrecoMomentum').innerHTML = '<div class="loading text-red-400">❌ Erro no gráfico</div>';
+  }
+}
+
+// Gráfico: ROCs Multi-período
+function renderizarGraficoROCs(chartData) {
+  try {
+    if (!chartData.rocs) return;
+    
+    const data = chartData.rocs;
+    
+    const trace1 = {
+      x: data.dates,
+      y: data.roc_1m,
+      type: 'scatter',
+      mode: 'lines',
+      name: 'ROC 1M',
+      line: { color: '#10b981', width: 2 }
+    };
+    
+    const trace2 = {
+      x: data.dates,
+      y: data.roc_3m,
+      type: 'scatter',
+      mode: 'lines',
+      name: 'ROC 3M',
+      line: { color: '#3b82f6', width: 2 }
+    };
+    
+    const trace3 = {
+      x: data.dates,
+      y: data.roc_6m,
+      type: 'scatter',
+      mode: 'lines',
+      name: 'ROC 6M',
+      line: { color: '#8b5cf6', width: 2 }
+    };
+    
+    // Linha zero
+    const trace4 = {
+      x: data.dates,
+      y: Array(data.dates.length).fill(0),
+      type: 'scatter',
+      mode: 'lines',
+      name: 'Zero',
+      line: { color: '#6b7280', width: 1, dash: 'dash' },
+      showlegend: false
+    };
+    
+    const layout = {
+      title: { text: 'ROC Multi-período', font: { color: 'white' } },
+      xaxis: { title: 'Data', color: 'white', gridcolor: 'rgba(255,255,255,0.1)' },
+      yaxis: { title: 'ROC (%)', color: 'white', gridcolor: 'rgba(255,255,255,0.1)' },
+      plot_bgcolor: 'rgba(0,0,0,0)',
+      paper_bgcolor: 'rgba(0,0,0,0)',
+      font: { color: 'white' },
+      legend: { font: { color: 'white' } },
+      margin: { t: 50, b: 50, l: 60, r: 20 }
+    };
+    
+    Plotly.newPlot('chartROCs', [trace1, trace2, trace3, trace4], layout, {responsive: true, displayModeBar: false});
+    
+  } catch (error) {
+    console.error('❌ Erro gráfico ROCs:', error);
+    document.getElementById('chartROCs').innerHTML = '<div class="loading text-red-400">❌ Erro no gráfico</div>';
+  }
+}
+
+// Gráfico: Volume e Aceleração
+function renderizarGraficoVolume(chartData) {
+  try {
+    if (!chartData.volume) return;
+    
+    const data = chartData.volume;
+    
+    const trace1 = {
+      x: data.dates,
+      y: data.volume,
+      type: 'bar',
+      name: 'Volume',
+      marker: { color: '#6b7280', opacity: 0.7 },
+      yaxis: 'y'
+    };
+    
+    const trace2 = {
+      x: data.dates,
+      y: data.aceleracao,
+      type: 'scatter',
+      mode: 'lines',
+      name: 'Aceleração',
+      line: { color: '#f59e0b', width: 2 },
+      yaxis: 'y2'
+    };
+    
+    // Linha de referência 1.0 para aceleração
+    const trace3 = {
+      x: data.dates,
+      y: Array(data.dates.length).fill(1),
+      type: 'scatter',
+      mode: 'lines',
+      name: 'Normal (1.0)',
+      line: { color: '#ef4444', width: 1, dash: 'dash' },
+      yaxis: 'y2',
+      showlegend: false
+    };
+    
+    const layout = {
+      title: { text: 'Volume e Aceleração', font: { color: 'white' } },
+      xaxis: { title: 'Data', color: 'white', gridcolor: 'rgba(255,255,255,0.1)' },
+      yaxis: { 
+        title: 'Volume', 
+        color: 'white', 
+        gridcolor: 'rgba(255,255,255,0.1)',
+        side: 'left'
+      },
+      yaxis2: {
+        title: 'Aceleração',
+        color: 'white',
+        overlaying: 'y',
+        side: 'right'
+      },
+      plot_bgcolor: 'rgba(0,0,0,0)',
+      paper_bgcolor: 'rgba(0,0,0,0)',
+      font: { color: 'white' },
+      legend: { font: { color: 'white' } },
+      margin: { t: 50, b: 50, l: 60, r: 60 }
+    };
+    
+    Plotly.newPlot('chartVolume', [trace1, trace2, trace3], layout, {responsive: true, displayModeBar: false});
+    
+  } catch (error) {
+    console.error('❌ Erro gráfico volume:', error);
+    document.getElementById('chartVolume').innerHTML = '<div class="loading text-red-400">❌ Erro no gráfico</div>';
+  }
+}
+
+// Gráfico: Distribuição do Momentum Score
+function renderizarGraficoDistribuicao(chartData) {
+  try {
+    if (!chartData.momentum_distribution) return;
+    
+    const data = chartData.momentum_distribution;
+    
+    const trace = {
+      x: data.values,
+      type: 'histogram',
+      name: 'Momentum Score',
+      marker: { color: '#ba39af', opacity: 0.7 },
+      nbinsx: 20
+    };
+    
+    const layout = {
+      title: { text: 'Distribuição do Momentum Score', font: { color: 'white' } },
+      xaxis: { title: 'Momentum Score', color: 'white', gridcolor: 'rgba(255,255,255,0.1)' },
+      yaxis: { title: 'Frequência', color: 'white', gridcolor: 'rgba(255,255,255,0.1)' },
+      plot_bgcolor: 'rgba(0,0,0,0)',
+      paper_bgcolor: 'rgba(0,0,0,0)',
+      font: { color: 'white' },
+      margin: { t: 50, b: 50, l: 60, r: 20 }
+    };
+    
+    Plotly.newPlot('chartDistribuicao', [trace], layout, {responsive: true, displayModeBar: false});
+    
+  } catch (error) {
+    console.error('❌ Erro gráfico distribuição:', error);
+    document.getElementById('chartDistribuicao').innerHTML = '<div class="loading text-red-400">❌ Erro no gráfico</div>';
+  }
+}
+
+// Atualizar estado do botão
+function atualizarBotaoCarregando(carregando) {
+  const btn = document.getElementById('atualizarBtn');
+  const text = document.getElementById('atualizarText');
+  const icon = btn.querySelector('i');
+  
+  if (carregando) {
+    btn.disabled = true;
+    btn.classList.add('btn-loading');
+    text.innerHTML = 'Carregando...';
+    if (icon) icon.classList.add('fa-spin');
+  } else {
+    btn.disabled = false;
+    btn.classList.remove('btn-loading');
+    text.innerHTML = 'Atualizar Ranking';
+    if (icon) icon.classList.remove('fa-spin');
+  }
+}
+
+// Mostrar erro
+function mostrarErro(mensagem) {
+  const tbody = document.getElementById('rankingTableBody');
+  tbody.innerHTML = `<tr><td colspan="10" class="text-center text-red-400">❌ ${mensagem}</td></tr>`;
+}
+
+// Verificar status da API
+async function verificarApiStatus() {
+  try {
+    const response = await fetch('/api/momentum-us/status');
+    const data = await response.json();
+    
+    const statusEl = document.getElementById('apiStatus');
+    if (data.sucesso) {
+      statusEl.className = 'w-8 h-8 bg-green-500 bg-opacity-10 border border-green-500 border-opacity-30 rounded-full flex items-center justify-center relative';
+      console.log('✅ API Momentum EUA funcionando');
+    } else {
+      statusEl.className = 'w-8 h-8 bg-red-500 bg-opacity-10 border border-red-500 border-opacity-30 rounded-full flex items-center justify-center relative';
+    }
+  } catch (error) {
+    console.error('❌ Erro API:', error.message);
+    const statusEl = document.getElementById('apiStatus');
+    statusEl.className = 'w-8 h-8 bg-red-500 bg-opacity-10 border border-red-500 border-opacity-30 rounded-full flex items-center justify-center relative';
+  }
+}
+
+// Event listeners
+document.getElementById('limiteSelect').addEventListener('change', carregarRanking);
+document.getElementById('setorSelect').addEventListener('change', carregarRanking);
+
+// Auto-refresh a cada 15 minutos
+setInterval(() => {
+  console.log('🔄 Auto-refresh do ranking momentum...');
+  carregarRanking();
+}, 15 * 60 * 1000);
+
+// Funções auxiliares para formatação
+function formatarPorcentagem(valor) {
+  return valor ? `${valor.toFixed(2)}%` : '-';
+}
+
+function formatarDolar(valor) {
+  return valor ? `${valor.toFixed(2)}` : '-';
+}
+
+function formatarNumero(valor) {
+  return valor ? valor.toFixed(1) : '-';
+}
+</script>
+</body>
+</html>

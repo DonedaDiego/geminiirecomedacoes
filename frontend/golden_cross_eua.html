@@ -1,0 +1,1254 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Golden Cross EUA - Geminii Tech</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        dark: '#000000',
+        light: '#ffffff',
+        subtle: 'rgba(255,255,255,0.1)',
+        geminii: '#ba39af',
+        usa: '#1e40af'
+      },
+      fontFamily: {
+        sans: ['Inter', 'sans-serif']
+      }
+    }
+  }
+}
+</script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+body { 
+  font-family: 'Inter', sans-serif; 
+  background: linear-gradient(135deg, #0f1419 0%, #1a202c 100%);
+  min-height: 100vh;
+}
+
+.rank-card {
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 20px;
+  padding: 2rem;
+  transition: all 0.3s ease;
+}
+
+.rank-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 20px 40px rgba(30, 64, 175, 0.15);
+  border-color: rgba(30, 64, 175, 0.3);
+}
+
+.chart-container {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 12px;
+  padding: 1rem;
+  margin: 1rem 0;
+  height: 400px;
+}
+
+.stats-card {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 1.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 200px;
+}
+
+.spinner {
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  border-top: 2px solid #1e40af;
+  width: 30px;
+  height: 30px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.btn-loading {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.table-container {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.ranking-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.ranking-table th,
+.ranking-table td {
+  padding: 12px;
+  text-align: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.ranking-table th {
+  background: rgba(30, 64, 175, 0.2);
+  font-weight: 600;
+  color: #3b82f6;
+}
+
+.ranking-table tr:hover {
+  background: rgba(255, 255, 255, 0.05);
+  cursor: pointer;
+}
+
+.position-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  font-weight: bold;
+  color: white;
+}
+
+.position-1 { background: linear-gradient(135deg, #ffd700, #ff8c00); }
+.position-2 { background: linear-gradient(135deg, #c0c0c0, #808080); }
+.position-3 { background: linear-gradient(135deg, #cd7f32, #8b4513); }
+.position-other { background: linear-gradient(135deg, #1e40af, #1e3a8a); }
+
+.status-golden-cross-ativo { color: #10b981; }
+.status-golden-cross-sobrecompra { color: #f59e0b; }
+.status-death-cross-ativo { color: #ef4444; }
+.status-death-cross-sobrevenda { color: #8b5cf6; }
+.status-neutro { color: #6b7280; }
+
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0,0,0,0.8);
+  backdrop-filter: blur(5px);
+}
+
+.modal-content {
+  background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
+  margin: 2% auto;
+  padding: 0;
+  border-radius: 20px;
+  width: 95%;
+  max-width: 1200px;
+  max-height: 95vh;
+  overflow-y: auto;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.modal-header {
+  background: linear-gradient(135deg, #1e40af, #1e3a8a);
+  padding: 1.5rem;
+  border-radius: 20px 20px 0 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.close {
+  color: white;
+  float: right;
+  font-size: 28px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.close:hover {
+  transform: scale(1.1);
+}
+
+.detail-section {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin: 1rem 0;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.setor-badge {
+  padding: 4px 8px;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.setor-technology { background: rgba(59, 130, 246, 0.2); color: #60a5fa; }
+.setor-financial { background: rgba(16, 185, 129, 0.2); color: #34d399; }
+.setor-healthcare { background: rgba(239, 68, 68, 0.2); color: #f87171; }
+.setor-consumer { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
+.setor-communication { background: rgba(139, 92, 246, 0.2); color: #a78bfa; }
+.setor-industrials { background: rgba(107, 114, 128, 0.2); color: #9ca3af; }
+
+.usa-flag {
+  background: linear-gradient(45deg, #b91c1c 0%, #1e40af 50%, #ffffff 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Remover loading dos gráficos */
+.chart-container .loading {
+    display: none !important;
+  }
+  
+  #chartPrecoStress .loading,
+  #chartPerformance .loading,
+  #chartIVMercado .loading,
+  #chartDistribuicao .loading {
+    display: none !important;
+  }
+  .js-plotly-plot ~ .loading,
+  .plotly-graph-div ~ .loading {
+    display: none !important;
+  }
+</style>
+</head>
+<body class="text-white">
+
+<!-- Navbar -->
+<nav class="fixed top-6 left-1/2 transform -translate-x-1/2 z-50 bg-opacity-5 border-opacity-10 bg-white border-white border rounded-full px-4 py-3 shadow-xl backdrop-blur-md">
+<div class="flex items-center justify-between">
+  <div class="flex items-center">
+    <img src="logo.png" alt="Geminii Logo" class="w-6 h-6 cursor-pointer" onclick="window.location.href='/'">
+  </div>
+  <div class="hidden md:flex items-center space-x-6 text-xs text-gray-300 ml-8">
+    <a href="/dashboard" class="hover:text-white transition-colors">Dashboard</a>
+    <a href="" class="hover:text-white transition-colors">Momentum US</a>
+    <a href="" class="hover:text-white transition-colors">Value Screening</a>
+    <a href="" class="hover:text-white transition-colors">Trend Following</a>
+    <span class="text-white font-medium">Golden Cross EUA</span>
+  </div>
+  <div class="flex items-center space-x-3 ml-8">
+    <div id="apiStatus" class="w-8 h-8 bg-blue-500 bg-opacity-10 border border-blue-500 border-opacity-30 rounded-full flex items-center justify-center relative">
+      <i class="fas fa-flag-usa text-blue-500 text-xs"></i>
+      <div class="absolute -top-1 -right-1 w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+    </div>
+  </div>
+</div>
+</nav>
+
+<!-- Content -->
+<div class="pt-32 pb-16">
+<div class="max-w-7xl mx-auto px-6">
+  
+  <!-- Header -->
+  <div class="text-center mb-8">
+    <h1 class="text-4xl md:text-5xl font-bold mb-4">
+      <span class="usa-flag font-black">Golden Cross</span>
+      <span class="text-white font-light">Estados Unidos</span>
+    </h1>
+    <p class="text-neutral-300 text-lg max-w-2xl mx-auto">
+      Análise técnica das 50 maiores empresas americanas com Golden Cross (SMA 50 > SMA 200) + filtro RSI
+    </p>
+  </div>
+
+  <!-- Estatísticas Gerais -->
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+    <div class="stats-card text-center">
+      <div class="text-2xl font-bold text-blue-400" id="totalEmpresas">50</div>
+      <div class="text-sm text-gray-400">Empresas Top EUA</div>
+    </div>
+    <div class="stats-card text-center">
+      <div class="text-2xl font-bold text-green-400" id="goldenCrossAtivo">-</div>
+      <div class="text-sm text-gray-400">Golden Cross Ativo</div>
+    </div>
+    <div class="stats-card text-center">
+      <div class="text-2xl font-bold text-purple-400" id="totalSetores">6</div>
+      <div class="text-sm text-gray-400">Setores</div>
+    </div>
+    <div class="stats-card text-center">
+      <div class="text-2xl font-bold text-orange-400" id="rsiThreshold">< 70</div>
+      <div class="text-sm text-gray-400">Filtro RSI</div>
+    </div>
+  </div>
+
+  <!-- Controles -->
+  <div class="rank-card mb-8">
+    <div class="flex flex-wrap gap-4 items-center justify-between">
+      <div class="flex gap-4 items-center">
+        <div>
+          <label class="block text-sm font-medium text-gray-300 mb-1">Limite</label>
+          <select id="limiteSelect" class="bg-gray-800 text-white rounded-lg px-3 py-2 border border-gray-600">
+            <option value="10">Top 10</option>
+            <option value="20" selected>Top 20</option>
+            <option value="30">Top 30</option>
+            <option value="50">Todas (50)</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-300 mb-1">Visualização</label>
+          <select id="visualizacaoSelect" class="bg-gray-800 text-white rounded-lg px-3 py-2 border border-gray-600">
+            <option value="ranking" selected>Ranking Geral</option>
+            <option value="setores">Por Setores</option>
+          </select>
+        </div>
+      </div>
+      <button 
+        id="atualizarBtn"
+        onclick="carregarDados()" 
+        class="px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 rounded-lg text-white font-semibold transition-all duration-300 transform hover:scale-105"
+      >
+        <i class="fas fa-sync-alt mr-2"></i>
+        <span id="atualizarText">Atualizar Dados</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Ranking Geral -->
+  <div id="rankingContainer" class="rank-card mb-8">
+    <h2 class="text-3xl font-bold mb-6 text-center">
+      <i class="fas fa-trophy mr-2 text-yellow-400"></i>
+      Ranking Golden Cross EUA
+    </h2>
+    
+    <div class="table-container">
+      <table class="ranking-table">
+        <thead>
+          <tr>
+            <th>Pos</th>
+            <th>Ticker</th>
+            <th>Empresa</th>
+            <th>Setor</th>
+            <th>Status</th>
+            <th>Preço</th>
+            <th>RSI</th>
+            <th>Score</th>
+            <th>30d</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody id="rankingTableBody">
+          <tr>
+            <td colspan="10" class="loading">
+              <div class="spinner"></div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Ranking por Setores -->
+  <div id="setoresContainer" class="hidden">
+    <h2 class="text-3xl font-bold mb-6 text-center">
+      <i class="fas fa-building mr-2 text-blue-400"></i>
+      Análise por Setores
+    </h2>
+    <div id="setoresContent">
+      <!-- Conteúdo será preenchido dinamicamente -->
+    </div>
+  </div>
+
+  <!-- Explicação da Metodologia -->
+  <div class="rank-card">
+    <h2 class="text-3xl font-bold mb-6 text-center">
+      <i class="fas fa-chart-line mr-2 text-blue-400"></i>
+      Metodologia Golden Cross EUA
+    </h2>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+      <div>
+        <h3 class="text-xl font-bold mb-4 text-green-400">
+          <i class="fas fa-crosshairs mr-2"></i>
+          O que é Golden Cross?
+        </h3>
+        <p class="text-gray-300 mb-4">
+          Golden Cross ocorre quando a <strong>Média Móvel de 50 períodos cruza acima</strong> da Média Móvel de 200 períodos, sinalizando possível início de tendência de alta.
+        </p>
+        <div class="bg-gray-800 p-4 rounded-lg">
+          <code class="text-green-400">Golden Cross = SMA(50) > SMA(200)</code>
+        </div>
+        <p class="text-sm text-gray-400 mt-2">
+          + Filtro RSI < 70 para evitar sobrecompra
+        </p>
+      </div>
+      
+      <div>
+        <h3 class="text-xl font-bold mb-4 text-blue-400">
+          <i class="fas fa-star mr-2"></i>
+          Sistema de Score
+        </h3>
+        <div class="space-y-2">
+          <div class="flex items-center gap-3">
+            <span class="w-4 h-4 bg-green-500 rounded-full"></span>
+            <span class="text-green-400">80-100</span>
+            <span class="text-gray-300">Setup Excelente</span>
+          </div>
+          <div class="flex items-center gap-3">
+            <span class="w-4 h-4 bg-blue-500 rounded-full"></span>
+            <span class="text-blue-400">60-79</span>
+            <span class="text-gray-300">Setup Bom</span>
+          </div>
+          <div class="flex items-center gap-3">
+            <span class="w-4 h-4 bg-yellow-500 rounded-full"></span>
+            <span class="text-yellow-400">40-59</span>
+            <span class="text-gray-300">Setup Regular</span>
+          </div>
+          <div class="flex items-center gap-3">
+            <span class="w-4 h-4 bg-orange-500 rounded-full"></span>
+            <span class="text-orange-400">20-39</span>
+            <span class="text-gray-300">Setup Fraco</span>
+          </div>
+          <div class="flex items-center gap-3">
+            <span class="w-4 h-4 bg-red-500 rounded-full"></span>
+            <span class="text-red-400">0-19</span>
+            <span class="text-gray-300">Sem Setup</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="mt-8 p-6 bg-gradient-to-r from-blue-900/30 to-purple-900/30 rounded-lg border border-blue-500/30">
+      <h3 class="text-xl font-bold mb-4 text-blue-400">
+        <i class="fas fa-flag-usa mr-2"></i>
+        Por que Mercado Americano?
+      </h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <ul class="text-gray-300 space-y-2">
+          <li>• <strong>Liquidez:</strong> Maior mercado de ações do mundo</li>
+          <li>• <strong>Empresas Globais:</strong> Apple, Microsoft, Google</li>
+          <li>• <strong>Inovação:</strong> Líderes em tecnologia e growth</li>
+        </ul>
+        <ul class="text-gray-300 space-y-2">
+          <li>• <strong>Transparência:</strong> Regulação robusta da SEC</li>
+          <li>• <strong>Diversificação:</strong> 6 setores principais</li>
+          <li>• <strong>Análise Técnica:</strong> Padrões mais confiáveis</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<!-- Modal de Detalhes -->
+<div id="detailModal" class="modal">
+<div class="modal-content">
+  <div class="modal-header">
+    <span class="close">&times;</span>
+    <h2 class="text-2xl font-bold text-white">
+      <i class="fas fa-chart-line mr-2"></i>
+      Análise Detalhada: <span id="modalTicker">-</span>
+    </h2>
+    <p class="text-blue-100 mt-2">Golden Cross e análise técnica completa</p>
+  </div>
+  
+  <div class="p-6">
+    
+    <!-- Métricas Principais -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+      <div class="stats-card text-center">
+        <div class="text-3xl font-bold text-blue-400" id="detailScore">-</div>
+        <div class="text-sm text-gray-400">Score</div>
+      </div>
+      <div class="stats-card text-center">
+        <div class="text-2xl font-bold text-green-400" id="detailPreco">-</div>
+        <div class="text-sm text-gray-400">Preço Atual</div>
+      </div>
+      <div class="stats-card text-center">
+        <div class="text-2xl font-bold text-purple-400" id="detailRSI">-</div>
+        <div class="text-sm text-gray-400">RSI</div>
+      </div>
+      <div class="stats-card text-center">
+        <div class="text-2xl font-bold text-orange-400" id="detailForca">-</div>
+        <div class="text-sm text-gray-400">Força GC (%)</div>
+      </div>
+    </div>
+
+    <!-- Informações da Empresa -->
+    <div class="detail-section">
+      <h3 class="text-xl font-bold mb-4 text-blue-400">
+        <i class="fas fa-building mr-2"></i>
+        Informações da Empresa
+      </h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <div class="flex justify-between items-center mb-2">
+            <span class="text-gray-400">Nome:</span>
+            <span id="detailNome" class="text-white font-semibold">-</span>
+          </div>
+          <div class="flex justify-between items-center mb-2">
+            <span class="text-gray-400">Setor:</span>
+            <span id="detailSetor" class="setor-badge">-</span>
+          </div>
+          <div class="flex justify-between items-center">
+            <span class="text-gray-400">Status Atual:</span>
+            <span id="detailStatus" class="font-semibold">-</span>
+          </div>
+        </div>
+        <div>
+          <div class="flex justify-between items-center mb-2">
+            <span class="text-gray-400">SMA 50:</span>
+            <span id="detailSMA50" class="text-blue-400">-</span>
+          </div>
+          <div class="flex justify-between items-center mb-2">
+            <span class="text-gray-400">SMA 200:</span>
+            <span id="detailSMA200" class="text-orange-400">-</span>
+          </div>
+          <div class="flex justify-between items-center">
+            <span class="text-gray-400">Performance 30d:</span>
+            <span id="detailPerf30d" class="font-semibold">-</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Gráficos -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      
+      <!-- Gráfico 1: Preço + SMAs -->
+      <div class="chart-container">
+        <h3 class="text-lg font-bold mb-4 text-center text-blue-400">
+          Preço + Médias Móveis
+        </h3>
+        <div id="chartPrecoSMAs" class="w-full h-full">
+          <div class="loading"><div class="spinner"></div></div>
+        </div>
+      </div>
+
+      <!-- Gráfico 2: RSI -->
+      <div class="chart-container">
+        <h3 class="text-lg font-bold mb-4 text-center text-purple-400">
+          RSI (14 períodos)
+        </h3>
+        <div id="chartRSI" class="w-full h-full">
+          <div class="loading"><div class="spinner"></div></div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Estatísticas Detalhadas -->
+    <div class="detail-section mt-6">
+      <h3 class="text-xl font-bold mb-4 text-green-400">
+        <i class="fas fa-chart-bar mr-2"></i>
+        Estatísticas dos Cruzamentos
+      </h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <h4 class="font-semibold text-blue-400 mb-3">Golden Cross (Últimos 12 meses)</h4>
+          <div class="space-y-2 text-sm">
+            <div class="flex justify-between">
+              <span class="text-gray-400">Total de sinais:</span>
+              <span id="detailTotalGolden" class="text-white">-</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-400">Sinais validados (RSI):</span>
+              <span id="detailGoldenValidados" class="text-green-400">-</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-400">Dias em GC:</span>
+              <span id="detailDiasGolden" class="text-blue-400">-</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-400">% Tempo em GC:</span>
+              <span id="detailPercentualGolden" class="text-purple-400">-</span>
+            </div>
+          </div>
+        </div>
+        <div>
+          <h4 class="font-semibold text-red-400 mb-3">Death Cross (Últimos 12 meses)</h4>
+          <div class="space-y-2 text-sm">
+            <div class="flex justify-between">
+              <span class="text-gray-400">Total de sinais:</span>
+              <span id="detailTotalDeath" class="text-white">-</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-400">Dias em DC:</span>
+              <span id="detailDiasDeath" class="text-red-400">-</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-400">Performance 90d:</span>
+              <span id="detailPerf90d" class="text-yellow-400">-</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-400">Distância SMA 200:</span>
+              <span id="detailDistSMA200" class="text-orange-400">-</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</div>
+
+<script>
+// Variáveis globais
+let rankingData = [];
+let setoresData = [];
+let currentDetailData = null;
+
+// Inicialização
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('🚀 Iniciando Golden Cross EUA...');
+  carregarDados();
+  verificarApiStatus();
+  
+  // Setup modal
+  setupModal();
+  
+  // Event listeners
+  document.getElementById('visualizacaoSelect').addEventListener('change', alterarVisualizacao);
+  document.getElementById('limiteSelect').addEventListener('change', carregarDados);
+});
+
+// Setup do modal
+function setupModal() {
+  const modal = document.getElementById('detailModal');
+  const closeBtn = document.getElementsByClassName('close')[0];
+  
+  closeBtn.onclick = function() {
+    modal.style.display = 'none';
+  }
+  
+  window.onclick = function(event) {
+    if (event.target == modal) {
+      modal.style.display = 'none';
+    }
+  }
+}
+
+// Carregar dados principais
+async function carregarDados() {
+  try {
+    atualizarBotaoCarregando(true);
+    console.log('🔄 Carregando dados Golden Cross EUA...');
+    
+    const limite = document.getElementById('limiteSelect').value;
+    
+    // Carregar estatísticas
+    await carregarEstatisticas();
+    
+    // Carregar ranking
+    await carregarRanking(limite);
+    
+    // Carregar dados por setores
+    await carregarSetores();
+    
+  } catch (error) {
+    console.error('❌ Erro:', error.message);
+    mostrarErro(error.message);
+  } finally {
+    atualizarBotaoCarregando(false);
+  }
+}
+
+// Carregar estatísticas
+async function carregarEstatisticas() {
+  try {
+    const response = await fetch('/api/golden-cross-eua/estatisticas');
+    const data = await response.json();
+    
+    if (data.sucesso) {
+      atualizarEstatisticas(data.data);
+    }
+  } catch (e) {
+    console.warn('⚠️ Erro ao carregar estatísticas:', e);
+  }
+}
+
+// Carregar ranking
+async function carregarRanking(limite) {
+  const response = await fetch(`/api/golden-cross-eua/ranking?limite=${limite}`);
+  const data = await response.json();
+  
+  if (!data.sucesso) {
+    throw new Error(data.erro || 'Erro na API');
+  }
+  
+  rankingData = data.data;
+  console.log(`✅ ${rankingData.length} empresas carregadas`);
+  
+  atualizarTabelaRanking();
+  atualizarEstatisticasRanking();
+}
+
+// Carregar dados por setores
+async function carregarSetores() {
+  try {
+    const response = await fetch('/api/golden-cross-eua/setores');
+    const data = await response.json();
+    
+    if (data.sucesso) {
+      setoresData = data.data;
+      atualizarVisualizacaoSetores();
+    }
+  } catch (e) {
+    console.warn('⚠️ Erro ao carregar setores:', e);
+  }
+}
+
+// Atualizar estatísticas gerais
+function atualizarEstatisticas(stats) {
+  try {
+    if (stats.total_empresas_analisadas) {
+      document.getElementById('totalEmpresas').textContent = stats.total_empresas_analisadas;
+    }
+    if (stats.distribuicao_setores) {
+      document.getElementById('totalSetores').textContent = Object.keys(stats.distribuicao_setores).length;
+    }
+  } catch (error) {
+    console.warn('⚠️ Erro ao atualizar estatísticas:', error);
+  }
+}
+
+// Atualizar estatísticas do ranking
+function atualizarEstatisticasRanking() {
+  if (!rankingData || rankingData.length === 0) return;
+  
+  const goldenAtivo = rankingData.filter(item => 
+    item.status_atual === 'GOLDEN_CROSS_ATIVO'
+  ).length;
+  
+  document.getElementById('goldenCrossAtivo').textContent = goldenAtivo;
+}
+
+// Atualizar tabela de ranking
+function atualizarTabelaRanking() {
+  const tbody = document.getElementById('rankingTableBody');
+  
+  if (!rankingData || rankingData.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="10" class="text-center text-gray-400">Nenhum dado disponível</td></tr>';
+    return;
+  }
+  
+  tbody.innerHTML = rankingData.map((empresa, index) => {
+    const posicao = empresa.posicao || (index + 1);
+    let badgeClass = 'position-other';
+    if (posicao === 1) badgeClass = 'position-1';
+    else if (posicao === 2) badgeClass = 'position-2';
+    else if (posicao === 3) badgeClass = 'position-3';
+    
+    // Classe de cor baseada no status
+    let statusClass = 'status-neutro';
+    let statusTexto = empresa.status_atual || 'NEUTRO';
+    
+    if (empresa.status_atual === 'GOLDEN_CROSS_ATIVO') {
+      statusClass = 'status-golden-cross-ativo';
+      statusTexto = 'Golden Cross';
+    } else if (empresa.status_atual === 'GOLDEN_CROSS_SOBRECOMPRA') {
+      statusClass = 'status-golden-cross-sobrecompra';
+      statusTexto = 'GC + Sobrecompra';
+    } else if (empresa.status_atual === 'DEATH_CROSS_ATIVO') {
+      statusClass = 'status-death-cross-ativo';
+      statusTexto = 'Death Cross';
+    } else if (empresa.status_atual === 'DEATH_CROSS_SOBREVENDA') {
+      statusClass = 'status-death-cross-sobrevenda';
+      statusTexto = 'DC + Sobrevenda';
+    }
+    
+    // Badge do setor
+    const setorClass = getSetorClass(empresa.setor);
+    
+    // Cor da performance 30d
+    const perf30dClass = empresa.retorno_30d >= 0 ? 'text-green-400' : 'text-red-400';
+    const perf30dIcon = empresa.retorno_30d >= 0 ? 'fa-arrow-up' : 'fa-arrow-down';
+    
+    return `
+      <tr onclick="abrirDetalhes('${empresa.ticker}')">
+        <td>
+          <span class="position-badge ${badgeClass}">${posicao}</span>
+        </td>
+        <td class="font-bold text-blue-400">${empresa.ticker}</td>
+        <td class="text-left font-medium">${empresa.nome}</td>
+        <td>
+          <span class="setor-badge ${setorClass}">${getSetorNome(empresa.setor)}</span>
+        </td>
+        <td class="${statusClass} font-semibold">${statusTexto}</td>
+        <td>${empresa.preco_atual ? empresa.preco_atual.toFixed(2) : '-'}</td>
+        <td class="${empresa.rsi > 70 ? 'text-red-400' : empresa.rsi < 30 ? 'text-purple-400' : 'text-blue-400'}">${empresa.rsi ? empresa.rsi.toFixed(1) : '-'}</td>
+        <td class="font-bold ${getScoreClass(empresa.score)}">${empresa.score ? empresa.score.toFixed(1) : '-'}</td>
+        <td class="${perf30dClass}">
+          <i class="fas ${perf30dIcon} mr-1"></i>
+          ${empresa.retorno_30d ? empresa.retorno_30d.toFixed(1) + '%' : '-'}
+        </td>
+        <td>
+          <button 
+            onclick="event.stopPropagation(); abrirDetalhes('${empresa.ticker}')"
+            class="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm transition-colors"
+          >
+            <i class="fas fa-chart-line mr-1"></i>
+            Ver
+          </button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+// Atualizar visualização por setores
+function atualizarVisualizacaoSetores() {
+  const container = document.getElementById('setoresContent');
+  
+  if (!setoresData || setoresData.length === 0) {
+    container.innerHTML = '<div class="text-center text-gray-400">Nenhum dado disponível</div>';
+    return;
+  }
+  
+  container.innerHTML = setoresData.map(setor => {
+    const setorClass = getSetorClass(setor.nome_setor);
+    const stats = setor.estatisticas;
+    
+    return `
+      <div class="rank-card mb-6">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-2xl font-bold flex items-center">
+            <span class="setor-badge ${setorClass} mr-3">${getSetorNome(setor.nome_setor)}</span>
+          </h3>
+          <div class="grid grid-cols-4 gap-4 text-center">
+            <div>
+              <div class="text-lg font-bold text-blue-400">${stats.total_acoes}</div>
+              <div class="text-xs text-gray-400">Empresas</div>
+            </div>
+            <div>
+              <div class="text-lg font-bold text-green-400">${stats.golden_cross_ativo}</div>
+              <div class="text-xs text-gray-400">Golden Cross</div>
+            </div>
+            <div>
+              <div class="text-lg font-bold text-purple-400">${stats.score_medio}</div>
+              <div class="text-xs text-gray-400">Score Médio</div>
+            </div>
+            <div>
+              <div class="text-lg font-bold ${stats.melhor_performance_30d >= 0 ? 'text-green-400' : 'text-red-400'}">${stats.melhor_performance_30d.toFixed(1)}%</div>
+              <div class="text-xs text-gray-400">Melhor 30d</div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+          ${setor.acoes.map(empresa => `
+            <div onclick="abrirDetalhes('${empresa.ticker}')" class="bg-white/5 rounded-lg p-3 cursor-pointer hover:bg-white/10 transition-colors border border-white/10">
+              <div class="flex items-center justify-between mb-2">
+                <span class="font-bold text-blue-400">${empresa.ticker}</span>
+                <span class="text-sm ${getScoreClass(empresa.score)}">${empresa.score.toFixed(1)}</span>
+              </div>
+              <div class="text-xs text-gray-400 mb-1">${empresa.nome}</div>
+              <div class="flex justify-between items-center">
+                <span class="text-sm ${empresa.status_atual === 'GOLDEN_CROSS_ATIVO' ? 'text-green-400' : 'text-gray-400'}">
+                  ${empresa.status_atual === 'GOLDEN_CROSS_ATIVO' ? 'Golden Cross' : 'Sem GC'}
+                </span>
+                <span class="text-sm ${empresa.retorno_30d >= 0 ? 'text-green-400' : 'text-red-400'}">
+                  ${empresa.retorno_30d.toFixed(1)}%
+                </span>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+// Alternar visualização
+function alterarVisualizacao() {
+  const visualizacao = document.getElementById('visualizacaoSelect').value;
+  const rankingContainer = document.getElementById('rankingContainer');
+  const setoresContainer = document.getElementById('setoresContainer');
+  
+  if (visualizacao === 'ranking') {
+    rankingContainer.style.display = 'block';
+    setoresContainer.style.display = 'none';
+  } else {
+    rankingContainer.style.display = 'none';
+    setoresContainer.style.display = 'block';
+  }
+}
+
+// Abrir modal de detalhes
+async function abrirDetalhes(ticker) {
+  try {
+    console.log('🔍 Abrindo detalhes para:', ticker);
+    
+    // Mostrar modal
+    const modal = document.getElementById('detailModal');
+    modal.style.display = 'block';
+    
+    // Atualizar título
+    document.getElementById('modalTicker').textContent = ticker;
+    
+    // Resetar conteúdo
+    resetarModalContent();
+    
+    // Buscar dados detalhados
+    const response = await fetch(`/api/golden-cross-eua/acao/${ticker}`);
+    const data = await response.json();
+    
+    if (!data.sucesso) {
+      throw new Error(data.erro || 'Erro ao buscar detalhes');
+    }
+    
+    currentDetailData = data.data;
+    console.log('✅ Dados detalhados carregados:', currentDetailData);
+    
+    // Atualizar modal com dados
+    atualizarModalContent(currentDetailData);
+    
+    // Renderizar gráficos
+    renderizarGraficosDetalhes(currentDetailData);
+    
+  } catch (error) {
+    console.error('❌ Erro ao abrir detalhes:', error);
+    document.getElementById('detailScore').textContent = 'Erro';
+  }
+}
+
+// Resetar conteúdo do modal
+function resetarModalContent() {
+  document.getElementById('detailScore').textContent = '-';
+  document.getElementById('detailPreco').textContent = '-';
+  document.getElementById('detailRSI').textContent = '-';
+  document.getElementById('detailForca').textContent = '-';
+  
+  // Resetar gráficos
+  ['chartPrecoSMAs', 'chartRSI'].forEach(id => {
+    document.getElementById(id).innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+  });
+}
+
+// Atualizar conteúdo do modal
+function atualizarModalContent(data) {
+  try {
+    // Métricas principais
+    document.getElementById('detailScore').textContent = data.score ? data.score.toFixed(1) : '-';
+    document.getElementById('detailPreco').textContent = `${data.preco_atual.toFixed(2)}`;
+    document.getElementById('detailRSI').textContent = data.rsi.toFixed(1);
+    document.getElementById('detailForca').textContent = `${data.forca_golden_cross.toFixed(2)}%`;
+    
+    // Informações da empresa
+    document.getElementById('detailNome').textContent = data.nome;
+    document.getElementById('detailSetor').textContent = getSetorNome(data.setor);
+    document.getElementById('detailSetor').className = `setor-badge ${getSetorClass(data.setor)}`;
+    
+    // Status
+    const statusEl = document.getElementById('detailStatus');
+    statusEl.textContent = getStatusTexto(data.status_atual);
+    statusEl.className = `font-semibold ${getStatusClass(data.status_atual)}`;
+    
+    // SMAs
+    document.getElementById('detailSMA50').textContent = `${data.sma_50.toFixed(2)}`;
+    document.getElementById('detailSMA200').textContent = `${data.sma_200.toFixed(2)}`;
+    
+    // Performance
+    const perf30d = data.retorno_30d;
+    const perf30dEl = document.getElementById('detailPerf30d');
+    perf30dEl.textContent = `${perf30d >= 0 ? '+' : ''}${perf30d.toFixed(2)}%`;
+    perf30dEl.className = `font-semibold ${perf30d >= 0 ? 'text-green-400' : 'text-red-400'}`;
+    
+    // Estatísticas dos cruzamentos
+    document.getElementById('detailTotalGolden').textContent = data.total_golden_signals || 0;
+    document.getElementById('detailGoldenValidados').textContent = data.total_golden_validados || 0;
+    document.getElementById('detailDiasGolden').textContent = data.dias_golden_cross || 0;
+    document.getElementById('detailPercentualGolden').textContent = `${(data.percentual_tempo_golden || 0).toFixed(1)}%`;
+    document.getElementById('detailTotalDeath').textContent = data.total_death_signals || 0;
+    document.getElementById('detailDiasDeath').textContent = data.dias_death_cross || 0;
+    
+    const perf90d = data.retorno_90d || 0;
+    const perf90dEl = document.getElementById('detailPerf90d');
+    perf90dEl.textContent = `${perf90d >= 0 ? '+' : ''}${perf90d.toFixed(2)}%`;
+    perf90dEl.className = perf90d >= 0 ? 'text-green-400' : 'text-red-400';
+    
+    document.getElementById('detailDistSMA200').textContent = `${(data.distancia_sma200 || 0).toFixed(2)}%`;
+    
+  } catch (error) {
+    console.error('❌ Erro ao atualizar modal:', error);
+  }
+}
+
+// Renderizar gráficos detalhados
+function renderizarGraficosDetalhes(data) {
+  try {
+    const chartData = data.chart_data;
+    if (!chartData) {
+      console.warn('⚠️ Dados de gráficos não disponíveis');
+      return;
+    }
+    
+    // Gráfico 1: Preço + SMAs
+    renderizarGraficoPrecoSMAs(chartData);
+    
+    // Gráfico 2: RSI
+    renderizarGraficoRSI(chartData);
+    
+    console.log('✅ Gráficos detalhados renderizados');
+    
+  } catch (error) {
+    console.error('❌ Erro ao renderizar gráficos:', error);
+  }
+}
+
+// Gráfico: Preço + SMAs
+function renderizarGraficoPrecoSMAs(chartData) {
+  try {
+    if (!chartData.preco_smas) return;
+    
+    const data = chartData.preco_smas;
+    
+    const trace1 = {
+      x: data.dates,
+      y: data.precos,
+      type: 'scatter',
+      mode: 'lines',
+      name: 'Preço',
+      line: { color: '#ffffff', width: 2 }
+    };
+    
+    const trace2 = {
+      x: data.dates,
+      y: data.sma_50,
+      type: 'scatter',
+      mode: 'lines',
+      name: 'SMA 50',
+      line: { color: '#3b82f6', width: 2 }
+    };
+    
+    const trace3 = {
+      x: data.dates,
+      y: data.sma_200,
+      type: 'scatter',
+      mode: 'lines',
+      name: 'SMA 200',
+      line: { color: '#f59e0b', width: 2 }
+    };
+    
+    const traces = [trace1, trace2, trace3];
+    
+    // Adicionar sinais Golden Cross
+    if (data.golden_signals && data.golden_signals.dates.length > 0) {
+      traces.push({
+        x: data.golden_signals.dates,
+        y: data.golden_signals.values,
+        type: 'scatter',
+        mode: 'markers',
+        name: 'Golden Cross',
+        marker: { 
+          color: '#10b981', 
+          size: 10,
+          symbol: 'triangle-up'
+        }
+      });
+    }
+    
+    // Adicionar sinais Death Cross
+    if (data.death_signals && data.death_signals.dates.length > 0) {
+      traces.push({
+        x: data.death_signals.dates,
+        y: data.death_signals.values,
+        type: 'scatter',
+        mode: 'markers',
+        name: 'Death Cross',
+        marker: { 
+          color: '#ef4444', 
+          size: 10,
+          symbol: 'triangle-down'
+        }
+      });
+    }
+    
+    const layout = {
+      title: { text: 'Preço + Médias Móveis', font: { color: 'white' } },
+      xaxis: { title: 'Data', color: 'white', gridcolor: 'rgba(255,255,255,0.1)' },
+      yaxis: { title: 'Preço ($)', color: 'white', gridcolor: 'rgba(255,255,255,0.1)' },
+      plot_bgcolor: 'rgba(0,0,0,0)',
+      paper_bgcolor: 'rgba(0,0,0,0)',
+      font: { color: 'white' },
+      legend: { font: { color: 'white' } },
+      margin: { t: 50, b: 50, l: 60, r: 20 }
+    };
+    
+    Plotly.newPlot('chartPrecoSMAs', traces, layout, {responsive: true, displayModeBar: false});
+    
+  } catch (error) {
+    console.error('❌ Erro gráfico preço/SMAs:', error);
+    document.getElementById('chartPrecoSMAs').innerHTML = '<div class="loading text-red-400">❌ Erro no gráfico</div>';
+  }
+}
+
+// Gráfico: RSI
+function renderizarGraficoRSI(chartData) {
+  try {
+    if (!chartData.rsi) return;
+    
+    const rsiData = chartData.rsi;
+    
+    const trace1 = {
+      x: rsiData.dates,
+      y: rsiData.values,
+      type: 'scatter',
+      mode: 'lines',
+      name: 'RSI',
+      line: { color: '#8b5cf6', width: 2 }
+    };
+    
+    const trace2 = {
+      x: rsiData.dates,
+      y: Array(rsiData.dates.length).fill(rsiData.sobrecompra),
+      type: 'scatter',
+      mode: 'lines',
+      name: `Sobrecompra (${rsiData.sobrecompra})`,
+      line: { color: '#ef4444', width: 2, dash: 'dash' }
+    };
+    
+    const trace3 = {
+      x: rsiData.dates,
+      y: Array(rsiData.dates.length).fill(rsiData.sobrevenda),
+      type: 'scatter',
+      mode: 'lines',
+      name: `Sobrevenda (${rsiData.sobrevenda})`,
+      line: { color: '#10b981', width: 2, dash: 'dash' }
+    };
+    
+    const layout = {
+      title: { text: 'RSI (14 períodos)', font: { color: 'white' } },
+      xaxis: { title: 'Data', color: 'white', gridcolor: 'rgba(255,255,255,0.1)' },
+      yaxis: { title: 'RSI', color: 'white', gridcolor: 'rgba(255,255,255,0.1)', range: [0, 100] },
+      plot_bgcolor: 'rgba(0,0,0,0)',
+      paper_bgcolor: 'rgba(0,0,0,0)',
+      font: { color: 'white' },
+      legend: { font: { color: 'white' } },
+      margin: { t: 50, b: 50, l: 60, r: 20 }
+    };
+    
+    Plotly.newPlot('chartRSI', [trace1, trace2, trace3], layout, {responsive: true, displayModeBar: false});
+    
+  } catch (error) {
+    console.error('❌ Erro gráfico RSI:', error);
+    document.getElementById('chartRSI').innerHTML = '<div class="loading text-red-400">❌ Erro no gráfico</div>';
+  }
+}
+
+// Funções auxiliares
+function getSetorClass(setor) {
+  const setorMap = {
+    'Technology': 'setor-technology',
+    'Financial Services': 'setor-financial',
+    'Healthcare': 'setor-healthcare',
+    'Consumer Cyclical': 'setor-consumer',
+    'Communication Services': 'setor-communication',
+    'Industrials': 'setor-industrials'
+  };
+  return setorMap[setor] || 'setor-industrials';
+}
+
+function getSetorNome(setor) {
+  const nomeMap = {
+    'Technology': 'Tech',
+    'Financial Services': 'Finance',
+    'Healthcare': 'Health',
+    'Consumer Cyclical': 'Consumer',
+    'Communication Services': 'Telecom',
+    'Industrials': 'Industry'
+  };
+  return nomeMap[setor] || setor;
+}
+
+function getScoreClass(score) {
+  if (score >= 80) return 'text-green-400';
+  if (score >= 60) return 'text-blue-400';
+  if (score >= 40) return 'text-yellow-400';
+  if (score >= 20) return 'text-orange-400';
+  return 'text-red-400';
+}
+
+function getStatusClass(status) {
+  const statusMap = {
+    'GOLDEN_CROSS_ATIVO': 'status-golden-cross-ativo',
+    'GOLDEN_CROSS_SOBRECOMPRA': 'status-golden-cross-sobrecompra',
+    'DEATH_CROSS_ATIVO': 'status-death-cross-ativo',
+    'DEATH_CROSS_SOBREVENDA': 'status-death-cross-sobrevenda'
+  };
+  return statusMap[status] || 'status-neutro';
+}
+
+function getStatusTexto(status) {
+  const statusMap = {
+    'GOLDEN_CROSS_ATIVO': 'Golden Cross',
+    'GOLDEN_CROSS_SOBRECOMPRA': 'GC + Sobrecompra',
+    'DEATH_CROSS_ATIVO': 'Death Cross',
+    'DEATH_CROSS_SOBREVENDA': 'DC + Sobrevenda'
+  };
+  return statusMap[status] || 'Neutro';
+}
+
+// Atualizar estado do botão
+function atualizarBotaoCarregando(carregando) {
+  const btn = document.getElementById('atualizarBtn');
+  const text = document.getElementById('atualizarText');
+  const icon = btn.querySelector('i');
+  
+  if (carregando) {
+    btn.disabled = true;
+    btn.classList.add('btn-loading');
+    text.innerHTML = 'Carregando...';
+    if (icon) icon.classList.add('fa-spin');
+  } else {
+    btn.disabled = false;
+    btn.classList.remove('btn-loading');
+    text.innerHTML = 'Atualizar Dados';
+    if (icon) icon.classList.remove('fa-spin');
+  }
+}
+
+// Mostrar erro
+function mostrarErro(mensagem) {
+  const tbody = document.getElementById('rankingTableBody');
+  tbody.innerHTML = `<tr><td colspan="10" class="text-center text-red-400">❌ ${mensagem}</td></tr>`;
+}
+
+// Verificar status da API
+async function verificarApiStatus() {
+  try {
+    const response = await fetch('/api/golden-cross-eua/status');
+    const data = await response.json();
+    
+    const statusEl = document.getElementById('apiStatus');
+    if (data.sucesso) {
+      statusEl.className = 'w-8 h-8 bg-blue-500 bg-opacity-10 border border-blue-500 border-opacity-30 rounded-full flex items-center justify-center relative';
+      console.log('✅ API Golden Cross EUA funcionando');
+    } else {
+      statusEl.className = 'w-8 h-8 bg-red-500 bg-opacity-10 border border-red-500 border-opacity-30 rounded-full flex items-center justify-center relative';
+    }
+  } catch (error) {
+    console.error('❌ Erro API:', error.message);
+    const statusEl = document.getElementById('apiStatus');
+    statusEl.className = 'w-8 h-8 bg-red-500 bg-opacity-10 border border-red-500 border-opacity-30 rounded-full flex items-center justify-center relative';
+  }
+}
+
+// Auto-refresh a cada 15 minutos
+setInterval(() => {
+  console.log('🔄 Auto-refresh do Golden Cross EUA...');
+  carregarDados();
+}, 15 * 60 * 1000);
+</script>
+</body>
+</html>

@@ -190,6 +190,21 @@ body {
   margin: 1rem 0;
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
+/* Remover loading dos gráficos */
+.chart-container .loading {
+  display: none !important;
+}
+
+#chartPrecoStress .loading,
+#chartPerformance .loading,
+#chartIVMercado .loading,
+#chartDistribuicao .loading {
+  display: none !important;
+}
+.js-plotly-plot ~ .loading,
+.plotly-graph-div ~ .loading {
+  display: none !important;
+}
 </style>
 </head>
 <body class="text-white">
@@ -202,8 +217,8 @@ body {
   </div>
   <div class="hidden md:flex items-center space-x-6 text-xs text-gray-300 ml-8">
     <a href="/dashboard" class="hover:text-white transition-colors">Dashboard</a>
-    <a href="opcoes.html" class="hover:text-white transition-colors">Hunter Walls</a>
-    <a href="formula.html" class="hover:text-white transition-colors">Fórmula Mágica</a>
+    <a href="regimes-volatilidade.html" class="hover:text-white transition-colors">Regimes de Volatilidade</a>
+    <a href="long-short.html" class="hover:text-white transition-colors">Long & Short</a>
     <span class="text-white font-medium">Indicador Antifrágil</span>
   </div>
   <div class="flex items-center space-x-3 ml-8">
@@ -257,10 +272,9 @@ body {
         <div>
           <label class="block text-sm font-medium text-gray-300 mb-1">Limite</label>
           <select id="limiteSelect" class="bg-gray-800 text-white rounded-lg px-3 py-2 border border-gray-600">
+            <option value="5">Top 5</option>
             <option value="10">Top 10</option>
-            <option value="20" selected>Top 20</option>
-            <option value="30">Top 30</option>
-            <option value="50">Top 50</option>
+            <option value="15" selected>Top 15</option>
           </select>
         </div>
         <div>

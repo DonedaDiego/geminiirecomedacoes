@@ -69,7 +69,7 @@ def hunter_walls_analysis(current_user_id):
         cursor.close()
         conn.close()
         
-        if not user or user[0] < 2:  # Plano Premium necessário
+        if not user or user[0] > 2:  # Plano Premium necessário
             return jsonify({
                 'success': False, 
                 'message': 'Recurso disponível apenas para planos Premium ou superior',

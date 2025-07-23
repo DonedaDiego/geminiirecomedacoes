@@ -33,12 +33,15 @@ from pro.vi_routes import get_vi_blueprint
 from pro.vol_regimes_routes import vol_regimes_bp
 from pro.regimes_volatilidade_routes import regimes_bp
 from pro.antifragil_routes import antifragil_bp
+from pro.momentum_routes import momentum_bp
 
 
 ## premium
 from premium.swing_trade_ml_routes import get_swing_trade_ml_blueprint
 from premium.beta_regression_routes import beta_regression_bp
 from premium.atsmom_routes import register_atsmom_routes
+from premium.golden_cross_eua_routes import golden_cross_eua_bp
+
 
 # administração
 from pag.control_pay_routes import get_control_pay_blueprint
@@ -191,6 +194,8 @@ app.register_blueprint(vi_bp)
 app.register_blueprint(regimes_bp, url_prefix='/api/regimes')
 app.register_blueprint(formula_bp)
 app.register_blueprint(antifragil_bp)
+app.register_blueprint(golden_cross_eua_bp)
+app.register_blueprint(momentum_bp)
 
 CORS(app, 
      origins=['*'],
@@ -453,6 +458,18 @@ def formual_page():
 def antifragil_page():
     return send_from_directory('../frontend', 'antifragil.html')
 
+
+@app.route('/golden_cross_eua')
+@app.route('/golden_cross_eua.html')
+def golden_eua_page():
+    return send_from_directory('../frontend', 'golden_cross_eua.html')
+
+
+
+@app.route('/momentum-eua')
+@app.route('/momentum-eua.html')
+def momentum_eua_page():
+    return send_from_directory('../frontend', 'momentum-eua.html')
 
 
 # ===== PÁGINAS DE RETORNO DO PAGAMENTO =====
