@@ -1017,18 +1017,18 @@ Obrigado por escolher a Geminii Tech!
         content_data = {
             'title': f'Renovação {urgency_text}',
             'subtitle': f'Sua assinatura {plan_name}',
-            'main_message': f'Sua assinatura {plan_name} será renovada em {days_until_renewal} {"dia" if days_until_renewal == 1 else "dias"}. Tudo certo para a renovação automática!',
+            'main_message': f'Sua assinatura {plan_name} precisa ser renovada {days_until_renewal} {"dia" if days_until_renewal == 1 else "dias"}. !',
             'user_name': user_name,
             'urgency_color': urgency_color,
             'button_text': '⚙️ Gerenciar Assinatura',
-            'button_url': f"{self.base_url}/planos",
+            'button_url': "https://geminii.com.br/pagamentos-app/",
             'details': [
                 {'label': 'Plano', 'value': plan_name},
-                {'label': 'Renovação', 'value': 'Automática'},
-                {'label': 'Método', 'value': 'Cartão cadastrado'}
+                {'label': 'Renovação', 'value': 'Manual'},
+                {'label': 'Método', 'value': 'Cadastrar Cartão'}
             ] + ([{'label': 'Valor', 'value': str(amount)}] if amount else []),
-            'warning_message': 'A renovação será processada automaticamente.',
-            'footer_message': f'Renovação automática em {days_until_renewal} {"dia" if days_until_renewal == 1 else "dias"}'
+            'warning_message': 'Renove sua assinatura na plataforma.',
+            'footer_message': f'Renove em {days_until_renewal} {"dia" if days_until_renewal == 1 else "dias"}'
         }
         
         html_content = self.create_professional_email_template(content_data)
@@ -1042,8 +1042,8 @@ Sua assinatura {plan_name} será renovada em {days_until_renewal} {"dia" if days
 
 Detalhes:
 - Plano: {plan_name}
-- Renovação: Automática
-- Método: Cartão cadastrado
+- Renovação: Manual
+- Método: Cadatrar Car~toa
 {"- Valor: " + str(amount) if amount else ""}
 
 Continuará aproveitando:
@@ -1056,7 +1056,7 @@ Gerenciar conta: {self.base_url}/account
 
 Precisa alterar algo? Acesse sua conta!
 
-© 2025 Geminii Tech - Trading Automatizado
+© 2025 Geminii Tech - Trading com Machine Learning
         """
         
         subject = f"📅 Renovação {urgency_text} - {plan_name} - Geminii Tech"
