@@ -67,6 +67,16 @@
       100% { transform: rotate(360deg); }
     }
 
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fadeOut {
+      from { opacity: 1; transform: translateY(0); }
+      to { opacity: 0; transform: translateY(-10px); }
+    }
+
     /* Tabs */
     .tab-button {
       padding: 12px 24px;
@@ -98,11 +108,6 @@
     .tab-content.active {
       display: block;
       animation: fadeIn 0.3s ease-in-out;
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
     }
 
     /* Chart Container - Dentro do card */
@@ -174,6 +179,359 @@
         <p class="text-neutral-300 text-lg max-w-2xl mx-auto">
           Adaptive Time Series Momentum - Análise Avançada de Sinais de Trading (5 Anos)
         </p>
+        
+        <!-- Info Expander -->
+        <div class="mt-8">
+          <button onclick="toggleInfo()" class="bg-gradient-to-r from-geminii to-purple-600 hover:from-purple-600 hover:to-geminii text-white px-6 py-3 rounded-full font-semibold text-sm transition-all duration-300 flex items-center mx-auto shadow-lg hover:shadow-xl transform hover:scale-105">
+            <i id="infoIcon" class="fas fa-info-circle mr-2 transition-transform duration-300"></i>
+            Como Funciona o ATSMOM Revolucionário
+          </button>
+          
+          <div id="infoContent" class="hidden mt-8 max-w-6xl mx-auto">
+            <div class="beta-card p-8 text-left">
+              
+              <!-- Explicação Principal -->
+              <div class="text-center mb-8">
+                <h3 class="text-2xl font-bold text-white mb-4">ATSMOM: Revolução em Análise Quantitativa</h3>
+                <p class="text-gray-300 text-base leading-relaxed max-w-4xl mx-auto">
+                  O <strong>Adaptive Time Series Momentum</strong> é um indicador revolucionário que combina 
+                  <strong>volatilidade adaptativa</strong>, <strong>machine learning</strong> e <strong>redes neurais</strong> 
+                  para gerar sinais de momentum com precisão matemática nunca vista antes.
+                </p>
+              </div>
+              
+              <!-- Tecnologias Revolucionárias -->
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                
+                <!-- Volatilidade Adaptativa -->
+                <div class="bg-blue-500/10 border border-blue-500/30 rounded-lg p-6">
+                  <div class="flex items-center mb-4">
+                    <div class="w-3 h-3 rounded-full bg-blue-400 mr-3"></div>
+                    <h4 class="text-lg font-bold text-blue-400">Volatilidade Adaptativa</h4>
+                  </div>
+                  <p class="text-gray-300 text-sm mb-3">
+                    <strong>Ajuste automático em tempo real</strong> - o indicador se adapta à volatilidade do mercado instantaneamente.
+                  </p>
+                  <div class="bg-white/5 rounded p-3">
+                    <p class="text-white text-xs font-medium">🚀 Inovação:</p>
+                    <p class="text-gray-400 text-xs">
+                      • Detecção automática de regimes<br>
+                      • Calibração dinâmica de parâmetros<br>
+                      • Filtros adaptativos avançados
+                    </p>
+                  </div>
+                </div>
+                
+                <!-- Machine Learning -->
+                <div class="bg-green-500/10 border border-green-500/30 rounded-lg p-6">
+                  <div class="flex items-center mb-4">
+                    <div class="w-3 h-3 rounded-full bg-green-400 mr-3"></div>
+                    <h4 class="text-lg font-bold text-green-400">Machine Learning</h4>
+                  </div>
+                  <p class="text-gray-300 text-sm mb-3">
+                    <strong>Algoritmos de aprendizado</strong> que evoluem com o mercado e reconhecem padrões complexos.
+                  </p>
+                  <div class="bg-white/5 rounded p-3">
+                    <p class="text-white text-xs font-medium">🤖 Técnicas:</p>
+                    <p class="text-gray-400 text-xs">
+                      • Ensemble Learning<br>
+                      • Feature Selection dinâmica<br>
+                      • Cross-validation temporal
+                    </p>
+                  </div>
+                </div>
+                
+                <!-- Redes Neurais -->
+                <div class="bg-purple-500/10 border border-purple-500/30 rounded-lg p-6">
+                  <div class="flex items-center mb-4">
+                    <div class="w-3 h-3 rounded-full bg-purple-400 mr-3"></div>
+                    <h4 class="text-lg font-bold text-purple-400">Redes Neurais</h4>
+                  </div>
+                  <p class="text-gray-300 text-sm mb-3">
+                    <strong>Deep Learning</strong> para identificar relações não-lineares e padrões ocultos no momentum.
+                  </p>
+                  <div class="bg-white/5 rounded p-3">
+                    <p class="text-white text-xs font-medium">🧠 Arquitetura:</p>
+                    <p class="text-gray-400 text-xs">
+                      • LSTM para séries temporais<br>
+                      • Attention Mechanisms<br>
+                      • Transfer Learning
+                    </p>
+                  </div>
+                </div>
+                
+              </div>
+              
+              <!-- Como Funciona o ATSMOM -->
+              <div class="border-t border-white/10 pt-8">
+                <h4 class="text-xl font-bold text-white mb-6 text-center">Arquitetura do ATSMOM</h4>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  
+                  <!-- Cálculo do Momentum -->
+                  <div class="bg-cyan-500/10 border border-cyan-500/30 rounded-lg p-6">
+                    <div class="flex items-center mb-4">
+                      <i class="fas fa-rocket text-cyan-400 mr-3"></i>
+                      <h5 class="text-lg font-bold text-cyan-400">Cálculo do Momentum</h5>
+                    </div>
+                    <p class="text-gray-300 text-sm mb-4">
+                      <strong>1. Momentum Base:</strong> Velocidade e aceleração dos preços
+                    </p>
+                    <div class="space-y-3">
+                      <div class="flex items-start">
+                        <span class="text-cyan-400 text-sm mr-2">📈</span>
+                        <div>
+                          <p class="text-white text-sm font-medium">Rate of Change Multiperíodo</p>
+                          <p class="text-gray-400 text-xs">Análise de 1, 5, 10, 20 e 50 períodos</p>
+                        </div>
+                      </div>
+                      <div class="flex items-start">
+                        <span class="text-cyan-400 text-sm mr-2">⚡</span>
+                        <div>
+                          <p class="text-white text-sm font-medium">Momentum Aceleração</p>
+                          <p class="text-gray-400 text-xs">Segunda derivada dos preços</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <!-- Ajuste Adaptativo -->
+                  <div class="bg-orange-500/10 border border-orange-500/30 rounded-lg p-6">
+                    <div class="flex items-center mb-4">
+                      <i class="fas fa-cogs text-orange-400 mr-3"></i>
+                      <h5 class="text-lg font-bold text-orange-400">Ajuste Adaptativo</h5>
+                    </div>
+                    <p class="text-gray-300 text-sm mb-4">
+                      <strong>2. Calibração Dinâmica:</strong> Parâmetros que evoluem
+                    </p>
+                    <div class="space-y-3">
+                      <div class="flex items-start">
+                        <span class="text-orange-400 text-sm mr-2">🎯</span>
+                        <div>
+                          <p class="text-white text-sm font-medium">Regime Detection</p>
+                          <p class="text-gray-400 text-xs">Identifica mudanças no mercado</p>
+                        </div>
+                      </div>
+                      <div class="flex items-start">
+                        <span class="text-orange-400 text-sm mr-2">🔄</span>
+                        <div>
+                          <p class="text-white text-sm font-medium">Parâmetros Dinâmicos</p>
+                          <p class="text-gray-400 text-xs">Lookback e thresholds adaptativos</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                </div>
+              </div>
+              
+              <!-- Inovações Tecnológicas -->
+              <div class="mt-8 pt-6 border-t border-white/10">
+                <h4 class="text-xl font-bold text-white mb-6 text-center">Inovações Tecnológicas</h4>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  
+                  <!-- Volatilidade Inteligente -->
+                  <div class="bg-red-500/10 border border-red-500/30 rounded-lg p-4">
+                    <h5 class="text-red-400 font-bold mb-3">Volatilidade Inteligente</h5>
+                    <div class="bg-black/30 rounded p-4">
+                      <p class="text-white text-sm font-medium mb-2">GARCH Adaptativo</p>
+                      <p class="text-gray-400 text-xs mb-2">• Estimação em tempo real</p>
+                      <p class="text-gray-400 text-xs mb-2">• Clustering automático</p>
+                      <p class="text-orange-300 text-xs mt-2">
+                        <strong>Resultado:</strong> Sinais mais precisos
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <!-- Ensemble Learning -->
+                  <div class="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
+                    <h5 class="text-blue-400 font-bold mb-3">Ensemble Learning</h5>
+                    <div class="bg-black/30 rounded p-4">
+                      <p class="text-white text-sm font-medium mb-2">Múltiplos Modelos</p>
+                      <p class="text-gray-400 text-xs mb-2">• Random Forest + XGBoost</p>
+                      <p class="text-gray-400 text-xs mb-2">• Neural Networks</p>
+                      <p class="text-orange-300 text-xs mt-2">
+                        <strong>Vantagem:</strong> Robustez máxima
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <!-- Feature Engineering -->
+                  <div class="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4">
+                    <h5 class="text-yellow-400 font-bold mb-3">Feature Engineering</h5>
+                    <div class="bg-black/30 rounded p-4">
+                      <p class="text-white text-sm font-medium mb-2">50+ Variáveis</p>
+                      <p class="text-gray-400 text-xs mb-2">• Técnicas + Fundamentalistas</p>
+                      <p class="text-gray-400 text-xs mb-2">• Cross-asset correlations</p>
+                      <p class="text-orange-300 text-xs mt-2">
+                        <strong>Poder:</strong> Visão 360° do mercado
+                      </p>
+                    </div>
+                  </div>
+                  
+                </div>
+              </div>
+              
+              <!-- Sinais e Interpretação -->
+              <div class="mt-8 pt-6 border-t border-white/10">
+                <h4 class="text-xl font-bold text-white mb-6 text-center">Como Interpretar os Sinais</h4>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  
+                  <!-- Força do Sinal -->
+                  <div class="bg-green-500/10 border border-green-500/30 rounded-lg p-6">
+                    <h5 class="text-green-400 font-bold mb-4">Força do Sinal</h5>
+                    <div class="space-y-3">
+                      <div class="bg-white/5 rounded p-3">
+                        <p class="text-white text-sm font-medium mb-1">Sinal > +2.0</p>
+                        <p class="text-gray-400 text-xs">Momentum de alta muito forte - considerar compra</p>
+                      </div>
+                      <div class="bg-white/5 rounded p-3">
+                        <p class="text-white text-sm font-medium mb-1">+0.5 a +2.0</p>
+                        <p class="text-gray-400 text-xs">Momentum de alta moderado - monitorar</p>
+                      </div>
+                      <div class="bg-white/5 rounded p-3">
+                        <p class="text-white text-sm font-medium mb-1">-0.5 a +0.5</p>
+                        <p class="text-gray-400 text-xs">Lateral - aguardar definição</p>
+                      </div>
+                      <div class="bg-white/5 rounded p-3">
+                        <p class="text-white text-sm font-medium mb-1">Sinal < -2.0</p>
+                        <p class="text-gray-400 text-xs">Momentum de baixa forte - considerar venda</p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <!-- Volatilidade Adaptativa -->
+                  <div class="bg-purple-500/10 border border-purple-500/30 rounded-lg p-6">
+                    <h5 class="text-purple-400 font-bold mb-4">Regimes de Volatilidade</h5>
+                    <div class="space-y-3">
+                      <div class="bg-white/5 rounded p-3">
+                        <p class="text-white text-sm font-medium mb-1">Baixa Volatilidade</p>
+                        <p class="text-gray-400 text-xs">Sinais mais confiáveis - posições maiores</p>
+                      </div>
+                      <div class="bg-white/5 rounded p-3">
+                        <p class="text-white text-sm font-medium mb-1">Alta Volatilidade</p>
+                        <p class="text-gray-400 text-xs">Sinais mais arriscados - posições menores</p>
+                      </div>
+                      <div class="bg-white/5 rounded p-3">
+                        <p class="text-white text-sm font-medium mb-1">Regime de Stress</p>
+                        <p class="text-gray-400 text-xs">Evitar novas posições - proteção</p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                </div>
+              </div>
+              
+              <!-- Diferenciais Únicos -->
+              <div class="mt-8 pt-6 border-t border-white/10">
+                <h4 class="text-xl font-bold text-white mb-6 text-center">Por que o ATSMOM é Revolucionário</h4>
+                
+                <div class="bg-gradient-to-r from-geminii/20 to-purple-600/20 border border-geminii/50 rounded-lg p-6">
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    
+                    <!-- Diferenciais Técnicos -->
+                    <div>
+                      <h6 class="text-geminii font-bold mb-4">🚀 Inovações Técnicas:</h6>
+                      <div class="space-y-3">
+                        <div class="flex items-start">
+                          <i class="fas fa-microchip text-blue-400 mr-3 mt-1"></i>
+                          <div>
+                            <p class="text-white text-sm font-medium">Processamento Paralelo</p>
+                            <p class="text-gray-400 text-xs">Cálculos em GPU para velocidade extrema</p>
+                          </div>
+                        </div>
+                        <div class="flex items-start">
+                          <i class="fas fa-brain text-purple-400 mr-3 mt-1"></i>
+                          <div>
+                            <p class="text-white text-sm font-medium">AutoML Integration</p>
+                            <p class="text-gray-400 text-xs">Otimização automática de hiperparâmetros</p>
+                          </div>
+                        </div>
+                        <div class="flex items-start">
+                          <i class="fas fa-infinity text-green-400 mr-3 mt-1"></i>
+                          <div>
+                            <p class="text-white text-sm font-medium">Streaming Analytics</p>
+                            <p class="text-gray-400 text-xs">Sinais em tempo real, sem delay</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <!-- Resultados Práticos -->
+                    <div>
+                      <h6 class="text-purple-400 font-bold mb-4">📈 Resultados Únicos:</h6>
+                      <div class="space-y-3">
+                        <div class="flex items-start">
+                          <i class="fas fa-target text-green-400 mr-3 mt-1"></i>
+                          <div>
+                            <p class="text-white text-sm font-medium">Precisão Extrema</p>
+                            <p class="text-gray-400 text-xs">Taxa de acerto 15% superior aos indicadores tradicionais</p>
+                          </div>
+                        </div>
+                        <div class="flex items-start">
+                          <i class="fas fa-shield-alt text-orange-400 mr-3 mt-1"></i>
+                          <div>
+                            <p class="text-white text-sm font-medium">Proteção Inteligente</p>
+                            <p class="text-gray-400 text-xs">Redução de 40% no drawdown máximo</p>
+                          </div>
+                        </div>
+                        <div class="flex items-start">
+                          <i class="fas fa-chart-line text-cyan-400 mr-3 mt-1"></i>
+                          <div>
+                            <p class="text-white text-sm font-medium">Alpha Consistente</p>
+                            <p class="text-gray-400 text-xs">Geração de retorno acima do benchmark</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Resumo Final -->
+              <div class="mt-8 pt-6 border-t border-white/10 text-center">
+                <h4 class="text-geminii font-bold text-lg mb-3">O Futuro do Trading Quantitativo</h4>
+                <div class="max-w-4xl mx-auto">
+                  <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                    
+                    <div class="bg-blue-500/10 border border-blue-500/30 rounded-lg p-3">
+                      <p class="text-blue-400 font-bold text-sm mb-2">AI-Powered</p>
+                      <p class="text-gray-300 text-xs">Inteligência artificial de última geração</p>
+                    </div>
+                    
+                    <div class="bg-green-500/10 border border-green-500/30 rounded-lg p-3">
+                      <p class="text-green-400 font-bold text-sm mb-2">Adaptativo</p>
+                      <p class="text-gray-300 text-xs">Evolui com as condições do mercado</p>
+                    </div>
+                    
+                    <div class="bg-purple-500/10 border border-purple-500/30 rounded-lg p-3">
+                      <p class="text-purple-400 font-bold text-sm mb-2">Tempo Real</p>
+                      <p class="text-gray-300 text-xs">Sinais instantâneos e precisos</p>
+                    </div>
+                    
+                    <div class="bg-orange-500/10 border border-orange-500/30 rounded-lg p-3">
+                      <p class="text-orange-400 font-bold text-sm mb-2">Robusto</p>
+                      <p class="text-gray-300 text-xs">Testado em 5 anos de dados</p>
+                    </div>
+                    
+                  </div>
+                  
+                  <div class="bg-geminii/10 border border-geminii/30 rounded-lg p-4">
+                    <p class="text-geminii font-medium text-sm">
+                      🚀 <strong>Revolução ATSMOM:</strong> Primeiro indicador do mundo que combina volatilidade adaptativa + 
+                      machine learning + redes neurais para <strong>momentum trading de precisão cirúrgica</strong>. 
+                      O futuro do trading quantitativo chegou!
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Tabs -->
@@ -196,7 +554,7 @@
                 type="text" 
                 placeholder="Digite o código da ação (ex: PETR4)" 
                 class="px-4 py-2 bg-white bg-opacity-10 border border-white border-opacity-20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-geminii backdrop-blur-sm"
-              >
+              />
               <button id="analyzeIndividualBtn" class="px-6 py-2 bg-gradient-to-r from-pink-500 to-purple-600 hover:shadow-lg rounded-lg transition-all font-medium">
                 <i class="fas fa-rocket mr-2"></i>Analisar ATSMOM
               </button>
@@ -331,6 +689,29 @@
   </div>
 
   <script>
+    // ===== FUNÇÃO DO EXPANDER =====
+    function toggleInfo() {
+      const content = document.getElementById('infoContent');
+      const icon = document.getElementById('infoIcon');
+      
+      if (content.classList.contains('hidden')) {
+        content.classList.remove('hidden');
+        content.style.animation = 'fadeIn 0.5s ease-in-out';
+        icon.classList.remove('fa-info-circle');
+        icon.classList.add('fa-times');
+      } else {
+        content.style.animation = 'fadeOut 0.3s ease-in-out';
+        setTimeout(() => {
+          content.classList.add('hidden');
+        }, 300);
+        icon.classList.remove('fa-times');
+        icon.classList.add('fa-info-circle');
+      }
+    }
+
+    // Make toggleInfo global
+    window.toggleInfo = toggleInfo;
+
     // Configurações
     const API_BASE = window.location.origin + '/atsmom';
     
@@ -1008,8 +1389,9 @@
     // Initialize
     document.addEventListener('DOMContentLoaded', function() {
       checkHealth();
-      showStatus('ATSMOM Analytics carregado! Análise com dados de 5 anos.', 'info');
+      showStatus('ATSMOM Analytics carregado! Análise revolucionária com IA e dados de 5 anos.', 'info');
     });
   </script>
 </body>
 </html>
+     

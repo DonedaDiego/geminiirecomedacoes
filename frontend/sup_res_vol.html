@@ -3,8 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Bandas de Volatilidade Híbridas - Geminii Tech</title>
+  <title>Beta Regression - Geminii Tech</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
   <script>
     tailwind.config = {
       theme: {
@@ -31,7 +32,7 @@
       min-height: 100vh;
     }
     
-    .vol-card {
+    .beta-card {
       background: rgba(255, 255, 255, 0.08);
       backdrop-filter: blur(20px);
       border: 1px solid rgba(255, 255, 255, 0.2);
@@ -39,7 +40,7 @@
       transition: all 0.3s ease;
     }
     
-    .vol-card:hover {
+    .beta-card:hover {
       transform: translateY(-2px);
       box-shadow: 0 20px 40px rgba(186, 57, 175, 0.15);
       border-color: rgba(186, 57, 175, 0.3);
@@ -65,6 +66,16 @@
       100% { transform: rotate(360deg); }
     }
 
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fadeOut {
+      from { opacity: 1; transform: translateY(0); }
+      to { opacity: 0; transform: translateY(-10px); }
+    }
+
     .dark-select {
       background-color: rgba(30, 30, 30, 0.9);
       border: 1px solid rgba(255, 255, 255, 0.2);
@@ -84,10 +95,10 @@
       box-shadow: 0 0 0 2px rgba(186, 57, 175, 0.2);
     }
 
-    .signal-indicator {
+    .strategy-indicator {
       display: inline-flex;
       align-items: center;
-      padding: 12px 20px;
+      padding: 8px 16px;
       border-radius: 25px;
       font-size: 14px;
       font-weight: 700;
@@ -97,35 +108,21 @@
       animation: pulse 2s infinite;
     }
     
-    .signal-buy-volatility {
+    .strategy-compra {
       background: linear-gradient(135deg, #10b981, #059669);
       color: white;
       border-color: #10b981;
       box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
     }
     
-    .signal-sell-volatility {
+    .strategy-venda {
       background: linear-gradient(135deg, #ef4444, #dc2626);
       color: white;
       border-color: #ef4444;
       box-shadow: 0 0 20px rgba(239, 68, 68, 0.3);
     }
     
-    .signal-call-bias {
-      background: linear-gradient(135deg, #3b82f6, #2563eb);
-      color: white;
-      border-color: #3b82f6;
-      box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
-    }
-    
-    .signal-put-bias {
-      background: linear-gradient(135deg, #f59e0b, #d97706);
-      color: white;
-      border-color: #f59e0b;
-      box-shadow: 0 0 20px rgba(245, 158, 11, 0.3);
-    }
-    
-    .signal-hold {
+    .strategy-neutro {
       background: linear-gradient(135deg, #6b7280, #4b5563);
       color: white;
       border-color: #6b7280;
@@ -134,40 +131,6 @@
     @keyframes pulse {
       0%, 100% { transform: scale(1); }
       50% { transform: scale(1.05); }
-    }
-
-    .band-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 12px 16px;
-      background: rgba(255, 255, 255, 0.05);
-      border-radius: 8px;
-      margin-bottom: 8px;
-      border-left: 4px solid;
-      transition: all 0.3s ease;
-    }
-
-    .band-item:hover {
-      background: rgba(255, 255, 255, 0.1);
-    }
-
-    .band-superior { border-left-color: #ef4444; }
-    .band-inferior { border-left-color: #10b981; }
-    .band-central { border-left-color: #6b7280; }
-
-    .confidence-bar {
-      width: 100%;
-      height: 8px;
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 4px;
-      overflow: hidden;
-    }
-
-    .confidence-fill {
-      height: 100%;
-      background: linear-gradient(90deg, #10b981, #059669);
-      transition: width 1s ease;
     }
   </style>
 </head>
@@ -181,14 +144,13 @@
       </div>
       <div class="hidden md:flex items-center space-x-6 text-xs text-gray-300 ml-8">
         <a href="/dashboard" class="hover:text-white transition-colors">Dashboard</a>
-        <span class="text-white font-medium">Suporte e Resistência</span>
-        <a href="/monitor-basico" class="hover:text-white transition-colors">Monitor Beta</a>
-        <a href="amplitude.html" class="hover:text-white transition-colors">Amplitude</a>
-        <a href="/rsl" class="hover:text-white transition-colors">RSL Radar</a>
+        <a href="swing-trade-machine-learning" class="hover:text-white transition-colors">ML Trading</a>
+        <a href="/atsmom.html" class="hover:text-white transition-colors">ATSMOM</a>
+        <span class="text-white font-medium">Beta Regression</span>
       </div>
       <div class="flex items-center space-x-3 ml-8">
         <div id="apiStatus" class="w-8 h-8 bg-green-500 bg-opacity-10 border border-green-500 border-opacity-30 rounded-full flex items-center justify-center relative">
-          <i class="fas fa-chart-line text-green-500 text-xs"></i>
+          <i class="fas fa-brain text-green-500 text-xs"></i>
           <div class="absolute -top-1 -right-1 w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
         </div>
       </div>
@@ -202,21 +164,248 @@
       <!-- Header -->
       <div class="text-center mb-12">
         <h1 class="text-4xl md:text-5xl font-bold mb-4">
-          <span style="color: #ba39af; font-weight: 900;">Bandas de</span>
-          <span class="text-white font-light">Volatilidade Híbridas</span>
+          <span style="color: #ba39af; font-weight: 900;">Beta</span>
+          <span class="text-white font-light">Regression</span>
         </h1>
         <p class="text-neutral-300 text-lg max-w-2xl mx-auto">
-          Este indicador foi desenvolvido com base em modelos estatísticos e técnicas modernas de machine learning, com o objetivo de identificar 
-          zonas potenciais de suporte e resistência utilizando a volatilidade como referência.
-          O modelo parte da estimativa da volatilidade anual dos ativos, ajustando-a para o contexto mensal e,
-          posteriormente, para projeções diárias. Para isso, combinamos o poder preditivo do XGBoost, uma das técnicas de a
-          prendizado de máquina mais avançadas utilizadas pela Geminii, com o modelo GARCH, um dos estimadores mais robustos e
-          reconhecidos para previsão de volatilidade financeira.
+          Análise avançada de regressão beta com machine learning e sinais de trading
         </p>
+        
+        <!-- Info Expander -->
+        <div class="mt-8">
+          <button onclick="toggleInfo()" class="bg-gradient-to-r from-geminii to-purple-600 hover:from-purple-600 hover:to-geminii text-white px-6 py-3 rounded-full font-semibold text-sm transition-all duration-300 flex items-center mx-auto shadow-lg hover:shadow-xl transform hover:scale-105">
+            <i id="infoIcon" class="fas fa-info-circle mr-2 transition-transform duration-300"></i>
+            Como Funciona a Estratégia Beta Regression
+          </button>
+          
+          <div id="infoContent" class="hidden mt-8 max-w-6xl mx-auto">
+            <div class="beta-card p-8 text-left">
+              
+              <!-- Explicação Principal -->
+              <div class="text-center mb-8">
+                <h3 class="text-2xl font-bold text-white mb-4">O que é Beta Regression?</h3>
+                <p class="text-gray-300 text-base leading-relaxed max-w-4xl mx-auto">
+                  É uma <strong>estratégia quantitativa avançada</strong> que utiliza regressão móvel para calcular o intercepto (Beta0) 
+                  e determinar sinais de compra e venda baseados na <strong>normalização deste valor combinado com a posição do preço</strong> 
+                  em relação à média móvel.
+                </p>
+              </div>
+              
+              <!-- Conceitos Fundamentais -->
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                
+                <!-- Beta0 -->
+                <div class="bg-blue-500/10 border border-blue-500/30 rounded-lg p-6">
+                  <div class="flex items-center mb-4">
+                    <div class="w-3 h-3 rounded-full bg-blue-400 mr-3"></div>
+                    <h4 class="text-lg font-bold text-blue-400">Beta0 (Intercepto)</h4>
+                  </div>
+                  <p class="text-gray-300 text-sm mb-3">
+                    <strong>Valor base da regressão</strong> que indica a tendência estatística do ativo.
+                  </p>
+                  <div class="bg-white/5 rounded p-3">
+                    <p class="text-white text-xs font-medium">💡 Interpretação:</p>
+                    <p class="text-gray-400 text-xs">
+                      > 0.5 = Tendência de alta<br>
+                      < 0.5 = Tendência de baixa
+                    </p>
+                  </div>
+                </div>
+                
+                <!-- Normalização -->
+                <div class="bg-green-500/10 border border-green-500/30 rounded-lg p-6">
+                  <div class="flex items-center mb-4">
+                    <div class="w-3 h-3 rounded-full bg-green-400 mr-3"></div>
+                    <h4 class="text-lg font-bold text-green-400">Normalização</h4>
+                  </div>
+                  <p class="text-gray-300 text-sm mb-3">
+                    <strong>Padronização do Beta0</strong> entre 0 e 1 para facilitar interpretação.
+                  </p>
+                  <div class="bg-white/5 rounded p-3">
+                    <p class="text-white text-xs font-medium">💡 Fórmula:</p>
+                    <p class="text-gray-400 text-xs">
+                      (Beta0 - Min) / (Max - Min)
+                    </p>
+                  </div>
+                </div>
+                
+                <!-- Média Móvel -->
+                <div class="bg-orange-500/10 border border-orange-500/30 rounded-lg p-6">
+                  <div class="flex items-center mb-4">
+                    <div class="w-3 h-3 rounded-full bg-orange-400 mr-3"></div>
+                    <h4 class="text-lg font-bold text-orange-400">Média Móvel</h4>
+                  </div>
+                  <p class="text-gray-300 text-sm mb-3">
+                    <strong>Filtro adicional</strong> de 20 períodos para confirmar a direção da tendência.
+                  </p>
+                  <div class="bg-white/5 rounded p-3">
+                    <p class="text-white text-xs font-medium">💡 Função:</p>
+                    <p class="text-gray-400 text-xs">
+                      Confirma se o movimento<br>
+                      está alinhado com a tendência
+                    </p>
+                  </div>
+                </div>
+                
+              </div>
+              
+              <!-- Sinais de Trading -->
+              <div class="border-t border-white/10 pt-8">
+                <h4 class="text-xl font-bold text-white mb-6 text-center">Sinais de Trading</h4>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  
+                  <!-- Sinal de Compra -->
+                  <div class="bg-green-500/10 border border-green-500/30 rounded-lg p-6">
+                    <div class="flex items-center mb-4">
+                      <i class="fas fa-arrow-up text-green-400 mr-3"></i>
+                      <h5 class="text-lg font-bold text-green-400">Sinal de COMPRA</h5>
+                    </div>
+                    <p class="text-gray-300 text-sm mb-4">
+                      <strong>Condições simultâneas necessárias:</strong>
+                    </p>
+                    <div class="space-y-3">
+                      <div class="flex items-start">
+                        <span class="text-green-400 text-sm mr-2">✓</span>
+                        <div>
+                          <p class="text-white text-sm font-medium">Beta0 Normalizado > 0.5</p>
+                          <p class="text-gray-400 text-xs">Regressão indica tendência de alta</p>
+                        </div>
+                      </div>
+                      <div class="flex items-start">
+                        <span class="text-green-400 text-sm mr-2">✓</span>
+                        <div>
+                          <p class="text-white text-sm font-medium">Preço > Média Móvel (20)</p>
+                          <p class="text-gray-400 text-xs">Confirmação da tendência de alta</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <!-- Sinal de Venda -->
+                  <div class="bg-red-500/10 border border-red-500/30 rounded-lg p-6">
+                    <div class="flex items-center mb-4">
+                      <i class="fas fa-arrow-down text-red-400 mr-3"></i>
+                      <h5 class="text-lg font-bold text-red-400">Sinal de VENDA</h5>
+                    </div>
+                    <p class="text-gray-300 text-sm mb-4">
+                      <strong>Condições simultâneas necessárias:</strong>
+                    </p>
+                    <div class="space-y-3">
+                      <div class="flex items-start">
+                        <span class="text-red-400 text-sm mr-2">✓</span>
+                        <div>
+                          <p class="text-white text-sm font-medium">Beta0 Normalizado < 0.5</p>
+                          <p class="text-gray-400 text-xs">Regressão indica tendência de baixa</p>
+                        </div>
+                      </div>
+                      <div class="flex items-start">
+                        <span class="text-red-400 text-sm mr-2">✓</span>
+                        <div>
+                          <p class="text-white text-sm font-medium">Preço < Média Móvel (20)</p>
+                          <p class="text-gray-400 text-xs">Confirmação da tendência de baixa</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                </div>
+              </div>
+              
+              <!-- Gestão de Risco -->
+              <div class="mt-8 pt-6 border-t border-white/10">
+                <h4 class="text-xl font-bold text-white mb-6 text-center">Gestão de Risco e Parâmetros</h4>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  
+                  <!-- Stop Loss -->
+                  <div class="bg-red-500/10 border border-red-500/30 rounded-lg p-4">
+                    <h5 class="text-red-400 font-bold mb-3">Stop Loss</h5>
+                    <div class="bg-black/30 rounded p-4">
+                      <p class="text-white text-sm font-medium mb-2">Automático em 5%</p>
+                      <p class="text-gray-400 text-xs mb-2">• Proteção contra perdas excessivas</p>
+                      <p class="text-gray-400 text-xs mb-2">• Ativado independente do sinal</p>
+                      <p class="text-orange-300 text-xs mt-2">
+                        <strong>Objetivo:</strong> Preservar capital
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <!-- Janela de Regressão -->
+                  <div class="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
+                    <h5 class="text-blue-400 font-bold mb-3">Janela Móvel</h5>
+                    <div class="bg-black/30 rounded p-4">
+                      <p class="text-white text-sm font-medium mb-2">20 períodos</p>
+                      <p class="text-gray-400 text-xs mb-2">• Regressão recalculada continuamente</p>
+                      <p class="text-gray-400 text-xs mb-2">• Adaptação às mudanças do mercado</p>
+                      <p class="text-orange-300 text-xs mt-2">
+                        <strong>Benefício:</strong> Sempre atualizada
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <!-- Custos -->
+                  <div class="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4">
+                    <h5 class="text-yellow-400 font-bold mb-3">Custos de Transação</h5>
+                    <div class="bg-black/30 rounded p-4">
+                      <p class="text-white text-sm font-medium mb-2">0.1% por operação</p>
+                      <p class="text-gray-400 text-xs mb-2">• Corretagem + impostos</p>
+                      <p class="text-gray-400 text-xs mb-2">• Incluído no cálculo final</p>
+                      <p class="text-orange-300 text-xs mt-2">
+                        <strong>Realista:</strong> Sem maquiagem
+                      </p>
+                    </div>
+                  </div>
+                  
+                </div>
+              </div>
+              
+              <!-- Resumo Prático -->
+              <div class="mt-8 pt-6 border-t border-white/10 text-center">
+                <h4 class="text-geminii font-bold text-lg mb-3">Quando Usar Beta Regression</h4>
+                <div class="max-w-4xl mx-auto">
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    
+                    <!-- Ideal Para -->
+                    <div class="bg-geminii/10 border border-geminii/30 rounded-lg p-4">
+                      <h5 class="text-geminii font-bold mb-3">✅ Ideal Para</h5>
+                      <div class="text-left text-sm space-y-2">
+                        <p class="text-gray-300">• <strong>Swing Trading:</strong> Operações de médio prazo</p>
+                        <p class="text-gray-300">• <strong>Seguir Tendências:</strong> Captura movimentos estatísticos</p>
+                        <p class="text-gray-300">• <strong>Ações Líquidas:</strong> Melhor funcionamento</p>
+                        <p class="text-gray-300">• <strong>Mercados Trending:</strong> Evita movimentos laterais</p>
+                      </div>
+                    </div>
+                    
+                    <!-- Cuidados -->
+                    <div class="bg-orange-500/10 border border-orange-500/30 rounded-lg p-4">
+                      <h5 class="text-orange-400 font-bold mb-3">⚠️ Cuidados</h5>
+                      <div class="text-left text-sm space-y-2">
+                        <p class="text-gray-300">• <strong>Mercados Laterais:</strong> Muitos sinais falsos</p>
+                        <p class="text-gray-300">• <strong>Alta Volatilidade:</strong> Stop pode ser atingido</p>
+                        <p class="text-gray-300">• <strong>Baixa Liquidez:</strong> Dificuldade de execução</p>
+                        <p class="text-gray-300">• <strong>Notícias Fortes:</strong> Podem quebrar padrões</p>
+                      </div>
+                    </div>
+                    
+                  </div>
+                  
+                  <div class="mt-6 bg-geminii/10 border border-geminii/30 rounded-lg p-4">
+                    <p class="text-geminii font-medium text-sm">
+                      💡 <strong>Dica de Ouro:</strong> Beta Regression funciona melhor em <strong>mercados com tendência definida</strong>. 
+                      Use em conjunto com análise de <strong>volume e suporte/resistência</strong> para melhores resultados!
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Controles -->
-      <div class="vol-card p-6 mb-8">
+      <div class="beta-card p-6 mb-8">
         <div class="flex flex-col md:flex-row gap-4 items-center justify-center">
           <div class="flex gap-3 flex-wrap items-center">
             <input 
@@ -225,8 +414,9 @@
               placeholder="Digite o código da ação (ex: PETR4)" 
               class="px-4 py-2 bg-white bg-opacity-10 border border-white border-opacity-20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-geminii backdrop-blur-sm"
             >
-            <select id="periodSelect" class="dark-select px-4 py-2 rounded-lg" style="display: none;">
-              <option value="2y" selected>2 anos</option>
+            <select id="yearsSelect" class="dark-select px-4 py-2 rounded-lg">
+              <option value="1" selected>1 Ano</option>
+              <option value="5">5 Anos</option>
             </select>
             <button id="analyzeBtn" class="px-6 py-2 bg-gradient-to-r from-pink-500 to-purple-600 hover:shadow-lg rounded-lg transition-all font-medium">
               <i class="fas fa-brain mr-2"></i>Analisar
@@ -238,169 +428,210 @@
       <!-- Status -->
       <div id="statusMsg" class="mb-6 p-4 rounded-lg hidden backdrop-blur-sm"></div>
 
-      <!-- Sinal de Trading -->
-      <div id="tradingSignal" class="mb-8 hidden">
-        <div class="vol-card p-6">
+      <!-- Sinal Atual -->
+      <div id="currentSignal" class="mb-8 hidden">
+        <div class="beta-card p-6">
           <div class="text-center">
             <h3 class="text-xl font-bold mb-4">
-              <i class="fas fa-bullseye mr-2"></i>Momento da Vol
+              <i class="fas fa-signal mr-2"></i>Sinal Atual de Trading
             </h3>
             <div id="signalIndicator" class="inline-block mb-4">
               <!-- Preenchido via JS -->
             </div>
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+              <div class="bg-white bg-opacity-5 p-4 rounded-lg">
+                <div class="text-sm text-gray-400 mb-1">Beta0 Normalizado</div>
+                <div id="currentBeta" class="text-xl font-bold text-white">--</div>
+              </div>
               <div class="bg-white bg-opacity-5 p-4 rounded-lg">
                 <div class="text-sm text-gray-400 mb-1">Preço Atual</div>
                 <div id="currentPrice" class="text-xl font-bold text-white">--</div>
               </div>
               <div class="bg-white bg-opacity-5 p-4 rounded-lg">
-                <div class="text-sm text-gray-400 mb-1">Volatilidade Híbrida</div>
-                <div id="hybridVolatility" class="text-xl font-bold text-white">--</div>
-              </div>
-              <div class="bg-white bg-opacity-5 p-4 rounded-lg">
-                <div class="text-sm text-gray-400 mb-1"></div>
-                <div id="confidenceValue" class="text-xl font-bold text-white">--</div>
-                <div class="confidence-bar mt-2">
-                  <div id="confidenceFill" class="confidence-fill" style="width: 0%"></div>
-                </div>
-              </div>
-              <div class="bg-white bg-opacity-5 p-4 rounded-lg">
-                <div class="text-sm text-gray-400 mb-1">Estratégia</div>
-                <div id="strategyValue" class="text-sm font-bold text-white">--</div>
+                <div class="text-sm text-gray-400 mb-1">Média Móvel</div>
+                <div id="currentMM" class="text-xl font-bold text-white">--</div>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Bandas de Volatilidade -->
-      <div id="bandsSection" class="mb-8 hidden">
-        <div class="vol-card p-6">
+      <!-- Análise Individual -->
+      <div id="individualAnalysis" class="mb-8 hidden">
+        <div class="beta-card p-6">
           <div class="flex justify-between items-center mb-6">
-            <h3 id="analysisTitle" class="text-2xl font-bold">
-              <i class="fas fa-layer-group mr-2"></i>Bandas de Volatilidade
-            </h3>
-            <div class="text-sm text-gray-400">
-              <span id="regimeInfo">--</span>
+            <h3 id="analysisTitle" class="text-2xl font-bold"></h3>
+            <div id="analysisTimestamp" class="text-sm text-gray-400"></div>
+          </div>
+          
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <div class="bg-white bg-opacity-5 p-4 rounded-lg">
+              <div class="text-sm text-gray-400">Win Rate</div>
+              <div id="winRate" class="text-xl font-bold"></div>
+            </div>
+            
+            <div class="bg-white bg-opacity-5 p-4 rounded-lg">
+              <div class="text-sm text-gray-400">Total Trades</div>
+              <div id="totalTrades" class="text-xl font-bold"></div>
+            </div>
+            
+            <div class="bg-white bg-opacity-5 p-4 rounded-lg">
+              <div class="text-sm text-gray-400">Retorno Bruto</div>
+              <div id="grossReturn" class="text-xl font-bold"></div>
+            </div>
+            
+            <div class="bg-white bg-opacity-5 p-4 rounded-lg">
+              <div class="text-sm text-gray-400">Retorno Líquido</div>
+              <div id="netReturn" class="text-xl font-bold"></div>
             </div>
           </div>
           
-          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <!-- Bandas Superiores -->
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div>
-              <h4 class="text-lg font-semibold mb-4 text-red-400">
-                <i class="fas fa-arrow-up mr-2"></i>Resistências (Bandas Superiores)
-              </h4>
+              <h4 class="text-lg font-semibold mb-4">Métricas de Risco</h4>
               <div class="space-y-3">
-                <div class="band-item band-superior">
-                  <div>
-                    <span class="font-semibold">Banda Superior 4σ</span>
-                    <div class="text-sm text-gray-400">Resistência extrema</div>
-                  </div>
-                  <div class="text-right">
-                    <div class="text-lg font-bold" id="bandaSuperior4sigma">--</div>
-                  </div>
+                <div class="bg-white bg-opacity-5 p-3 rounded-lg flex justify-between">
+                  <span class="text-gray-400">Max Drawdown:</span>
+                  <span id="maxDrawdown" class="font-semibold">0%</span>
                 </div>
-                <div class="band-item band-superior">
-                  <div>
-                    <span class="font-semibold">Banda Superior 2σ</span>
-                    <div class="text-sm text-gray-400">Resistência principal</div>
-                  </div>
-                  <div class="text-right">
-                    <div class="text-lg font-bold" id="bandaSuperior2sigma">--</div>
-                  </div>
+                <div class="bg-white bg-opacity-5 p-3 rounded-lg flex justify-between">
+                  <span class="text-gray-400">Volatilidade:</span>
+                  <span id="volatility" class="font-semibold">0%</span>
+                </div>
+                <div class="bg-white bg-opacity-5 p-3 rounded-lg flex justify-between">
+                  <span class="text-gray-400">Sharpe Ratio:</span>
+                  <span id="sharpeRatio" class="font-semibold">0</span>
                 </div>
               </div>
             </div>
             
-            <!-- Linha Central e Bandas Inferiores -->
             <div>
-              <h4 class="text-lg font-semibold mb-4 text-green-400">
-                <i class="fas fa-arrow-down mr-2"></i>Suportes (Bandas Inferiores)
-              </h4>
+              <h4 class="text-lg font-semibold mb-4">Resultado das Operações</h4>
               <div class="space-y-3">
-                <div class="band-item band-central">
-                  <div>
-                    <span class="font-semibold">Linha Central</span>
-                    <div class="text-sm text-gray-400">Equilíbrio</div>
-                  </div>
-                  <div class="text-right">
-                    <div class="text-lg font-bold" id="linhaCentral">--</div>
-                  </div>
+                <div class="bg-white bg-opacity-5 p-3 rounded-lg flex justify-between">
+                  <span class="text-gray-400">Trades Vencedores:</span>
+                  <span id="winningTrades" class="font-semibold text-green-400">0</span>
                 </div>
-                <div class="band-item band-inferior">
-                  <div>
-                    <span class="font-semibold">Banda Inferior 2σ</span>
-                    <div class="text-sm text-gray-400">Suporte principal</div>
-                  </div>
-                  <div class="text-right">
-                    <div class="text-lg font-bold" id="bandaInferior2sigma">--</div>
-                  </div>
+                <div class="bg-white bg-opacity-5 p-3 rounded-lg flex justify-between">
+                  <span class="text-gray-400">Trades Perdedores:</span>
+                  <span id="losingTrades" class="font-semibold text-red-400">0</span>
                 </div>
-                <div class="band-item band-inferior">
-                  <div>
-                    <span class="font-semibold">Banda Inferior 4σ</span>
-                    <div class="text-sm text-gray-400">Suporte extremo</div>
-                  </div>
-                  <div class="text-right">
-                    <div class="text-lg font-bold" id="bandaInferior4sigma">--</div>
-                  </div>
+                <div class="bg-white bg-opacity-5 p-3 rounded-lg flex justify-between">
+                  <span class="text-gray-400">Total Taxas:</span>
+                  <span id="totalFees" class="font-semibold">R$ 0</span>
                 </div>
+              </div>
+            </div>
+            
+            <div>
+              <h4 class="text-lg font-semibold mb-4">Período da Análise</h4>
+              <div class="bg-white bg-opacity-5 p-4 rounded-lg">
+                <div class="text-sm text-gray-400 mb-2">Período analisado:</div>
+                <div id="analysisPeriod" class="text-sm font-semibold">--</div>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Métricas Técnicas -->
-      <div id="metricsSection" class="mb-8 hidden">
-        <div class="vol-card p-6">
-          <h3 class="text-xl font-bold mb-6">
-            <i class="fas fa-chart-pie mr-2"></i>Métricas do Modelo Híbrido
+      <!-- Gráfico Principal -->
+      <div id="mainChart" class="mb-8 hidden">
+        <div class="beta-card p-6">
+          <h3 class="text-xl font-bold mb-4">
+            <i class="fas fa-chart-line text-purple-400 mr-2"></i>
+            Gráfico Interativo - Preço e Sinais de Trading
           </h3>
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div class="bg-white bg-opacity-5 p-4 rounded-lg">
-              <h4 class="font-semibold mb-3 text-blue-400">Volatilidade GARCH</h4>
-              <div id="garchVolatility" class="text-2xl font-bold">--</div>
-              <div class="text-sm text-gray-400 mt-1">Modelo condicional</div>
+          <div class="mb-4 flex flex-wrap gap-4 text-sm">
+            <div class="flex items-center gap-2">
+              <div class="w-3 h-3 rounded-full bg-gray-400"></div>
+              <span>Neutro</span>
             </div>
-            <div class="bg-white bg-opacity-5 p-4 rounded-lg">
-              <h4 class="font-semibold mb-3 text-purple-400">Volatilidade XGBoost</h4>
-              <div id="xgbVolatility" class="text-2xl font-bold">--</div>
-              <div class="text-sm text-gray-400 mt-1">Machine Learning</div>
-            </div>
-            <div class="bg-white bg-opacity-5 p-4 rounded-lg">
-              <h4 class="font-semibold mb-3 text-green-400">Posição do Preço</h4>
-              <div id="pricePosition" class="text-sm font-bold">--</div>
-              <div class="text-sm text-gray-400 mt-1">Relação com bandas</div>
+            <div class="flex items-center gap-2">
+              <div class="w-3 h-3 rounded-full bg-orange-400"></div>
+              <span>Média Móvel</span>
             </div>
           </div>
-        </div>
-      </div>
-
-      <!-- Gráfico -->
-      <div id="chartSection" class="mb-8 hidden">
-        <div class="vol-card p-6">
-          <h3 class="text-xl font-bold mb-4">
-            <i class="fas fa-chart-line text-geminii mr-2"></i>
-            Gráfico Interativo - Bandas de Volatilidade Híbridas
-          </h3>
           <div style="background: rgba(255, 255, 255, 0.05); border-radius: 12px; padding: 20px; border: 1px solid rgba(255, 255, 255, 0.1);">
-            <div id="interactiveChart" style="width: 100%; height: 700px; background: transparent;">
+            <div id="interactivePriceChart" style="width: 100%; height: 600px; background: transparent;">
               <!-- Gráfico Plotly será inserido aqui -->
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Estratégia Recomendada -->
-      <div id="strategySection" class="mb-8 hidden">
-        <div class="vol-card p-6">
-          <h3 class="text-xl font-bold mb-4">
-            
-          </h3>
-          <div id="strategyContent" class="space-y-4">
+      <!-- Gráficos Beta0 e Retornos -->
+      <div id="chartsSection" class="mb-8 hidden">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div class="beta-card p-6">
+            <h3 class="text-xl font-bold mb-4">
+              <i class="fas fa-wave-square text-blue-400 mr-2"></i>
+              Beta0 Normalizado
+            </h3>
+            <div class="mb-4 flex flex-wrap gap-4 text-sm">
+              <div class="flex items-center gap-2">
+                <div class="w-3 h-3 rounded-full bg-blue-400"></div>
+                <span>Beta0 > 0.5 = Tendência de Alta</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <div class="w-3 h-3 rounded-full bg-red-400"></div>
+                <span>Beta0 < 0.5 = Tendência de Baixa</span>
+              </div>
+            </div>
+            <div style="background: rgba(255, 255, 255, 0.05); border-radius: 12px; padding: 15px; border: 1px solid rgba(255, 255, 255, 0.1);">
+              <div id="betaChartPlotly" style="width: 100%; height: 350px; background: transparent;">
+                <!-- Gráfico Beta0 Plotly -->
+              </div>
+            </div>
+          </div>
+          
+          <div class="beta-card p-6">
+            <h3 class="text-xl font-bold mb-4">
+              <i class="fas fa-chart-area text-green-400 mr-2"></i>
+              Retornos Acumulados
+            </h3>
+            <div class="mb-4 flex flex-wrap gap-4 text-sm">
+              <div class="flex items-center gap-2">
+                <div class="w-3 h-3 rounded-full bg-purple-400"></div>
+                <span>Retorno Bruto</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <div class="w-3 h-3 rounded-full bg-pink-400"></div>
+                <span>Retorno Líquido (após taxas)</span>
+              </div>
+            </div>
+            <div style="background: rgba(255, 255, 255, 0.05); border-radius: 12px; padding: 15px; border: 1px solid rgba(255, 255, 255, 0.1);">
+              <div id="returnsChartPlotly" style="width: 100%; height: 350px; background: transparent;">
+                <!-- Gráfico Retornos Plotly -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
+      <!-- Histórico de Trades -->
+      <div id="tradesHistory" class="mb-8 hidden">
+        <div class="beta-card p-6">
+          <h3 class="text-xl font-bold mb-6">
+            <i class="fas fa-history text-yellow-400 mr-2"></i>
+            Histórico de Trades (Últimos 10)
+          </h3>
+          <div class="overflow-x-auto">
+            <table class="w-full">
+              <thead>
+                <tr class="border-b border-white border-opacity-10">
+                  <th class="text-left py-3 px-4 text-gray-300">Data Entrada</th>
+                  <th class="text-left py-3 px-4 text-gray-300">Preço Entrada</th>
+                  <th class="text-left py-3 px-4 text-gray-300">Data Saída</th>
+                  <th class="text-left py-3 px-4 text-gray-300">Preço Saída</th>
+                  <th class="text-left py-3 px-4 text-gray-300">PnL (%)</th>
+                  <th class="text-left py-3 px-4 text-gray-300">Tipo</th>
+                  <th class="text-left py-3 px-4 text-gray-300">Resultado</th>
+                </tr>
+              </thead>
+              <tbody id="tradesTableBody">
+                <!-- Trades serão inseridos aqui -->
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
@@ -409,19 +640,42 @@
   </div>
 
   <script>
+    // ===== FUNÇÃO DO EXPANDER =====
+    function toggleInfo() {
+      const content = document.getElementById('infoContent');
+      const icon = document.getElementById('infoIcon');
+      
+      if (content.classList.contains('hidden')) {
+        content.classList.remove('hidden');
+        content.style.animation = 'fadeIn 0.5s ease-in-out';
+        icon.classList.remove('fa-info-circle');
+        icon.classList.add('fa-times');
+      } else {
+        content.style.animation = 'fadeOut 0.3s ease-in-out';
+        setTimeout(() => {
+          content.classList.add('hidden');
+        }, 300);
+        icon.classList.remove('fa-times');
+        icon.classList.add('fa-info-circle');
+      }
+    }
+
+    // Make toggleInfo global
+    window.toggleInfo = toggleInfo;
+
     // Configurações
-    const API_BASE = window.location.origin + '/api/volatility';
+    const API_BASE = window.location.origin + '/beta_regression';
     
     // Elementos DOM
     const stockInput = document.getElementById('stockInput');
-    const periodSelect = document.getElementById('periodSelect');
+    const yearsSelect = document.getElementById('yearsSelect');
     const analyzeBtn = document.getElementById('analyzeBtn');
     const statusMsg = document.getElementById('statusMsg');
-    const tradingSignal = document.getElementById('tradingSignal');
-    const bandsSection = document.getElementById('bandsSection');
-    const metricsSection = document.getElementById('metricsSection');
-    const chartSection = document.getElementById('chartSection');
-    const strategySection = document.getElementById('strategySection');
+    const individualAnalysis = document.getElementById('individualAnalysis');
+    const tradesHistory = document.getElementById('tradesHistory');
+    const chartsSection = document.getElementById('chartsSection');
+    const currentSignal = document.getElementById('currentSignal');
+    const mainChart = document.getElementById('mainChart');
     
     // Funções utilitárias
     function showStatus(message, type = 'info') {
@@ -442,10 +696,6 @@
       }).format(value);
     }
     
-    function formatPercentage(value) {
-      return `${(value * 100).toFixed(2)}%`;
-    }
-    
     function setLoading(loading) {
       if (loading) {
         analyzeBtn.classList.add('loading');
@@ -456,10 +706,10 @@
       }
     }
     
-    // Analisar ação
+    // Analisar ação individual
     async function analyzeStock() {
       const symbol = stockInput.value.trim().toUpperCase();
-      const period = periodSelect.value;
+      const anos = parseInt(yearsSelect.value);
       
       if (!symbol) {
         showStatus('Digite o código de uma ação', 'error');
@@ -467,222 +717,420 @@
       }
       
       setLoading(true);
-      showStatus('Executando análise híbrida GARCH + XGBoost... Aguarde', 'info');
+      showStatus('Executando análise Beta Regression... Isso pode levar alguns minutos', 'info');
       
       try {
-        const response = await fetch(`${API_BASE}/analyze/${symbol}?period=${period}`, {
-          method: 'GET',
+        const response = await fetch(`${API_BASE}/analyze`, {
+          method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-          }
+          },
+          body: JSON.stringify({
+            symbol: symbol,
+            anos: anos
+          })
         });
         
         const data = await response.json();
         
         if (data.success) {
-          displayAnalysis(data);
+          displayIndividualAnalysis(data);
           showStatus(`Análise de ${symbol} concluída com sucesso!`, 'success');
         } else {
           showStatus(data.error || 'Erro na análise', 'error');
-          hideAllSections();
         }
       } catch (error) {
         showStatus('Erro ao executar análise', 'error');
-        console.error('Erro:', error);
-        hideAllSections();
+        console.error(error);
       }
       
       setLoading(false);
     }
     
-    // Ocultar todas as seções
-    function hideAllSections() {
-      tradingSignal.classList.add('hidden');
-      bandsSection.classList.add('hidden');
-      metricsSection.classList.add('hidden');
-      chartSection.classList.add('hidden');
-      strategySection.classList.add('hidden');
-    }
-    
-    // Exibir análise completa
-    function displayAnalysis(data) {
-      console.log('Dados recebidos:', data);
+    // Exibir análise individual
+    function displayIndividualAnalysis(data) {
+      const analysis = data.analysis_data;
       
-      // Sinal de trading
-      displayTradingSignal(data);
+      // Sinal atual
+      displayCurrentSignal(analysis);
       
-      // Bandas de volatilidade
-      displayVolatilityBands(data);
+      // Título e timestamp
+      document.getElementById('analysisTitle').textContent = `${analysis.symbol} - Análise Beta Regression`;
+      document.getElementById('analysisTimestamp').textContent = analysis.timestamp;
       
-      // Métricas técnicas
-      displayMetrics(data);
+      // Métricas principais
+      document.getElementById('winRate').textContent = `${analysis.win_rate}%`;
+      document.getElementById('winRate').className = `text-xl font-bold ${analysis.win_rate >= 50 ? 'text-green-400' : 'text-red-400'}`;
       
-      // Gráfico
-      displayChart(data);
+      document.getElementById('totalTrades').textContent = analysis.total_trades;
       
-      // Estratégia
-      displayStrategy(data);
+      document.getElementById('grossReturn').textContent = `${analysis.return_bruto.toFixed(2)}%`;
+      document.getElementById('grossReturn').className = `text-xl font-bold ${analysis.return_bruto >= 0 ? 'text-green-400' : 'text-red-400'}`;
+      
+      document.getElementById('netReturn').textContent = `${analysis.final_return.toFixed(2)}%`;
+      document.getElementById('netReturn').className = `text-xl font-bold ${analysis.final_return >= 0 ? 'text-green-400' : 'text-red-400'}`;
+      
+      // Métricas de risco
+      document.getElementById('maxDrawdown').textContent = `${analysis.max_drawdown.toFixed(2)}%`;
+      document.getElementById('maxDrawdown').className = `font-semibold text-red-400`;
+      
+      document.getElementById('volatility').textContent = `${analysis.volatility.toFixed(2)}%`;
+      document.getElementById('sharpeRatio').textContent = analysis.sharpe_ratio.toFixed(2);
+      document.getElementById('sharpeRatio').className = `font-semibold ${analysis.sharpe_ratio >= 0 ? 'text-green-400' : 'text-red-400'}`;
+      
+      // Resultado das operações
+      document.getElementById('winningTrades').textContent = analysis.winning_trades;
+      document.getElementById('losingTrades').textContent = analysis.losing_trades;
+      document.getElementById('totalFees').textContent = formatCurrency(analysis.total_fees);
+      
+      // Período da análise
+      document.getElementById('analysisPeriod').textContent = analysis.periodo;
       
       // Mostrar seções
-      tradingSignal.classList.remove('hidden');
-      bandsSection.classList.remove('hidden');
-      metricsSection.classList.remove('hidden');
-      chartSection.classList.remove('hidden');
+      individualAnalysis.classList.remove('hidden');
       
+      // Gráficos
+      if (data.chart_data) {
+        updateInteractiveCharts(data.chart_data);
+      }
+      
+      // Histórico de trades
+      if (data.trades_history && data.trades_history.length > 0) {
+        displayTradesHistory(data.trades_history);
+      }
     }
     
-    // Exibir sinal de trading
-    function displayTradingSignal(data) {
-      const signal = data.trading_signal;
+    // Exibir sinal atual
+    function displayCurrentSignal(analysis) {
       const signalIndicator = document.getElementById('signalIndicator');
+      const currentBeta = document.getElementById('currentBeta');
+      const currentPrice = document.getElementById('currentPrice');
+      const currentMM = document.getElementById('currentMM');
       
       // Determinar classe do sinal
-      let signalClass = 'signal-hold';
-      let signalIcon = 'fas fa-pause';
-      let signalText = signal.signal || 'HOLD';
+      let signalClass = 'strategy-neutro';
+      let signalIcon = 'fas fa-minus';
       
-      switch(signal.signal) {
-        case 'BUY_VOLATILITY':
-          signalClass = 'signal-buy-volatility';
-          signalIcon = 'fas fa-arrow-trend-up';
-          signalText = 'COMPRAR VOLATILIDADE';
-          break;
-        case 'SELL_VOLATILITY':
-          signalClass = 'signal-sell-volatility';
-          signalIcon = 'fas fa-arrow-trend-down';
-          signalText = 'VENDER VOLATILIDADE';
-          break;
-        case 'CALL_BIAS':
-          signalClass = 'signal-call-bias';
-          signalIcon = 'fas fa-arrow-up';
-          signalText = 'VIÉS DE ALTA';
-          break;
-        case 'PUT_BIAS':
-          signalClass = 'signal-put-bias';
-          signalIcon = 'fas fa-arrow-down';
-          signalText = 'VIÉS DE BAIXA';
-          break;
+      if (analysis.status === 'COMPRA') {
+        signalClass = 'strategy-compra';
+        signalIcon = 'fas fa-arrow-up';
+      } else if (analysis.status === 'VENDA') {
+        signalClass = 'strategy-venda';
+        signalIcon = 'fas fa-arrow-down';
       }
       
       signalIndicator.innerHTML = `
-        <div class="signal-indicator ${signalClass}">
+        <div class="strategy-indicator ${signalClass}">
           <i class="${signalIcon} mr-2"></i>
-          ${signalText}
+          ${analysis.status}
         </div>
       `;
       
-      // Dados do sinal
-      document.getElementById('currentPrice').textContent = formatCurrency(data.current_price);
-      document.getElementById('hybridVolatility').textContent = formatPercentage(data.metrics?.volatility?.hybrid || 0);
-      document.getElementById('confidenceValue').textContent = `${signal.confidence || 0}%`;
-      document.getElementById('strategyValue').textContent = signal.strategy || '--';
+      // Preencher dados atuais
+      currentBeta.textContent = analysis.beta0_norm.toFixed(4);
+      currentBeta.className = `text-xl font-bold ${analysis.beta0_norm > 0.5 ? 'text-green-400' : 'text-red-400'}`;
       
-      // Barra de confiança
-      const confidenceFill = document.getElementById('confidenceFill');
-      setTimeout(() => {
-        confidenceFill.style.width = `${signal.confidence || 0}%`;
-      }, 500);
-    }
-    
-    // Exibir bandas de volatilidade
-    function displayVolatilityBands(data) {
-      const bands = data.metrics?.bands || {};
+      currentPrice.textContent = formatCurrency(analysis.last_close);
+      currentMM.textContent = formatCurrency(analysis.mm);
       
-      document.getElementById('analysisTitle').innerHTML = `
-        <i class="fas fa-layer-group mr-2"></i>Bandas de Volatilidade - ${data.ticker}
-      `;
-      
-      document.getElementById('regimeInfo').textContent = 
-        `Regime: ${data.metrics?.volatility?.regime || '--'} | Trend: ${data.metrics?.position?.trend_regime || '--'}`;
-      
-      // Bandas
-      document.getElementById('bandaSuperior4sigma').textContent = formatCurrency(bands.superior_4sigma || 0);
-      document.getElementById('bandaSuperior2sigma').textContent = formatCurrency(bands.superior_2sigma || 0);
-      document.getElementById('linhaCentral').textContent = formatCurrency(bands.linha_central || 0);
-      document.getElementById('bandaInferior2sigma').textContent = formatCurrency(bands.inferior_2sigma || 0);
-      document.getElementById('bandaInferior4sigma').textContent = formatCurrency(bands.inferior_4sigma || 0);
-    }
-    
-    // Exibir métricas técnicas
-    function displayMetrics(data) {
-      const volatility = data.metrics?.volatility || {};
-      
-      document.getElementById('garchVolatility').textContent = formatPercentage(volatility.garch || 0);
-      document.getElementById('xgbVolatility').textContent = formatPercentage(volatility.xgb || 0);
-      document.getElementById('pricePosition').textContent = data.metrics?.position?.description || '--';
-    }
-    
-    // Exibir gráfico
-    function displayChart(data) {
-      if (data.chart_html) {
-        const chartContainer = document.getElementById('interactiveChart');
-        
-        // Criar iframe para o gráfico Plotly
-        const iframe = document.createElement('iframe');
-        iframe.style.width = '100%';
-        iframe.style.height = '700px';
-        iframe.style.border = 'none';
-        iframe.style.background = 'transparent';
-        
-        chartContainer.innerHTML = '';
-        chartContainer.appendChild(iframe);
-        
-        // Escrever HTML do Plotly no iframe
-        const doc = iframe.contentDocument || iframe.contentWindow.document;
-        doc.open();
-        doc.write(data.chart_html);
-        doc.close();
-        
-        console.log('Gráfico Plotly carregado');
+      // Destacar se preço está acima ou abaixo da MM
+      if (analysis.mm_pos === 1) {
+        currentPrice.className += ' text-green-400';
+        currentMM.className += ' text-gray-400';
       } else {
-        document.getElementById('interactiveChart').innerHTML = '<p class="text-center text-gray-400">Gráfico não disponível</p>';
+        currentPrice.className += ' text-red-400';
+        currentMM.className += ' text-gray-400';
+      }
+      
+      currentSignal.classList.remove('hidden');
+    }
+    
+    // Histórico de trades
+    function displayTradesHistory(trades) {
+      const tbody = document.getElementById('tradesTableBody');
+      
+      // Ordenar trades por data de entrada (mais recente primeiro) e limitar a 10
+      const sortedTrades = trades
+        .sort((a, b) => {
+          const dateA = new Date(a['Entry Date'].split('/').reverse().join('-'));
+          const dateB = new Date(b['Entry Date'].split('/').reverse().join('-'));
+          return dateB - dateA;
+        })
+        .slice(0, 10);
+      
+      tbody.innerHTML = sortedTrades.map(trade => `
+        <tr class="border-b border-white border-opacity-10 hover:bg-white hover:bg-opacity-5 transition-colors">
+          <td class="py-3 px-4 text-sm">${trade['Entry Date']}</td>
+          <td class="py-3 px-4 text-sm">${formatCurrency(trade['Entry Price'])}</td>
+          <td class="py-3 px-4 text-sm">${trade['Exit Date']}</td>
+          <td class="py-3 px-4 text-sm">${formatCurrency(trade['Exit Price'])}</td>
+          <td class="py-3 px-4 text-sm font-semibold ${trade['PnL (%)'] >= 0 ? 'text-green-400' : 'text-red-400'}">${trade['PnL (%)'].toFixed(2)}%</td>
+          <td class="py-3 px-4 text-sm">
+            <span class="px-2 py-1 rounded-full text-xs ${trade['Type'] === 'LONG' ? 'bg-blue-600 bg-opacity-20 text-blue-400' : 'bg-orange-600 bg-opacity-20 text-orange-400'}">
+              ${trade['Type']}
+            </span>
+          </td>
+          <td class="py-3 px-4 text-sm">
+            <span class="px-2 py-1 rounded-full text-xs font-semibold ${trade['Outcome'] === 'GAIN' ? 'bg-green-600 bg-opacity-20 text-green-400' : 'bg-red-600 bg-opacity-20 text-red-400'}">
+              ${trade['Outcome']}
+            </span>
+          </td>
+        </tr>
+      `).join('');
+      
+      tradesHistory.classList.remove('hidden');
+    }
+    
+    // Atualizar gráficos interativos com Plotly
+    function updateInteractiveCharts(chartData) {
+      if (!chartData || !chartData.prices || !chartData.labels) {
+        console.error('Dados do gráfico inválidos:', chartData);
+        return;
+      }
+      
+      try {
+        // Gráfico principal com sinais
+        updateMainChartPlotly(chartData);
+        
+        // Gráfico Beta0
+        updateBetaChartPlotly(chartData);
+        
+        // Gráfico Retornos
+        updateReturnsChartPlotly(chartData);
+        
+        mainChart.classList.remove('hidden');
+        chartsSection.classList.remove('hidden');
+        
+      } catch (error) {
+        console.error('Erro ao criar gráficos:', error);
+        showStatus('Erro ao criar gráficos: ' + error.message, 'error');
       }
     }
     
-    // Exibir estratégia recomendada
-    function displayStrategy(data) {
-      const signal = data.trading_signal;
-      const strategyContent = document.getElementById('strategyContent');
+    // Gráfico principal com Plotly
+    function updateMainChartPlotly(chartData) {
+      const signals = chartData.trading_signals || [];
+      const prices = chartData.prices || [];
+      const labels = chartData.labels || [];
+      const mmData = chartData.mm || [];
       
-      let strategyHtml = `
-        <div class="bg-white bg-opacity-5 p-4 rounded-lg">
-          <h4 class="font-semibold mb-2 text-geminii">Estratégia: ${signal.strategy || 'Indefinida'}</h4>
-          <p class="text-gray-300 mb-3">Confiança: ${signal.confidence || 0}%</p>
-      `;
+      // Criar traces para cada tipo de sinal
+      const traces = [];
       
-      if (signal.reasoning && signal.reasoning.length > 0) {
-        strategyHtml += '<div class="space-y-2">';
-        signal.reasoning.forEach(reason => {
-          strategyHtml += `<div class="flex items-start gap-2">
-            <i class="fas fa-check-circle text-green-400 mt-1 text-xs"></i>
-            <span class="text-sm text-gray-300">${reason}</span>
-          </div>`;
+      // Preço principal (linha base)
+      traces.push({
+        x: labels,
+        y: prices,
+        type: 'scatter',
+        mode: 'lines',
+        name: 'Preço',
+        line: { color: '#ffffff', width: 2 },
+        hovertemplate: '<b>%{x}</b><br>Preço: R$ %{y:.2f}<extra></extra>'
+      });
+      
+      // Média Móvel
+      if (mmData.length > 0) {
+        traces.push({
+          x: labels,
+          y: mmData,
+          type: 'scatter',
+          mode: 'lines',
+          name: 'Média Móvel',
+          line: { color: '#FFA500', width: 2 },
+          hovertemplate: '<b>%{x}</b><br>MM: R$ %{y:.2f}<extra></extra>'
         });
-        strategyHtml += '</div>';
       }
       
-      strategyHtml += '</div>';
-      
-      // Adicionar métricas da estratégia
-      if (signal.metrics) {
-        strategyHtml += `
-          <div class="bg-white bg-opacity-5 p-4 rounded-lg">
-            <h4 class="font-semibold mb-2 text-blue-400">Métricas da Estratégia</h4>
-            <div class="grid grid-cols-2 gap-4 text-sm">
-              <div>
-                <span class="text-gray-400">Volatilidade:</span>
-                <span class="font-semibold">${formatPercentage(signal.metrics.volatility || 0)}</span>
-              </div>
-              <div>
-                <span class="text-gray-400">Preço vs Central:</span>
-                <span class="font-semibold">${(signal.metrics.price_vs_central || 0).toFixed(2)}%</span>
-              </div>
-            </div>
-          </div>
-        `;
+      // Pontos de sinal de compra
+      const buyIndices = signals.map((s, i) => s === 1 ? i : null).filter(i => i !== null);
+      if (buyIndices.length > 0) {
+        traces.push({
+          x: buyIndices.map(i => labels[i]),
+          y: buyIndices.map(i => prices[i]),
+          type: 'scatter',
+          mode: 'markers',
+          name: 'Sinal Compra',
+          marker: { 
+            color: '#10b981', 
+            size: 10,
+            symbol: 'triangle-up'
+          },
+          hovertemplate: '<b>%{x}</b><br>COMPRA: R$ %{y:.2f}<extra></extra>'
+        });
       }
       
-      strategyContent.innerHTML = strategyHtml;
+      // Pontos de sinal de venda
+      const sellIndices = signals.map((s, i) => s === -1 ? i : null).filter(i => i !== null);
+      if (sellIndices.length > 0) {
+        traces.push({
+          x: sellIndices.map(i => labels[i]),
+          y: sellIndices.map(i => prices[i]),
+          type: 'scatter',
+          mode: 'markers',
+          name: 'Sinal Venda',
+          marker: { 
+            color: '#ef4444', 
+            size: 10,
+            symbol: 'triangle-down'
+          },
+          hovertemplate: '<b>%{x}</b><br>VENDA: R$ %{y:.2f}<extra></extra>'
+        });
+      }
+      
+      const layout = {
+        paper_bgcolor: 'rgba(0,0,0,0)',
+        plot_bgcolor: 'rgba(0,0,0,0)',
+        font: { color: '#ffffff', family: 'Inter' },
+        xaxis: { 
+          gridcolor: 'rgba(255,255,255,0.1)',
+          color: '#ffffff',
+          showspikes: true,
+          spikethickness: 1,
+          spikecolor: '#ba39af'
+        },
+        yaxis: { 
+          gridcolor: 'rgba(255,255,255,0.1)',
+          color: '#ffffff',
+          tickformat: 'R$ ,.2f'
+        },
+        legend: {
+          bgcolor: 'rgba(0,0,0,0.5)',
+          bordercolor: 'rgba(255,255,255,0.2)',
+          borderwidth: 1,
+          font: { color: '#ffffff' }
+        },
+        hovermode: 'x unified',
+        margin: { l: 60, r: 30, t: 30, b: 60 }
+      };
+      
+      const config = {
+        displayModeBar: true,
+        displaylogo: false,
+        modeBarButtonsToRemove: ['toImage', 'sendDataToCloud'],
+        responsive: true
+      };
+      
+      Plotly.newPlot('interactivePriceChart', traces, layout, config);
+    }
+    
+    // Gráfico Beta0 com Plotly
+    function updateBetaChartPlotly(chartData) {
+      const beta0Data = chartData.beta0_norm || [];
+      const labels = chartData.labels || [];
+      
+      const traces = [{
+        x: labels,
+        y: beta0Data,
+        type: 'scatter',
+        mode: 'lines',
+        name: 'Beta0 Normalizado',
+        line: { color: '#3b82f6', width: 2 },
+        fill: 'tozeroy',
+        fillcolor: 'rgba(59, 130, 246, 0.1)',
+        hovertemplate: '<b>%{x}</b><br>Beta0: %{y:.4f}<extra></extra>'
+      }];
+      
+      // Linha de referência em 0.5
+      traces.push({
+        x: [labels[0], labels[labels.length - 1]],
+        y: [0.5, 0.5],
+        type: 'scatter',
+        mode: 'lines',
+        name: 'Nível 0.5',
+        line: { color: '#FFD700', width: 2, dash: 'dash' },
+        hoverinfo: 'skip'
+      });
+      
+      const layout = {
+        paper_bgcolor: 'rgba(0,0,0,0)',
+        plot_bgcolor: 'rgba(0,0,0,0)',
+        font: { color: '#ffffff', family: 'Inter' },
+        xaxis: { 
+          gridcolor: 'rgba(255,255,255,0.1)',
+          color: '#ffffff'
+        },
+        yaxis: { 
+          gridcolor: 'rgba(255,255,255,0.1)',
+          color: '#ffffff',
+          range: [0, 1],
+          tickformat: '.2f'
+        },
+        legend: {
+          bgcolor: 'rgba(0,0,0,0.5)',
+          bordercolor: 'rgba(255,255,255,0.2)',
+          borderwidth: 1,
+          font: { color: '#ffffff' }
+        },
+        margin: { l: 60, r: 30, t: 30, b: 60 }
+      };
+      
+      const config = {
+        displayModeBar: true,
+        displaylogo: false,
+        modeBarButtonsToRemove: ['toImage', 'sendDataToCloud'],
+        responsive: true
+      };
+      
+      Plotly.newPlot('betaChartPlotly', traces, layout, config);
+    }
+    
+    // Gráfico Retornos com Plotly
+    function updateReturnsChartPlotly(chartData) {
+      const accReturns = chartData.acc_returns || [];
+      const accReturnsAfterFees = chartData.acc_returns_after_fees || [];
+      const labels = chartData.labels || [];
+      
+      const traces = [
+        {
+          x: labels,
+          y: accReturns,
+          type: 'scatter',
+          mode: 'lines',
+          name: 'Retorno Bruto',
+          line: { color: '#8b5cf6', width: 2 },
+          hovertemplate: '<b>%{x}</b><br>Bruto: %{y:.2f}%<extra></extra>'
+        },
+        {
+          x: labels,
+          y: accReturnsAfterFees,
+          type: 'scatter',
+          mode: 'lines',
+          name: 'Retorno Líquido',
+          line: { color: '#d946ef', width: 2 },
+          hovertemplate: '<b>%{x}</b><br>Líquido: %{y:.2f}%<extra></extra>'
+        }
+      ];
+      
+      const layout = {
+        paper_bgcolor: 'rgba(0,0,0,0)',
+        plot_bgcolor: 'rgba(0,0,0,0)',
+        font: { color: '#ffffff', family: 'Inter' },
+        xaxis: { 
+          gridcolor: 'rgba(255,255,255,0.1)',
+          color: '#ffffff'
+        },
+        yaxis: { 
+          gridcolor: 'rgba(255,255,255,0.1)',
+          color: '#ffffff',
+          ticksuffix: '%'
+        },
+        legend: {
+          bgcolor: 'rgba(0,0,0,0.5)',
+          bordercolor: 'rgba(255,255,255,0.2)',
+          borderwidth: 1,
+          font: { color: '#ffffff' }
+        },
+        margin: { l: 60, r: 30, t: 30, b: 60 }
+      };
+      
+      const config = {
+        displayModeBar: true,
+        displaylogo: false,
+        modeBarButtonsToRemove: ['toImage', 'sendDataToCloud'],
+        responsive: true
+      };
+      
+      Plotly.newPlot('returnsChartPlotly', traces, layout, config);
     }
     
     // Event Listeners
@@ -693,22 +1141,7 @@
     });
     
     // Inicialização
-    document.addEventListener('DOMContentLoaded', () => {
-      showStatus('Bandas de Volatilidade Híbridas carregadas! Digite o código de uma ação e clique em Analisar.', 'info');
-      
-      // Verificar status da API
-      fetch(`${API_BASE}/health`)
-        .then(response => response.json())
-        .then(data => {
-          if (data.status === 'OK') {
-            console.log('API conectada:', data.service);
-          }
-        })
-        .catch(error => {
-          console.warn('API não conectada:', error);
-          showStatus('Aviso: API pode estar indisponível', 'error');
-        });
-    });
+    showStatus('Beta Regression carregado! Digite o código de uma ação e clique em Analisar.', 'info');
   </script>
 </body>
 </html>

@@ -36,17 +36,17 @@ class YFinanceRSLService:
         'POMO4': 'Transporte',
         'RAPT4': 'Transporte',
         'TUPY3': 'Transporte',
-        'WEGE3': 'Máquinas',
-        'ROMI3': 'Máquinas',
-        'TASA4': 'Máquinas',
         'AZUL4': 'Transporte',
-        'GOLL4': 'Transporte',
+        #'GOLL4': 'Transporte',
         'RAIL3': 'Transporte',
         'JSLG3': 'Transporte',
         'TGMA3': 'Transporte',
         'CCRO3': 'Transporte',
         'STBP3': 'Transporte',
         'PORT3': 'Transporte',
+        'WEGE3': 'Máquinas',
+        'ROMI3': 'Máquinas',
+        'TASA4': 'Máquinas',
         'AGXY3': 'Agropecuária',
         'SOJA3': 'Agropecuária',
         'AGRO3': 'Agropecuária',
@@ -99,9 +99,9 @@ class YFinanceRSLService:
         'RDOR3': 'Serviços Médico',
         'TRAD3': 'Serviços',
         'TOTS3': 'Serviços',
-        'OIBR3': 'Telecomunicações',
-        'VIVT3': 'Telecomunicações',
-        'TIMS3': 'Telecomunicações',
+       # 'OIBR3': 'Telecomunicações',
+       # 'VIVT3': 'Telecomunicações',
+       # 'TIMS3': 'Telecomunicações',
         'ALUP11': 'Energia',
         'CBEE3': 'Energia',
         'AURE3': 'Energia',
@@ -236,10 +236,6 @@ class YFinanceRSLService:
     
     @staticmethod
     def calculate_volatilidade(price_series: pd.Series) -> Optional[float]:
-        """
-        Calcula volatilidade anualizada como no MetaTrader:
-        Vol = pct_change().std() * sqrt(252) * 100
-        """
         try:
             if price_series is None or len(price_series) < 30:
                 return None
@@ -278,6 +274,7 @@ class YFinanceRSLService:
             
             # Calcular Volatilidade
             volatilidade = YFinanceRSLService.calculate_volatilidade(price_data)
+            
             
             if rsl is None or volatilidade is None:
                 return None
@@ -344,7 +341,8 @@ class YFinanceRSLService:
             
             # ✅ CALCULAR MÉDIAS COMO NO METATRADER
             rsl_values = [r['rsl'] for r in resultados_individuais]
-            vol_values = [r['volatilidade'] for r in resultados_individuais]
+            vol_values = [r['volatilidade'] for r in resultados_individuais if r.get('volatilidade') is not None and np.isfinite(r['volatilidade'])]
+
             
             rsl_medio = np.mean(rsl_values)
             vol_media = np.mean(vol_values)

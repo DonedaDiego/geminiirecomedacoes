@@ -48,6 +48,16 @@
       box-shadow: 0 20px 40px rgba(186, 57, 175, 0.15);
       border-color: rgba(186, 57, 175, 0.3);
     }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fadeOut {
+      from { opacity: 1; transform: translateY(0); }
+      to { opacity: 0; transform: translateY(-10px); }
+    }
     
     .loading {
       opacity: 0.6;
@@ -220,7 +230,7 @@
       <div class="max-w-7xl mx-auto px-6">
         
         <!-- Header -->
-        <div class="text-center mb-12">
+        <div class="text-center mb-8">
           <h1 class="text-4xl md:text-5xl font-bold mb-4">
             <span style="color: #ba39af; font-weight: 900;">Radar</span>
             <span class="text-white font-light">de Setores</span>
@@ -229,6 +239,279 @@
             Dupla perspectiva setorial: RSL calcula a eficiência risco-retorno revelando quais setores oferecem melhor qualidade de investimento, Performance
             mostra os ganhos absolutos destacando maiores valorizações. Combine ambas as métricas para decisões mais assertivas - inteligência de risco versus resultado final
           </p>
+          
+          <!-- Info Expander -->
+          <div class="mt-8">
+            <button onclick="toggleInfo()" class="bg-gradient-to-r from-geminii to-purple-600 hover:from-purple-600 hover:to-geminii text-white px-6 py-3 rounded-full font-semibold text-sm transition-all duration-300 flex items-center mx-auto shadow-lg hover:shadow-xl transform hover:scale-105">
+              <i id="infoIcon" class="fas fa-info-circle mr-2 transition-transform duration-300"></i>
+              Como Funciona o Radar Setorial RSL
+            </button>
+            
+            <div id="infoContent" class="hidden mt-8 max-w-6xl mx-auto">
+              <div class="radar-card p-8 text-left">
+                
+                <!-- Explicação Principal -->
+                <div class="text-center mb-8">
+                  <h3 class="text-2xl font-bold text-white mb-4">O que é o RSL (Risk-Sharpe-Like)?</h3>
+                  <p class="text-gray-300 text-base leading-relaxed max-w-4xl mx-auto">
+                    O <strong>RSL é uma métrica que mede a eficiência risco-retorno</strong>, calculando quantos % de retorno 
+                    cada setor oferece para cada 1% de risco assumido. É como um <strong>"custo-benefício" dos investimentos</strong>.
+                  </p>
+                </div>
+                
+                <!-- Conceitos Fundamentais -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                  
+                  <!-- RSL -->
+                  <div class="bg-purple-500/10 border border-purple-500/30 rounded-lg p-6">
+                    <div class="flex items-center mb-4">
+                      <div class="w-3 h-3 rounded-full bg-purple-400 mr-3"></div>
+                      <h4 class="text-lg font-bold text-purple-400">RSL (%)</h4>
+                    </div>
+                    <p class="text-gray-300 text-sm mb-3">
+                      <strong>Retorno ajustado ao risco</strong> - quanto o setor rende considerando sua volatilidade.
+                    </p>
+                    <div class="bg-white/5 rounded p-3">
+                      <p class="text-white text-xs font-medium">💡 Exemplo:</p>
+                      <p class="text-gray-400 text-xs">
+                        RSL +8% = setor rende 8% acima<br>
+                        do risco assumido
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <!-- Volatilidade -->
+                  <div class="bg-orange-500/10 border border-orange-500/30 rounded-lg p-6">
+                    <div class="flex items-center mb-4">
+                      <div class="w-3 h-3 rounded-full bg-orange-400 mr-3"></div>
+                      <h4 class="text-lg font-bold text-orange-400">Volatilidade (%)</h4>
+                    </div>
+                    <p class="text-gray-300 text-sm mb-3">
+                      <strong>Oscilação média do setor</strong> - quanto as ações do setor variam diariamente.
+                    </p>
+                    <div class="bg-white/5 rounded p-3">
+                      <p class="text-white text-xs font-medium">💡 Interpretação:</p>
+                      <p class="text-gray-400 text-xs">
+                        25% = linha de referência<br>
+                        >25% = mais arriscado
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <!-- Score RSL -->
+                  <div class="bg-cyan-500/10 border border-cyan-500/30 rounded-lg p-6">
+                    <div class="flex items-center mb-4">
+                      <div class="w-3 h-3 rounded-full bg-cyan-400 mr-3"></div>
+                      <h4 class="text-lg font-bold text-cyan-400">Score RSL</h4>
+                    </div>
+                    <p class="text-gray-300 text-sm mb-3">
+                      <strong>Eficiência normalizada</strong> - RSL dividido pela volatilidade (x100).
+                    </p>
+                    <div class="bg-white/5 rounded p-3">
+                      <p class="text-white text-xs font-medium">💡 Como usar:</p>
+                      <p class="text-gray-400 text-xs">
+                        Score >50 = eficiente<br>
+                        Score 0 = ineficiente
+                      </p>
+                    </div>
+                  </div>
+                  
+                </div>
+                
+                <!-- Como Interpretar os Quadrantes -->
+                <div class="border-t border-white/10 pt-8">
+                  <h4 class="text-xl font-bold text-white mb-6 text-center"> Mapa dos Quadrantes</h4>
+                  
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    
+                    <!-- Quadrantes Superiores (Baixa Volatilidade) -->
+                    <div class="space-y-4">
+                      <h5 class="text-lg font-bold text-green-400 text-center mb-4">Baixa Volatilidade (&lt;25%)</h5>
+                      
+                      <div class="bg-green-500/10 border border-green-500/30 rounded-lg p-4">
+                        <div class="flex items-center mb-3">
+                          <i class="fas fa-gem text-green-400 mr-3"></i>
+                          <h6 class="text-md font-bold text-green-400">IDEAL (RSL+ & Vol-)</h6>
+                        </div>
+                        <p class="text-gray-300 text-sm mb-3">
+                          <strong>Alto retorno, baixo risco</strong> - o santo graal dos investimentos
+                        </p>
+                        <div class="space-y-2">
+                          <div class="flex items-start">
+                            <span class="text-green-400 text-sm mr-2">✓</span>
+                            <p class="text-gray-400 text-xs">RSL positivo + volatilidade controlada</p>
+                          </div>
+                          <div class="flex items-start">
+                            <span class="text-green-400 text-sm mr-2">✓</span>
+                            <p class="text-gray-400 text-xs">Ideal para portfolio principal</p>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div class="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
+                        <div class="flex items-center mb-3">
+                          <i class="fas fa-shield-alt text-blue-400 mr-3"></i>
+                          <h6 class="text-md font-bold text-blue-400">DEFENSIVO (RSL- & Vol-)</h6>
+                        </div>
+                        <p class="text-gray-300 text-sm mb-3">
+                          <strong>Baixo retorno, baixo risco</strong> - preservação de capital
+                        </p>
+                        <div class="space-y-2">
+                          <div class="flex items-start">
+                            <span class="text-blue-400 text-sm mr-2">○</span>
+                            <p class="text-gray-400 text-xs">RSL negativo mas risco controlado</p>
+                          </div>
+                          <div class="flex items-start">
+                            <span class="text-blue-400 text-sm mr-2">○</span>
+                            <p class="text-gray-400 text-xs">Bom para momentos de crise</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <!-- Quadrantes Inferiores (Alta Volatilidade) -->
+                    <div class="space-y-4">
+                      <h5 class="text-lg font-bold text-red-400 text-center mb-4">Alta Volatilidade (&gt;25%)</h5>
+                      
+                      <div class="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4">
+                        <div class="flex items-center mb-3">
+                          <i class="fas fa-rocket text-yellow-400 mr-3"></i>
+                          <h6 class="text-md font-bold text-yellow-400">AGRESSIVO (RSL+ & Vol+)</h6>
+                        </div>
+                        <p class="text-gray-300 text-sm mb-3">
+                          <strong>Alto retorno, alto risco</strong> - para investidores experientes
+                        </p>
+                        <div class="space-y-2">
+                          <div class="flex items-start">
+                            <span class="text-yellow-400 text-sm mr-2"></span>
+                            <p class="text-gray-400 text-xs">RSL positivo mas com volatilidade alta</p>
+                          </div>
+                          <div class="flex items-start">
+                            <span class="text-yellow-400 text-sm mr-2"></span>
+                            <p class="text-gray-400 text-xs">Máximo 20% do portfolio</p>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div class="bg-red-500/10 border border-red-500/30 rounded-lg p-4">
+                        <div class="flex items-center mb-3">
+                          <i class="fas fa-exclamation-triangle text-red-400 mr-3"></i>
+                          <h6 class="text-md font-bold text-red-400">RISCO (RSL- & Vol+)</h6>
+                        </div>
+                        <p class="text-gray-300 text-sm mb-3">
+                          <strong>Baixo retorno, alto risco</strong> - evitar ou aguardar correção
+                        </p>
+                        <div class="space-y-2">
+                          <div class="flex items-start">
+                            <span class="text-red-400 text-sm mr-2">✗</span>
+                            <p class="text-gray-400 text-xs">RSL negativo + alta volatilidade</p>
+                          </div>
+                          <div class="flex items-start">
+                            <span class="text-red-400 text-sm mr-2">✗</span>
+                            <p class="text-gray-400 text-xs">Evitar até melhora do RSL</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                  </div>
+                </div>
+                
+                <!-- Como Usar na Prática -->
+                <div class="mt-8 pt-6 border-t border-white/10">
+                  <h4 class="text-xl font-bold text-white mb-6 text-center">Estratégias por Quadrante</h4>
+                  
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    
+                    <!-- Portfolio Conservador -->
+                    <div class="bg-green-500/10 border border-green-500/30 rounded-lg p-6">
+                      <h5 class="text-green-400 font-bold mb-4">Portfolio Conservador</h5>
+                      <div class="space-y-3">
+                        <div class="flex items-start">
+                          <span class="text-green-400 text-sm mr-2">70%</span>
+                          <p class="text-gray-300 text-sm">Setores IDEAIS  - base do portfolio</p>
+                        </div>
+                        <div class="flex items-start">
+                          <span class="text-blue-400 text-sm mr-2">20%</span>
+                          <p class="text-gray-300 text-sm">Setores DEFENSIVOS  - proteção</p>
+                        </div>
+                        <div class="flex items-start">
+                          <span class="text-yellow-400 text-sm mr-2">10%</span>
+                          <p class="text-gray-300 text-sm">Setores AGRESSIVOS  - crescimento</p>
+                        </div>
+                        <div class="flex items-start">
+                          <span class="text-red-400 text-sm mr-2">0%</span>
+                          <p class="text-gray-300 text-sm">Setores de RISCO  - evitar</p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <!-- Portfolio Agressivo -->
+                    <div class="bg-orange-500/10 border border-orange-500/30 rounded-lg p-6">
+                      <h5 class="text-orange-400 font-bold mb-4"> Portfolio Agressivo</h5>
+                      <div class="space-y-3">
+                        <div class="flex items-start">
+                          <span class="text-green-400 text-sm mr-2">50%</span>
+                          <p class="text-gray-300 text-sm">Setores IDEAIS  - base sólida</p>
+                        </div>
+                        <div class="flex items-start">
+                          <span class="text-yellow-400 text-sm mr-2">30%</span>
+                          <p class="text-gray-300 text-sm">Setores AGRESSIVOS  - crescimento</p>
+                        </div>
+                        <div class="flex items-start">
+                          <span class="text-blue-400 text-sm mr-2">15%</span>
+                          <p class="text-gray-300 text-sm">Setores DEFENSIVOS - hedge</p>
+                        </div>
+                        <div class="flex items-start">
+                          <span class="text-red-400 text-sm mr-2">5%</span>
+                          <p class="text-gray-300 text-sm">Setores de RISCO  - especulação</p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                  </div>
+                </div>
+                
+                <!-- Resumo Final -->
+                <div class="mt-8 pt-6 border-t border-white/10 text-center">
+                  <h4 class="text-geminii font-bold text-lg mb-3">Resumo: Como Usar o Radar RSL</h4>
+                  <div class="max-w-4xl mx-auto">
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                      
+                      <div class="bg-purple-500/10 border border-purple-500/30 rounded-lg p-3">
+                        <p class="text-purple-400 font-bold text-sm mb-2">1. Identifique</p>
+                        <p class="text-gray-300 text-xs">Setores no quadrante IDEAL</p>
+                      </div>
+                      
+                      <div class="bg-blue-500/10 border border-blue-500/30 rounded-lg p-3">
+                        <p class="text-blue-400 font-bold text-sm mb-2">2. Analise</p>
+                        <p class="text-gray-300 text-xs">Score RSL e volatilidade</p>
+                      </div>
+                      
+                      <div class="bg-green-500/10 border border-green-500/30 rounded-lg p-3">
+                        <p class="text-green-400 font-bold text-sm mb-2">3. Diversifique</p>
+                        <p class="text-gray-300 text-xs">Entre os melhores setores</p>
+                      </div>
+                      
+                      <div class="bg-orange-500/10 border border-orange-500/30 rounded-lg p-3">
+                        <p class="text-orange-400 font-bold text-sm mb-2">4. Monitore</p>
+                        <p class="text-gray-300 text-xs">Mudanças de quadrante</p>
+                      </div>
+                      
+                    </div>
+                    
+                    <div class="bg-geminii/10 border border-geminii/30 rounded-lg p-4">
+                      <p class="text-geminii font-medium text-sm">
+                        💡 <strong>Dica Avançada:</strong> Setores que migram do quadrante RISCO para AGRESSIVO ou IDEAL 
+                        podem sinalizar <strong>oportunidades de entrada</strong>. Monitore essas transições!
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- Controles -->
@@ -282,6 +565,29 @@
   </div>
 
   <script>
+    // ===== FUNÇÃO DO EXPANDER =====
+    function toggleInfo() {
+      const content = document.getElementById('infoContent');
+      const icon = document.getElementById('infoIcon');
+      
+      if (content.classList.contains('hidden')) {
+        content.classList.remove('hidden');
+        content.style.animation = 'fadeIn 0.5s ease-in-out';
+        icon.classList.remove('fa-info-circle');
+        icon.classList.add('fa-times');
+      } else {
+        content.style.animation = 'fadeOut 0.3s ease-in-out';
+        setTimeout(() => {
+          content.classList.add('hidden');
+        }, 300);
+        icon.classList.remove('fa-times');
+        icon.classList.add('fa-info-circle');
+      }
+    }
+
+    // Make toggleInfo global
+    window.toggleInfo = toggleInfo;
+
     // Configurações
     const API_BASE = window.location.origin + '/api';
     let currentChart = null;

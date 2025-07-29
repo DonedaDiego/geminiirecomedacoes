@@ -45,6 +45,16 @@
       box-shadow: 0 20px 40px rgba(186, 57, 175, 0.15);
       border-color: rgba(186, 57, 175, 0.3);
     }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fadeOut {
+      from { opacity: 1; transform: translateY(0); }
+      to { opacity: 0; transform: translateY(-10px); }
+    }
     
     .beta-badge {
       padding: 4px 12px;
@@ -152,7 +162,7 @@
     <div class="max-w-7xl mx-auto px-6">
       
       <!-- Header -->
-      <div class="text-center mb-12">
+      <div class="text-center mb-8">
         <h1 class="text-4xl md:text-5xl font-bold mb-4">
           <span style="color: #ba39af; font-weight: 900;">Monitor</span>
           <span class="text-white font-light">Beta</span>
@@ -160,6 +170,403 @@
         <p class="text-neutral-300 text-lg max-w-2xl mx-auto">
           Análise Beta completa: sensibilidade, correlação e ranking automático para decisões de investimento mais assertivas
         </p>
+        
+        <!-- Info Expander -->
+        <div class="mt-8">
+          <button onclick="toggleInfo()" class="bg-gradient-to-r from-geminii to-purple-600 hover:from-purple-600 hover:to-geminii text-white px-6 py-3 rounded-full font-semibold text-sm transition-all duration-300 flex items-center mx-auto shadow-lg hover:shadow-xl transform hover:scale-105">
+            <i id="infoIcon" class="fas fa-info-circle mr-2 transition-transform duration-300"></i>
+            Como Funciona o Monitor Beta
+          </button>
+          
+          <div id="infoContent" class="hidden mt-8 max-w-6xl mx-auto">
+            <div class="beta-card p-8 text-left">
+              
+              <!-- Explicação Principal -->
+              <div class="text-center mb-8">
+                <h3 class="text-2xl font-bold text-white mb-4">O que é Beta?</h3>
+                <p class="text-gray-300 text-base leading-relaxed max-w-4xl mx-auto">
+                  O <strong>Beta mede a sensibilidade de uma ação em relação ao mercado (IBOVESPA)</strong>. 
+                  É uma métrica que mostra <strong>quanto a ação se move</strong> quando o mercado se move 1%. 
+                  Essencial para <strong>gestão de risco e construção de portfólio</strong>.
+                </p>
+              </div>
+              
+              <!-- Conceitos Fundamentais -->
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                
+                <!-- Beta -->
+                <div class="bg-purple-500/10 border border-purple-500/30 rounded-lg p-6">
+                  <div class="flex items-center mb-4">
+                    <div class="w-3 h-3 rounded-full bg-purple-400 mr-3"></div>
+                    <h4 class="text-lg font-bold text-purple-400">Coeficiente Beta</h4>
+                  </div>
+                  <p class="text-gray-300 text-sm mb-3">
+                    <strong>Sensibilidade ao mercado</strong> - quanto a ação varia quando o IBOV varia 1%.
+                  </p>
+                  <div class="bg-white/5 rounded p-3">
+                    <p class="text-white text-xs font-medium">💡 Exemplo:</p>
+                    <p class="text-gray-400 text-xs">
+                      Beta 1.5 = se IBOV sobe 2%<br>
+                      a ação tende a subir 3%
+                    </p>
+                  </div>
+                </div>
+                
+                <!-- Correlação -->
+                <div class="bg-blue-500/10 border border-blue-500/30 rounded-lg p-6">
+                  <div class="flex items-center mb-4">
+                    <div class="w-3 h-3 rounded-full bg-blue-400 mr-3"></div>
+                    <h4 class="text-lg font-bold text-blue-400">Correlação (R²)</h4>
+                  </div>
+                  <p class="text-gray-300 text-sm mb-3">
+                    <strong>Força da relação</strong> com o IBOVESPA - quão confiável é o Beta.
+                  </p>
+                  <div class="bg-white/5 rounded p-3">
+                    <p class="text-white text-xs font-medium">💡 Como ler:</p>
+                    <p class="text-gray-400 text-xs">
+                      80% = forte correlação<br>
+                      30% = correlação fraca
+                    </p>
+                  </div>
+                </div>
+                
+                <!-- Volatilidade -->
+                <div class="bg-orange-500/10 border border-orange-500/30 rounded-lg p-6">
+                  <div class="flex items-center mb-4">
+                    <div class="w-3 h-3 rounded-full bg-orange-400 mr-3"></div>
+                    <h4 class="text-lg font-bold text-orange-400">Volatilidade</h4>
+                  </div>
+                  <p class="text-gray-300 text-sm mb-3">
+                    <strong>Oscilação própria da ação</strong> - desvio padrão dos retornos diários.
+                  </p>
+                  <div class="bg-white/5 rounded p-3">
+                    <p class="text-white text-xs font-medium">💡 Interpretação:</p>
+                    <p class="text-gray-400 text-xs">
+                      2% = baixa volatilidade<br>
+                      5% = alta volatilidade
+                    </p>
+                  </div>
+                </div>
+                
+              </div>
+              
+              <!-- Classificações do Beta -->
+              <div class="border-t border-white/10 pt-8">
+                <h4 class="text-xl font-bold text-white mb-6 text-center"> Classificações do Beta</h4>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  
+                  <!-- Beta Baixo -->
+                  <div class="space-y-4">
+                    <h5 class="text-lg font-bold text-green-400 text-center mb-4">Defensivas (Beta &lt; 1.0)</h5>
+                    
+                    <div class="bg-green-500/10 border border-green-500/30 rounded-lg p-4">
+                      <div class="flex items-center mb-3">
+                        <span class="text-green-400 font-bold mr-2">Beta 0.5</span>
+                        <span class="text-gray-300 text-sm">Muito Defensiva</span>
+                      </div>
+                      <p class="text-gray-300 text-sm mb-3">
+                        <strong>Se IBOV cai 10%, ação cai só 5%</strong>
+                      </p>
+                      <div class="space-y-2">
+                        <div class="flex items-start">
+                          <span class="text-green-400 text-sm mr-2">✓</span>
+                          <p class="text-gray-400 text-xs">Menor risco em quedas</p>
+                        </div>
+                        <div class="flex items-start">
+                          <span class="text-green-400 text-sm mr-2">✓</span>
+                          <p class="text-gray-400 text-xs">Ideal para conservadores</p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div class="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
+                      <div class="flex items-center mb-3">
+                        <span class="text-blue-400 font-bold mr-2">Beta 0.8</span>
+                        <span class="text-gray-300 text-sm">Moderadamente Defensiva</span>
+                      </div>
+                      <p class="text-gray-300 text-sm mb-3">
+                        <strong>Se IBOV sobe 10%, ação sobe 8%</strong>
+                      </p>
+                      <div class="space-y-2">
+                        <div class="flex items-start">
+                          <span class="text-blue-400 text-sm mr-2">○</span>
+                          <p class="text-gray-400 text-xs">Equilibrio risco-retorno</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <!-- Beta Neutro -->
+                  <div class="space-y-4">
+                    <h5 class="text-lg font-bold text-yellow-400 text-center mb-4">Neutras (Beta ≈ 1.0)</h5>
+                    
+                    <div class="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4">
+                      <div class="flex items-center mb-3">
+                        <span class="text-yellow-400 font-bold mr-2">Beta 1.0</span>
+                        <span class="text-gray-300 text-sm">Acompanha o Mercado</span>
+                      </div>
+                      <p class="text-gray-300 text-sm mb-3">
+                        <strong>Move igual ao IBOVESPA</strong>
+                      </p>
+                      <div class="space-y-2">
+                        <div class="flex items-start">
+                          <span class="text-yellow-400 text-sm mr-2"></span>
+                          <p class="text-gray-400 text-xs">Risco igual ao mercado</p>
+                        </div>
+                        <div class="flex items-start">
+                          <span class="text-yellow-400 text-sm mr-2"></span>
+                          <p class="text-gray-400 text-xs">Retorno próximo ao IBOV</p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div class="bg-gray-500/10 border border-gray-500/30 rounded-lg p-4">
+                      <div class="text-center">
+                        <p class="text-gray-300 text-sm">
+                          <strong>Referência:</strong> IBOVESPA = Beta 1.0<br>
+                          <span class="text-xs text-gray-400">Benchmark do mercado brasileiro</span>
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <!-- Beta Alto -->
+                  <div class="space-y-4">
+                    <h5 class="text-lg font-bold text-red-400 text-center mb-4">Agressivas (Beta &gt; 1.0)</h5>
+                    
+                    <div class="bg-orange-500/10 border border-orange-500/30 rounded-lg p-4">
+                      <div class="flex items-center mb-3">
+                        <span class="text-orange-400 font-bold mr-2">Beta 1.3</span>
+                        <span class="text-gray-300 text-sm">Moderadamente Agressiva</span>
+                      </div>
+                      <p class="text-gray-300 text-sm mb-3">
+                        <strong>Se IBOV sobe 10%, ação sobe 13%</strong>
+                      </p>
+                      <div class="space-y-2">
+                        <div class="flex items-start">
+                          <span class="text-orange-400 text-sm mr-2"></span>
+                          <p class="text-gray-400 text-xs">Maior potencial de ganho</p>
+                        </div>
+                        <div class="flex items-start">
+                          <span class="text-orange-400 text-sm mr-2"></span>
+                          <p class="text-gray-400 text-xs">Maior risco em quedas</p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div class="bg-red-500/10 border border-red-500/30 rounded-lg p-4">
+                      <div class="flex items-center mb-3">
+                        <span class="text-red-400 font-bold mr-2">Beta 2.0</span>
+                        <span class="text-gray-300 text-sm">Muito Agressiva</span>
+                      </div>
+                      <p class="text-gray-300 text-sm mb-3">
+                        <strong>Se IBOV cai 10%, ação cai 20%</strong>
+                      </p>
+                      <div class="space-y-2">
+                        <div class="flex items-start">
+                          <span class="text-red-400 text-sm mr-2"></span>
+                          <p class="text-gray-400 text-xs">Alto risco, alto retorno</p>
+                        </div>
+                        <div class="flex items-start">
+                          <span class="text-red-400 text-sm mr-2"></span>
+                          <p class="text-gray-400 text-xs">Só para experientes</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                </div>
+              </div>
+              
+              <!-- Períodos de Análise -->
+              <div class="mt-8 pt-6 border-t border-white/10">
+                <h4 class="text-xl font-bold text-white mb-6 text-center">Períodos de Análise</h4>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  
+                  <!-- Curto Prazo -->
+                  <div class="bg-cyan-500/10 border border-cyan-500/30 rounded-lg p-6">
+                    <h5 class="text-cyan-400 font-bold mb-3">30 Dias (Curto)</h5>
+                    <div class="space-y-3">
+                      <div class="flex items-start">
+                        <span class="text-cyan-400 text-sm mr-2"></span>
+                        <div>
+                          <p class="text-white text-sm font-medium">Para que serve:</p>
+                          <p class="text-gray-400 text-xs">Beta atual, tendências recentes</p>
+                        </div>
+                      </div>
+                      <div class="flex items-start">
+                        <span class="text-cyan-400 text-sm mr-2"></span>
+                        <div>
+                          <p class="text-white text-sm font-medium">Quando usar:</p>
+                          <p class="text-gray-400 text-xs">Trading, posições de curto prazo</p>
+                        </div>
+                      </div>
+                      <div class="flex items-start">
+                        <span class="text-cyan-400 text-sm mr-2"></span>
+                        <div>
+                          <p class="text-white text-sm font-medium">Cuidado:</p>
+                          <p class="text-gray-400 text-xs">Pode ser instável, poucos dados</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <!-- Médio Prazo -->
+                  <div class="bg-blue-500/10 border border-blue-500/30 rounded-lg p-6">
+                    <h5 class="text-blue-400 font-bold mb-3">180 Dias (Médio)</h5>
+                    <div class="space-y-3">
+                      <div class="flex items-start">
+                        <span class="text-blue-400 text-sm mr-2"></span>
+                        <div>
+                          <p class="text-white text-sm font-medium">Para que serve:</p>
+                          <p class="text-gray-400 text-xs">Beta equilibrado, tendência semestral</p>
+                        </div>
+                      </div>
+                      <div class="flex items-start">
+                        <span class="text-blue-400 text-sm mr-2"></span>
+                        <div>
+                          <p class="text-white text-sm font-medium">Quando usar:</p>
+                          <p class="text-gray-400 text-xs">Swing trade, posições médias</p>
+                        </div>
+                      </div>
+                      <div class="flex items-start">
+                        <span class="text-blue-400 text-sm mr-2">✓</span>
+                        <div>
+                          <p class="text-white text-sm font-medium">Vantagem:</p>
+                          <p class="text-gray-400 text-xs">Bom equilíbrio estabilidade/atualização</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <!-- Longo Prazo -->
+                  <div class="bg-green-500/10 border border-green-500/30 rounded-lg p-6">
+                    <h5 class="text-green-400 font-bold mb-3">252 Dias (Longo)</h5>
+                    <div class="space-y-3">
+                      <div class="flex items-start">
+                        <span class="text-green-400 text-sm mr-2"></span>
+                        <div>
+                          <p class="text-white text-sm font-medium">Para que serve:</p>
+                          <p class="text-gray-400 text-xs">Beta histórico, padrão estrutural</p>
+                        </div>
+                      </div>
+                      <div class="flex items-start">
+                        <span class="text-green-400 text-sm mr-2"></span>
+                        <div>
+                          <p class="text-white text-sm font-medium">Quando usar:</p>
+                          <p class="text-gray-400 text-xs">Buy & hold, construção de portfólio</p>
+                        </div>
+                      </div>
+                      <div class="flex items-start">
+                        <span class="text-green-400 text-sm mr-2">✓</span>
+                        <div>
+                          <p class="text-white text-sm font-medium">Vantagem:</p>
+                          <p class="text-gray-400 text-xs">Mais estável, dados robustos</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                </div>
+              </div>
+              
+              <!-- Como Usar na Prática -->
+              <div class="mt-8 pt-6 border-t border-white/10">
+                <h4 class="text-xl font-bold text-white mb-6 text-center">Estratégias de Portfólio</h4>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  
+                  <!-- Portfolio Defensivo -->
+                  <div class="bg-green-500/10 border border-green-500/30 rounded-lg p-6">
+                    <h5 class="text-green-400 font-bold mb-4">Portfólio Defensivo</h5>
+                    <div class="space-y-3">
+                      <div class="flex items-start">
+                        <span class="text-green-400 text-sm mr-2">60%</span>
+                        <p class="text-gray-300 text-sm">Beta 0.3-0.7 (muito defensivas)</p>
+                      </div>
+                      <div class="flex items-start">
+                        <span class="text-blue-400 text-sm mr-2">30%</span>
+                        <p class="text-gray-300 text-sm">Beta 0.8-1.0 (neutras)</p>
+                      </div>
+                      <div class="flex items-start">
+                        <span class="text-yellow-400 text-sm mr-2">10%</span>
+                        <p class="text-gray-300 text-sm">Beta 1.1-1.3 (ligeiramente agressivas)</p>
+                      </div>
+                      <div class="bg-white/5 rounded p-3 mt-4">
+                        <p class="text-green-300 text-sm font-medium">Objetivo:</p>
+                        <p class="text-gray-400 text-xs">Preservar capital em quedas, crescimento estável</p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <!-- Portfolio Agressivo -->
+                  <div class="bg-orange-500/10 border border-orange-500/30 rounded-lg p-6">
+                    <h5 class="text-orange-400 font-bold mb-4">Portfólio Agressivo</h5>
+                    <div class="space-y-3">
+                      <div class="flex items-start">
+                        <span class="text-red-400 text-sm mr-2">40%</span>
+                        <p class="text-gray-300 text-sm">Beta 1.3-2.0 (agressivas)</p>
+                      </div>
+                      <div class="flex items-start">
+                        <span class="text-yellow-400 text-sm mr-2">35%</span>
+                        <p class="text-gray-300 text-sm">Beta 0.8-1.2 (neutras/moderadas)</p>
+                      </div>
+                      <div class="flex items-start">
+                        <span class="text-green-400 text-sm mr-2">25%</span>
+                        <p class="text-gray-300 text-sm">Beta 0.3-0.7 (hedge defensivo)</p>
+                      </div>
+                      <div class="bg-white/5 rounded p-3 mt-4">
+                        <p class="text-orange-300 text-sm font-medium">Objetivo:</p>
+                        <p class="text-gray-400 text-xs">Maximizar ganhos em alta, aceitar volatilidade</p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                </div>
+              </div>
+              
+              <!-- Resumo Final -->
+              <div class="mt-8 pt-6 border-t border-white/10 text-center">
+                <h4 class="text-geminii font-bold text-lg mb-3">Resumo: Como Usar o Monitor Beta</h4>
+                <div class="max-w-4xl mx-auto">
+                  <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                    
+                    <div class="bg-purple-500/10 border border-purple-500/30 rounded-lg p-3">
+                      <p class="text-purple-400 font-bold text-sm mb-2">1. Analise</p>
+                      <p class="text-gray-300 text-xs">Beta nos 3 períodos</p>
+                    </div>
+                    
+                    <div class="bg-blue-500/10 border border-blue-500/30 rounded-lg p-3">
+                      <p class="text-blue-400 font-bold text-sm mb-2">2. Classifique</p>
+                      <p class="text-gray-300 text-xs">Defensiva, neutra ou agressiva</p>
+                    </div>
+                    
+                    <div class="bg-green-500/10 border border-green-500/30 rounded-lg p-3">
+                      <p class="text-green-400 font-bold text-sm mb-2">3. Correlacione</p>
+                      <p class="text-gray-300 text-xs">Verifique R² com IBOVESPA</p>
+                    </div>
+                    
+                    <div class="bg-orange-500/10 border border-orange-500/30 rounded-lg p-3">
+                      <p class="text-orange-400 font-bold text-sm mb-2">4. Aloque</p>
+                      <p class="text-gray-300 text-xs">Distribua conforme perfil</p>
+                    </div>
+                    
+                  </div>
+                  
+                  <div class="bg-geminii/10 border border-geminii/30 rounded-lg p-4">
+                    <p class="text-geminii font-medium text-sm">
+                      💡 <strong>Dica Avançada:</strong> Compare o Beta em diferentes períodos. Se o Beta de 30 dias é muito diferente 
+                      do de 252 dias, a ação pode estar <strong>mudando seu perfil de risco</strong>. Monitore essas transições!
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Controles Simplificados -->
@@ -178,29 +585,6 @@
           </div>
         </div>
       </div>
-
-      <!-- Card YouTube -->
-      <!-- <div class="beta-card p-6 mb-8">
-        <div class="flex items-center gap-4">
-          <div class="w-16 h-16 bg-red-600 bg-opacity-20 border border-red-500 border-opacity-30 rounded-full flex items-center justify-center flex-shrink-0">
-            <i class="fab fa-youtube text-red-500 text-2xl"></i>
-          </div>
-          <div class="flex-1">
-            <h3 class="text-xl font-semibold mb-2 text-red-400">
-              <i class="fas fa-play-circle mr-2"></i>
-              Tutorial Completo no YouTube
-            </h3>
-            <p class="text-neutral-300 mb-4">
-              Assista ao vídeo explicativo completo sobre como utilizar a estratégia Beta Regression e interpretar os sinais de trading.
-            </p>
-            <a href="https://www.youtube.com/watch?v=10bZWx39mKI&t=494s" target="_blank" class="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 rounded-lg transition-all font-medium text-white shadow-lg hover:shadow-xl">
-              <i class="fab fa-youtube"></i>
-              Assistir Tutorial
-              <i class="fas fa-external-link-alt text-sm"></i>
-            </a>
-          </div>
-        </div>
-      </div> -->
 
       <!-- Status -->
       <div id="statusMsg" class="mb-6 p-4 rounded-lg hidden backdrop-blur-sm"></div>
@@ -324,6 +708,29 @@
   </div>
 
   <script>
+    // ===== FUNÇÃO DO EXPANDER =====
+    function toggleInfo() {
+      const content = document.getElementById('infoContent');
+      const icon = document.getElementById('infoIcon');
+      
+      if (content.classList.contains('hidden')) {
+        content.classList.remove('hidden');
+        content.style.animation = 'fadeIn 0.5s ease-in-out';
+        icon.classList.remove('fa-info-circle');
+        icon.classList.add('fa-times');
+      } else {
+        content.style.animation = 'fadeOut 0.3s ease-in-out';
+        setTimeout(() => {
+          content.classList.add('hidden');
+        }, 300);
+        icon.classList.remove('fa-times');
+        icon.classList.add('fa-info-circle');
+      }
+    }
+
+    // Make toggleInfo global
+    window.toggleInfo = toggleInfo;
+
     // Configurações
     const API_BASE = window.location.origin + '/api/beta';
     let currentPeriod = 'long'; // Começar com longo prazo

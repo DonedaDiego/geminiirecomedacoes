@@ -73,6 +73,16 @@
       0% { transform: rotate(0deg); }
       100% { transform: rotate(360deg); }
     }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fadeOut {
+      from { opacity: 1; transform: translateY(0); }
+      to { opacity: 0; transform: translateY(-10px); }
+    }
     
     .signal-card {
       background: rgba(255, 255, 255, 0.05);
@@ -186,6 +196,279 @@
         <p class="text-neutral-300 text-lg max-w-2xl mx-auto">
           Análise avançada de regressão beta com machine learning e sinais de trading
         </p>
+        
+        <!-- Info Expander -->
+        <div class="mt-8">
+          <button onclick="toggleInfo()" class="bg-gradient-to-r from-geminii to-purple-600 hover:from-purple-600 hover:to-geminii text-white px-6 py-3 rounded-full font-semibold text-sm transition-all duration-300 flex items-center mx-auto shadow-lg hover:shadow-xl transform hover:scale-105">
+            <i id="infoIcon" class="fas fa-info-circle mr-2 transition-transform duration-300"></i>
+            Como Funciona a Estratégia Beta Regression
+          </button>
+          
+          <div id="infoContent" class="hidden mt-8 max-w-6xl mx-auto">
+            <div class="beta-card p-8 text-left">
+              
+              <!-- Explicação Principal -->
+              <div class="text-center mb-8">
+                <h3 class="text-2xl font-bold text-white mb-4">O que é Beta Regression?</h3>
+                <p class="text-gray-300 text-base leading-relaxed max-w-4xl mx-auto">
+                  É uma <strong>estratégia quantitativa avançada</strong> que utiliza regressão móvel para calcular o intercepto (Beta0) 
+                  e determinar sinais de compra e venda baseados na <strong>normalização deste valor combinado com a posição do preço</strong> 
+                  em relação à média móvel.
+                </p>
+              </div>
+              
+              <!-- Conceitos Fundamentais -->
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                
+                <!-- Beta0 -->
+                <div class="bg-blue-500/10 border border-blue-500/30 rounded-lg p-6">
+                  <div class="flex items-center mb-4">
+                    <div class="w-3 h-3 rounded-full bg-blue-400 mr-3"></div>
+                    <h4 class="text-lg font-bold text-blue-400">Beta0 (Intercepto)</h4>
+                  </div>
+                  <p class="text-gray-300 text-sm mb-3">
+                    <strong>Valor base da regressão</strong> que indica a tendência estatística do ativo.
+                  </p>
+                  <div class="bg-white/5 rounded p-3">
+                    <p class="text-white text-xs font-medium">💡 Interpretação:</p>
+                    <p class="text-gray-400 text-xs">
+                      > 0.5 = Tendência de alta<br>
+                      < 0.5 = Tendência de baixa
+                    </p>
+                  </div>
+                </div>
+                
+                <!-- Normalização -->
+                <div class="bg-green-500/10 border border-green-500/30 rounded-lg p-6">
+                  <div class="flex items-center mb-4">
+                    <div class="w-3 h-3 rounded-full bg-green-400 mr-3"></div>
+                    <h4 class="text-lg font-bold text-green-400">Normalização</h4>
+                  </div>
+                  <p class="text-gray-300 text-sm mb-3">
+                    <strong>Padronização do Beta0</strong> entre 0 e 1 para facilitar interpretação.
+                  </p>
+                  <div class="bg-white/5 rounded p-3">
+                    <p class="text-white text-xs font-medium">💡 Fórmula:</p>
+                    <p class="text-gray-400 text-xs">
+                      (Beta0 - Min) / (Max - Min)
+                    </p>
+                  </div>
+                </div>
+                
+                <!-- Média Móvel -->
+                <div class="bg-orange-500/10 border border-orange-500/30 rounded-lg p-6">
+                  <div class="flex items-center mb-4">
+                    <div class="w-3 h-3 rounded-full bg-orange-400 mr-3"></div>
+                    <h4 class="text-lg font-bold text-orange-400">Média Móvel</h4>
+                  </div>
+                  <p class="text-gray-300 text-sm mb-3">
+                    <strong>Filtro adicional</strong> de 20 períodos para confirmar a direção da tendência.
+                  </p>
+                  <div class="bg-white/5 rounded p-3">
+                    <p class="text-white text-xs font-medium">💡 Função:</p>
+                    <p class="text-gray-400 text-xs">
+                      Confirma se o movimento<br>
+                      está alinhado com a tendência
+                    </p>
+                  </div>
+                </div>
+                
+              </div>
+              
+              <!-- Sinais de Trading -->
+              <div class="border-t border-white/10 pt-8">
+                <h4 class="text-xl font-bold text-white mb-6 text-center">Sinais de Trading</h4>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  
+                  <!-- Sinal de Compra -->
+                  <div class="bg-green-500/10 border border-green-500/30 rounded-lg p-6">
+                    <div class="flex items-center mb-4">
+                      <i class="fas fa-arrow-up text-green-400 mr-3"></i>
+                      <h5 class="text-lg font-bold text-green-400">Sinal de COMPRA</h5>
+                    </div>
+                    <p class="text-gray-300 text-sm mb-4">
+                      <strong>Condições simultâneas necessárias:</strong>
+                    </p>
+                    <div class="space-y-3">
+                      <div class="flex items-start">
+                        <span class="text-green-400 text-sm mr-2">✓</span>
+                        <div>
+                          <p class="text-white text-sm font-medium">Beta0 Normalizado > 0.5</p>
+                          <p class="text-gray-400 text-xs">Regressão indica tendência de alta</p>
+                        </div>
+                      </div>
+                      <div class="flex items-start">
+                        <span class="text-green-400 text-sm mr-2">✓</span>
+                        <div>
+                          <p class="text-white text-sm font-medium">Preço > Média Móvel (20)</p>
+                          <p class="text-gray-400 text-xs">Confirmação da tendência de alta</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <!-- Sinal de Venda -->
+                  <div class="bg-red-500/10 border border-red-500/30 rounded-lg p-6">
+                    <div class="flex items-center mb-4">
+                      <i class="fas fa-arrow-down text-red-400 mr-3"></i>
+                      <h5 class="text-lg font-bold text-red-400">Sinal de VENDA</h5>
+                    </div>
+                    <p class="text-gray-300 text-sm mb-4">
+                      <strong>Condições simultâneas necessárias:</strong>
+                    </p>
+                    <div class="space-y-3">
+                      <div class="flex items-start">
+                        <span class="text-red-400 text-sm mr-2">✓</span>
+                        <div>
+                          <p class="text-white text-sm font-medium">Beta0 Normalizado < 0.5</p>
+                          <p class="text-gray-400 text-xs">Regressão indica tendência de baixa</p>
+                        </div>
+                      </div>
+                      <div class="flex items-start">
+                        <span class="text-red-400 text-sm mr-2">✓</span>
+                        <div>
+                          <p class="text-white text-sm font-medium">Preço < Média Móvel (20)</p>
+                          <p class="text-gray-400 text-xs">Confirmação da tendência de baixa</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                </div>
+              </div>
+              
+              <!-- Gestão de Risco -->
+              <div class="mt-8 pt-6 border-t border-white/10">
+                <h4 class="text-xl font-bold text-white mb-6 text-center">Gestão de Risco e Parâmetros</h4>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  
+                  <!-- Stop Loss -->
+                  <div class="bg-red-500/10 border border-red-500/30 rounded-lg p-4">
+                    <h5 class="text-red-400 font-bold mb-3">Stop Loss</h5>
+                    <div class="bg-black/30 rounded p-4">
+                      <p class="text-white text-sm font-medium mb-2">Automático em 5%</p>
+                      <p class="text-gray-400 text-xs mb-2">• Proteção contra perdas excessivas</p>
+                      <p class="text-gray-400 text-xs mb-2">• Ativado independente do sinal</p>
+                      <p class="text-orange-300 text-xs mt-2">
+                        <strong>Objetivo:</strong> Preservar capital
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <!-- Janela de Regressão -->
+                  <div class="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
+                    <h5 class="text-blue-400 font-bold mb-3">Janela Móvel</h5>
+                    <div class="bg-black/30 rounded p-4">
+                      <p class="text-white text-sm font-medium mb-2">20 períodos</p>
+                      <p class="text-gray-400 text-xs mb-2">• Regressão recalculada continuamente</p>
+                      <p class="text-gray-400 text-xs mb-2">• Adaptação às mudanças do mercado</p>
+                      <p class="text-orange-300 text-xs mt-2">
+                        <strong>Benefício:</strong> Sempre atualizada
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <!-- Custos -->
+                  <div class="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4">
+                    <h5 class="text-yellow-400 font-bold mb-3">Custos de Transação</h5>
+                    <div class="bg-black/30 rounded p-4">
+                      <p class="text-white text-sm font-medium mb-2">0.1% por operação</p>
+                      <p class="text-gray-400 text-xs mb-2">• Corretagem + impostos</p>
+                      <p class="text-gray-400 text-xs mb-2">• Incluído no cálculo final</p>
+                      <p class="text-orange-300 text-xs mt-2">
+                        <strong>Realista:</strong> Sem maquiagem
+                      </p>
+                    </div>
+                  </div>
+                  
+                </div>
+              </div>
+              
+              <!-- Métricas de Performance -->
+              <div class="mt-8 pt-6 border-t border-white/10">
+                <h4 class="text-xl font-bold text-white mb-6 text-center">Métricas de Performance</h4>
+                
+                <div class="bg-white/5 rounded-lg p-6">
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    
+                    <!-- Métricas Básicas -->
+                    <div>
+                      <h5 class="text-purple-400 font-bold mb-3">Retorno e Sucesso</h5>
+                      <div class="space-y-3">
+                        <div class="bg-black/30 rounded p-3">
+                          <p class="text-white text-sm font-medium">Win Rate</p>
+                          <p class="text-gray-400 text-xs">Percentual de trades vencedores</p>
+                        </div>
+                        <div class="bg-black/30 rounded p-3">
+                          <p class="text-white text-sm font-medium">Retorno Bruto/Líquido</p>
+                          <p class="text-gray-400 text-xs">Performance antes e após custos</p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <!-- Métricas de Risco -->
+                    <div>
+                      <h5 class="text-cyan-400 font-bold mb-3">Análise de Risco</h5>
+                      <div class="space-y-3">
+                        <div class="bg-black/30 rounded p-3">
+                          <p class="text-white text-sm font-medium">Max Drawdown</p>
+                          <p class="text-gray-400 text-xs">Maior perda consecutiva</p>
+                        </div>
+                        <div class="bg-black/30 rounded p-3">
+                          <p class="text-white text-sm font-medium">Sharpe Ratio</p>
+                          <p class="text-gray-400 text-xs">Retorno ajustado ao risco</p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Resumo Prático -->
+              <div class="mt-8 pt-6 border-t border-white/10 text-center">
+                <h4 class="text-geminii font-bold text-lg mb-3">Quando Usar Beta Regression</h4>
+                <div class="max-w-4xl mx-auto">
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    
+                    <!-- Ideal Para -->
+                    <div class="bg-geminii/10 border border-geminii/30 rounded-lg p-4">
+                      <h5 class="text-geminii font-bold mb-3">✅ Ideal Para</h5>
+                      <div class="text-left text-sm space-y-2">
+                        <p class="text-gray-300">• <strong>Swing Trading:</strong> Operações de médio prazo</p>
+                        <p class="text-gray-300">• <strong>Seguir Tendências:</strong> Captura movimentos estatísticos</p>
+                        <p class="text-gray-300">• <strong>Ações Líquidas:</strong> Melhor funcionamento</p>
+                        <p class="text-gray-300">• <strong>Mercados Trending:</strong> Evita movimentos laterais</p>
+                      </div>
+                    </div>
+                    
+                    <!-- Cuidados -->
+                    <div class="bg-orange-500/10 border border-orange-500/30 rounded-lg p-4">
+                      <h5 class="text-orange-400 font-bold mb-3">⚠️ Cuidados</h5>
+                      <div class="text-left text-sm space-y-2">
+                        <p class="text-gray-300">• <strong>Mercados Laterais:</strong> Muitos sinais falsos</p>
+                        <p class="text-gray-300">• <strong>Alta Volatilidade:</strong> Stop pode ser atingido</p>
+                        <p class="text-gray-300">• <strong>Baixa Liquidez:</strong> Dificuldade de execução</p>
+                        <p class="text-gray-300">• <strong>Notícias Fortes:</strong> Podem quebrar padrões</p>
+                      </div>
+                    </div>
+                    
+                  </div>
+                  
+                  <div class="mt-6 bg-geminii/10 border border-geminii/30 rounded-lg p-4">
+                    <p class="text-geminii font-medium text-sm">
+                      💡 <strong>Dica de Ouro:</strong> Beta Regression funciona melhor em <strong>mercados com tendência definida</strong>. 
+                      Use em conjunto com análise de <strong>volume e suporte/resistência</strong> para melhores resultados!
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Controles -->
@@ -211,58 +494,6 @@
 
       <!-- Status -->
       <div id="statusMsg" class="mb-6 p-4 rounded-lg hidden backdrop-blur-sm"></div>
-
-      <!-- Estratégia Explicativa -->
-      <div id="strategyExplanation" class="mb-8 hidden">
-        <div class="beta-card p-6">
-          <div class="flex items-start gap-4">
-            <div class="flex-shrink-0 w-12 h-12 bg-gradient-to-r from-pink-500 to-purple-600 rounded-full flex items-center justify-center">
-              <i class="fas fa-chart-line text-white text-lg"></i>
-            </div>
-            <div class="flex-1">
-              <h3 class="text-lg font-bold mb-3 text-white">
-                <i class="fas fa-lightbulb mr-2 text-yellow-400"></i>Como Funciona a Estratégia Beta Regression
-              </h3>
-              <div class="space-y-3 text-gray-300 leading-relaxed">
-                <p>
-                  A estratégia <strong class="text-white">Beta Regression</strong> utiliza regressão móvel para calcular o intercepto (Beta0) 
-                  e determinar sinais de compra e venda baseados na normalização deste valor combinado com a posição do preço em relação à média móvel.
-                </p>
-                <p>
-                  <strong class="text-geminii">Sinais de Trading:</strong>
-                </p>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                  <div class="bg-white bg-opacity-5 p-4 rounded-lg border-l-4 border-green-400">
-                    <div class="flex items-center gap-2 mb-2">
-                      <i class="fas fa-arrow-up text-green-400"></i>
-                      <span class="font-semibold text-green-400">Sinal de COMPRA</span>
-                    </div>
-                    <p class="text-sm text-gray-400">
-                      Beta0 Normalizado > 0.5 <strong>E</strong> preço acima da média móvel (20 períodos)
-                    </p>
-                  </div>
-                  <div class="bg-white bg-opacity-5 p-4 rounded-lg border-l-4 border-red-400">
-                    <div class="flex items-center gap-2 mb-2">
-                      <i class="fas fa-arrow-down text-red-400"></i>
-                      <span class="font-semibold text-red-400">Sinal de VENDA</span>
-                    </div>
-                    <p class="text-sm text-gray-400">
-                      Beta0 Normalizado < 0.5 <strong>E</strong> preço abaixo da média móvel (20 períodos)
-                    </p>
-                  </div>
-                </div>
-                <div class="mt-4 p-4 bg-blue-600 bg-opacity-20 border border-blue-500 border-opacity-30 rounded-lg">
-                  <p class="text-sm">
-                    <i class="fas fa-info-circle text-blue-400 mr-2"></i>
-                    <strong class="text-blue-400">Importante:</strong> A estratégia opera com stop loss automático de 5% para proteção do capital. 
-                    Os sinais mudam conforme o Beta0 Normalizado cruza o nível 0.5 e a relação preço/média móvel.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
 
       <!-- Sinal Atual -->
       <div id="currentSignal" class="mb-8 hidden">
@@ -478,6 +709,29 @@
   </div>
 
   <script>
+    // ===== FUNÇÃO DO EXPANDER =====
+    function toggleInfo() {
+      const content = document.getElementById('infoContent');
+      const icon = document.getElementById('infoIcon');
+      
+      if (content.classList.contains('hidden')) {
+        content.classList.remove('hidden');
+        content.style.animation = 'fadeIn 0.5s ease-in-out';
+        icon.classList.remove('fa-info-circle');
+        icon.classList.add('fa-times');
+      } else {
+        content.style.animation = 'fadeOut 0.3s ease-in-out';
+        setTimeout(() => {
+          content.classList.add('hidden');
+        }, 300);
+        icon.classList.remove('fa-times');
+        icon.classList.add('fa-info-circle');
+      }
+    }
+
+    // Make toggleInfo global
+    window.toggleInfo = toggleInfo;
+
     // Configurações
     const API_BASE = window.location.origin + '/beta_regression';
     
@@ -578,9 +832,6 @@
     // Exibir análise individual
     function displayIndividualAnalysis(data) {
       const analysis = data.analysis_data;
-      
-      // Mostrar explicação da estratégia
-      strategyExplanation.classList.remove('hidden');
       
       // Sinal atual
       displayCurrentSignal(analysis);
