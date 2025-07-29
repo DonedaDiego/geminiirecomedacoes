@@ -34,6 +34,7 @@ from pro.vol_regimes_routes import vol_regimes_bp
 from pro.regimes_volatilidade_routes import regimes_bp
 from pro.antifragil_routes import antifragil_bp
 from pro.momentum_routes import momentum_bp
+from pro.regime_pro_intra_routes import get_regime_pro_intra_blueprint
 
 
 ## premium
@@ -196,6 +197,8 @@ app.register_blueprint(formula_bp)
 app.register_blueprint(antifragil_bp)
 app.register_blueprint(golden_cross_eua_bp)
 app.register_blueprint(momentum_bp)
+regime_pro_intra_bp = get_regime_pro_intra_blueprint()
+app.register_blueprint(regime_pro_intra_bp)
 
 CORS(app, 
      origins=['*'],
@@ -470,6 +473,10 @@ def golden_eua_page():
 @app.route('/momentum-eua.html')
 def momentum_eua_page():
     return send_from_directory('../frontend', 'momentum-eua.html')
+
+@app.route('/test-intraday')
+def test_intraday():
+    return send_from_directory('frontend', 'test-intraday.html')
 
 
 # ===== PÁGINAS DE RETORNO DO PAGAMENTO =====

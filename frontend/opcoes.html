@@ -96,6 +96,11 @@
       from { opacity: 0; transform: translateY(20px); }
       to { opacity: 1; transform: translateY(0); }
     }
+
+    @keyframes fadeOut {
+      from { opacity: 1; transform: translateY(0); }
+      to { opacity: 0; transform: translateY(-10px); }
+    }
     
     .loading-spinner {
       border: 3px solid rgba(255, 255, 255, 0.3);
@@ -302,9 +307,84 @@
               <h1 class="text-5xl font-bold text-white mb-3">
                  <span class="gradient-text">Hunter Walls</span>
               </h1>
-              <p class="text-gray-300 text-xl">Análise de Múltiplos Vencimentos de Opções</p>
+              <p class="text-gray-300 text-xl">Análise de Volume por Strike em Múltiplos Vencimentos</p>
             </div>
           </div>
+          
+          <!-- Info Expander -->
+          <div class="mt-8">
+            <button onclick="toggleInfo()" class="bg-gradient-to-r from-geminii to-purple-600 hover:from-purple-600 hover:to-geminii text-white px-6 py-3 rounded-full font-semibold text-sm transition-all duration-300 flex items-center mx-auto shadow-lg hover:shadow-xl transform hover:scale-105">
+              <i id="infoIcon" class="fas fa-info-circle mr-2 transition-transform duration-300"></i>
+              Como Funciona o Hunter Walls
+            </button>
+            
+            <div id="infoContent" class="hidden mt-8 max-w-5xl mx-auto">
+              <div class="card rounded-xl p-8 text-left">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  
+                  <!-- Volume por Strike -->
+                  <div class="space-y-4">
+                    <div class="flex items-center mb-4">
+                      <div class="w-4 h-4 rounded-full bg-gradient-to-r from-blue-400 to-cyan-500 mr-3"></div>
+                      <h3 class="text-xl font-bold text-white">Análise de Volume por Strike</h3>
+                    </div>
+                    <p class="text-gray-300 text-sm leading-relaxed mb-4">
+                      O Hunter Walls captura os <strong>volumes negociados por strike ao longo do dia</strong>, 
+                      podendo encontrar <strong>discrepâncias em strikes específicos</strong> - as famosas 
+                      <strong>anomalias dos insider tradings</strong>. Essas informações nos permitem 
+                      <strong>capturar informação privilegiada para se posicionar</strong>.
+                    </p>
+                    <div class="bg-white/5 rounded-lg p-4">
+                      <h4 class="text-white font-semibold text-sm mb-3">O que detectamos:</h4>
+                      <ul class="text-gray-400 text-sm space-y-2">
+                        <li>• <span class="text-white font-medium">Volume Anômalo de Calls</span>: Insider info de alta por strike</li>
+                        <li>• <span class="text-white font-medium">Volume Anômalo de Puts</span>: Insider info de baixa por strike</li>
+                        <li>• <span class="text-white font-medium">Discrepâncias de Volume</span>: Strikes com atividade suspeita</li>
+                        <li>• <span class="text-white font-medium">Padrões de Acumulação</span>: Grandes players se posicionando</li>
+                      </ul>
+                    </div>
+                  </div>
+                  
+                  <!-- Múltiplos Vencimentos -->
+                  <div class="space-y-4">
+                    <div class="flex items-center mb-4">
+                      <div class="w-4 h-4 rounded-full bg-gradient-to-r from-purple-400 to-pink-500 mr-3"></div>
+                      <h3 class="text-xl font-bold text-white">Comparação de Vencimentos</h3>
+                    </div>
+                    <p class="text-gray-300 text-sm leading-relaxed mb-4">
+                      Compara <strong>anomalias de volume entre diferentes vencimentos</strong>, revelando 
+                      se insiders estão se posicionando para <strong>eventos específicos em horizontes distintos</strong>. 
+                      Permite identificar <strong>concentrações suspeitas</strong> que precedem grandes movimentos.
+                    </p>
+                    <div class="bg-white/5 rounded-lg p-4">
+                      <h4 class="text-white font-semibold text-sm mb-3">Insights de insider:</h4>
+                      <ul class="text-gray-400 text-sm space-y-2">
+                        <li>• <span class="text-white font-medium">Concentração Temporal</span>: Vencimentos com atividade anômala</li>
+                        <li>• <span class="text-white font-medium">Migração de Posições</span>: Movimento entre prazos</li>
+                        <li>• <span class="text-white font-medium">Timing de Eventos</span>: Quando insiders esperam movimento</li>
+                        <li>• <span class="text-white font-medium">Arbitragem de Informação</span>: Assimetrias para explorar</li>
+                      </ul>
+                    </div>
+                  </div>
+                  
+                </div>
+                
+                <!-- Poder Estratégico -->
+                <div class="mt-8 pt-6 border-t border-white/10">
+                  <div class="text-center">
+                    <h4 class="text-geminii font-bold text-lg mb-3">Poder Estratégico</h4>
+                    <p class="text-gray-300 text-sm max-w-3xl mx-auto">
+                      Quando você detecta <strong>volumes anômalos concentrados em strikes específicos</strong>, 
+                      está capturando <strong>informação privilegiada de insider trading</strong>. 
+                      Essas discrepâncias revelam onde o <strong>dinheiro inteligente está se posicionando</strong> 
+                      antes de grandes movimentos, permitindo que você <strong>surfar na onda dos grandes players</strong>.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
           <div class="bg-gradient-to-r from-primary/10 to-secondary/10 rounded-xl p-6 mt-8">
             <p class="text-gray-300 text-lg">
               <strong>Exclusivo Pro:</strong> Compare volumes de calls e puts em diferentes vencimentos lado a lado
@@ -405,7 +485,7 @@
               </div>
             </div>
             <div class="mt-4 text-gray-400 text-sm space-y-2">
-              <p><strong>💡 Dica:</strong> Clique nas letras acima - letras do mesmo mês ficam destacadas automaticamente</p>
+              <p><strong>Dica:</strong> Clique nas letras acima - letras do mesmo mês ficam destacadas automaticamente</p>
               <p><strong>Exemplo:</strong> F,R (Junho) para um grupo | G,S (Julho) para outro grupo</p>
               <p>Cada grupo será exibido como um gráfico separado lado a lado</p>
             </div>
@@ -1001,9 +1081,9 @@
           <div class="chart-title">
             <span>${mesNome} (${letrasGrupo})</span>
             <div class="chart-stats">
-              <span title="Maior volume de calls: R$ ${maxCallsStrike?.toFixed(2)}">🔵 Calls: ${maxCallsVolume.toLocaleString()}</span>
-              <span title="Maior volume de puts: R$ ${maxPutsStrike?.toFixed(2)}">🟠 Puts: ${maxPutsVolume.toLocaleString()}</span>
-              <span class="text-yellow-400" title="Strike com maior volume total">📈 Maior: R$ ${encontrarMaiorVolumeStrike(dados)}</span>
+              <span title="Maior volume de calls: R$ ${maxCallsStrike?.toFixed(2)}">Calls: ${maxCallsVolume.toLocaleString()}</span>
+              <span title="Maior volume de puts: R$ ${maxPutsStrike?.toFixed(2)}">Puts: ${maxPutsVolume.toLocaleString()}</span>
+              <span class="text-yellow-400" title="Strike com maior volume total">Maior: R$ ${encontrarMaiorVolumeStrike(dados)}</span>
             </div>
           </div>
           <div id="chart-${index}" style="height: 450px;"></div>
@@ -1192,7 +1272,7 @@
         </div>
         
         <div class="space-y-6">
-          <h3 class="text-xl font-bold text-white">🏆 Top Opções por Grupo</h3>
+          <h3 class="text-xl font-bold text-white">Top Opções por Grupo</h3>
       `;
       
       summary.grupos.forEach(grupo => {
@@ -1213,7 +1293,7 @@
             <h4 class="text-lg font-semibold text-white mb-4">${mesNome}</h4>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <h5 class="text-blue-400 font-semibold mb-2">🔵 Top Calls</h5>
+                <h5 class="text-blue-400 font-semibold mb-2">Top Calls</h5>
                 <ul class="space-y-1">
         `;
         
@@ -1229,7 +1309,7 @@
                 </ul>
               </div>
               <div>
-                <h5 class="text-orange-400 font-semibold mb-2">🟠 Top Puts</h5>
+                <h5 class="text-orange-400 font-semibold mb-2">Top Puts</h5>
                 <ul class="space-y-1">
         `;
         
@@ -1252,6 +1332,26 @@
       html += '</div>';
       
       container.innerHTML = html;
+    }
+
+    // ===== FUNÇÃO DO EXPANDER =====
+    function toggleInfo() {
+      const content = document.getElementById('infoContent');
+      const icon = document.getElementById('infoIcon');
+      
+      if (content.classList.contains('hidden')) {
+        content.classList.remove('hidden');
+        content.style.animation = 'fadeIn 0.5s ease-in-out';
+        icon.classList.remove('fa-info-circle');
+        icon.classList.add('fa-times');
+      } else {
+        content.style.animation = 'fadeOut 0.3s ease-in-out';
+        setTimeout(() => {
+          content.classList.add('hidden');
+        }, 300);
+        icon.classList.remove('fa-times');
+        icon.classList.add('fa-info-circle');
+      }
     }
 
     // Logout function
@@ -1279,6 +1379,7 @@
     window.removerGrupo = removerGrupo;
     window.executarAnalise = executarAnalise;
     window.toggleLetraSelection = toggleLetraSelection;
+    window.toggleInfo = toggleInfo;
 
     // Initialize when page loads
     document.addEventListener('DOMContentLoaded', initPage);

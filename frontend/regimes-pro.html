@@ -163,12 +163,6 @@
       border: 1px solid rgba(255, 255, 255, 0.1);
     }
 
-    .recommendation-box {
-      background: linear-gradient(135deg, rgba(186, 57, 175, 0.2), rgba(99, 102, 241, 0.1));
-      border: 1px solid rgba(186, 57, 175, 0.3);
-      backdrop-filter: blur(20px);
-    }
-
     .metric-card {
       background: rgba(255, 255, 255, 0.05);
       border: 1px solid rgba(255, 255, 255, 0.1);
@@ -226,9 +220,80 @@
           <p class="text-neutral-300 text-lg max-w-2xl mx-auto">
             Análise avançada com GARCH + XGBoost para previsão de volatilidade
           </p>
+          
+          <!-- Info Expander -->
+          <div class="mt-8">
+            <button onclick="toggleInfo()" class="bg-gradient-to-r from-geminii to-purple-600 hover:from-purple-600 hover:to-geminii text-white px-6 py-3 rounded-full font-semibold text-sm transition-all duration-300 flex items-center mx-auto shadow-lg hover:shadow-xl transform hover:scale-105">
+              <i id="infoIcon" class="fas fa-info-circle mr-2 transition-transform duration-300"></i>
+              Como Funciona Nossa Tecnologia Avançada
+            </button>
+            
+            <div id="infoContent" class="hidden mt-8 max-w-5xl mx-auto">
+              <div class="card rounded-xl p-8 text-left">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  
+                  <!-- Hybrid Volatility Bands -->
+                  <div class="space-y-4">
+                    <div class="flex items-center mb-4">
+                      <div class="w-4 h-4 rounded-full bg-gradient-to-r from-yellow-400 to-orange-500 mr-3"></div>
+                      <h3 class="text-xl font-bold text-white">Bandas de Volatilidade Híbridas</h3>
+                    </div>
+                    <p class="text-gray-300 text-sm leading-relaxed mb-4">
+                      Nosso modelo captura a <strong>volatilidade passada</strong> usando estimativa ponderada com <strong>GARCH</strong>, 
+                      depois roda machine learning <strong>XGBoost</strong> com outras <strong>15 variáveis</strong> para estimar 
+                      suportes e resistências com precisão matemática.
+                    </p>
+                    <div class="bg-white/5 rounded-lg p-4">
+                      <h4 class="text-warning font-semibold text-sm mb-3">O que você obtém:</h4>
+                      <ul class="text-gray-400 text-sm space-y-2">
+                        <li>• <span class="text-red-400 font-medium">Bandas Superiores</span>: Níveis de resistência calculados</li>
+                        <li>• <span class="text-green-400 font-medium">Bandas Inferiores</span>: Níveis de suporte calculados</li>
+                        <li>• <span class="text-yellow-400 font-medium">Linha Central</span>: Preço equilibrado estimado</li>
+                        <li>• <span class="text-blue-400 font-medium">Regime de Volatilidade</span>: Classificação atual do mercado</li>
+                      </ul>
+                    </div>
+                  </div>
+                  
+                  <!-- Geminii Flow -->
+                  <div class="space-y-4">
+                    <div class="flex items-center mb-4">
+                      <div class="w-4 h-4 rounded-full bg-gradient-to-r from-green-400 to-emerald-500 mr-3"></div>
+                      <h3 class="text-xl font-bold text-white">Geminii Flow Tracker</h3>
+                    </div>
+                    <p class="text-gray-300 text-sm leading-relaxed mb-4">
+                      Captura o <strong>prêmio e expectativa futura</strong> das calls e puts, seguindo o mercado 
+                      e monitorando realmente o <strong>prêmio das opções</strong> para identificar onde o dinheiro 
+                      inteligente está posicionado.
+                    </p>
+                    <div class="bg-white/5 rounded-lg p-4">
+                      <h4 class="text-success font-semibold text-sm mb-3">Métricas monitoradas:</h4>
+                      <ul class="text-gray-400 text-sm space-y-2">
+                        <li>• <span class="text-green-400 font-medium">Call Flow</span>: Pressão compradora no prêmio</li>
+                        <li>• <span class="text-red-400 font-medium">Put Flow</span>: Pressão vendedora no prêmio</li>
+                        <li>• <span class="text-yellow-400 font-medium">C/P Ratio</span>: Proporção entre calls e puts</li>
+                        <li>• <span class="text-purple-400 font-medium">Intensidade</span>: Força do movimento detectado</li>
+                      </ul>
+                    </div>
+                  </div>
+                  
+                </div>
+                
+                <!-- Combined Power -->
+                <div class="mt-8 pt-6 border-t border-white/10">
+                  <div class="text-center">
+                    <h4 class="text-geminii font-bold text-lg mb-3">Poder Combinado</h4>
+                    <p class="text-gray-300 text-sm max-w-3xl mx-auto">
+                      Quando as <strong>bandas identificam níveis técnicos precisos</strong> baseados em 15+ variáveis 
+                      e o <strong>flow confirma a direção através do prêmio real das opções</strong>, obtemos sinais 
+                      de altíssima probabilidade para operações de suporte e resistência.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
   
-
       <!-- Input Section -->
       <div class="card rounded-2xl p-8 mb-8 fade-in">
         <h2 class="text-2xl font-bold text-white mb-6 flex items-center">
@@ -277,58 +342,20 @@
       <!-- Results Section -->
       <div id="results" class="space-y-8">
         
+        <!-- Bandas Signals - MOVIDO PARA CIMA -->
+        <div id="bandsSignals" class="card rounded-xl p-6 fade-in">
+          <h3 class="text-xl font-bold text-white mb-4 flex items-center">
+            <i class="fas fa-chart-line mr-2 text-warning"></i>
+            Sinais de Bandas
+          </h3>
+          <div id="bandsSignalsContent" class="space-y-3">
+            <p class="text-gray-400 text-center">Clique em "Análise Completa" ou "Apenas Bandas" para ver os resultados</p>
+          </div>
+        </div>
+        
         <!-- Charts -->
         <div id="bandsChart" class="chart-container rounded-2xl p-6 hidden"></div>
         <div id="flowChart" class="chart-container rounded-2xl p-6 hidden"></div>
-        
-        <!-- Analysis Cards -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          
-          <!-- Bandas Signals -->
-          <div id="bandsSignals" class="card rounded-xl p-6 fade-in">
-            <h3 class="text-xl font-bold text-white mb-4 flex items-center">
-              <i class="fas fa-chart-line mr-2 text-warning"></i>
-              Sinais de Bandas
-            </h3>
-            <div id="bandsSignalsContent" class="space-y-3">
-              <p class="text-gray-400 text-center">Clique em "Análise Completa" ou "Apenas Bandas" para ver os resultados</p>
-            </div>
-          </div>
-          
-          <!-- IV Validation -->
-          <div id="ivValidation" class="card rounded-xl p-6 fade-in">
-            <h3 class="text-xl font-bold text-white mb-4 flex items-center">
-              <i class="fas fa-search mr-2 text-accent"></i>
-              Validação IV
-            </h3>
-            <div id="ivValidationContent" class="space-y-3">
-              <p class="text-gray-400 text-center">Clique em "Análise Completa" ou "Apenas Bandas" para ver os resultados</p>
-            </div>
-          </div>
-          
-          <!-- Flow Analysis -->
-          <div id="flowAnalysis" class="card rounded-xl p-6 fade-in">
-            <h3 class="text-xl font-bold text-white mb-4 flex items-center">
-              <i class="fas fa-water mr-2 text-success"></i>
-              Análise de Flow
-            </h3>
-            <div id="flowAnalysisContent" class="space-y-3">
-              <p class="text-gray-400 text-center">Clique em "Análise Completa" ou "Apenas Flow" para ver os resultados</p>
-            </div>
-          </div>
-          
-        </div>
-        
-        <!-- Recommendation Box -->
-        <div id="recommendation" class="recommendation-box rounded-2xl p-8 text-center">
-          <h3 class="text-2xl font-bold text-white mb-4 flex items-center justify-center">
-            <i class="fas fa-brain mr-3 text-geminii"></i>
-            Recomendação Combinada
-          </h3>
-          <div id="recommendationText" class="text-lg text-gray-200">
-            <p class="text-gray-400">Digite um ticker e clique em uma das análises para ver a recomendação</p>
-          </div>
-        </div>
         
       </div>
     </div>
@@ -430,11 +457,6 @@
     
         if (data.flow && data.flow.plot_data) {
           renderFlowChart(data.flow.plot_data);
-          renderFlowAnalysis(data.flow.analysis);
-        }
-    
-        if (data.combined) {
-          renderRecommendation(data.combined);
         }
     
         hideLoading();
@@ -514,7 +536,6 @@
     
         if (data.plot_data) {
           renderFlowChart(data.plot_data);
-          renderFlowAnalysis(data.analysis);
         }
     
         hideLoading();
@@ -553,7 +574,7 @@
         type: 'scatter',
         mode: 'lines',
         name: 'Banda Inferior 2σ',
-        line: {color: '#4ECDC4', width: 2}
+        line: {color: '#2ED573', width: 2}
       };
 
       const bandaSuperior4 = {
@@ -580,7 +601,7 @@
         type: 'scatter',
         mode: 'lines',
         name: 'Linha Central',
-        line: {color: '#000000', width: 2}
+        line: {color: 'ffd700', width: 2}
       };
 
       const data = [candlestick, bandaSuperior2, bandaInferior2, bandaSuperior4, bandaInferior4, linhaCentral];
@@ -741,7 +762,7 @@
     function renderBandsSignals(signals) {
       if (!signals) return;
 
-      const currency = signals.bandas ? (signals.bandas.superior_2σ > 1000 ? 'R$' : '$') : 'R$';
+      const currency = signals.bandas ? (signals.bandas.superior_2σ > 1000 ? 'R$' : '') : 'R$';
       
       const html = `
         <div class="metric-card rounded-lg p-4 mb-4">
@@ -753,10 +774,7 @@
             <span class="text-gray-400 text-sm">Volatilidade</span>
             <span class="text-warning font-medium">${(signals.volatility * 100)?.toFixed(2) || 'N/A'}%</span>
           </div>
-          <div class="flex justify-between items-center mb-2">
-            <span class="text-gray-400 text-sm">Regime</span>
-            <span class="text-accent font-medium text-sm">${signals.trend_regime || 'N/A'} Market</span>
-          </div>
+      
           <div class="flex justify-between items-center">
             <span class="text-gray-400 text-sm">Vol Regime</span>
             <span class="text-secondary font-medium text-sm">${signals.vol_regime || 'N/A'} Vol</span>
@@ -774,10 +792,6 @@
         
         <div class="space-y-2">
           <div class="flex justify-between items-center py-2 border-b border-white/10">
-            <span class="text-gray-400 text-sm">Banda Superior 2σ</span>
-            <span class="text-danger font-medium">${currency}${signals.bandas?.superior_2σ?.toFixed(2) || 'N/A'}</span>
-          </div>
-          <div class="flex justify-between items-center py-2 border-b border-white/10">
             <span class="text-gray-400 text-sm">Linha Central</span>
             <span class="text-warning font-medium">${currency}${signals.bandas?.linha_central?.toFixed(2) || 'N/A'}</span>
           </div>
@@ -789,121 +803,6 @@
       `;
 
       document.getElementById('bandsSignalsContent').innerHTML = html;
-
-      // IV Validation
-      const ivData = signals.iv_validation;
-      if (ivData) {
-        const statusClass = ivData.status?.toLowerCase() || 'neutro';
-        const ivHtml = `
-          <div class="metric-card rounded-lg p-4 mb-4">
-            <div class="flex justify-between items-center mb-3">
-              <span class="text-gray-400 text-sm">Score de Confiança</span>
-              <span class="text-white font-bold text-xl">${ivData.score || 'N/A'}/100</span>
-            </div>
-            <div class="flex justify-between items-center mb-3">
-              <span class="text-gray-400 text-sm">Status</span>
-              <span class="status-badge status-${statusClass}">${ivData.status_emoji || ''} ${ivData.status || 'N/A'}</span>
-            </div>
-            <div class="text-center">
-              <p class="text-gray-300 text-sm">${ivData.recommendation || 'N/A'}</p>
-            </div>
-          </div>
-          ${ivData.details && ivData.details.length > 0 ? `
-            <div class="bg-white/5 rounded-lg p-4">
-              <h4 class="text-white font-medium mb-2">Detalhes da Análise</h4>
-              <ul class="space-y-1">
-                ${ivData.details.slice(0, 3).map(detail => `<li class="text-gray-400 text-sm">• ${detail}</li>`).join('')}
-              </ul>
-            </div>
-          ` : ''}
-        `;
-        document.getElementById('ivValidationContent').innerHTML = ivHtml;
-      }
-    }
-
-    function renderFlowAnalysis(analysis) {
-      if (!analysis) return;
-
-      const sentimentColor = analysis.sentiment?.includes('BULLISH') ? '#10b981' : '#ef4444';
-      
-      const html = `
-        <div class="metric-card rounded-lg p-4 mb-4">
-          <div class="text-center mb-3">
-            <span class="text-gray-400 text-sm">Sentimento do Mercado</span>
-          </div>
-          <div class="text-center">
-            <span class="font-bold text-lg" style="color: ${sentimentColor}">${analysis.sentiment || 'N/A'}</span>
-          </div>
-        </div>
-        
-        <div class="space-y-3">
-          <div class="flex justify-between items-center py-2 border-b border-white/10">
-            <span class="text-gray-400 text-sm">C/P Ratio</span>
-            <span class="text-white font-medium">${analysis.cp_ratio?.toFixed(2) || 'N/A'}</span>
-          </div>
-          <div class="flex justify-between items-center py-2 border-b border-white/10">
-            <span class="text-gray-400 text-sm">Net Flow</span>
-            <span class="text-white font-medium">${analysis.net_flow > 0 ? '+' : ''}${analysis.net_flow?.toLocaleString() || 'N/A'}</span>
-          </div>
-          <div class="flex justify-between items-center py-2 border-b border-white/10">
-            <span class="text-gray-400 text-sm">Tendência</span>
-            <span class="text-accent font-medium">${analysis.trend || 'N/A'}</span>
-          </div>
-          <div class="flex justify-between items-center py-2 border-b border-white/10">
-            <span class="text-gray-400 text-sm">Força do Sinal</span>
-            <span class="text-warning font-medium">${analysis.signal_strength || 'N/A'}</span>
-          </div>
-          <div class="flex justify-between items-center py-2">
-            <span class="text-gray-400 text-sm">Períodos Analisados</span>
-            <span class="text-white font-medium">${analysis.periods || 'N/A'}</span>
-          </div>
-        </div>
-      `;
-
-      document.getElementById('flowAnalysisContent').innerHTML = html;
-    }
-
-    function renderRecommendation(combined) {
-      if (!combined || !combined.recommendation) return;
-
-      let emoji = '';
-      if (combined.recommendation.includes('SINAL FORTE')) {
-        emoji = '';
-      } else if (combined.recommendation.includes('REVERSAL')) {
-        emoji = '';
-      } else if (combined.recommendation.includes('NEUTRO')) {
-        emoji = '';
-      } else if (combined.recommendation.includes('PREPARAR')) {
-        emoji = '';
-      } else if (combined.recommendation.includes('AGUARDAR')) {
-        emoji = '';
-      }
-
-      const html = `
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-          <div class="metric-card rounded-lg p-4 text-center">
-            <div class="text-gray-400 text-sm mb-2">Posição nas Bandas</div>
-            <div class="text-white font-bold">${combined.bands_position || 'N/A'}</div>
-          </div>
-          <div class="metric-card rounded-lg p-4 text-center">
-            <div class="text-gray-400 text-sm mb-2">Score IV</div>
-            <div class="text-warning font-bold">${combined.iv_score || 'N/A'}/100</div>
-          </div>
-          <div class="metric-card rounded-lg p-4 text-center">
-            <div class="text-gray-400 text-sm mb-2">Flow Sentiment</div>
-            <div class="text-accent font-bold">${combined.flow_sentiment || 'N/A'}</div>
-          </div>
-        </div>
-        
-        <div class="text-center">
-          <div class="text-gray-400 text-sm mb-2">C/P Ratio: ${combined.cp_ratio?.toFixed(2) || 'N/A'}</div>
-          <div class="text-2xl font-bold text-white">
-            ${emoji} ${combined.recommendation}
-          </div>
-        </div>
-      `;
-
-      document.getElementById('recommendationText').innerHTML = html;
     }
 
     // ===== UTILITÁRIOS =====
@@ -969,6 +868,33 @@
 
     // Show welcome message
     showToast('Sistema Regimes PRO carregado com sucesso!', 'success');
+
+    // ===== FUNÇÃO DO EXPANDER =====
+    function toggleInfo() {
+      const content = document.getElementById('infoContent');
+      const icon = document.getElementById('infoIcon');
+      
+      if (content.classList.contains('hidden')) {
+        content.classList.remove('hidden');
+        content.style.animation = 'fadeIn 0.5s ease-in-out';
+        icon.classList.remove('fa-info-circle');
+        icon.classList.add('fa-times');
+      } else {
+        content.style.animation = 'fadeOut 0.3s ease-in-out';
+        setTimeout(() => {
+          content.classList.add('hidden');
+        }, 300);
+        icon.classList.remove('fa-times');
+        icon.classList.add('fa-info-circle');
+      }
+    }
   </script>
+  
+  <style>
+    @keyframes fadeOut {
+      from { opacity: 1; transform: translateY(0); }
+      to { opacity: 0; transform: translateY(-10px); }
+    }
+  </style>
 </body>
 </html>

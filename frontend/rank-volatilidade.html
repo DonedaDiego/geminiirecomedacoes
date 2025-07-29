@@ -76,6 +76,16 @@
       100% { transform: rotate(360deg); }
     }
 
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fadeOut {
+      from { opacity: 1; transform: translateY(0); }
+      to { opacity: 0; transform: translateY(-10px); }
+    }
+
     .btn-loading {
       opacity: 0.7;
       cursor: not-allowed;
@@ -84,17 +94,17 @@
       display: none !important;
     }
     
-    #chartPrecoStress .loading,
-    #chartPerformance .loading,
-    #chartIVMercado .loading,
-    #chartDistribuicao .loading {
-      display: none !important;
-    }
-    
-    /* Esconder loading quando gráfico Plotly está renderizado */
     .js-plotly-plot ~ .loading,
     .plotly-graph-div ~ .loading {
       display: none !important;
+    }
+
+    .panel-high {
+      border-left: 4px solid #ef4444;
+    }
+    
+    .panel-low {
+      border-left: 4px solid #22c55e;
     }
   </style>
 </head>
@@ -129,22 +139,234 @@
       <!-- Header -->
       <div class="text-center mb-8">
         <h1 class="text-4xl md:text-5xl font-bold mb-4">
-          <span style="color: #ba39af; font-weight: 900;">Ranking</span>
-          <span class="text-white font-light">Volatilidade Implícita</span>
+          <span style="color: #ba39af; font-weight: 900;">IV Scanner</span>
+          <span class="text-white font-light">Ranking de Volatilidade</span>
         </h1>
         <p class="text-neutral-300 text-lg max-w-2xl mx-auto">
           Análise completa das oportunidades em opções por volatilidade implícita
         </p>
+        
+        <!-- Info Expander -->
+        <div class="mt-8">
+          <button onclick="toggleInfo()" class="bg-gradient-to-r from-geminii to-purple-600 hover:from-purple-600 hover:to-geminii text-white px-6 py-3 rounded-full font-semibold text-sm transition-all duration-300 flex items-center mx-auto shadow-lg hover:shadow-xl transform hover:scale-105">
+            <i id="infoIcon" class="fas fa-info-circle mr-2 transition-transform duration-300"></i>
+            Como Funciona o IV Scanner
+          </button>
+          
+          <div id="infoContent" class="hidden mt-8 max-w-6xl mx-auto">
+            <div class="rank-card p-8 text-left">
+              
+              <!-- Explicação Principal -->
+              <div class="text-center mb-8">
+                <h3 class="text-2xl font-bold text-white mb-4">O que é o IV Scanner?</h3>
+                <p class="text-gray-300 text-base leading-relaxed max-w-4xl mx-auto">
+                  É um <strong>radar de oportunidades</strong> que analisa <strong>todas as 87 ações com opções</strong> da bolsa, 
+                  comparando se a <strong>volatilidade implícita está cara ou barata</strong> em relação ao próprio histórico de cada ação.
+                </p>
+              </div>
+              
+              <!-- Conceitos Fundamentais -->
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                
+                <!-- O que é IV Atual -->
+                <div class="bg-blue-500/10 border border-blue-500/30 rounded-lg p-6">
+                  <div class="flex items-center mb-4">
+                    <div class="w-3 h-3 rounded-full bg-blue-400 mr-3"></div>
+                    <h4 class="text-lg font-bold text-blue-400">IV Atual (%)</h4>
+                  </div>
+                  <p class="text-gray-300 text-sm mb-3">
+                    <strong>Volatilidade Implícita no momento</strong> - quanto o mercado espera que a ação varie.
+                  </p>
+                  <div class="bg-white/5 rounded p-3">
+                    <p class="text-white text-xs font-medium">💡 Exemplo prático:</p>
+                    <p class="text-gray-400 text-xs">
+                      PETR4 com IV 45% = mercado espera variação de ±45% ao ano
+                    </p>
+                  </div>
+                </div>
+                
+                <!-- O que é Percentil -->
+                <div class="bg-orange-500/10 border border-orange-500/30 rounded-lg p-6">
+                  <div class="flex items-center mb-4">
+                    <div class="w-3 h-3 rounded-full bg-orange-400 mr-3"></div>
+                    <h4 class="text-lg font-bold text-orange-400">Percentil 6M</h4>
+                  </div>
+                  <p class="text-gray-300 text-sm mb-3">
+                    <strong>Posição da IV atual</strong> comparada aos últimos 6 meses da mesma ação.
+                  </p>
+                  <div class="bg-white/5 rounded p-3">
+                    <p class="text-white text-xs font-medium">💡 Como ler:</p>
+                    <p class="text-green-400 text-xs">• Percentil 20% = IV barata</p>
+                    <p class="text-red-400 text-xs">• Percentil 80% = IV cara</p>
+                  </div>
+                </div>
+                
+                <!-- O que é Volume Financeiro -->
+                <div class="bg-purple-500/10 border border-purple-500/30 rounded-lg p-6">
+                  <div class="flex items-center mb-4">
+                    <div class="w-3 h-3 rounded-full bg-purple-400 mr-3"></div>
+                    <h4 class="text-lg font-bold text-purple-400">Volume Financeiro</h4>
+                  </div>
+                  <p class="text-gray-300 text-sm mb-3">
+                    <strong>Liquidez das opções</strong> - quanto dinheiro está sendo negociado.
+                  </p>
+                  <div class="bg-white/5 rounded p-3">
+                    <p class="text-white text-xs font-medium">💡 Por que importa:</p>
+                    <p class="text-gray-400 text-xs">
+                      Volume alto = fácil entrar/sair das posições
+                    </p>
+                  </div>
+                </div>
+                
+              </div>
+              
+              <!-- Como Interpretar os Gráficos -->
+              <div class="border-t border-white/10 pt-8">
+                <h4 class="text-xl font-bold text-white mb-6 text-center">Como Interpretar os Painéis</h4>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  
+                  <!-- Painel Vermelho -->
+                  <div class="bg-red-500/10 border border-red-500/30 rounded-lg p-6">
+                    <div class="flex items-center mb-4">
+                      <i class="fas fa-arrow-up text-red-400 mr-3"></i>
+                      <h5 class="text-lg font-bold text-red-400">Painel Vermelho - IV ALTA</h5>
+                    </div>
+                    <p class="text-gray-300 text-sm mb-4">
+                      <strong>Top 20 ações com maior volatilidade implícita</strong>
+                    </p>
+                    <div class="space-y-3">
+                      <div class="flex items-start">
+                        <span class="text-red-400 text-sm mr-2"></span>
+                        <div>
+                          <p class="text-white text-sm font-medium">O que buscar:</p>
+                          <p class="text-gray-400 text-xs">Percentil >80% + Volume alto</p>
+                        </div>
+                      </div>
+                      <div class="flex items-start">
+                        <span class="text-red-400 text-sm mr-2"></span>
+                        <div>
+                          <p class="text-white text-sm font-medium">Estratégia:</p>
+                          <p class="text-gray-400 text-xs">VENDER opções (IV cara)</p>
+                        </div>
+                      </div>
+                      <div class="flex items-start">
+                        <span class="text-red-400 text-sm mr-2"></span>
+                        <div>
+                          <p class="text-white text-sm font-medium">Expectativa:</p>
+                          <p class="text-gray-400 text-xs">IV voltar para níveis normais</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <!-- Painel Verde -->
+                  <div class="bg-green-500/10 border border-green-500/30 rounded-lg p-6">
+                    <div class="flex items-center mb-4">
+                      <i class="fas fa-arrow-down text-green-400 mr-3"></i>
+                      <h5 class="text-lg font-bold text-green-400">Painel Verde - IV BAIXA</h5>
+                    </div>
+                    <p class="text-gray-300 text-sm mb-4">
+                      <strong>Top 20 ações com menor volatilidade implícita</strong>
+                    </p>
+                    <div class="space-y-3">
+                      <div class="flex items-start">
+                        <span class="text-green-400 text-sm mr-2"></span>
+                        <div>
+                          <p class="text-white text-sm font-medium">O que buscar:</p>
+                          <p class="text-gray-400 text-xs">Percentil 20% + Volume alto</p>
+                        </div>
+                      </div>
+                      <div class="flex items-start">
+                        <span class="text-green-400 text-sm mr-2"></span>
+                        <div>
+                          <p class="text-white text-sm font-medium">Estratégia:</p>
+                          <p class="text-gray-400 text-xs">COMPRAR opções (IV barata)</p>
+                        </div>
+                      </div>
+                      <div class="flex items-start">
+                        <span class="text-green-400 text-sm mr-2"></span>
+                        <div>
+                          <p class="text-white text-sm font-medium">Expectativa:</p>
+                          <p class="text-gray-400 text-xs">IV subir para níveis normais</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                </div>
+              </div>
+              
+              <!-- Exemplo Prático -->
+              <div class="mt-8 pt-6 border-t border-white/10">
+                <h4 class="text-xl font-bold text-geminii mb-4 text-center">Exemplo Prático</h4>
+                <div class="bg-white/5 rounded-lg p-6">
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    
+                    <!-- Exemplo Venda -->
+                    <div>
+                      <h5 class="text-red-400 font-bold mb-3">🔴 Oportunidade de Venda</h5>
+                      <div class="bg-black/30 rounded p-4">
+                        <p class="text-white text-sm font-medium mb-2">PETR4</p>
+                        <p class="text-gray-400 text-xs">• IV Atual: 65%</p>
+                        <p class="text-gray-400 text-xs">• Percentil 6M: 85%</p>
+                        <p class="text-gray-400 text-xs">• Volume: R$ 50M</p>
+                        <p class="text-orange-300 text-xs mt-2">
+                          <strong>Interpretação:</strong> IV está no top 15% do histórico + boa liquidez = oportunidade de venda
+                        </p>
+                      </div>
+                    </div>
+                    
+                    <!-- Exemplo Compra -->
+                    <div>
+                      <h5 class="text-green-400 font-bold mb-3">🟢 Oportunidade de Compra</h5>
+                      <div class="bg-black/30 rounded p-4">
+                        <p class="text-white text-sm font-medium mb-2">VALE3</p>
+                        <p class="text-gray-400 text-xs">• IV Atual: 25%</p>
+                        <p class="text-gray-400 text-xs">• Percentil 6M: 15%</p>
+                        <p class="text-gray-400 text-xs">• Volume: R$ 80M</p>
+                        <p class="text-orange-300 text-xs mt-2">
+                          <strong>Interpretação:</strong> IV está no bottom 15% do histórico + boa liquidez = oportunidade de compra
+                        </p>
+                      </div>
+                    </div>
+                    
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Resumo Final -->
+              <div class="mt-8 pt-6 border-t border-white/10 text-center">
+                <h4 class="text-geminii font-bold text-lg mb-3">Resumo: Como Usar o IV Scanner</h4>
+                <div class="max-w-4xl mx-auto">
+                  <p class="text-gray-300 text-sm leading-relaxed mb-4">
+                    1. <strong>Olhe o percentil</strong>: >80% = caro, 20% = barato<br>
+                    2. <strong>Confirme o volume</strong>: Quanto maior, melhor para executar<br>
+                    3. <strong>Compare IV atual vs 6M máximo</strong>: Distância indica oportunidade<br>
+                    4. <strong>Escolha a estratégia</strong>: Venda no vermelho, compra no verde
+                  </p>
+                  <div class="bg-geminii/10 border border-geminii/30 rounded-lg p-4">
+                    <p class="text-geminii font-medium text-sm">
+                       O IV Scanner elimina o trabalho de analisar ação por ação, mostrando as melhores oportunidades do mercado inteiro em segundos!
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
+            </div>
+          </div>
+        </div>
       </div>
 
-      <!-- Painel de Gráficos -->
-      <div class="rank-card">
-        <h2 class="text-3xl font-bold mb-6 text-center">
-          <i class="fas fa-chart-bar mr-2 text-purple-400"></i>
-          Painel de Ranking - Ações com Opções (Volatilidade Implícita)
+      <!-- Painel de Gráficos - IV ALTA -->
+      <div class="rank-card panel-high mb-8">
+        <h2 class="text-3xl font-bold mb-2 text-center">
+          <i class="fas fa-arrow-up mr-2 text-red-400"></i>
+          <span class="text-red-400">Top 20 Maiores</span> Volatilidades Implícitas
         </h2>
+        <p class="text-center text-gray-400 text-sm mb-6">Oportunidades para vendedores de opções</p>
 
-        <!-- Grid de 4 Gráficos -->
+        <!-- Grid de 4 Gráficos - IV ALTA -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
           
           <!-- Gráfico 1: IV Atual -->
@@ -188,18 +410,72 @@
           </div>
 
         </div>
+      </div>
 
-        <!-- Controles -->
-        <div class="mt-6 flex justify-center">
-          <button 
-            id="refreshBtn"
-            onclick="loadAndRenderCharts()" 
-            class="px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 rounded-lg text-white font-semibold transition-all duration-300 transform hover:scale-105"
-          >
-            <i class="fas fa-sync-alt mr-2"></i>
-            <span id="refreshText">Atualizar Dados</span>
-          </button>
+      <!-- Painel de Gráficos - IV BAIXA -->
+      <div class="rank-card panel-low">
+        <h2 class="text-3xl font-bold mb-2 text-center">
+          <i class="fas fa-arrow-down mr-2 text-green-400"></i>
+          <span class="text-green-400">Top 20 Menores</span> Volatilidades Implícitas
+        </h2>
+        <p class="text-center text-gray-400 text-sm mb-6">Oportunidades para compradores de opções</p>
+
+        <!-- Grid de 4 Gráficos - IV BAIXA -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          
+          <!-- Gráfico 5: IV Atual (Baixas) -->
+          <div class="chart-container">
+            <h3 class="text-xl font-bold mb-4 text-center text-blue-400">
+              Volatilidade Implícita Atual (%)
+            </h3>
+            <div id="chart5" class="w-full h-full">
+              <div class="loading"><div class="spinner"></div></div>
+            </div>
+          </div>
+
+          <!-- Gráfico 6: IV Atual vs IV 6M Max (Baixas) -->
+          <div class="chart-container">
+            <h3 class="text-xl font-bold mb-4 text-center text-green-400">
+              IV Atual vs IV 6M Máximo
+            </h3>
+            <div id="chart6" class="w-full h-full">
+              <div class="loading"><div class="spinner"></div></div>
+            </div>
+          </div>
+
+          <!-- Gráfico 7: Percentil IV 6M (Baixas) -->
+          <div class="chart-container">
+            <h3 class="text-xl font-bold mb-4 text-center text-orange-400">
+              Percentil IV 6M (%)
+            </h3>
+            <div id="chart7" class="w-full h-full">
+              <div class="loading"><div class="spinner"></div></div>
+            </div>
+          </div>
+
+          <!-- Gráfico 8: IV vs Volume (Baixas) -->
+          <div class="chart-container">
+            <h3 class="text-xl font-bold mb-4 text-center text-purple-400">
+              IV Atual vs Volume Financeiro
+            </h3>
+            <div id="chart8" class="w-full h-full">
+              <div class="loading"><div class="spinner"></div></div>
+            </div>
+          </div>
+
         </div>
+      </div>
+
+      <!-- Controles -->
+      <div class="mt-8 flex justify-center">
+        <button 
+          id="refreshBtn"
+          onclick="loadAndRenderCharts()" 
+          class="px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 rounded-lg text-white font-semibold transition-all duration-300 transform hover:scale-105"
+        >
+          <i class="fas fa-sync-alt mr-2"></i>
+          <span id="refreshText">Atualizar Dados</span>
+        </button>
       </div>
 
     </div>
@@ -207,7 +483,8 @@
 
   <script>
     // Variáveis globais
-    let stocksData = [];
+    let stocksDataHigh = [];
+    let stocksDataLow = [];
     
     // Lista de ações com opções (mesma do Python)
     const optionsStocks = [
@@ -223,13 +500,33 @@
       'SUZB3', 'TAEE11', 'TIMS3', 'TOTS3', 'UGPA3', 'USIM5', 'VALE3', 'VAMO3', 
       'VBBR3', 'VIVA3', 'VIVT3', 'WEGE3', 'YDUQ3'
     ];
+
+    // ===== FUNÇÃO DO EXPANDER =====
+    function toggleInfo() {
+      const content = document.getElementById('infoContent');
+      const icon = document.getElementById('infoIcon');
+      
+      if (content.classList.contains('hidden')) {
+        content.classList.remove('hidden');
+        content.style.animation = 'fadeIn 0.5s ease-in-out';
+        icon.classList.remove('fa-info-circle');
+        icon.classList.add('fa-times');
+      } else {
+        content.style.animation = 'fadeOut 0.3s ease-in-out';
+        setTimeout(() => {
+          content.classList.add('hidden');
+        }, 300);
+        icon.classList.remove('fa-times');
+        icon.classList.add('fa-info-circle');
+      }
+    }
+
+    // Make toggleInfo global
+    window.toggleInfo = toggleInfo;
     
     // Função de debug
     function debug(message) {
       console.log(message);
-      const debugEl = document.getElementById('debug');
-      debugEl.innerHTML += message + '<br>';
-      debugEl.scrollTop = debugEl.scrollHeight;
     }
     
     // Inicialização
@@ -239,13 +536,14 @@
       loadAndRenderCharts();
     });
     
-    // Carregar dados da API - REPLICANDO EXATAMENTE O PYTHON
+    // Carregar dados da API
     async function loadAndRenderCharts() {
       try {
+        updateButtonState(true);
         debug('🔄 Carregando dados da API...');
         
-        // Chamar a API que já existe
-        const response = await fetch('/api/rank/iv-ranking?top_n=20');
+        // Chamar a API que já existe para buscar TODOS os dados
+        const response = await fetch('/api/rank/analise-completa?top_n=150');
         const apiData = await response.json();
         
         debug(`📡 API Response: ${response.status}`);
@@ -254,35 +552,39 @@
           throw new Error(apiData.error || 'Erro na API');
         }
         
-        // Extrair dados - múltiplas tentativas como Python
-        let rawData = null;
-        if (apiData.rankings && apiData.rankings.iv_atual) {
-          rawData = apiData.rankings.iv_atual;
+        // Extrair TODOS os dados
+        let allData = null;
+        if (apiData.all_stocks) {
+          allData = apiData.all_stocks;
+          debug('✅ Usando todos os dados de all_stocks');
+        } else if (apiData.rankings && apiData.rankings.iv_atual) {
+          allData = apiData.rankings.iv_atual;
           debug('✅ Usando dados de rankings.iv_atual');
-        } else if (apiData.all_stocks) {
-          rawData = apiData.all_stocks.slice(0, 20);
-          debug('✅ Usando dados de all_stocks');
-        } else if (Array.isArray(apiData.data)) {
-          rawData = apiData.data;
-          debug('✅ Usando dados diretos');
         } else {
           throw new Error('Estrutura de dados não reconhecida');
         }
         
-        if (!rawData || rawData.length === 0) {
+        if (!allData || allData.length === 0) {
           throw new Error('Nenhum dado retornado');
         }
         
-        // Processar dados EXATAMENTE como Python
-        stocksData = processStocksData(rawData);
-        debug(`✅ ${stocksData.length} ações processadas`);
+        // Processar dados para alta e baixa volatilidade
+        const processedData = processAllStocksData(allData);
+        stocksDataHigh = processedData.high;
+        stocksDataLow = processedData.low;
+        
+        debug(`✅ ${stocksDataHigh.length} ações com IV alta processadas`);
+        debug(`✅ ${stocksDataLow.length} ações com IV baixa processadas`);
         
         // Renderizar gráficos
         renderAllCharts();
         
+        updateButtonState(false);
+        
       } catch (error) {
         debug(`❌ Erro: ${error.message}`);
         showError(error.message);
+        updateButtonState(false);
       }
     }
     
@@ -295,9 +597,9 @@
       return isNaN(num) ? 0 : num;
     }
     
-    // Processar dados - REPLICANDO PYTHON COM LIMPEZA DE DADOS
-    function processStocksData(data) {
-      debug('🔧 Processando dados...');
+    // Processar dados para alta e baixa volatilidade
+    function processAllStocksData(data) {
+      debug('🔧 Processando dados para alta e baixa IV...');
       
       // Filtrar apenas ações com opções (como Python)
       const filtered = data.filter(stock => {
@@ -306,7 +608,7 @@
       
       debug(`🔍 ${filtered.length} ações filtradas (com opções)`);
       
-      // Remover ações sem IV atual (como Python) E LIMPAR DADOS
+      // Remover ações sem IV atual E LIMPAR DADOS
       const withIV = filtered.filter(stock => {
         const iv = cleanNumericValue(stock.iv_current);
         return iv > 0; // Só aceitar IV > 0
@@ -325,27 +627,35 @@
       
       debug(`📊 ${withIV.length} ações com IV válida e dados limpos`);
       
-      // Ordenar por IV atual decrescente (como Python)
-      const sorted = withIV.sort((a, b) => {
-        return b.iv_current - a.iv_current;
-      });
+      // Ordenar por IV atual
+      const sortedData = [...withIV].sort((a, b) => b.iv_current - a.iv_current);
       
-      // Pegar top 20
-      const top20 = sorted.slice(0, 20);
+      // Top 20 maiores IVs
+      const top20High = sortedData.slice(0, 20);
       
-      debug(`🏆 Top 20 selecionado`);
+      // Top 20 menores IVs (pegar do final da lista ordenada decrescente)
+      const top20Low = sortedData.slice(-20).reverse(); // Reverter para mostrar menor para maior
       
-      // Log do primeiro item para debug
-      if (top20.length > 0) {
-        debug(`📋 Primeiro item: ${top20[0].symbol} - IV: ${top20[0].iv_current}%`);
+      debug(`🏆 Top 20 IV alta selecionado`);
+      debug(`🏆 Top 20 IV baixa selecionado`);
+      
+      // Log do primeiro item de cada para debug
+      if (top20High.length > 0) {
+        debug(`📋 Maior IV: ${top20High[0].symbol} - IV: ${top20High[0].iv_current}%`);
+      }
+      if (top20Low.length > 0) {
+        debug(`📋 Menor IV: ${top20Low[0].symbol} - IV: ${top20Low[0].iv_current}%`);
       }
       
-      return top20;
+      return {
+        high: top20High,
+        low: top20Low
+      };
     }
     
     // Renderizar todos os gráficos
     function renderAllCharts() {
-      if (!stocksData || stocksData.length === 0) {
+      if ((!stocksDataHigh || stocksDataHigh.length === 0) && (!stocksDataLow || stocksDataLow.length === 0)) {
         showError('Nenhum dado para renderizar');
         return;
       }
@@ -353,28 +663,38 @@
       debug('🎨 Renderizando gráficos...');
       
       try {
-        renderChart1(); // IV Atual
-        renderChart2(); // IV Atual vs 6M Max
-        renderChart3(); // Percentil IV 6M
-        renderChart4(); // IV vs Volume
+        // Gráficos para IV Alta (1-4)
+        renderChart1(); // IV Atual - Alta
+        renderChart2(); // IV Atual vs 6M Max - Alta
+        renderChart3(); // Percentil IV 6M - Alta
+        renderChart4(); // IV vs Volume - Alta
+        
+        // Gráficos para IV Baixa (5-8)
+        renderChart5(); // IV Atual - Baixa
+        renderChart6(); // IV Atual vs 6M Max - Baixa
+        renderChart7(); // Percentil IV 6M - Baixa
+        renderChart8(); // IV vs Volume - Baixa
+        
         debug('✅ Todos os gráficos renderizados');
       } catch (error) {
         debug(`❌ Erro na renderização: ${error.message}`);
       }
     }
     
-    // Gráfico 1: IV Atual (EXATAMENTE como Python)
+    // ===== GRÁFICOS PARA IV ALTA (1-4) =====
+    
+    // Gráfico 1: IV Atual - Alta
     function renderChart1() {
       try {
-        const symbols = stocksData.map(item => item.symbol);
-        const ivValues = stocksData.map(item => item.iv_current); // Já está limpo
+        const symbols = stocksDataHigh.map(item => item.symbol);
+        const ivValues = stocksDataHigh.map(item => item.iv_current);
         
         const trace = {
           x: symbols,
           y: ivValues,
           type: 'bar',
           marker: {
-            color: 'skyblue',
+            color: '#ef4444',
             opacity: 0.7
           },
           text: ivValues.map(v => `${v.toFixed(1)}%`),
@@ -383,7 +703,7 @@
         
         const layout = {
           title: {
-            text: 'Volatilidade Implícita Atual (%)',
+            text: 'Volatilidade Implícita Atual (%) - Maiores',
             font: { color: 'white', weight: 'bold' }
           },
           xaxis: {
@@ -404,19 +724,19 @@
         };
         
         Plotly.newPlot('chart1', [trace], layout, {responsive: true, displayModeBar: false});
-        debug('✅ Chart1 renderizado');
+        debug('✅ Chart1 (IV Alta) renderizado');
       } catch (error) {
         debug(`❌ Erro Chart1: ${error.message}`);
         document.getElementById('chart1').innerHTML = '<div class="loading" style="color: #ff6b6b;">❌ Erro no gráfico 1</div>';
       }
     }
     
-    // Gráfico 2: IV Atual vs IV 6M Max (EXATAMENTE como Python)
+    // Gráfico 2: IV Atual vs IV 6M Max - Alta
     function renderChart2() {
       try {
-        const symbols = stocksData.map(item => item.symbol);
-        const ivCurrent = stocksData.map(item => item.iv_current); // Já está limpo
-        const iv6mMax = stocksData.map(item => item.iv_6m_max); // Já está limpo
+        const symbols = stocksDataHigh.map(item => item.symbol);
+        const ivCurrent = stocksDataHigh.map(item => item.iv_current);
+        const iv6mMax = stocksDataHigh.map(item => item.iv_6m_max);
         
         const width = 0.35;
         const x = symbols.map((_, i) => i);
@@ -426,7 +746,7 @@
           y: ivCurrent,
           name: 'IV Atual',
           type: 'bar',
-          marker: { color: 'lightcoral', opacity: 0.7 },
+          marker: { color: '#ef4444', opacity: 0.7 },
           width: width
         };
         
@@ -435,13 +755,13 @@
           y: iv6mMax,
           name: 'IV 6M Max',
           type: 'bar',
-          marker: { color: 'lightgreen', opacity: 0.7 },
+          marker: { color: '#f97316', opacity: 0.7 },
           width: width
         };
         
         const layout = {
           title: {
-            text: 'IV Atual vs IV 6M Máximo',
+            text: 'IV Atual vs IV 6M Máximo - Maiores',
             font: { color: 'white', weight: 'bold' }
           },
           xaxis: {
@@ -465,25 +785,25 @@
         };
         
         Plotly.newPlot('chart2', [trace1, trace2], layout, {responsive: true, displayModeBar: false});
-        debug('✅ Chart2 renderizado');
+        debug('✅ Chart2 (IV Alta) renderizado');
       } catch (error) {
         debug(`❌ Erro Chart2: ${error.message}`);
         document.getElementById('chart2').innerHTML = '<div class="loading" style="color: #ff6b6b;">❌ Erro no gráfico 2</div>';
       }
     }
     
-    // Gráfico 3: Percentil IV 6M (EXATAMENTE como Python)
+    // Gráfico 3: Percentil IV 6M - Alta
     function renderChart3() {
       try {
-        const symbols = stocksData.map(item => item.symbol);
-        const percentiles = stocksData.map(item => item.iv_6m_percentile); // Já está limpo
+        const symbols = stocksDataHigh.map(item => item.symbol);
+        const percentiles = stocksDataHigh.map(item => item.iv_6m_percentile);
         
-        // Cores baseadas no percentil (como Python)
+        // Cores baseadas no percentil
         const colors = percentiles.map(p => {
-          if (p > 80) return 'red';
-          if (p > 60) return 'orange';
-          if (p > 40) return 'yellow';
-          return 'lightgreen';
+          if (p > 80) return '#dc2626';
+          if (p > 60) return '#ea580c';
+          if (p > 40) return '#eab308';
+          return '#16a34a';
         });
         
         const trace = {
@@ -498,7 +818,7 @@
         
         const layout = {
           title: {
-            text: 'Percentil IV 6M (%)',
+            text: 'Percentil IV 6M (%) - Maiores',
             font: { color: 'white', weight: 'bold' }
           },
           xaxis: {
@@ -520,69 +840,26 @@
               type: 'line',
               x0: 0, x1: 1, xref: 'paper',
               y0: 80, y1: 80,
-              line: { color: 'red', width: 2, dash: 'dash' }
-            },
-            {
-              type: 'line',
-              x0: 0, x1: 1, xref: 'paper',
-              y0: 20, y1: 20,
-              line: { color: 'green', width: 2, dash: 'dash' }
+              line: { color: '#dc2626', width: 2, dash: 'dash' }
             }
           ],
           margin: { t: 50, b: 80, l: 60, r: 20 }
         };
         
         Plotly.newPlot('chart3', [trace], layout, {responsive: true, displayModeBar: false});
-        debug('✅ Chart3 renderizado');
+        debug('✅ Chart3 (IV Alta) renderizado');
       } catch (error) {
         debug(`❌ Erro Chart3: ${error.message}`);
         document.getElementById('chart3').innerHTML = '<div class="loading" style="color: #ff6b6b;">❌ Erro no gráfico 3</div>';
       }
     }
-      
-      const layout = {
-        title: {
-          text: 'Percentil IV 6M (%)',
-          font: { color: 'white', weight: 'bold' }
-        },
-        xaxis: {
-          title: 'Ações',
-          tickangle: -45,
-          color: 'white'
-        },
-        yaxis: {
-          title: 'Percentil (%)',
-          color: 'white'
-        },
-        plot_bgcolor: 'rgba(0,0,0,0)',
-        paper_bgcolor: 'rgba(0,0,0,0)',
-        font: { color: 'white' },
-        shapes: [
-          {
-            type: 'line',
-            x0: 0, x1: 1, xref: 'paper',
-            y0: 80, y1: 80,
-            line: { color: 'red', width: 2, dash: 'dash' }
-          },
-          {
-            type: 'line',
-            x0: 0, x1: 1, xref: 'paper',
-            y0: 20, y1: 20,
-            line: { color: 'green', width: 2, dash: 'dash' }
-          }
-        ],
-        margin: { t: 50, b: 80, l: 60, r: 20 }
-      };
-      
-      Plotly.newPlot('chart3', [trace], layout, {responsive: true});
     
-    
-    // Gráfico 4: IV vs Volume (EXATAMENTE como Python)
+    // Gráfico 4: IV vs Volume - Alta
     function renderChart4() {
       try {
-        const volumes = stocksData.map(item => item.financial_volume); // Já está limpo (mínimo 1)
-        const ivValues = stocksData.map(item => item.iv_current); // Já está limpo
-        const symbols = stocksData.map(item => item.symbol);
+        const volumes = stocksDataHigh.map(item => item.financial_volume);
+        const ivValues = stocksDataHigh.map(item => item.iv_current);
+        const symbols = stocksDataHigh.map(item => item.symbol);
         
         const trace = {
           x: volumes,
@@ -590,7 +867,7 @@
           mode: 'markers+text',
           type: 'scatter',
           marker: {
-            color: 'purple',
+            color: '#ef4444',
             size: 10,
             opacity: 0.6
           },
@@ -601,7 +878,7 @@
         
         const layout = {
           title: {
-            text: 'IV Atual vs Volume Financeiro',
+            text: 'IV Atual vs Volume Financeiro - Maiores',
             font: { color: 'white', weight: 'bold' }
           },
           xaxis: {
@@ -622,10 +899,235 @@
         };
         
         Plotly.newPlot('chart4', [trace], layout, {responsive: true, displayModeBar: false});
-        debug('✅ Chart4 renderizado');
+        debug('✅ Chart4 (IV Alta) renderizado');
       } catch (error) {
         debug(`❌ Erro Chart4: ${error.message}`);
         document.getElementById('chart4').innerHTML = '<div class="loading" style="color: #ff6b6b;">❌ Erro no gráfico 4</div>';
+      }
+    }
+    
+    // ===== GRÁFICOS PARA IV BAIXA (5-8) =====
+    
+    // Gráfico 5: IV Atual - Baixa
+    function renderChart5() {
+      try {
+        const symbols = stocksDataLow.map(item => item.symbol);
+        const ivValues = stocksDataLow.map(item => item.iv_current);
+        
+        const trace = {
+          x: symbols,
+          y: ivValues,
+          type: 'bar',
+          marker: {
+            color: '#22c55e',
+            opacity: 0.7
+          },
+          text: ivValues.map(v => `${v.toFixed(1)}%`),
+          textposition: 'auto'
+        };
+        
+        const layout = {
+          title: {
+            text: 'Volatilidade Implícita Atual (%) - Menores',
+            font: { color: 'white', weight: 'bold' }
+          },
+          xaxis: {
+            title: 'Ações',
+            tickangle: -45,
+            color: 'white',
+            gridcolor: 'rgba(255,255,255,0.1)'
+          },
+          yaxis: {
+            title: 'IV Atual (%)',
+            color: 'white',
+            gridcolor: 'rgba(255,255,255,0.1)'
+          },
+          plot_bgcolor: 'rgba(0,0,0,0)',
+          paper_bgcolor: 'rgba(0,0,0,0)',
+          font: { color: 'white' },
+          margin: { t: 50, b: 80, l: 60, r: 20 }
+        };
+        
+        Plotly.newPlot('chart5', [trace], layout, {responsive: true, displayModeBar: false});
+        debug('✅ Chart5 (IV Baixa) renderizado');
+      } catch (error) {
+        debug(`❌ Erro Chart5: ${error.message}`);
+        document.getElementById('chart5').innerHTML = '<div class="loading" style="color: #ff6b6b;">❌ Erro no gráfico 5</div>';
+      }
+    }
+    
+    // Gráfico 6: IV Atual vs IV 6M Max - Baixa
+    function renderChart6() {
+      try {
+        const symbols = stocksDataLow.map(item => item.symbol);
+        const ivCurrent = stocksDataLow.map(item => item.iv_current);
+        const iv6mMax = stocksDataLow.map(item => item.iv_6m_max);
+        
+        const width = 0.35;
+        const x = symbols.map((_, i) => i);
+        
+        const trace1 = {
+          x: x.map(i => i - width/2),
+          y: ivCurrent,
+          name: 'IV Atual',
+          type: 'bar',
+          marker: { color: '#22c55e', opacity: 0.7 },
+          width: width
+        };
+        
+        const trace2 = {
+          x: x.map(i => i + width/2),
+          y: iv6mMax,
+          name: 'IV 6M Max',
+          type: 'bar',
+          marker: { color: '#65a30d', opacity: 0.7 },
+          width: width
+        };
+        
+        const layout = {
+          title: {
+            text: 'IV Atual vs IV 6M Máximo - Menores',
+            font: { color: 'white', weight: 'bold' }
+          },
+          xaxis: {
+            title: 'Ações',
+            tickvals: x,
+            ticktext: symbols,
+            tickangle: -45,
+            color: 'white',
+            gridcolor: 'rgba(255,255,255,0.1)'
+          },
+          yaxis: {
+            title: 'IV (%)',
+            color: 'white',
+            gridcolor: 'rgba(255,255,255,0.1)'
+          },
+          plot_bgcolor: 'rgba(0,0,0,0)',
+          paper_bgcolor: 'rgba(0,0,0,0)',
+          font: { color: 'white' },
+          legend: { font: { color: 'white' } },
+          margin: { t: 50, b: 80, l: 60, r: 20 }
+        };
+        
+        Plotly.newPlot('chart6', [trace1, trace2], layout, {responsive: true, displayModeBar: false});
+        debug('✅ Chart6 (IV Baixa) renderizado');
+      } catch (error) {
+        debug(`❌ Erro Chart6: ${error.message}`);
+        document.getElementById('chart6').innerHTML = '<div class="loading" style="color: #ff6b6b;">❌ Erro no gráfico 6</div>';
+      }
+    }
+    
+    // Gráfico 7: Percentil IV 6M - Baixa
+    function renderChart7() {
+      try {
+        const symbols = stocksDataLow.map(item => item.symbol);
+        const percentiles = stocksDataLow.map(item => item.iv_6m_percentile);
+        
+        // Cores baseadas no percentil
+        const colors = percentiles.map(p => {
+          if (p > 80) return '#dc2626';
+          if (p > 60) return '#ea580c';
+          if (p > 40) return '#eab308';
+          return '#16a34a';
+        });
+        
+        const trace = {
+          x: symbols,
+          y: percentiles,
+          type: 'bar',
+          marker: {
+            color: colors,
+            opacity: 0.7
+          }
+        };
+        
+        const layout = {
+          title: {
+            text: 'Percentil IV 6M (%) - Menores',
+            font: { color: 'white', weight: 'bold' }
+          },
+          xaxis: {
+            title: 'Ações',
+            tickangle: -45,
+            color: 'white',
+            gridcolor: 'rgba(255,255,255,0.1)'
+          },
+          yaxis: {
+            title: 'Percentil (%)',
+            color: 'white',
+            gridcolor: 'rgba(255,255,255,0.1)'
+          },
+          plot_bgcolor: 'rgba(0,0,0,0)',
+          paper_bgcolor: 'rgba(0,0,0,0)',
+          font: { color: 'white' },
+          shapes: [
+            {
+              type: 'line',
+              x0: 0, x1: 1, xref: 'paper',
+              y0: 20, y1: 20,
+              line: { color: '#16a34a', width: 2, dash: 'dash' }
+            }
+          ],
+          margin: { t: 50, b: 80, l: 60, r: 20 }
+        };
+        
+        Plotly.newPlot('chart7', [trace], layout, {responsive: true, displayModeBar: false});
+        debug('✅ Chart7 (IV Baixa) renderizado');
+      } catch (error) {
+        debug(`❌ Erro Chart7: ${error.message}`);
+        document.getElementById('chart7').innerHTML = '<div class="loading" style="color: #ff6b6b;">❌ Erro no gráfico 7</div>';
+      }
+    }
+    
+    // Gráfico 8: IV vs Volume - Baixa
+    function renderChart8() {
+      try {
+        const volumes = stocksDataLow.map(item => item.financial_volume);
+        const ivValues = stocksDataLow.map(item => item.iv_current);
+        const symbols = stocksDataLow.map(item => item.symbol);
+        
+        const trace = {
+          x: volumes,
+          y: ivValues,
+          mode: 'markers+text',
+          type: 'scatter',
+          marker: {
+            color: '#22c55e',
+            size: 10,
+            opacity: 0.6
+          },
+          text: symbols,
+          textposition: 'top center',
+          textfont: { color: 'white', size: 8 }
+        };
+        
+        const layout = {
+          title: {
+            text: 'IV Atual vs Volume Financeiro - Menores',
+            font: { color: 'white', weight: 'bold' }
+          },
+          xaxis: {
+            title: 'Volume Financeiro (R$)',
+            type: 'log',
+            color: 'white',
+            gridcolor: 'rgba(255,255,255,0.1)'
+          },
+          yaxis: {
+            title: 'IV Atual (%)',
+            color: 'white',
+            gridcolor: 'rgba(255,255,255,0.1)'
+          },
+          plot_bgcolor: 'rgba(0,0,0,0)',
+          paper_bgcolor: 'rgba(0,0,0,0)',
+          font: { color: 'white' },
+          margin: { t: 50, b: 80, l: 60, r: 20 }
+        };
+        
+        Plotly.newPlot('chart8', [trace], layout, {responsive: true, displayModeBar: false});
+        debug('✅ Chart8 (IV Baixa) renderizado');
+      } catch (error) {
+        debug(`❌ Erro Chart8: ${error.message}`);
+        document.getElementById('chart8').innerHTML = '<div class="loading" style="color: #ff6b6b;">❌ Erro no gráfico 8</div>';
       }
     }
     
@@ -650,14 +1152,9 @@
     
     // Mostrar erro
     function showError(message) {
-      ['chart1', 'chart2', 'chart3', 'chart4'].forEach(id => {
+      ['chart1', 'chart2', 'chart3', 'chart4', 'chart5', 'chart6', 'chart7', 'chart8'].forEach(id => {
         document.getElementById(id).innerHTML = `<div class="loading" style="color: #ff6b6b;">❌ ${message}</div>`;
       });
-    }
-    
-    // Função de debug
-    function debug(message) {
-      console.log(message);
     }
     
     // Verificar saúde da API
@@ -679,6 +1176,9 @@
         statusEl.className = 'w-8 h-8 bg-red-500 bg-opacity-10 border border-red-500 border-opacity-30 rounded-full flex items-center justify-center relative';
       }
     }
+
+    // Inicializar verificação da API
+    checkApiHealth();
   </script>
 </body>
 </html>

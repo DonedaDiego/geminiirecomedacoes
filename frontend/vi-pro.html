@@ -65,6 +65,16 @@
       100% { transform: rotate(360deg); }
     }
 
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fadeOut {
+      from { opacity: 1; transform: translateY(0); }
+      to { opacity: 0; transform: translateY(-10px); }
+    }
+
     .dark-select {
       background-color: rgba(30, 30, 30, 0.9);
       border: 1px solid rgba(255, 255, 255, 0.2);
@@ -242,7 +252,81 @@
           <span class="text-white font-light">Quartis </span>
         </h1>
         <p class="text-neutral-300 text-lg max-w-3xl mx-auto">
-          Análise quantitativa avançada de volatilidade implícita através de quartis históricos para identificação de oportunidades de compra e venda de volatilidade no mercado de opçõe.
+          Análise quantitativa avançada de volatilidade implícita através de quartis históricos para identificação de oportunidades de compra e venda de volatilidade no mercado de opções.
+        </p>
+        
+        <!-- Info Expander -->
+        <div class="mt-8">
+          <button onclick="toggleInfo()" class="bg-gradient-to-r from-geminii to-purple-600 hover:from-purple-600 hover:to-geminii text-white px-6 py-3 rounded-full font-semibold text-sm transition-all duration-300 flex items-center mx-auto shadow-lg hover:shadow-xl transform hover:scale-105">
+            <i id="infoIcon" class="fas fa-info-circle mr-2 transition-transform duration-300"></i>
+            Como Funciona o Sistema de Quartis
+          </button>
+          
+          <div id="infoContent" class="hidden mt-8 max-w-5xl mx-auto">
+            <div class="vi-card p-8 text-left">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                
+                <!-- Análise por Quartis -->
+                <div class="space-y-4">
+                  <div class="flex items-center mb-4">
+                    <div class="w-4 h-4 rounded-full bg-gradient-to-r from-blue-400 to-cyan-500 mr-3"></div>
+                    <h3 class="text-xl font-bold text-white">Análise por Quartis</h3>
+                  </div>
+                  <p class="text-gray-300 text-sm leading-relaxed mb-4">
+                    Dividimos o histórico de <strong>1 ano da Volatilidade Implícita</strong> em 4 quartis para 
+                    identificar se a VI atual está <strong>cara ou barata</strong> em relação ao histórico, 
+                    oferecendo uma <strong>base estatística sólida</strong> para decisões de trading.
+                  </p>
+                  <div class="bg-white/5 rounded-lg p-4">
+                    <h4 class="text-white font-semibold text-sm mb-3">Quartis identificados:</h4>
+                    <ul class="text-gray-400 text-sm space-y-2">
+                      <li>• <span class="text-white font-medium">Q4 (75-100%)</span>: VI muito alta - Ideal para vender volatilidade</li>
+                      <li>• <span class="text-white font-medium">Q3 (50-75%)</span>: VI alta - Favorável para vender</li>
+                      <li>• <span class="text-white font-medium">Q2 (25-50%)</span>: VI normal - Condições neutras</li>
+                      <li>• <span class="text-white font-medium">Q1 (0-25%)</span>: VI baixa - Ideal para comprar volatilidade</li>
+                    </ul>
+                  </div>
+                </div>
+                
+                <!-- Estratégias por Quartil -->
+                <div class="space-y-4">
+                  <div class="flex items-center mb-4">
+                    <div class="w-4 h-4 rounded-full bg-gradient-to-r from-purple-400 to-pink-500 mr-3"></div>
+                    <h3 class="text-xl font-bold text-white">Estratégias Recomendadas</h3>
+                  </div>
+                  <p class="text-gray-300 text-sm leading-relaxed mb-4">
+                    Cada quartil indica um <strong>nível específico da volatilidade implícita</strong> em relação 
+                    ao histórico, direcionando para a <strong>melhor estratégia com opções</strong> baseada em 
+                    vantagem estatística comprovada.
+                  </p>
+                  <div class="bg-white/5 rounded-lg p-4">
+                    <h4 class="text-white font-semibold text-sm mb-3">Direcionamento estratégico:</h4>
+                    <ul class="text-gray-400 text-sm space-y-2">
+                      <li>• <span class="text-white font-medium">Q4</span>: Venda de opções com alto prêmio</li>
+                      <li>• <span class="text-white font-medium">Q3</span>: Estratégias de venda com risco limitado</li>
+                      <li>• <span class="text-white font-medium">Q2</span>: Aguardar melhor oportunidade</li>
+                      <li>• <span class="text-white font-medium">Q1</span>: Compra de volatilidade barata</li>
+                    </ul>
+                  </div>
+                </div>
+                
+              </div>
+              
+              <!-- Vantagem Estatística -->
+              <div class="mt-8 pt-6 border-t border-white/10">
+                <div class="text-center">
+                  <h4 class="text-geminii font-bold text-lg mb-3">Vantagem Estatística</h4>
+                  <p class="text-gray-300 text-sm max-w-3xl mx-auto">
+                    Ao usar <strong>quartis históricos de 252 dias</strong>, você opera com base em 
+                    <strong>probabilidades estatísticas reais</strong>, não em intuição. Quando a VI está no 
+                    <strong>Q4, estatisticamente ela tende a reverter</strong> para níveis mais baixos, 
+                    criando oportunidades consistentes de <strong>venda de volatilidade com edge matemático</strong>.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Controles -->
@@ -310,7 +394,7 @@
             </div>
             
             <div class="metric-card">
-              <div class="text-sm text-gray-400 mb-1">Uma Visão para Estrátegias</div>
+              <div class="text-sm text-gray-400 mb-1">Uma Visão para Estratégias</div>
               <div id="recommendedStrategy" class="text-lg font-bold text-white mb-2">--</div>
               <div id="strategyDescription" class="text-sm text-gray-300">--</div>
             </div>
@@ -382,125 +466,6 @@
 
       </div>
 
-      <!-- Card Explicativo -->
-      <div class="vi-card explanation-card p-8 mb-8">
-        <h2 class="text-2xl font-bold mb-6 text-center">
-          <i class="fas fa-graduation-cap text-geminii mr-3"></i>
-          Como Funciona o Sistema de Quartis de Volatilidade Implícita
-        </h2>
-        
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-          
-          <!-- Explicação dos Quartis -->
-          <div class="space-y-4">
-            <div class="flex items-center mb-3">
-              <i class="fas fa-chart-bar text-blue-400 text-xl mr-3"></i>
-              <h3 class="text-lg font-bold">Análise por Quartis</h3>
-            </div>
-            <p class="text-gray-300 text-sm leading-relaxed mb-4">
-              Dividimos o histórico de <strong>1 ano da Volatilidade Implícita</strong> em 4 quartis para identificar se a VI atual está cara ou barata.
-            </p>
-            <div class="space-y-2 text-xs">
-              <div class="flex items-center">
-                <div class="w-3 h-3 bg-green-500 rounded mr-2"></div>
-                <span><strong>Q4 (75-100%):</strong> VI muito alta - Ideal para VENDER volatilidade</span>
-              </div>
-              <div class="flex items-center">
-                <div class="w-3 h-3 bg-green-300 rounded mr-2"></div>
-                <span><strong>Q3 (50-75%):</strong> VI alta - Favorável para vender</span>
-              </div>
-              <div class="flex items-center">
-                <div class="w-3 h-3 bg-gray-500 rounded mr-2"></div>
-                <span><strong>Q2 (25-50%):</strong> VI normal - Condições neutras</span>
-              </div>
-              <div class="flex items-center">
-                <div class="w-3 h-3 bg-red-500 rounded mr-2"></div>
-                <span><strong>Q1 (0-25%):</strong> VI baixa - Ideal para COMPRAR volatilidade</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Estratégias por Quartil -->
-          <div class="space-y-4">
-            <div class="flex items-center mb-3">
-              <i class="fas fa-chess text-purple-400 text-xl mr-3"></i>
-              <h3 class="text-lg font-bold">Visão para Estratégias</h3>
-            </div>
-            <p class="text-gray-300 text-sm leading-relaxed mb-4">
-              Cada quartil indica um nível da volatilidade implícita em relação ao histórico. Isso ajuda a escolher a melhor estratégia com opções.
-            </p>
-            <div class="space-y-2 text-xs">
-              <div class="flex items-center">
-                <div class="w-3 h-3 bg-green-500 rounded mr-2"></div>
-                <span><strong>Q4:</strong> Volatilidade muito alta — ideal para <strong>venda de opções</strong>: venda coberta (covered call), venda de puts com caixa (cash-secured puts), condor de ferro (iron condor).</span>
-              </div>
-              <div class="flex items-center">
-                <div class="w-3 h-3 bg-green-300 rounded mr-2"></div>
-                <span><strong>Q3:</strong> Volatilidade alta — favorável para <strong>estratégias de venda com risco limitado</strong>: travas de alta ou baixa (call spreads, put spreads), calendários.</span>
-              </div>
-              <div class="flex items-center">
-                <div class="w-3 h-3 bg-gray-500 rounded mr-2"></div>
-                <span><strong>Q2:</strong> Volatilidade neutra — <strong>aguardar melhor oportunidade</strong> ou montar posições equilibradas com baixo risco.</span>
-              </div>
-              <div class="flex items-center">
-                <div class="w-3 h-3 bg-red-500 rounded mr-2"></div>
-                <span><strong>Q1:</strong> Volatilidade baixa — ideal para <strong>compra de volatilidade</strong>: operar com expectativa de forte movimento, como straddle (compra de call e put no mesmo strike) ou strangle (call e put em strikes diferentes).</span>
-              </div>
-            </div>
-          </div>
-
-
-        </div>
-
-        <!-- Detalhes dos Quartis -->
-        <div class="mt-8 pt-6 border-t border-gray-600">
-          <h3 class="text-xl font-bold mb-4 text-center">Interpretação dos Quartis</h3>
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            
-            <div class="bg-green-500 bg-opacity-10 border border-green-500 border-opacity-30 rounded-lg p-4">
-              <h4 class="font-bold text-green-400 mb-2">Q4 - VI Muito Alta</h4>
-              <p class="text-xs text-gray-300 mb-2">Top 25% histórico</p>
-              <ul class="text-xs text-gray-400">
-                <li>• VI cara vs histórico</li>
-                <li>• Vender volatilidade</li>
-                <li>• Alto premio das opções</li>
-              </ul>
-            </div>
-
-            <div class="bg-green-300 bg-opacity-10 border border-green-300 border-opacity-30 rounded-lg p-4">
-              <h4 class="font-bold text-green-300 mb-2">Q3 - VI Alta</h4>
-              <p class="text-xs text-gray-300 mb-2">Entre 50-75%</p>
-              <ul class="text-xs text-gray-400">
-                <li>• VI acima da mediana</li>
-                <li>• Bom para vender</li>
-                <li>• Premio elevado</li>
-              </ul>
-            </div>
-
-            <div class="bg-gray-500 bg-opacity-10 border border-gray-500 border-opacity-30 rounded-lg p-4">
-              <h4 class="font-bold text-gray-400 mb-2">Q2 - VI Normal</h4>
-              <p class="text-xs text-gray-300 mb-2">Entre 25-50%</p>
-              <ul class="text-xs text-gray-400">
-                <li>• VI próxima da média</li>
-                <li>• Condições neutras</li>
-                <li>• Aguardar oportunidade</li>
-              </ul>
-            </div>
-
-            <div class="bg-red-500 bg-opacity-10 border border-red-500 border-opacity-30 rounded-lg p-4">
-              <h4 class="font-bold text-red-400 mb-2">Q1 - VI Baixa</h4>
-              <p class="text-xs text-gray-300 mb-2">Bottom 25% histórico</p>
-              <ul class="text-xs text-gray-400">
-                <li>• VI barata vs histórico</li>
-                <li>• Comprar volatilidade</li>
-                <li>• Premio baixo das opções</li>
-              </ul>
-            </div>
-
-          </div>
-        </div>
-      </div>
-
     </div>
   </div>
 
@@ -515,6 +480,29 @@
     const statusMsg = document.getElementById('statusMsg');
     const mainSignal = document.getElementById('mainSignal');
     const chartsSection = document.getElementById('chartsSection');
+    
+    // ===== FUNÇÃO DO EXPANDER =====
+    function toggleInfo() {
+      const content = document.getElementById('infoContent');
+      const icon = document.getElementById('infoIcon');
+      
+      if (content.classList.contains('hidden')) {
+        content.classList.remove('hidden');
+        content.style.animation = 'fadeIn 0.5s ease-in-out';
+        icon.classList.remove('fa-info-circle');
+        icon.classList.add('fa-times');
+      } else {
+        content.style.animation = 'fadeOut 0.3s ease-in-out';
+        setTimeout(() => {
+          content.classList.add('hidden');
+        }, 300);
+        icon.classList.remove('fa-times');
+        icon.classList.add('fa-info-circle');
+      }
+    }
+
+    // Make toggleInfo global
+    window.toggleInfo = toggleInfo;
     
     // Funções utilitárias
     function showStatus(message, type = 'info') {
