@@ -848,7 +848,7 @@ def logout():
 def create_app():
     """Factory para criar app - Railway"""
     if os.environ.get('RAILWAY_ENVIRONMENT'):
-        print("🚄 Executando no Railway...")
+        print("Executando no Railway...")
         app.config['ENV'] = 'production'
         app.config['DEBUG'] = False
     

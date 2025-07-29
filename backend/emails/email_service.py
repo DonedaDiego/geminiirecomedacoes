@@ -1067,8 +1067,6 @@ email_service = EmailService()
 
 # FUNÇÃO DE SETUP
 def setup_email_system():
-    """🚀 Configurar sistema de email"""
-    
     
     if email_service.setup_tables():
     

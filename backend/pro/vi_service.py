@@ -18,8 +18,9 @@ class VolatilityImpliedService:
             "Access-Token": self.token,
             "Content-Type": "application/json"
         }
-        print(f"✅ VolatilityImpliedService inicializado")
-    
+        self._cache = {}
+        self._cache_timeout = 300
+
     def _load_token(self):
         token = os.environ.get('OPLAB_TOKEN')
         if token:
@@ -42,7 +43,7 @@ class VolatilityImpliedService:
                 print(f"⚠️ Erro ao ler {config_path}: {e}")
                 continue
         
-        default_token = ""
+        default_token = "beczK/4WCP1n9eOkIqVi4cR+qIlvNST0mq7DfBvKzU1kBRF0rakIb/wnspMQ9qSx--FiV9LR+39n8REDQPYVGc6A==--N2E2OGM3M2YzYmQwMzM0MzE0MWRjNzU4ZThhMDJkMGE="
         return default_token
     
     def get_historical_data(self, ticker, from_date, to_date, symbol=None):
@@ -56,7 +57,7 @@ class VolatilityImpliedService:
         print(f"🔍 Buscando dados das opções: {ticker} ({from_date} a {to_date})")
         
         try:
-            response = requests.get(url, headers=self.headers, params=params, timeout=30)
+            response = requests.get(url, headers=self.headers, params=params, timeout=10)
             
             if response.status_code == 200:
                 data = response.json()
@@ -439,7 +440,7 @@ class VolatilityImpliedService:
             return {
                 'status': 'IV MUITO ALTA (Q4)',
                 'description': f'Volatilidade implícita no quartil superior{quartile_info} - Excelente para vender volatilidade',
-                'recommendation': 'Vender volatilidade: covered calls, cash-secured puts, iron condors',
+                'recommendation': 'Aproveite para vender volatilidade: venda coberta de opções, venda de opções com garantia em caixa, estratégias com ganho limitado e perda controlada (como condor de ferro).',
                 'color': 'green',
                 'confidence': 'Muito Alta'
             }
@@ -447,7 +448,7 @@ class VolatilityImpliedService:
             return {
                 'status': 'IV ALTA (Q3)',
                 'description': f'Volatilidade implícita acima da mediana{quartile_info} - Favorável para vender',
-                'recommendation': 'Estratégias de venda: call spreads, put spreads',
+                'recommendation': 'Bom momento para operar vendendo: montar estruturas com opções em que o ganho ocorre se o ativo não variar muito, como spreads de compra ou de venda.',
                 'color': 'lightgreen',
                 'confidence': 'Alta'
             }
@@ -455,7 +456,7 @@ class VolatilityImpliedService:
             return {
                 'status': 'IV NORMAL (Q2)',
                 'description': f'Volatilidade implícita próxima da mediana{quartile_info} - Condições neutras',
-                'recommendation': 'Estratégias neutras ou aguardar melhor oportunidade',
+                'recommendation': 'Mercado neutro: aguarde novas oportunidades ou monte estratégias equilibradas que ganham em faixas de preço.',
                 'color': 'gray',
                 'confidence': 'Média'
             }
@@ -463,10 +464,11 @@ class VolatilityImpliedService:
             return {
                 'status': 'IV BAIXA (Q1)',
                 'description': f'Volatilidade implícita no quartil inferior{quartile_info} - Cuidado para vender',
-                'recommendation': 'Comprar volatilidade: long straddles, long strangles',
+                'recommendation': 'Melhor momento para comprar volatilidade: operar esperando grandes movimentos, com estratégias como trava de alta/baixa ou compra de opções dos dois lados (como straddle ou strangle).',
                 'color': 'red',
                 'confidence': 'Alta'
             }
+
 
 # Função standalone para uso direto
 def analyze_volatility_implied(ticker, period_days=252):
