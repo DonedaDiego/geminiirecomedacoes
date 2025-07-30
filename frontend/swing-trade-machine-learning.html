@@ -159,6 +159,28 @@
       color: white !important;
       padding: 8px 12px !important;
     }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    @keyframes fadeOut {
+      from { opacity: 1; transform: translateY(0); }
+      to { opacity: 0; transform: translateY(-10px); }
+    }
+    
+    /* ===== ÍCONE COM ROTAÇÃO ===== */
+    .icon-transition {
+      transition: transform 0.3s ease;
+    }
+    
+    .icon-rotate {
+      transform: rotate(45deg);
+    }
+    .mt-8 {
+      margin-bottom: 2rem; /* 32px de espaço embaixo */
+    }
   </style>
 </head>
 <body class="text-white">
@@ -198,6 +220,183 @@
           Análise preditiva com IA, stops dinâmicos e ensemble de modelos avançados
         </p>
       </div>
+
+      <!-- Info Expander -->
+      <div class="mt-8 mb-12">
+        <button onclick="toggleInfo()" class="bg-gradient-to-r from-geminii to-purple-600 hover:from-purple-600 hover:to-geminii text-white px-6 py-3 rounded-full font-semibold text-sm transition-all duration-300 flex items-center mx-auto shadow-lg hover:shadow-xl transform hover:scale-105">
+          <i id="infoIcon" class="fas fa-brain mr-2 icon-transition"></i>
+          Como Funciona o Machine Learning
+        </button>
+        
+        <div id="infoContent" class="hidden mt-8 max-w-6xl mx-auto">
+          <div class="ml-card p-8 text-left">
+            
+            <!-- Explicação Principal -->
+            <div class="text-center mb-8">
+              <h3 class="text-2xl font-bold text-white mb-4">Sistema de Machine Learning Avançado</h3>
+              <p class="text-gray-300 text-base leading-relaxed max-w-4xl mx-auto">
+                Nosso <strong>Machine Learning altamente preciso</strong> combina um ensemble de modelos avançados:
+                <strong>XGBoost, Random Forest e Regressão Logística</strong>. O sistema utiliza a <strong>volatilidade histórica</strong> 
+                como ponto de partida e adiciona diversas variáveis para encontrar a combinação perfeita.
+              </p>
+            </div>
+            
+            <!-- Conceitos Fundamentais -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+              
+              <!-- Ensemble de Modelos -->
+              <div class="bg-blue-500/10 border border-blue-500/30 rounded-lg p-6">
+                <div class="flex items-center mb-4">
+                  <div class="w-3 h-3 rounded-full bg-blue-400 mr-3"></div>
+                  <h4 class="text-lg font-bold text-blue-400">Ensemble de Modelos</h4>
+                </div>
+                <p class="text-gray-300 text-sm mb-3">
+                  <strong>XGBoost + Random Forest + Regressão Logística</strong> - Combinação de algoritmos para máxima precisão.
+                </p>
+                <div class="bg-white/5 rounded p-3">
+                  <p class="text-white text-xs font-medium">💡 Resultado:</p>
+                  <p class="text-gray-400 text-xs">
+                    Acurácia média de <strong>65%</strong><br>
+                    dos movimentos previstos
+                  </p>
+                </div>
+              </div>
+              
+              <!-- Volatilidade Histórica -->
+              <div class="bg-green-500/10 border border-green-500/30 rounded-lg p-6">
+                <div class="flex items-center mb-4">
+                  <div class="w-3 h-3 rounded-full bg-green-400 mr-3"></div>
+                  <h4 class="text-lg font-bold text-green-400">Volatilidade Histórica</h4>
+                </div>
+                <p class="text-gray-300 text-sm mb-3">
+                  <strong>Ponto de partida fundamental</strong> - análise dos padrões de oscilação passados do ativo.
+                </p>
+                <div class="bg-white/5 rounded p-3">
+                  <p class="text-white text-xs font-medium">💡 Base para:</p>
+                  <p class="text-gray-400 text-xs">
+                    Cálculo de stops dinâmicos<br>
+                    e targets otimizados
+                  </p>
+                </div>
+              </div>
+              
+              <!-- Stops Dinâmicos -->
+              <div class="bg-orange-500/10 border border-orange-500/30 rounded-lg p-6">
+                <div class="flex items-center mb-4">
+                  <div class="w-3 h-3 rounded-full bg-orange-400 mr-3"></div>
+                  <h4 class="text-lg font-bold text-orange-400">Stops Dinâmicos</h4>
+                </div>
+                <p class="text-gray-300 text-sm mb-3">
+                  <strong>Stop loss calculado pelo ATR</strong> - ajuste automático conforme a volatilidade atual.
+                </p>
+                <div class="bg-white/5 rounded p-3">
+                  <p class="text-white text-xs font-medium">💡 Vantagem:</p>
+                  <p class="text-gray-400 text-xs">
+                    Proteção inteligente que<br>
+                    se adapta ao mercado
+                  </p>
+                </div>
+              </div>
+              
+            </div>
+            
+            <!-- Performance e Métricas -->
+            <div class="mt-8 pt-6 border-t border-white/10">
+              <h4 class="text-xl font-bold text-white mb-6 text-center">Performance e Métricas</h4>
+              
+              <div class="bg-white/5 rounded-lg p-6">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  
+                  <!-- Acurácia -->
+                  <div>
+                    <h5 class="text-green-400 font-bold mb-3 flex items-center">
+                      <i class="fas fa-bullseye mr-2"></i>Acurácia Média
+                    </h5>
+                    <div class="bg-black/30 rounded p-4">
+                      <div class="text-3xl font-bold text-green-400 mb-2">65%</div>
+                      <p class="text-gray-400 text-xs mb-2">dos movimentos previstos corretamente</p>
+                      <p class="text-green-300 text-xs">
+                        <strong>Excelente:</strong> Acima da média do mercado (50-55%)
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <!-- Stops Dinâmicos -->
+                  <div>
+                    <h5 class="text-red-400 font-bold mb-3 flex items-center">
+                      <i class="fas fa-shield-alt mr-2"></i>Stops Dinâmicos
+                    </h5>
+                    <div class="bg-black/30 rounded p-4">
+                      <div class="text-xl font-bold text-red-400 mb-2">ATR-Based</div>
+                      <p class="text-gray-400 text-xs mb-2">Stop loss calculado automaticamente</p>
+                      <p class="text-red-300 text-xs">
+                        <strong>Inteligente:</strong> Se adapta à volatilidade atual
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <!-- Otimização -->
+                  <div>
+                    <h5 class="text-yellow-400 font-bold mb-3 flex items-center">
+                      <i class="fas fa-robot mr-2"></i>Otimização
+                    </h5>
+                    <div class="bg-black/30 rounded p-4">
+                      <div class="text-xl font-bold text-yellow-400 mb-2">Ensemble</div>
+                      <p class="text-gray-400 text-xs mb-2">3 algoritmos trabalhando juntos</p>
+                      <p class="text-yellow-300 text-xs">
+                        <strong>Robusto:</strong> Reduz overfitting e falsos sinais
+                      </p>
+                    </div>
+                  </div>
+                  
+                </div>
+              </div>
+            </div>
+            
+            <!-- Resumo Prático -->
+            <div class="mt-8 pt-6 border-t border-white/10 text-center">
+              <h4 class="text-geminii font-bold text-lg mb-3">Como Usar na Prática</h4>
+              <div class="max-w-4xl mx-auto">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  
+                  <!-- Para Swing Trade -->
+                  <div class="bg-geminii/10 border border-geminii/30 rounded-lg p-4">
+                    <h5 class="text-geminii font-bold mb-3">O Que o Sistema Faz</h5>
+                    <div class="text-left text-sm space-y-2">
+                      <p class="text-gray-300">✓ <strong>Prevê direção</strong>: COMPRA ou VENDA</p>
+                      <p class="text-gray-300">✓ <strong>Calcula stop dinâmico</strong>: Baseado no ATR</p>
+                      <p class="text-gray-300">✓ <strong>Define target</strong>: Take profit otimizado</p>
+                      <p class="text-gray-300">✓ <strong>Monitora performance</strong>: Métricas em tempo real</p>
+                    </div>
+                  </div>
+                  
+                  <!-- Para Day Trade -->
+                  <div class="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
+                    <h5 class="text-blue-400 font-bold mb-3">O Que Você Deve Fazer</h5>
+                    <div class="text-left text-sm space-y-2">
+                      <p class="text-gray-300"> <strong>Confirme com análise técnica</strong>: Gráficos e padrões</p>
+                      <p class="text-gray-300"> <strong>Verifique notícias</strong>: Fundamentos da empresa</p>
+                      <p class="text-gray-300"> <strong>Gerencie risco</strong>: Tamanho de posição adequado</p>
+                      <p class="text-gray-300"> <strong>Siga a disciplina</strong>: Respeite stops e targets</p>
+                    </div>
+                  </div>
+                  
+                </div>
+                
+                <div class="mt-6 bg-geminii/10 border border-geminii/30 rounded-lg p-4">
+                  <p class="text-geminii font-medium text-sm">
+                     <strong>Lembre-se:</strong> Machine Learning é uma <strong>ferramenta de apoio</strong>, não uma bola de cristal. 
+                    Combine com sua <strong>análise pessoal</strong> e sempre pratique <strong>gestão de risco responsável</strong>!
+                  </p>
+                </div>
+              </div>
+            </div>
+            
+          </div>
+        </div>
+      </div>
+
+
 
       <!-- Controles -->
       <div class="ml-card p-6 mb-8">
@@ -986,6 +1185,29 @@
         console.log('Event listener do ticker configurado');
       }
     }
+
+      function toggleInfo() {
+        const content = document.getElementById('infoContent');
+        const icon = document.getElementById('infoIcon');
+        
+        if (content.classList.contains('hidden')) {
+          content.classList.remove('hidden');
+          content.style.animation = 'fadeIn 0.5s ease-in-out';
+          icon.classList.remove('fa-brain');
+          icon.classList.add('fa-times');
+          icon.classList.add('icon-rotate');
+        } else {
+          content.style.animation = 'fadeOut 0.3s ease-in-out';
+          setTimeout(() => {
+            content.classList.add('hidden');
+          }, 300);
+          icon.classList.remove('fa-times', 'icon-rotate');
+          icon.classList.add('fa-brain');
+        }
+      }
+      
+      // Make toggleInfo global
+      window.toggleInfo = toggleInfo;
 
     // Verificar autenticação na inicialização
     function checkAuth() {
