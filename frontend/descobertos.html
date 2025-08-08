@@ -1,0 +1,1702 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Geminii Walls - Dashboard B3</title>
+    
+    <!-- Fonts Google -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Chart.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <!-- Chart.js Annotation Plugin -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-annotation/1.4.0/chartjs-plugin-annotation.min.js"></script>
+    
+    <style>
+        /* RESET E ISOLAMENTO */
+    .GEMINII_WALLS_container {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: 'Inter', sans-serif;
+        background: linear-gradient(135deg, #0f0514 0%, #1a0b2e 50%, #2d1b4e 100%);
+        min-height: 100vh;
+        color: #e2e8f0;
+        position: relative;
+        overflow-x: hidden;
+    }
+    
+    .GEMINII_WALLS_container * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+    
+    /* LAYOUT PRINCIPAL - SEM FUNDO */
+    .GEMINII_WALLS_main {
+        width: 100%;
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: clamp(20px, 4vw, 30px);
+        position: relative;
+        z-index: 1;
+        background: none;
+    }
+    
+    /* HEADER MODERNO - SEM FUNDO */
+    .GEMINII_WALLS_header {
+        text-align: center;
+        margin-bottom: 60px;
+        position: relative;
+        z-index: 10;
+        background: none;
+    }
+    
+    .GEMINII_WALLS_title {
+        font-family: 'Orbitron', sans-serif;
+        font-weight: 800;
+        font-size: clamp(1.8rem, 5vw, 3rem);
+        text-transform: uppercase;
+        color: #ffffff;
+        margin-bottom: 15px;
+        line-height: 1.2;
+    }
+    
+    .GEMINII_WALLS_title .highlight {
+        background: linear-gradient(45deg, #ba39af, #d946ef);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+    
+    .GEMINII_WALLS_subtitle {
+        color: #94a3b8;
+        font-size: clamp(1rem, 2.5vw, 1.2rem);
+        font-weight: 300;
+        max-width: 600px;
+        margin: 0 auto;
+    }
+    
+    /* FILTROS HORIZONTAIS COM GLASS EFFECT */
+    .GEMINII_WALLS_filters {
+        backdrop-filter: blur(20px) brightness(0.9);
+        -webkit-backdrop-filter: blur(20px) brightness(0.9);
+        background: rgba(186, 57, 175, 0.08);
+        border: 1px solid rgba(186, 57, 175, 0.3);
+        border-radius: 24px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 20px;
+        justify-content: center;
+        align-items: center;
+        margin-bottom: 40px;
+        padding: clamp(16px, 4vw, 32px);
+        position: relative;
+        overflow: hidden;
+        transition: all 0.3s ease;
+    }
+    
+    .GEMINII_WALLS_filters::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(186, 57, 175, 0.1), transparent);
+        transition: left 1s ease;
+    }
+    
+    .GEMINII_WALLS_filters:hover::before {
+        left: 100%;
+    }
+    
+    .GEMINII_WALLS_filters:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 20px 40px rgba(186, 57, 175, 0.2);
+    }
+    
+    .GEMINII_WALLS_filter_item {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        min-width: 150px;
+    }
+    
+    .GEMINII_WALLS_filter_label {
+        font-size: 0.85rem;
+        color: #cbd5e1;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .GEMINII_WALLS_select {
+        padding: 10px 12px;
+        background: rgba(186, 57, 175, 0.1);
+        border: 1px solid rgba(186, 57, 175, 0.3);
+        border-radius: 8px;
+        color: #e2e8f0;
+        font-size: 14px;
+        transition: all 0.3s ease;
+        min-width: 140px;
+    }
+    
+    .GEMINII_WALLS_select:focus {
+        outline: none;
+        border-color: #d946ef;
+        box-shadow: 0 0 0 2px rgba(217, 70, 239, 0.2);
+    }
+    
+    .GEMINII_WALLS_select option {
+        background: #1a0b2e;
+        color: #e2e8f0;
+    }
+    
+    /* BOTÃO ANALISAR PREMIUM */
+    .GEMINII_WALLS_btn {
+        background: linear-gradient(45deg, #ba39af, #d946ef);
+        border: none;
+        color: white;
+        padding: 16px 32px;
+        border-radius: 50px;
+        font-weight: 700;
+        font-size: 1rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 8px 25px rgba(186, 57, 175, 0.3);
+        margin-top: 20px;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .GEMINII_WALLS_btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 12px 35px rgba(186, 57, 175, 0.4);
+    }
+    
+    .GEMINII_WALLS_btn:active {
+        transform: translateY(-1px);
+    }
+    
+    .GEMINII_WALLS_btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+    }
+    
+    /* CARDS DE MÉTRICAS PREMIUM */
+    .GEMINII_WALLS_metrics {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 24px;
+        margin-bottom: 40px;
+    }
+    
+    .GEMINII_WALLS_metric_card {
+        background: rgba(186, 57, 175, 0.08);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(186, 57, 175, 0.3);
+        border-radius: 24px;
+        padding: 28px;
+        text-align: center;
+        transition: all 0.4s ease;
+        position: relative;
+        overflow: hidden;
+        cursor: pointer;
+        transform: rotate(-0.5deg);
+    }
+    
+    .GEMINII_WALLS_metric_card:nth-child(even) {
+        transform: rotate(0.5deg);
+    }
+    
+    .GEMINII_WALLS_metric_card:hover {
+        transform: rotate(0deg) translateY(-8px) scale(1.02);
+        box-shadow: 0 20px 40px rgba(186, 57, 175, 0.3);
+    }
+    
+    .GEMINII_WALLS_metric_card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(186, 57, 175, 0.1), transparent);
+        transition: left 0.8s;
+    }
+    
+    .GEMINII_WALLS_metric_card:hover::before {
+        left: 100%;
+    }
+    
+    .GEMINII_WALLS_metric_card.selected {
+        border-color: #d946ef;
+        box-shadow: 0 0 20px rgba(217, 70, 239, 0.3);
+        transform: rotate(0deg) scale(1.05);
+    }
+    
+    .GEMINII_WALLS_metric_value {
+        font-family: 'Orbitron', sans-serif;
+        font-weight: 900;
+        font-size: 2.5rem;
+        margin-bottom: 8px;
+        line-height: 1;
+        text-shadow: 0 0 20px rgba(186, 57, 175, 0.3);
+    }
+    
+    .GEMINII_WALLS_metric_label {
+        font-size: 0.9rem;
+        color: #94a3b8;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        font-weight: 600;
+        margin-bottom: 12px;
+    }
+    
+    .GEMINII_WALLS_metric_change {
+        font-size: clamp(0.75rem, 1.8vw, 0.9rem);
+        font-weight: 600;
+        padding: 4px 8px;
+        border-radius: 12px;
+        display: inline-block;
+    }
+    
+    /* CORES ESPECÍFICAS PARA MÉTRICAS */
+    .GEMINII_WALLS_metric_descoberto {
+        border-color: rgba(239, 68, 68, 0.4);
+        background: rgba(239, 68, 68, 0.05);
+    }
+    .GEMINII_WALLS_metric_descoberto .GEMINII_WALLS_metric_value {
+        color: #ef4444;
+    }
+    
+    .GEMINII_WALLS_metric_travado {
+        border-color: rgba(251, 191, 36, 0.4);
+        background: rgba(251, 191, 36, 0.05);
+    }
+    .GEMINII_WALLS_metric_travado .GEMINII_WALLS_metric_value {
+        color: #fbbf24;
+    }
+    
+    .GEMINII_WALLS_metric_coberto {
+        border-color: rgba(59, 130, 246, 0.4);
+        background: rgba(59, 130, 246, 0.05);
+    }
+    .GEMINII_WALLS_metric_coberto .GEMINII_WALLS_metric_value {
+        color: #3b82f6;
+    }
+    
+    .GEMINII_WALLS_metric_ratio {
+        border-color: rgba(16, 185, 129, 0.4);
+        background: rgba(16, 185, 129, 0.05);
+    }
+    .GEMINII_WALLS_metric_ratio .GEMINII_WALLS_metric_value {
+        color: #10b981;
+    }
+    
+    .GEMINII_WALLS_metric_iq {
+        border-color: rgba(168, 85, 247, 0.4);
+        background: rgba(168, 85, 247, 0.05);
+    }
+    .GEMINII_WALLS_metric_iq .GEMINII_WALLS_metric_value {
+        color: #a855f7;
+    }
+    
+    .GEMINII_WALLS_metric_preco {
+        border-color: rgba(50, 255, 50, 0.4);
+        background: rgba(50, 255, 50, 0.05);
+    }
+    .GEMINII_WALLS_metric_preco .GEMINII_WALLS_metric_value {
+        color: #32ff32;
+    }
+    
+    /* ÁREA DO GRÁFICO COM GLASS EFFECT */
+    .GEMINII_WALLS_chart_area {
+        backdrop-filter: blur(20px) brightness(0.9);
+        -webkit-backdrop-filter: blur(20px) brightness(0.9);
+        background: rgba(186, 57, 175, 0.08);
+        border: 1px solid rgba(186, 57, 175, 0.3);
+        border-radius: 24px;
+        padding: clamp(16px, 4vw, 32px);
+        position: relative;
+        height: clamp(300px, 50vh, 550px);  
+        margin-bottom: clamp(30px, 8vw, 80px);
+        z-index: 1;
+        overflow: visible;
+        transition: all 0.3s ease;
+    }
+    
+    .GEMINII_WALLS_chart_area::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(186, 57, 175, 0.1), transparent);
+        transition: left 1s ease;
+        z-index: -1;
+    }
+    
+    .GEMINII_WALLS_chart_area:hover::before {
+        left: 100%;
+    }
+    
+    .GEMINII_WALLS_chart_area:hover {
+        transform: none;
+        box-shadow: 0 20px 40px rgba(186, 57, 175, 0.2);
+    }
+    
+    .GEMINII_WALLS_chart_container {
+        position: relative;
+        height: 100%;
+        width: 100%;
+    }
+    
+    /* LEGENDA DO GRÁFICO */
+    .GEMINII_WALLS_legend {
+        display: flex;
+        justify-content: center;
+        gap: 20px;
+        margin-bottom: 15px;
+        flex-wrap: wrap;
+    }
+    
+    .GEMINII_WALLS_legend_item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 14px;
+        font-weight: 600;
+    }
+    
+    .GEMINII_WALLS_legend_color {
+        width: 16px;
+        height: 16px;
+        border-radius: 4px;
+    }
+    
+    .GEMINII_WALLS_legend_descoberto { background: #ef4444; }
+    .GEMINII_WALLS_legend_travado { background: #fbbf24; }
+    .GEMINII_WALLS_legend_coberto { background: #3b82f6; }
+    .GEMINII_WALLS_legend_preco { background: #32ff32; }
+    
+    /* FILTRO VISUAL DO GRÁFICO */
+    .GEMINII_WALLS_chart_filters {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        margin-bottom: 15px;
+        flex-wrap: wrap;
+    }
+    
+    .GEMINII_WALLS_chart_filter {
+        padding: 8px 16px;
+        background: rgba(186, 57, 175, 0.1);
+        border: 1px solid rgba(186, 57, 175, 0.3);
+        border-radius: 20px;
+        color: #cbd5e1;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .GEMINII_WALLS_chart_filter.active {
+        background: linear-gradient(45deg, #ba39af, #d946ef);
+        color: white;
+        border-color: #d946ef;
+    }
+    
+    .GEMINII_WALLS_chart_filter:hover {
+        background: rgba(186, 57, 175, 0.2);
+    }
+    
+    /* SEÇÃO DA TABELA - SEM FUNDO */
+    .GEMINII_WALLS_table_section {
+        margin-top: 50px;
+        clear: both;
+        position: relative;
+        z-index: 10;
+        background: none;
+        isolation: isolate;
+    }
+    
+    .GEMINII_WALLS_table_title {
+        font-family: 'Orbitron', sans-serif;
+        font-size: clamp(1.2rem, 3vw, 1.8rem);
+        font-weight: 700;
+        color: #ba39af;
+        margin-bottom: clamp(16px, 3vw, 24px);
+        text-align: center;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        background: none;
+    }
+    
+    .GEMINII_WALLS_table_container {
+        backdrop-filter: blur(20px) brightness(0.9);
+        -webkit-backdrop-filter: blur(20px) brightness(0.9);
+        background: rgba(186, 57, 175, 0.08);
+        border: 1px solid rgba(186, 57, 175, 0.3);
+        border-radius: 24px;
+        padding: clamp(16px, 4vw, 32px);
+        overflow-x: auto;
+        max-height: 600px;
+        overflow-y: auto;
+        position: relative;
+        z-index: 20;
+        transition: all 0.4s ease;
+        isolation: isolate;
+    }
+    
+    .GEMINII_WALLS_table_container:hover {
+        transform: none;
+        box-shadow: 0 20px 40px rgba(186, 57, 175, 0.2);
+    }
+    
+    /* TABELA RESPONSIVA */
+    .GEMINII_WALLS_table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: clamp(12px, 2vw, 14px);
+        min-width: 800px;
+    }
+    
+    .GEMINII_WALLS_table th {
+        background: rgba(186, 57, 175, 0.15);
+        color: #cbd5e1;
+        padding: 12px 8px;
+        text-align: center;
+        border-bottom: 2px solid rgba(186, 57, 175, 0.3);
+        font-weight: 700;
+        position: sticky;
+        top: 0;
+        z-index: 1;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .GEMINII_WALLS_table td {
+        padding: 10px 8px;
+        text-align: center;
+        border-bottom: 1px solid rgba(186, 57, 175, 0.1);
+        color: #e2e8f0;
+    }
+    
+    .GEMINII_WALLS_table tbody tr:hover {
+        background: rgba(186, 57, 175, 0.08);
+        transition: all 0.3s ease;
+    }
+    
+    /* CORES POR TIPO */
+    .GEMINII_WALLS_row_call {
+        border-left: 3px solid #3b82f6;
+        background: rgba(59, 130, 246, 0.03);
+    }
+    
+    .GEMINII_WALLS_row_put {
+        border-left: 3px solid #ef4444;
+        background: rgba(239, 68, 68, 0.03);
+    }
+    
+    /* ESTATÍSTICAS DA TABELA - SEM FUNDO */
+    .GEMINII_WALLS_table_stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 15px;
+        margin-top: 20px;
+        padding: 15px;
+        background: none;
+        border-radius: 12px;
+    }
+    
+    .GEMINII_WALLS_stat_item {
+        text-align: center;
+        background: none;
+    }
+    
+    .GEMINII_WALLS_stat_value {
+        font-family: 'Orbitron', sans-serif;
+        font-weight: 800;
+        font-size: clamp(1.2rem, 3vw, 1.5rem);
+        color: #d946ef;
+        margin-bottom: 5px;
+    }
+    
+    .GEMINII_WALLS_stat_label {
+        font-size: clamp(0.8rem, 2vw, 0.9rem);
+        color: #94a3b8;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    /* LOADING E ESTADOS PREMIUM */
+    .GEMINII_WALLS_loading {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 200px;
+        color: #ba39af;
+        font-size: clamp(1rem, 2vw, 1.2rem);
+        font-weight: 600;
+        padding: 20px;
+        text-align: center;
+    }
+    
+    .GEMINII_WALLS_loading::before {
+        content: '';
+        width: 20px;
+        height: 20px;
+        border: 2px solid rgba(186, 57, 175, 0.3);
+        border-top: 2px solid #ba39af;
+        border-radius: 50%;
+        margin-right: 15px;
+        animation: GEMINII_WALLS_spin 1s linear infinite;
+        flex-shrink: 0;
+    }
+    
+    @keyframes GEMINII_WALLS_spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    .GEMINII_WALLS_error {
+        color: #ef4444;
+        text-align: center;
+        padding: clamp(15px, 3vw, 25px);
+        background: rgba(239, 68, 68, 0.1);
+        border-radius: 12px;
+        border: 1px solid rgba(239, 68, 68, 0.3);
+        margin: 20px 0;
+        font-weight: 600;
+        font-size: clamp(0.9rem, 2vw, 1rem);
+    }
+    
+    .GEMINII_WALLS_empty_state {
+        text-align: center;
+        padding: 60px 20px;
+        color: #94a3b8;
+    }
+    
+    .GEMINII_WALLS_empty_state h3 {
+        font-family: 'Orbitron', sans-serif;
+        color: #d946ef;
+        margin-bottom: 15px;
+        font-size: clamp(1.2rem, 3vw, 1.5rem);
+    }
+    
+    .GEMINII_WALLS_empty_state i {
+        font-size: 3rem;
+        margin-bottom: 16px;
+        color: #ba39af;
+        opacity: 0.5;
+    }
+    
+    /* RESPONSIVIDADE MOBILE PREMIUM */
+    @media (max-width: 768px) {
+        .GEMINII_WALLS_chart_area {
+            height: clamp(250px, 40vh, 350px);
+            margin-bottom: clamp(20px, 5vw, 40px);
+            padding: 12px;
+        }
+
+        
+        .GEMINII_WALLS_filters {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 16px;
+        }
+        
+        .GEMINII_WALLS_filter_item {
+            min-width: auto;
+        }
+        
+        .GEMINII_WALLS_chart_area {
+            height: 350px;
+            padding: 15px;
+            margin-bottom: 60px;
+        }
+        
+        .GEMINII_WALLS_metrics {
+            grid-template-columns: 1fr;
+            gap: 16px;
+        }
+    
+        .GEMINII_WALLS_metric_card, .GEMINII_WALLS_metric_card:nth-child(even) {
+            transform: rotate(0deg);
+            padding: 20px;
+        }
+    
+        .GEMINII_WALLS_table_section {
+            margin-top: 80px;
+        }
+    
+        .GEMINII_WALLS_table_container {
+            padding: 10px;
+            max-height: 400px;
+        }
+    
+        .GEMINII_WALLS_table {
+            font-size: 11px;
+        }
+    
+        .GEMINII_WALLS_table th,
+        .GEMINII_WALLS_table td {
+            padding: 8px 4px;
+        }
+    
+        .GEMINII_WALLS_btn {
+            padding: 14px 28px;
+            font-size: 0.9rem;
+        }
+    }
+    
+    @media (max-width: 480px) {
+        .GEMINII_WALLS_main {
+            padding: 10px;
+        }
+        
+        .GEMINII_WALLS_chart_area {
+            height: 300px;
+            padding: 10px;
+            margin-bottom: 50px;
+        }
+    
+        .GEMINII_WALLS_table_section {
+            margin-top: 70px;
+        }
+    
+        .GEMINII_WALLS_metric_card {
+            padding: 16px;
+        }
+    
+        .GEMINII_WALLS_table {
+            font-size: 10px;
+        }
+    
+        .GEMINII_WALLS_btn {
+            padding: 12px 24px;
+            font-size: 0.85rem;
+        }
+    }
+    </style>
+</head>
+
+<body>
+<div class="GEMINII_WALLS_container">
+    <div class="GEMINII_WALLS_main">
+        <!-- HEADER -->
+        <header class="GEMINII_WALLS_header">
+            <h1 class="GEMINII_WALLS_title"></h1>
+            <p class="GEMINII_WALLS_subtitle">Análise de Posições em Aberto B3</p>
+        </header>
+
+        
+        <!-- FILTROS HORIZONTAIS -->
+        <div class="GEMINII_WALLS_filters">
+            <div class="GEMINII_WALLS_filter_item">
+                <label class="GEMINII_WALLS_filter_label">Ticker</label>
+                <select class="GEMINII_WALLS_select" id="GEMINII_WALLS_ticker">
+                    <option value="ABEV3">ABEV3</option>
+                  <option value="ALOS3">ALOS3</option>
+                  <option value="ASAI3">ASAI3</option>
+                  <option value="AURE3">AURE3</option>
+                  <option value="AZUL4">AZUL4</option>
+                  <option value="AZZA3">AZZA3</option>
+                  <option value="B3SA3">B3SA3</option>
+                  <option value="BBAS3">BBAS3</option>
+                  <option value="BBDC3">BBDC3</option>
+                  <option value="BBDC4">BBDC4</option>
+                  <option value="BBSE3">BBSE3</option>
+                  <option value="BEEF3">BEEF3</option>
+                  <option value="BPAC11">BPAC11</option>
+                  <option value="BRAP4">BRAP4</option>
+                  <option value="BRAV3">BRAV3</option>
+                  <option value="BRFS3">BRFS3</option>
+                  <option value="BRKM5">BRKM5</option>
+                  <option value="CMIG4">CMIG4</option>
+                  <option value="CMIN3">CMIN3</option>
+                  <option value="COGN3">COGN3</option>
+                  <option value="CPFE3">CPFE3</option>
+                  <option value="CPLE6">CPLE6</option>
+                  <option value="CSAN3">CSAN3</option>
+                  <option value="CSNA3">CSNA3</option>
+                  <option value="CVCB3">CVCB3</option>
+                  <option value="CXSE3">CXSE3</option>
+                  <option value="CYRE3">CYRE3</option>
+                  <option value="DIRR3">DIRR3</option>
+                  <option value="EGIE3">EGIE3</option>
+                  <option value="ELET3">ELET3</option>
+                  <option value="ELET6">ELET6</option>
+                  <option value="EMBR3">EMBR3</option>
+                  <option value="ENEV3">ENEV3</option>
+                  <option value="ENGI11">ENGI11</option>
+                  <option value="EQTL3">EQTL3</option>
+                  <option value="FLRY3">FLRY3</option>
+                  <option value="GGBR4">GGBR4</option>
+                  <option value="GOAU4">GOAU4</option>
+                  <option value="HAPV3">HAPV3</option>
+                  <option value="HYPE3">HYPE3</option>
+                  <option value="IGTI11">IGTI11</option>
+                  <option value="IRBR3">IRBR3</option>
+                  <option value="ISAE4">ISAE4</option>
+                  <option value="ITSA4">ITSA4</option>
+                  <option value="ITUB4">ITUB4</option>
+                  <option value="KLBN11">KLBN11</option>
+                  <option value="LREN3">LREN3</option>
+                  <option value="MGLU3">MGLU3</option>
+                  <option value="MOTV3">MOTV3</option>
+                  <option value="MRFG3">MRFG3</option>
+                  <option value="MRVE3">MRVE3</option>
+                  <option value="MULT3">MULT3</option>
+                  <option value="NATU3">NATU3</option>
+                  <option value="PCAR3">PCAR3</option>
+                  <option value="PETR3">PETR3</option>
+                  <option value="PETR4">PETR4</option>
+                  <option value="BOVA11" selected>BOVA11</option>
+                  <option value="PETZ3">PETZ3</option>
+                  <option value="POMO4">POMO4</option>
+                  <option value="PRIO3">PRIO3</option>
+                  <option value="PSSA3">PSSA3</option>
+                  <option value="RADL3">RADL3</option>
+                  <option value="RAIL3">RAIL3</option>
+                  <option value="RAIZ4">RAIZ4</option>
+                  <option value="RDOR3">RDOR3</option>
+                  <option value="RECV3">RECV3</option>
+                  <option value="RENT3">RENT3</option>
+                  <option value="SANB11">SANB11</option>
+                  <option value="SBSP3">SBSP3</option>
+                  <option value="SLCE3">SLCE3</option>
+                  <option value="SMFT3">SMFT3</option>
+                  <option value="SMTO3">SMTO3</option>
+                  <option value="STBP3">STBP3</option>
+                  <option value="SUZB3">SUZB3</option>
+                  <option value="TAEE11">TAEE11</option>
+                  <option value="TIMS3">TIMS3</option>
+                  <option value="TOTS3">TOTS3</option>
+                  <option value="UGPA3">UGPA3</option>
+                  <option value="USIM5">USIM5</option>
+                  <option value="VALE3">VALE3</option>
+                  <option value="VAMO3">VAMO3</option>
+                  <option value="VBBR3">VBBR3</option>
+                  <option value="VIVA3">VIVA3</option>
+                  <option value="VIVT3">VIVT3</option>
+                  <option value="WEGE3">WEGE3</option>
+                  <option value="YDUQ3">YDUQ3</option>
+                </select>
+            </div>
+
+            <div class="GEMINII_WALLS_filter_item">
+                <label class="GEMINII_WALLS_filter_label">Vencimento</label>
+                <select class="GEMINII_WALLS_select" id="GEMINII_WALLS_vencimento">
+                    <option value="auto" selected>Automático</option>
+                    <option value="20250704">04 Jul 25 - W</option>
+                    <option value="20250711">11 Jul 25 - W</option>
+                    <option value="20250718">18 Jul 25 - M</option>
+                    <option value="20250725">25 Jul 25 - W4</option>
+                    <option value="20250801">01 Ago 25 - W1</option>
+                    <option value="20250808">08 Ago 25 - W2</option>
+                    <option value="20250815">15 Ago 25 - M</option>
+                    <option value="20250822">22 Ago 25 - W4</option>
+                    <option value="20250829">29 Ago 25 - W5</option>
+                    <option value="20250905">05 Set 25 - W1</option>
+                    <option value="20250912">12 Set 25 - W2</option>
+                    <option value="20250919">19 Set 25 - M</option>
+                    <option value="20250926">26 Set 25 - W4</option>
+                    <option value="20251017">17 Out 25 - M</option>
+                    <option value="20251121">21 Nov 25 - M</option>
+                    <option value="20251219">19 Dez 25 - M</option>
+                    <option value="20260116">16 Jan 26 - M</option>
+                    <option value="20260220">20 Fev 26 - M</option>
+                    <option value="20260320">20 Mar 26 - M</option>
+                    <option value="20260417">17 Abr 26 - M</option>
+                    <option value="20260515">15 Mai 26 - M</option>
+                    <option value="20260619">19 Jun 26 - M</option>
+                    <option value="20260717">17 Jul 26 - M</option>
+                    <option value="20260821">21 Ago 26 - M</option>
+                    <option value="20260918">18 Set 26 - M</option>
+                    <option value="20261016">16 Out 26 - M</option>
+                    <option value="20261119">19 Nov 26 - M</option>
+                    <option value="20261218">18 Dez 26 - M</option>
+                    <option value="20270115">15 Jan 27 - M</option>
+                    <option value="20270219">19 Fev 27 - M</option>
+                    <option value="20270319">19 Mar 27 - M</option>
+                    <option value="20270416">16 Abr 27 - M</option>
+                    <option value="20270521">21 Mai 27 - M</option>
+                    <option value="20270618">18 Jun 27 - M</option>
+                    <option value="20270716">16 Jul 27 - M</option>
+                </select>
+            </div>
+
+
+            <div class="GEMINII_WALLS_filter_item">
+                <label class="GEMINII_WALLS_filter_label">Tipo</label>
+                <select class="GEMINII_WALLS_select" id="GEMINII_WALLS_tipo">
+                    <option value="both" selected>CALL + PUT</option>
+                    <option value="calls">Apenas CALL</option>
+                    <option value="puts">Apenas PUT</option>
+                </select>
+            </div>
+
+            <div class="GEMINII_WALLS_filter_item">
+                <button class="GEMINII_WALLS_btn" id="GEMINII_WALLS_analyze">
+                    Analisar
+                </button>
+            </div>
+        </div>
+
+        <!-- MÉTRICAS - AGORA ACIMA DO GRÁFICO -->
+        <div id="GEMINII_WALLS_metrics_container">
+            <!-- Métricas serão inseridas aqui dinamicamente -->
+        </div>
+
+        <!-- ÁREA DO GRÁFICO -->
+        <div class="GEMINII_WALLS_chart_area">
+            <!-- FILTROS VISUAIS -->
+            <div class="GEMINII_WALLS_chart_filters" id="GEMINII_WALLS_chart_filters" style="display: none;">
+                <div class="GEMINII_WALLS_chart_filter active" data-filter="all">Todos</div>
+                <div class="GEMINII_WALLS_chart_filter" data-filter="descoberto">Descobertos</div>
+                <div class="GEMINII_WALLS_chart_filter" data-filter="travado">Travados</div>
+                <div class="GEMINII_WALLS_chart_filter" data-filter="coberto">Cobertos</div>
+            </div>
+
+            <!-- LEGENDA -->
+            <div class="GEMINII_WALLS_legend" style="display: none;" id="GEMINII_WALLS_legend">
+                <div class="GEMINII_WALLS_legend_item">
+                    <div class="GEMINII_WALLS_legend_color GEMINII_WALLS_legend_descoberto"></div>
+                    <span>Descoberto</span>
+                </div>
+                <div class="GEMINII_WALLS_legend_item">
+                    <div class="GEMINII_WALLS_legend_color GEMINII_WALLS_legend_travado"></div>
+                    <span>Travado</span>
+                </div>
+                <div class="GEMINII_WALLS_legend_item">
+                    <div class="GEMINII_WALLS_legend_color GEMINII_WALLS_legend_coberto"></div>
+                    <span>Coberto</span>
+                </div>
+                <div class="GEMINII_WALLS_legend_item">
+                    <div class="GEMINII_WALLS_legend_color GEMINII_WALLS_legend_preco"></div>
+                    <span>Preço Atual</span>
+                </div>
+            </div>
+
+            <!-- CONTAINER DO GRÁFICO -->
+            <div class="GEMINII_WALLS_chart_container" id="GEMINII_WALLS_chart_wrapper">
+                <div class="GEMINII_WALLS_empty_state">
+                    <h3>Aguardando Análise</h3>
+                    <p>Selecione um ticker e clique em "Analisar" para visualizar as posições em aberto</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- SEÇÃO DA TABELA -->
+        <div class="GEMINII_WALLS_table_section" id="GEMINII_WALLS_table_section" style="display: none;">
+            <h3 class="GEMINII_WALLS_table_title">Resumo Detalhado por Strike</h3>
+            <div class="GEMINII_WALLS_table_container" id="GEMINII_WALLS_table_container">
+                <!-- Tabela será inserida aqui dinamicamente -->
+            </div>
+            
+            <!-- ESTATÍSTICAS DA TABELA -->
+            <div class="GEMINII_WALLS_table_stats" id="GEMINII_WALLS_table_stats">
+                <!-- Estatísticas serão inseridas aqui dinamicamente -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// REGISTRAR PLUGIN DE ANNOTATION NO CHART.JS
+Chart.register(window['chartjs-plugin-annotation']);
+
+// NAMESPACE GLOBAL
+window.GEMINII_WALLS = {
+    chart: null,
+    dadosOriginais: null,      // Dados completos da API
+    dadosFiltrados: null,      // Dados filtrados por tipo (calls/puts/both)
+    precoFechamento: null,     // NOVO: Preço de fechamento
+    cache: new Map(),
+    currentFilter: 'all'
+};
+
+// CONFIGURAÇÕES
+const GEMINII_WALLS_CONFIG = {
+    baseUrl: 'https://floqui.com.br/api/posicoes_em_aberto/',
+    timeout: 15000,
+    maxRetries: 3,
+    cacheTime: 5 * 60 * 1000
+};
+
+// FUNÇÃO PRINCIPAL DE ANÁLISE - LÓGICA DO PYTHON + PREÇO DE FECHAMENTO
+async function GEMINII_WALLS_analisar() {
+    try {
+        const ticker = document.getElementById('GEMINII_WALLS_ticker').value;
+        const vencimento = document.getElementById('GEMINII_WALLS_vencimento').value;
+        const tipo = document.getElementById('GEMINII_WALLS_tipo').value;
+        
+        const btnAnalyze = document.getElementById('GEMINII_WALLS_analyze');
+        const chartWrapper = document.getElementById('GEMINII_WALLS_chart_wrapper');
+        const metricsContainer = document.getElementById('GEMINII_WALLS_metrics_container');
+        
+        // LOADING STATE
+        btnAnalyze.disabled = true;
+        btnAnalyze.textContent = 'Analisando...';
+        chartWrapper.innerHTML = '<div class="GEMINII_WALLS_loading">Buscando dados da API...</div>';
+        metricsContainer.innerHTML = '';
+        
+        // ESCONDER TABELA
+        document.getElementById('GEMINII_WALLS_table_section').style.display = 'none';
+        
+        // 1. BUSCAR DADOS COMPLETOS (como no Python)
+        const dadosCompletos = await GEMINII_WALLS_buscarDados(ticker, vencimento);
+        
+        if (!dadosCompletos || dadosCompletos.length === 0) {
+            throw new Error('Nenhum dado encontrado para os parâmetros selecionados');
+        }
+        
+        // 2. LIMPAR E PROCESSAR DADOS (como no Python) + CAPTURAR PREÇO
+        const dadosLimpos = GEMINII_WALLS_limparDados(dadosCompletos);
+        
+        // 3. FILTRAR POR TIPO (como no Python)
+        let dadosFiltrados = dadosLimpos;
+        if (tipo === 'calls') {
+            dadosFiltrados = dadosLimpos.filter(d => d.tipo_opcao === 'Call');
+        } else if (tipo === 'puts') {
+            dadosFiltrados = dadosLimpos.filter(d => d.tipo_opcao === 'Put');
+        }
+        
+        if (dadosFiltrados.length === 0) {
+            throw new Error(`Nenhuma opção ${tipo} encontrada para ${ticker.toUpperCase()}`);
+        }
+        
+        // 4. SALVAR DADOS NO NAMESPACE (como no Python) + PREÇO
+        window.GEMINII_WALLS.dadosOriginais = dadosLimpos;
+        window.GEMINII_WALLS.dadosFiltrados = dadosFiltrados;
+        window.GEMINII_WALLS.precoFechamento = dadosLimpos.length > 0 ? dadosLimpos[0].preco_fechamento_ticker_associado : 0;
+        
+        // 5. CALCULAR MÉTRICAS (como no Python)
+        const metricas = GEMINII_WALLS_calcularMetricas(dadosLimpos, dadosFiltrados);
+        
+        // 6. EXIBIR MÉTRICAS + PREÇO
+        GEMINII_WALLS_exibirMetricas(metricas);
+        
+        // 7. PREPARAR DADOS PARA GRÁFICO (como no Python - só strikes com volume > 0)
+        const dadosGrafico = dadosFiltrados
+            .filter(item => item.qtd_total > 0)
+            .sort((a, b) => b.qtd_total - a.qtd_total)  // Maior volume primeiro
+            .slice(0, 30)  // Top 30 (como no Python)
+            .sort((a, b) => a.preco_exercicio - b.preco_exercicio);  // Reordenar por strike
+        
+        // 8. CRIAR CANVAS E GRÁFICO
+        chartWrapper.innerHTML = `
+            <div style="position: relative; height: 100%; width: 100%; min-height: 200px;">
+                <canvas id="GEMINII_WALLS_chart"></canvas>
+            </div>
+        `;
+        
+        // MOSTRAR FILTROS E LEGENDA
+        document.getElementById('GEMINII_WALLS_chart_filters').style.display = 'flex';
+        document.getElementById('GEMINII_WALLS_legend').style.display = 'flex';
+        
+        // 9. CRIAR GRÁFICO E TABELA
+        setTimeout(() => {
+            GEMINII_WALLS_criarGrafico(dadosGrafico, 'all');
+            GEMINII_WALLS_criarTabela(dadosFiltrados);
+        }, 300);
+        
+    } catch (error) {
+        GEMINII_WALLS_exibirErro(error.message);
+    } finally {
+        const btnAnalyze = document.getElementById('GEMINII_WALLS_analyze');
+        btnAnalyze.disabled = false;
+        btnAnalyze.textContent = 'Analisar';
+    }
+}
+
+// BUSCAR DADOS DA API - IGUAL AO PYTHON
+async function GEMINII_WALLS_buscarDados(ticker, vencimento) {
+    const cacheKey = `${ticker}_${vencimento}`;
+    
+    // VERIFICAR CACHE
+    if (window.GEMINII_WALLS.cache.has(cacheKey)) {
+        const cached = window.GEMINII_WALLS.cache.get(cacheKey);
+        if (Date.now() - cached.timestamp < GEMINII_WALLS_CONFIG.cacheTime) {
+            return cached.data;
+        }
+    }
+    
+    // DATAS PARA TENTAR (como no Python)
+    const datasParaTentar = vencimento === 'auto' 
+        ? ["20250620", "20250619", "20250618", "20250617", "20250616", "20250613", 
+           "20250612", "20250611", "20250610", "20250609", "20250606", "20250627", 
+           "20250704", "20250711", "20250718", "20250725"]
+        : [vencimento, "20250620", "20250619", "20250618", "20250613"];
+    
+    for (let i = 0; i < datasParaTentar.length; i++) {
+        const data = datasParaTentar[i];
+        try {
+            const url = `${GEMINII_WALLS_CONFIG.baseUrl}${ticker.toLowerCase()}/${data}`;
+            
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), GEMINII_WALLS_CONFIG.timeout);
+            
+            const response = await fetch(url, { 
+                signal: controller.signal,
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            clearTimeout(timeoutId);
+            
+            if (response.ok) {
+                const dados = await response.json();
+                
+                if (dados && Array.isArray(dados) && dados.length > 0) {
+                    // CACHE DOS DADOS
+                    window.GEMINII_WALLS.cache.set(cacheKey, {
+                        data: dados,
+                        timestamp: Date.now()
+                    });
+                    
+                    return dados;
+                }
+            }
+        } catch (error) {
+            continue;
+        }
+    }
+    
+    throw new Error(`Nenhum dado encontrado para ${ticker.toUpperCase()} nas datas disponíveis`);
+}
+
+// LIMPAR DADOS - IGUAL AO PYTHON + PREÇO DE FECHAMENTO
+function GEMINII_WALLS_limparDados(dados) {
+    return dados.map(item => {
+        // Limpar e converter cada campo (como no Python) + PREÇO
+        const itemLimpo = {
+            ...item,
+            preco_exercicio: parseFloat(item.preco_exercicio) || 0,
+            preco_fechamento_ticker_associado: parseFloat(item.preco_fechamento_ticker_associado) || 0, // NOVO CAMPO
+            qtd_total: parseInt(item.qtd_total) || 0,
+            qtd_coberto: parseInt(item.qtd_coberto) || 0,
+            qtd_trava: parseInt(item.qtd_trava) || 0,
+            qtd_descoberto: parseInt(item.qtd_descoberto) || 0,
+            qtd_titular: parseInt(item.qtd_titular) || 0,
+            qtd_lancador: parseInt(item.qtd_lancador) || 0
+        };
+        return itemLimpo;
+    }).filter(item => item.qtd_total > 0 && item.preco_exercicio > 0);
+}
+
+// CALCULAR MÉTRICAS - LÓGICA EXATA DO PYTHON
+function GEMINII_WALLS_calcularMetricas(dadosOriginais, dadosFiltrados) {
+    // MÉTRICAS BÁSICAS: Usar dados filtrados (como no Python)
+    const totalContratos = dadosFiltrados.reduce((sum, item) => sum + item.qtd_total, 0);
+    const totalCoberto = dadosFiltrados.reduce((sum, item) => sum + item.qtd_coberto, 0);
+    const totalTrava = dadosFiltrados.reduce((sum, item) => sum + item.qtd_trava, 0);
+    const totalDescoberto = dadosFiltrados.reduce((sum, item) => sum + item.qtd_descoberto, 0);
+    const totalTitular = dadosFiltrados.reduce((sum, item) => sum + item.qtd_titular, 0);
+    const totalLancador = dadosFiltrados.reduce((sum, item) => sum + item.qtd_lancador, 0);
+    
+    // PUT/CALL RATIO: SEMPRE usar dados originais completos (como no Python)
+    const calls = dadosOriginais.filter(d => d.tipo_opcao === 'Call');
+    const puts = dadosOriginais.filter(d => d.tipo_opcao === 'Put');
+    const totalCalls = calls.reduce((sum, item) => sum + item.qtd_total, 0);
+    const totalPuts = puts.reduce((sum, item) => sum + item.qtd_total, 0);
+    const putCallRatio = totalCalls > 0 ? totalPuts / totalCalls : 0;
+    
+    // IQ INDEX: Usar dados filtrados (como no Python)
+    const iqIndex = totalLancador > 0 ? totalTitular / totalLancador : 0;
+    
+    // PREÇO DE FECHAMENTO
+    const precoFechamento = window.GEMINII_WALLS.precoFechamento || 0;
+    
+    return {
+        totalContratos,
+        totalCoberto,
+        totalTrava, 
+        totalDescoberto,
+        totalTitular,
+        totalLancador,
+        putCallRatio,
+        iqIndex,
+        precoFechamento  // NOVO
+    };
+}
+
+// EXIBIR MÉTRICAS - SEM GIFS + PREÇO DE FECHAMENTO
+function GEMINII_WALLS_exibirMetricas(metricas) {
+    const container = document.getElementById('GEMINII_WALLS_metrics_container');
+    
+    const percentCoberto = metricas.totalContratos > 0 ? (metricas.totalCoberto / metricas.totalContratos) * 100 : 0;
+    const percentTrava = metricas.totalContratos > 0 ? (metricas.totalTrava / metricas.totalContratos) * 100 : 0;
+    const percentDescoberto = metricas.totalContratos > 0 ? (metricas.totalDescoberto / metricas.totalContratos) * 100 : 0;
+    
+    container.innerHTML = `
+        <div class="GEMINII_WALLS_metrics">
+            <div class="GEMINII_WALLS_metric_card GEMINII_WALLS_metric_preco" data-type="preco">
+                <div class="GEMINII_WALLS_metric_value">R$ ${metricas.precoFechamento.toFixed(2)}</div>
+                <div class="GEMINII_WALLS_metric_label">Preço Atual</div>
+                <div class="GEMINII_WALLS_metric_change" style="background: rgba(50, 255, 50, 0.2); color: #32ff32;">
+                    Referência
+                </div>
+            </div>
+            
+            <div class="GEMINII_WALLS_metric_card GEMINII_WALLS_metric_coberto" data-type="coberto">
+                <div class="GEMINII_WALLS_metric_value">${GEMINII_WALLS_formatarNumero(metricas.totalCoberto)}</div>
+                <div class="GEMINII_WALLS_metric_label">Cobertas</div>
+                <div class="GEMINII_WALLS_metric_change" style="background: rgba(59, 130, 246, 0.2); color: #3b82f6;">
+                    ${percentCoberto.toFixed(1)}%
+                </div>
+            </div>
+            
+            <div class="GEMINII_WALLS_metric_card GEMINII_WALLS_metric_travado" data-type="travado">
+                <div class="GEMINII_WALLS_metric_value">${GEMINII_WALLS_formatarNumero(metricas.totalTrava)}</div>
+                <div class="GEMINII_WALLS_metric_label">Travadas</div>
+                <div class="GEMINII_WALLS_metric_change" style="background: rgba(251, 191, 36, 0.2); color: #fbbf24;">
+                    ${percentTrava.toFixed(1)}%
+                </div>
+            </div>
+            
+            <div class="GEMINII_WALLS_metric_card GEMINII_WALLS_metric_descoberto" data-type="descoberto">
+                <div class="GEMINII_WALLS_metric_value">${GEMINII_WALLS_formatarNumero(metricas.totalDescoberto)}</div>
+                <div class="GEMINII_WALLS_metric_label">Descobertas</div>
+                <div class="GEMINII_WALLS_metric_change" style="background: rgba(239, 68, 68, 0.2); color: #ef4444;">
+                    ${percentDescoberto.toFixed(1)}%
+                </div>
+            </div>
+            
+            <div class="GEMINII_WALLS_metric_card GEMINII_WALLS_metric_iq">
+                <div class="GEMINII_WALLS_metric_value">${metricas.iqIndex.toFixed(2)}</div>
+                <div class="GEMINII_WALLS_metric_label">IQ Index</div>
+                <div class="GEMINII_WALLS_metric_change" style="background: rgba(168, 85, 247, 0.2); color: #a855f7;">
+                    ${metricas.iqIndex > 1.2 ? 'Smart Money' : metricas.iqIndex < 0.8 ? 'Retail' : 'Equilibrado'}
+                </div>
+            </div>
+            
+            <div class="GEMINII_WALLS_metric_card GEMINII_WALLS_metric_ratio">
+                <div class="GEMINII_WALLS_metric_value">${metricas.putCallRatio.toFixed(3)}</div>
+                <div class="GEMINII_WALLS_metric_label">PUT/CALL Ratio</div>
+                <div class="GEMINII_WALLS_metric_change" style="background: ${metricas.putCallRatio > 1.2 ? 'rgba(239, 68, 68, 0.2)' : metricas.putCallRatio < 0.8 ? 'rgba(16, 185, 129, 0.2)' : 'rgba(251, 191, 36, 0.2)'}; color: ${metricas.putCallRatio > 1.2 ? '#ef4444' : metricas.putCallRatio < 0.8 ? '#10b981' : '#fbbf24'};">
+                    ${metricas.putCallRatio > 1.2 ? 'Bearish' : metricas.putCallRatio < 0.8 ? 'Bullish' : 'Neutro'}
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // ADICIONAR EVENT LISTENERS PARA FILTROS DE MÉTRICAS
+    setTimeout(() => {
+        const metricCards = document.querySelectorAll('[data-type]');
+        metricCards.forEach(card => {
+            card.addEventListener('click', function() {
+                const type = this.getAttribute('data-type');
+                
+                // NÃO FILTRAR SE FOR PREÇO
+                if (type === 'preco') return;
+                
+                GEMINII_WALLS_filtrarGrafico(type);
+                
+                // ATUALIZAR SELEÇÃO VISUAL
+                metricCards.forEach(c => c.classList.remove('selected'));
+                this.classList.add('selected');
+            });
+        });
+    }, 100);
+}
+
+// CRIAR GRÁFICO - LÓGICA DO PYTHON + LINHA VERTICAL VERDE LIMÃO
+function GEMINII_WALLS_criarGrafico(dados, filtro = 'all') {
+    if (typeof Chart === 'undefined') {
+        GEMINII_WALLS_exibirErro('Chart.js não está carregado. Recarregue a página.');
+        return;
+    }
+    
+    const canvas = document.getElementById('GEMINII_WALLS_chart');
+    if (!canvas) return;
+    
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    
+    // DESTRUIR GRÁFICO ANTERIOR
+    if (window.GEMINII_WALLS.chart) {
+        try {
+            window.GEMINII_WALLS.chart.destroy();
+            window.GEMINII_WALLS.chart = null;
+        } catch (error) {
+            console.warn('Erro ao destruir gráfico:', error);
+        }
+    }
+    
+    // VERIFICAR DADOS VÁLIDOS
+    if (!dados || dados.length === 0) {
+        GEMINII_WALLS_exibirErro('Nenhum dado válido para criar o gráfico');
+        return;
+    }
+    
+    // PREPARAR DADOS COMO NO PYTHON (dados já vêm filtrados e ordenados)
+    const labels = dados.map(item => parseFloat(item.preco_exercicio).toFixed(2));
+    const descobertos = dados.map(item => parseInt(item.qtd_descoberto) || 0);
+    const travados = dados.map(item => parseInt(item.qtd_trava) || 0);
+    const cobertos = dados.map(item => parseInt(item.qtd_coberto) || 0);
+    
+    // CAPTURAR PREÇO DE FECHAMENTO PARA LINHA VERTICAL
+    const precoFechamento = window.GEMINII_WALLS.precoFechamento || 0;
+    
+    // CONFIGURAR DATASETS BASEADO NO FILTRO
+    let datasets = [];
+    
+    if (filtro === 'all' || filtro === 'descoberto') {
+        datasets.push({
+            label: 'Descoberto',
+            data: descobertos,
+            backgroundColor: filtro === 'descoberto' ? '#ef4444' : 'rgba(239, 68, 68, 0.8)',
+            borderColor: '#dc2626',
+            borderWidth: 1
+        });
+    }
+    
+    if (filtro === 'all' || filtro === 'travado') {
+        datasets.push({
+            label: 'Travado', 
+            data: travados,
+            backgroundColor: filtro === 'travado' ? '#fbbf24' : 'rgba(251, 191, 36, 0.8)',
+            borderColor: '#f59e0b',
+            borderWidth: 1
+        });
+    }
+    
+    if (filtro === 'all' || filtro === 'coberto') {
+        datasets.push({
+            label: 'Coberto',
+            data: cobertos,
+            backgroundColor: filtro === 'coberto' ? '#3b82f6' : 'rgba(59, 130, 246, 0.8)',
+            borderColor: '#2563eb',
+            borderWidth: 1
+        });
+    }
+    
+    // CONFIGURAÇÃO COMPLETA DO GRÁFICO COM LINHA VERTICAL
+    const config = {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: datasets
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                x: {
+                    stacked: filtro === 'all',
+                    title: {
+                        display: true,
+                        text: 'Strike (R$)',
+                        color: '#cbd5e1'
+                    },
+                    ticks: {
+                        color: '#94a3b8',
+                        maxTicksLimit: 15
+                    },
+                    grid: {
+                        color: 'rgba(148, 163, 184, 0.2)'
+                    }
+                },
+                y: {
+                    stacked: filtro === 'all',
+                    title: {
+                        display: true,
+                        text: 'Quantidade de Contratos',
+                        color: '#cbd5e1'
+                    },
+                    ticks: {
+                        color: '#94a3b8',
+                        callback: function(value) {
+                            return GEMINII_WALLS_formatarNumero(value);
+                        }
+                    },
+                    grid: {
+                        color: 'rgba(148, 163, 184, 0.2)'
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    titleColor: '#ffffff',
+                    bodyColor: '#ffffff',
+                    borderColor: '#ba39af',
+                    borderWidth: 1,
+                    callbacks: {
+                        label: function(context) {
+                            return `${context.dataset.label}: ${GEMINII_WALLS_formatarNumero(context.parsed.y)}`;
+                        }
+                    }
+                },
+                // PLUGIN DE ANNOTATION PARA LINHA VERTICAL VERDE LIMÃO
+                annotation: {
+                    annotations: precoFechamento > 0 ? {
+                        precoReferencia: {
+                            type: 'line',
+                            mode: 'vertical',
+                            scaleID: 'x',
+                            value: GEMINII_WALLS_encontrarIndicePreco(labels, precoFechamento), // USAR ÍNDICE CORRETO
+                            borderColor: '#32ff32',      // VERDE LIMÃO
+                            borderWidth: 3,
+                            borderDash: [8, 4],          // LINHA TRACEJADA
+                            label: {
+                                enabled: true,
+                                content: `Preço: R$ ${precoFechamento.toFixed(2)}`,
+                                position: 'start',
+                                yAdjust: -10,
+                                backgroundColor: '#32ff32',
+                                color: '#000000',
+                                font: {
+                                    weight: 'bold',
+                                    size: 12
+                                },
+                                padding: 4,
+                                borderRadius: 4
+                            }
+                        }
+                    } : {}
+                }
+            },
+            animation: {
+                duration: 600
+            }
+        }
+    };
+    
+    try {
+        window.GEMINII_WALLS.chart = new Chart(ctx, config);
+        window.GEMINII_WALLS.currentFilter = filtro;
+        
+        console.log(`✅ Gráfico criado com linha de preço: R$ ${precoFechamento.toFixed(2)}`);
+    } catch (error) {
+        console.error('Erro ao criar gráfico:', error);
+        GEMINII_WALLS_exibirErro(`Erro na renderização: ${error.message}`);
+    }
+}
+
+// FILTRAR GRÁFICO - COM RECÁLCULO DE MÉTRICAS E TABELA (LÓGICA DO PYTHON)
+function GEMINII_WALLS_filtrarGrafico(tipo) {
+    if (!window.GEMINII_WALLS.dadosFiltrados) return;
+    
+    // PREPARAR DADOS PARA RECÁLCULO DE MÉTRICAS
+    let dadosParaMetricas = window.GEMINII_WALLS.dadosFiltrados;
+    
+    // FILTRAR MÉTRICAS BASEADO NO TIPO SELECIONADO (como no Python)
+    if (tipo === 'descoberto') {
+        dadosParaMetricas = window.GEMINII_WALLS.dadosFiltrados.filter(item => item.qtd_descoberto > 0);
+    } else if (tipo === 'travado') {
+        dadosParaMetricas = window.GEMINII_WALLS.dadosFiltrados.filter(item => item.qtd_trava > 0);
+    } else if (tipo === 'coberto') {
+        dadosParaMetricas = window.GEMINII_WALLS.dadosFiltrados.filter(item => item.qtd_coberto > 0);
+    }
+    // Para 'all', usar dadosFiltrados completos
+    
+    // RECALCULAR MÉTRICAS COM DADOS FILTRADOS (como no Python)
+    const metricas = GEMINII_WALLS_calcularMetricas(window.GEMINII_WALLS.dadosOriginais, dadosParaMetricas);
+    GEMINII_WALLS_exibirMetricas(metricas);
+    
+    // PREPARAR DADOS PARA GRÁFICO (como no Python)
+    const dadosGrafico = dadosParaMetricas
+        .filter(item => item.qtd_total > 0)
+        .sort((a, b) => b.qtd_total - a.qtd_total)  // Maior volume primeiro
+        .slice(0, 30)  // Top 30
+        .sort((a, b) => a.preco_exercicio - b.preco_exercicio);  // Reordenar por strike
+    
+    // ATUALIZAR FILTROS VISUAIS
+    const filters = document.querySelectorAll('.GEMINII_WALLS_chart_filter');
+    filters.forEach(f => f.classList.remove('active'));
+    
+    const targetFilter = tipo === 'all' ? 
+        document.querySelector('[data-filter="all"]') : 
+        document.querySelector(`[data-filter="${tipo}"]`);
+    
+    if (targetFilter) {
+        targetFilter.classList.add('active');
+    }
+    
+    // RECRIAR GRÁFICO E TABELA COM DADOS FILTRADOS
+    GEMINII_WALLS_criarGrafico(dadosGrafico, tipo === 'all' ? 'all' : tipo);
+    GEMINII_WALLS_criarTabela(dadosParaMetricas);
+}
+
+// CRIAR TABELA - LÓGICA DO PYTHON
+function GEMINII_WALLS_criarTabela(dados) {
+    if (!dados || dados.length === 0) {
+        document.getElementById('GEMINII_WALLS_table_section').style.display = 'none';
+        return;
+    }
+    
+    // FILTRAR E ORDENAR COMO NO PYTHON
+    const dadosTabela = dados
+        .filter(item => item.qtd_total > 0)
+        .sort((a, b) => b.qtd_total - a.qtd_total)  // Maior volume primeiro
+        .slice(0, 50);  // Top 50 para tabela (como no Python)
+    
+    if (dadosTabela.length === 0) {
+        document.getElementById('GEMINII_WALLS_table_section').style.display = 'none';
+        return;
+    }
+    
+    // CRIAR HTML DA TABELA
+    let tabelaHTML = `
+        <table class="GEMINII_WALLS_table">
+            <thead>
+                <tr>
+                    <th>Tipo</th>
+                    <th>Strike</th>
+                    <th>Total</th>
+                    <th>Coberto</th>
+                    <th>Travado</th>
+                    <th>Descoberto</th>
+                    <th>Titular</th>
+                    <th>Lançador</th>
+                    <th>IQ</th>
+                </tr>
+            </thead>
+            <tbody>
+    `;
+    
+    dadosTabela.forEach(item => {
+        const iq = item.qtd_lancador > 0 ? (item.qtd_titular / item.qtd_lancador).toFixed(2) : '0.00';
+        const rowClass = item.tipo_opcao === 'Call' ? 'GEMINII_WALLS_row_call' : 'GEMINII_WALLS_row_put';
+        
+        tabelaHTML += `
+            <tr class="${rowClass}">
+                <td><strong>${item.tipo_opcao}</strong></td>
+                <td>R$ ${item.preco_exercicio.toFixed(2)}</td>
+                <td>${GEMINII_WALLS_formatarNumero(item.qtd_total)}</td>
+                <td>${GEMINII_WALLS_formatarNumero(item.qtd_coberto)}</td>
+                <td>${GEMINII_WALLS_formatarNumero(item.qtd_trava)}</td>
+                <td>${GEMINII_WALLS_formatarNumero(item.qtd_descoberto)}</td>
+                <td>${GEMINII_WALLS_formatarNumero(item.qtd_titular)}</td>
+                <td>${GEMINII_WALLS_formatarNumero(item.qtd_lancador)}</td>
+                <td>${iq}</td>
+            </tr>
+        `;
+    });
+    
+    tabelaHTML += `
+            </tbody>
+        </table>
+    `;
+    
+    // INSERIR TABELA
+    document.getElementById('GEMINII_WALLS_table_container').innerHTML = tabelaHTML;
+    
+    // CALCULAR ESTATÍSTICAS DA TABELA
+    GEMINII_WALLS_criarEstatisticasTabela(dadosTabela);
+    
+    // MOSTRAR SEÇÃO DA TABELA
+    document.getElementById('GEMINII_WALLS_table_section').style.display = 'block';
+}
+
+// CRIAR ESTATÍSTICAS DA TABELA
+function GEMINII_WALLS_criarEstatisticasTabela(dados) {
+    const totalStrikes = dados.length;
+    const strikesCalls = dados.filter(item => item.tipo_opcao === 'Call').length;
+    const strikesPuts = dados.filter(item => item.tipo_opcao === 'Put').length;
+    
+    // CALCULAR IQ MÉDIO
+    const iqValues = dados
+        .map(item => item.qtd_lancador > 0 ? item.qtd_titular / item.qtd_lancador : 0)
+        .filter(iq => iq > 0);
+    const iqMedio = iqValues.length > 0 ? iqValues.reduce((sum, iq) => sum + iq, 0) / iqValues.length : 0;
+    
+    // VOLUME TOTAL DA TABELA
+    const volumeTotal = dados.reduce((sum, item) => sum + item.qtd_total, 0);
+    
+    const statsHTML = `
+        <div class="GEMINII_WALLS_stat_item">
+            <div class="GEMINII_WALLS_stat_value">${totalStrikes}</div>
+            <div class="GEMINII_WALLS_stat_label">Total Strikes</div>
+        </div>
+        
+        <div class="GEMINII_WALLS_stat_item">
+            <div class="GEMINII_WALLS_stat_value">${strikesCalls}</div>
+            <div class="GEMINII_WALLS_stat_label">Strikes CALLS</div>
+        </div>
+        
+        <div class="GEMINII_WALLS_stat_item">
+            <div class="GEMINII_WALLS_stat_value">${strikesPuts}</div>
+            <div class="GEMINII_WALLS_stat_label">Strikes PUTS</div>
+        </div>
+        
+        <div class="GEMINII_WALLS_stat_item">
+            <div class="GEMINII_WALLS_stat_value">${iqMedio.toFixed(2)}</div>
+            <div class="GEMINII_WALLS_stat_label">IQ Médio</div>
+        </div>
+        
+        <div class="GEMINII_WALLS_stat_item">
+            <div class="GEMINII_WALLS_stat_value">${GEMINII_WALLS_formatarNumero(volumeTotal)}</div>
+            <div class="GEMINII_WALLS_stat_label">Volume Total</div>
+        </div>
+    `;
+    
+    document.getElementById('GEMINII_WALLS_table_stats').innerHTML = statsHTML;
+}
+
+// EXIBIR ERRO
+function GEMINII_WALLS_exibirErro(mensagem) {
+    const chartWrapper = document.getElementById('GEMINII_WALLS_chart_wrapper');
+    const metricsContainer = document.getElementById('GEMINII_WALLS_metrics_container');
+    
+    chartWrapper.innerHTML = `
+        <div class="GEMINII_WALLS_error">
+            <h3>Erro na Análise</h3>
+            <p><strong>${mensagem}</strong></p>
+            <br>
+            <p><strong>Dicas para resolver:</strong></p>
+            <ul style="list-style: none; padding: 0; margin-top: 10px;">
+                <li>• Verifique se o ticker está correto (ex: PETR4, VALE3)</li>
+                <li>• Tente com "Automático" no vencimento</li>
+                <li>• Use tickers populares como BOVA11, PETR4, ITUB4</li>
+                <li>• Aguarde alguns minutos e tente novamente</li>
+                <li>• Verifique sua conexão com a internet</li>
+            </ul>
+            <br>
+            <button class="GEMINII_WALLS_btn" onclick="GEMINII_WALLS_analisar()" style="margin-top: 15px;">
+                Tentar Novamente
+            </button>
+        </div>
+    `;
+    
+    metricsContainer.innerHTML = '';
+    document.getElementById('GEMINII_WALLS_chart_filters').style.display = 'none';
+    document.getElementById('GEMINII_WALLS_legend').style.display = 'none';
+    document.getElementById('GEMINII_WALLS_table_section').style.display = 'none';
+}
+
+// FUNÇÃO PARA ENCONTRAR O ÍNDICE CORRETO DO PREÇO NO EIXO X
+function GEMINII_WALLS_encontrarIndicePreco(labels, precoFechamento) {
+    if (!labels || labels.length === 0 || !precoFechamento) return null;
+    
+    // CONVERTER LABELS PARA NÚMEROS PARA COMPARAÇÃO
+    const labelsNumericos = labels.map(label => parseFloat(label));
+    
+    // ENCONTRAR O STRIKE MAIS PRÓXIMO DO PREÇO
+    let indiceProximo = 0;
+    let menorDiferenca = Math.abs(labelsNumericos[0] - precoFechamento);
+    
+    for (let i = 1; i < labelsNumericos.length; i++) {
+        const diferenca = Math.abs(labelsNumericos[i] - precoFechamento);
+        if (diferenca < menorDiferenca) {
+            menorDiferenca = diferenca;
+            indiceProximo = i;
+        }
+    }
+    
+    // SE O PREÇO ESTÁ ENTRE DOIS STRIKES, INTERPOLAR A POSIÇÃO
+    if (indiceProximo > 0 && indiceProximo < labelsNumericos.length - 1) {
+        const strikeAnterior = labelsNumericos[indiceProximo - 1];
+        const strikeAtual = labelsNumericos[indiceProximo];
+        const strikeProximo = labelsNumericos[indiceProximo + 1];
+        
+        // VERIFICAR SE ESTÁ ENTRE ANTERIOR E ATUAL
+        if (precoFechamento >= strikeAnterior && precoFechamento <= strikeAtual) {
+            const proporcao = (precoFechamento - strikeAnterior) / (strikeAtual - strikeAnterior);
+            return (indiceProximo - 1) + proporcao;
+        }
+        
+        // VERIFICAR SE ESTÁ ENTRE ATUAL E PRÓXIMO
+        if (precoFechamento >= strikeAtual && precoFechamento <= strikeProximo) {
+            const proporcao = (precoFechamento - strikeAtual) / (strikeProximo - strikeAtual);
+            return indiceProximo + proporcao;
+        }
+    }
+    
+    // RETORNAR O ÍNDICE DO STRIKE MAIS PRÓXIMO
+    return indiceProximo;
+}
+
+// FORMATAR NÚMEROS - IGUAL AO PYTHON
+function GEMINII_WALLS_formatarNumero(numero) {
+    if (!numero || numero === 0) return '0';
+    
+    if (numero >= 1000000) {
+        return (numero / 1000000).toFixed(1) + 'M';
+    } else if (numero >= 1000) {
+        return (numero / 1000).toFixed(0) + 'K';
+    }
+    
+    return numero.toLocaleString('pt-BR');
+}
+
+// INICIALIZAÇÃO
+document.addEventListener('DOMContentLoaded', function() {
+    // AGUARDAR CHART.JS E PLUGIN
+    function aguardarChartJS(tentativas = 0) {
+        if (typeof Chart !== 'undefined' && Chart.registry.plugins.get('annotation')) {
+            console.log('✅ Chart.js e Plugin Annotation carregados com sucesso');
+            
+            // CONFIGURAR EVENT LISTENERS
+            const btn = document.getElementById('GEMINII_WALLS_analyze');
+            if (btn) {
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    GEMINII_WALLS_analisar();
+                });
+            }
+            
+            // EVENT LISTENERS PARA FILTROS DO GRÁFICO
+            const chartFilters = document.querySelectorAll('.GEMINII_WALLS_chart_filter');
+            chartFilters.forEach(filter => {
+                filter.addEventListener('click', function() {
+                    const filterType = this.getAttribute('data-filter');
+                    
+                    // REMOVER SELEÇÃO DOS CARDS
+                    document.querySelectorAll('[data-type]').forEach(c => c.classList.remove('selected'));
+                    
+                    // FILTRAR GRÁFICO COM RECÁLCULO DE MÉTRICAS E TABELA
+                    if (filterType === 'all') {
+                        GEMINII_WALLS_filtrarGrafico('all');
+                    } else {
+                        GEMINII_WALLS_filtrarGrafico(filterType);
+                    }
+                });
+            });
+            
+        } else if (tentativas < 20) {
+            console.log(`⏳ Aguardando Chart.js e Plugin... (tentativa ${tentativas + 1})`);
+            setTimeout(() => aguardarChartJS(tentativas + 1), 500);
+        } else {
+            const chartWrapper = document.getElementById('GEMINII_WALLS_chart_wrapper');
+            if (chartWrapper) {
+                chartWrapper.innerHTML = `
+                    <div class="GEMINII_WALLS_error">
+                        <h3>Erro: Chart.js ou Plugin não carregou</h3>
+                        <p><strong>As bibliotecas de gráficos não foram carregadas.</strong></p>
+                        <p>Verifique sua conexão com a internet e recarregue a página.</p>
+                        <button class="GEMINII_WALLS_btn" onclick="location.reload()" style="margin-top: 15px;">
+                            Recarregar Página
+                        </button>
+                    </div>
+                `;
+            }
+        }
+    }
+    
+    aguardarChartJS();
+    
+    // LIMPAR CACHE AUTOMATICAMENTE
+    setInterval(() => {
+        window.GEMINII_WALLS.cache.clear();
+    }, 5 * 60 * 1000);
+});
+</script>
+</body>
+</html>

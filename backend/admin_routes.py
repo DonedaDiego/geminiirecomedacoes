@@ -186,7 +186,7 @@ def manage_subscription(admin_id):
         
         if action == 'grant':
             # Mapear plan_id para plan_name
-            plan_names = {3: 'Básico', 1: 'Pro', 2: 'Premium'}
+            plan_names = {3: 'Free',  4: 'community'}
             plan_name = plan_names.get(plan_id, 'Pro')
             
             # Calcular expiração (30 dias para teste)

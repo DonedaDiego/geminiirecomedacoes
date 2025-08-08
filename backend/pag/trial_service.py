@@ -57,7 +57,6 @@ def clear_cache(user_id):
 # ===== FUNÇÕES PRINCIPAIS DO TRIAL =====
 
 def create_trial_user(name, email, password, ip_address=None):
-
     try:
         conn = get_db_connection()
         if not conn:
@@ -79,7 +78,7 @@ def create_trial_user(name, email, password, ip_address=None):
         now = datetime.now(timezone.utc)
         trial_expires = now + timedelta(days=15)
         
-        # Inserir usuário com trial Premium
+        # 🔥 ÚNICO AJUSTE: plan_id=4 para Community trial
         cursor.execute("""
             INSERT INTO users (
                 name, email, password, plan_id, plan_name, user_type,
@@ -89,7 +88,7 @@ def create_trial_user(name, email, password, ip_address=None):
             RETURNING id
         """, (
             name, email, password_hash, 
-            2, 'Premium', 'trial',  # 🔥 TRIAL PREMIUM
+            4, 'Community', 'trial',  # 🔥 plan_id=4 Community
             trial_expires, now, now, now,
             True, now, ip_address
         ))
@@ -99,6 +98,7 @@ def create_trial_user(name, email, password, ip_address=None):
         conn.commit()
         cursor.close()
         conn.close()
+        
         try:
             from emails.email_service import email_service
             email_service.send_trial_welcome_email(name, email)
@@ -109,17 +109,16 @@ def create_trial_user(name, email, password, ip_address=None):
         return {
             'success': True,
             'user_id': user_id,
-            'message': 'Usuário criado com trial Premium de 15 dias',
+            'message': 'Usuário criado com trial Community de 15 dias',
             'trial_expires_at': trial_expires.isoformat()
         }
         
     except Exception as e:
         return {'success': False, 'error': f'Erro ao criar usuário: {str(e)}'}
 
-
 def downgrade_user_trial(user_id):
     """
-    Fazer downgrade de usuário com trial expirado
+    🔥 AJUSTE: Fazer downgrade para Free (plan_id=3) ao invés de remover
     """
     try:
         conn = get_db_connection()
@@ -128,10 +127,24 @@ def downgrade_user_trial(user_id):
         
         cursor = conn.cursor()
         
-        # Fazer downgrade para Básico
+        # Buscar dados do usuário antes de fazer downgrade
+        cursor.execute("""
+            SELECT name, email FROM users 
+            WHERE id = %s AND user_type = 'trial'
+        """, (user_id,))
+        
+        user_data = cursor.fetchone()
+        if not user_data:
+            cursor.close()
+            conn.close()
+            return {'success': False, 'error': 'Usuário não encontrado ou não está em trial'}
+        
+        name, email = user_data
+        
+        # 🔥 AJUSTE: Downgrade para Free (plan_id=3) ao invés de deletar
         cursor.execute("""
             UPDATE users 
-            SET plan_id = 3, plan_name = 'Básico', user_type = 'regular',
+            SET plan_id = 3, plan_name = 'Free', user_type = 'regular',
                 plan_expires_at = NULL, updated_at = CURRENT_TIMESTAMP
             WHERE id = %s AND user_type = 'trial'
         """, (user_id,))
@@ -139,7 +152,7 @@ def downgrade_user_trial(user_id):
         if cursor.rowcount == 0:
             cursor.close()
             conn.close()
-            return {'success': False, 'error': 'Usuário não encontrado ou não está em trial'}
+            return {'success': False, 'error': 'Usuário não pôde ser atualizado'}
         
         conn.commit()
         cursor.close()
@@ -148,9 +161,13 @@ def downgrade_user_trial(user_id):
         # Limpar cache
         clear_cache(user_id)
         
+        print(f"⬇️ Usuário trial movido para Free: {name} ({email})")
+        
         return {
             'success': True,
-            'message': 'Usuário foi rebaixado para plano Básico'
+            'message': f'Usuário {name} foi movido para plano Free',
+            'action': 'downgraded',
+            'user_info': {'name': name, 'email': email}
         }
         
     except Exception as e:
@@ -223,11 +240,12 @@ def get_all_trial_users():
         
         cursor = conn.cursor()
         
+        # 🔥 AJUSTE: Buscar apenas plan_id=4 (Community)
         cursor.execute("""
             SELECT id, name, email, plan_id, plan_name, plan_expires_at, created_at,
                    EXTRACT(days FROM (plan_expires_at - NOW())) as days_remaining
             FROM users 
-            WHERE user_type = 'trial'
+            WHERE user_type = 'trial' AND plan_id = 4
             ORDER BY plan_expires_at ASC
         """)
         
@@ -240,13 +258,13 @@ def get_all_trial_users():
                 days_remaining = int(days_remaining)
                 if days_remaining < 0:
                     status = 'expired'
-                    status_text = 'Expirado'
+                    status_text = '⚠️ Será movido para Free no próximo processamento'
                 elif days_remaining <= 3:
                     status = 'ending_soon'
-                    status_text = f'{days_remaining} dias restantes'
+                    status_text = f'⏰ {days_remaining} dias restantes'
                 else:
                     status = 'active'
-                    status_text = f'{days_remaining} dias restantes'
+                    status_text = f'✅ {days_remaining} dias restantes'
             else:
                 status = 'no_expiry'
                 status_text = 'Sem data de expiração'
@@ -262,7 +280,8 @@ def get_all_trial_users():
                 'days_remaining': days_remaining,
                 'status': status,
                 'status_text': status_text,
-                'formatted_expires': expires_at.strftime('%d/%m/%Y') if expires_at else 'N/A'
+                'formatted_expires': expires_at.strftime('%d/%m/%Y') if expires_at else 'N/A',
+                'action_pending': '⬇️ Downgrade para Free' if status == 'expired' else None
             })
         
         cursor.close()
@@ -278,7 +297,9 @@ def get_all_trial_users():
         return {'success': False, 'error': f'Erro ao buscar usuários em trial: {str(e)}'}
 
 def process_expired_trials():
-
+    """
+    🔥 AJUSTE: Fazer downgrade para Free ao invés de remover usuários
+    """
     try:
         conn = get_db_connection()
         if not conn:
@@ -286,37 +307,42 @@ def process_expired_trials():
         
         cursor = conn.cursor()
         
-        # 🔥 PRIMEIRO: Buscar trials expirados
+        # 🔥 AJUSTE: Buscar trials Community expirados (plan_id=4)
         cursor.execute("""
             SELECT id, name, email 
             FROM users 
             WHERE user_type = 'trial' 
+            AND plan_id = 4
             AND plan_expires_at IS NOT NULL 
             AND plan_expires_at < NOW()
         """)
         
         expired_users = cursor.fetchall()
         
-        # 🔥 SEGUNDO: Fazer downgrade dos expirados
         if expired_users:
+            # 🔥 AJUSTE: Fazer downgrade para Free (plan_id=3)
             cursor.execute("""
                 UPDATE users 
-                SET plan_id = 3, plan_name = 'Básico', user_type = 'regular',
+                SET plan_id = 3, plan_name = 'Free', user_type = 'regular',
                     plan_expires_at = NULL, updated_at = CURRENT_TIMESTAMP
                 WHERE user_type = 'trial' 
+                AND plan_id = 4
                 AND plan_expires_at IS NOT NULL 
                 AND plan_expires_at < NOW()
             """)
             
             processed_count = cursor.rowcount
             conn.commit()
+            
+            print(f"⬇️ {processed_count} usuários trial Community movidos para FREE")
+            
         else:
             processed_count = 0
         
         cursor.close()
         conn.close()
         
-        # 🔥 TERCEIRO: Enviar avisos para os que ainda estão ativos
+        # Enviar avisos para os que ainda estão ativos
         print("📧 Enviando avisos de trial expirando...")
         warnings_result = send_trial_expiring_warnings()
         if warnings_result['success']:
@@ -330,9 +356,10 @@ def process_expired_trials():
         
         return {
             'success': True,
-            'message': f'{processed_count} trials expirados processados',
+            'message': f'{processed_count} trials expirados movidos para FREE',
             'processed_count': processed_count,
-            'processed_users': [{'id': u[0], 'name': u[1], 'email': u[2]} for u in expired_users]
+            'action': 'downgraded',
+            'downgraded_users': [{'id': u[0], 'name': u[1], 'email': u[2]} for u in expired_users]
         }
         
     except Exception as e:
@@ -349,27 +376,29 @@ def get_trial_stats():
         
         cursor = conn.cursor()
         
-        # Total de usuários em trial
-        cursor.execute("SELECT COUNT(*) FROM users WHERE user_type = 'trial'")
+        # 🔥 AJUSTE: Total de usuários em trial Community (plan_id=4)
+        cursor.execute("SELECT COUNT(*) FROM users WHERE user_type = 'trial' AND plan_id = 4")
         total_trials = cursor.fetchone()[0]
         
         # Trials expirando em 3 dias
         cursor.execute("""
             SELECT COUNT(*) FROM users 
             WHERE user_type = 'trial' 
+            AND plan_id = 4
             AND plan_expires_at IS NOT NULL 
             AND plan_expires_at BETWEEN NOW() AND NOW() + INTERVAL '3 days'
         """)
         expiring_soon = cursor.fetchone()[0]
         
-        # Trials expirados (ainda não processados)
+        # Trials expirados (que serão movidos para Free)
         cursor.execute("""
             SELECT COUNT(*) FROM users 
             WHERE user_type = 'trial' 
+            AND plan_id = 4
             AND plan_expires_at IS NOT NULL 
             AND plan_expires_at < NOW()
         """)
-        expired = cursor.fetchone()[0]
+        expired_pending_downgrade = cursor.fetchone()[0]
         
         # Usuários que já foram de trial para pagante
         cursor.execute("""
@@ -387,7 +416,7 @@ def get_trial_stats():
             'stats': {
                 'total_trials': total_trials,
                 'expiring_soon': expiring_soon,
-                'expired': expired,
+                'expired_pending_downgrade': expired_pending_downgrade,
                 'converted_this_month': converted_this_month
             }
         }
@@ -420,7 +449,7 @@ def get_trial_days_remaining(user_id):
 
 def can_access_premium_features(user_id):
     """
-    🔥 VERIFICAÇÃO DIRETA NO BANCO - NÃO DEPENDER APENAS DO CONTROL_PAY_SERVICE
+    🔥 AJUSTE: Community trial (plan_id=4) tem acesso a Premium
     """
     try:
         print(f"🔍 Verificando acesso Premium para user_id: {user_id}")
@@ -449,19 +478,19 @@ def can_access_premium_features(user_id):
         
         print(f"📊 Dados do usuário: plan_id={plan_id}, user_type={user_type}, plan_name={plan_name}, email={email}")
         
-        # 🔥 REGRA 1: Se é regular com plano básico, NEGAR SEMPRE
+        # 🔥 REGRA 1: Se é regular com plano Free (3), NEGAR
         if user_type == 'regular' and plan_id == 3:
-            print(f"❌ ACESSO NEGADO: Usuário regular com plano básico")
+            print(f"❌ ACESSO NEGADO: Usuário regular com plano Free")
             return False
             
-        # 🔥 REGRA 2: Se é trial, verificar se não expirou
-        if user_type == 'trial':
+        # 🔥 REGRA 2: Se é trial Community (4), verificar se não expirou
+        if user_type == 'trial' and plan_id == 4:
             if plan_expires_at and plan_expires_at < datetime.now(timezone.utc):
                 print(f"❌ ACESSO NEGADO: Trial expirado em {plan_expires_at}")
                 return False
             else:
-                print(f"✅ ACESSO LIBERADO: Trial ainda válido até {plan_expires_at}")
-                return plan_id == 2  # Só Premium trial
+                print(f"✅ ACESSO LIBERADO: Trial Community válido até {plan_expires_at}")
+                return True
         
         # 🔥 REGRA 3: Para usuários pagantes, verificar plano
         if user_type in ['regular', 'pro', 'premium']:
@@ -485,7 +514,7 @@ def can_access_premium_features(user_id):
 
 def can_access_pro_features(user_id):
     """
-    🔥 VERIFICAÇÃO DIRETA NO BANCO PARA RECURSOS PRO
+    🔥 AJUSTE: Community trial (plan_id=4) tem acesso a Pro
     """
     try:
         print(f"🔍 Verificando acesso Pro para user_id: {user_id}")
@@ -514,19 +543,19 @@ def can_access_pro_features(user_id):
         
         print(f"📊 Dados do usuário: plan_id={plan_id}, user_type={user_type}, plan_name={plan_name}, email={email}")
         
-        # 🔥 REGRA 1: Se é regular com plano básico, NEGAR SEMPRE
+        # 🔥 REGRA 1: Se é regular com plano Free (3), NEGAR
         if user_type == 'regular' and plan_id == 3:
-            print(f"❌ ACESSO NEGADO: Usuário regular com plano básico")
+            print(f"❌ ACESSO NEGADO: Usuário regular com plano Free")
             return False
             
-        # 🔥 REGRA 2: Se é trial, verificar se não expirou
-        if user_type == 'trial':
+        # 🔥 REGRA 2: Se é trial Community (4), verificar se não expirou
+        if user_type == 'trial' and plan_id == 4:
             if plan_expires_at and plan_expires_at < datetime.now(timezone.utc):
                 print(f"❌ ACESSO NEGADO: Trial expirado em {plan_expires_at}")
                 return False
             else:
-                print(f"✅ ACESSO LIBERADO: Trial ainda válido até {plan_expires_at}")
-                return plan_id in [1, 2]  # Pro ou Premium trial
+                print(f"✅ ACESSO LIBERADO: Trial Community válido até {plan_expires_at}")
+                return True
         
         # 🔥 REGRA 3: Para usuários pagantes, verificar plano
         if user_type in ['regular', 'pro', 'premium']:
@@ -560,7 +589,6 @@ def send_trial_expiring_email(user_info, days_remaining):
         
         user_name = user_info['name']
         
-        # 🔥 USAR APENAS O NOVO MÉTODO - SEM HTML
         success = email_service.send_trial_reminder_email(
             user_name=user_name,
             email=user_email,
@@ -580,7 +608,6 @@ def send_trial_expiring_email(user_info, days_remaining):
         return False
 
 def send_trial_expiring_warnings():
-
     try:
         conn = get_db_connection()
         if not conn:
@@ -588,12 +615,13 @@ def send_trial_expiring_warnings():
         
         cursor = conn.cursor()
         
-        # Buscar trials que vão expirar em 7, 3 ou 1 dias
+        # 🔥 AJUSTE: Buscar apenas trials Community (plan_id=4)
         cursor.execute("""
             SELECT id, name, email, plan_name, plan_expires_at,
                    EXTRACT(days FROM (plan_expires_at - NOW())) as days_remaining
             FROM users 
             WHERE user_type = 'trial' 
+            AND plan_id = 4
             AND plan_expires_at IS NOT NULL 
             AND plan_expires_at BETWEEN NOW() AND NOW() + INTERVAL '7 days'
             ORDER BY plan_expires_at ASC
@@ -642,3 +670,55 @@ def send_trial_expiring_warnings():
     except Exception as e:
         return {'success': False, 'error': f'Erro interno: {str(e)}'}
 
+# ===== FUNÇÃO PARA LIMPEZA MANUAL (ADMIN) =====
+
+def manually_remove_expired_trials():
+    """
+    Função para admin executar processamento manual
+    """
+    try:
+        print("🧹 PROCESSAMENTO MANUAL: Movendo trials expirados para Free...")
+        
+        result = process_expired_trials()
+        
+        if result['success']:
+            processed_count = result['processed_count']
+            print(f"✅ Processamento concluído: {processed_count} usuários movidos para Free")
+            
+            if processed_count > 0:
+                downgraded_users = result.get('downgraded_users', [])
+                print("📝 Usuários que fizeram downgrade:")
+                for user in downgraded_users:
+                    print(f"   - {user['name']} ({user['email']})")
+            
+            return result
+        else:
+            print(f"❌ Erro no processamento: {result['error']}")
+            return result
+            
+    except Exception as e:
+        error_msg = f"Erro no processamento manual: {str(e)}"
+        print(f"❌ {error_msg}")
+        return {'success': False, 'error': error_msg}
+
+# ===== TESTE MANUAL =====
+if __name__ == "__main__":
+    print("🧪 TESTANDO LÓGICA DE TRIAL ATUALIZADA")
+    print("=" * 50)
+    
+    # Testar estatísticas
+    print("📊 Estatísticas atuais:")
+    stats = get_trial_stats()
+    if stats['success']:
+        print(f"   - Trials ativos: {stats['stats']['total_trials']}")
+        print(f"   - Expirando em breve: {stats['stats']['expiring_soon']}")
+        print(f"   - Pendentes de downgrade: {stats['stats']['expired_pending_downgrade']}")
+    
+    # Listar usuários trial
+    print("\n👥 Usuários em trial:")
+    users = get_all_trial_users()
+    if users['success']:
+        for user in users['trial_users'][:5]:  # Mostrar apenas 5
+            print(f"   - {user['name']}: {user['status_text']}")
+    
+    print("\n🔧 Para executar processamento manual: manually_remove_expired_trials()")

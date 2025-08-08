@@ -229,7 +229,7 @@
         <a href="/dashboard" class="hover:text-white transition-colors">Dashboard</a>
         <a href="opcoes.html" class="hover:text-white transition-colors">Hunter Walls</a>
         <span class="text-white font-medium">Implícita Sigma</span>
-        <a href="regimes-pro.html" class="hover:text-white transition-colors">Hybrid Volatility Bands</a>
+        <a href="regimes-pro.html" class="hover:text-white transition-colors">Bandas De Volatilidade</a>
         <a href="rank-volatilidade.html" class="hover:text-white transition-colors">IV Scanner</a>
       </div>
       <div class="flex items-center space-x-3 ml-8">
@@ -364,7 +364,8 @@
             </div>
           </div>
           
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <!-- GRID REDUZIDO - Removendo o segundo card -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div class="metric-card text-center">
               <div class="text-sm text-gray-400 mb-2">Quartil Atual</div>
               <div class="relative inline-block">
@@ -391,12 +392,6 @@
                   <span>Q4</span>
                 </div>
               </div>
-            </div>
-            
-            <div class="metric-card">
-              <div class="text-sm text-gray-400 mb-1">Uma Visão para Estratégias</div>
-              <div id="recommendedStrategy" class="text-lg font-bold text-white mb-2">--</div>
-              <div id="strategyDescription" class="text-sm text-gray-300">--</div>
             </div>
             
             <div class="metric-card">
@@ -598,7 +593,7 @@
       chartsSection.classList.remove('hidden');
     }
     
-    // Exibir sinal principal
+    // Exibir sinal principal - FUNÇÃO ATUALIZADA
     function displayMainSignal(data) {
       const signal = data.current_signal || 0;
       const interpretation = data.signal_interpretation || {};
@@ -625,10 +620,8 @@
       // Atualizar indicador de quartil na barra
       updateQuartileIndicator(signal);
       
-      // Dados complementares
+      // Dados complementares - REMOVIDAS AS LINHAS DAS ESTRATÉGIAS
       document.getElementById('signalValue').textContent = getQuartileLabel(signal);
-      document.getElementById('recommendedStrategy').textContent = interpretation.recommendation || '--';
-      document.getElementById('strategyDescription').textContent = interpretation.description || '--';
       document.getElementById('currentPrice').textContent = formatCurrency(data.current_price || 0);
       document.getElementById('signalConfidence').textContent = interpretation.confidence || '--';
       

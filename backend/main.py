@@ -474,9 +474,18 @@ def golden_eua_page():
 def momentum_eua_page():
     return send_from_directory('../frontend', 'momentum-eua.html')
 
-@app.route('/test-intraday')
-def test_intraday():
-    return send_from_directory('frontend', 'test-intraday.html')
+@app.route('/visao-360')
+@app.route('/visao-360.html')
+def visao_360_page():  # ✅ Nome da função mais claro
+    return send_from_directory('../frontend', 'visao-360.html')
+
+
+@app.route('/descobertos')
+@app.route('/descobertos.html')
+def descobertos_page():  # ✅ Nome da função mais claro
+    return send_from_directory('../frontend', 'descobertos.html')
+
+
 
 
 # ===== PÁGINAS DE RETORNO DO PAGAMENTO =====

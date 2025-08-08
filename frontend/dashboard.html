@@ -5,8 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dashboard - Geminii Tech</title>
   <link rel="icon" type="image/png" sizes="32x32" href="assets/logo.png">
-  <link rel="icon" type="image/png" sizes="16x16" href="assets/logo.png">
-  <link rel="apple-touch-icon" href="assets/logo.png">
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -20,9 +18,6 @@
             warning: '#f59e0b',
             danger: '#ef4444',
             geminii: '#ba39af'
-          },
-          fontFamily: {
-            sans: ['Inter', 'system-ui', 'sans-serif']
           }
         }
       }
@@ -31,10 +26,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
-    * {
-      scroll-behavior: smooth;
-    }
-    
     body {
       font-family: 'Inter', sans-serif;
       background: #0f0f0f;
@@ -51,7 +42,6 @@
     .card:hover {
       transform: translateY(-4px);
       box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
-      border-color: rgba(255, 255, 255, 0.2);
     }
     
     .dropdown {
@@ -74,9 +64,10 @@
     }
     
     .dropdown.show {
-      opacity: 1;
-      visibility: visible;
-      transform: translateY(0);
+      opacity: 1 !important;
+      visibility: visible !important;
+      transform: translateY(0) !important;
+      display: block !important;
     }
     
     .navbar {
@@ -89,7 +80,6 @@
       background: linear-gradient(135deg, #6366f1, #8b5cf6);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
-      background-clip: text;
     }
     
     .btn-primary {
@@ -104,88 +94,59 @@
       box-shadow: 0 10px 25px rgba(99, 102, 241, 0.3);
     }
     
-    .nav-active {
-      color: #6366f1;
+    .community-badge {
+      background: linear-gradient(135deg, #ba39af, #6366f1);
+      color: white;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
       font-weight: 600;
-      border-bottom: 2px solid #6366f1;
-      padding-bottom: 4px;
-    }
-    
-    .fade-in {
-      animation: fadeIn 0.5s ease-in;
-    }
-    
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
     }
 
-    .pulse-glow {
-      animation: pulseGlow 2s ease-in-out infinite alternate;
-    }
-    
-    @keyframes pulseGlow {
-      from { box-shadow: 0 0 20px rgba(138, 43, 226, 0.3); }
-      to { box-shadow: 0 0 30px rgba(138, 43, 226, 0.6); }
+    .free-badge {
+      background: linear-gradient(135deg, #10b981, #06b6d4);
+      color: white;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
     }
 
-    .trial-banner {
-      background: linear-gradient(135deg, #8b5cf6, #6366f1);
-      border: 1px solid rgba(139, 92, 246, 0.3);
-      animation: trialGlow 3s ease-in-out infinite alternate;
-    }
-    
-    @keyframes trialGlow {
-      from { box-shadow: 0 0 20px rgba(139, 92, 246, 0.4); }
-      to { box-shadow: 0 0 30px rgba(139, 92, 246, 0.7); }
-    }
-    
-    .trial-urgent {
+    .trial-badge {
       background: linear-gradient(135deg, #f59e0b, #ef4444);
-      border: 1px solid rgba(239, 68, 68, 0.3);
-      animation: urgentPulse 1.5s ease-in-out infinite alternate;
-    }
-    
-    @keyframes urgentPulse {
-      from { box-shadow: 0 0 15px rgba(239, 68, 68, 0.5); }
-      to { box-shadow: 0 0 25px rgba(239, 68, 68, 0.8); }
-    }
-    
-    .ml-card {
-      background: linear-gradient(135deg, rgba(138, 43, 226, 0.1), rgba(147, 51, 234, 0.05));
-      border: 1px solid rgba(138, 43, 226, 0.2);
-      backdrop-filter: blur(20px);
-      transition: all 0.3s ease;
-    }
-    
-    .ml-card:hover {
-      background: linear-gradient(135deg, rgba(138, 43, 226, 0.15), rgba(147, 51, 234, 0.08));
-      border-color: rgba(138, 43, 226, 0.3);
-      transform: translateY(-2px);
+      color: white;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
     }
 
+    /* FORÇA SEMPRE MOSTRAR DROPDOWNS */
+    .tool-card {
+      opacity: 1 !important;
+      cursor: pointer !important;
+      pointer-events: auto !important;
+    }
+    
     .dropdown a,
     .dropdown div {
       background-color: rgba(30, 30, 35, 0.6) !important;
+      color: white !important;
     }
 
     .dropdown a:hover,
     .dropdown div:hover {
       background-color: rgba(50, 50, 60, 0.8) !important;
     }
-
-    /* Estilo para cards desabilitados */
-    .card-disabled {
-      opacity: 0.6;
-      filter: grayscale(0.5);
-      cursor: not-allowed !important;
-    }
-    
-    .card-disabled:hover {
-      transform: none !important;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3) !important;
-    }
-    
   </style>
 </head>
 <body class="min-h-screen">
@@ -199,7 +160,7 @@
           <span class="text-xl font-bold text-white">Geminii</span>
         </div>
         <div class="hidden md:flex items-center space-x-6">
-          <a href="dashboard.html" class="nav-active transition-colors font-medium">Dashboard</a>
+          <a href="dashboard.html" class="text-primary font-semibold">Dashboard</a>
         </div>
       </div>
   
@@ -218,34 +179,9 @@
   <!-- Main Content -->
   <main class="pt-20 px-6 pb-96">
     <div class="max-w-7xl mx-auto">
-      
-      <!-- 🔥 TRIAL BANNER -->
-      <div id="trialBanner" class="trial-banner rounded-2xl p-6 mb-6 fade-in hidden">
-        <div class="flex items-center justify-between">
-          <div class="flex items-center gap-4">
-            <div class="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
-              <i class="fas fa-crown text-white text-xl"></i>
-            </div>
-            <div>
-              <h3 class="text-xl font-bold text-white mb-1" id="trialTitle">🎉 Trial Premium Ativo!</h3>
-              <p class="text-white/90 text-sm" id="trialSubtitle">Você tem acesso completo a todos os recursos Premium</p>
-            </div>
-          </div>
-          <div class="text-right">
-            <div class="text-3xl font-bold text-white mb-1" id="trialDaysLeft">15</div>
-            <div class="text-white/80 text-sm" id="trialDaysText">dias restantes</div>
-          </div>
-        </div>
-        
-        <div class="mt-4 flex items-center justify-between">
-          <div class="text-white/80 text-sm" id="trialExpiryText">
-            Expira em: <span id="trialExpiryDate" class="font-semibold">--</span>
-          </div>
-        </div>
-      </div>
 
       <!-- Header Section -->
-      <div class="card rounded-2xl p-8 mb-8 fade-in">
+      <div class="card rounded-2xl p-8 mb-8">
         <div class="flex flex-col lg:flex-row items-center gap-8">
           <div class="flex-shrink-0">
             <div id="userAvatar" class="w-20 h-20 rounded-full bg-gradient-to-r from-primary to-secondary flex items-center justify-center text-white text-xl font-bold shadow-lg">
@@ -257,157 +193,278 @@
             <h1 class="text-4xl font-bold text-white mb-2">
               Olá, <span id="userName" class="gradient-text">Usuário</span>!
             </h1>
-            <p class="text-gray-300 text-lg mb-4" id="userEmail">Bem-vindo ao seu painel de investimentos</p>
+            <p class="text-gray-300 text-lg mb-4" id="userEmail">Bem-vindo à Geminii</p>
             
-            <div class="flex flex-col sm:flex-row items-center gap-4">
-              <div class="flex items-center gap-2">
-                <span class="text-gray-400">Plano:</span>
-                <span id="userPlanBadge" class="px-3 py-1 rounded-full text-sm font-semibold bg-gray-100 text-gray-700">Básico</span>
-                <span id="trialIndicator" class="hidden px-2 py-1 rounded-full text-xs font-bold bg-purple-600 text-white animate-pulse">
-                  TRIAL
-                </span>
-              </div>
+            <div class="flex flex-col sm:flex-row items-center gap-4 mb-6">
+              <span id="userPlanBadge" class="free-badge">
+                <i class="fas fa-user"></i>
+                Plano Free
+              </span>
               <div class="text-sm text-gray-400">
                 <i class="fas fa-calendar mr-2"></i>
                 Membro desde: <span id="memberSince">2025</span>
               </div>
+              <div id="trialInfo" class="text-sm text-warning hidden">
+                <i class="fas fa-clock mr-2"></i>
+                Trial: <span id="trialDaysLeft">--</span> dias restantes
+              </div>
+            </div>
+            
+            <!-- Redes Sociais -->
+            <div class="flex flex-wrap justify-center lg:justify-start gap-3">
+              <a href="https://discord.com/channels/1387417259621744731/1387417260536369335" target="_blank" class="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-3 py-2 rounded-lg text-sm transition-colors">
+                <i class="fab fa-discord text-blue-400"></i>
+                Discord
+              </a>
+              <a href="https://instagram.com/geminiiresearch" target="_blank" class="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-3 py-2 rounded-lg text-sm transition-colors">
+                <i class="fab fa-instagram text-pink-400"></i>
+                Instagram
+              </a>
+              <a href="https://linkedin.com/company/geminii-research" target="_blank" class="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-3 py-2 rounded-lg text-sm transition-colors">
+                <i class="fab fa-linkedin text-blue-500"></i>
+                LinkedIn
+              </a>
+              <a href="https://x.com/geminiiresearch" target="_blank" class="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-2 py-1 rounded-lg text-sm transition-colors">
+                <i class="fab fa-x-twitter text-white"></i>
+                X  
+              </a>
             </div>
           </div>
           
           <div class="flex flex-col gap-3">
-            <a href="https://geminii.com.br/pagamentos-app" id="upgradeButton" class="btn-primary px-6 py-3 rounded-xl font-semibold inline-block text-center" target="_blank">
-              <i class="fas fa-crown mr-2"></i>Fazer Upgrade
+            <a href="https://youtube.com/@geminiiresearch" class="btn-primary px-6 py-3 rounded-xl font-semibold inline-block text-center" target="_blank">
+              <i class="fab fa-youtube mr-2"></i>Canal YouTube
             </a>
-          </div>
-        </div>
-      </div>
-
-      <!-- Machine Learning Highlight Card -->
-      <div class="ml-card rounded-2xl p-8 mb-8 fade-in pulse-glow relative overflow-hidden">
-        <div class="absolute inset-0 bg-gradient-to-r from-purple-600/5 to-pink-600/5"></div>
-        <div class="relative z-10">
-          <div class="flex items-center justify-between mb-6">
-            <div class="flex items-center gap-4">
-              <div class="w-16 h-16 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl flex items-center justify-center">
-                <i class="fas fa-brain text-white text-2xl"></i>
-              </div>
-              <div>
-                <h2 class="text-3xl font-bold text-white mb-2">Inteligência Artificial</h2>
-                <p class="text-gray-300">Algoritmos avançados para maximizar seus resultados</p>
-              </div>
-            </div>
-            <div class="text-right">
-              <div class="text-purple-400 text-sm font-semibold mb-1">POWERED BY</div>
-              <div class="text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
-                Machine Learning
-              </div>
-            </div>
-          </div>
-          
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div class="bg-white/5 rounded-lg p-4 border border-white/10">
-              <div class="flex items-center gap-3 mb-2">
-                <i class="fas fa-chart-line text-green-400"></i>
-                <span class="text-white font-semibold">Swing Trade ML</span>
-              </div>
-              <p class="text-gray-400 text-sm">IA Preditiva com Stops Dinâmicos</p>
-            </div>
-
-            <div class="bg-white/5 rounded-lg p-4 border border-white/10">
-              <div class="flex items-center gap-3 mb-2">
-                <i class="fas fa-robot text-blue-400"></i>
-                <span class="text-white font-semibold">Beta Regression</span>
-              </div>
-              <p class="text-gray-400 text-sm">Regressão Avançada vs IBOVESPA</p>
-            </div>
-
-            <div class="bg-white/5 rounded-lg p-4 border border-white/10">
-              <div class="flex items-center gap-3 mb-2">
-                <i class="fas fa-rocket text-purple-400"></i>
-                <span class="text-white font-semibold">ATSMOM</span>
-              </div>
-              <p class="text-gray-400 text-sm">Adaptive Time Series Momentum</p>
-            </div>
-
-            <div class="bg-white/5 rounded-lg p-4 border border-white/10">
-              <div class="flex items-center gap-3 mb-2">
-                <i class="fas fa-eye text-orange-400"></i>
-                <span class="text-white font-semibold">Pattern Recognition</span>
-              </div>
-              <p class="text-gray-400 text-sm">Reconhecimento de Padrões</p>
-            </div>
+            <a href="https://geminii.com.br/membros/" target="_blank" id="upgradeBtn" class="bg-gradient-to-r from-warning to-danger text-white px-6 py-3 rounded-xl font-semibold hidden inline-block text-center">
+              <i class="fas fa-crown mr-2"></i>Upgrade para Comunidade
+            </a>
           </div>
         </div>
       </div>
 
       <!-- Recommendations Free Card -->
-      <div class="card rounded-2xl p-8 mb-8 fade-in relative overflow-hidden">
-        <div class="absolute top-0 right-0 bg-gradient-to-l from-geminii/20 to-transparent w-64 h-64 -mr-32 -mt-32 rounded-full blur-3xl"></div>
-        <div class="relative z-10">
-          <div class="flex items-center justify-between mb-6">
-            <div>
-              <h2 class="text-2xl font-bold text-white mb-2 flex items-center">
-                <i class="fas fa-gift text-geminii mr-3"></i>
-                Recomendações Free Mensais
-              </h2>
-              <p class="text-gray-300">Análises profissionais geradas por Machine Learning</p>
+      <div class="card rounded-2xl p-8 mb-8">
+        <div class="flex items-center justify-between mb-6">
+          <div>
+            <h2 class="text-2xl font-bold text-white mb-2 flex items-center">
+              <i class="fas fa-gift text-geminii mr-3"></i>
+              Recomendações Gratuitas
+            </h2>
+            <p class="text-gray-300">Análises mensais disponíveis para todos os usuários</p>
+          </div>
+          <a href="recomendacoes-free.html" class="btn-primary px-6 py-3 rounded-xl font-semibold inline-flex items-center">
+            <i class="fas fa-chart-line mr-2"></i>
+            Ver Recomendações
+          </a>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div class="bg-white/5 rounded-lg p-4">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-gray-400">Sinais Ativos</span>
+              <i class="fas fa-signal text-accent"></i>
             </div>
-            <a href="recomendacoes-free.html" class="btn-primary px-6 py-3 rounded-xl font-semibold inline-flex items-center">
-              <i class="fas fa-chart-line mr-2"></i>
-              Ver Recomendações
-            </a>
+            <div class="text-2xl font-bold text-white" id="activeSignalsCount">--</div>
+            <div class="text-sm text-gray-400">Atualizados em tempo real</div>
           </div>
           
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div class="bg-white/5 rounded-lg p-4">
-              <div class="flex items-center justify-between mb-2">
-                <span class="text-gray-400">Sinais Ativos</span>
-                <i class="fas fa-signal text-accent"></i>
-              </div>
-              <div class="text-2xl font-bold text-white" id="activeSignalsCount">--</div>
-              <div class="text-sm text-gray-400">Atualizados em tempo real</div>
+          <div class="bg-white/5 rounded-lg p-4">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-gray-400">Taxa de Acerto</span>
+              <i class="fas fa-bullseye text-success"></i>
             </div>
-            
-            <div class="bg-white/5 rounded-lg p-4">
-              <div class="flex items-center justify-between mb-2">
-                <span class="text-gray-400">Taxa de Acerto</span>
-                <i class="fas fa-bullseye text-success"></i>
-              </div>
-              <div class="text-2xl font-bold text-success" id="freeSuccessRate">--</div>
-              <div class="text-sm text-gray-400">Últimos 30 dias</div>
-            </div>
-            
-            <div class="bg-white/5 rounded-lg p-4">
-              <div class="flex items-center justify-between mb-2">
-                <span class="text-gray-400">Próxima Atualização</span>
-                <i class="fas fa-calendar text-warning"></i>
-              </div>
-              <div class="text-2xl font-bold text-white" id="nextUpdateDays">--</div>
-              <div class="text-sm text-gray-400">Mensal</div>
-            </div>
+            <div class="text-2xl font-bold text-success" id="freeSuccessRate">--</div>
+            <div class="text-sm text-gray-400">Últimos 30 dias</div>
           </div>
           
-          <div class="mt-6 p-4 bg-geminii/10 border border-geminii/30 rounded-lg">
-            <div class="flex items-center">
-              <i class="fas fa-info-circle text-geminii mr-3"></i>
-              <p class="text-sm text-gray-300">
-                <span class="font-semibold text-white">100% Grátis:</span> 
-                Nossos modelos de ML analisam o mercado e geram até 1 recomendação mensal com entrada, alvo e stop loss definidos.
-              </p>
+          <div class="bg-white/5 rounded-lg p-4">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-gray-400">Próxima Atualização</span>
+              <i class="fas fa-calendar text-warning"></i>
             </div>
+            <div class="text-2xl font-bold text-white" id="nextUpdateDays">--</div>
+            <div class="text-sm text-gray-400">Mensal</div>
           </div>
         </div>
       </div>
 
-      <!-- Quick Actions -->
-      <div class="card rounded-2xl p-8 mb-8 fade-in">
+      <!-- Tools Section -->
+      <div class="card rounded-2xl p-8 mb-8">
         <h2 class="text-2xl font-bold text-white mb-6 flex items-center">
-          <i class="fas fa-bolt text-primary mr-3"></i>
-          Ações Rápidas
+          <i class="fas fa-tools text-primary mr-3"></i>
+          Ferramentas Disponíveis
         </h2>
         
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 items-stretch" id="quickActionsGrid">
-          <!-- Os cards serão gerados dinamicamente pelo JavaScript -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          
+          <!-- Card 1: Análise Gratuita -->
+          <div class="relative">
+            <div 
+              onclick="toggleGratisDropdown()"
+              class="tool-card bg-gradient-to-r from-success/10 to-success/5 hover:from-success/20 hover:to-success/10 border border-success/20 rounded-xl p-6 transition-all group cursor-pointer relative"
+            >
+              <div class="flex items-center gap-4 mb-4">
+                <div class="w-14 h-14 bg-success/20 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <i class="fas fa-gift text-success text-xl"></i>
+                </div>
+                <div class="flex-1">
+                  <h3 class="text-lg font-semibold text-white">Análise Essencial</h3>
+                  <p class="text-sm text-gray-300">Recursos fundamentais</p>
+                </div>
+                <i class="fas fa-chevron-down text-gray-400 transition-transform duration-300" id="gratisChevron"></i>
+              </div>
+              <span class="absolute top-4 right-4 bg-green-500 text-white text-xs px-3 py-1 rounded-full font-bold">FREE</span>
+            </div>
+            
+            <div id="gratisDropdown" class="dropdown">
+              <div class="grid grid-cols-1 gap-3">
+                <a href="monitor-basico.html" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white">
+                  <i class="fas fa-chart-area text-success w-6"></i>
+                  <div>
+                    <div class="font-medium">Monitor Beta</div>
+                    <div class="text-xs text-gray-400">Análise vs IBOVESPA</div>
+                  </div>
+                </a>
+                
+                <a href="rsl.html" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white">
+                  <i class="fas fa-robot text-pink-400 w-6"></i>
+                  <div>
+                    <div class="font-medium">RSL Radar</div>
+                    <div class="text-xs text-gray-400">Momentum atual da empresa</div>
+                  </div>
+                </a>
+            
+                <a href="amplitude.html" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white">
+                  <i class="fas fa-chart-bar text-orange-400 w-6"></i>
+                  <div>
+                    <div class="font-medium">Amplitude</div>
+                    <div class="text-xs text-gray-400">Movimentação do Ativo</div>
+                  </div>
+                </a>
+
+                <!-- <a href="descobertos.html" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white">
+                  <i class="fas fa-lightbulb text-yellow-400 w-6"></i>
+                  <div>
+                    <div class="font-medium">Novo Recurso</div>
+                    <div class="text-xs text-gray-400">Descrição do recurso</div>
+                  </div>
+                </a> -->                
+                
+                <a href="sup_res_vol.html" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white">
+                  <i class="fas fa-chart-line text-blue-400 w-6"></i>
+                  <div>
+                    <div class="font-medium">Bandas De Volatilidade (Simples)</div>
+                    <div class="text-xs text-gray-400">Com base em Volatilidade</div>
+                  </div>
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <!-- Card 2: Monitor de Opções -->
+          <div class="relative" id="opcoesCard">
+            <div 
+              onclick="toggleOpcoesDropdown()"
+              class="tool-card bg-gradient-to-r from-orange-500/10 to-orange-500/5 hover:from-orange-500/20 hover:to-orange-500/10 border border-orange-500/20 rounded-xl p-6 transition-all group cursor-pointer relative"
+            >
+              <div class="flex items-center gap-4 mb-4">
+                <div class="w-14 h-14 bg-orange-500/20 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <i class="fas fa-chart-pie text-orange-400 text-xl"></i>
+                </div>
+                <div class="flex-1">
+                  <h3 class="text-lg font-semibold text-white">Monitor de Opções</h3>
+                  <p class="text-sm text-gray-300">Análise Completa + IA</p>
+                </div>
+                <i class="fas fa-chevron-down text-gray-400 transition-transform duration-300" id="opcoesChevron"></i>
+              </div>
+              <span class="absolute top-4 right-4 bg-orange-500 text-white text-xs px-3 py-1 rounded-full font-bold">COMUNIDADE</span>
+            </div>
+            
+            <div id="opcoesDropdown" class="dropdown">
+              <div class="grid grid-cols-1 gap-3">
+                <a href="vi-pro.html" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white">
+                  <i class="fas fa-search text-purple-400 w-6"></i>
+                  <div>
+                    <div class="font-medium">Implícita Sigma</div>
+                    <div class="text-xs text-gray-400">Análise integrada de volatilidade</div>
+                  </div>
+                </a>
+                
+                <a href="regimes-pro.html" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white">
+                  <i class="fas fa-chart-area text-purple-400 w-6"></i>
+                  <div>
+                    <div class="font-medium">Bandas De Volatilidade</div>
+                    <div class="text-xs text-gray-400">GARCH + XGBoost + Validação IV</div>
+                  </div>
+                </a>
+                
+                <a href="rank-volatilidade.html" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white">
+                  <i class="fas fa-search text-green-400 w-6"></i>
+                  <div>
+                    <div class="font-medium">IV Scanner</div>
+                    <div class="text-xs text-gray-400">Scanner de Volatilidade Implícita</div>
+                  </div>
+                </a>
+                
+                <a href="opcoes.html" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white">
+                  <i class="fas fa-crosshairs text-orange-400 w-6"></i>
+                  <div>
+                    <div class="font-medium">Hunter Walls</div>
+                    <div class="text-xs text-gray-400">Volume de negócios por Strike</div>
+                  </div>
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <!-- Card 3: Machine Learning -->
+          <div class="relative" id="mlCard">
+            <div 
+              onclick="toggleMLDropdown()"
+              class="tool-card bg-gradient-to-r from-purple-500/10 to-purple-500/5 hover:from-purple-500/20 hover:to-purple-500/10 border border-purple-500/20 rounded-xl p-6 transition-all group cursor-pointer relative"
+            >
+              <div class="flex items-center gap-4 mb-4">
+                <div class="w-14 h-14 bg-purple-500/20 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <i class="fas fa-brain text-purple-400 text-xl"></i>
+                </div>
+                <div class="flex-1">
+                  <h3 class="text-lg font-semibold text-white">Machine Learning</h3>
+                  <p class="text-sm text-gray-300">IA Preditiva + Algoritmos</p>
+                </div>
+                <i class="fas fa-chevron-down text-gray-400 transition-transform duration-300" id="mlChevron"></i>
+              </div>
+              <span class="absolute top-4 right-4 bg-purple-600 text-white text-xs px-3 py-1 rounded-full font-bold">COMUNIDADE</span>
+            </div>
+            
+            <div id="mlDropdown" class="dropdown">
+              <div class="grid grid-cols-1 gap-3">
+                <a href="swing-trade-machine-learning.html" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white">
+                  <i class="fas fa-chart-line text-green-400 w-6"></i>
+                  <div>
+                    <div class="font-medium">Swing Trade ML</div>
+                    <div class="text-xs text-gray-400">IA Preditiva com Stops Dinâmicos</div>
+                  </div>
+                </a>
+                
+                <a href="beta-regression.html" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white">
+                  <i class="fas fa-calculator text-blue-400 w-6"></i>
+                  <div>
+                    <div class="font-medium">Beta Regression</div>
+                    <div class="text-xs text-gray-400">Trading c/ beta-movel</div>
+                  </div>
+                </a>
+                
+                <a href="atsmom.html" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white">
+                  <i class="fas fa-rocket text-purple-400 w-6"></i>
+                  <div>
+                    <div class="font-medium">ATSMOM</div>
+                    <div class="text-xs text-gray-400">Adaptive Time Series Momentum</div>
+                  </div>
+                </a>
+              </div>
+            </div>
+          </div>
+
         </div>
       </div>
 
@@ -417,8 +474,7 @@
   <script>
     let currentUser = null;
     let userToken = null;
-    let trialInfo = null; 
-    let userAccessLevel = 'BASIC'; // Inicializar como BASIC
+    let userPlan = 'trial'; // FORÇA TRIAL POR PADRÃO
 
     // Initialize dashboard
     async function initDashboard() {
@@ -426,13 +482,34 @@
       
       tryLoadFromLocalStorage();
       await checkAuth();
-      await loadUserStats();
       await loadFreeRecommendationsStatsWithRetry();
-      generateQuickActions(); // Gerar cards baseado no nível de acesso
       checkApiStatus();
       setInterval(checkApiStatus, 30000);
       
+      // FORÇA LIBERAÇÃO DE TUDO
+      setTimeout(forceUnlockEverything, 500);
+      
       console.log('✅ Dashboard inicializado!');
+    }
+
+    function forceUnlockEverything() {
+      console.log('🔓 FORÇANDO LIBERAÇÃO TOTAL...');
+      
+      userPlan = 'trial'; // FORÇA TRIAL
+      
+      // Garantir que todos os cards estão desbloqueados
+      document.querySelectorAll('.tool-card').forEach(card => {
+        card.style.opacity = '1';
+        card.style.cursor = 'pointer';
+        card.style.pointerEvents = 'auto';
+      });
+      
+      // Garantir que todos os dropdowns estão habilitados
+      document.querySelectorAll('.dropdown').forEach(dropdown => {
+        dropdown.style.display = 'block';
+      });
+      
+      console.log('✅ TUDO LIBERADO!');
     }
 
     function tryLoadFromLocalStorage() {
@@ -441,199 +518,123 @@
         if (userData) {
           const user = JSON.parse(userData);
           if (user && user.name) {
-            console.log('📦 Carregando dados do localStorage como fallback:', user.name);
+            console.log('📦 Carregando dados do localStorage:', user.name);
             updateUserInterface(user);
           }
         }
       } catch (error) {
-        console.log('⚠️ Erro ao carregar dados do localStorage:', error);
+        console.log('⚠️ Erro no localStorage:', error);
       }
     }
 
-    function calculateDaysRemaining(trialInfo, user) {
-      console.log('🔍 Calculando dias restantes...');
+    function checkUserPlan(user) {
+      console.log('🔍 Verificando plano:', user);
       
-      if (trialInfo && typeof trialInfo.days_remaining === 'number' && trialInfo.days_remaining >= 0) {
-        return trialInfo.days_remaining;
+      // SEMPRE RETORNA TRIAL SE TIVER plan_id = 4
+      if (user.plan_id === 4) {
+        console.log('✅ TRIAL COMMUNITY DETECTADO');
+        userPlan = 'trial';
+        return 'trial';
       }
       
-      if (user && user.plan_expires_at) {
-        try {
-          const expiryDate = new Date(user.plan_expires_at);
+      if (user.user_type === 'trial') {
+        console.log('✅ USER_TYPE TRIAL DETECTADO');
+        userPlan = 'trial';
+        return 'trial';
+      }
+      
+      userPlan = 'free';
+      return 'free';
+    }
+
+    function updatePlanInterface(plan, user = null) {
+      const planBadge = document.getElementById('userPlanBadge');
+      const upgradeBtn = document.getElementById('upgradeBtn');
+      const trialInfo = document.getElementById('trialInfo');
+      const trialDaysLeft = document.getElementById('trialDaysLeft');
+      
+      if (plan === 'trial') {
+        planBadge.className = 'trial-badge';
+        planBadge.innerHTML = '<i class="fas fa-clock"></i>Trial Ativo';
+        upgradeBtn.classList.remove('hidden');
+        trialInfo.classList.remove('hidden');
+        
+        let daysLeft = 15; // PADRÃO
+        if (user && user.trial_end_date) {
           const now = new Date();
-          const diffTime = expiryDate - now;
-          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-          return Math.max(0, diffDays);
-        } catch (error) {
-          console.error('❌ Erro ao calcular data:', error);
+          const trialEnd = new Date(user.trial_end_date);
+          daysLeft = Math.ceil((trialEnd - now) / (1000 * 60 * 60 * 24));
         }
+        
+        trialDaysLeft.textContent = Math.max(0, daysLeft);
+      } else {
+        planBadge.className = 'free-badge';
+        planBadge.innerHTML = '<i class="fas fa-user"></i>Plano Free';
+        upgradeBtn.classList.remove('hidden');
+        trialInfo.classList.add('hidden');
       }
-      
-      if (user && user.user_type === 'trial') {
-        return 0;
-      }
-      
-      return 0;
     }
 
-    // 🔥 FUNÇÃO CORRIGIDA - BASEADA NA EXPLICAÇÃO DO DIEGO
-    function getUserAccessLevel() {
-      console.log('🔍 Verificando nível de acesso do usuário...');
-      
-      if (!currentUser) {
-        console.log('❌ currentUser não definido');
-        return 'BASIC';
-      }
-      
-      const userType = currentUser.user_type || 'regular';
-      const planId = currentUser.plan_id || 3;
-      const email = currentUser.email || '';
-      
-      console.log(`📊 DADOS COMPLETOS: userType="${userType}", planId=${planId}, email="${email}"`);
-      
-      // 🔥 REGRA 1: ADMIN SEMPRE TEM ACESSO TOTAL
-      if (userType === 'admin' || userType === 'master' || email === 'diego@geminii.com.br') {
-        console.log('🎯 ADMIN CONFIRMADO - ACESSO PREMIUM TOTAL');
-        return 'PREMIUM';
-      }
-      
-      // 🔥 REGRA 2: TRIAL = 15 DIAS PREMIUM
-      if (userType === 'trial') {
-        // Verificar se o trial não expirou
-        if (currentUser.plan_expires_at) {
-          const expiryDate = new Date(currentUser.plan_expires_at);
-          const now = new Date();
-          if (expiryDate > now) {
-            console.log('🎯 TRIAL ATIVO - ACESSO PREMIUM');
-            return 'PREMIUM';
-          } else {
-            console.log('❌ TRIAL EXPIRADO - ACESSO BASIC');
-            return 'BASIC';
-          }
-        }
-        console.log('🎯 TRIAL SEM DATA - ASSUMINDO PREMIUM');
-        return 'PREMIUM';
-      }
-      
-      // 🔥 REGRA 3: BASEADO NO PLAN_ID (CONFORME BANCO)
-      if (planId === 3) {
-        console.log('🎯 PLAN_ID=3 - BÁSICO');
-        return 'BASIC';
-      } else if (planId === 1) {
-        console.log('🎯 PLAN_ID=1 - PRO');
-        return 'PRO';
-      } else if (planId === 2) {
-        console.log('🎯 PLAN_ID=2 - PREMIUM TOTAL');
-        return 'PREMIUM';
-      }
-      
-      // 🔥 FALLBACK: SE NADA BATER, BÁSICO
-      console.log('⚠️ NENHUMA REGRA BATEU - ASSUMINDO BASIC');
-      return 'BASIC';
-    }
-
-    // Check authentication
     async function checkAuth() {
       const token = localStorage.getItem('geminii_token');
       const userData = localStorage.getItem('geminii_user');
     
       if (!token || !userData) {
-        console.log('❌ Token ou userData não encontrados, redirecionando...');
+        console.log('❌ Redirecionando para login...');
         window.location.href = '/login.html';
         return;
       }
     
       try {
-        console.log('🔍 Verificando autenticação com o servidor...');
-        
         const response = await fetch('/auth/verify', {
           headers: { 
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
-          },
-          cache: 'no-cache'
+          }
         });
     
         const result = await response.json();
-        console.log('📡 Resposta da verificação:', result);
-    
+        
         if (result.success && result.data && result.data.user) {
           userToken = token;
           currentUser = result.data.user;
           
-          trialInfo = result.trial_info || 
-                      result.data.trial_info || 
-                      result.data.trial || 
-                      null;
-          
-          if (!trialInfo && currentUser) {
-            if (currentUser.trial_info) {
-              trialInfo = currentUser.trial_info;
-            } else if (currentUser.user_type === 'trial') {
-              const calculatedDays = calculateDaysRemaining(null, currentUser);
-              trialInfo = {
-                is_trial: true,
-                trial_expired: calculatedDays <= 0,
-                days_remaining: calculatedDays,
-                expires_at: currentUser.plan_expires_at
-              };
-            }
-          }
-          
-          // 🔥 CALCULAR NÍVEL DE ACESSO
-          userAccessLevel = getUserAccessLevel();
-          console.log('🎯 Nível de acesso definido:', userAccessLevel);
+          const plan = checkUserPlan(currentUser);
+          updatePlanInterface(plan, currentUser);
+          updateUserInterface(currentUser);
           
           localStorage.setItem('geminii_user', JSON.stringify(currentUser));
-          updateUserInterface(currentUser);
-          updateTrialInterface(trialInfo);
         } else {
-          console.log('❌ Falha na verificação, limpando dados...');
           localStorage.removeItem('geminii_token');
           localStorage.removeItem('geminii_user');
           window.location.href = '/login.html';
         }
       } catch (error) {
-        console.error('❌ Erro na verificação de auth:', error);
-        
+        console.error('Erro na verificação:', error);
+        // USAR DADOS DO LOCALSTORAGE EM CASO DE ERRO
         try {
-          const userData = localStorage.getItem('geminii_user');
-          if (userData) {
-            const user = JSON.parse(userData);
-            console.log('🔄 Usando dados do localStorage devido a erro de rede');
-            currentUser = user;
-            userToken = token;
-            userAccessLevel = getUserAccessLevel();
-            updateUserInterface(user);
-            updateTrialInterface(null);
-            return;
-          }
+          const user = JSON.parse(userData);
+          currentUser = user;
+          userToken = token;
+          const plan = checkUserPlan(user);
+          updatePlanInterface(plan, user);
+          updateUserInterface(user);
         } catch (e) {
-          console.error('Erro ao usar dados do localStorage:', e);
+          window.location.href = '/login.html';
         }
-        
-        localStorage.removeItem('geminii_token');
-        localStorage.removeItem('geminii_user');
-        window.location.href = '/login.html';
       }
     }
 
-    // Update user interface
     function updateUserInterface(user) {
-      console.log('🎨 Atualizando interface do usuário com:', user);
-      
       if (!user) return;
 
       const userInitialsEl = document.getElementById('userInitials');
       const userNameEl = document.getElementById('userName');
       const userEmailEl = document.getElementById('userEmail');
-      const planBadgeEl = document.getElementById('userPlanBadge');
       const memberSinceEl = document.getElementById('memberSince');
-      const trialIndicatorEl = document.getElementById('trialIndicator');
 
       if (user.name) {
         const initials = user.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
-        
         if (userInitialsEl) userInitialsEl.textContent = initials;
         if (userNameEl) userNameEl.textContent = user.name;
       }
@@ -642,687 +643,37 @@
         userEmailEl.textContent = user.email;
       }
 
-      if (planBadgeEl) {
-        const planId = user.plan_id || 3;
-        const userType = user.user_type || 'regular';
-        
-        if (userType === 'trial') {
-          planBadgeEl.textContent = 'Premium Trial';
-          planBadgeEl.style.background = '#7c3aed';
-          planBadgeEl.style.color = 'white';
-          
-          if (trialIndicatorEl) {
-            trialIndicatorEl.style.display = 'inline-block';
-          }
-        } else {
-          if (planId === 3) {
-            planBadgeEl.textContent = 'Básico';
-            planBadgeEl.style.background = '#4b5563';
-            planBadgeEl.style.color = '#d1d5db';
-          } else if (planId === 1) {
-            planBadgeEl.textContent = 'Pro';
-            planBadgeEl.style.background = '#f59e0b';
-            planBadgeEl.style.color = 'white';
-          } else if (planId >= 2) {
-            planBadgeEl.textContent = 'Premium';
-            planBadgeEl.style.background = '#8b5cf6';
-            planBadgeEl.style.color = 'white';
-          }
-          
-          if (trialIndicatorEl) {
-            trialIndicatorEl.style.display = 'none';
-          }
-        }
-      }
-
       if (user.created_at && memberSinceEl) {
         const createdDate = new Date(user.created_at).toLocaleDateString('pt-BR');
         memberSinceEl.textContent = createdDate;
       }
     }
 
-    // Update trial interface
-    function updateTrialInterface(trialInfo) {
-      console.log('🔥 updateTrialInterface chamado com:', trialInfo);
+    function getNextMonthlyUpdate() {
+      const today = new Date();
+      const firstOfCurrentMonth = new Date(today.getFullYear(), today.getMonth(), 1);
       
-      const trialBannerEl = document.getElementById('trialBanner');
-      const trialTitleEl = document.getElementById('trialTitle');
-      const trialSubtitleEl = document.getElementById('trialSubtitle');
-      const trialDaysLeftEl = document.getElementById('trialDaysLeft');
-      const trialDaysTextEl = document.getElementById('trialDaysText');
-      const trialExpiryDateEl = document.getElementById('trialExpiryDate');
-      const upgradeButtonEl = document.getElementById('upgradeButton');
-      
-      if (!trialBannerEl) return;
-      
-      const isTrialUser = currentUser && currentUser.user_type === 'trial';
-      const hasTrialInfo = trialInfo && trialInfo.is_trial && !trialInfo.trial_expired;
-      
-      if (!hasTrialInfo && !isTrialUser) {
-        trialBannerEl.style.display = 'none';
-        trialBannerEl.classList.add('hidden');
-        return;
-      }
-      
-      const daysLeft = calculateDaysRemaining(trialInfo, currentUser);
-      const expiresAt = trialInfo ? trialInfo.expires_at : null;
-      
-      trialBannerEl.style.display = 'block';
-      trialBannerEl.classList.remove('hidden');
-      
-      if (daysLeft <= 1) {
-        trialBannerEl.className = 'trial-urgent rounded-2xl p-6 mb-6 fade-in';
-      } else if (daysLeft <= 3) {
-        trialBannerEl.className = 'trial-urgent rounded-2xl p-6 mb-6 fade-in';
+      // Se ainda não passou do dia 1º deste mês
+      if (today.getDate() === 1) {
+        return 30; // Próximo mês
       } else {
-        trialBannerEl.className = 'trial-banner rounded-2xl p-6 mb-6 fade-in';
-      }
-      
-      if (daysLeft <= 1) {
-        if (trialTitleEl) trialTitleEl.textContent = '⚠️ Trial Premium Expirando Hoje!';
-        if (trialSubtitleEl) trialSubtitleEl.textContent = 'Seu trial Premium expira hoje. Não perca o acesso aos recursos avançados!';
-      } else if (daysLeft <= 3) {
-        if (trialTitleEl) trialTitleEl.textContent = '⏰ Trial Premium Expirando em Breve!';
-        if (trialSubtitleEl) trialSubtitleEl.textContent = `Apenas ${daysLeft} dias restantes do seu trial Premium!`;
-      } else {
-        if (trialTitleEl) trialTitleEl.textContent = '🎉 Trial Premium Ativo!';
-        if (trialSubtitleEl) trialSubtitleEl.textContent = 'Você tem acesso completo a todos os recursos Premium';
-      }
-      
-      if (trialDaysLeftEl) trialDaysLeftEl.textContent = daysLeft;
-      if (trialDaysTextEl) trialDaysTextEl.textContent = daysLeft === 1 ? 'dia restante' : 'dias restantes';
-      
-      if (expiresAt && trialExpiryDateEl) {
-        const expiryDate = new Date(expiresAt);
-        trialExpiryDateEl.textContent = expiryDate.toLocaleDateString('pt-BR');
-      }
-      
-      if (upgradeButtonEl) {
-        if (daysLeft <= 3) {
-          upgradeButtonEl.innerHTML = '<i class="fas fa-crown" style="margin-right: 8px;"></i>Upgrade Agora!';
-          upgradeButtonEl.style.background = 'linear-gradient(135deg, #dc2626, #ec4899)';
-          upgradeButtonEl.style.animation = 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite';
-        } else {
-          upgradeButtonEl.innerHTML = '<i class="fas fa-crown" style="margin-right: 8px;"></i>Ver Planos';
-          upgradeButtonEl.style.background = 'linear-gradient(135deg, #6366f1, #8b5cf6)';
-          upgradeButtonEl.style.animation = 'none';
-        }
+        // Próximo mês
+        const firstOfNextMonth = new Date(today.getFullYear(), today.getMonth() + 1, 1);
+        const daysLeft = Math.ceil((firstOfNextMonth - today) / (1000 * 60 * 60 * 24));
+        return daysLeft;
       }
     }
 
-    // 🔥 GERAR CARDS DE AÇÕES RÁPIDAS BASEADO NO NÍVEL DE ACESSO
-    function generateQuickActions() {
-      console.log('🎯 Gerando cards de ações rápidas para nível:', userAccessLevel);
-      
-      const container = document.getElementById('quickActionsGrid');
-      if (!container) return;
-      
-      let cardsHTML = '';
-      
-      // CARD 1: GRÁTIS (sempre disponível) - MANTÉM IGUAL
-      cardsHTML += `
-        <div class="relative">
-          <div 
-            onclick="toggleGratisDropdown()"
-            class="bg-gradient-to-r from-success/10 to-success/5 hover:from-success/20 hover:to-success/10 border border-success/20 rounded-xl p-4 transition-all group cursor-pointer relative"
-          >
-            <div class="flex items-center gap-3">
-              <div class="w-12 h-12 bg-success/20 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
-                <i class="fas fa-gift text-success text-lg"></i>
-              </div>
-              <div class="flex-1">
-                <h3 class="font-semibold text-white">Fique à Vontade</h3>
-                <p class="text-sm text-gray-300">Recursos Gratuitos</p>
-              </div>
-              <i class="fas fa-chevron-down text-gray-400 transition-transform duration-300" id="gratisChevron"></i>
-            </div>
-            <span class="absolute top-3 right-3 bg-green-500 text-white text-xs px-2 py-1 rounded-full font-bold">GRÁTIS</span>
-          </div>
-          
-          <div id="gratisDropdown" class="dropdown">
-            <div class="grid grid-cols-1 gap-2">
-              <a href="monitor-basico.html" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white">
-                <i class="fas fa-chart-area text-success w-5"></i>
-                <div>
-                  <div class="font-medium">Monitor Beta</div>
-                  <div class="text-xs text-gray-400">Análise vs IBOVESPA</div>
-                </div>
-              </a>
-              
-              <a href="rsl.html" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white">
-                <i class="fas fa-robot text-pink-400 w-5"></i>
-                <div>
-                  <div class="font-medium">RSL Radar</div>
-                  <div class="text-xs text-gray-400">Momentum atual da empresa</div>
-                </div>
-              </a>
-          
-              <a href="amplitude.html" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white">
-                <i class="fas fa-chart-bar text-orange-400 w-5"></i>
-                <div>
-                  <div class="font-medium">Amplitude</div>
-                  <div class="text-xs text-gray-400">Movimentação do Ativo</div>
-                </div>
-              </a>
-              
-              <a href="sup_res_vol.html" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white">
-                <i class="fas fa-chart-line text-blue-400 w-5"></i>
-                <div>
-                  <div class="font-medium">Suporte e Resistência</div>
-                  <div class="text-xs text-gray-400">Com base em Volatilidade</div>
-                </div>
-              </a>
-              
-              <div onclick="showUpgradeDialog('Radar Financeiro', 'FREE')" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white cursor-pointer">
-                <i class="fas fa-radar-chart text-cyan-400 w-5"></i>
-                <div class="flex-1">
-                  <div class="font-medium">Radar Financeiro</div>
-                  <div class="text-xs text-gray-400">Indicadores Fundamentalistas</div>
-                </div>
-                <span class="bg-red-600 text-white text-xs px-2 py-1 rounded-full font-bold">EM BREVE</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      `;
-      
-      // CARD 2: ANÁLISE TÉCNICA CLÁSSICA (GRÁTIS) - NOVO CARD
-      cardsHTML += `
-        <div class="relative">
-          <div 
-            onclick="toggleAnaliseTecnicaDropdown()"
-            class="bg-gradient-to-r from-blue-500/10 to-blue-500/5 hover:from-blue-500/20 hover:to-blue-500/10 border border-blue-500/20 rounded-xl p-4 transition-all group cursor-pointer relative"
-          >
-            <div class="flex items-center gap-3">
-              <div class="w-12 h-12 bg-blue-500/20 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
-                <i class="fas fa-chart-line text-blue-400 text-lg"></i>
-              </div>
-              <div class="flex-1">
-                <h3 class="font-semibold text-white">Indicadores Tradicionais</h3>
-                <p class="text-sm text-gray-300">Analise técnica e Fundamentalista</p>
-              </div>
-              <i class="fas fa-chevron-down text-gray-400 transition-transform duration-300" id="analiseTecnicaChevron"></i>
-            </div>
-            <span class="absolute top-3 right-3 bg-green-500 text-white text-xs px-2 py-1 rounded-full font-bold">GRÁTIS</span>
-          </div>
-          
-          <div id="analiseTecnicaDropdown" class="dropdown">
-            <div class="grid grid-cols-1 gap-2">
-              <div onclick="showUpgradeDialog('Momentum', 'FREE')" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white cursor-pointer">
-                <i class="fas fa-rocket text-purple-400 w-5"></i>
-                <div class="flex-1">
-                  <div class="font-medium">Momentum</div>
-                  <div class="text-xs text-gray-400">Análise de momentum clássica</div>
-                </div>
-                <span class="bg-red-600 text-white text-xs px-2 py-1 rounded-full font-bold">EM BREVE</span>
-              </div>
-              
-              <a href="formula.html" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white">
-                <i class="fas fa-magic text-yellow-400 w-5"></i>
-                <div class="flex-1">
-                  <div class="font-medium">Fórmula Mágica Joel Greenblatt</div>
-                  <div class="text-xs text-gray-400">Value investing estratégia</div>
-                </div>
-              </a>
-              
-              <div onclick="showUpgradeDialog('Inside Bar', 'FREE')" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white cursor-pointer">
-                <i class="fas fa-compress-alt text-green-400 w-5"></i>
-                <div class="flex-1">
-                  <div class="font-medium">Inside Bar</div>
-                  <div class="text-xs text-gray-400">Padrão de consolidação</div>
-                </div>
-                <span class="bg-red-600 text-white text-xs px-2 py-1 rounded-full font-bold">EM BREVE</span>
-              </div>
-              
-              <div onclick="showUpgradeDialog('Golden Cross', 'FREE')" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white cursor-pointer">
-                <i class="fas fa-plus text-orange-400 w-5"></i>
-                <div class="flex-1">
-                  <div class="font-medium">Golden Cross</div>
-                  <div class="text-xs text-gray-400">Cruzamento de médias móveis</div>
-                </div>
-                <span class="bg-red-600 text-white text-xs px-2 py-1 rounded-full font-bold">EM BREVE</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      `;
-      
-      // CARD 3: PRO - MANTÉM IGUAL (já está correto)
-      if (userAccessLevel === 'PRO' || userAccessLevel === 'PREMIUM') {
-        cardsHTML += `
-          <div class="relative">
-            <div 
-              onclick="toggleProDropdown()"
-              class="bg-gradient-to-r from-warning/10 to-warning/5 hover:from-warning/20 hover:to-warning/10 border border-warning/20 rounded-xl p-4 transition-all group cursor-pointer relative"
-            >
-              <div class="flex items-center gap-3">
-                <div class="w-12 h-12 bg-warning/20 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
-                  <i class="fas fa-chart-line text-warning text-lg"></i>
-                </div>
-                <div class="flex-1">
-                  <h3 class="font-semibold text-white">Estatística Aplicada</h3>
-                  <p class="text-sm text-gray-300">Análises Profissionais</p>
-                </div>
-                <i class="fas fa-chevron-down text-gray-400 transition-transform duration-300" id="proChevron"></i>
-              </div>
-              <span class="absolute top-3 right-3 bg-warning text-white text-xs px-2 py-1 rounded-full font-bold">PRO</span>
-            </div>
-            
-            <div id="proDropdown" class="dropdown">
-              <div class="grid grid-cols-1 gap-2">
-                <a href="regimes-volatilidade.html" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white">
-                  <i class="fas fa-brain text-purple-400 w-5"></i>
-                  <div>
-                    <div class="font-medium">Regimes de Volatilidade</div>
-                    <div class="text-xs text-gray-400">IA + 3 Indicadores Não Convencionais</div>
-                  </div>
-                </a>
-                
-                <a href="long-short.html" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white">
-                  <i class="fas fa-exchange-alt text-secondary w-5"></i>
-                  <div>
-                    <div class="font-medium">Long & Short</div>
-                    <div class="text-xs text-gray-400">Cointegração Estatística</div>
-                  </div>
-                </a>
-                
-                <!-- 🔥 NOVO: Indicador Antifrágil -->
-                <a href="antifragil.html" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white">
-                  <i class="fas fa-shield-alt text-green-400 w-5"></i>
-                  <div>
-                    <div class="font-medium">Indicador Antifrágil</div>
-                    <div class="text-xs text-gray-400">Ativos que prosperam no caos</div>
-                  </div>
-                </a>
-              </div>
-            </div>
-          </div>
-        `;
-      } else {
-        cardsHTML += `
-          <div onclick="showUpgradeDialog('Estatística Aplicada', 'PRO')" class="bg-gradient-to-r from-warning/10 to-warning/5 border border-warning/20 rounded-xl p-4 transition-all group cursor-pointer relative card-disabled">
-            <div class="flex items-center gap-3">
-              <div class="w-12 h-12 bg-warning/20 rounded-lg flex items-center justify-center">
-                <i class="fas fa-chart-line text-warning text-lg"></i>
-              </div>
-              <div class="flex-1">
-                <h3 class="font-semibold text-white">Estatística Aplicada</h3>
-                <p class="text-sm text-gray-300">Análises Profissionais</p>
-              </div>
-              <i class="fas fa-lock text-gray-400"></i>
-            </div>
-            <span class="absolute top-3 right-3 bg-warning text-white text-xs px-2 py-1 rounded-full font-bold">PRO</span>
-          </div>
-        `;
-      }
-      
-      // CARD 4: OPÇÕES PRO - MANTÉM IGUAL (já está correto)
-      if (userAccessLevel === 'PRO' || userAccessLevel === 'PREMIUM') {
-        cardsHTML += `
-          <div class="relative">
-            <div 
-              onclick="toggleOpcoesDropdown()"
-              class="bg-gradient-to-r from-orange-500/10 to-orange-500/5 hover:from-orange-500/20 hover:to-orange-500/10 border border-orange-500/20 rounded-xl p-4 transition-all group cursor-pointer relative"
-            >
-              <div class="flex items-center gap-3">
-                <div class="w-12 h-12 bg-orange-500/20 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
-                  <i class="fas fa-chart-pie text-orange-400 text-lg"></i>
-                </div>
-                <div class="flex-1">
-                  <h3 class="font-semibold text-white">Monitor de Opções</h3>
-                  <p class="text-sm text-gray-300">Análise Completa + IA</p>
-                </div>
-                <i class="fas fa-chevron-down text-gray-400 transition-transform duration-300" id="opcoesChevron"></i>
-              </div>
-              <span class="absolute top-3 right-3 bg-warning text-white text-xs px-2 py-1 rounded-full font-bold">PRO</span>
-            </div>
-            
-            <div id="opcoesDropdown" class="dropdown">
-              <div class="grid grid-cols-1 gap-2">
-                <a href="vi-pro.html" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white">
-                  <i class="fas fa-search text-purple-400 w-5"></i>
-                  <div>
-                    <div class="font-medium">Implícita Sigma</div>
-                    <div class="text-xs text-gray-400">Análise integrada de volatilidade implícita</div>
-                  </div>
-                </a>
-                
-                <a href="regimes-pro.html" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white">
-                  <i class="fas fa-chart-area text-purple-400 w-5"></i>
-                  <div>
-                    <div class="font-medium">Hybrid Volatility Bands</div>
-                    <div class="text-xs text-gray-400">GARCH + XGBoost + Validação IV</div>
-                  </div>
-                </a>
-                
-                <a href="rank-volatilidade.html" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white">
-                  <i class="fas fa-search text-green-400 w-5"></i>
-                  <div>
-                    <div class="font-medium">IV Scanner</div>
-                    <div class="text-xs text-gray-400">Scanner de Volatilidade Implícita</div>
-                  </div>
-                </a>
-                
-                <a href="opcoes.html" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white">
-                  <i class="fas fa-crosshairs text-orange-400 w-5"></i>
-                  <div>
-                    <div class="font-medium">Hunter Walls</div>
-                    <div class="text-xs text-gray-400">Volume de negócios por Strike</div>
-                  </div>
-                </a>
-              </div>
-            </div>
-          </div>
-        `;
-      } else {
-        cardsHTML += `
-          <div onclick="showUpgradeDialog('Monitor de Opções', 'PRO')" class="bg-gradient-to-r from-orange-500/10 to-orange-500/5 border border-orange-500/20 rounded-xl p-4 transition-all group cursor-pointer relative card-disabled">
-            <div class="flex items-center gap-3">
-              <div class="w-12 h-12 bg-orange-500/20 rounded-lg flex items-center justify-center">
-                <i class="fas fa-chart-pie text-orange-400 text-lg"></i>
-              </div>
-              <div class="flex-1">
-                <h3 class="font-semibold text-white">Monitor de Opções</h3>
-                <p class="text-sm text-gray-300">Análise Completa + IA</p>
-              </div>
-              <i class="fas fa-lock text-gray-400"></i>
-            </div>
-            <span class="absolute top-3 right-3 bg-warning text-white text-xs px-2 py-1 rounded-full font-bold">PRO</span>
-          </div>
-        `;
-      }
-      
-      // CARD 5: ANÁLISE PAPÉIS AMERICANOS (PRO) - NOVO CARD
-      if (userAccessLevel === 'PRO' || userAccessLevel === 'PREMIUM') {
-        cardsHTML += `
-          <div class="relative">
-            <div 
-              onclick="toggleAmericanosDropdown()"
-              class="bg-gradient-to-r from-red-500/10 to-red-500/5 hover:from-red-500/20 hover:to-red-500/10 border border-red-500/20 rounded-xl p-4 transition-all group cursor-pointer relative"
-            >
-              <div class="flex items-center gap-3">
-                <div class="w-12 h-12 bg-red-500/20 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
-                  <i class="fas fa-flag-usa text-red-400 text-lg"></i>
-                </div>
-                <div class="flex-1">
-                  <h3 class="font-semibold text-white">Análise Papéis Americanos</h3>
-                  <p class="text-sm text-gray-300">Mercado US + IA</p>
-                </div>
-                <i class="fas fa-chevron-down text-gray-400 transition-transform duration-300" id="americanosChevron"></i>
-              </div>
-              <span class="absolute top-3 right-3 bg-warning text-white text-xs px-2 py-1 rounded-full font-bold">PRO</span>
-            </div>
-            
-            <div id="americanosDropdown" class="dropdown">
-              <div class="grid grid-cols-1 gap-2">
-                <a href="golden_cross_eua.html" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white">
-                  <i class="fas fa-flag-usa text-blue-400 w-5"></i>
-                  <div class="flex-1">
-                    <div class="font-medium">Golden Cross EUA</div>
-                    <div class="text-xs text-gray-400">50 maiores empresas americanas + RSI</div>
-                  </div>
-                </a>
-                
-                <a href="momentum-eua.html" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white">
-                  <i class="fas fa-rocket text-purple-400 w-5"></i>
-                  <div class="flex-1">
-                    <div class="font-medium">Momentum US</div>
-                    <div class="text-xs text-gray-400">Análise momentum S&P 500</div>
-                  </div>
-                </a>
-                
-                <div onclick="showUpgradeDialog('Value Screening', 'PRO')" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white cursor-pointer">
-                  <i class="fas fa-search text-green-400 w-5"></i>
-                  <div class="flex-1">
-                    <div class="font-medium">Value Screening</div>
-                    <div class="text-xs text-gray-400">Scanner de valor US</div>
-                  </div>
-                  <span class="bg-red-600 text-white text-xs px-2 py-1 rounded-full font-bold">EM BREVE</span>
-                </div>
-                
-                <div onclick="showUpgradeDialog('Trend Following', 'PRO')" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white cursor-pointer">
-                  <i class="fas fa-chart-line text-blue-400 w-5"></i>
-                  <div class="flex-1">
-                    <div class="font-medium">Trend Following</div>
-                    <div class="text-xs text-gray-400">Seguimento de tendência US</div>
-                  </div>
-                  <span class="bg-red-600 text-white text-xs px-2 py-1 rounded-full font-bold">EM BREVE</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        `;
-      } else {
-        cardsHTML += `
-          <div onclick="showUpgradeDialog('Análise Papéis Americanos', 'PRO')" class="bg-gradient-to-r from-red-500/10 to-red-500/5 border border-red-500/20 rounded-xl p-4 transition-all group cursor-pointer relative card-disabled">
-            <div class="flex items-center gap-3">
-              <div class="w-12 h-12 bg-red-500/20 rounded-lg flex items-center justify-center">
-                <i class="fas fa-flag-usa text-red-400 text-lg"></i>
-              </div>
-              <div class="flex-1">
-                <h3 class="font-semibold text-white">Análise Papéis Americanos</h3>
-                <p class="text-sm text-gray-300">Mercado US + IA</p>
-              </div>
-              <i class="fas fa-lock text-gray-400"></i>
-            </div>
-            <span class="absolute top-3 right-3 bg-warning text-white text-xs px-2 py-1 rounded-full font-bold">PRO</span>
-          </div>
-        `;
-      }
-      
-      // CARD 6: MACHINE LEARNING (PREMIUM) - MANTÉM IGUAL (já está correto)
-      if (userAccessLevel === 'PREMIUM') {
-        cardsHTML += `
-          <div class="relative">
-            <div 
-              onclick="toggleMLDropdown()"
-              class="bg-gradient-to-r from-purple-500/10 to-purple-500/5 hover:from-purple-500/20 hover:to-purple-500/10 border border-purple-500/20 rounded-xl p-4 transition-all group cursor-pointer relative"
-            >
-              <div class="flex items-center gap-3">
-                <div class="w-12 h-12 bg-purple-500/20 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
-                  <i class="fas fa-brain text-purple-400 text-lg"></i>
-                </div>
-                <div class="flex-1">
-                  <h3 class="font-semibold text-white">Machine Learning</h3>
-                  <p class="text-sm text-gray-300">IA Preditiva + Algoritmos</p>
-                </div>
-                <i class="fas fa-chevron-down text-gray-400 transition-transform duration-300" id="mlChevron"></i>
-              </div>
-              <span class="absolute top-3 right-3 bg-purple-600 text-white text-xs px-2 py-1 rounded-full font-bold">PREMIUM</span>
-            </div>
-            
-            <div id="mlDropdown" class="dropdown">
-              <div class="grid grid-cols-1 gap-2">
-                <a href="swing-trade-machine-learning.html" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white">
-                  <i class="fas fa-chart-line text-green-400 w-5"></i>
-                  <div>
-                    <div class="font-medium">Swing Trade ML</div>
-                    <div class="text-xs text-gray-400">IA Preditiva com Stops Dinâmicos</div>
-                  </div>
-                </a>
-                
-                <a href="beta-regression.html" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white">
-                  <i class="fas fa-calculator text-blue-400 w-5"></i>
-                  <div>
-                    <div class="font-medium">Beta Regression</div>
-                    <div class="text-xs text-gray-400">Trading c/ beta-movel</div>
-                  </div>
-                </a>
-                
-                <a href="atsmom.html" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white">
-                  <i class="fas fa-rocket text-purple-400 w-5"></i>
-                  <div>
-                    <div class="font-medium">ATSMOM</div>
-                    <div class="text-xs text-gray-400">Adaptive Time Series Momentum</div>
-                  </div>
-                </a>
-              </div>
-            </div>
-          </div>
-        `;
-      } else {
-        cardsHTML += `
-          <div onclick="showUpgradeDialog('Machine Learning', 'PREMIUM')" class="bg-gradient-to-r from-purple-500/10 to-purple-500/5 border border-purple-500/20 rounded-xl p-4 transition-all group cursor-pointer relative card-disabled">
-            <div class="flex items-center gap-3">
-              <div class="w-12 h-12 bg-purple-500/20 rounded-lg flex items-center justify-center">
-                <i class="fas fa-brain text-purple-400 text-lg"></i>
-              </div>
-              <div class="flex-1">
-                <h3 class="font-semibold text-white">Machine Learning</h3>
-                <p class="text-sm text-gray-300">IA Preditiva + Algoritmos</p>
-              </div>
-              <i class="fas fa-lock text-gray-400"></i>
-            </div>
-            <span class="absolute top-3 right-3 bg-purple-600 text-white text-xs px-2 py-1 rounded-full font-bold">PREMIUM</span>
-          </div>
-        `;
-      }
-      
-      container.innerHTML = cardsHTML;
-      console.log('✅ Cards gerados com sucesso para nível:', userAccessLevel);
-    }
-
-
-    function executeFeatureAction(featureName) {
-      console.log('🚀 Executando funcionalidade:', featureName);
-      
-      // Mapear nomes das funcionalidades para URLs
-      const featureMap = {
-        'Smart Carteiras': 'analises.html',
-        'Opções Recomendações': 'opcoes-recomendacoes.html',
-        'Machine Learning': '#', // Dropdown - não redireciona
-        'Monitor de Opções': '#', // Dropdown - não redireciona
-        'Estatística Aplicada': '#', // Dropdown - não redireciona
-        'Indicador Antifrágil': 'antifragil.html', // 🔥 NOVO LINK
-        'Radar Financeiro': '#', // Em breve
-        'Regressão Linear': '#', // Em breve
-        'Regressão Polinomial': '#', // Em breve
-        'Manipulação de Volumes Extremos': '#', // Em breve
-        'Pattern Recognition': '#' // Em breve
-      };
-      
-      const url = featureMap[featureName];
-      if (url && url !== '#') {
-        console.log('🔗 Redirecionando para:', url);
-        window.location.href = url;
-      } else {
-        console.log('📋 Funcionalidade:', featureName, 'não tem URL específica ou está em desenvolvimento');
-      }
-    }
-    
-    // ===== ADICIONAR LOGS DE DEBUG PARA getUserAccessLevel() =====
-    function getUserAccessLevel() {
-      console.log('🔍 [DEBUG] Verificando nível de acesso do usuário...');
-      
-      if (!currentUser) {
-        console.log('❌ [DEBUG] currentUser não definido');
-        return 'BASIC';
-      }
-      
-      const userType = currentUser.user_type || 'regular';
-      const planId = currentUser.plan_id || 3;
-      const email = currentUser.email || '';
-      
-      console.log(`📊 [DEBUG] DADOS COMPLETOS: userType="${userType}", planId=${planId}, email="${email}"`);
-      
-      // 🔥 REGRA 1: ADMIN SEMPRE TEM ACESSO TOTAL
-      if (userType === 'admin' || userType === 'master' || email === 'diego@geminii.com.br') {
-        console.log('🎯 [DEBUG] ADMIN CONFIRMADO - ACESSO PREMIUM TOTAL');
-        return 'PREMIUM';
-      }
-      
-      // 🔥 REGRA 2: TRIAL = 15 DIAS PREMIUM
-      if (userType === 'trial') {
-        if (currentUser.plan_expires_at) {
-          const expiryDate = new Date(currentUser.plan_expires_at);
-          const now = new Date();
-          if (expiryDate > now) {
-            console.log('🎯 [DEBUG] TRIAL ATIVO - ACESSO PREMIUM');
-            return 'PREMIUM';
-          } else {
-            console.log('❌ [DEBUG] TRIAL EXPIRADO - ACESSO BASIC');
-            return 'BASIC';
-          }
-        }
-        console.log('🎯 [DEBUG] TRIAL SEM DATA - ASSUMINDO PREMIUM');
-        return 'PREMIUM';
-      }
-      
-      // 🔥 REGRA 3: BASEADO NO PLAN_ID
-      if (planId === 3) {
-        console.log('🎯 [DEBUG] PLAN_ID=3 - BÁSICO');
-        return 'BASIC';
-      } else if (planId === 1) {
-        console.log('🎯 [DEBUG] PLAN_ID=1 - PRO');
-        return 'PRO';
-      } else if (planId === 2) {
-        console.log('🎯 [DEBUG] PLAN_ID=2 - PREMIUM TOTAL');
-        return 'PREMIUM';
-      }
-      
-      console.log('⚠️ [DEBUG] NENHUMA REGRA BATEU - ASSUMINDO BASIC');
-      return 'BASIC';
-    }
-
-    // Load user statistics
-    async function loadUserStats() {
+    async function loadFreeRecommendationsStatsWithRetry(attempt = 1) {
       if (!userToken) return;
 
       try {
-        const response = await fetch('/api/user/my-portfolios', {
-          headers: { 'Authorization': `Bearer ${userToken}` }
-        });
-
-        if (response.ok) {
-          const result = await response.json();
-          if (result.success) {
-            const portfolios = result.portfolios || [];
-            console.log('📊 Estatísticas carregadas:', portfolios.length, 'carteiras');
-          }
-        }
-      } catch (error) {
-        console.error('❌ Erro ao carregar estatísticas:', error);
-      }
-    }
-
-    // Load Free Recommendations Stats com retry
-    async function loadFreeRecommendationsStatsWithRetry(attempt = 1) {
-      if (!userToken) {
-        console.log('⚠️ Token não disponível para carregar recomendações');
-        return;
-      }
-
-      try {
-        console.log(`📡 Carregando estatísticas das recomendações free (tentativa ${attempt})...`);
-        
         const response = await fetch('/api/recommendations/free/all', {
           headers: { 
             'Authorization': `Bearer ${userToken}`,
             'Content-Type': 'application/json'
-          },
-          cache: 'no-cache'
-        });
-
-        if (response.status === 403) {
-          console.log('🚫 Erro 403 nas recomendações - verificando auth...');
-          await checkAuth();
-          
-          if (attempt < 3) {
-            console.log('🔄 Tentando carregar recomendações novamente...');
-            await new Promise(resolve => setTimeout(resolve, 2000));
-            return loadFreeRecommendationsStatsWithRetry(attempt + 1);
           }
-          
-          console.log('❌ Acesso negado às recomendações - usando valores padrão');
-          setDefaultRecommendationValues();
-          return;
-        }
-
-        if (response.status === 401) {
-          console.log('🔑 Token expirado para recomendações');
-          setDefaultRecommendationValues();
-          return;
-        }
+        });
 
         if (response.ok) {
           const result = await response.json();
@@ -1333,51 +684,22 @@
             const wins = closedRecs.filter(r => r.status === 'FINALIZADA_GANHO');
             const successRate = closedRecs.length > 0 ? (wins.length / closedRecs.length * 100) : 0;
             
-            const now = new Date();
-            const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
-            const firstFriday = new Date(nextMonth);
-            while (firstFriday.getDay() !== 5) {
-              firstFriday.setDate(firstFriday.getDate() + 1);
-            }
-            const daysUntilUpdate = Math.ceil((firstFriday - now) / (1000 * 60 * 60 * 24));
-            
             const activeSignalsEl = document.getElementById('activeSignalsCount');
             const successRateEl = document.getElementById('freeSuccessRate');
             const nextUpdateEl = document.getElementById('nextUpdateDays');
             
             if (activeSignalsEl) activeSignalsEl.textContent = activeRecs.length;
             if (successRateEl) successRateEl.textContent = successRate > 0 ? `${successRate.toFixed(1)}%` : '--';
-            if (nextUpdateEl) nextUpdateEl.textContent = daysUntilUpdate > 0 ? `${daysUntilUpdate} dias` : 'Em breve';
-            
-            console.log('📊 Estatísticas free carregadas:', {
-              ativas: activeRecs.length,
-              sucesso: successRate.toFixed(1) + '%',
-              proximaAtualizacao: daysUntilUpdate + ' dias'
-            });
-            
-          } else {
-            throw new Error(result.error || 'Erro na API');
+            if (nextUpdateEl) nextUpdateEl.textContent = `${getNextMonthlyUpdate()} dias`;
           }
-        } else {
-          throw new Error(`HTTP ${response.status}`);
         }
       } catch (error) {
-        console.error(`❌ Erro ao carregar recomendações free (tentativa ${attempt}):`, error);
-        
-        if (attempt < 3) {
-          console.log(`🔄 Tentando novamente em 3 segundos...`);
-          await new Promise(resolve => setTimeout(resolve, 3000));
-          return loadFreeRecommendationsStatsWithRetry(attempt + 1);
-        }
-        
+        console.error('Erro ao carregar recomendações:', error);
         setDefaultRecommendationValues();
       }
     }
 
-    // Definir valores padrão quando não conseguir carregar recomendações
     function setDefaultRecommendationValues() {
-      console.log('📋 Definindo valores padrão para recomendações...');
-      
       const activeSignalsEl = document.getElementById('activeSignalsCount');
       const successRateEl = document.getElementById('freeSuccessRate');
       const nextUpdateEl = document.getElementById('nextUpdateDays');
@@ -1387,71 +709,9 @@
       if (nextUpdateEl) nextUpdateEl.textContent = '--';
     }
 
-    // 💎 MOSTRAR DIALOG DE UPGRADE - CORRIGIDO PARA ADMIN
-    function showUpgradeDialog(featureName, requiredLevel) {
-      console.log(`💎 Verificando acesso: ${featureName} (precisa: ${requiredLevel}, tem: ${userAccessLevel})`);
-      
-      // 🔥 SE TEM ACESSO, EXECUTAR FUNÇÃO AO INVÉS DE MOSTRAR UPGRADE
-      if (checkAccess(userAccessLevel, requiredLevel)) {
-        console.log('✅ ACESSO LIBERADO - Executando funcionalidade');
-        executeFeatureAction(featureName);
-        return;
-      }
-      
-      // ❌ NÃO TEM ACESSO - MOSTRAR POPUP DE UPGRADE
-      const levelNames = { 
-        'BASIC': 'Básico', 
-        'PRO': 'Pro', 
-        'PREMIUM': 'Premium' 
-      };
-      
-      const currentPlanName = levelNames[userAccessLevel] || 'Básico';
-      const requiredPlanName = levelNames[requiredLevel] || 'Premium';
-      
-      let message = `Recurso ${requiredPlanName}\n\n"${featureName}" está disponível apenas para usuários do plano ${requiredPlanName} ou superior.\n\n`;
-      message += `Seu plano atual: ${currentPlanName}\n`;
-      message += ` Plano necessário: ${requiredPlanName}\n\n`;
-      
-      if (userAccessLevel === 'BASIC') {
-        message += `Faça upgrade e tenha acesso a dezenas de recursos avançados de Machine Learning e análise técnica!\n\n`;
-      }
-      
-      message += `Deseja fazer upgrade agora?`;
-      
-      if (confirm(message)) {
-        window.location.href = 'https://geminii.com.br/pagamentos-app/';
-      }
-    }
-
-    // 🔑 VERIFICAR SE O NÍVEL DO USUÁRIO TEM ACESSO AO RECURSO
-    function checkAccess(userLevel, requiredLevel) {
-      console.log(`🔑 Verificando: userLevel=${userLevel}, requiredLevel=${requiredLevel}`);
-      
-      if (requiredLevel === 'FREE') {
-        console.log(' Recurso grátis - acesso liberado');
-        return true; // Todos têm acesso ao grátis
-      }
-      
-      if (requiredLevel === 'PRO') {
-        const hasAccess = ['PRO', 'PREMIUM'].includes(userLevel);
-        console.log(`${hasAccess ? '' : '❌'} Recurso PRO - acesso ${hasAccess ? 'liberado' : 'negado'}`);
-        return hasAccess;
-      }
-      
-      if (requiredLevel === 'PREMIUM') {
-        const hasAccess = userLevel === 'PREMIUM';
-        console.log(`${hasAccess ? '' : '❌'} Recurso PREMIUM - acesso ${hasAccess ? 'liberado' : 'negado'}`);
-        return hasAccess;
-      }
-      
-      console.log('❌ Nível não reconhecido - negando acesso');
-      return false;
-    }
-
-    // Helper function to close other dropdowns
     function closeOtherDropdowns(except) {
-      const allDropdowns = ['mlDropdown', 'opcoesDropdown', 'gratisDropdown', 'proDropdown', 'analiseTecnicaDropdown', 'americanosDropdown'];
-      const allChevrons = ['mlChevron', 'opcoesChevron', 'gratisChevron', 'proChevron', 'analiseTecnicaChevron', 'americanosChevron'];
+      const allDropdowns = ['mlDropdown', 'opcoesDropdown', 'gratisDropdown'];
+      const allChevrons = ['mlChevron', 'opcoesChevron', 'gratisChevron'];
       
       allDropdowns.forEach((dropdownId, index) => {
         if (!except.includes(dropdownId)) {
@@ -1466,8 +726,8 @@
       });
     }
 
-    // Toggle functions for dropdowns
     function toggleGratisDropdown() {
+      console.log('📱 Abrindo Gratis Dropdown');
       const dropdown = document.getElementById('gratisDropdown');
       const chevron = document.getElementById('gratisChevron');
       
@@ -1484,24 +744,9 @@
       }
     }
 
-    function toggleProDropdown() {
-      const dropdown = document.getElementById('proDropdown');
-      const chevron = document.getElementById('proChevron');
-      
-      closeOtherDropdowns(['proDropdown']);
-      
-      if (dropdown && chevron) {
-        if (dropdown.classList.contains('show')) {
-          dropdown.classList.remove('show');
-          chevron.style.transform = 'rotate(0deg)';
-        } else {
-          dropdown.classList.add('show');
-          chevron.style.transform = 'rotate(180deg)';
-        }
-      }
-    }
-
     function toggleMLDropdown() {
+      console.log('🧠 Abrindo ML Dropdown - userPlan:', userPlan);
+      
       const dropdown = document.getElementById('mlDropdown');
       const chevron = document.getElementById('mlChevron');
       
@@ -1511,14 +756,18 @@
         if (dropdown.classList.contains('show')) {
           dropdown.classList.remove('show');
           chevron.style.transform = 'rotate(0deg)';
+          console.log('🧠 ML Dropdown FECHADO');
         } else {
           dropdown.classList.add('show');
           chevron.style.transform = 'rotate(180deg)';
+          console.log('🧠 ML Dropdown ABERTO');
         }
       }
     }
 
     function toggleOpcoesDropdown() {
+      console.log('📊 Abrindo Opcoes Dropdown - userPlan:', userPlan);
+      
       const dropdown = document.getElementById('opcoesDropdown');
       const chevron = document.getElementById('opcoesChevron');
       
@@ -1528,50 +777,15 @@
         if (dropdown.classList.contains('show')) {
           dropdown.classList.remove('show');
           chevron.style.transform = 'rotate(0deg)';
+          console.log('📊 Opcoes Dropdown FECHADO');
         } else {
           dropdown.classList.add('show');
           chevron.style.transform = 'rotate(180deg)';
+          console.log('📊 Opcoes Dropdown ABERTO');
         }
       }
     }
 
-    function toggleAnaliseTecnicaDropdown() {
-      const dropdown = document.getElementById('analiseTecnicaDropdown');
-      const chevron = document.getElementById('analiseTecnicaChevron');
-      
-      closeOtherDropdowns(['analiseTecnicaDropdown']);
-      
-      if (dropdown && chevron) {
-        if (dropdown.classList.contains('show')) {
-          dropdown.classList.remove('show');
-          chevron.style.transform = 'rotate(0deg)';
-        } else {
-          dropdown.classList.add('show');
-          chevron.style.transform = 'rotate(180deg)';
-        }
-      }
-    }
-    
-    // NOVA FUNÇÃO - Toggle Análise Papéis Americanos Dropdown
-    function toggleAmericanosDropdown() {
-      const dropdown = document.getElementById('americanosDropdown');
-      const chevron = document.getElementById('americanosChevron');
-      
-      closeOtherDropdowns(['americanosDropdown']);
-      
-      if (dropdown && chevron) {
-        if (dropdown.classList.contains('show')) {
-          dropdown.classList.remove('show');
-          chevron.style.transform = 'rotate(0deg)';
-        } else {
-          dropdown.classList.add('show');
-          chevron.style.transform = 'rotate(180deg)';
-        }
-      }
-    }
-
-
-    // Logout function
     async function logout() {
       try {
         if (userToken) {
@@ -1585,12 +799,10 @@
       } finally {
         localStorage.removeItem('geminii_token');
         localStorage.removeItem('geminii_user');
-        console.log('🚪 Logout realizado, redirecionando...');
         window.location.href = '/';
       }
     }
 
-    // Check API status
     async function checkApiStatus() {
       if (!userToken) return;
       
@@ -1626,122 +838,13 @@
 
     // Make functions global
     window.logout = logout;
-    window.showUpgradeDialog = showUpgradeDialog;
     window.toggleMLDropdown = toggleMLDropdown;
     window.toggleOpcoesDropdown = toggleOpcoesDropdown;
     window.toggleGratisDropdown = toggleGratisDropdown;
-    window.toggleProDropdown = toggleProDropdown;
-    window.toggleAnaliseTecnicaDropdown = toggleAnaliseTecnicaDropdown;
-    window.toggleAmericanosDropdown = toggleAmericanosDropdown;
-    window.executeFeatureAction = executeFeatureAction;
 
     // Initialize when page loads
     document.addEventListener('DOMContentLoaded', initDashboard);
   </script>
   
-  <footer class="relative z-10 bg-black bg-opacity-60 backdrop-blur-md border-t border-white border-opacity-10">
-    <div class="max-w-6xl mx-auto px-6 py-12">
-      <!-- Newsletter Section -->
-      <div class="text-center mb-8">
-        <h3 class="text-xl font-medium text-white mb-4">Fique por dentro das oportunidades</h3>
-        <p class="text-neutral-300 mb-6 max-w-xl mx-auto">
-          Receba análises exclusivas e insights sobre as melhores oportunidades na bolsa brasileira.
-        </p>
-        
-        <button id="newsletterBtn" class="newsletter-btn px-8 py-4 bg-white text-black font-medium rounded-full hover:bg-gray-200 transition-all duration-300 shadow-lg hover:shadow-xl text-lg">
-          📧 Receber Análises Gratuitas
-        </button>
-      </div>
-
-      <!-- Social Media -->
-      <div class="flex justify-center gap-6 mb-8">
-        <a href="https://youtube.com/@geminiiresearch?si=SKM462RGWl0aYs18?sub_confirmation=1" class="social-icon" title="YouTube">
-          <i class="fab fa-youtube"></i>
-        </a>
-        <a href="https://www.instagram.com/geminiiresearch" class="social-icon" title="Instagram">
-          <i class="fab fa-instagram"></i>
-        </a>
-        <a href="https://www.linkedin.com/company/geminii-research/" class="social-icon" title="LinkedIn">
-          <i class="fab fa-linkedin"></i>
-        </a>
-        <a href="https://t.me/geminiireserach" class="social-icon" title="Telegram">
-          <i class="fab fa-telegram"></i>
-        </a>
-      </div>
-
-      <!-- Footer Links -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-        <!-- Links Principais -->
-        <div class="text-center md:text-left">
-          <h4 class="text-white font-medium mb-4">Navegação</h4>
-          <div class="flex flex-wrap justify-center md:justify-start gap-6">
-            <a href="https://geminii.com.br/pagamentos-app/" class="footer-link">Planos</a>
-            <a href="/sobre" class="footer-link">Sobre</a>
-            <a href="/contato" class="footer-link">Contato</a>
-          </div>
-        </div>
-
-        <!-- Links Institucionais -->
-        <div class="text-center md:text-right">
-          <h4 class="text-white font-medium mb-4">Institucional</h4>
-          <div class="flex flex-wrap justify-center md:justify-end gap-6">
-            <a href="/politica-de-privacidade" class="footer-link">Política de Privacidade</a>
-            <a href="/termos-de-uso" class="footer-link">Termos de Uso</a>
-            <a href="/politicas-internas" class="footer-link">Políticas Internas</a>
-            <a href="/compliance" class="footer-link">Compliance</a>
-          </div>
-        </div>
-      </div>
-
-      <!-- Disclaimer Legal -->
-      <div class="bg-gray-900 bg-opacity-40 backdrop-blur-sm border border-gray-700 border-opacity-50 rounded-2xl p-6 mb-8">
-        <div class="text-center mb-4">
-          <h4 class="text-white font-medium mb-2 flex items-center justify-center gap-2">
-            Avisos Legais e Responsabilidades
-          </h4>
-        </div>
-        
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-xs text-gray-300">
-          <!-- Natureza do Serviço -->
-          <div>
-            <h5 class="text-white font-medium mb-2 text-sm">NATUREZA DO SERVIÇO</h5>
-            <p class="leading-relaxed">
-              Este aplicativo é desenvolvido pela <strong class="text-geminii">Geminii Research Ltda</strong>, empresa credenciada pela <strong>APIMEC</strong> como Analista de Valores Mobiliários. Fornece ferramentas de análise técnica para fins <strong>educativos e informativos</strong>.
-            </p>
-          </div>
-
-          <!-- Riscos -->
-          <div>
-            <h5 class="text-white font-medium mb-2 text-sm">RISCOS ENVOLVIDOS</h5>
-            <ul class="space-y-1 leading-relaxed">
-              <li>• Operações com valores mobiliários envolvem <strong>riscos de perda</strong></li>
-              <li>• Análise técnica <strong>não garante</strong> resultados futuros</li>
-              <li>• Trading automatizado pode <strong>amplificar perdas</strong></li>
-              <li>• Mercado futuro pode resultar em <strong>perdas superiores ao capital</strong></li>
-            </ul>
-          </div>
-
-          <!-- Responsabilidade -->
-          <div>
-            <h5 class="text-white font-medium mb-2 text-sm">RESPONSABILIDADE</h5>
-            <p class="leading-relaxed">
-              Decisões de investimento são de <strong>responsabilidade exclusiva do usuário</strong>. Recomendamos <strong>consulta a profissionais qualificados</strong> antes de qualquer operação financeira.
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Copyright e Informações Legais -->
-      <div class="text-center pt-6 border-t border-white border-opacity-10">
-        <p class="text-neutral-400 text-sm mb-2">
-          © 2024 Geminii Research. Todos os direitos reservados.
-        </p>
-        <p class="text-neutral-500 text-xs">
-          Rua Major Virgolino Esmanhotto, n° 50 ⚫ Geminii Research CNPJ: 60.897.331/0001-06
-        </p>
-      </div>
-
-    </div>
-  </footer>
 </body>
 </html>

@@ -99,31 +99,27 @@ def create_plans_table():
             );
         """)
         
-        # 🔥 LIMPAR E RECRIAR PLANOS EXATAMENTE COMO NO SERVICE
+        # 🔥 NOVA ESTRUTURA DE PLANOS: APENAS BÁSICO E COMUNIDADE
         cursor.execute("DELETE FROM plans")
         
+        # ✅ CORREÇÃO: Adicionada aspa faltante no 'Free'
         cursor.execute("""
             INSERT INTO plans (id, name, display_name, price_monthly, price_annual, description, features) VALUES
-            (1, 'pro', 'Pro', 110.00, 1100.00, 'Para quem já investe e quer se posicionar melhor', 
-            ARRAY['Monitor avançado de ações', 'RSL e análise técnica avançada', 'Backtests automáticos', 'Alertas via WhatsApp', 'Dados históricos ilimitados', 'API para desenvolvedores']),
+            (3, 'Free', 'Free', 0.00, 0.00, 'Acesso básico ao sistema', 
+            ARRAY['Acesso básico ao sistema', 'Dados limitados', 'Funcionalidades essenciais']),
             
-            (2, 'premium', 'Premium', 160.00, 1530.00, 'Para investidores experientes que querem diferenciais', 
-            ARRAY['Tudo do Pro +', 'Long & Short strategies', 'IA para recomendações', 'Consultoria personalizada', 'Acesso prioritário', 'Relatórios exclusivos']),
-            
-            (3, 'basico', 'Básico', 0.00, 0.00, 'Acesso básico ao sistema', 
-            ARRAY['Acesso básico ao sistema', 'Dados limitados', 'Funcionalidades essenciais']);
+            (4, 'community', 'Community', 97.00, 970.00, 'Acesso completo às ferramentas da comunidade', 
+            ARRAY['Monitor de Opções completo', 'Machine Learning avançado', 'Todas as ferramentas de análise', 'Suporte prioritário', 'Recomendações exclusivas'])
         """)
-
-
-
         
         # Resetar sequence
-        cursor.execute("SELECT setval('plans_id_seq', 3, true)")
+        cursor.execute("SELECT setval('plans_id_seq', 4, true)")
         
         conn.commit()
         cursor.close()
         conn.close()
         
+        print("✅ Planos criados com sucesso!")
         return True
         
     except Exception as e:
@@ -131,7 +127,7 @@ def create_plans_table():
         return False
 
 def create_users_table():
-    """🔥 Criar tabela users COM TODOS OS CAMPOS NECESSÁRIOS PARA O TRIAL"""
+    
     try:
         conn = get_db_connection()
         if not conn:
@@ -430,10 +426,10 @@ def create_initial_admin():
             "Diego Doneda - Admin",    # name
             admin_email,               # email
             admin_password,            # password
-            2,                         # plan_id (Premium)
-            "Premium",                 # plan_name
-            "admin",                   # user_type
-            "active",                  # subscription_status
+            4,                         
+            "community",               
+            "admin",                   
+            "active",                  
             True,                      # email_confirmed
             now,                       # email_confirmed_at
             now,                       # created_at

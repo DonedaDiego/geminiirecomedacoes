@@ -67,39 +67,82 @@ class VolatilityRegimesService:
     
     def get_stock_data(self, ticker: str, period: str = "2y") -> Optional[pd.DataFrame]:
         try:
-            # Lógica de ticker melhorada
-            if not ticker.endswith('.SA') and not ticker.startswith('^'):
-                ticker = ticker + '.SA'
+            # ===== USAR LÓGICA IDÊNTICA AO BANDAS_PRO =====
+            logging.info(f"Carregando dados para {ticker}")
             
-            self.logger.info(f"Buscando dados para {ticker} - período: {period}")
+            # Normalizar ticker se necessário
+            ticker_to_use = ticker
+            if len(ticker) <= 6 and not ticker.endswith('.SA') and '-' not in ticker:
+                ticker_to_use = ticker + '.SA'
             
-            # Baixar dados
-            data = yf.download(ticker, start=None, end=None, period=period, interval='1d')
-            if hasattr(data.columns, 'get_level_values') and ticker in data.columns.get_level_values(1):
-                data = data.xs(ticker, axis=1, level=1)
+            # Baixar dados históricos - MESMO MÉTODO DO BANDAS_PRO
+            stock = yf.Ticker(ticker_to_use)
+            data = stock.history(period=period)
             
-            if data.empty:
-                self.logger.error(f"Nenhum dado encontrado para {ticker}")
-                return None
+            # Verificações de dados
+            if data is None or data.empty:
+                # Tentar ticker original se o normalizado falhou
+                if ticker_to_use != ticker:
+                    logging.warning(f"Tentando ticker original: {ticker}")
+                    stock = yf.Ticker(ticker)
+                    data = stock.history(period=period)
+                
+                if data is None or data.empty:
+                    raise ValueError(f"Nenhum dado encontrado para {ticker}")
             
-            data = data[(data['Open'] > 0) & 
-                    (data['High'] > 0) & 
-                    (data['Low'] > 0) & 
-                    (data['Close'] > 0)]
+            # Verificar quantidade de dados
+            if len(data) < 50:
+                raise ValueError(f"Dados insuficientes para {ticker} (apenas {len(data)} registros)")
             
+            # Validar colunas necessárias
+            required_columns = ['Open', 'High', 'Low', 'Close', 'Volume']
+            missing_columns = [col for col in required_columns if col not in data.columns]
+            if missing_columns:
+                raise ValueError(f"Colunas ausentes nos dados: {missing_columns}")
             
-            
-            # Reset index e calcular retornos
+            # Reset index e configurar Date
             data.reset_index(inplace=True)
+            
+            # Configurar coluna Date corretamente
+            if 'Date' in data.columns:
+                data['Date'] = pd.to_datetime(data['Date'])
+            else:
+                # Se não tem Date, usar o índice do yfinance que são as datas
+                data['Date'] = data.index if hasattr(data.index, 'date') else pd.date_range(start=pd.Timestamp.now() - pd.Timedelta(days=len(data)), periods=len(data), freq='D')
+            
+            # Calcular retornos
             data['Returns'] = data['Close'].pct_change()
             data['Log_Returns'] = np.log(data['Close'] / data['Close'].shift(1))
-            data.dropna(inplace=True)
             
-            self.logger.info(f"Dados carregados: {len(data)} registros de {data['Date'].iloc[0]} até {data['Date'].iloc[-1]}")
+            # Remover dados nulos/inválidos - MESMO FILTRO DO BANDAS_PRO
+            data = data[(data['Open'] > 0) & 
+                        (data['High'] > 0) & 
+                        (data['Low'] > 0) & 
+                        (data['Close'] > 0)]
+            
+            # Remover NaNs
+            initial_len = len(data)
+            data = data.dropna()
+            final_len = len(data)
+            
+            if final_len < 30:
+                raise ValueError(f"Dados insuficientes após limpeza: {final_len} registros")
+            
+            if initial_len != final_len:
+                logging.warning(f"Removidos {initial_len - final_len} registros com dados nulos")
+            
+            logging.info(f"Dados carregados com sucesso: {len(data)} registros para {ticker}")
             return data
             
+        except ValueError as e:
+            error_msg = f"Erro de validação ao carregar dados para {ticker}: {str(e)}"
+            logging.error(error_msg)
+            return None
+            
         except Exception as e:
-            self.logger.error(f"Erro ao buscar dados: {e}")
+            error_msg = f"Erro inesperado ao carregar dados para {ticker}: {str(e)}"
+            logging.error(error_msg)
+            logging.error(f"Tipo do erro: {type(e).__name__}")
             return None
     
     def calculate_base_volatility(self, data: pd.DataFrame) -> pd.DataFrame:

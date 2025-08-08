@@ -1,12 +1,12 @@
+
 from flask import Blueprint, request, jsonify, render_template_string, redirect, url_for
 import jwt
 import hashlib
 from datetime import datetime, timezone, timedelta
-from database import get_db_connection
+from database import get_db_connection  # ← APENAS ESTE IMPORT
 from emails.email_service import email_service
 from pag.trial_service import create_trial_user
 from pag.control_pay_service import check_user_subscription_status
-from database import get_db_connection  # ← ADICIONAR ESTA LINHA
 from pag.trial_service import downgrade_user_trial
 
 
@@ -30,7 +30,7 @@ def generate_jwt_token(user_id, email, secret_key):
 
 @auth_bp.route('/register', methods=['POST'])
 def register():
-    """🔥 Registro com trial Premium de 15 dias + confirmação de email"""
+    """🔥 Registro CORRIGIDO com trial automático de 15 dias"""
     try:
         data = request.get_json()
         
@@ -73,6 +73,8 @@ def register():
             user_id, is_confirmed, conflict_type = existing_user
             if conflict_type == 'ip':
                 return jsonify({'success': False, 'error': 'Este usuário já foi registrado com outro e-mail! Dúvidas entre em contato com os canais abaixo'}), 400
+            elif is_confirmed:
+                return jsonify({'success': False, 'error': 'Email já está em uso por outra conta'}), 400
             else:
                 # Email existe mas não confirmado - reenviar confirmação
                 token_result = email_service.generate_confirmation_token(user_id, email)
@@ -87,7 +89,7 @@ def register():
                 
                 return jsonify({'success': False, 'error': 'Erro ao reenviar confirmação'}), 500
         
-        # 🔥 USAR O TRIAL SERVICE PARA CRIAR USUÁRIO COM TRIAL PREMIUM
+        # 🔥 USAR O TRIAL SERVICE PARA CRIAR USUÁRIO COM TRIAL
         trial_result = create_trial_user(name, email, password, user_ip)
         
         if not trial_result['success']:
@@ -99,7 +101,7 @@ def register():
         user_id = trial_result['user_id']
         
         # 🔥 AGORA PRECISAMOS ATUALIZAR O USUÁRIO PARA NÃO CONFIRMADO
-        # (porque o trial_service cria confirmado, mas queremos confirmação de email)
+        # (porque register_user_with_trial cria confirmado por padrão)
         conn = get_db_connection()
         if conn:
             cursor = conn.cursor()
@@ -124,11 +126,11 @@ def register():
         if email_sent:
             return jsonify({
                 'success': True,
-                'message': '🎉 Conta criada com TRIAL PREMIUM de 15 dias! Verifique seu email para ativar.',
+                'message': '🎉 Conta criada com TRIAL de 15 dias! Verifique seu email para ativar.',
                 'requires_confirmation': True,
                 'trial_info': {
-                    'message': 'Você ganhou 15 dias de acesso Premium GRATUITO!',
-                    'plan_name': 'Premium',
+                    'message': 'Você ganhou 15 dias de acesso GRATUITO!',
+                    'plan_name': 'Comunidade',
                     'days_remaining': 15
                 },
                 'data': {
@@ -142,6 +144,8 @@ def register():
         
     except Exception as e:
         print(f"❌ Erro no registro: {e}")
+        import traceback
+        traceback.print_exc()
         return jsonify({'success': False, 'error': f'Erro interno: {str(e)}'}), 500
 
 # ===== ROTAS DE CONFIRMAÇÃO DE EMAIL =====
@@ -186,6 +190,7 @@ def confirm_email_page():
                 h1 {{ margin-bottom: 20px; }}
                 .btn {{ display: inline-block; background: white; color: #ba39af; padding: 15px 30px; text-decoration: none; border-radius: 10px; font-weight: bold; margin: 20px 10px; }}
                 .btn:hover {{ background: #f0f0f0; }}
+                .trial-info {{ background: rgba(255,255,255,0.1); padding: 20px; border-radius: 10px; margin: 20px 0; }}
             </style>
         </head>
         <body>
@@ -193,17 +198,22 @@ def confirm_email_page():
                 <div class="success">✅</div>
                 <h1>Email Confirmado!</h1>
                 <p>Olá, <strong>{result['user_name']}</strong>!</p>
-                <p>Seu email foi confirmado com sucesso. Agora você pode fazer login na plataforma.</p>
+                <p>Seu email foi confirmado com sucesso.</p>
+                
+                <div class="trial-info">
+                    <h3>🎉 Trial de 15 dias ATIVADO!</h3>
+                    <p>Você tem acesso completo às ferramentas da Comunidade por 15 dias!</p>
+                </div>
                 
                 <a href="/login" class="btn">🔐 Fazer Login</a>
                 <a href="/dashboard" class="btn">📊 Ir ao Dashboard</a>
             </div>
             
             <script>
-                // Auto-redirecionar após 5 segundos
+                // Auto-redirecionar após 8 segundos
                 setTimeout(() => {{
                     window.location.href = '/login';
-                }}, 5000);
+                }}, 8000);
             </script>
         </body>
         </html>
@@ -287,6 +297,101 @@ def resend_confirmation():
         print(f"❌ Erro ao reenviar confirmação: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
+# ===== FUNÇÃO PARA CONFIRMAR EMAIL E ATIVAR TRIAL =====
+
+@auth_bp.route('/activate-user/<user_id>', methods=['POST'])
+def activate_user_manually(user_id):
+    """🔥 FUNÇÃO TEMPORÁRIA - Ativar usuário manualmente"""
+    try:
+        conn = get_db_connection()
+        if not conn:
+            return jsonify({'success': False, 'error': 'Erro de conexão'}), 500
+        
+        cursor = conn.cursor()
+        
+        # Confirmar email e garantir que o trial está ativo
+        cursor.execute("""
+            UPDATE users 
+            SET email_confirmed = TRUE, 
+                email_confirmed_at = CURRENT_TIMESTAMP,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = %s
+            RETURNING name, email, trial_end_date
+        """, (user_id,))
+        
+        result = cursor.fetchone()
+        
+        if result:
+            conn.commit()
+            name, email, trial_end_date = result
+            
+            cursor.close()
+            conn.close()
+            
+            return jsonify({
+                'success': True,
+                'message': f'Usuário {name} ativado com sucesso!',
+                'data': {
+                    'name': name,
+                    'email': email,
+                    'trial_end_date': trial_end_date.isoformat() if trial_end_date else None
+                }
+            }), 200
+        else:
+            cursor.close()
+            conn.close()
+            return jsonify({'success': False, 'error': 'Usuário não encontrado'}), 404
+        
+    except Exception as e:
+        print(f"❌ Erro ao ativar usuário: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+# ===== ROTA TEMPORÁRIA PARA LISTAR USUÁRIOS NÃO CONFIRMADOS =====
+
+@auth_bp.route('/list-unconfirmed', methods=['GET'])
+def list_unconfirmed_users():
+    """🔥 FUNÇÃO TEMPORÁRIA - Listar usuários não confirmados"""
+    try:
+        conn = get_db_connection()
+        if not conn:
+            return jsonify({'success': False, 'error': 'Erro de conexão'}), 500
+        
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            SELECT id, name, email, created_at, trial_end_date
+            FROM users 
+            WHERE email_confirmed = FALSE
+            ORDER BY created_at DESC
+            LIMIT 10
+        """)
+        
+        users = cursor.fetchall()
+        cursor.close()
+        conn.close()
+        
+        user_list = []
+        for user in users:
+            user_id, name, email, created_at, trial_end_date = user
+            user_list.append({
+                'id': user_id,
+                'name': name,
+                'email': email,
+                'created_at': created_at.isoformat() if created_at else None,
+                'trial_end_date': trial_end_date.isoformat() if trial_end_date else None,
+                'activate_url': f'/auth/activate-user/{user_id}'
+            })
+        
+        return jsonify({
+            'success': True,
+            'message': f'Encontrados {len(user_list)} usuários não confirmados',
+            'users': user_list
+        }), 200
+        
+    except Exception as e:
+        print(f"❌ Erro ao listar usuários: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 # ===== ROTAS DE LOGIN =====
 
 @auth_bp.route('/login', methods=['POST'])
@@ -314,7 +419,8 @@ def login():
         cursor = conn.cursor()
         
         cursor.execute("""
-            SELECT id, name, email, password, plan_id, plan_name, user_type, email_confirmed
+            SELECT id, name, email, password, plan_id, plan_name, user_type, email_confirmed,
+                   trial_end_date, subscription_status, created_at
             FROM users WHERE email = %s
         """, (email,))
         
@@ -326,10 +432,12 @@ def login():
             print(f"❌ Usuário não encontrado: {email}")
             return jsonify({'success': False, 'error': 'E-mail não encontrado'}), 401
         
-        user_id, name, user_email, stored_password, plan_id, plan_name, user_type, email_confirmed = user
+        user_id, name, user_email, stored_password, plan_id, plan_name, user_type, email_confirmed, trial_end_date, subscription_status, created_at = user
         
         print(f"✅ Usuário encontrado: {name} (ID: {user_id})")
         print(f"📧 Email confirmado: {email_confirmed}")
+        print(f"🔥 Trial end date: {trial_end_date}")
+        print(f"📊 Subscription status: {subscription_status}")
         
         # Verificar senha
         if hash_password(password) != stored_password:
@@ -345,17 +453,18 @@ def login():
                 'success': False, 
                 'error': 'Email não confirmado', 
                 'requires_confirmation': True,
-                'email': email
+                'email': email,
+                'user_id': user_id  # Para debug temporário
             }), 403
         
         print("✅ Email confirmado - procedendo com login")
         
         # 🔥 VERIFICAR STATUS DA SUBSCRIPTION/TRIAL
-        subscription_status = check_user_subscription_status(user_id)
-        print(f"📊 Status da subscription: {subscription_status}")
+        subscription_status_result = check_user_subscription_status(user_id)
+        print(f"📊 Status da subscription: {subscription_status_result}")
         
         # 🔥 VERIFICAR SE A FUNÇÃO RETORNOU SUCESSO
-        if not subscription_status.get('success', False):
+        if not subscription_status_result.get('success', False):
             print("❌ Erro ao verificar status da subscription")
             return jsonify({'success': False, 'error': 'Erro ao verificar status da conta'}), 500
         
@@ -366,8 +475,8 @@ def login():
         print(f"🎫 Token JWT gerado: {token[:50]}...")
         
         # 🔥 EXTRAIR DADOS DA SUBSCRIPTION
-        subscription_data = subscription_status.get('subscription', {})
-        user_data = subscription_status.get('user', {})
+        subscription_data = subscription_status_result.get('subscription', {})
+        user_data = subscription_status_result.get('user', {})
         
         # 🔥 PREPARAR RESPOSTA COM SUBSCRIPTION INFO
         login_response = {
@@ -381,7 +490,9 @@ def login():
                     'plan_id': user_data.get('plan_id', plan_id),
                     'plan_name': user_data.get('plan_name', plan_name),
                     'user_type': user_data.get('user_type', user_type),
-                    'email_confirmed': email_confirmed
+                    'email_confirmed': email_confirmed,
+                    'created_at': created_at.isoformat() if created_at else None,
+                    'trial_end_date': trial_end_date.isoformat() if trial_end_date else None
                 },
                 'token': token
             }
@@ -401,21 +512,21 @@ def login():
             
             # Mensagem personalizada baseada no tempo restante
             if days_left <= 1:
-                login_response['message'] = '⚠️ Seu trial Premium expira hoje! Não perca o acesso total.'
+                login_response['message'] = '⚠️ Seu trial expira hoje! Não perca o acesso total.'
             elif days_left <= 3:
-                login_response['message'] = f'⏰ Apenas {days_left} dias restantes do seu trial Premium!'
+                login_response['message'] = f'⏰ Apenas {days_left} dias restantes do seu trial!'
             elif days_left <= 7:
-                login_response['message'] = f'🚀 Você tem {days_left} dias de trial Premium restantes!'
+                login_response['message'] = f'🚀 Você tem {days_left} dias de trial restantes!'
             else:
-                login_response['message'] = f'🎉 Bem-vindo! {days_left} dias de Premium restantes!'
+                login_response['message'] = f'🎉 Bem-vindo! {days_left} dias de trial restantes!'
         
         elif subscription_data.get('status') == 'trial_expired':
             login_response['trial_info'] = {
                 'is_trial': False,
                 'trial_expired': True,
-                'message': 'Seu trial Premium expirou. Que tal fazer upgrade?'
+                'message': 'Seu trial expirou. Que tal fazer upgrade?'
             }
-            login_response['message'] = '💡 Seu trial Premium expirou, mas você ainda pode acessar os recursos básicos!'
+            login_response['message'] = '💡 Seu trial expirou, mas você ainda pode acessar os recursos básicos!'
         
         elif subscription_data.get('status') == 'active':
             # Subscription paga ativa
@@ -566,7 +677,6 @@ def reset_password():
 
 # ===== ROTAS DE VERIFICAÇÃO =====
 
-
 @auth_bp.route('/verify', methods=['GET'])
 def verify_token():
     """🔥 Verificar token JWT com informações de subscription/trial + DOWNGRADE AUTOMÁTICO"""
@@ -585,11 +695,46 @@ def verify_token():
             user_id = payload['user_id']
             
             # 🔥 VERIFICAR STATUS DA SUBSCRIPTION/TRIAL
-            subscription_status = check_user_subscription_status(user_id)
-            
-            if not subscription_status.get('success', False):
-                print(f"❌ Erro ao verificar subscription: {subscription_status}")
-                return jsonify({'success': False, 'error': 'Erro ao verificar status da conta'}), 500
+            try:
+                subscription_status = check_user_subscription_status(user_id)
+                
+                # 🔥 TRATAMENTO ROBUSTO PARA DIFERENTES TIPOS DE RETORNO
+                if isinstance(subscription_status, str):
+                    print(f"⚠️ subscription_status retornou string: {subscription_status}")
+                    # Criar estrutura padrão baseada nos dados do banco
+                    subscription_status = {
+                        'success': True,
+                        'subscription': {'status': 'basic', 'is_trial': False},
+                        'user': {}
+                    }
+                elif subscription_status is None:
+                    print(f"⚠️ subscription_status retornou None")
+                    subscription_status = {
+                        'success': True,
+                        'subscription': {'status': 'basic', 'is_trial': False},
+                        'user': {}
+                    }
+                elif not isinstance(subscription_status, dict):
+                    print(f"⚠️ subscription_status tipo inesperado: {type(subscription_status)}")
+                    subscription_status = {
+                        'success': True,
+                        'subscription': {'status': 'basic', 'is_trial': False},
+                        'user': {}
+                    }
+                
+                # Garantir que tem a estrutura mínima necessária
+                if not subscription_status.get('subscription'):
+                    subscription_status['subscription'] = {'status': 'basic', 'is_trial': False}
+                if not subscription_status.get('user'):
+                    subscription_status['user'] = {}
+                    
+            except Exception as e:
+                print(f"❌ Erro ao chamar check_user_subscription_status: {e}")
+                subscription_status = {
+                    'success': True,
+                    'subscription': {'status': 'basic', 'is_trial': False},
+                    'user': {}
+                }
             
             # 🔥 DOWNGRADE AUTOMÁTICO - TRIAL EXPIRADO
             subscription_data = subscription_status.get('subscription', {})
@@ -619,32 +764,33 @@ def verify_token():
                     if conn:
                         cursor = conn.cursor()
                         
-                        # Verificar se realmente está expirado
+                        # Verificar se realmente está expirado (apenas COMUNIDADE paga)
                         cursor.execute("""
                             SELECT plan_id, plan_name, plan_expires_at
                             FROM users 
                             WHERE id = %s 
                             AND plan_expires_at IS NOT NULL 
                             AND plan_expires_at < NOW()
-                            AND user_type != 'trial'
-                            AND plan_id IN (1, 2)
+                            AND subscription_status = 'active'
+                            AND plan_id = 4
                         """, (user_id,))
                         
                         expired_user = cursor.fetchone()
                         
                         if expired_user:
-                            # Fazer downgrade individual
+                            # Fazer downgrade para plano básico (ID 3)
                             cursor.execute("""
                                 UPDATE users 
                                 SET plan_id = 3, 
-                                    plan_name = 'Básico',
+                                    plan_name = 'basico',
                                     plan_expires_at = NULL,
+                                    subscription_status = 'inactive',
                                     updated_at = CURRENT_TIMESTAMP
                                 WHERE id = %s
                             """, (user_id,))
                             
                             conn.commit()
-                            print(f"✅ Downgrade de pagamento realizado para usuário {user_id}")
+                            print(f"✅ Downgrade de pagamento realizado para usuário {user_id} (Comunidade -> Básico)")
                             
                             # Re-verificar status após downgrade
                             subscription_status = check_user_subscription_status(user_id)
@@ -664,7 +810,8 @@ def verify_token():
             
             cursor = conn.cursor()
             cursor.execute("""
-                SELECT id, name, email, plan_id, plan_name, user_type, email_confirmed
+                SELECT id, name, email, plan_id, plan_name, user_type, email_confirmed,
+                       plan_expires_at, subscription_status, created_at
                 FROM users WHERE id = %s
             """, (user_id,))
             
@@ -676,58 +823,82 @@ def verify_token():
                 print(f"❌ Usuário não encontrado no banco: {user_id}")
                 return jsonify({'success': False, 'error': 'Usuário não encontrado'}), 401
             
-            user_id, name, email, plan_id, plan_name, user_type, email_confirmed = user
+            user_id, name, email, plan_id, plan_name, user_type, email_confirmed, plan_expires_at, subscription_status_db, created_at = user
+            
+            print(f"👤 DADOS DO USUÁRIO DO BANCO:")
+            print(f"   - user_id: {user_id}")
+            print(f"   - name: {name}")
+            print(f"   - plan_id: {plan_id}")
+            print(f"   - plan_name: {plan_name}")
+            print(f"   - user_type: {user_type}")
+            print(f"   - subscription_status: {subscription_status_db}")
+            print(f"   - plan_expires_at: {plan_expires_at}")  # ← CAMPO CORRETO!
             
             # 🔥 EXTRAIR DADOS DA SUBSCRIPTION (atualizados após possível downgrade)
             subscription_data = subscription_status.get('subscription', {})
             user_data = subscription_status.get('user', {})
             
+            print(f"📊 DADOS DO SUBSCRIPTION SERVICE:")
+            print(f"   - subscription_data: {subscription_data}")
+            print(f"   - user_data: {user_data}")
+            
+            # 🔥 USAR DADOS DO BANCO COMO AUTORIDADE
+            user_response_data = {
+                'id': user_id,
+                'name': name,
+                'email': email,
+                'plan_id': plan_id,  # Do banco
+                'plan_name': plan_name,  # Do banco
+                'user_type': user_type,  # Do banco
+                'email_confirmed': email_confirmed,
+                'created_at': created_at.isoformat() if created_at else None,
+                'trial_end_date': plan_expires_at.isoformat() if plan_expires_at else None,  # CORRIGIDO!
+                'subscription_status': subscription_status_db  # Do banco
+            }
+            
             # 🔥 PREPARAR RESPOSTA COM SUBSCRIPTION INFO
             response_data = {
                 'success': True,
                 'data': {
-                    'user': {
-                        'id': user_id,
-                        'name': name,
-                        'email': email,
-                        'plan_id': user_data.get('plan_id', plan_id),
-                        'plan_name': user_data.get('plan_name', plan_name),
-                        'user_type': user_data.get('user_type', user_type),
-                        'email_confirmed': email_confirmed
-                    }
+                    'user': user_response_data
                 }
             }
             
-            # 🔥 ADICIONAR TRIAL/SUBSCRIPTION INFO
-            if subscription_data.get('is_trial', False):
-                response_data['trial_info'] = {
-                    'is_trial': True,
-                    'expires_at': subscription_data.get('expires_at'),
-                    'days_remaining': subscription_data.get('days_remaining', 0),
-                    'hours_remaining': subscription_data.get('hours_remaining', 0),
-                    'urgency_level': 'high' if subscription_data.get('days_remaining', 0) <= 3 else 'medium' if subscription_data.get('days_remaining', 0) <= 7 else 'low',
-                    'message': subscription_data.get('message', 'Trial ativo')
-                }
-            elif subscription_data.get('status') == 'trial_expired':
-                response_data['trial_info'] = {
-                    'is_trial': False,
-                    'trial_expired': True,
-                    'message': 'Trial expirado'
-                }
-            elif subscription_data.get('status') == 'paid_active':
+            # 🔥 LÓGICA SIMPLIFICADA BASEADA NOS DADOS DO BANCO
+            if user_type == 'trial':
+                # Verificar se trial ainda é válido
+                now = datetime.now(timezone.utc)
+                if plan_expires_at and plan_expires_at.replace(tzinfo=timezone.utc) > now:
+                    days_left = (plan_expires_at.replace(tzinfo=timezone.utc) - now).days
+                    response_data['trial_info'] = {
+                        'is_trial': True,
+                        'expires_at': plan_expires_at.isoformat(),
+                        'days_remaining': days_left,
+                        'hours_remaining': int((plan_expires_at.replace(tzinfo=timezone.utc) - now).total_seconds() / 3600),
+                        'urgency_level': 'high' if days_left <= 3 else 'medium' if days_left <= 7 else 'low',
+                        'message': f'Trial ativo - {days_left} dias restantes'
+                    }
+                    print(f"✅ TRIAL ATIVO: {days_left} dias restantes")
+                else:
+                    response_data['trial_info'] = {
+                        'is_trial': False,
+                        'trial_expired': True,
+                        'message': 'Trial expirado'
+                    }
+                    print(f"❌ TRIAL EXPIRADO - plan_expires_at: {plan_expires_at}")
+            
+            elif plan_id == 4 and subscription_status_db == 'active':
                 response_data['subscription_info'] = {
                     'is_paid': True,
                     'status': 'active',
-                    'expires_at': subscription_data.get('expires_at'),
-                    'days_until_renewal': subscription_data.get('days_remaining', 0),
-                    'plan_name': user_data.get('plan_name', plan_name)
+                    'plan_name': plan_name
                 }
-            elif subscription_data.get('status') == 'paid_expired':
-                response_data['subscription_info'] = {
-                    'is_paid': False,
-                    'status': 'expired',
-                    'message': 'Assinatura expirada'
-                }
+                print(f"✅ COMUNIDADE PAGA ATIVA")
+            
+            else:
+                print(f"📋 USUÁRIO FREE")
+            
+            print(f"🎯 RESPOSTA FINAL: {response_data}")
             
             return jsonify(response_data), 200
             

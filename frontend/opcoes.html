@@ -282,7 +282,7 @@
         <a href="/dashboard" class="hover:text-white transition-colors">Dashboard</a>
         <span class="text-white font-medium">Hunter Walls</span>
         <a href="vi-pro.html" class="hover:text-white transition-colors">Implícita Sigma</a>
-        <a href="regimes-pro.html" class="hover:text-white transition-colors">Hybrid Volatility Bands</a>
+        <a href="regimes-pro.html" class="hover:text-white transition-colors">Bandas De Volatilidade</a>
         <a href="rank-volatilidade.html" class="hover:text-white transition-colors">IV Scanner</a>
       </div>
       <div class="flex items-center space-x-3 ml-8">
@@ -611,7 +611,7 @@
           currentUser = result.data.user;
           
           // Verificar se tem plano Premium
-          const allowedPlans = [1, 2];
+          const allowedPlans = [4];
             if (!allowedPlans.includes(currentUser.plan_id)) {
               showUpgradeRequired();
               return;
