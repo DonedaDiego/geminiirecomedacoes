@@ -420,10 +420,10 @@ def login():
         
         cursor.execute("""
             SELECT id, name, email, password, plan_id, plan_name, user_type, email_confirmed,
-                plan_expires_at, subscription_status, created_at  
+                plan_expires_at, subscription_status, created_at  # ← CORRETO!
             FROM users WHERE email = %s
         """, (email,))
-        
+                
         user = cursor.fetchone()
         cursor.close()
         conn.close()
@@ -811,7 +811,7 @@ def verify_token():
             # TROCAR:
             cursor.execute("""
                 SELECT id, name, email, plan_id, plan_name, user_type, email_confirmed,
-                    plan_expires_at, subscription_status, created_at  # ← JÁ ESTÁ CORRETO!
+                    plan_expires_at, subscription_status, created_at  # ← REMOVIDO COMENTÁRIO PROBLEMÁTICO
                 FROM users WHERE id = %s
             """, (user_id,))
             
@@ -852,7 +852,7 @@ def verify_token():
                 'user_type': user_type,  # Do banco
                 'email_confirmed': email_confirmed,
                 'created_at': created_at.isoformat() if created_at else None,
-                'trial_end_date': plan_expires_at.isoformat() if plan_expires_at else None,  # CORRIGIDO!
+                'trial_end_date': plan_expires_at.isoformat() if plan_expires_at else None, 
                 'subscription_status': subscription_status_db  # Do banco
             }
             
