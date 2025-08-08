@@ -436,7 +436,7 @@ def login():
         
         print(f"✅ Usuário encontrado: {name} (ID: {user_id})")
         print(f"📧 Email confirmado: {email_confirmed}")
-        addprint(f"📊 Subscription status: {subscription_status}")
+        print(f"📊 Subscription status: {subscription_status}")
         
         # Verificar senha
         if hash_password(password) != stored_password:
