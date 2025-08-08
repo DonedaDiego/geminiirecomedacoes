@@ -420,7 +420,7 @@ def login():
         
         cursor.execute("""
             SELECT id, name, email, password, plan_id, plan_name, user_type, email_confirmed,
-                   trial_end_date, subscription_status, created_at
+                plan_expires_at, subscription_status, created_at  
             FROM users WHERE email = %s
         """, (email,))
         
@@ -432,12 +432,11 @@ def login():
             print(f"❌ Usuário não encontrado: {email}")
             return jsonify({'success': False, 'error': 'E-mail não encontrado'}), 401
         
-        user_id, name, user_email, stored_password, plan_id, plan_name, user_type, email_confirmed, trial_end_date, subscription_status, created_at = user
+        user_id, name, user_email, stored_password, plan_id, plan_name, user_type, email_confirmed, plan_expires_at, subscription_status, created_at = user
         
         print(f"✅ Usuário encontrado: {name} (ID: {user_id})")
         print(f"📧 Email confirmado: {email_confirmed}")
-        print(f"🔥 Trial end date: {trial_end_date}")
-        print(f"📊 Subscription status: {subscription_status}")
+        addprint(f"📊 Subscription status: {subscription_status}")
         
         # Verificar senha
         if hash_password(password) != stored_password:
@@ -492,7 +491,7 @@ def login():
                     'user_type': user_data.get('user_type', user_type),
                     'email_confirmed': email_confirmed,
                     'created_at': created_at.isoformat() if created_at else None,
-                    'trial_end_date': trial_end_date.isoformat() if trial_end_date else None
+                    'trial_end_date': plan_expires_at.isoformat() if plan_expires_at else None,
                 },
                 'token': token
             }
@@ -809,9 +808,10 @@ def verify_token():
                 return jsonify({'success': False, 'error': 'Erro de conexão com banco'}), 500
             
             cursor = conn.cursor()
+            # TROCAR:
             cursor.execute("""
                 SELECT id, name, email, plan_id, plan_name, user_type, email_confirmed,
-                       plan_expires_at, subscription_status, created_at
+                    plan_expires_at, subscription_status, created_at  # ← JÁ ESTÁ CORRETO!
                 FROM users WHERE id = %s
             """, (user_id,))
             
