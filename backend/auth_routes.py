@@ -418,8 +418,7 @@ def login():
             return jsonify({'success': False, 'error': 'Erro de conexão com banco'}), 500
         
         cursor = conn.cursor()
-        
-        # 🔥 QUERY CORRIGIDA - REMOVIDO COMENTÁRIO PYTHON DENTRO DO SQL
+             
         cursor.execute("""
             SELECT id, name, email, password, plan_id, plan_name, user_type, email_confirmed,
                 plan_expires_at, subscription_status, created_at

@@ -779,29 +779,49 @@
       userToken = null;
     }
 
+    // 🔥 CORREÇÃO DO BADGE DE PLANOS - FUNÇÃO showUserView()
+
     function showUserView(user) {
       document.getElementById('guestView').classList.add('hidden');
       document.getElementById('userView').classList.remove('hidden');
       document.getElementById('guestCTA').classList.add('hidden');
       document.getElementById('userCTA').classList.remove('hidden');
-    
+
       const initials = user.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
       document.getElementById('userInitials').textContent = initials;
       document.getElementById('userName').textContent = user.name;
       document.getElementById('userEmail').textContent = user.email;
       document.getElementById('userPlan').textContent = user.plan_name || 'Básico';
-    
+
       const planBadge = document.getElementById('planBadge');
       const planId = user.plan_id || 3;
       
+      // 🔥 LÓGICA CORRIGIDA BASEADA NOS SEUS PLANOS
       if (planId === 3) {
-        planBadge.textContent = 'GRÁTIS';
+        // Plano Básico/Gratuito
+        planBadge.textContent = 'FREE';
         planBadge.className = 'plan-badge';
-      } else if (planId === 1) {
-        planBadge.textContent = 'PRO';
+      } else if (planId === 4) {
+        // Plano Comunidade - CORREÇÃO AQUI!
+        planBadge.textContent = 'COMUNIDADE';
         planBadge.className = 'plan-badge premium';
+      } else if (planId === 1) {
+        // Se tiver outros planos no futuro
+        planBadge.textContent = 'PRO';
+        planBadge.className = 'plan-badge strategic';
       } else if (planId === 2) {
+        // Se tiver outros planos no futuro
         planBadge.textContent = 'PREMIUM';
+        planBadge.className = 'plan-badge strategic';
+      } else {
+        // Fallback para planos desconhecidos
+        planBadge.textContent = user.plan_name?.toUpperCase() || 'FREE';
+        planBadge.className = 'plan-badge';
+      }
+      
+      // 🔥 ADICIONAL: Verificar se é trial ativo
+      if (user.user_type === 'trial') {
+        planBadge.textContent = 'TRIAL';
         planBadge.className = 'plan-badge strategic';
       }
     }

@@ -593,30 +593,46 @@
     async function checkAuth() {
       const token = localStorage.getItem('geminii_token');
       const userData = localStorage.getItem('geminii_user');
-
+    
       if (!token || !userData) {
         window.location.href = '/login.html';
         return;
       }
-
+    
       try {
         const response = await fetch('/auth/verify', {
           headers: { 'Authorization': `Bearer ${token}` }
         });
-
+    
         const result = await response.json();
-
+    
         if (result.success) {
           userToken = token;
           currentUser = result.data.user;
           
-          // Verificar se tem plano Premium
-          const allowedPlans = [4];
-            if (!allowedPlans.includes(currentUser.plan_id)) {
-              showUpgradeRequired();
-              return;
-            }
-                      
+          console.log('👤 Dados do usuário:', currentUser); // DEBUG
+          console.log('🎯 Plan ID:', currentUser.plan_id); // DEBUG
+          console.log('📋 User Type:', currentUser.user_type); // DEBUG
+          
+          // 🔥 VERIFICAÇÃO MAIS FLEXÍVEL E COM DEBUG
+          const allowedPlans = [4]; // Comunidade
+          const allowedUserTypes = ['trial', 'paid']; // Trial ou Pago
+          
+          // Verificar por plan_id OU user_type
+          const hasValidPlan = allowedPlans.includes(currentUser.plan_id);
+          const hasValidUserType = allowedUserTypes.includes(currentUser.user_type);
+          
+          console.log('✅ Plan válido?', hasValidPlan);
+          console.log('✅ User type válido?', hasValidUserType);
+          
+          if (!hasValidPlan && !hasValidUserType) {
+            console.log('❌ Acesso negado - plan_id:', currentUser.plan_id, 'user_type:', currentUser.user_type);
+            showUpgradeRequired();
+            return;
+          }
+          
+          console.log('🎉 Acesso liberado!');
+          
         } else {
           localStorage.removeItem('geminii_token');
           localStorage.removeItem('geminii_user');
@@ -630,6 +646,9 @@
 
     // Show upgrade required message
     function showUpgradeRequired() {
+      console.log('🚫 Mostrando tela de upgrade');
+      console.log('👤 Usuário atual:', currentUser);
+      
       document.querySelector('main').innerHTML = `
         <div class="max-w-4xl mx-auto text-center">
           <div class="card rounded-2xl p-12">
@@ -642,6 +661,10 @@
               <p class="text-gray-400">
                 Seu plano atual: <span class="text-gray-300 font-semibold">${currentUser?.plan_name || 'Básico'}</span>
               </p>
+              <p class="text-gray-500 text-sm">
+                Plan ID: ${currentUser?.plan_id || 'N/A'} | 
+                User Type: ${currentUser?.user_type || 'N/A'}
+              </p>
               <div class="flex gap-4 justify-center">
                 <a href="planos.html" class="action-btn">
                   <i class="fas fa-arrow-up"></i>Fazer Upgrade
@@ -649,11 +672,27 @@
                 <a href="dashboard.html" class="bg-gray-600 hover:bg-gray-500 text-white px-8 py-3 rounded-xl font-semibold transition-colors">
                   <i class="fas fa-arrow-left mr-2"></i>Voltar ao Dashboard
                 </a>
+                <button onclick="debugUser()" class="bg-blue-600 hover:bg-blue-500 text-white px-8 py-3 rounded-xl font-semibold transition-colors">
+                  <i class="fas fa-bug mr-2"></i>Debug Info
+                </button>
               </div>
             </div>
           </div>
         </div>
       `;
+    }
+    
+    // 🔥 CORREÇÃO 3: FUNÇÃO DE DEBUG
+    function debugUser() {
+      const debugInfo = {
+        token: !!userToken,
+        user: currentUser,
+        localStorage_token: !!localStorage.getItem('geminii_token'),
+        localStorage_user: localStorage.getItem('geminii_user')
+      };
+      
+      console.log('🐛 DEBUG INFO:', debugInfo);
+      alert('Debug info no console (F12)');
     }
 
     // Buscar letras disponíveis
