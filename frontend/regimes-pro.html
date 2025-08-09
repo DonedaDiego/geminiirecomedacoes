@@ -292,6 +292,50 @@
       border-color: #6366f1;
       box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
     }
+
+    /* Responsividade melhorada para gráficos */
+    .chart-container {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      overflow-x: auto; /* Permite scroll horizontal se necessário */
+    }
+
+    /* Responsividade específica para gráficos */
+    @media (max-width: 768px) {
+      .chart-container {
+        padding: 1rem; /* Reduz padding em mobile */
+        margin: 0 -1rem; /* Compensa padding do container pai */
+      }
+      
+      /* Força altura menor em mobile */
+      #bandsChart, #flowChart {
+        min-height: 400px !important;
+        max-height: 500px !important;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .chart-container {
+        padding: 0.5rem;
+        margin: 0 -1.5rem;
+        border-radius: 0.5rem;
+      }
+      
+      #bandsChart, #flowChart {
+        min-height: 350px !important;
+        max-height: 450px !important;
+      }
+    }
+
+    /* Container principal responsivo */
+    @media (max-width: 768px) {
+      .max-w-7xl {
+        padding-left: 1rem;
+        padding-right: 1rem;
+      }
+    }
+
   </style>
 </head>
 <body class="min-h-screen text-white">
@@ -993,7 +1037,7 @@
         increasing: {line: {color: '#ffffff'}},
         decreasing: {line: {color: '#ef4444'}}
       };
-
+    
       const bandaSuperior2 = {
         x: plotData.dates,
         y: plotData.bands.superior_2sigma,
@@ -1002,7 +1046,7 @@
         name: 'Banda Superior 2σ',
         line: {color: '#FF6B6B', width: 2}
       };
-
+    
       const bandaInferior2 = {
         x: plotData.dates,
         y: plotData.bands.inferior_2sigma,
@@ -1011,7 +1055,7 @@
         name: 'Banda Inferior 2σ',
         line: {color: '#2ED573', width: 2}
       };
-
+    
       const bandaSuperior4 = {
         x: plotData.dates,
         y: plotData.bands.superior_4sigma,
@@ -1020,7 +1064,7 @@
         name: 'Banda Superior 4σ',
         line: {color: '#FF4757', width: 1.5, dash: 'dash'}
       };
-
+    
       const bandaInferior4 = {
         x: plotData.dates,
         y: plotData.bands.inferior_4sigma,
@@ -1029,7 +1073,7 @@
         name: 'Banda Inferior 4σ',
         line: {color: '#2ED573', width: 1.5, dash: 'dash'}
       };
-
+    
       const linhaCentral = {
         x: plotData.dates,
         y: plotData.bands.linha_central,
@@ -1038,171 +1082,284 @@
         name: 'Linha Central',
         line: {color: 'ffd700', width: 2}
       };
-
+    
       const data = [candlestick, bandaSuperior2, bandaInferior2, bandaSuperior4, bandaInferior4, linhaCentral];
-
+    
+      // Layout responsivo
+      const isMobile = window.innerWidth <= 768;
+      
       const layout = {
         title: {
-          text: `${plotData.ticker} - Bandas de Volatilidade Híbridas (GARCH + XGBoost)`,
-          font: {color: 'white', size: 18}
+          text: `${plotData.ticker} - Bandas de Volatilidade Híbridas`,
+          font: {
+            color: 'white', 
+            size: isMobile ? 14 : 18
+          }
         },
         paper_bgcolor: 'rgba(0,0,0,0)',
         plot_bgcolor: 'rgba(255,255,255,0.05)',
         xaxis: {
-          title: 'Data',
+          title: isMobile ? '' : 'Data',
           rangeslider: {visible: false},
           gridcolor: 'rgba(255,255,255,0.1)',
-          color: 'white'
+          color: 'white',
+          tickfont: {
+            size: isMobile ? 10 : 12
+          }
         },
         yaxis: {
-          title: `Preço (${plotData.currency})`,
+          title: isMobile ? '' : `Preço (${plotData.currency})`,
           side: 'right',
           gridcolor: 'rgba(255,255,255,0.1)',
-          color: 'white'
+          color: 'white',
+          tickfont: {
+            size: isMobile ? 10 : 12
+          }
         },
-        showlegend: true,
+        showlegend: !isMobile, // Remove legenda em mobile para economizar espaço
         legend: {
-          font: {color: 'white'},
-          bgcolor: 'rgba(0,0,0,0.5)'
+          font: {color: 'white', size: isMobile ? 10 : 12},
+          bgcolor: 'rgba(0,0,0,0.5)',
+          orientation: isMobile ? 'h' : 'v',
+          x: isMobile ? 0 : 1,
+          y: isMobile ? -0.1 : 1
         },
-        height: 700
+        height: isMobile ? 400 : 700,
+        margin: {
+          l: isMobile ? 40 : 60,
+          r: isMobile ? 40 : 60,
+          t: isMobile ? 40 : 60,
+          b: isMobile ? 60 : 80
+        },
+        // Configurações de responsividade
+        autosize: true,
+        responsive: true
       };
-
+    
+      // Configurações responsivas do Plotly
+      const config = {
+        responsive: true,
+        displayModeBar: !isMobile, // Remove barra de ferramentas em mobile
+        modeBarButtonsToRemove: ['pan2d', 'lasso2d', 'select2d'],
+        displaylogo: false
+      };
+    
       currentBandsData = plotData.bands;
       const exportBtn = document.getElementById('exportBtn');
       if (exportBtn) {
         exportBtn.classList.remove('hidden');
       }
-
+    
       const bandsChartEl = document.getElementById('bandsChart');
       if (bandsChartEl) {
         bandsChartEl.classList.remove('hidden');
-        Plotly.newPlot('bandsChart', data, layout);
+        Plotly.newPlot('bandsChart', data, layout, config);
       }
     }
 
     function renderFlowChart(plotData) {
+      const isMobile = window.innerWidth <= 768;
+      
       const fig = {
         data: [],
         layout: {
           title: {
-            text: `GEMINII FLOW TRACKER' - ${plotData.ticker}`,
-            font: {color: 'white', size: 18}
+            text: `Flow Tracker - ${plotData.ticker}`,
+            font: {
+              color: 'white', 
+              size: isMobile ? 14 : 18
+            }
           },
           paper_bgcolor: 'rgba(0,0,0,0)',
           plot_bgcolor: 'rgba(255,255,255,0.05)',
-          showlegend: true,
-          height: 900,
+          showlegend: !isMobile,
+          height: isMobile ? 450 : 900,
           grid: {
-            rows: 2,
+            rows: isMobile ? 1 : 2,
             columns: 1,
             pattern: 'independent',
             roworder: 'top to bottom'
           },
           legend: {
-            font: {color: 'white'},
-            bgcolor: 'rgba(0,0,0,0.5)'
-          }
+            font: {color: 'white', size: isMobile ? 10 : 12},
+            bgcolor: 'rgba(0,0,0,0.5)',
+            orientation: isMobile ? 'h' : 'v'
+          },
+          margin: {
+            l: isMobile ? 40 : 60,
+            r: isMobile ? 40 : 60,
+            t: isMobile ? 40 : 60,
+            b: isMobile ? 80 : 100
+          },
+          autosize: true
         }
       };
-
-      // Preço do ativo
-      fig.data.push({
-        x: plotData.dates,
-        y: plotData.spot_prices,
-        type: 'scatter',
-        mode: 'lines',
-        name: plotData.ticker,
-        line: {color: '#FFD700', width: 4},
-        xaxis: 'x',
-        yaxis: 'y'
-      });
-
-      // Call Flow
-      fig.data.push({
-        x: plotData.dates,
-        y: plotData.call_flow,
-        type: 'scatter',
-        mode: 'lines',
-        name: '🟢 Call Flow',
-        fill: 'tonexty',
-        fillcolor: 'rgba(0, 255, 136, 0.5)',
-        line: {color: '#00FF88', width: 3},
-        xaxis: 'x',
-        yaxis: 'y2'
-      });
-
-      // Put Flow (negativo)
-      fig.data.push({
-        x: plotData.dates,
-        y: plotData.put_flow.map(v => -v),
-        type: 'scatter',
-        mode: 'lines',
-        name: '🔴 Put Flow',
-        fill: 'tonexty',
-        fillcolor: 'rgba(255, 68, 68, 0.5)',
-        line: {color: '#FF4444', width: 3},
-        xaxis: 'x',
-        yaxis: 'y2'
-      });
-
-      // Intensity bars
-      const colors = plotData.bias.map(bias => bias > 0 ? '#00FF88' : '#FF4444');
-      fig.data.push({
-        x: plotData.dates,
-        y: plotData.intensity,
-        type: 'bar',
-        name: 'Intensity',
-        marker: {color: colors},
-        xaxis: 'x2',
-        yaxis: 'y3'
-      });
-
-      // Layout específico
-      fig.layout.xaxis = {domain: [0, 1], anchor: 'y', color: 'white', gridcolor: 'rgba(255,255,255,0.1)'};
-      fig.layout.yaxis = {
-        title: `${plotData.ticker} - Preço (R$)`,
-        side: 'left',
-        domain: [0.3, 1],
-        color: 'white',
-        gridcolor: 'rgba(255,255,255,0.1)'
+    
+      // Em mobile, simplifica o gráfico mostrando apenas preço e flow
+      if (isMobile) {
+        // Preço do ativo
+        fig.data.push({
+          x: plotData.dates,
+          y: plotData.spot_prices,
+          type: 'scatter',
+          mode: 'lines',
+          name: plotData.ticker,
+          line: {color: '#FFD700', width: 3}
+        });
+    
+        // Call Flow simplificado
+        fig.data.push({
+          x: plotData.dates,
+          y: plotData.call_flow,
+          type: 'scatter',
+          mode: 'lines',
+          name: 'Call Flow',
+          line: {color: '#00FF88', width: 2},
+          yaxis: 'y2'
+        });
+    
+        // Put Flow simplificado
+        fig.data.push({
+          x: plotData.dates,
+          y: plotData.put_flow.map(v => -v),
+          type: 'scatter',
+          mode: 'lines',
+          name: 'Put Flow',
+          line: {color: '#FF4444', width: 2},
+          yaxis: 'y2'
+        });
+    
+        // Layout simplificado para mobile
+        fig.layout.xaxis = {
+          domain: [0, 1],
+          color: 'white',
+          gridcolor: 'rgba(255,255,255,0.1)',
+          tickfont: {size: 10}
+        };
+        fig.layout.yaxis = {
+          title: plotData.ticker,
+          titlefont: {size: 12},
+          side: 'left',
+          color: 'white',
+          gridcolor: 'rgba(255,255,255,0.1)',
+          tickfont: {size: 10}
+        };
+        fig.layout.yaxis2 = {
+          title: 'Flow',
+          titlefont: {size: 12},
+          overlaying: 'y',
+          side: 'right',
+          color: 'white',
+          tickfont: {size: 10}
+        };
+    
+      } else {
+        // Versão desktop completa (código original)
+        // Preço do ativo
+        fig.data.push({
+          x: plotData.dates,
+          y: plotData.spot_prices,
+          type: 'scatter',
+          mode: 'lines',
+          name: plotData.ticker,
+          line: {color: '#FFD700', width: 4},
+          xaxis: 'x',
+          yaxis: 'y'
+        });
+    
+        // Call Flow
+        fig.data.push({
+          x: plotData.dates,
+          y: plotData.call_flow,
+          type: 'scatter',
+          mode: 'lines',
+          name: '🟢 Call Flow',
+          fill: 'tonexty',
+          fillcolor: 'rgba(0, 255, 136, 0.5)',
+          line: {color: '#00FF88', width: 3},
+          xaxis: 'x',
+          yaxis: 'y2'
+        });
+    
+        // Put Flow (negativo)
+        fig.data.push({
+          x: plotData.dates,
+          y: plotData.put_flow.map(v => -v),
+          type: 'scatter',
+          mode: 'lines',
+          name: '🔴 Put Flow',
+          fill: 'tonexty',
+          fillcolor: 'rgba(255, 68, 68, 0.5)',
+          line: {color: '#FF4444', width: 3},
+          xaxis: 'x',
+          yaxis: 'y2'
+        });
+    
+        // Intensity bars
+        const colors = plotData.bias.map(bias => bias > 0 ? '#00FF88' : '#FF4444');
+        fig.data.push({
+          x: plotData.dates,
+          y: plotData.intensity,
+          type: 'bar',
+          name: 'Intensity',
+          marker: {color: colors},
+          xaxis: 'x2',
+          yaxis: 'y3'
+        });
+    
+        // Layout desktop
+        fig.layout.xaxis = {domain: [0, 1], anchor: 'y', color: 'white', gridcolor: 'rgba(255,255,255,0.1)'};
+        fig.layout.yaxis = {
+          title: `${plotData.ticker} - Preço (R$)`,
+          side: 'left',
+          domain: [0.3, 1],
+          color: 'white',
+          gridcolor: 'rgba(255,255,255,0.1)'
+        };
+        fig.layout.yaxis2 = {
+          title: 'Options Flow',
+          overlaying: 'y',
+          side: 'right',
+          domain: [0.3, 1],
+          color: 'white',
+          gridcolor: 'rgba(255,255,255,0.1)'
+        };
+        fig.layout.xaxis2 = {domain: [0, 1], anchor: 'y3', color: 'white', gridcolor: 'rgba(255,255,255,0.1)'};
+        fig.layout.yaxis3 = {
+          title: 'Flow Intensity',
+          domain: [0, 0.25],
+          color: 'white',
+          gridcolor: 'rgba(255,255,255,0.1)'
+        };
+    
+        // Linha zero
+        fig.layout.shapes = [{
+          type: 'line',
+          x0: plotData.dates[0],
+          y0: 0,
+          x1: plotData.dates[plotData.dates.length - 1],
+          y1: 0,
+          line: {
+            color: 'gray',
+            width: 1,
+            dash: 'dash'
+          },
+          xref: 'x',
+          yref: 'y2'
+        }];
+      }
+    
+      // Configurações responsivas do Plotly
+      const config = {
+        responsive: true,
+        displayModeBar: !isMobile,
+        displaylogo: false
       };
-      fig.layout.yaxis2 = {
-        title: 'Options Flow',
-        overlaying: 'y',
-        side: 'right',
-        domain: [0.3, 1],
-        color: 'white',
-        gridcolor: 'rgba(255,255,255,0.1)'
-      };
-      fig.layout.xaxis2 = {domain: [0, 1], anchor: 'y3', color: 'white', gridcolor: 'rgba(255,255,255,0.1)'};
-      fig.layout.yaxis3 = {
-        title: 'Flow Intensity',
-        domain: [0, 0.25],
-        color: 'white',
-        gridcolor: 'rgba(255,255,255,0.1)'
-      };
-
-      // Linha zero
-      fig.layout.shapes = [{
-        type: 'line',
-        x0: plotData.dates[0],
-        y0: 0,
-        x1: plotData.dates[plotData.dates.length - 1],
-        y1: 0,
-        line: {
-          color: 'gray',
-          width: 1,
-          dash: 'dash'
-        },
-        xref: 'x',
-        yref: 'y2'
-      }];
-
+    
       const flowChartEl = document.getElementById('flowChart');
       if (flowChartEl) {
         flowChartEl.classList.remove('hidden');
-        Plotly.newPlot('flowChart', fig.data, fig.layout);
+        Plotly.newPlot('flowChart', fig.data, fig.layout, config);
       }
     }
 
