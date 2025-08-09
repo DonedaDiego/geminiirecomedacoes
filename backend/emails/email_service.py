@@ -21,7 +21,6 @@ class EmailService:
         self.from_name = 'Geminii Tech'
         self.base_url = os.environ.get('BASE_URL', 'https://app-geminii.railway.app')  
         
-        
         self.test_mode = False  # Sempre usar SMTP real com suas credenciais
 
     def send_email(self, to_email, subject, html_content, text_content=None):
@@ -315,6 +314,232 @@ class EmailService:
                                 Cancelar emails
                             </a>
                         </p>
+                    </div>
+                </div>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>
+        """
+        
+        return html_template.strip()
+
+    def create_community_email_template(self, content_data, user_name):
+        """🎨 Template específico para email da comunidade com benefícios"""
+        
+        title = content_data.get('title', 'Geminii Tech')
+        subtitle = content_data.get('subtitle', '')
+        main_message = content_data.get('main_message', '')
+        urgency_color = content_data.get('urgency_color', '#ba39af')
+        button_text = content_data.get('button_text', 'Acessar')
+        button_url = content_data.get('button_url', self.base_url)
+        
+        html_template = f"""
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="pt-BR">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{title}</title>
+    <style type="text/css">
+        body {{ 
+            margin: 0; 
+            padding: 0; 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, Arial, sans-serif; 
+            background-color: #f8fafc;
+            line-height: 1.6;
+        }}
+        
+        .container {{ 
+            max-width: 600px; 
+            margin: 0 auto; 
+            background-color: #ffffff; 
+            border-radius: 8px;
+            overflow: hidden;
+        }}
+        
+        .header {{ 
+            background: linear-gradient(135deg, {urgency_color}, {urgency_color}); 
+            padding: 30px; 
+            text-align: center; 
+        }}
+        
+        .header h1 {{
+            margin: 0;
+            font-size: 24px;
+            font-weight: 600;
+            color: #ffffff;
+        }}
+        
+        .header p {{
+            margin: 8px 0 0 0;
+            color: #ffffff;
+            opacity: 0.9;
+            font-size: 14px;
+        }}
+        
+        .content {{ 
+            padding: 40px 30px; 
+            background-color: #ffffff;
+        }}
+        
+        .button {{ 
+            display: inline-block; 
+            background: linear-gradient(135deg, {urgency_color}, {urgency_color}); 
+            color: #ffffff !important; 
+            padding: 16px 32px; 
+            text-decoration: none; 
+            border-radius: 8px; 
+            font-weight: 600; 
+            margin: 20px 0;
+            font-size: 18px;
+        }}
+        
+        .benefits-grid {{
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin: 30px 0;
+        }}
+        
+        .benefit-item {{
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid {urgency_color};
+            text-align: center;
+        }}
+        
+        .benefit-icon {{
+            width: 48px;
+            height: 48px;
+            background: {urgency_color};
+            border-radius: 50%;
+            margin: 0 auto 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 20px;
+        }}
+        
+        .benefit-title {{
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 8px;
+            font-size: 16px;
+        }}
+        
+        .benefit-desc {{
+            color: #6b7280;
+            font-size: 14px;
+            line-height: 1.4;
+        }}
+        
+        .footer {{ 
+            background-color: #f1f5f9; 
+            padding: 20px; 
+            text-align: center; 
+            font-size: 12px; 
+            color: #64748b;
+        }}
+        
+        @media (max-width: 600px) {{
+            .benefits-grid {{
+                grid-template-columns: 1fr;
+            }}
+            .content {{
+                padding: 20px;
+            }}
+        }}
+    </style>
+</head>
+<body>
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+        <tr>
+            <td align="center" style="padding: 20px;">
+                <div class="container">
+                    <!-- Header -->
+                    <div class="header">
+                        <h1>{title}</h1>
+                        <p>{subtitle}</p>
+                    </div>
+                    
+                    <!-- Content -->
+                    <div class="content">
+                        <h2 style="color: #1f2937; margin-bottom: 16px; font-size: 20px;">
+                            Olá, {user_name}!
+                        </h2>
+                        
+                        <p style="color: #374151; margin-bottom: 20px; font-size: 16px;">
+                            {main_message}
+                        </p>
+                        
+                        <h3 style="color: #1f2937; margin: 30px 0 20px 0; font-size: 18px; text-align: center;">
+                            O que você terá na Comunidade:
+                        </h3>
+                        
+                        <div class="benefits-grid">
+                            <div class="benefit-item">
+                                <div class="benefit-icon">🎓</div>
+                                <div class="benefit-title">Aulas Online</div>
+                                <div class="benefit-desc">2x por semana com conteúdo prático e aplicação real no mercado</div>
+                            </div>
+                            
+                            <div class="benefit-item">
+                                <div class="benefit-icon">📹</div>
+                                <div class="benefit-title">Aulas Gravadas</div>
+                                <div class="benefit-desc">Nivelamento do básico ao avançado, direto ao ponto</div>
+                            </div>
+                            
+                            <div class="benefit-item">
+                                <div class="benefit-icon">💬</div>
+                                <div class="benefit-title">Grupo WhatsApp</div>
+                                <div class="benefit-desc">Fechado para trocas de experiências e discussões</div>
+                            </div>
+                            
+                            <div class="benefit-item">
+                                <div class="benefit-icon">🎥</div>
+                                <div class="benefit-title">Reuniões Gravadas</div>
+                                <div class="benefit-desc">Rever e tirar dúvidas sobre operações quando quiser</div>
+                            </div>
+                            
+                            <div class="benefit-item">
+                                <div class="benefit-icon">📈</div>
+                                <div class="benefit-title">Estratégias</div>
+                                <div class="benefit-desc">Acompanhamento direto das estratégias do dia a dia</div>
+                            </div>
+                            
+                            <div class="benefit-item">
+                                <div class="benefit-icon">💡</div>
+                                <div class="benefit-title">Insights</div>
+                                <div class="benefit-desc">Análises e insights exclusivos do mercado</div>
+                            </div>
+                        </div>
+                        
+                        <div style="text-align: center; margin: 40px 0;">
+                            <a href="{button_url}" class="button">
+                                {button_text}
+                            </a>
+                        </div>
+                        
+                        <div style="background-color: #fef3c7; border: 1px solid #f59e0b; padding: 16px; border-radius: 8px; margin: 20px 0; color: #92400e; text-align: center;">
+                            <strong>Não perca:</strong> Continue com acesso completo e receba todas as atualizações!
+                        </div>
+                        
+                        <div style="margin-top: 30px; text-align: center;">
+                            <p style="color: #64748b; font-size: 14px; margin: 0;">
+                                Dúvidas? Entre em contato: 
+                                <a href="mailto:contato@geminii.com.br" style="color: {urgency_color};">contato@geminii.com.br</a>
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <!-- Footer -->
+                    <div class="footer">
+                        <p style="margin: 0;">© 2025 Geminii Tech - Comunidade de Opções Estruturadas</p>
+                        <p style="margin: 8px 0 0 0;">Transforme seus investimentos com nossa comunidade exclusiva</p>
                     </div>
                 </div>
             </td>
@@ -765,39 +990,6 @@ Dúvidas? Entre em contato: contato@geminii.com.br
             print(f"❌ Erro ao redefinir senha: {e}")
             return {'success': False, 'error': str(e)}
 
-    def debug_user(self, email):
-        """🔍 Debug de usuário"""
-        try:
-            conn = get_db_connection()
-            if not conn:
-                return
-            
-            cursor = conn.cursor()
-            
-            # Status do usuário
-            cursor.execute("""
-                SELECT id, name, email, email_confirmed, email_confirmed_at, created_at
-                FROM users WHERE email = %s
-            """, (email,))
-            
-            user = cursor.fetchone()
-            if user:
-                user_id, name, email, confirmed, confirmed_at, created_at = user
-                print(f"\n🔍 DEBUG - {email}:")
-                print(f"   ID: {user_id}")
-                print(f"   Nome: {name}")
-                print(f"   Confirmado: {confirmed}")
-                print(f"   Confirmado em: {confirmed_at}")
-                print(f"   Criado em: {created_at}")
-            else:
-                print(f"❌ Usuário não encontrado: {email}")
-            
-            cursor.close()
-            conn.close()
-            
-        except Exception as e:
-            print(f"❌ Erro no debug: {e}")
-
     # ===== EMAILS DE TRIAL COM TEMPLATE ANTI-SPAM =====
 
     def send_trial_welcome_email(self, user_name, email):
@@ -949,127 +1141,149 @@ Continue sua jornada conosco!
         
         return self.send_email(email, "💡 Trial expirado - Geminii Tech", html_content, text_content)
 
-    # ===== EMAILS DE PAGAMENTO COM TEMPLATE ANTI-SPAM =====
+    # ===== NOVOS EMAILS DA COMUNIDADE =====
 
-    def send_payment_success_email(self, user_name, email, plan_name, amount=None):
-        """✅ Enviar email de pagamento confirmado COM TEMPLATE ANTI-SPAM"""
+    def send_trial_welcome_community_email(self, user_name, email):
+        """🎉 Email de boas-vindas ao trial - VERSÃO COMUNIDADE"""
         
         content_data = {
-            'title': 'Pagamento Confirmado!',
-            'subtitle': f'Bem-vindo ao {plan_name}',
-            'main_message': f'Seu pagamento foi confirmado com sucesso! Agora você tem acesso total ao plano {plan_name}.',
+            'title': 'Bem-vindo à Geminii Tech!',
+            'subtitle': '15 dias de acesso completo - Trial ativado',
+            'main_message': f'Olá {user_name}! Seu trial de 15 dias foi ativado com sucesso. Aproveite todos os recursos da nossa plataforma de análise automatizada.',
             'user_name': user_name,
             'urgency_color': '#10b981',
-            'button_text': '🚀 Acessar Dashboard',
+            'button_text': 'Acessar Plataforma',
             'button_url': f"{self.base_url}/dashboard",
             'details': [
-                {'label': 'Plano', 'value': plan_name},
-                {'label': 'Status', 'value': 'Ativo'},
-                {'label': 'Renovação', 'value': 'Automática'}
-            ] + ([{'label': 'Valor', 'value': str(amount)}] if amount else []),
-            'warning_message': 'Agora você pode aproveitar todos os recursos Premium.',
-            'footer_message': 'Obrigado por escolher a Geminii Tech!'
+                {'label': 'Trial ativo por', 'value': '15 dias'},
+                {'label': 'Acesso completo', 'value': 'Todas as ferramentas'},
+                {'label': 'Suporte', 'value': 'Email e WhatsApp'}
+            ],
+            'warning_message': 'Seu trial expira em 15 dias. Aproveite ao máximo!',
+            'footer_message': 'Explore todas as funcionalidades durante seu período de teste.'
         }
         
         html_content = self.create_professional_email_template(content_data)
         
         text_content = f"""
-Geminii Tech - Pagamento Confirmado!
+Geminii Tech - Bem-vindo!
 
 Olá, {user_name}!
 
-Seu pagamento foi confirmado com sucesso!
+Seu trial de 15 dias foi ativado com sucesso!
 
-Detalhes:
-- Plano: {plan_name}
-- Status: Ativo
-- Renovação: Automática
-{"- Valor: " + str(amount) if amount else ""}
+Durante o trial você pode:
+- Acessar todas as ferramentas de análise
+- Usar estratégias automatizadas
+- Gerar relatórios completos
+- Receber suporte completo
 
-Agora você pode aproveitar:
-- Ferramentas avançadas
-- Relatórios completos
-- Suporte prioritário
-- Acesso ilimitado
+Acesse agora: {self.base_url}/dashboard
 
-Acessar agora: {self.base_url}/dashboard
+Aproveite seus 15 dias de acesso completo!
 
-Obrigado por escolher a Geminii Tech!
+Dúvidas? contato@geminii.com.br
 
-© 2025 Geminii Tech - Trading Automatizado
+© 2025 Geminii Tech - Análise Automatizada
         """
         
-        return self.send_email(email, f"✅ Pagamento confirmado - {plan_name} - Geminii Tech", html_content, text_content)
+        return self.send_email(email, "Bem-vindo à Geminii Tech - Trial ativado", html_content, text_content)
 
-    def send_payment_reminder_email(self, user_name, email, plan_name, days_until_renewal, amount=None):
-        """📅 Enviar lembrete de renovação COM TEMPLATE ANTI-SPAM"""
-        
-        if days_until_renewal <= 1:
-            urgency_color = "#ef4444"
-            urgency_text = "AMANHÃ"
-        elif days_until_renewal <= 3:
-            urgency_color = "#f59e0b"
-            urgency_text = f"Em {days_until_renewal} dias"
-        else:
-            urgency_color = "#0ea5e9"
-            urgency_text = f"Em {days_until_renewal} dias"
+    def send_trial_ending_community_email(self, user_name, email):
+        """⏰ Email de trial acabando - FOCO NA COMUNIDADE"""
         
         content_data = {
-            'title': f'Renovação {urgency_text}',
-            'subtitle': f'Sua assinatura {plan_name}',
-            'main_message': f'Sua assinatura {plan_name} precisa ser renovada {days_until_renewal} {"dia" if days_until_renewal == 1 else "dias"}. !',
+            'title': 'Seu Trial está Terminando',
+            'subtitle': 'Continue aproveitando todas as funcionalidades',
+            'main_message': 'Seu trial de 15 dias está chegando ao fim. Para continuar usufruindo de todas as funcionalidades da ferramenta e também das novas atualizações, entre para nossa Comunidade de Opções Estruturadas.',
             'user_name': user_name,
-            'urgency_color': urgency_color,
-            'button_text': '⚙️ Gerenciar Assinatura',
-            'button_url': "https://geminii.com.br/pagamentos-app/",
-            'details': [
-                {'label': 'Plano', 'value': plan_name},
-                {'label': 'Renovação', 'value': 'Manual'},
-                {'label': 'Método', 'value': 'Cadastrar Cartão'}
-            ] + ([{'label': 'Valor', 'value': str(amount)}] if amount else []),
-            'warning_message': 'Renove sua assinatura na plataforma.',
-            'footer_message': f'Renove em {days_until_renewal} {"dia" if days_until_renewal == 1 else "dias"}'
+            'urgency_color': '#ba39af',
+            'button_text': 'Entrar na Comunidade',
+            'button_url': f"{self.base_url}/planos",
         }
         
-        html_content = self.create_professional_email_template(content_data)
+        # Template customizado com benefícios da comunidade
+        html_content = self.create_community_email_template(content_data, user_name)
         
         text_content = f"""
-Geminii Tech - Renovação {urgency_text}
+Geminii Tech - Trial Terminando
 
 Olá, {user_name}!
 
-Sua assinatura {plan_name} será renovada em {days_until_renewal} {"dia" if days_until_renewal == 1 else "dias"}.
+Seu trial de 15 dias está chegando ao fim.
 
-Detalhes:
-- Plano: {plan_name}
-- Renovação: Manual
-- Método: Cadatrar Car~toa
-{"- Valor: " + str(amount) if amount else ""}
+Para continuar usufruindo de todas as funcionalidades da ferramenta e também das novas atualizações, entre para nossa Comunidade de Opções Estruturadas.
 
-Continuará aproveitando:
-- Ferramentas avançadas
-- Relatórios completos
-- Suporte prioritário
-- Acesso ilimitado
+BENEFÍCIOS DA COMUNIDADE:
 
-Gerenciar conta: {self.base_url}/account
+AULAS ONLINE
+- 2x por semana com conteúdo prático e aplicação real no mercado
 
-Precisa alterar algo? Acesse sua conta!
+AULAS GRAVADAS  
+- Nivelamento do básico ao avançado, direto ao ponto
 
-© 2025 Geminii Tech - Trading com Machine Learning
+GRUPO WHATSAPP
+- Fechado para trocas de experiências e discussões
+
+REUNIÕES GRAVADAS
+- Rever e tirar dúvidas sobre operações quando quiser
+
+ESTRATÉGIAS
+- Acompanhamento direto das estratégias do dia a dia
+
+INSIGHTS
+- Análises e insights exclusivos do mercado
+
+Entre na comunidade: {self.base_url}/planos
+
+Não perca essa oportunidade!
+
+© 2025 Geminii Tech - Opções Estruturadas
         """
         
-        subject = f"📅 Renovação {urgency_text} - {plan_name} - Geminii Tech"
-        return self.send_email(email, subject, html_content, text_content)
+        return self.send_email(email, "Trial terminando - Entre na Comunidade", html_content, text_content)
+
+    def debug_user(self, email):
+        """🔍 Debug de usuário"""
+        try:
+            conn = get_db_connection()
+            if not conn:
+                return
+            
+            cursor = conn.cursor()
+            
+            # Status do usuário
+            cursor.execute("""
+                SELECT id, name, email, email_confirmed, email_confirmed_at, created_at
+                FROM users WHERE email = %s
+            """, (email,))
+            
+            user = cursor.fetchone()
+            if user:
+                user_id, name, email, confirmed, confirmed_at, created_at = user
+                print(f"\n🔍 DEBUG - {email}:")
+                print(f"   ID: {user_id}")
+                print(f"   Nome: {name}")
+                print(f"   Confirmado: {confirmed}")
+                print(f"   Confirmado em: {confirmed_at}")
+                print(f"   Criado em: {created_at}")
+            else:
+                print(f"❌ Usuário não encontrado: {email}")
+            
+            cursor.close()
+            conn.close()
+            
+        except Exception as e:
+            print(f"❌ Erro no debug: {e}")
 
 # INSTÂNCIA GLOBAL
 email_service = EmailService()
 
 # FUNÇÃO DE SETUP
 def setup_email_system():
-    
+    print("🔧 Configurando sistema de emails...")
     if email_service.setup_tables():
-    
+        print("✅ Sistema de emails configurado com sucesso!")
         return True
     else:
         print("❌ Falha na configuração")

@@ -21,19 +21,14 @@ from gratis.carrossel_yfinance_routes import get_carrossel_blueprint
 
 
 ### Pro
-from pro.long_short_routes import long_short_bp
+
 from pro.opcoes_routes import opcoes_bp
-from pro.arbitragem_puts_routes import arbitragem_puts_bp
 from pro.calc_routes import calc_bp
-from pro.box_3_routes import box3_bp
 from pro.rank_routes import get_rank_blueprint
-from pro.screening_routes import screening_bp
 from pro.bandas_pro_routes import get_bandas_pro_blueprint
 from pro.vi_routes import get_vi_blueprint
 from pro.vol_regimes_routes import vol_regimes_bp
 from pro.regimes_volatilidade_routes import regimes_bp
-from pro.antifragil_routes import antifragil_bp
-from pro.momentum_routes import momentum_bp
 from pro.regime_pro_intra_routes import get_regime_pro_intra_blueprint
 
 
@@ -135,18 +130,6 @@ except Exception as e:
     print(f"❌ Erro ao carregar auth blueprint: {e}")
     AUTH_AVAILABLE = False
 
-SCREENING_AVAILABLE = False
-try:
-    from backend.pro.screening_routes import screening_bp
-    app.register_blueprint(screening_bp, url_prefix='/screening')
-    SCREENING_AVAILABLE = True
-    
-except ImportError as e:
-    print(f"⚠️ Screening routes não disponível: {e}")
-    SCREENING_AVAILABLE = False
-except Exception as e:
-    print(f"❌ Erro ao carregar screening blueprint: {e}")
-    SCREENING_AVAILABLE = False
 
 
 try:
@@ -161,7 +144,6 @@ except Exception as e:
 # Blueprints existentes
 app.register_blueprint(opcoes_bp)
 app.register_blueprint(beta_bp)
-app.register_blueprint(long_short_bp)
 
 rsl_bp = get_rsl_blueprint()
 app.register_blueprint(rsl_bp)
@@ -180,8 +162,6 @@ app.register_blueprint(trial_bp)
 app.register_blueprint(vol_regimes_bp)
 app.register_blueprint(get_coupons_blueprint())  
 app.register_blueprint(get_validate_blueprint())
-app.register_blueprint(arbitragem_puts_bp)
-app.register_blueprint(box3_bp)
 app.register_blueprint(amplitude_bp)
 app.register_blueprint(get_scheduler_blueprint())
 control_pay_bp = get_control_pay_blueprint()
@@ -194,9 +174,9 @@ vi_bp = get_vi_blueprint()
 app.register_blueprint(vi_bp)
 app.register_blueprint(regimes_bp, url_prefix='/api/regimes')
 app.register_blueprint(formula_bp)
-app.register_blueprint(antifragil_bp)
+
 app.register_blueprint(golden_cross_eua_bp)
-app.register_blueprint(momentum_bp)
+
 regime_pro_intra_bp = get_regime_pro_intra_blueprint()
 app.register_blueprint(regime_pro_intra_bp)
 
@@ -682,7 +662,7 @@ def status():
     mp_status = {"success": MP_AVAILABLE, "message": "Blueprint carregado" if MP_AVAILABLE else "Não disponível"}
     admin_status = {"success": ADMIN_AVAILABLE, "message": "Blueprint carregado" if ADMIN_AVAILABLE else "Não disponível"}
     carrossel_status = {"success": CARROSSEL_AVAILABLE, "message": "Blueprint carregado" if CARROSSEL_AVAILABLE else "Não disponível"}
-    screening_status = {"success": SCREENING_AVAILABLE, "message": "Blueprint carregado" if SCREENING_AVAILABLE else "Não disponível"}
+    
     
     
     return jsonify({
@@ -692,7 +672,7 @@ def status():
         'mercadopago': mp_status,
         'admin': admin_status,
         'carrossel': carrossel_status,
-        'screening': screening_status,
+        
         
     })
 @app.route('/api/test-db')
