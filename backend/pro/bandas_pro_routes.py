@@ -39,16 +39,20 @@ def get_bandas_pro_blueprint():
             
             period = data.get('period', '6mo')
             flow_days = data.get('flow_days', 30)
+            regime = data.get('regime', 'M')
             
             # Validações adicionais
             if flow_days < 7 or flow_days > 90:
                 return jsonify({'error': 'flow_days deve estar entre 7 e 90'}), 400
             
+            if regime not in ['M', 'W', 'A', 'Q']:
+                 return jsonify({'error': 'regime deve ser M, W, A ou Q'}), 400
+            
             logging.info(f"API: Análise completa solicitada para {ticker}")
             
             # Executar análise
             
-            result = service.analyze_complete(ticker, period, flow_days)
+            result = service.analyze_complete(ticker, period, flow_days, regime)
             
             response = {
                 'success': True,
@@ -79,10 +83,15 @@ def get_bandas_pro_blueprint():
                 return jsonify({'error': 'Ticker é obrigatório'}), 400
             
             period = data.get('period', '6mo')
-            logging.info(f"API: Análise de bandas solicitada para {ticker}")
+            regime = data.get('regime', 'M')
+            
+            if regime not in ['M', 'W', 'A', 'Q']:
+                return jsonify({'error': 'regime deve ser M, W, A ou Q'}), 400
+        
+            logging.info(f"API: Análise de bandas solicitada para {ticker} com regime {regime}")
             
             # Executar análise
-            result = service.analyze_bands(ticker, period)
+            result = service.analyze_bands(ticker, period, regime)
             
             response = {
                 'success': True,

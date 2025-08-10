@@ -157,27 +157,26 @@ class VolatilityValidator:
 class HybridVolatilityBands:
     """Sistema de Bandas de Volatilidade Híbridas com Validação IV"""
     
-    def __init__(self, ticker, period='2y'):
-        # ===== USAR LÓGICA IDÊNTICA DO VOL_REGIMES_SERVICE.PY =====
-        # Processar ticker IGUAL ao vol_regimes
+    def __init__(self, ticker, period='2y', regime="M"): 
         if not ticker.endswith('.SA') and not ticker.startswith('^'):
             ticker = ticker + '.SA'
             
         self.ticker = ticker
         self.ticker_display = ticker.replace('.SA', '')
         self.period = period
-        self.data = None  # Dados originais do yfinance
-        self.df = None    # DataFrame processado
+        self.regime = regime  
+        self.data = None  
+        self.df = None    
         self.xgb_model = None
         self.scaler = RobustScaler()
         self.iv_validator = VolatilityValidator()
             
     def load_data(self):      
         try:
-            # ===== USAR LÓGICA IDÊNTICA DO VOL_REGIMES_SERVICE.PY =====
+            
             ticker = self.ticker
             
-            # MESMA lógica de processamento
+            
             if not ticker.endswith('.SA') and not ticker.startswith('^'):
                 ticker = ticker + '.SA'
             
@@ -373,32 +372,34 @@ class HybridVolatilityBands:
         df['Date'] = pd.to_datetime(df['Date'])
         
         # Criar referência mensal
-        df['Month'] = df['Date'].dt.to_period('M')
+        df['Period'] = df['Date'].dt.to_period(self.regime)
         
-        monthly_ref = df.groupby('Month').agg(
+        period_ref = df.groupby('Period').agg(
             reference_price=('Close', 'last'),
-            monthly_vol=('hybrid_vol', 'last')
+            # ANTES: monthly_vol=('hybrid_vol', 'last')
+            # DEPOIS:
+            period_vol=('hybrid_vol', 'last')
         ).reset_index()
         
-        monthly_ref['Next_Month'] = monthly_ref['Month'] + 1
+        period_ref['Next_Period'] = period_ref['Period'] + 1
         df = df.merge(
-            monthly_ref[['Next_Month', 'reference_price', 'monthly_vol']],
-            left_on='Month', right_on='Next_Month', how='left'
+            period_ref[['Next_Period', 'reference_price', 'period_vol']],
+            left_on='Period', right_on='Next_Period', how='left'
         )
         
         # Preenchimento forward fill
-        df['monthly_vol'].fillna(method='ffill', inplace=True)
+        df['period_vol'].fillna(method='ffill', inplace=True)
         df['reference_price'].fillna(method='ffill', inplace=True)
-        df['monthly_vol'].fillna(df['hybrid_vol'], inplace=True)
+        df['period_vol'].fillna(df['hybrid_vol'], inplace=True)
         df['reference_price'].fillna(df['Close'], inplace=True)
         
         # Criar bandas
         for d in [2, 4]:
             self.df[f'banda_superior_{d}sigma'] = (
-                (1 + d * df['monthly_vol']) * df['reference_price']
+                (1 + d * df['period_vol']) * df['reference_price']
             )
             self.df[f'banda_inferior_{d}sigma'] = (
-                (1 - d * df['monthly_vol']) * df['reference_price']
+                (1 - d * df['period_vol']) * df['reference_price']
             )
         
         self.df['linha_central'] = (self.df['banda_superior_2sigma'] + self.df['banda_inferior_2sigma']) / 2
@@ -1227,11 +1228,11 @@ class BandasProService:
         self.flow_system = GeminiiFlowTracker()
         self.ticker_details_service = TickerDetailsService() 
     
-    def analyze_bands(self, ticker, period='2y'):
-        """Executa análise de bandas de volatilidade"""
+    def analyze_bands(self, ticker, period='2y', regime='M'):
+        
         logging.info(f"Iniciando análise de bandas para {ticker}")
         
-        self.bands_system = HybridVolatilityBands(ticker, period)
+        self.bands_system = HybridVolatilityBands(ticker, period, regime)
         self.bands_system.load_data()
         
         # CORREÇÃO: Verificar se self.bands_system.df existe e não está vazio
@@ -1283,12 +1284,12 @@ class BandasProService:
             'plot_data': plot_data
         }
     
-    def analyze_complete(self, ticker, period='2y', flow_days=30):
+    def analyze_complete(self, ticker, period='2y', flow_days=30, regime='M'):
         """Executa análise completa: Bandas + Flow"""
         logging.info(f"Iniciando análise completa para {ticker}")
         
         # Análise das Bandas
-        bands_result = self.analyze_bands(ticker, period)
+        bands_result = self.analyze_bands(ticker, period, regime)
         
         # Análise do Flow
         flow_result = None
