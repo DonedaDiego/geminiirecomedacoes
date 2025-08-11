@@ -1,1127 +1,1626 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Regimes PRO - Geminii Tech</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            primary: '#6366f1',
-            secondary: '#8b5cf6',
-            accent: '#06b6d4',
-            success: '#10b981',
-            warning: '#f59e0b',
-            danger: '#ef4444',
-            geminii: '#ba39af'
-          }
-        }
-      }
-    }
-  </script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <style>
-    body {
-      font-family: 'Inter', sans-serif;
-      background: #0f0f0f;
-    }
-    
-    .card {
-      background: rgba(255, 255, 255, 0.08);
-      backdrop-filter: blur(20px);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-      transition: all 0.3s ease;
-    }
-    
-    .card:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
-      border-color: rgba(255, 255, 255, 0.2);
-    }
-    
-    .navbar {
-      background: rgba(15, 15, 15, 0.95);
-      backdrop-filter: blur(20px);
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    }
-    
-    .pulse-glow {
-      animation: pulseGlow 2s ease-in-out infinite alternate;
-    }
-    
-    @keyframes pulseGlow {
-      from { box-shadow: 0 0 20px rgba(255, 215, 0, 0.3); }
-      to { box-shadow: 0 0 30px rgba(255, 215, 0, 0.6); }
-    }
-    
-    .loading-skeleton {
-      background: linear-gradient(90deg, #1a1a1a 25%, #2a2a2a 50%, #1a1a1a 75%);
-      background-size: 400% 100%;
-      animation: skeleton-loading 1.4s ease-in-out infinite;
-    }
+ <meta charset="UTF-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0">
+ <title>Regimes PRO - Geminii Tech</title>
+ <script src="https://cdn.tailwindcss.com"></script>
+ <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+ <script>
+   tailwind.config = {
+     theme: {
+       extend: {
+         colors: {
+           primary: '#6366f1',
+           secondary: '#8b5cf6',
+           accent: '#06b6d4',
+           success: '#10b981',
+           warning: '#f59e0b',
+           danger: '#ef4444',
+           geminii: '#ba39af'
+         }
+       }
+     }
+   }
+ </script>
+ <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+ <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+ <style>
+   body {
+     font-family: 'Inter', sans-serif;
+     background: #0f0f0f;
+   }
+   
+   .card {
+     background: rgba(255, 255, 255, 0.08);
+     backdrop-filter: blur(20px);
+     border: 1px solid rgba(255, 255, 255, 0.1);
+     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+     transition: all 0.3s ease;
+   }
+   
+   .card:hover {
+     transform: translateY(-2px);
+     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+     border-color: rgba(255, 255, 255, 0.2);
+   }
+   
+   .navbar {
+     background: rgba(15, 15, 15, 0.95);
+     backdrop-filter: blur(20px);
+     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+   }
+   
+   .pulse-glow {
+     animation: pulseGlow 2s ease-in-out infinite alternate;
+   }
+   
+   @keyframes pulseGlow {
+     from { box-shadow: 0 0 20px rgba(255, 215, 0, 0.3); }
+     to { box-shadow: 0 0 30px rgba(255, 215, 0, 0.6); }
+   }
+   
+   .loading-skeleton {
+     background: linear-gradient(90deg, #1a1a1a 25%, #2a2a2a 50%, #1a1a1a 75%);
+     background-size: 400% 100%;
+     animation: skeleton-loading 1.4s ease-in-out infinite;
+   }
 
-    @keyframes skeleton-loading {
-      0% { background-position: 100% 50%; }
-      100% { background-position: 0 50%; }
-    }
-    
-    .fade-in {
-      animation: fadeIn 0.5s ease-in;
-    }
-    
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
+   @keyframes skeleton-loading {
+     0% { background-position: 100% 50%; }
+     100% { background-position: 0 50%; }
+   }
+   
+   .fade-in {
+     animation: fadeIn 0.5s ease-in;
+   }
+   
+   @keyframes fadeIn {
+     from { opacity: 0; transform: translateY(20px); }
+     to { opacity: 1; transform: translateY(0); }
+   }
 
-    .status-badge {
-      padding: 0.25rem 0.75rem;
-      border-radius: 9999px;
-      font-size: 0.75rem;
-      font-weight: 600;
-      text-transform: uppercase;
-    }
+   .status-badge {
+     padding: 0.25rem 0.75rem;
+     border-radius: 9999px;
+     font-size: 0.75rem;
+     font-weight: 600;
+     text-transform: uppercase;
+   }
 
-    .status-confiavel {
-      background-color: rgba(16, 185, 129, 0.2);
-      color: #10b981;
-      border: 1px solid rgba(16, 185, 129, 0.3);
-    }
+   .status-confiavel {
+     background-color: rgba(16, 185, 129, 0.2);
+     color: #10b981;
+     border: 1px solid rgba(16, 185, 129, 0.3);
+   }
 
-    .status-neutro {
-      background-color: rgba(245, 158, 11, 0.2);
-      color: #f59e0b;
-      border: 1px solid rgba(245, 158, 11, 0.3);
-    }
+   .status-neutro {
+     background-color: rgba(245, 158, 11, 0.2);
+     color: #f59e0b;
+     border: 1px solid rgba(245, 158, 11, 0.3);
+   }
 
-    .status-suspeito {
-      background-color: rgba(239, 68, 68, 0.2);
-      color: #ef4444;
-      border: 1px solid rgba(239, 68, 68, 0.3);
-    }
+   .status-suspeito {
+     background-color: rgba(239, 68, 68, 0.2);
+     color: #ef4444;
+     border: 1px solid rgba(239, 68, 68, 0.3);
+   }
 
-    .error-card {
-      background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(220, 38, 38, 0.05));
-      border: 1px solid rgba(239, 68, 68, 0.3);
-    }
+   .error-card {
+     background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(220, 38, 38, 0.05));
+     border: 1px solid rgba(239, 68, 68, 0.3);
+   }
 
-    .btn-modern {
-      background: linear-gradient(135deg, #6366f1, #8b5cf6);
-      transition: all 0.3s ease;
-      box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
-    }
+   .btn-modern {
+     background: linear-gradient(135deg, #6366f1, #8b5cf6);
+     transition: all 0.3s ease;
+     box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+   }
 
-    .btn-modern:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 25px rgba(99, 102, 241, 0.4);
-    }
+   .btn-modern:hover {
+     transform: translateY(-2px);
+     box-shadow: 0 8px 25px rgba(99, 102, 241, 0.4);
+   }
 
-    .btn-bands {
-      background: linear-gradient(135deg, #FFD700, #FFA500);
-      color: #1a1a2e;
-      box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
-    }
+   .btn-bands {
+     background: linear-gradient(135deg, #FFD700, #FFA500);
+     color: #1a1a2e;
+     box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
+   }
 
-    .btn-bands:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 25px rgba(255, 215, 0, 0.4);
-    }
+   .btn-bands:hover {
+     transform: translateY(-2px);
+     box-shadow: 0 8px 25px rgba(255, 215, 0, 0.4);
+   }
 
-    .btn-flow {
-      background: linear-gradient(135deg, #00FF88, #00CC70);
-      box-shadow: 0 4px 15px rgba(0, 255, 136, 0.3);
-    }
+   .btn-flow {
+     background: linear-gradient(135deg, #00FF88, #00CC70);
+     box-shadow: 0 4px 15px rgba(0, 255, 136, 0.3);
+   }
 
-    .btn-flow:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 25px rgba(0, 255, 136, 0.4);
-    }
+   .btn-flow:hover {
+     transform: translateY(-2px);
+     box-shadow: 0 8px 25px rgba(0, 255, 136, 0.4);
+   }
 
-    .btn-export {
-      background: linear-gradient(135deg, #10b981, #059669);
-      box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
-    }
+   .btn-export {
+     background: linear-gradient(135deg, #10b981, #059669);
+     box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+   }
 
-    .btn-export:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
-    }
+   .btn-export:hover {
+     transform: translateY(-2px);
+     box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
+   }
 
-    .btn-details {
-      background: linear-gradient(135deg, #ba39af, #9333ea);
-      box-shadow: 0 4px 15px rgba(186, 57, 175, 0.3);
-    }
+   .btn-details {
+     background: linear-gradient(135deg, #ba39af, #9333ea);
+     box-shadow: 0 4px 15px rgba(186, 57, 175, 0.3);
+   }
 
-    .btn-details:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 25px rgba(186, 57, 175, 0.4);
-    }
+   .btn-details:hover {
+     transform: translateY(-2px);
+     box-shadow: 0 8px 25px rgba(186, 57, 175, 0.4);
+   }
 
-    .spinner {
-      border: 4px solid rgba(255, 255, 255, 0.3);
-      border-top: 4px solid #FFD700;
-      border-radius: 50%;
-      width: 40px;
-      height: 40px;
-      animation: spin 1s linear infinite;
-    }
+   .btn-movement {
+     background: linear-gradient(135deg, #f59e0b, #d97706);
+     box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
+   }
 
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
+   .btn-movement:hover {
+     transform: translateY(-2px);
+     box-shadow: 0 8px 25px rgba(245, 158, 11, 0.4);
+   }
 
-    .chart-container {
-      background: rgba(255, 255, 255, 0.05);
-      backdrop-filter: blur(20px);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-    }
+   .spinner {
+     border: 4px solid rgba(255, 255, 255, 0.3);
+     border-top: 4px solid #FFD700;
+     border-radius: 50%;
+     width: 40px;
+     height: 40px;
+     animation: spin 1s linear infinite;
+   }
 
-    .metric-card {
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      transition: all 0.3s ease;
-    }
+   @keyframes spin {
+     0% { transform: rotate(0deg); }
+     100% { transform: rotate(360deg); }
+   }
 
-    .metric-card:hover {
-      background: rgba(255, 255, 255, 0.08);
-      border-color: rgba(255, 255, 255, 0.2);
-    }
+   .chart-container {
+     background: rgba(255, 255, 255, 0.05);
+     backdrop-filter: blur(20px);
+     border: 1px solid rgba(255, 255, 255, 0.1);
+   }
 
-    /* Gauge Styles - Estilo Velocímetro Real */
-    .gauge-container {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      position: relative;
-    }
+   .metric-card {
+     background: rgba(255, 255, 255, 0.05);
+     border: 1px solid rgba(255, 255, 255, 0.1);
+     transition: all 0.3s ease;
+   }
 
-    .gauge-svg {
-      filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.5));
-    }
+   .metric-card:hover {
+     background: rgba(255, 255, 255, 0.08);
+     border-color: rgba(255, 255, 255, 0.2);
+   }
 
-    .gauge-bg {
-      fill: #2a2a2a;
-      stroke: #404040;
-      stroke-width: 3;
-    }
+   /* Gauge Styles - Estilo Velocímetro Real */
+   .gauge-container {
+     display: flex;
+     justify-content: center;
+     align-items: center;
+     position: relative;
+   }
 
-    .gauge-face {
-      fill: #1a1a1a;
-      stroke: #333;
-      stroke-width: 2;
-    }
+   .gauge-svg {
+     filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.5));
+   }
 
-    .gauge-arc-bg {
-      fill: none;
-      stroke: #333;
-      stroke-width: 8;
-    }
+   .gauge-bg {
+     fill: #2a2a2a;
+     stroke: #404040;
+     stroke-width: 3;
+   }
 
-    .gauge-arc-green {
-      fill: none;
-      stroke: #10b981;
-      stroke-width: 8;
-    }
+   .gauge-face {
+     fill: #1a1a1a;
+     stroke: #333;
+     stroke-width: 2;
+   }
 
-    .gauge-arc-yellow {
-      fill: none;
-      stroke: #f59e0b;
-      stroke-width: 8;
-    }
+   .gauge-arc-bg {
+     fill: none;
+     stroke: #333;
+     stroke-width: 8;
+   }
 
-    .gauge-arc-red {
-      fill: none;
-      stroke: #ef4444;
-      stroke-width: 8;
-    }
+   .gauge-arc-green {
+     fill: none;
+     stroke: #10b981;
+     stroke-width: 8;
+   }
 
-    .gauge-needle {
-      fill: #ffffff;
-      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
-      transform-origin: 80px 80px;
-      transition: transform 2s ease-out;
-    }
+   .gauge-arc-yellow {
+     fill: none;
+     stroke: #f59e0b;
+     stroke-width: 8;
+   }
 
-    .gauge-center {
-      fill: #666;
-      stroke: #999;
-      stroke-width: 2;
-    }
+   .gauge-arc-red {
+     fill: none;
+     stroke: #ef4444;
+     stroke-width: 8;
+   }
 
-    .gauge-value-text {
-      fill: white;
-      font-size: 16px;
-      font-weight: bold;
-      font-family: 'Inter', sans-serif;
-      text-anchor: middle;
-    }
+   .gauge-needle {
+     fill: #ffffff;
+     filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+     transform-origin: 80px 80px;
+     transition: transform 2s ease-out;
+   }
 
-    .gauge-label-text {
-      fill: #9CA3AF;
-      font-size: 11px;
-      font-weight: 500;
-      font-family: 'Inter', sans-serif;
-      text-anchor: middle;
-    }
+   .gauge-center {
+     fill: #666;
+     stroke: #999;
+     stroke-width: 2;
+   }
 
-    .gauge-scale-text {
-      fill: #9CA3AF;
-      font-size: 8px;
-      font-weight: 500;
-      font-family: 'Inter', sans-serif;
-      text-anchor: middle;
-    }
+   .gauge-value-text {
+     fill: white;
+     font-size: 16px;
+     font-weight: bold;
+     font-family: 'Inter', sans-serif;
+     text-anchor: middle;
+   }
 
-    .gauge-title {
-      fill: white;
-      font-size: 12px;
-      font-weight: 600;
-      font-family: 'Inter', sans-serif;
-      text-anchor: middle;
-    }
+   .gauge-label-text {
+     fill: #9CA3AF;
+     font-size: 11px;
+     font-weight: 500;
+     font-family: 'Inter', sans-serif;
+     text-anchor: middle;
+   }
 
-    input:focus {
-      outline: none;
-      border-color: #6366f1;
-      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
-    }
+   .gauge-scale-text {
+     fill: #9CA3AF;
+     font-size: 8px;
+     font-weight: 500;
+     font-family: 'Inter', sans-serif;
+     text-anchor: middle;
+   }
 
-    /* Responsividade melhorada para gráficos */
-    .chart-container {
-      background: rgba(255, 255, 255, 0.05);
-      backdrop-filter: blur(20px);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      overflow-x: auto; /* Permite scroll horizontal se necessário */
-    }
+   .gauge-title {
+     fill: white;
+     font-size: 12px;
+     font-weight: 600;
+     font-family: 'Inter', sans-serif;
+     text-anchor: middle;
+   }
 
-    /* Responsividade específica para gráficos */
-    @media (max-width: 768px) {
-      .chart-container {
-        padding: 1rem; /* Reduz padding em mobile */
-        margin: 0 -1rem; /* Compensa padding do container pai */
-      }
-      
-      /* Força altura menor em mobile */
-      #bandsChart, #flowChart {
-        min-height: 400px !important;
-        max-height: 500px !important;
-      }
-    }
+   input:focus {
+     outline: none;
+     border-color: #6366f1;
+     box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+   }
 
-    @media (max-width: 480px) {
-      .chart-container {
-        padding: 0.5rem;
-        margin: 0 -1.5rem;
-        border-radius: 0.5rem;
-      }
-      
-      #bandsChart, #flowChart {
-        min-height: 350px !important;
-        max-height: 450px !important;
-      }
-    }
+   /* Responsividade melhorada para gráficos */
+   .chart-container {
+     background: rgba(255, 255, 255, 0.05);
+     backdrop-filter: blur(20px);
+     border: 1px solid rgba(255, 255, 255, 0.1);
+     overflow-x: auto; /* Permite scroll horizontal se necessário */
+   }
 
-    /* Container principal responsivo */
-    @media (max-width: 768px) {
-      .max-w-7xl {
-        padding-left: 1rem;
-        padding-right: 1rem;
-      }
-    }
+   /* Responsividade específica para gráficos */
+   @media (max-width: 768px) {
+     .chart-container {
+       padding: 1rem; /* Reduz padding em mobile */
+       margin: 0 -1rem; /* Compensa padding do container pai */
+     }
+     
+     /* Força altura menor em mobile */
+     #bandsChart, #flowChart {
+       min-height: 400px !important;
+       max-height: 500px !important;
+     }
+   }
 
-    select:focus {
-      outline: none;
-      border-color: #6366f1;
-      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
-    }
-    
-    select option {
-      background-color: #1a1a1a;
-      color: white;
-    }
+   @media (max-width: 480px) {
+     .chart-container {
+       padding: 0.5rem;
+       margin: 0 -1.5rem;
+       border-radius: 0.5rem;
+     }
+     
+     #bandsChart, #flowChart {
+       min-height: 350px !important;
+       max-height: 450px !important;
+     }
+   }
 
-  </style>
+   /* Container principal responsivo */
+   @media (max-width: 768px) {
+     .max-w-7xl {
+       padding-left: 1rem;
+       padding-right: 1rem;
+     }
+   }
+
+   select:focus {
+     outline: none;
+     border-color: #6366f1;
+     box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+   }
+   
+   select option {
+     background-color: #1a1a1a;
+     color: white;
+   }
+
+   /* Modal Styles */
+   .modal-backdrop {
+     background: rgba(0, 0, 0, 0.8);
+     backdrop-filter: blur(8px);
+   }
+
+   .modal-content {
+     background: rgba(17, 24, 39, 0.95);
+     backdrop-filter: blur(20px);
+     border: 1px solid rgba(255, 255, 255, 0.1);
+   }
+
+   @keyframes fadeOut {
+     from { opacity: 1; transform: translateY(0); }
+     to { opacity: 0; transform: translateY(-10px); }
+   }
+
+ </style>
 </head>
 <body class="min-h-screen text-white">
-  
-  <!-- Navigation -->
-  <nav class="fixed top-6 left-1/2 transform -translate-x-1/2 z-50 bg-opacity-5 border-opacity-10 bg-white border-white border rounded-full px-4 py-3 shadow-xl backdrop-blur-md">
-    <div class="flex items-center justify-between">
-      <div class="flex items-center">
-        <img src="logo.png" alt="Geminii Logo" class="w-6 h-6 cursor-pointer" onclick="window.location.href='/'">
-      </div>
-      <div class="hidden md:flex items-center space-x-6 text-xs text-gray-300 ml-8">
-        <a href="/dashboard" class="hover:text-white transition-colors">Dashboard</a>
-        <a href="opcoes.html" class="hover:text-white transition-colors">Hunter Walls</a>
-        <a href="vi-pro.html" class="hover:text-white transition-colors">Implícita Sigma</a>
-       <span class="text-white font-medium">Bandas De Volatilidade</span>
-        <a href="rank-volatilidade.html" class="hover:text-white transition-colors">IV Scanner</a>
-        
-      </div>
-      <div class="flex items-center space-x-3 ml-8">
-        <div id="apiStatus" class="w-8 h-8 bg-green-500 bg-opacity-10 border border-green-500 border-opacity-30 rounded-full flex items-center justify-center relative">
-          <i class="fas fa-chart-line text-green-500 text-xs"></i>
-          <div class="absolute -top-1 -right-1 w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-        </div>
-      </div>
-    </div>
-  </nav>
+ 
+ <!-- Navigation -->
+ <nav class="fixed top-6 left-1/2 transform -translate-x-1/2 z-50 bg-opacity-5 border-opacity-10 bg-white border-white border rounded-full px-4 py-3 shadow-xl backdrop-blur-md">
+   <div class="flex items-center justify-between">
+     <div class="flex items-center">
+       <img src="logo.png" alt="Geminii Logo" class="w-6 h-6 cursor-pointer" onclick="window.location.href='/'">
+     </div>
+     <div class="hidden md:flex items-center space-x-6 text-xs text-gray-300 ml-8">
+       <a href="/dashboard" class="hover:text-white transition-colors">Dashboard</a>
+       <a href="opcoes.html" class="hover:text-white transition-colors">Hunter Walls</a>
+       <a href="vi-pro.html" class="hover:text-white transition-colors">Implícita Sigma</a>
+      <span class="text-white font-medium">Bandas De Volatilidade</span>
+       <a href="rank-volatilidade.html" class="hover:text-white transition-colors">IV Scanner</a>
+       
+     </div>
+     <div class="flex items-center space-x-3 ml-8">
+       <div id="apiStatus" class="w-8 h-8 bg-green-500 bg-opacity-10 border border-green-500 border-opacity-30 rounded-full flex items-center justify-center relative">
+         <i class="fas fa-chart-line text-green-500 text-xs"></i>
+         <div class="absolute -top-1 -right-1 w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+       </div>
+     </div>
+   </div>
+ </nav>
 
-  <!-- Main Content -->
-  <main class="pt-24 px-6 pb-12">
-    <div class="pt-32 pb-16">
-      <div class="max-w-7xl mx-auto px-6">
-        
-        <!-- Header -->
-        <div class="text-center mb-8">
-          <h1 class="text-4xl md:text-5xl font-bold mb-4">
-            <span style="color: #ba39af; font-weight: 900;">Sistema Bandas</span>
-            <span class="text-white font-light">De Volatilidade</span>
-          </h1>
-          <p class="text-neutral-300 text-lg max-w-2xl mx-auto">
-            Análise avançada com GARCH + XGBoost para previsão de volatilidade
-          </p>
-          
-          <!-- Info Expander -->
-          <div class="mt-8">
-            <button onclick="toggleInfo()" class="bg-gradient-to-r from-geminii to-purple-600 hover:from-purple-600 hover:to-geminii text-white px-6 py-3 rounded-full font-semibold text-sm transition-all duration-300 flex items-center mx-auto shadow-lg hover:shadow-xl transform hover:scale-105">
-              <i id="infoIcon" class="fas fa-info-circle mr-2 transition-transform duration-300"></i>
-              Como Funciona Nossa Tecnologia Avançada
-            </button>
-            
-            <div id="infoContent" class="hidden mt-8 max-w-5xl mx-auto">
-              <div class="card rounded-xl p-8 text-left">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  
-                  <!-- Hybrid Volatility Bands -->
-                  <div class="space-y-4">
-                    <div class="flex items-center mb-4">
-                      <div class="w-4 h-4 rounded-full bg-gradient-to-r from-yellow-400 to-orange-500 mr-3"></div>
-                      <h3 class="text-xl font-bold text-white">Bandas de Volatilidade Híbridas</h3>
-                    </div>
-                    <p class="text-gray-300 text-sm leading-relaxed mb-4">
-                      Nosso modelo captura a <strong>volatilidade passada</strong> usando estimativa ponderada com <strong>GARCH</strong>, 
-                      depois roda machine learning <strong>XGBoost</strong> com outras <strong>15 variáveis</strong> para estimar 
-                      suportes e resistências com precisão matemática.
-                    </p>
-                    <div class="bg-white/5 rounded-lg p-4">
-                      <h4 class="text-warning font-semibold text-sm mb-3">O que você obtém:</h4>
-                      <ul class="text-gray-400 text-sm space-y-2">
-                        <li>• <span class="text-red-400 font-medium">Bandas Superiores</span>: Níveis de resistência calculados</li>
-                        <li>• <span class="text-green-400 font-medium">Bandas Inferiores</span>: Níveis de suporte calculados</li>
-                        <li>• <span class="text-yellow-400 font-medium">Linha Central</span>: Preço equilibrado estimado</li>
-                        <li>• <span class="text-blue-400 font-medium">Regime de Volatilidade</span>: Classificação atual do mercado</li>
-                      </ul>
-                    </div>
-                  </div>
-                  
-                  <!-- Geminii Flow -->
-                  <div class="space-y-4">
-                    <div class="flex items-center mb-4">
-                      <div class="w-4 h-4 rounded-full bg-gradient-to-r from-green-400 to-emerald-500 mr-3"></div>
-                      <h3 class="text-xl font-bold text-white">Geminii Flow Tracker</h3>
-                    </div>
-                    <p class="text-gray-300 text-sm leading-relaxed mb-4">
-                      Captura o <strong>prêmio e expectativa futura</strong> das calls e puts, seguindo o mercado 
-                      e monitorando realmente o <strong>prêmio das opções</strong> para identificar onde o dinheiro 
-                      inteligente está posicionado.
-                    </p>
-                    <div class="bg-white/5 rounded-lg p-4">
-                      <h4 class="text-success font-semibold text-sm mb-3">Métricas monitoradas:</h4>
-                      <ul class="text-gray-400 text-sm space-y-2">
-                        <li>• <span class="text-green-400 font-medium">Call Flow</span>: Pressão compradora no prêmio</li>
-                        <li>• <span class="text-red-400 font-medium">Put Flow</span>: Pressão vendedora no prêmio</li>
-                        <li>• <span class="text-yellow-400 font-medium">C/P Ratio</span>: Proporção entre calls e puts</li>
-                        <li>• <span class="text-purple-400 font-medium">Intensidade</span>: Força do movimento detectado</li>
-                      </ul>
-                    </div>
-                  </div>
-                  
-                </div>
-                
-                <!-- Combined Power -->
-                <div class="mt-8 pt-6 border-t border-white/10">
-                  <div class="text-center">
-                    <h4 class="text-geminii font-bold text-lg mb-3">Poder Combinado</h4>
-                    <p class="text-gray-300 text-sm max-w-3xl mx-auto">
-                      Quando as <strong>bandas identificam níveis técnicos precisos</strong> baseados em 15+ variáveis 
-                      e o <strong>flow confirma a direção através do prêmio real das opções</strong>, obtemos sinais 
-                      de altíssima probabilidade para operações de suporte e resistência.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-  
-      
-      <!-- Input Section -->
-      <div class="card rounded-2xl p-8 mb-8 fade-in">
-        <h2 class="text-2xl font-bold text-white mb-6 flex items-center">
-            Configurações da Análise
-        </h2>
-        
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8"> <!-- MUDAR DE 2 PARA 3 COLUNAS -->
-          <div class="space-y-2">
-            <label for="ticker" class="block text-sm font-medium text-gray-300">Ticker</label>
-            <input type="text" id="ticker" placeholder="Ex: PETR4, VALE3" 
-                  class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 transition-all duration-300">
-          </div>
-          
-          <!-- ADICIONAR ESTE NOVO CAMPO -->
-          <div class="space-y-2">
-            <label for="regime" class="block text-sm font-medium text-gray-300">Período das Bandas</label>
-            <select id="regime" class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white transition-all duration-300">
-              <option value="M" selected>Mensal</option>
-              <option value="W">Semanal</option>
-              <option value="Q">Trimestral</option>
-              <option value="A">Anual</option>
-            </select>
-          </div>
-          
-          <div class="space-y-2">
-            <label for="flowDays" class="block text-sm font-medium text-gray-300">Dias de Flow</label>
-            <input type="number" id="flowDays" value="30" min="7" max="90"
-                  class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white transition-all duration-300">
-          </div>
-  </div>
-        
-        <div class="flex flex-wrap gap-4 justify-center">
-          <button onclick="runCompleteAnalysis()" class="btn-modern text-white px-8 py-3 rounded-lg font-semibold transition-all duration-300 flex items-center">
-            <i class="fas fa-chart-line mr-2"></i>
-            Análise Completa
-          </button>
-          <button onclick="runBandsAnalysis()" class="btn-bands text-gray-900 px-8 py-3 rounded-lg font-semibold transition-all duration-300 flex items-center">
-            <i class="fas fa-chart-area mr-2"></i>
-            Apenas Bandas
-          </button>
-          <button onclick="runFlowAnalysis()" class="btn-flow text-white px-8 py-3 rounded-lg font-semibold transition-all duration-300 flex items-center">
-            <i class="fas fa-water mr-2"></i>
-            Apenas Flow
-          </button>
-          <button onclick="exportToProfit()" id="exportBtn" class="hidden btn-export text-white px-8 py-3 rounded-lg font-semibold transition-all duration-300 flex items-center">
-            <i class="fas fa-download mr-2"></i>
-            Exportar para Profit
-          </button>
-        </div>
-      </div>
+ <!-- Main Content -->
+ <main class="pt-24 px-6 pb-12">
+   <div class="pt-32 pb-16">
+     <div class="max-w-7xl mx-auto px-6">
+       
+       <!-- Header -->
+       <div class="text-center mb-8">
+         <h1 class="text-4xl md:text-5xl font-bold mb-4">
+           <span style="color: #ba39af; font-weight: 900;">Sistema Bandas</span>
+           <span class="text-white font-light">De Volatilidade</span>
+         </h1>
+         <p class="text-neutral-300 text-lg max-w-2xl mx-auto">
+           Análise avançada com GARCH + XGBoost para previsão de volatilidade
+         </p>
+         
+         <!-- Info Expander -->
+         <div class="mt-8">
+           <button onclick="toggleInfo()" class="bg-gradient-to-r from-geminii to-purple-600 hover:from-purple-600 hover:to-geminii text-white px-6 py-3 rounded-full font-semibold text-sm transition-all duration-300 flex items-center mx-auto shadow-lg hover:shadow-xl transform hover:scale-105">
+             <i id="infoIcon" class="fas fa-info-circle mr-2 transition-transform duration-300"></i>
+             Como Funciona Nossa Tecnologia Avançada
+           </button>
+           
+           <div id="infoContent" class="hidden mt-8 max-w-5xl mx-auto">
+             <div class="card rounded-xl p-8 text-left">
+               <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                 
+                 <!-- Hybrid Volatility Bands -->
+                 <div class="space-y-4">
+                   <div class="flex items-center mb-4">
+                     <div class="w-4 h-4 rounded-full bg-gradient-to-r from-yellow-400 to-orange-500 mr-3"></div>
+                     <h3 class="text-xl font-bold text-white">Bandas de Volatilidade Híbridas</h3>
+                   </div>
+                   <p class="text-gray-300 text-sm leading-relaxed mb-4">
+                     Nosso modelo captura a <strong>volatilidade passada</strong> usando estimativa ponderada com <strong>GARCH</strong>, 
+                     depois roda machine learning <strong>XGBoost</strong> com outras <strong>15 variáveis</strong> para estimar 
+                     suportes e resistências com precisão matemática.
+                   </p>
+                   <div class="bg-white/5 rounded-lg p-4">
+                     <h4 class="text-warning font-semibold text-sm mb-3">O que você obtém:</h4>
+                     <ul class="text-gray-400 text-sm space-y-2">
+                       <li>• <span class="text-red-400 font-medium">Bandas Superiores</span>: Níveis de resistência calculados</li>
+                       <li>• <span class="text-green-400 font-medium">Bandas Inferiores</span>: Níveis de suporte calculados</li>
+                       <li>• <span class="text-yellow-400 font-medium">Linha Central</span>: Preço equilibrado estimado</li>
+                       <li>• <span class="text-blue-400 font-medium">Regime de Volatilidade</span>: Classificação atual do mercado</li>
+                     </ul>
+                   </div>
+                 </div>
+                 
+                 <!-- Geminii Flow -->
+                 <div class="space-y-4">
+                   <div class="flex items-center mb-4">
+                     <div class="w-4 h-4 rounded-full bg-gradient-to-r from-green-400 to-emerald-500 mr-3"></div>
+                     <h3 class="text-xl font-bold text-white">Geminii Flow Tracker</h3>
+                   </div>
+                   <p class="text-gray-300 text-sm leading-relaxed mb-4">
+                     Captura o <strong>prêmio e expectativa futura</strong> das calls e puts, seguindo o mercado 
+                     e monitorando realmente o <strong>prêmio das opções</strong> para identificar onde o dinheiro 
+                     inteligente está posicionado.
+                   </p>
+                   <div class="bg-white/5 rounded-lg p-4">
+                     <h4 class="text-success font-semibold text-sm mb-3">Métricas monitoradas:</h4>
+                     <ul class="text-gray-400 text-sm space-y-2">
+                       <li>• <span class="text-green-400 font-medium">Call Flow</span>: Pressão compradora no prêmio</li>
+                       <li>• <span class="text-red-400 font-medium">Put Flow</span>: Pressão vendedora no prêmio</li>
+                       <li>• <span class="text-yellow-400 font-medium">C/P Ratio</span>: Proporção entre calls e puts</li>
+                       <li>• <span class="text-purple-400 font-medium">Intensidade</span>: Força do movimento detectado</li>
+                     </ul>
+                   </div>
+                 </div>
+                 
+               </div>
+               
+               <!-- Combined Power -->
+               <div class="mt-8 pt-6 border-t border-white/10">
+                 <div class="text-center">
+                   <h4 class="text-geminii font-bold text-lg mb-3">Poder Combinado</h4>
+                   <p class="text-gray-300 text-sm max-w-3xl mx-auto">
+                     Quando as <strong>bandas identificam níveis técnicos precisos</strong> baseados em 15+ variáveis 
+                     e o <strong>flow confirma a direção através do prêmio real das opções</strong>, obtemos sinais 
+                     de altíssima probabilidade para operações de suporte e resistência.
+                   </p>
+                 </div>
+               </div>
+             </div>
+           </div>
+         </div>
+       </div>
+ 
+     
+     <!-- Input Section -->
+     <div class="card rounded-2xl p-8 mb-8 fade-in">
+       <h2 class="text-2xl font-bold text-white mb-6 flex items-center">
+           Configurações da Análise
+       </h2>
+       
+       <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+         <div class="space-y-2">
+           <label for="ticker" class="block text-sm font-medium text-gray-300">Ticker</label>
+           <input type="text" id="ticker" placeholder="Ex: PETR4, VALE3" 
+                 class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 transition-all duration-300">
+         </div>
+         
+         <div class="space-y-2">
+           <label for="regime" class="block text-sm font-medium text-gray-300">Período das Bandas</label>
+           <select id="regime" class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white transition-all duration-300">
+             <option value="M" selected>Mensal</option>
+             <option value="W">Semanal</option>
+             <option value="Q">Trimestral</option>
+             <option value="A">Anual</option>
+           </select>
+         </div>
+         
+         <div class="space-y-2">
+           <label for="flowDays" class="block text-sm font-medium text-gray-300">Dias de Flow</label>
+           <input type="number" id="flowDays" value="30" min="7" max="90"
+                 class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white transition-all duration-300">
+         </div>
+       </div>
+       
+       <div class="flex flex-wrap gap-4 justify-center">
+         <button onclick="runCompleteAnalysis()" class="btn-modern text-white px-8 py-3 rounded-lg font-semibold transition-all duration-300 flex items-center">
+           <i class="fas fa-chart-line mr-2"></i>
+           Análise Completa
+         </button>
+         <button onclick="runBandsAnalysis()" class="btn-bands text-gray-900 px-8 py-3 rounded-lg font-semibold transition-all duration-300 flex items-center">
+           <i class="fas fa-chart-area mr-2"></i>
+           Apenas Bandas
+         </button>
+         <button onclick="runFlowAnalysis()" class="btn-flow text-white px-8 py-3 rounded-lg font-semibold transition-all duration-300 flex items-center">
+           <i class="fas fa-water mr-2"></i>
+           Apenas Flow
+         </button>
+         <button onclick="exportToProfit()" id="exportBtn" class="hidden btn-export text-white px-8 py-3 rounded-lg font-semibold transition-all duration-300 flex items-center">
+           <i class="fas fa-download mr-2"></i>
+           Exportar para Profit
+         </button>
+       </div>
+     </div>
 
+     <!-- Loading State -->
+     <div id="loading" class="hidden">
+       <div class="card rounded-2xl p-12 text-center">
+         <div class="spinner mx-auto mb-6"></div>
+         <p class="text-xl text-gray-300">Processando análise avançada...</p>
+         <p class="text-sm text-gray-400 mt-2">Aguarde enquanto processamos os dados com nossos algoritmos de Machine Learning</p>
+       </div>
+     </div>
+
+     <!-- Results Section -->
+     <div id="results" class="space-y-8">
+       
+       <!-- Ticker Details Section (sempre visível quando há dados) -->
+       <div id="tickerDetails" class="hidden">
+         <div class="card rounded-xl p-6 fade-in">
+           <h3 class="text-xl font-bold text-white mb-4 flex items-center">
+             <i class="fas fa-info-circle mr-2 text-geminii"></i>
+             Dados Fundamentais do Ticker
+             <span class="ml-2 text-sm text-gray-400 font-normal">(Atualizado automaticamente)</span>
+             </h3>
+           <div id="tickerDetailsContent">
+             <!-- Content will be populated by JavaScript -->
+           </div>
+         </div>
+       </div>
+       
+       <!-- Bandas Signals -->
+       <div id="bandsSignals" class="card rounded-xl p-6 fade-in">
+         <h3 class="text-xl font-bold text-white mb-4 flex items-center">
+           <i class="fas fa-chart-line mr-2 text-warning"></i>
+           Sinais de Bandas
+         </h3>
+         <div id="bandsSignalsContent" class="space-y-3">
+           <p class="text-gray-400 text-center">Clique em "Análise Completa" ou "Apenas Bandas" para ver os resultados</p>
+         </div>
+       </div>
+       
+       <!-- Charts -->
+       <div id="bandsChart" class="chart-container rounded-2xl p-6 hidden"></div>
+       <div id="flowChart" class="chart-container rounded-2xl p-6 hidden"></div>
+       
+     </div>
+   </div>
+ </main>
+
+ <!-- ===== POPUP MODAL CALCULADORA DE MOVIMENTO ===== -->
+ <div id="movementModal" class="fixed inset-0 modal-backdrop z-50 hidden flex items-center justify-center p-4">
+   <!-- Modal Container -->
+   <div class="modal-content rounded-2xl shadow-2xl max-w-5xl w-full max-h-[90vh] overflow-y-auto">
+     
+     <!-- Modal Header -->
+     <div class="flex items-center justify-between p-6 border-b border-white/10">
+       <h2 class="text-2xl font-bold text-white flex items-center">
+         <i class="fas fa-calculator mr-3 text-purple-400"></i>
+         Calculadora de Movimento Esperado
+       </h2>
+       <button onclick="closeMovementModal()" class="text-gray-400 hover:text-white transition-colors text-2xl">
+         <i class="fas fa-times"></i>
+       </button>
+     </div>
+     
+     <!-- Modal Body -->
+     <div class="p-6">
+       
+       <!-- Combo de Vencimento -->
+       <div class="mb-6">
+         <label for="modalVencimento" class="block text-sm font-medium text-gray-300 mb-2">
+           Dias até o Vencimento
+         </label>
+         <select id="modalVencimento" onchange="recalculateMovement()" 
+                 class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white transition-all duration-300">
+           <option value="7">1 Semana (7 dias)</option>
+           <option value="14">2 Semanas (14 dias)</option>
+           <option value="21" selected>3 Semanas (21 dias)</option>
+           <option value="30">1 Mês (30 dias)</option>
+           <option value="45">6 Semanas (45 dias)</option>
+           <option value="60">2 Meses (60 dias)</option>
+           <option value="90">3 Meses (90 dias)</option>
+         </select>
+       </div>
+       
+       <!-- Gráfico Container -->
+       <div class="bg-black/30 rounded-xl p-4 mb-6">
+         <div id="movementChart" style="height: 400px;"></div>
+       </div>
+       
+       <!-- Informações do Cálculo -->
+       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+         
+         <!-- Dados de Entrada -->
+         <div class="space-y-4">
+           <h3 class="text-lg font-bold text-white mb-3 flex items-center">
+             <i class="fas fa-info-circle mr-2 text-blue-400"></i>
+             Dados de Entrada
+           </h3>
+           
+           <div class="space-y-3">
+             <div class="flex justify-between items-center p-3 bg-white/5 rounded-lg">
+               <span class="text-gray-400">Ticker:</span>
+               <span id="modalTicker" class="text-white font-medium">-</span>
+             </div>
+             <div class="flex justify-between items-center p-3 bg-white/5 rounded-lg">
+               <span class="text-gray-400">Preço Atual:</span>
+               <span id="modalPreco" class="text-white font-medium">R$ -</span>
+             </div>
+             <div class="flex justify-between items-center p-3 bg-white/5 rounded-lg">
+               <span class="text-gray-400">Volatilidade Implícita:</span>
+               <span id="modalVI" class="text-white font-medium">-</span>
+             </div>
+             <div class="flex justify-between items-center p-3 bg-white/5 rounded-lg">
+               <span class="text-gray-400">Dias Vencimento:</span>
+               <span id="modalDias" class="text-white font-medium">-</span>
+             </div>
+           </div>
+         </div>
+         
+         <!-- Resultados -->
+         <div class="space-y-4">
+           <h3 class="text-lg font-bold text-white mb-3 flex items-center">
+             <i class="fas fa-chart-line mr-2 text-green-400"></i>
+             Resultados
+           </h3>
+           
+           <div class="space-y-3">
+             <!-- 1 Desvio Padrão (68%) -->
+             <div class="p-4 bg-gradient-to-r from-green-500/10 to-red-500/10 rounded-lg border border-white/10">
+               <div class="text-center mb-3">
+                 <h4 class="text-white font-semibold">1º Desvio Padrão (68%)</h4>
+                 <p class="text-gray-400 text-sm">Movimento Esperado: ± <span id="movimento1" class="text-white font-medium">R$ -</span></p>
+               </div>
+               <div class="grid grid-cols-2 gap-3">
+                 <div class="text-center p-2 bg-green-500/20 rounded">
+                   <p class="text-green-400 text-sm">Teto</p>
+                   <p id="teto1" class="text-white font-bold">R$ -</p>
+                 </div>
+                 <div class="text-center p-2 bg-red-500/20 rounded">
+                   <p class="text-red-400 text-sm">Piso</p>
+                   <p id="piso1" class="text-white font-bold">R$ -</p>
+                 </div>
+               </div>
+             </div>
+             
+             <!-- 2 Desvio Padrão (95%) -->
+             <div class="p-4 bg-gradient-to-r from-green-600/10 to-red-600/10 rounded-lg border border-white/10">
+               <div class="text-center mb-3">
+                 <h4 class="text-white font-semibold">2º Desvio Padrão (95%)</h4>
+                 <p class="text-gray-400 text-sm">Movimento Esperado: ± <span id="movimento2" class="text-white font-medium">R$ -</span></p>
+               </div>
+               <div class="grid grid-cols-2 gap-3">
+                 <div class="text-center p-2 bg-green-600/20 rounded">
+                   <p class="text-green-400 text-sm">Teto</p>
+                   <p id="teto2" class="text-white font-bold">R$ -</p>
+                 </div>
+                 <div class="text-center p-2 bg-red-600/20 rounded">
+                   <p class="text-red-400 text-sm">Piso</p>
+                   <p id="piso2" class="text-white font-bold">R$ -</p>
+                 </div>
+               </div>
+             </div>
+           </div>
+         </div>
+       </div>
+       
+       <!-- Fórmula Utilizada -->
+       <div class="bg-purple-500/10 border border-purple-500/20 rounded-lg p-4">
+         <h4 class="text-purple-400 font-semibold mb-2 flex items-center">
+           <i class="fas fa-formula mr-2"></i>
+           Fórmula Utilizada
+         </h4>
+         <p class="text-gray-300 text-sm font-mono">
+           Movimento = Preço × (VI/100) + Modelo de Monte-Carlo
+         </p>
+         <p class="text-gray-400 text-xs mt-2">
+          VI = volatilidade implícita. Simulações: GBM, T = dias até vencimento, N = nº de simulações.
+         </p>
+       </div>
+       
+     </div>
+     
+     <!-- Modal Footer -->
+     <div class="flex justify-center p-6 border-t border-white/10">
+       <button onclick="closeMovementModal()" 
+               class="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-8 py-3 rounded-lg font-semibold transition-all duration-300 transform hover:scale-105">
+         <i class="fas fa-check mr-2"></i>
+         Voltar
+       </button>
+     </div>
+     
+   </div>
+ </div>
+
+ <script>
+   
+   let currentBandsData = null;
+   let currentModalData = null; // Para dados do modal
+   
+   // Verificar autenticação
+   let userToken = localStorage.getItem('geminii_token');
+   if (!userToken) {
+       window.location.href = '/login.html';
+   }
+
+   // ===== FUNÇÕES DE UI =====
+   function showLoading() {
+     document.getElementById('loading').classList.remove('hidden');
+   }
+
+   function hideLoading() {
+     document.getElementById('loading').classList.add('hidden');
+   }
+
+   function showError(message) {
+     hideLoading();
+     const resultsSection = document.getElementById('results');
+     resultsSection.innerHTML = `
+       <div class="error-card rounded-xl p-6 text-center">
+         <i class="fas fa-exclamation-triangle text-4xl text-danger mb-4"></i>
+         <h3 class="text-xl font-bold text-white mb-2">Erro na Análise</h3>
+         <p class="text-gray-300">${message}</p>
+         <button onclick="location.reload()" class="mt-4 btn-modern text-white px-6 py-2 rounded-lg">
+           <i class="fas fa-sync mr-2"></i>Tentar Novamente
+         </button>
+       </div>
+     `;
+   }
+
+   function showToast(message, type = 'info') {
+     const colors = {
+       success: 'bg-green-500',
+       error: 'bg-red-500',
+       info: 'bg-blue-500',
+       warning: 'bg-yellow-500'
+     };
+     
+     const toast = document.createElement('div');
+     toast.className = `fixed top-20 right-4 ${colors[type]} text-white px-6 py-3 rounded-lg shadow-lg z-50 transition-all duration-300`;
+     toast.textContent = message;
+
+     document.body.appendChild(toast);
+
+     setTimeout(() => {
+       toast.style.opacity = '0';
+       setTimeout(() => {
+         if (document.body.contains(toast)) {
+           document.body.removeChild(toast);
+         }
+       }, 300);
+     }, 4000);
+   }
+
+   // ===== FUNÇÕES DO MODAL =====
+   function openMovementModal() {
+     if (!currentModalData) {
+       showToast('Execute uma análise primeiro para calcular movimento', 'warning');
+       return;
+     }
+     
+     document.getElementById('movementModal').classList.remove('hidden');
+     populateModalData();
+     calculateAndRenderMovement();
+   }
+
+   function closeMovementModal() {
+     document.getElementById('movementModal').classList.add('hidden');
+   }
+
+   function populateModalData() {
+     if (!currentModalData) return;
+     
+     const ticker = document.getElementById('ticker').value.trim();
+     const precoAtual = currentModalData.price_data?.close || currentModalData.price_data?.last_price || 0;
+     const vi = currentModalData.volatility_iv?.iv_current || 0;
+     const dias = parseInt(document.getElementById('modalVencimento').value);
+     
+     document.getElementById('modalTicker').textContent = ticker;
+     document.getElementById('modalPreco').textContent = `R$ ${precoAtual.toFixed(2)}`;
+     document.getElementById('modalVI').textContent = `${vi.toFixed(1)}%`;
+     document.getElementById('modalDias').textContent = `${dias} dias`;
+   }
+
+   function recalculateMovement() {
+     if (currentModalData) {
+       populateModalData();
+       calculateAndRenderMovement();
+     }
+   }
+
+   function calculateAndRenderMovement() {
+     if (!currentModalData) return;
+     
+     const precoAtual = currentModalData.price_data?.close || currentModalData.price_data?.last_price;
+     const vi = currentModalData.volatility_iv?.iv_current;
+     const dias = parseInt(document.getElementById('modalVencimento').value);
+     
+     if (!precoAtual || !vi || !dias) return;
+     
+     // Sua fórmula: Preço × VI × √(dias/252)
+     const movimento1 = precoAtual * (vi / 100) * Math.sqrt(dias / 252);
+     const movimento2 = movimento1 * 2; // 2 desvios padrão
+     
+     const teto1 = precoAtual + movimento1;
+     const piso1 = precoAtual - movimento1;
+     const teto2 = precoAtual + movimento2;
+     const piso2 = precoAtual - movimento2;
+     
+     // Atualizar valores na tela
+     document.getElementById('movimento1').textContent = `R$ ${movimento1.toFixed(2)}`;
+     document.getElementById('movimento2').textContent = `R$ ${movimento2.toFixed(2)}`;
+     
+     document.getElementById('teto1').textContent = `R$ ${teto1.toFixed(2)}`;
+     document.getElementById('piso1').textContent = `R$ ${piso1.toFixed(2)}`;
+     document.getElementById('teto2').textContent = `R$ ${teto2.toFixed(2)}`;
+     document.getElementById('piso2').textContent = `R$ ${piso2.toFixed(2)}`;
+     
+     // Renderizar gráfico
+     renderMovementChart(precoAtual, movimento1, movimento2);
+   }
+
+   function renderMovementChart(precoAtual, movimento1, movimento2) {
+    const teto2 = precoAtual + movimento2;
+    const teto1 = precoAtual + movimento1;
+    const piso1 = precoAtual - movimento1;
+    const piso2 = precoAtual - movimento2;
     
-      
-
-
-      <!-- Loading State -->
-      <div id="loading" class="hidden">
-        <div class="card rounded-2xl p-12 text-center">
-          <div class="spinner mx-auto mb-6"></div>
-          <p class="text-xl text-gray-300">Processando análise avançada...</p>
-          <p class="text-sm text-gray-400 mt-2">Aguarde enquanto processamos os dados com nossos algoritmos de Machine Learning</p>
-        </div>
-      </div>
-
-      <!-- Results Section -->
-      <div id="results" class="space-y-8">
-        
-        <!-- Ticker Details Section (sempre visível quando há dados) -->
-        <div id="tickerDetails" class="hidden">
-          <div class="card rounded-xl p-6 fade-in">
-            <h3 class="text-xl font-bold text-white mb-4 flex items-center">
-              <i class="fas fa-info-circle mr-2 text-geminii"></i>
-              Dados Fundamentais do Ticker
-              <span class="ml-2 text-sm text-gray-400 font-normal">(Atualizado automaticamente)</span>
-            </h3>
-            <div id="tickerDetailsContent">
-              <!-- Content will be populated by JavaScript -->
-            </div>
-          </div>
-        </div>
-        
-        <!-- Bandas Signals -->
-        <div id="bandsSignals" class="card rounded-xl p-6 fade-in">
-          <h3 class="text-xl font-bold text-white mb-4 flex items-center">
-            <i class="fas fa-chart-line mr-2 text-warning"></i>
-            Sinais de Bandas
-          </h3>
-          <div id="bandsSignalsContent" class="space-y-3">
-            <p class="text-gray-400 text-center">Clique em "Análise Completa" ou "Apenas Bandas" para ver os resultados</p>
-          </div>
-        </div>
-        
-        <!-- Charts -->
-        <div id="bandsChart" class="chart-container rounded-2xl p-6 hidden"></div>
-        <div id="flowChart" class="chart-container rounded-2xl p-6 hidden"></div>
-        
-      </div>
-    </div>
-  </main>
-
-  <script>
+    const data = [
+      // Zona 2σ (95%) - Fundo vertical
+      {
+        y: [0, 0.8, 0.8, 0, 0],
+        x: [teto2, teto2, piso2, piso2, teto2],
+        type: 'scatter',
+        mode: 'lines',
+        fill: 'toself',
+        fillcolor: 'rgba(34, 197, 94, 0.1)',
+        line: {color: 'rgba(34, 197, 94, 0.4)', width: 1, dash: 'dash'},
+        name: '95% Probabilidade (2σ)',
+        showlegend: true
+      },
+      // Zona 1σ (68%) - Sobre a anterior vertical
+      {
+        y: [0.1, 0.7, 0.7, 0.1, 0.1],
+        x: [teto1, teto1, piso1, piso1, teto1],
+        type: 'scatter',
+        mode: 'lines',
+        fill: 'toself',
+        fillcolor: 'rgba(34, 197, 94, 0.25)',
+        line: {color: 'rgba(34, 197, 94, 0.8)', width: 2},
+        name: '68% Probabilidade (1σ)',
+        showlegend: true
+      },
+      // Linha do preço atual - VERTICAL no meio
+      {
+        y: [0, 0.8],
+        x: [precoAtual, precoAtual],
+        type: 'scatter',
+        mode: 'lines',
+        name: 'Preço Atual',
+        line: {color: '#FFD700', width: 4},
+        showlegend: true
+      },
+      // Linhas de referência dos níveis VERTICAIS
+      // Teto 2σ
+      {
+        y: [0, 0.8],
+        x: [teto2, teto2],
+        type: 'scatter',
+        mode: 'lines',
+        line: {color: 'rgba(239, 68, 68, 0.6)', width: 1, dash: 'dot'},
+        showlegend: false
+      },
+      // Teto 1σ
+      {
+        y: [0, 0.8],
+        x: [teto1, teto1],
+        type: 'scatter',
+        mode: 'lines',
+        line: {color: 'rgba(239, 68, 68, 0.8)', width: 1.5, dash: 'dot'},
+        showlegend: false
+      },
+      // Piso 1σ
+      {
+        y: [0, 0.8],
+        x: [piso1, piso1],
+        type: 'scatter',
+        mode: 'lines',
+        line: {color: 'rgba(34, 197, 94, 0.8)', width: 1.5, dash: 'dot'},
+        showlegend: false
+      },
+      // Piso 2σ
+      {
+        y: [0, 0.8],
+        x: [piso2, piso2],
+        type: 'scatter',
+        mode: 'lines',
+        line: {color: 'rgba(34, 197, 94, 0.6)', width: 1, dash: 'dot'},
+        showlegend: false
+      }
+    ];
     
-    let currentBandsData = null;
-    // Verificar autenticação
-    let userToken = localStorage.getItem('geminii_token');
-    if (!userToken) {
-        window.location.href = '/login.html';
-    }
+    const layout = {
+      title: {
+        text: 'Movimento Esperado - Faixas de Probabilidade',
+        font: {color: 'white', size: 16}
+      },
+      paper_bgcolor: 'rgba(0,0,0,0)',
+      plot_bgcolor: 'rgba(255,255,255,0.05)',
+      yaxis: {
+        showticklabels: false,
+        showgrid: false,
+        zeroline: false,
+        range: [0, 1]
+      },
+      xaxis: {
+        title: 'Preço (R$)',
+        gridcolor: 'rgba(255,255,255,0.1)',
+        color: 'white',
+        tickformat: '.2f',
+        range: [piso2 - (movimento2 * 0.1), teto2 + (movimento2 * 0.1)]
+      },
+      showlegend: true,
+      legend: {
+        font: {color: 'white', size: 11},
+        bgcolor: 'rgba(0,0,0,0.7)',
+        x: 0.02,
+        y: 1,
+        orientation: 'v'
+      },
+      annotations: [
+        // Etiquetas FORA da área do gráfico, na parte superior
+        {
+          y: 0.95, // Bem no topo
+          x: teto2,
+          text: `R$ ${teto2.toFixed(2)}`,
+          showarrow: false,
+          font: {color: '#ef4444', size: 10, family: 'monospace'},
+          yanchor: 'bottom',
+          bgcolor: 'rgba(0,0,0,0.8)', // Fundo escuro
+          bordercolor: '#ef4444',
+          borderwidth: 1
+        },
+        {
+          y: 0.95,
+          x: teto1,
+          text: `R$ ${teto1.toFixed(2)}`,
+          showarrow: false,
+          font: {color: '#ef4444', size: 11, family: 'monospace'},
+          yanchor: 'bottom',
+          bgcolor: 'rgba(0,0,0,0.8)',
+          bordercolor: '#ef4444',
+          borderwidth: 1
+        },
+        {
+          y: 0.95,
+          x: precoAtual,
+          text: `R$ ${precoAtual.toFixed(2)}`,
+          showarrow: false,
+          font: {color: '#FFD700', size: 12, family: 'monospace', weight: 'bold'},
+          yanchor: 'bottom',
+          bgcolor: 'rgba(0,0,0,0.9)',
+          bordercolor: '#FFD700',
+          borderwidth: 2
+        },
+        {
+          y: 0.95,
+          x: piso1,
+          text: `R$ ${piso1.toFixed(2)}`,
+          showarrow: false,
+          font: {color: '#22c55e', size: 11, family: 'monospace'},
+          yanchor: 'bottom',
+          bgcolor: 'rgba(0,0,0,0.8)',
+          bordercolor: '#22c55e',
+          borderwidth: 1
+        },
+        {
+          y: 0.95,
+          x: piso2,
+          text: `R$ ${piso2.toFixed(2)}`,
+          showarrow: false,
+          font: {color: '#22c55e', size: 10, family: 'monospace'},
+          yanchor: 'bottom',
+          bgcolor: 'rgba(0,0,0,0.8)',
+          bordercolor: '#22c55e',
+          borderwidth: 1
+        }
+      ],
+      margin: {l: 60, r: 40, t: 80, b: 80}, // Mais espaço no topo
+      height: 400
+    };
+    
+    const config = {
+      responsive: true,
+      displayModeBar: false
+    };
+    
+    Plotly.newPlot('movementChart', data, layout, config);
+  }
 
-    // ===== FUNÇÕES DE UI =====
-    function showLoading() {
-      document.getElementById('loading').classList.remove('hidden');
-    }
+   // ===== FUNÇÃO AUXILIAR PARA BUSCAR DETALHES AUTOMATICAMENTE =====
+   async function fetchTickerDetailsAuto(ticker) {
+     try {
+       const response = await fetch('/pro/bandas/ticker-details', {
+         method: 'POST',
+         headers: {
+           'Content-Type': 'application/json',
+           'Authorization': `Bearer ${userToken}`
+         },
+         body: JSON.stringify({
+           ticker: ticker
+         })
+       });
 
-    function hideLoading() {
-      document.getElementById('loading').classList.add('hidden');
-    }
+       if (response.ok) {
+         const data = await response.json();
+         if (data.data) {
+           renderTickerDetails(data.data);
+           currentModalData = data.data; // Salvar dados para o modal
+           return true;
+         }
+       }
+       
+       return false;
+     } catch (error) {
+       console.warn('Detalhes do ticker não disponíveis:', error.message);
+       return false;
+     }
+   }
 
-    function showError(message) {
+   // ===== NOVA FUNÇÃO PARA DETALHES DO TICKER (mantida para compatibilidade) =====
+   async function getTickerDetails() {
+     const ticker = document.getElementById('ticker').value.trim();
+     if (!ticker) {
+       showToast('Por favor, insira um ticker válido', 'warning');
+       return;
+     }
+
+     showLoading();
+
+     try {
+       const success = await fetchTickerDetailsAuto(ticker);
+       if (!success) {
+         throw new Error('Detalhes não disponíveis');
+       }
+       hideLoading();
+     } catch (error) {
+       showError('Erro ao buscar detalhes: ' + error.message);
+     }
+   }
+
+   function renderTickerDetails(tickerData) {
+     if (!tickerData) return;
+
+     const { basic_info, price_data, volatility_iv, market_metrics } = tickerData;
+     
+     // Função auxiliar para criar gauges estilo velocímetro
+     function createSpeedometerHTML(value, label, title) {
+       const numValue = parseFloat(value) || 0;
+ 
+       const angle = (numValue / 100) * 180 - 90;
+       
+       // Determinar cor baseada no valor
+       let needleColor = '#10b981';
+       if (numValue >= 70) needleColor = '#ef4444';
+       else if (numValue >= 45) needleColor = '#f59e0b';
+       
+       return `
+         <div class="text-center">
+           <div class="gauge-container mb-3">
+             <svg class="gauge-svg" width="160" height="120" viewBox="0 0 160 120">
+               <!-- Background -->
+               <circle cx="80" cy="80" r="70" class="gauge-bg"/>
+               <circle cx="80" cy="80" r="60" class="gauge-face"/>
+               
+               <!-- Arcos coloridos -->
+               <path d="M 25 80 A 55 55 0 0 1 62 35" class="gauge-arc-green" stroke-dasharray="5,2"/>
+               <path d="M 62 35 A 55 55 0 0 1 98 35" class="gauge-arc-yellow" stroke-dasharray="5,2"/>
+               <path d="M 98 35 A 55 55 0 0 1 135 80" class="gauge-arc-red" stroke-dasharray="5,2"/>
+               
+               <!-- Scale marks -->
+               <g stroke="#666" stroke-width="1">
+                 <line x1="25" y1="80" x2="30" y2="80"/>
+                 <line x1="41" y1="41" x2="46" y2="46"/>
+                 <line x1="80" y1="25" x2="80" y2="30"/>
+                 <line x1="119" y1="41" x2="114" y2="46"/>
+                 <line x1="135" y1="80" x2="130" y2="80"/>
+               </g>
+               
+               <!-- Scale numbers -->
+               <text x="20" y="85" class="gauge-scale-text">0</text>
+               <text x="46" y="46" class="gauge-scale-text">25</text>
+               <text x="80" y="20" class="gauge-scale-text">50</text>
+               <text x="114" y="46" class="gauge-scale-text">75</text>
+               <text x="140" y="85" class="gauge-scale-text">100</text>
+               
+               <!-- AGULHA CORRIGIDA -->
+               <g transform="rotate(${angle} 80 80)">
+                 <polygon points="75,80 80,30 85,80 80,82" fill="${needleColor}"/>
+                 <circle cx="80" cy="80" r="3" fill="#fff"/>
+               </g>
+               
+               <!-- Center -->
+               <circle cx="80" cy="80" r="6" class="gauge-center"/>
+               
+               <!-- Value display -->
+               <text x="80" y="105" class="gauge-value-text">${numValue.toFixed(1)}</text>
+               <text x="80" y="115" class="gauge-label-text">%</text>
+               <text x="80" y="15" class="gauge-title">${title}</text>
+             </svg>
+           </div>
+           <p class="text-sm text-gray-400 font-medium">${label}</p>
+         </div>
+       `;
+     }
+     
+     const html = `
+       <!-- Basic Info -->
+       <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+         <div class="metric-card rounded-lg p-4">
+           <div class="text-center">
+             <h4 class="text-lg font-bold text-white mb-2">${basic_info.symbol}</h4>
+             <p class="text-gray-400 text-sm">${basic_info.name || 'N/A'}</p>
+             <div class="mt-2">
+               <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${basic_info.has_options ? 'bg-green-500/20 text-green-400' : 'bg-gray-500/20 text-gray-400'}">
+                 ${basic_info.has_options ? '✓ Com Opções' : '✗ Sem Opções'}
+               </span>
+             </div>
+           </div>
+         </div>
+         
+         <div class="metric-card rounded-lg p-4">
+           <div class="text-center">
+             <h4 class="text-lg font-bold text-white mb-2">Volume</h4>
+             <p class="text-2xl font-bold text-accent">${formatNumber(price_data.volume)}</p>
+             <p class="text-gray-400 text-sm">Volume Diário</p>
+           </div>
+         </div>
+         
+         <div class="metric-card rounded-lg p-4">
+           <div class="text-center">
+             <h4 class="text-lg font-bold text-white mb-2">Volume Financeiro</h4>
+             <p class="text-2xl font-bold text-success">R$ ${formatCurrency(price_data.financial_volume)}</p>
+             <p class="text-gray-400 text-sm">Volume em R$</p>
+           </div>
+         </div>
+       </div>
+
+       <!-- Volatility IV Section com Speedometers -->
+       <div class="metric-card rounded-lg p-6 mb-6">
+         <h4 class="text-lg font-bold text-white mb-6 flex items-center">
+           
+           Volatilidade Implícita
+         </h4>
+         
+         <!-- Speedometers Container -->
+         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-4">
+           ${createSpeedometerHTML(volatility_iv.iv_current, 'Volatilidade Implícita Atual', 'Vol. Impl.')}
+           ${createSpeedometerHTML(volatility_iv.iv_1y_rank, 'Ranking de 1 Ano', 'IV Rank')}
+           ${createSpeedometerHTML(volatility_iv.iv_1y_percentile, 'Percentil de 1 Ano', 'Percentil')}
+         </div>
+
+         <!-- Zone Explanation -->
+         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-white/10">
+           <div class="text-center p-3 rounded-lg" style="background: rgba(16, 185, 129, 0.1);">
+             <div class="w-4 h-4 bg-green-500 rounded-full mx-auto mb-2"></div>
+             <p class="text-sm text-green-400 font-medium">Zona Verde</p>
+             <p class="text-xs text-gray-400">0% - 55% (Baixa Vol)</p>
+           </div>
+           <div class="text-center p-3 rounded-lg" style="background: rgba(245, 158, 11, 0.1);">
+             <div class="w-4 h-4 bg-yellow-500 rounded-full mx-auto mb-2"></div>
+             <p class="text-sm text-yellow-400 font-medium">Zona Amarela</p>
+             <p class="text-xs text-gray-400">55% - 80% (Vol Alta)</p>
+           </div>
+           <div class="text-center p-3 rounded-lg" style="background: rgba(239, 68, 68, 0.1);">
+             <div class="w-4 h-4 bg-red-500 rounded-full mx-auto mb-2"></div>
+             <p class="text-sm text-red-400 font-medium">Zona Vermelha</p>
+             <p class="text-xs text-gray-400">80% - 100% (Vol Extrema)</p>
+           </div>
+         </div>
+
+         <!-- Additional IV Info -->
+         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-white/10 mt-4">
+           <div class="text-center">
+             <p class="text-sm text-gray-400">Range IV 1Y</p>
+             <p class="text-sm font-medium text-gray-300">
+               Min: ${volatility_iv.iv_1y_range.min || 'N/A'}% | Max: ${volatility_iv.iv_1y_range.max || 'N/A'}%
+             </p>
+           </div>
+           <div class="text-center">
+             <p class="text-sm text-gray-400">Range IV 6M</p>
+             <p class="text-sm font-medium text-gray-300">
+               ${volatility_iv.iv_6m_percentile || 'N/A'}% (Percentile) | ${volatility_iv.iv_6m_rank || 'N/A'}% (Rank)
+             </p>
+           </div>
+         </div>
+       </div>
+
+       <!-- Market Metrics Section -->
+       <div class="metric-card rounded-lg p-6">
+         <h4 class="text-lg font-bold text-white mb-4 flex items-center">
+           <i class="fas fa-chart-bar mr-2 text-accent"></i>
+           Métricas de Mercado
+         </h4>
+         
+         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+           <div class="text-center">
+             <p class="text-sm text-gray-400">Correlação IBOV</p>
+             <p class="text-xl font-bold text-white">${market_metrics.correl_ibov || 'N/A'}%</p>
+             <p class="text-xs text-gray-500">${market_metrics.correl_status}</p>
+           </div>
+           <div class="text-center">
+             <p class="text-sm text-gray-400">Beta IBOV</p>
+             <p class="text-xl font-bold text-accent">${market_metrics.beta_ibov || 'N/A'}</p>
+           </div>
+           <div class="text-center">
+             <p class="text-sm text-gray-400">EWMA Atual</p>
+             <p class="text-xl font-bold text-warning">${market_metrics.ewma_current || 'N/A'}%</p>
+           </div>
+           <div class="text-center">
+             <p class="text-sm text-gray-400">StdDev 5D</p>
+             <p class="text-xl font-bold text-danger">${market_metrics.stdv_5d || 'N/A'}%</p>
+           </div>
+         </div>
+       </div>
+       <!-- COLE O BOTÃO AQUI -->
+      <div class="text-center mt-6">
+        <button onclick="openMovementModal()" class="btn-movement text-white px-8 py-4 rounded-xl font-semibold transition-all duration-300 flex items-center mx-auto">
+          <i class="fas fa-calculator mr-3"></i>
+          Calcular Movimento
+        </button>
+      </div>
+       
+     `;
+
+     document.getElementById('tickerDetailsContent').innerHTML = html;
+     const tickerDetailsEl = document.getElementById('tickerDetails');
+     if (tickerDetailsEl) {
+       tickerDetailsEl.classList.remove('hidden');
+     }
+
+     // Trigger needle animations
+     setTimeout(() => {
+       const needles = document.querySelectorAll('.gauge-needle');
+       needles.forEach((needle, index) => {
+         needle.style.transition = `transform ${2 + index * 0.5}s ease-out`;
+       });
+     }, 100);
+   }
+
+   // ===== FUNÇÕES AUXILIARES PARA FORMATAÇÃO =====
+   function formatNumber(num) {
+     if (!num) return 'N/A';
+     return new Intl.NumberFormat('pt-BR').format(num);
+   }
+
+   function formatCurrency(value) {
+     if (!value) return 'N/A';
+     return new Intl.NumberFormat('pt-BR', {
+       minimumFractionDigits: 2,
+       maximumFractionDigits: 2
+     }).format(value);
+   }
+
+   async function exportToProfit() {
+     const ticker = document.getElementById('ticker').value.trim();
+     if (!ticker || !currentBandsData) {
+       showToast('Execute a análise das bandas primeiro!', 'warning');
+       return;
+     }
+   
+     try {
+       showLoading();
+       
+       const response = await fetch('/pro/bandas/export-profit', {
+         method: 'POST',
+         headers: {
+           'Content-Type': 'application/json',
+           'Authorization': `Bearer ${userToken}`
+         },
+         body: JSON.stringify({
+           ticker: ticker,
+           bands_data: currentBandsData
+         })
+       });
+   
+       const data = await response.json();
+       
+       if (!response.ok) {
+         throw new Error(data.error || 'Erro ao gerar código NTSL');
+       }
+   
+       // Download do arquivo
+       await navigator.clipboard.writeText(data.ntsl_code);
+       showToast('Código NTSL exportado com sucesso!', 'success');
+   
+     } catch (error) {
+       showToast('Erro ao exportar: ' + error.message, 'error');
+     } finally {
+       hideLoading();
+     }
+   }
+   
+   
+
+   // ===== FUNÇÕES DE ANÁLISE =====
+   async function runCompleteAnalysis() {
+     const regime = document.getElementById('regime').value;
+     const ticker = document.getElementById('ticker').value.trim();
+     if (!ticker) {
+       showError('Por favor, insira um ticker válido');
+       return;
+     }
+   
+     showLoading();
+   
+     try {
+       // Buscar detalhes do ticker automaticamente
+       await fetchTickerDetailsAuto(ticker);
+
+       const response = await fetch('/pro/bandas/analyze', {
+         method: 'POST',
+         headers: {
+           'Content-Type': 'application/json',
+           'Authorization': `Bearer ${userToken}`
+         },
+         body: JSON.stringify({
+           ticker: ticker,
+           period: '6mo', 
+           flow_days: parseInt(document.getElementById('flowDays').value),
+           regime: regime
+         })
+       });
+   
+       const data = await response.json();
+       
+       if (!response.ok) {
+         throw new Error(data.error || 'Erro na requisição');
+       }
+   
+       // Render results
+       if (data.bands && data.bands.plot_data) {
+         renderBandsChart(data.bands.plot_data);
+         renderBandsSignals(data.bands.signals);
+       }
+   
+       if (data.flow && data.flow.plot_data) {
+         renderFlowChart(data.flow.plot_data);
+       }
+   
+       hideLoading();
+   
+     } catch (error) {
+       showError('Erro de conexão: ' + error.message);
+     }
+   }
+   
+   async function runBandsAnalysis() {
+     const regime = document.getElementById('regime').value;
+     const ticker = document.getElementById('ticker').value.trim();
+     if (!ticker) {
+       showError('Por favor, insira um ticker válido');
+       return;
+     }
+   
+     showLoading();
+   
+     try {
+       // Buscar detalhes do ticker automaticamente
+       await fetchTickerDetailsAuto(ticker);
+
+       const response = await fetch('/pro/bandas/analyze-bands', {
+         method: 'POST',
+         headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${userToken}`
+        },
+        body: JSON.stringify({
+          ticker: ticker,
+          period: '6mo',
+          regime: regime 
+        })
+      });
+  
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Erro na requisição');
+      }
+  
+      if (data.plot_data) {
+        renderBandsChart(data.plot_data);
+        renderBandsSignals(data.signals);
+      }
+  
       hideLoading();
-      const resultsSection = document.getElementById('results');
-      resultsSection.innerHTML = `
-        <div class="error-card rounded-xl p-6 text-center">
-          <i class="fas fa-exclamation-triangle text-4xl text-danger mb-4"></i>
-          <h3 class="text-xl font-bold text-white mb-2">Erro na Análise</h3>
-          <p class="text-gray-300">${message}</p>
-          <button onclick="location.reload()" class="mt-4 btn-modern text-white px-6 py-2 rounded-lg">
-            <i class="fas fa-sync mr-2"></i>Tentar Novamente
-          </button>
-        </div>
-      `;
-    }
-
-    function showToast(message, type = 'info') {
-      const colors = {
-        success: 'bg-green-500',
-        error: 'bg-red-500',
-        info: 'bg-blue-500',
-        warning: 'bg-yellow-500'
-      };
-      
-      const toast = document.createElement('div');
-      toast.className = `fixed top-20 right-4 ${colors[type]} text-white px-6 py-3 rounded-lg shadow-lg z-50 transition-all duration-300`;
-      toast.textContent = message;
-
-      document.body.appendChild(toast);
-
-      setTimeout(() => {
-        toast.style.opacity = '0';
-        setTimeout(() => {
-          if (document.body.contains(toast)) {
-            document.body.removeChild(toast);
-          }
-        }, 300);
-      }, 4000);
-    }
-
-    // ===== FUNÇÃO AUXILIAR PARA BUSCAR DETALHES AUTOMATICAMENTE =====
-    async function fetchTickerDetailsAuto(ticker) {
-      try {
-        const response = await fetch('/pro/bandas/ticker-details', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${userToken}`
-          },
-          body: JSON.stringify({
-            ticker: ticker
-          })
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          if (data.data) {
-            renderTickerDetails(data.data);
-            return true;
-          }
-        }
-        
-        return false;
-      } catch (error) {
-        console.warn('Detalhes do ticker não disponíveis:', error.message);
-        return false;
-      }
-    }
-
-    // ===== NOVA FUNÇÃO PARA DETALHES DO TICKER (mantida para compatibilidade) =====
-    async function getTickerDetails() {
-      const ticker = document.getElementById('ticker').value.trim();
-      if (!ticker) {
-        showToast('Por favor, insira um ticker válido', 'warning');
-        return;
-      }
-
-      showLoading();
-
-      try {
-        const success = await fetchTickerDetailsAuto(ticker);
-        if (!success) {
-          throw new Error('Detalhes não disponíveis');
-        }
-        hideLoading();
-      } catch (error) {
-        showError('Erro ao buscar detalhes: ' + error.message);
-      }
-    }
-
-    function renderTickerDetails(tickerData) {
-      if (!tickerData) return;
-
-      const { basic_info, price_data, volatility_iv, market_metrics } = tickerData;
-      
-      // Função auxiliar para criar gauges estilo velocímetro
-      function createSpeedometerHTML(value, label, title) {
-        const numValue = parseFloat(value) || 0;
   
-        const angle = (numValue / 100) * 180 - 90;
-        
-        // Determinar cor baseada no valor
-        let needleColor = '#10b981';
-        if (numValue >= 70) needleColor = '#ef4444';
-        else if (numValue >= 45) needleColor = '#f59e0b';
-        
-        return `
-          <div class="text-center">
-            <div class="gauge-container mb-3">
-              <svg class="gauge-svg" width="160" height="120" viewBox="0 0 160 120">
-                <!-- Background -->
-                <circle cx="80" cy="80" r="70" class="gauge-bg"/>
-                <circle cx="80" cy="80" r="60" class="gauge-face"/>
-                
-                <!-- Arcos coloridos -->
-                <path d="M 25 80 A 55 55 0 0 1 62 35" class="gauge-arc-green" stroke-dasharray="5,2"/>
-                <path d="M 62 35 A 55 55 0 0 1 98 35" class="gauge-arc-yellow" stroke-dasharray="5,2"/>
-                <path d="M 98 35 A 55 55 0 0 1 135 80" class="gauge-arc-red" stroke-dasharray="5,2"/>
-                
-                <!-- Scale marks -->
-                <g stroke="#666" stroke-width="1">
-                  <line x1="25" y1="80" x2="30" y2="80"/>
-                  <line x1="41" y1="41" x2="46" y2="46"/>
-                  <line x1="80" y1="25" x2="80" y2="30"/>
-                  <line x1="119" y1="41" x2="114" y2="46"/>
-                  <line x1="135" y1="80" x2="130" y2="80"/>
-                </g>
-                
-                <!-- Scale numbers -->
-                <text x="20" y="85" class="gauge-scale-text">0</text>
-                <text x="46" y="46" class="gauge-scale-text">25</text>
-                <text x="80" y="20" class="gauge-scale-text">50</text>
-                <text x="114" y="46" class="gauge-scale-text">75</text>
-                <text x="140" y="85" class="gauge-scale-text">100</text>
-                
-                <!-- AGULHA CORRIGIDA -->
-                <g transform="rotate(${angle} 80 80)">
-                  <polygon points="75,80 80,30 85,80 80,82" fill="${needleColor}"/>
-                  <circle cx="80" cy="80" r="3" fill="#fff"/>
-                </g>
-                
-                <!-- Center -->
-                <circle cx="80" cy="80" r="6" class="gauge-center"/>
-                
-                <!-- Value display -->
-                <text x="80" y="105" class="gauge-value-text">${numValue.toFixed(1)}</text>
-                <text x="80" y="115" class="gauge-label-text">%</text>
-                <text x="80" y="15" class="gauge-title">${title}</text>
-              </svg>
-            </div>
-            <p class="text-sm text-gray-400 font-medium">${label}</p>
-          </div>
-        `;
-}
+    } catch (error) {
+      showError('Erro de conexão: ' + error.message);
+    }
+  }
+  
+  async function runFlowAnalysis() {
+    const ticker = document.getElementById('ticker').value.trim();
+    if (!ticker) {
+      showError('Por favor, insira um ticker válido');
+      return;
+    }
+  
+    showLoading();
+  
+    try {
+      // Buscar detalhes do ticker automaticamente
+      await fetchTickerDetailsAuto(ticker);
+
+      const response = await fetch('/pro/bandas/analyze-flow', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${userToken}`
+        },
+        body: JSON.stringify({
+          ticker: ticker,
+          flow_days: parseInt(document.getElementById('flowDays').value)
+        })
+      });
+  
+      const data = await response.json();
       
-      const html = `
-        <!-- Basic Info -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-          <div class="metric-card rounded-lg p-4">
-            <div class="text-center">
-              <h4 class="text-lg font-bold text-white mb-2">${basic_info.symbol}</h4>
-              <p class="text-gray-400 text-sm">${basic_info.name || 'N/A'}</p>
-              <div class="mt-2">
-                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${basic_info.has_options ? 'bg-green-500/20 text-green-400' : 'bg-gray-500/20 text-gray-400'}">
-                  ${basic_info.has_options ? '✓ Com Opções' : '✗ Sem Opções'}
-                </span>
-              </div>
-            </div>
-          </div>
-          
-          <div class="metric-card rounded-lg p-4">
-            <div class="text-center">
-              <h4 class="text-lg font-bold text-white mb-2">Volume</h4>
-              <p class="text-2xl font-bold text-accent">${formatNumber(price_data.volume)}</p>
-              <p class="text-gray-400 text-sm">Volume Diário</p>
-            </div>
-          </div>
-          
-          <div class="metric-card rounded-lg p-4">
-            <div class="text-center">
-              <h4 class="text-lg font-bold text-white mb-2">Volume Financeiro</h4>
-              <p class="text-2xl font-bold text-success">R$ ${formatCurrency(price_data.financial_volume)}</p>
-              <p class="text-gray-400 text-sm">Volume em R$</p>
-            </div>
-          </div>
-        </div>
-
-        <!-- Volatility IV Section com Speedometers -->
-        <div class="metric-card rounded-lg p-6 mb-6">
-          <h4 class="text-lg font-bold text-white mb-6 flex items-center">
-            
-            Volatilidade Implícita
-          </h4>
-          
-          <!-- Speedometers Container -->
-          <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-4">
-            ${createSpeedometerHTML(volatility_iv.iv_current, 'Volatilidade Implícita Atual', 'Vol. Impl.')}
-            ${createSpeedometerHTML(volatility_iv.iv_1y_rank, 'Ranking de 1 Ano', 'IV Rank')}
-            ${createSpeedometerHTML(volatility_iv.iv_1y_percentile, 'Percentil de 1 Ano', 'Percentil')}
-          </div>
-
-          <!-- Zone Explanation -->
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-white/10">
-            <div class="text-center p-3 rounded-lg" style="background: rgba(16, 185, 129, 0.1);">
-              <div class="w-4 h-4 bg-green-500 rounded-full mx-auto mb-2"></div>
-              <p class="text-sm text-green-400 font-medium">Zona Verde</p>
-              <p class="text-xs text-gray-400">0% - 55% (Baixa Vol)</p>
-            </div>
-            <div class="text-center p-3 rounded-lg" style="background: rgba(245, 158, 11, 0.1);">
-              <div class="w-4 h-4 bg-yellow-500 rounded-full mx-auto mb-2"></div>
-              <p class="text-sm text-yellow-400 font-medium">Zona Amarela</p>
-              <p class="text-xs text-gray-400">55% - 80% (Vol Alta)</p>
-            </div>
-            <div class="text-center p-3 rounded-lg" style="background: rgba(239, 68, 68, 0.1);">
-              <div class="w-4 h-4 bg-red-500 rounded-full mx-auto mb-2"></div>
-              <p class="text-sm text-red-400 font-medium">Zona Vermelha</p>
-              <p class="text-xs text-gray-400">80% - 100% (Vol Extrema)</p>
-            </div>
-          </div>
-
-          <!-- Additional IV Info -->
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-white/10 mt-4">
-            <div class="text-center">
-              <p class="text-sm text-gray-400">Range IV 1Y</p>
-              <p class="text-sm font-medium text-gray-300">
-                Min: ${volatility_iv.iv_1y_range.min || 'N/A'}% | Max: ${volatility_iv.iv_1y_range.max || 'N/A'}%
-              </p>
-            </div>
-            <div class="text-center">
-              <p class="text-sm text-gray-400">Range IV 6M</p>
-              <p class="text-sm font-medium text-gray-300">
-                ${volatility_iv.iv_6m_percentile || 'N/A'}% (Percentile) | ${volatility_iv.iv_6m_rank || 'N/A'}% (Rank)
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <!-- Market Metrics Section -->
-        <div class="metric-card rounded-lg p-6">
-          <h4 class="text-lg font-bold text-white mb-4 flex items-center">
-            <i class="fas fa-chart-bar mr-2 text-accent"></i>
-            Métricas de Mercado
-          </h4>
-          
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div class="text-center">
-              <p class="text-sm text-gray-400">Correlação IBOV</p>
-              <p class="text-xl font-bold text-white">${market_metrics.correl_ibov || 'N/A'}%</p>
-              <p class="text-xs text-gray-500">${market_metrics.correl_status}</p>
-            </div>
-            <div class="text-center">
-              <p class="text-sm text-gray-400">Beta IBOV</p>
-              <p class="text-xl font-bold text-accent">${market_metrics.beta_ibov || 'N/A'}</p>
-            </div>
-            <div class="text-center">
-              <p class="text-sm text-gray-400">EWMA Atual</p>
-              <p class="text-xl font-bold text-warning">${market_metrics.ewma_current || 'N/A'}%</p>
-            </div>
-            <div class="text-center">
-              <p class="text-sm text-gray-400">StdDev 5D</p>
-              <p class="text-xl font-bold text-danger">${market_metrics.stdv_5d || 'N/A'}%</p>
-            </div>
-          </div>
-        </div>
-      `;
-
-      document.getElementById('tickerDetailsContent').innerHTML = html;
-      const tickerDetailsEl = document.getElementById('tickerDetails');
-      if (tickerDetailsEl) {
-        tickerDetailsEl.classList.remove('hidden');
+      if (!response.ok) {
+        throw new Error(data.error || 'Erro na requisição');
       }
-
-      // Trigger needle animations
-      setTimeout(() => {
-        const needles = document.querySelectorAll('.gauge-needle');
-        needles.forEach((needle, index) => {
-          needle.style.transition = `transform ${2 + index * 0.5}s ease-out`;
-        });
-      }, 100);
+  
+      if (data.plot_data) {
+        renderFlowChart(data.plot_data);
+      }
+  
+      hideLoading();
+  
+    } catch (error) {
+      showError('Erro de conexão: ' + error.message);
     }
+  }
 
-    // ===== FUNÇÕES AUXILIARES PARA FORMATAÇÃO =====
-    function formatNumber(num) {
-      if (!num) return 'N/A';
-      return new Intl.NumberFormat('pt-BR').format(num);
+  // ===== FUNÇÕES DE RENDERIZAÇÃO =====
+  function renderBandsChart(plotData) {
+    const candlestick = {
+      x: plotData.dates,
+      open: plotData.ohlc.open,
+      high: plotData.ohlc.high,
+      low: plotData.ohlc.low,
+      close: plotData.ohlc.close,
+      type: 'candlestick',
+      name: 'Preço',
+      increasing: {line: {color: '#ffffff'}},
+      decreasing: {line: {color: '#ef4444'}}
+    };
+  
+    const bandaSuperior2 = {
+      x: plotData.dates,
+      y: plotData.bands.superior_2sigma,
+      type: 'scatter',
+      mode: 'lines',
+      name: 'Banda Superior 2σ',
+      line: {color: '#FF6B6B', width: 2}
+    };
+  
+    const bandaInferior2 = {
+      x: plotData.dates,
+      y: plotData.bands.inferior_2sigma,
+      type: 'scatter',
+      mode: 'lines',
+      name: 'Banda Inferior 2σ',
+      line: {color: '#2ED573', width: 2}
+    };
+  
+    const bandaSuperior4 = {
+      x: plotData.dates,
+      y: plotData.bands.superior_4sigma,
+      type: 'scatter',
+      mode: 'lines',
+      name: 'Banda Superior 4σ',
+      line: {color: '#FF4757', width: 1.5, dash: 'dash'}
+    };
+  
+    const bandaInferior4 = {
+      x: plotData.dates,
+      y: plotData.bands.inferior_4sigma,
+      type: 'scatter',
+      mode: 'lines',
+      name: 'Banda Inferior 4σ',
+      line: {color: '#2ED573', width: 1.5, dash: 'dash'}
+    };
+  
+    const linhaCentral = {
+      x: plotData.dates,
+      y: plotData.bands.linha_central,
+      type: 'scatter',
+      mode: 'lines',
+      name: 'Linha Central',
+      line: {color: 'ffd700', width: 2}
+    };
+  
+    const data = [candlestick, bandaSuperior2, bandaInferior2, bandaSuperior4, bandaInferior4, linhaCentral];
+  
+    // Layout responsivo
+    const isMobile = window.innerWidth <= 768;
+    
+    const layout = {
+      title: {
+        text: `${plotData.ticker} - Bandas de Volatilidade Híbridas`,
+        font: {
+          color: 'white', 
+          size: isMobile ? 14 : 18
+        }
+      },
+      paper_bgcolor: 'rgba(0,0,0,0)',
+      plot_bgcolor: 'rgba(255,255,255,0.05)',
+      xaxis: {
+        title: isMobile ? '' : 'Data',
+        rangeslider: {visible: false},
+        gridcolor: 'rgba(255,255,255,0.1)',
+        color: 'white',
+        tickfont: {
+          size: isMobile ? 10 : 12
+        }
+      },
+      yaxis: {
+        title: isMobile ? '' : `Preço (${plotData.currency})`,
+        side: 'right',
+        gridcolor: 'rgba(255,255,255,0.1)',
+        color: 'white',
+        tickfont: {
+          size: isMobile ? 10 : 12
+        }
+      },
+      showlegend: !isMobile, // Remove legenda em mobile para economizar espaço
+      legend: {
+        font: {color: 'white', size: isMobile ? 10 : 12},
+        bgcolor: 'rgba(0,0,0,0.5)',
+        orientation: isMobile ? 'h' : 'v',
+        x: isMobile ? 0 : 1,
+        y: isMobile ? -0.1 : 1
+      },
+      height: isMobile ? 400 : 700,
+      margin: {
+        l: isMobile ? 40 : 60,
+        r: isMobile ? 40 : 60,
+        t: isMobile ? 40 : 60,
+        b: isMobile ? 60 : 80
+      },
+      // Configurações de responsividade
+      autosize: true,
+      responsive: true
+    };
+  
+    // Configurações responsivas do Plotly
+    const config = {
+      responsive: true,
+      displayModeBar: !isMobile, // Remove barra de ferramentas em mobile
+      modeBarButtonsToRemove: ['pan2d', 'lasso2d', 'select2d'],
+      displaylogo: false
+    };
+  
+    currentBandsData = plotData.bands;
+    const exportBtn = document.getElementById('exportBtn');
+    if (exportBtn) {
+      exportBtn.classList.remove('hidden');
     }
-
-    function formatCurrency(value) {
-      if (!value) return 'N/A';
-      return new Intl.NumberFormat('pt-BR', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-      }).format(value);
+  
+    const bandsChartEl = document.getElementById('bandsChart');
+    if (bandsChartEl) {
+      bandsChartEl.classList.remove('hidden');
+      Plotly.newPlot('bandsChart', data, layout, config);
     }
+  }
 
-    async function exportToProfit() {
-      const ticker = document.getElementById('ticker').value.trim();
-      if (!ticker || !currentBandsData) {
-        showToast('Execute a análise das bandas primeiro!', 'warning');
-        return;
-      }
+  function renderFlowChart(plotData) {
+    const isMobile = window.innerWidth <= 768;
     
-      try {
-        showLoading();
-        
-        const response = await fetch('/pro/bandas/export-profit', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${userToken}`
-          },
-          body: JSON.stringify({
-            ticker: ticker,
-            bands_data: currentBandsData
-          })
-        });
-    
-        const data = await response.json();
-        
-        if (!response.ok) {
-          throw new Error(data.error || 'Erro ao gerar código NTSL');
-        }
-    
-        // Download do arquivo
-        await navigator.clipboard.writeText(data.ntsl_code);
-        showToast('Código NTSL exportado com sucesso!', 'success');
-    
-      } catch (error) {
-        showToast('Erro ao exportar: ' + error.message, 'error');
-      } finally {
-        hideLoading();
-      }
-    }
-    
-    
-
-    // ===== FUNÇÕES DE ANÁLISE =====
-    async function runCompleteAnalysis() {
-      const regime = document.getElementById('regime').value;
-      const ticker = document.getElementById('ticker').value.trim();
-      if (!ticker) {
-        showError('Por favor, insira um ticker válido');
-        return;
-      }
-    
-      showLoading();
-    
-      try {
-        // Buscar detalhes do ticker automaticamente
-        await fetchTickerDetailsAuto(ticker);
-
-        const response = await fetch('/pro/bandas/analyze', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${userToken}`
-          },
-          body: JSON.stringify({
-            ticker: ticker,
-            period: '6mo', 
-            flow_days: parseInt(document.getElementById('flowDays').value),
-            regime: regime
-          })
-        });
-    
-        const data = await response.json();
-        
-        if (!response.ok) {
-          throw new Error(data.error || 'Erro na requisição');
-        }
-    
-        // Render results
-        if (data.bands && data.bands.plot_data) {
-          renderBandsChart(data.bands.plot_data);
-          renderBandsSignals(data.bands.signals);
-        }
-    
-        if (data.flow && data.flow.plot_data) {
-          renderFlowChart(data.flow.plot_data);
-        }
-    
-        hideLoading();
-    
-      } catch (error) {
-        showError('Erro de conexão: ' + error.message);
-      }
-    }
-    
-    async function runBandsAnalysis() {
-      const regime = document.getElementById('regime').value;
-      const ticker = document.getElementById('ticker').value.trim();
-      if (!ticker) {
-        showError('Por favor, insira um ticker válido');
-        return;
-      }
-    
-      showLoading();
-    
-      try {
-        // Buscar detalhes do ticker automaticamente
-        await fetchTickerDetailsAuto(ticker);
-
-        const response = await fetch('/pro/bandas/analyze-bands', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${userToken}`
-          },
-          body: JSON.stringify({
-            ticker: ticker,
-            period: '6mo',
-            regime: regime 
-          })
-        });
-    
-        const data = await response.json();
-        
-        if (!response.ok) {
-          throw new Error(data.error || 'Erro na requisição');
-        }
-    
-        if (data.plot_data) {
-          renderBandsChart(data.plot_data);
-          renderBandsSignals(data.signals);
-        }
-    
-        hideLoading();
-    
-      } catch (error) {
-        showError('Erro de conexão: ' + error.message);
-      }
-    }
-    
-    async function runFlowAnalysis() {
-      const ticker = document.getElementById('ticker').value.trim();
-      if (!ticker) {
-        showError('Por favor, insira um ticker válido');
-        return;
-      }
-    
-      showLoading();
-    
-      try {
-        // Buscar detalhes do ticker automaticamente
-        await fetchTickerDetailsAuto(ticker);
-
-        const response = await fetch('/pro/bandas/analyze-flow', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${userToken}`
-          },
-          body: JSON.stringify({
-            ticker: ticker,
-            flow_days: parseInt(document.getElementById('flowDays').value)
-          })
-        });
-    
-        const data = await response.json();
-        
-        if (!response.ok) {
-          throw new Error(data.error || 'Erro na requisição');
-        }
-    
-        if (data.plot_data) {
-          renderFlowChart(data.plot_data);
-        }
-    
-        hideLoading();
-    
-      } catch (error) {
-        showError('Erro de conexão: ' + error.message);
-      }
-    }
-
-    // ===== FUNÇÕES DE RENDERIZAÇÃO =====
-    function renderBandsChart(plotData) {
-      const candlestick = {
-        x: plotData.dates,
-        open: plotData.ohlc.open,
-        high: plotData.ohlc.high,
-        low: plotData.ohlc.low,
-        close: plotData.ohlc.close,
-        type: 'candlestick',
-        name: 'Preço',
-        increasing: {line: {color: '#ffffff'}},
-        decreasing: {line: {color: '#ef4444'}}
-      };
-    
-      const bandaSuperior2 = {
-        x: plotData.dates,
-        y: plotData.bands.superior_2sigma,
-        type: 'scatter',
-        mode: 'lines',
-        name: 'Banda Superior 2σ',
-        line: {color: '#FF6B6B', width: 2}
-      };
-    
-      const bandaInferior2 = {
-        x: plotData.dates,
-        y: plotData.bands.inferior_2sigma,
-        type: 'scatter',
-        mode: 'lines',
-        name: 'Banda Inferior 2σ',
-        line: {color: '#2ED573', width: 2}
-      };
-    
-      const bandaSuperior4 = {
-        x: plotData.dates,
-        y: plotData.bands.superior_4sigma,
-        type: 'scatter',
-        mode: 'lines',
-        name: 'Banda Superior 4σ',
-        line: {color: '#FF4757', width: 1.5, dash: 'dash'}
-      };
-    
-      const bandaInferior4 = {
-        x: plotData.dates,
-        y: plotData.bands.inferior_4sigma,
-        type: 'scatter',
-        mode: 'lines',
-        name: 'Banda Inferior 4σ',
-        line: {color: '#2ED573', width: 1.5, dash: 'dash'}
-      };
-    
-      const linhaCentral = {
-        x: plotData.dates,
-        y: plotData.bands.linha_central,
-        type: 'scatter',
-        mode: 'lines',
-        name: 'Linha Central',
-        line: {color: 'ffd700', width: 2}
-      };
-    
-      const data = [candlestick, bandaSuperior2, bandaInferior2, bandaSuperior4, bandaInferior4, linhaCentral];
-    
-      // Layout responsivo
-      const isMobile = window.innerWidth <= 768;
-      
-      const layout = {
+    const fig = {
+      data: [],
+      layout: {
         title: {
-          text: `${plotData.ticker} - Bandas de Volatilidade Híbridas`,
+          text: `Flow Tracker - ${plotData.ticker}`,
           font: {
             color: 'white', 
             size: isMobile ? 14 : 18
@@ -1129,555 +1628,478 @@
         },
         paper_bgcolor: 'rgba(0,0,0,0)',
         plot_bgcolor: 'rgba(255,255,255,0.05)',
-        xaxis: {
-          title: isMobile ? '' : 'Data',
-          rangeslider: {visible: false},
-          gridcolor: 'rgba(255,255,255,0.1)',
-          color: 'white',
-          tickfont: {
-            size: isMobile ? 10 : 12
-          }
+        showlegend: !isMobile,
+        height: isMobile ? 450 : 900,
+        grid: {
+          rows: isMobile ? 1 : 2,
+          columns: 1,
+          pattern: 'independent',
+          roworder: 'top to bottom'
         },
-        yaxis: {
-          title: isMobile ? '' : `Preço (${plotData.currency})`,
-          side: 'right',
-          gridcolor: 'rgba(255,255,255,0.1)',
-          color: 'white',
-          tickfont: {
-            size: isMobile ? 10 : 12
-          }
-        },
-        showlegend: !isMobile, // Remove legenda em mobile para economizar espaço
         legend: {
           font: {color: 'white', size: isMobile ? 10 : 12},
           bgcolor: 'rgba(0,0,0,0.5)',
-          orientation: isMobile ? 'h' : 'v',
-          x: isMobile ? 0 : 1,
-          y: isMobile ? -0.1 : 1
+          orientation: isMobile ? 'h' : 'v'
         },
-        height: isMobile ? 400 : 700,
         margin: {
           l: isMobile ? 40 : 60,
           r: isMobile ? 40 : 60,
           t: isMobile ? 40 : 60,
-          b: isMobile ? 60 : 80
+          b: isMobile ? 80 : 100
         },
-        // Configurações de responsividade
-        autosize: true,
-        responsive: true
-      };
-    
-      // Configurações responsivas do Plotly
-      const config = {
-        responsive: true,
-        displayModeBar: !isMobile, // Remove barra de ferramentas em mobile
-        modeBarButtonsToRemove: ['pan2d', 'lasso2d', 'select2d'],
-        displaylogo: false
-      };
-    
-      currentBandsData = plotData.bands;
-      const exportBtn = document.getElementById('exportBtn');
-      if (exportBtn) {
-        exportBtn.classList.remove('hidden');
+        autosize: true
       }
-    
-      const bandsChartEl = document.getElementById('bandsChart');
-      if (bandsChartEl) {
-        bandsChartEl.classList.remove('hidden');
-        Plotly.newPlot('bandsChart', data, layout, config);
-      }
+    };
+  
+    // Em mobile, simplifica o gráfico mostrando apenas preço e flow
+    if (isMobile) {
+      // Preço do ativo
+      fig.data.push({
+        x: plotData.dates,
+        y: plotData.spot_prices,
+        type: 'scatter',
+        mode: 'lines',
+        name: plotData.ticker,
+        line: {color: '#FFD700', width: 3}
+      });
+  
+      // Call Flow simplificado
+      fig.data.push({
+        x: plotData.dates,
+        y: plotData.call_flow,
+        type: 'scatter',
+        mode: 'lines',
+        name: 'Call Flow',
+        line: {color: '#00FF88', width: 2},
+        yaxis: 'y2'
+      });
+  
+      // Put Flow simplificado
+      fig.data.push({
+        x: plotData.dates,
+        y: plotData.put_flow.map(v => -v),
+        type: 'scatter',
+        mode: 'lines',
+        name: 'Put Flow',
+        line: {color: '#FF4444', width: 2},
+        yaxis: 'y2'
+      });
+  
+      // Layout simplificado para mobile
+      fig.layout.xaxis = {
+        domain: [0, 1],
+        color: 'white',
+        gridcolor: 'rgba(255,255,255,0.1)',
+        tickfont: {size: 10}
+      };
+      fig.layout.yaxis = {
+        title: plotData.ticker,
+        titlefont: {size: 12},
+        side: 'left',
+        color: 'white',
+        gridcolor: 'rgba(255,255,255,0.1)',
+        tickfont: {size: 10}
+      };
+      fig.layout.yaxis2 = {
+        title: 'Flow',
+        titlefont: {size: 12},
+        overlaying: 'y',
+        side: 'right',
+        color: 'white',
+        tickfont: {size: 10}
+      };
+  
+    } else {
+      // Versão desktop completa (código original)
+      // Preço do ativo
+      fig.data.push({
+        x: plotData.dates,
+        y: plotData.spot_prices,
+        type: 'scatter',
+        mode: 'lines',
+        name: plotData.ticker,
+        line: {color: '#FFD700', width: 4},
+        xaxis: 'x',
+        yaxis: 'y'
+      });
+  
+      // Call Flow
+      fig.data.push({
+        x: plotData.dates,
+        y: plotData.call_flow,
+        type: 'scatter',
+        mode: 'lines',
+        name: '🟢 Call Flow',
+        fill: 'tonexty',
+        fillcolor: 'rgba(0, 255, 136, 0.5)',
+        line: {color: '#00FF88', width: 3},
+        xaxis: 'x',
+        yaxis: 'y2'
+      });
+  
+      // Put Flow (negativo)
+      fig.data.push({
+        x: plotData.dates,
+        y: plotData.put_flow.map(v => -v),
+        type: 'scatter',
+        mode: 'lines',
+        name: '🔴 Put Flow',
+        fill: 'tonexty',
+        fillcolor: 'rgba(255, 68, 68, 0.5)',
+        line: {color: '#FF4444', width: 3},
+        xaxis: 'x',
+        yaxis: 'y2'
+      });
+  
+      // Intensity bars
+      const colors = plotData.bias.map(bias => bias > 0 ? '#00FF88' : '#FF4444');
+      fig.data.push({
+        x: plotData.dates,
+        y: plotData.intensity,
+        type: 'bar',
+        name: 'Intensity',
+        marker: {color: colors},
+        xaxis: 'x2',
+        yaxis: 'y3'
+      });
+  
+      // Layout desktop
+      fig.layout.xaxis = {domain: [0, 1], anchor: 'y', color: 'white', gridcolor: 'rgba(255,255,255,0.1)'};
+      fig.layout.yaxis = {
+        title: `${plotData.ticker} - Preço (R$)`,
+        side: 'left',
+        domain: [0.3, 1],
+        color: 'white',
+        gridcolor: 'rgba(255,255,255,0.1)'
+      };
+      fig.layout.yaxis2 = {
+        title: 'Options Flow',
+        overlaying: 'y',
+        side: 'right',
+        domain: [0.3, 1],
+        color: 'white',
+        gridcolor: 'rgba(255,255,255,0.1)'
+      };
+      fig.layout.xaxis2 = {domain: [0, 1], anchor: 'y3', color: 'white', gridcolor: 'rgba(255,255,255,0.1)'};
+      fig.layout.yaxis3 = {
+        title: 'Flow Intensity',
+        domain: [0, 0.25],
+        color: 'white',
+        gridcolor: 'rgba(255,255,255,0.1)'
+      };
+  
+      // Linha zero
+      fig.layout.shapes = [{
+        type: 'line',
+        x0: plotData.dates[0],
+        y0: 0,
+        x1: plotData.dates[plotData.dates.length - 1],
+        y1: 0,
+        line: {
+          color: 'gray',
+          width: 1,
+          dash: 'dash'
+        },
+        xref: 'x',
+        yref: 'y2'
+      }];
     }
-
-    function renderFlowChart(plotData) {
-      const isMobile = window.innerWidth <= 768;
-      
-      const fig = {
-        data: [],
-        layout: {
-          title: {
-            text: `Flow Tracker - ${plotData.ticker}`,
-            font: {
-              color: 'white', 
-              size: isMobile ? 14 : 18
-            }
-          },
-          paper_bgcolor: 'rgba(0,0,0,0)',
-          plot_bgcolor: 'rgba(255,255,255,0.05)',
-          showlegend: !isMobile,
-          height: isMobile ? 450 : 900,
-          grid: {
-            rows: isMobile ? 1 : 2,
-            columns: 1,
-            pattern: 'independent',
-            roworder: 'top to bottom'
-          },
-          legend: {
-            font: {color: 'white', size: isMobile ? 10 : 12},
-            bgcolor: 'rgba(0,0,0,0.5)',
-            orientation: isMobile ? 'h' : 'v'
-          },
-          margin: {
-            l: isMobile ? 40 : 60,
-            r: isMobile ? 40 : 60,
-            t: isMobile ? 40 : 60,
-            b: isMobile ? 80 : 100
-          },
-          autosize: true
-        }
-      };
-    
-      // Em mobile, simplifica o gráfico mostrando apenas preço e flow
-      if (isMobile) {
-        // Preço do ativo
-        fig.data.push({
-          x: plotData.dates,
-          y: plotData.spot_prices,
-          type: 'scatter',
-          mode: 'lines',
-          name: plotData.ticker,
-          line: {color: '#FFD700', width: 3}
-        });
-    
-        // Call Flow simplificado
-        fig.data.push({
-          x: plotData.dates,
-          y: plotData.call_flow,
-          type: 'scatter',
-          mode: 'lines',
-          name: 'Call Flow',
-          line: {color: '#00FF88', width: 2},
-          yaxis: 'y2'
-        });
-    
-        // Put Flow simplificado
-        fig.data.push({
-          x: plotData.dates,
-          y: plotData.put_flow.map(v => -v),
-          type: 'scatter',
-          mode: 'lines',
-          name: 'Put Flow',
-          line: {color: '#FF4444', width: 2},
-          yaxis: 'y2'
-        });
-    
-        // Layout simplificado para mobile
-        fig.layout.xaxis = {
-          domain: [0, 1],
-          color: 'white',
-          gridcolor: 'rgba(255,255,255,0.1)',
-          tickfont: {size: 10}
-        };
-        fig.layout.yaxis = {
-          title: plotData.ticker,
-          titlefont: {size: 12},
-          side: 'left',
-          color: 'white',
-          gridcolor: 'rgba(255,255,255,0.1)',
-          tickfont: {size: 10}
-        };
-        fig.layout.yaxis2 = {
-          title: 'Flow',
-          titlefont: {size: 12},
-          overlaying: 'y',
-          side: 'right',
-          color: 'white',
-          tickfont: {size: 10}
-        };
-    
-      } else {
-        // Versão desktop completa (código original)
-        // Preço do ativo
-        fig.data.push({
-          x: plotData.dates,
-          y: plotData.spot_prices,
-          type: 'scatter',
-          mode: 'lines',
-          name: plotData.ticker,
-          line: {color: '#FFD700', width: 4},
-          xaxis: 'x',
-          yaxis: 'y'
-        });
-    
-        // Call Flow
-        fig.data.push({
-          x: plotData.dates,
-          y: plotData.call_flow,
-          type: 'scatter',
-          mode: 'lines',
-          name: '🟢 Call Flow',
-          fill: 'tonexty',
-          fillcolor: 'rgba(0, 255, 136, 0.5)',
-          line: {color: '#00FF88', width: 3},
-          xaxis: 'x',
-          yaxis: 'y2'
-        });
-    
-        // Put Flow (negativo)
-        fig.data.push({
-          x: plotData.dates,
-          y: plotData.put_flow.map(v => -v),
-          type: 'scatter',
-          mode: 'lines',
-          name: '🔴 Put Flow',
-          fill: 'tonexty',
-          fillcolor: 'rgba(255, 68, 68, 0.5)',
-          line: {color: '#FF4444', width: 3},
-          xaxis: 'x',
-          yaxis: 'y2'
-        });
-    
-        // Intensity bars
-        const colors = plotData.bias.map(bias => bias > 0 ? '#00FF88' : '#FF4444');
-        fig.data.push({
-          x: plotData.dates,
-          y: plotData.intensity,
-          type: 'bar',
-          name: 'Intensity',
-          marker: {color: colors},
-          xaxis: 'x2',
-          yaxis: 'y3'
-        });
-    
-        // Layout desktop
-        fig.layout.xaxis = {domain: [0, 1], anchor: 'y', color: 'white', gridcolor: 'rgba(255,255,255,0.1)'};
-        fig.layout.yaxis = {
-          title: `${plotData.ticker} - Preço (R$)`,
-          side: 'left',
-          domain: [0.3, 1],
-          color: 'white',
-          gridcolor: 'rgba(255,255,255,0.1)'
-        };
-        fig.layout.yaxis2 = {
-          title: 'Options Flow',
-          overlaying: 'y',
-          side: 'right',
-          domain: [0.3, 1],
-          color: 'white',
-          gridcolor: 'rgba(255,255,255,0.1)'
-        };
-        fig.layout.xaxis2 = {domain: [0, 1], anchor: 'y3', color: 'white', gridcolor: 'rgba(255,255,255,0.1)'};
-        fig.layout.yaxis3 = {
-          title: 'Flow Intensity',
-          domain: [0, 0.25],
-          color: 'white',
-          gridcolor: 'rgba(255,255,255,0.1)'
-        };
-    
-        // Linha zero
-        fig.layout.shapes = [{
-          type: 'line',
-          x0: plotData.dates[0],
-          y0: 0,
-          x1: plotData.dates[plotData.dates.length - 1],
-          y1: 0,
-          line: {
-            color: 'gray',
-            width: 1,
-            dash: 'dash'
-          },
-          xref: 'x',
-          yref: 'y2'
-        }];
-      }
-    
-      // Configurações responsivas do Plotly
-      const config = {
-        responsive: true,
-        displayModeBar: !isMobile,
-        displaylogo: false
-      };
-    
-      const flowChartEl = document.getElementById('flowChart');
-      if (flowChartEl) {
-        flowChartEl.classList.remove('hidden');
-        Plotly.newPlot('flowChart', fig.data, fig.layout, config);
-      }
+  
+    // Configurações responsivas do Plotly
+    const config = {
+      responsive: true,
+      displayModeBar: !isMobile,
+      displaylogo: false
+    };
+  
+    const flowChartEl = document.getElementById('flowChart');
+    if (flowChartEl) {
+      flowChartEl.classList.remove('hidden');
+      Plotly.newPlot('flowChart', fig.data, fig.layout, config);
     }
+  }
 
-    function renderBandsSignals(signals) {
-      if (!signals) return;
+  function renderBandsSignals(signals) {
+    if (!signals) return;
+  
+    const currency = signals.bandas && signals.bandas.superior_2σ > 1000 ? 'R$' : '';
     
-      const currency = signals.bandas && signals.bandas.superior_2σ > 1000 ? 'R$' : '';
-      
-      // Função para determinar cor baseada no risk level
-      const getRiskColor = (riskLevel) => {
-        switch(riskLevel) {
-          case 'MUITO ALTO': return 'text-red-400';
-          case 'ALTO': return 'text-orange-400';
-          case 'MODERADO': return 'text-yellow-400';
-          default: return 'text-gray-400';
-        }
-      };
+    // Função para determinar cor baseada no risk level
+    const getRiskColor = (riskLevel) => {
+      switch(riskLevel) {
+        case 'MUITO ALTO': return 'text-red-400';
+        case 'ALTO': return 'text-orange-400';
+        case 'MODERADO': return 'text-yellow-400';
+        default: return 'text-gray-400';
+      }
+    };
+  
+    // Função para determinar cor da zona
+    const getZoneColorClass = (zoneColor) => {
+      switch(zoneColor) {
+        case '🔴': return 'border-red-500 bg-red-500/10';
+        case '🟠': return 'border-orange-500 bg-orange-500/10';
+        case '🟡': return 'border-yellow-500 bg-yellow-500/10';
+        case '🟢': return 'border-green-500 bg-green-500/10';
+        default: return 'border-gray-500 bg-gray-500/10';
+      }
+    };
+  
+    // Função para cor do opportunity score
+    const getOpportunityColor = (score) => {
+      if (score >= 80) return 'text-green-400';
+      if (score >= 60) return 'text-yellow-400';
+      if (score >= 40) return 'text-orange-400';
+      return 'text-red-400';
+    };
     
-      // Função para determinar cor da zona
-      const getZoneColorClass = (zoneColor) => {
-        switch(zoneColor) {
-          case '🔴': return 'border-red-500 bg-red-500/10';
-          case '🟠': return 'border-orange-500 bg-orange-500/10';
-          case '🟡': return 'border-yellow-500 bg-yellow-500/10';
-          case '🟢': return 'border-green-500 bg-green-500/10';
-          default: return 'border-gray-500 bg-gray-500/10';
-        }
-      };
-    
-      // Função para cor do opportunity score
-      const getOpportunityColor = (score) => {
-        if (score >= 80) return 'text-green-400';
-        if (score >= 60) return 'text-yellow-400';
-        if (score >= 40) return 'text-orange-400';
-        return 'text-red-400';
-      };
-      
-      const html = `
-        <!-- Header com Preço e Zona Atual -->
-        <div class="metric-card rounded-lg p-6 mb-4 ${getZoneColorClass(signals.zone_color)} border-2">
-          <div class="flex justify-between items-start mb-4">
-            <div>
-              <h3 class="text-xl font-bold text-white mb-1">
-                ${currency}${signals.price?.toFixed(2) || 'N/A'}
-              </h3>
-              <p class="text-gray-400 text-sm">Preço Atual</p>
-            </div>
-            <div class="text-right">
-              <div class="text-2xl mb-1">${signals.zone_color || '⚪'}</div>
-              <p class="text-xs text-gray-400">${signals.zone_name || 'N/A'}</p>
-            </div>
+    const html = `
+      <!-- Header com Preço e Zona Atual -->
+      <div class="metric-card rounded-lg p-6 mb-4 ${getZoneColorClass(signals.zone_color)} border-2">
+        <div class="flex justify-between items-start mb-4">
+          <div>
+            <h3 class="text-xl font-bold text-white mb-1">
+              ${currency}${signals.price?.toFixed(2) || 'N/A'}
+            </h3>
+            <p class="text-gray-400 text-sm">Preço Atual</p>
           </div>
-          
-          <!-- Posição e Status -->
-          <div class="text-center mb-4 p-3 bg-black/20 rounded-lg">
-            <p class="text-white font-bold text-lg mb-1">${signals.position || 'N/A'}</p>
-            <p class="text-sm text-gray-300">${signals.position_detail || ''}</p>
-          </div>
-          
-          <!-- Risk Level e Action -->
-          <div class="grid grid-cols-2 gap-4 mb-4">
-            <div class="text-center">
-              <p class="text-xs text-gray-400 mb-1">Nível de Risco</p>
-              <p class="font-semibold ${getRiskColor(signals.risk_level)}">${signals.risk_level || 'N/A'}</p>
-            </div>
-            <div class="text-center">
-              <p class="text-xs text-gray-400 mb-1">Oportunidade</p>
-              <p class="font-semibold ${getOpportunityColor(signals.opportunity_score)}">
-                ${signals.opportunity_score || 'N/A'}/100
-              </p>
-            </div>
-          </div>
-          
-          <!-- Action Suggestion -->
-          ${signals.action_suggestion ? `
-            <div class="bg-white/5 rounded-lg p-3 mb-4">
-              <p class="text-xs text-gray-400 mb-1">Sugestão de Ação</p>
-              <p class="text-sm text-white font-medium">${signals.action_suggestion}</p>
-            </div>
-          ` : ''}
-          
-          <!-- Probability Reversal -->
-          ${signals.probability_reversal ? `
-            <div class="text-center">
-              <p class="text-xs text-gray-400">Probabilidade de Reversão</p>
-              <p class="text-sm font-medium text-purple-400">${signals.probability_reversal}</p>
-            </div>
-          ` : ''}
-        </div>
-    
-    
-    
-        <!-- Bandas de Volatilidade -->
-        <div class="metric-card rounded-lg p-4 mb-4">
-          <h4 class="text-white font-semibold mb-3 flex items-center">
-            <i class="fas fa-layer-group mr-2 text-yellow-400"></i>
-            Bandas de Volatilidade
-          </h4>
-          
-          <div class="space-y-2">
-            <!-- Banda Superior 4σ -->
-            <div class="flex justify-between items-center py-2 ${signals.price > signals.bandas?.superior_4σ ? 'bg-red-500/20 rounded px-2' : ''}">
-              <span class="text-gray-400 text-sm flex items-center">
-                <span class="w-2 h-2 bg-red-500 rounded-full mr-2"></span>
-                Superior 4σ
-              </span>
-              <span class="text-red-400 font-medium">${currency}${signals.bandas?.superior_4σ?.toFixed(2) || 'N/A'}</span>
-            </div>
-            
-            <!-- Banda Superior 2σ -->
-            <div class="flex justify-between items-center py-2 ${signals.price > signals.bandas?.superior_2σ && signals.price <= signals.bandas?.superior_4σ ? 'bg-orange-500/20 rounded px-2' : ''}">
-              <span class="text-gray-400 text-sm flex items-center">
-                <span class="w-2 h-2 bg-orange-500 rounded-full mr-2"></span>
-                Superior 2σ
-              </span>
-              <span class="text-orange-400 font-medium">${currency}${signals.bandas?.superior_2σ?.toFixed(2) || 'N/A'}</span>
-            </div>
-            
-            <!-- Linha Central -->
-            <div class="flex justify-between items-center py-2 border-y border-white/10 ${signals.price <= signals.bandas?.superior_2σ && signals.price >= signals.bandas?.inferior_2σ ? 'bg-yellow-500/10 rounded px-2' : ''}">
-              <span class="text-gray-400 text-sm flex items-center">
-                <span class="w-2 h-2 bg-yellow-500 rounded-full mr-2"></span>
-                Linha Central
-              </span>
-              <span class="text-yellow-400 font-medium">${currency}${signals.bandas?.linha_central?.toFixed(2) || 'N/A'}</span>
-            </div>
-            
-            <!-- Banda Inferior 2σ -->
-            <div class="flex justify-between items-center py-2 ${signals.price < signals.bandas?.inferior_2σ && signals.price >= signals.bandas?.inferior_4σ ? 'bg-green-500/20 rounded px-2' : ''}">
-              <span class="text-gray-400 text-sm flex items-center">
-                <span class="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
-                Inferior 2σ
-              </span>
-              <span class="text-green-400 font-medium">${currency}${signals.bandas?.inferior_2σ?.toFixed(2) || 'N/A'}</span>
-            </div>
-            
-            <!-- Banda Inferior 4σ -->
-            <div class="flex justify-between items-center py-2 ${signals.price < signals.bandas?.inferior_4σ ? 'bg-green-500/30 rounded px-2' : ''}">
-              <span class="text-gray-400 text-sm flex items-center">
-                <span class="w-2 h-2 bg-emerald-500 rounded-full mr-2"></span>
-                Inferior 4σ
-              </span>
-              <span class="text-emerald-400 font-medium">${currency}${signals.bandas?.inferior_4σ?.toFixed(2) || 'N/A'}</span>
-            </div>
+          <div class="text-right">
+            <div class="text-2xl mb-1">${signals.zone_color || '⚪'}</div>
+            <p class="text-xs text-gray-400">${signals.zone_name || 'N/A'}</p>
           </div>
         </div>
-    
-        <!-- Distâncias das Bandas -->
-        ${signals.distance_metrics ? `
-          <div class="metric-card rounded-lg p-4 mb-4">
-            <h4 class="text-white font-semibold mb-3 flex items-center">
-              <i class="fas fa-ruler mr-2 text-cyan-400"></i>
-              Distâncias (%)
-            </h4>
-            
-            <div class="grid grid-cols-2 gap-3 text-xs">
-              <div class="flex justify-between">
-                <span class="text-gray-400">4σ Sup:</span>
-                <span class="text-red-400">${signals.distance_metrics.dist_4sigma_sup}%</span>
-              </div>
-              <div class="flex justify-between">
-                <span class="text-gray-400">2σ Sup:</span>
-                <span class="text-orange-400">${signals.distance_metrics.dist_2sigma_sup}%</span>
-              </div>
-              <div class="flex justify-between">
-                <span class="text-gray-400">Central:</span>
-                <span class="text-yellow-400">${signals.distance_metrics.dist_central}%</span>
-              </div>
-              <div class="flex justify-between">
-                <span class="text-gray-400">2σ Inf:</span>
-                <span class="text-green-400">${signals.distance_metrics.dist_2sigma_inf}%</span>
-              </div>
-              <div class="flex justify-between">
-                <span class="text-gray-400">4σ Inf:</span>
-                <span class="text-emerald-400">${signals.distance_metrics.dist_4sigma_inf}%</span>
-              </div>
-            </div>
+        
+        <!-- Posição e Status -->
+        <div class="text-center mb-4 p-3 bg-black/20 rounded-lg">
+          <p class="text-white font-bold text-lg mb-1">${signals.position || 'N/A'}</p>
+          <p class="text-sm text-gray-300">${signals.position_detail || ''}</p>
+        </div>
+        
+        <!-- Risk Level e Action -->
+        <div class="grid grid-cols-2 gap-4 mb-4">
+          <div class="text-center">
+            <p class="text-xs text-gray-400 mb-1">Nível de Risco</p>
+            <p class="font-semibold ${getRiskColor(signals.risk_level)}">${signals.risk_level || 'N/A'}</p>
+          </div>
+          <div class="text-center">
+            <p class="text-xs text-gray-400 mb-1">Oportunidade</p>
+            <p class="font-semibold ${getOpportunityColor(signals.opportunity_score)}">
+              ${signals.opportunity_score || 'N/A'}/100
+            </p>
+          </div>
+        </div>
+        
+        <!-- Action Suggestion -->
+        ${signals.action_suggestion ? `
+          <div class="bg-white/5 rounded-lg p-3 mb-4">
+            <p class="text-xs text-gray-400 mb-1">Sugestão de Ação</p>
+            <p class="text-sm text-white font-medium">${signals.action_suggestion}</p>
           </div>
         ` : ''}
-    
-    
-      `;
-    
-      // Salvar dados das bandas para exportação
-      if (signals && signals.bandas) {
-        currentBandsData = signals.bandas;
-        document.getElementById('exportBtn').classList.remove('hidden');
-      }
-      
-      document.getElementById('bandsSignalsContent').innerHTML = html;
-    }
-
-    // ===== UTILITÁRIOS =====
-    function logout() {
-      localStorage.removeItem('geminii_token');
-      localStorage.removeItem('geminii_user');
-      window.location.href = '/';
-    }
-
-    // Enter key handler
-    document.getElementById('ticker').addEventListener('keypress', function(e) {
-      if (e.key === 'Enter') {
-        runCompleteAnalysis();
-      }
-    });
-
-    // Initialize tooltips and animations
-    document.addEventListener('DOMContentLoaded', function() {
-      // Add smooth animations
-      const cards = document.querySelectorAll('.card');
-      cards.forEach((card, index) => {
-        card.style.animationDelay = `${index * 0.1}s`;
-      });
-
-      // Check authentication
-      if (!userToken) {
-        showToast('Sessão expirada. Redirecionando...', 'warning');
-        setTimeout(() => {
-          window.location.href = '/login.html';
-        }, 2000);
-      }
-    });
-
-    // Connection status check
-    async function checkConnection() {
-      try {
-        const response = await fetch('/pro/bandas/health');
-        const statusEl = document.getElementById('connectionStatus');
         
-        // Verificar se o elemento existe antes de manipular
-        if (statusEl) {
-          if (response.ok) {
-            statusEl.innerHTML = `
-              <div class="w-2 h-2 bg-success rounded-full animate-pulse"></div>
-              <span class="text-sm text-gray-300">Sistema Online</span>
-            `;
-          } else {
-            statusEl.innerHTML = `
-              <div class="w-2 h-2 bg-danger rounded-full animate-pulse"></div>
-              <span class="text-sm text-gray-300">Sistema Offline</span>
-            `;
-          }
-        }
-      } catch (error) {
-        const statusEl = document.getElementById('connectionStatus');
-        if (statusEl) {
+        <!-- Probability Reversal -->
+        ${signals.probability_reversal ? `
+          <div class="text-center">
+            <p class="text-xs text-gray-400">Probabilidade de Reversão</p>
+            <p class="text-sm font-medium text-purple-400">${signals.probability_reversal}</p>
+          </div>
+        ` : ''}
+      </div>
+  
+      <!-- Bandas de Volatilidade -->
+      <div class="metric-card rounded-lg p-4 mb-4">
+        <h4 class="text-white font-semibold mb-3 flex items-center">
+          <i class="fas fa-layer-group mr-2 text-yellow-400"></i>
+          Bandas de Volatilidade
+        </h4>
+        
+        <div class="space-y-2">
+          <!-- Banda Superior 4σ -->
+          <div class="flex justify-between items-center py-2 ${signals.price > signals.bandas?.superior_4σ ? 'bg-red-500/20 rounded px-2' : ''}">
+            <span class="text-gray-400 text-sm flex items-center">
+              <span class="w-2 h-2 bg-red-500 rounded-full mr-2"></span>
+              Superior 4σ
+            </span>
+            <span class="text-red-400 font-medium">${currency}${signals.bandas?.superior_4σ?.toFixed(2) || 'N/A'}</span>
+          </div>
+          
+          <!-- Banda Superior 2σ -->
+          <div class="flex justify-between items-center py-2 ${signals.price > signals.bandas?.superior_2σ && signals.price <= signals.bandas?.superior_4σ ? 'bg-orange-500/20 rounded px-2' : ''}">
+            <span class="text-gray-400 text-sm flex items-center">
+              <span class="w-2 h-2 bg-orange-500 rounded-full mr-2"></span>
+              Superior 2σ
+            </span>
+            <span class="text-orange-400 font-medium">${currency}${signals.bandas?.superior_2σ?.toFixed(2) || 'N/A'}</span>
+          </div>
+          
+          <!-- Linha Central -->
+          <div class="flex justify-between items-center py-2 border-y border-white/10 ${signals.price <= signals.bandas?.superior_2σ && signals.price >= signals.bandas?.inferior_2σ ? 'bg-yellow-500/10 rounded px-2' : ''}">
+            <span class="text-gray-400 text-sm flex items-center">
+              <span class="w-2 h-2 bg-yellow-500 rounded-full mr-2"></span>
+              Linha Central
+            </span>
+            <span class="text-yellow-400 font-medium">${currency}${signals.bandas?.linha_central?.toFixed(2) || 'N/A'}</span>
+          </div>
+          
+          <!-- Banda Inferior 2σ -->
+          <div class="flex justify-between items-center py-2 ${signals.price < signals.bandas?.inferior_2σ && signals.price >= signals.bandas?.inferior_4σ ? 'bg-green-500/20 rounded px-2' : ''}">
+            <span class="text-gray-400 text-sm flex items-center">
+              <span class="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
+              Inferior 2σ
+            </span>
+            <span class="text-green-400 font-medium">${currency}${signals.bandas?.inferior_2σ?.toFixed(2) || 'N/A'}</span>
+          </div>
+          
+          <!-- Banda Inferior 4σ -->
+          <div class="flex justify-between items-center py-2 ${signals.price < signals.bandas?.inferior_4σ ? 'bg-green-500/30 rounded px-2' : ''}">
+            <span class="text-gray-400 text-sm flex items-center">
+              <span class="w-2 h-2 bg-emerald-500 rounded-full mr-2"></span>
+              Inferior 4σ
+            </span>
+            <span class="text-emerald-400 font-medium">${currency}${signals.bandas?.inferior_4σ?.toFixed(2) || 'N/A'}</span>
+          </div>
+        </div>
+      </div>
+  
+      <!-- Distâncias das Bandas -->
+      ${signals.distance_metrics ? `
+        <div class="metric-card rounded-lg p-4 mb-4">
+          <h4 class="text-white font-semibold mb-3 flex items-center">
+            <i class="fas fa-ruler mr-2 text-cyan-400"></i>
+            Distâncias (%)
+          </h4>
+          
+          <div class="grid grid-cols-2 gap-3 text-xs">
+            <div class="flex justify-between">
+              <span class="text-gray-400">4σ Sup:</span>
+              <span class="text-red-400">${signals.distance_metrics.dist_4sigma_sup}%</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-400">2σ Sup:</span>
+              <span class="text-orange-400">${signals.distance_metrics.dist_2sigma_sup}%</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-400">Central:</span>
+              <span class="text-yellow-400">${signals.distance_metrics.dist_central}%</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-400">2σ Inf:</span>
+              <span class="text-green-400">${signals.distance_metrics.dist_2sigma_inf}%</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-400">4σ Inf:</span>
+              <span class="text-emerald-400">${signals.distance_metrics.dist_4sigma_inf}%</span>
+            </div>
+          </div>
+        </div>
+      ` : ''}
+    `;
+  
+    // Salvar dados das bandas para exportação
+    if (signals && signals.bandas) {
+      currentBandsData = signals.bandas;
+      document.getElementById('exportBtn').classList.remove('hidden');
+    }
+    
+    document.getElementById('bandsSignalsContent').innerHTML = html;
+  }
+
+  // ===== UTILITÁRIOS =====
+  function logout() {
+    localStorage.removeItem('geminii_token');
+    localStorage.removeItem('geminii_user');
+    window.location.href = '/';
+  }
+
+  // Enter key handler
+  document.getElementById('ticker').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+      runCompleteAnalysis();
+    }
+  });
+
+  // Click outside modal to close
+  document.getElementById('movementModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+      closeMovementModal();
+    }
+  });
+
+  // Initialize tooltips and animations
+  document.addEventListener('DOMContentLoaded', function() {
+    // Add smooth animations
+    const cards = document.querySelectorAll('.card');
+    cards.forEach((card, index) => {
+      card.style.animationDelay = `${index * 0.1}s`;
+    });
+
+    // Check authentication
+    if (!userToken) {
+      showToast('Sessão expirada. Redirecionando...', 'warning');
+      setTimeout(() => {
+        window.location.href = '/login.html';
+      }, 2000);
+    }
+  });
+
+  // Connection status check
+  async function checkConnection() {
+    try {
+      const response = await fetch('/pro/bandas/health');
+      const statusEl = document.getElementById('connectionStatus');
+      
+      // Verificar se o elemento existe antes de manipular
+      if (statusEl) {
+        if (response.ok) {
+          statusEl.innerHTML = `
+            <div class="w-2 h-2 bg-success rounded-full animate-pulse"></div>
+            <span class="text-sm text-gray-300">Sistema Online</span>
+          `;
+        } else {
           statusEl.innerHTML = `
             <div class="w-2 h-2 bg-danger rounded-full animate-pulse"></div>
-            <span class="text-sm text-gray-300">Conexão Perdida</span>
+            <span class="text-sm text-gray-300">Sistema Offline</span>
           `;
         }
       }
-    }
-
-    // Check connection every 30 seconds
-    setInterval(checkConnection, 30000);
-    checkConnection(); // Initial check
-
-    // Show welcome message
-    showToast('Sistema Regimes PRO carregado com sucesso!', 'success');
-
-    // ===== FUNÇÃO DO EXPANDER =====
-    function toggleInfo() {
-      const content = document.getElementById('infoContent');
-      const icon = document.getElementById('infoIcon');
-      
-      if (content.classList.contains('hidden')) {
-        content.classList.remove('hidden');
-        content.style.animation = 'fadeIn 0.5s ease-in-out';
-        icon.classList.remove('fa-info-circle');
-        icon.classList.add('fa-times');
-      } else {
-        content.style.animation = 'fadeOut 0.3s ease-in-out';
-        setTimeout(() => {
-          content.classList.add('hidden');
-        }, 300);
-        icon.classList.remove('fa-times');
-        icon.classList.add('fa-info-circle');
+    } catch (error) {
+      const statusEl = document.getElementById('connectionStatus');
+      if (statusEl) {
+        statusEl.innerHTML = `
+          <div class="w-2 h-2 bg-danger rounded-full animate-pulse"></div>
+          <span class="text-sm text-gray-300">Conexão Perdida</span>
+        `;
       }
     }
-  </script>
-  
-  <style>
-    @keyframes fadeOut {
-      from { opacity: 1; transform: translateY(0); }
-      to { opacity: 0; transform: translateY(-10px); }
+  }
+
+  // Check connection every 30 seconds
+  setInterval(checkConnection, 30000);
+  checkConnection(); // Initial check
+
+  // Show welcome message
+  showToast('Sistema Regimes PRO carregado com sucesso!', 'success');
+
+  // ===== FUNÇÃO DO EXPANDER =====
+  function toggleInfo() {
+    const content = document.getElementById('infoContent');
+    const icon = document.getElementById('infoIcon');
+    
+    if (content.classList.contains('hidden')) {
+      content.classList.remove('hidden');
+      content.style.animation = 'fadeIn 0.5s ease-in-out';
+      icon.classList.remove('fa-info-circle');
+      icon.classList.add('fa-times');
+    } else {
+      content.style.animation = 'fadeOut 0.3s ease-in-out';
+      setTimeout(() => {
+        content.classList.add('hidden');
+      }, 300);
+      icon.classList.remove('fa-times');
+      icon.classList.add('fa-info-circle');
     }
-  </style>
+  }
+</script>
+
 </body>
 </html>
