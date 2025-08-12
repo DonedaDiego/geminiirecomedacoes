@@ -319,7 +319,7 @@ class AmplitudeService:
         # Ordenar por volatilidade (amplitude média)
         results.sort(key=lambda x: x['avg_amplitude'])
         
-        print(f"🎯 Total de ativos analisados: {len(results)}")  # Debug final
+        print(f" Total de ativos analisados: {len(results)}")  # Debug final
         
         return results
     

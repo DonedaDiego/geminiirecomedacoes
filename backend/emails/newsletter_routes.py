@@ -6,7 +6,7 @@ newsletter_bp = Blueprint('newsletter', __name__, url_prefix='/api')
 @newsletter_bp.route('/newsletter', methods=['POST'])
 def subscribe_newsletter():
     try:
-        print("🎯 Newsletter route chamada!")
+        print(" Newsletter route chamada!")
         
         data = request.get_json()
         print(f"📥 Dados recebidos: {data}")

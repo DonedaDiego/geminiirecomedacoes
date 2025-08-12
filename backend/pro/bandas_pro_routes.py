@@ -356,7 +356,7 @@ def get_bandas_pro_blueprint():
         5. As linhas de suporte e resistência aparecerão automaticamente
 
         ═══════════════════════════════════════════════════════════════
-        🎯 LEGENDA DAS BANDAS:
+         LEGENDA DAS BANDAS:
         ═══════════════════════════════════════════════════════════════
         🟡 LINHA CENTRAL ({bands['linha_central']:.2f})
         → Preço equilibrado calculado pelo modelo

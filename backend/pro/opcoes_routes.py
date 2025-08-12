@@ -61,7 +61,7 @@ def hunter_walls_analysis(current_user_id):
         if not grupos_vencimentos:
             return jsonify({'success': False, 'message': 'Grupos de vencimentos são obrigatórios'}), 400
         
-        print(f"🎯 Hunter Walls - Usuário: {current_user_id}, Ticker: {ticker}")
+        print(f" Hunter Walls - Usuário: {current_user_id}, Ticker: {ticker}")
         
         # ✅ VERIFICAR PLANO DO USUÁRIO - CORRIGIDO
         conn = get_db_connection()

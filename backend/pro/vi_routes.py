@@ -67,7 +67,7 @@ def get_signal(ticker):
         # Limpar ticker
         clean_ticker = ticker.upper().replace('.SA', '')
         
-        print(f"🎯 Sinal VI solicitado: {clean_ticker}")
+        print(f" Sinal VI solicitado: {clean_ticker}")
         
         # Executar análise usando o serviço
         result = vi_service.create_analysis(clean_ticker, period_days)

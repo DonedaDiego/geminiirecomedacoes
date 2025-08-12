@@ -141,7 +141,7 @@ class RecommendationsServiceFree:
         if last_row['Volume'] > avg_volume * 1.5:
             score += 3  # Volume confirma o movimento
         
-        # 🎯 DECISÃO MAIS SELETIVA
+        #  DECISÃO MAIS SELETIVA
         if score >= 12:  # Precisa de score maior para COMPRA
             action = 'COMPRA'
             confidence = min(score / 18 * 100, 95)
@@ -400,7 +400,7 @@ class RecommendationsServiceFree:
                     ))
                     
                     if status != rec['status']:
-                        print(f"🎯 {ticker} mudou status: {rec['status']} → {status}")
+                        print(f" {ticker} mudou status: {rec['status']} → {status}")
                         # Se mudou para finalizada, definir closed_at
                         if status.startswith('FINALIZADA'):
                             cursor.execute("""

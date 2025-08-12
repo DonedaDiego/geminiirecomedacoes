@@ -1344,7 +1344,7 @@ class BandasProService:
                 recommendation = "🟡 SINAL NEUTRO: Sinais mistos, aguarde confirmação"
         else:
             if iv_score >= 70 and abs(cp_ratio - 1) > 0.5:
-                recommendation = "🎯 PREPARAR: Movimento forte se aproximando"
+                recommendation = " PREPARAR: Movimento forte se aproximando"
             elif iv_score >= 40:
                 recommendation = "⏳ AGUARDAR: Sinais ainda não claros"
             else:

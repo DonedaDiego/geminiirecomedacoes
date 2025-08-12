@@ -644,12 +644,12 @@
       let customPortfolioReturn = metrics.total_return; // Valor original (ponderado)
       
       if (metrics.assets_performance) {
-        // 🎯 OPÇÃO 1: SOMA DIRETA (10.39%)
+        //  OPÇÃO 1: SOMA DIRETA (10.39%)
         const simpleSum = Object.values(metrics.assets_performance).reduce((sum, asset) => {
           return sum + (asset.return || 0);
         }, 0);
         
-        // 🎯 OPÇÃO 2: MÉDIA SIMPLES (1.73%)
+        //  OPÇÃO 2: MÉDIA SIMPLES (1.73%)
         const assetCount = Object.keys(metrics.assets_performance).length;
         const simpleAverage = assetCount > 0 ? simpleSum / assetCount : 0;
         

@@ -597,7 +597,7 @@ class VolatilityRegimesService:
             
             # ===== FIX: GARANTIR QUE O PREÇO NO SINAL ESTÁ CORRETO =====
             signals['price'] = current_price
-            self.logger.info(f"🎯 PREÇO FINAL nos SINAIS: R$ {signals['price']:.4f}")
+            self.logger.info(f" PREÇO FINAL nos SINAIS: R$ {signals['price']:.4f}")
             
             # Gerar gráfico HTML
             chart_html = self.generate_plotly_chart(data, search_ticker)

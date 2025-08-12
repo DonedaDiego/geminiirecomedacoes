@@ -224,7 +224,7 @@ class VolatilityImpliedService:
         if daily_metrics.empty or 'iv_avg' not in daily_metrics.columns:
             return daily_metrics
         
-        print("🎯 Calculando IV Quartile Signal...")
+        print(" Calculando IV Quartile Signal...")
         
         try:
             # Remover valores nulos

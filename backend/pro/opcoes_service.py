@@ -162,7 +162,7 @@ class OpcoesService:
     def hunter_walls_analysis(self, ticker: str, grupos_vencimentos: List[List[str]]) -> Optional[Dict]:
         """Análise Hunter Walls completa"""
         try:
-            print(f"🎯 Iniciando Hunter Walls para {ticker}")
+            print(f" Iniciando Hunter Walls para {ticker}")
             
             # 1. Preço via yfinance
             ticker_info = self.get_ticker_basic_info(ticker)

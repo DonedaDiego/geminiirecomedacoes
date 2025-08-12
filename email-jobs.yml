@@ -19,7 +19,7 @@ jobs:
           echo "🔄 Enviando avisos de renovação..."
           curl -X POST https://app-geminii.railway.app/api/subscriptions/cron/send-warnings || echo "❌ Falha nos avisos"
           
-      - name: 🎯 Processar Trials Expirados  
+      - name:  Processar Trials Expirados  
         run: |
           echo "🔄 Processando trials expirados..."
           curl -X POST https://app-geminii.railway.app/api/subscriptions/cron/process-expired || echo "❌ Falha no processamento"

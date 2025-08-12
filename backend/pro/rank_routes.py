@@ -56,7 +56,7 @@ def get_top_iv():
         tipo = request.args.get('tipo', 'alta').lower()
         quantidade = int(request.args.get('quantidade', 5))
         
-        print(f"🎯 Top IV {tipo}: {quantidade} ações")
+        print(f" Top IV {tipo}: {quantidade} ações")
         
         # Buscar dados usando o serviço
         data = ranking_service.fetch_data(limit=150)
@@ -269,7 +269,7 @@ def get_analise_completa():
         rank_by = request.args.get('rank_by', 'iv_current')
         top_n = int(request.args.get('top_n', 20))
         
-        print(f"🎯 Análise completa solicitada: {rank_by}, top {top_n}")
+        print(f" Análise completa solicitada: {rank_by}, top {top_n}")
         
         # **USAR MÉTODO PRINCIPAL DO SERVIÇO**
         result = ranking_service.get_full_analysis(rank_by=rank_by, top_n=top_n)

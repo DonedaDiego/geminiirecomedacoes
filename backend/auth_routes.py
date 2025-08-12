@@ -30,100 +30,190 @@ def generate_jwt_token(user_id, email, secret_key):
 
 @auth_bp.route('/register', methods=['POST'])
 def register():
-    """🔥 Registro CORRIGIDO com trial automático de 15 dias"""
+    """🔥 Registro CORRIGIDO com validação inteligente por IP"""
     try:
         data = request.get_json()
         
         if not data:
-            return jsonify({'success': False, 'error': 'Dados JSON necessários'}), 400
+            return jsonify({'success': False, 'error': 'Dados JSON necessários', 'error_code': 'MISSING_DATA'}), 400
         
         name = data.get('name', '').strip()
         email = data.get('email', '').strip().lower()
         password = data.get('password', '')
         user_ip = request.remote_addr
         
-        # Validações
+        print(f"🔐 Tentativa de registro - Email: {email}, IP: {user_ip}")
+        
+        # Validações básicas
         if not name or not email or not password:
-            return jsonify({'success': False, 'error': 'Nome, e-mail e senha são obrigatórios'}), 400
+            return jsonify({'success': False, 'error': 'Nome, e-mail e senha são obrigatórios', 'error_code': 'MISSING_FIELDS'}), 400
         
         if len(password) < 6:
-            return jsonify({'success': False, 'error': 'Senha deve ter pelo menos 6 caracteres'}), 400
+            return jsonify({'success': False, 'error': 'Senha deve ter pelo menos 6 caracteres', 'error_code': 'PASSWORD_TOO_SHORT'}), 400
         
         if '@' not in email or '.' not in email:
-            return jsonify({'success': False, 'error': 'E-mail inválido'}), 400
+            return jsonify({'success': False, 'error': 'E-mail inválido', 'error_code': 'EMAIL_INVALID'}), 400
         
-        # Verificar se email já existe
+        # Conectar ao banco
         conn = get_db_connection()
         if not conn:
-            return jsonify({'success': False, 'error': 'Erro de conexão com banco'}), 500
+            return jsonify({'success': False, 'error': 'Erro de conexão com banco', 'error_code': 'DATABASE_ERROR'}), 500
 
         cursor = conn.cursor()
+        
+        # 🔥 VALIDAÇÃO INTELIGENTE - VERIFICAR EMAIL E IP
         cursor.execute("""
-            SELECT id, email_confirmed, 
+            SELECT id, email_confirmed, email,
                 CASE WHEN email = %s THEN 'email' ELSE 'ip' END as conflict_type
             FROM users 
             WHERE email = %s OR ip_address = %s
         """, (email, email, user_ip))
 
         existing_user = cursor.fetchone()
-        cursor.close()
-        conn.close()
         
         if existing_user:
-            user_id, is_confirmed, conflict_type = existing_user
-            if conflict_type == 'ip':
-                return jsonify({'success': False, 'error': 'Este usuário já foi registrado com outro e-mail! Dúvidas entre em contato com os canais abaixo'}), 400
-            elif is_confirmed:
-                return jsonify({'success': False, 'error': 'Email já está em uso por outra conta'}), 400
-            else:
-                # Email existe mas não confirmado - reenviar confirmação
-                token_result = email_service.generate_confirmation_token(user_id, email)
-                if token_result['success']:
-                    email_sent = email_service.send_confirmation_email(name, email, token_result['token'])
-                    if email_sent:
-                        return jsonify({
-                            'success': True,
-                            'message': 'Conta já existe! Enviamos um novo email de confirmação.',
-                            'requires_confirmation': True
-                        }), 200
+            user_id, is_confirmed, existing_email, conflict_type = existing_user
+            
+            if conflict_type == 'email':
+                # Email já existe
+                if is_confirmed:
+                    cursor.close()
+                    conn.close()
+                    return jsonify({
+                        'success': False, 
+                        'error': 'Este email já possui uma conta. Tente fazer login ou use outro email.',
+                        'error_code': 'EMAIL_EXISTS'
+                    }), 400
+                else:
+                    # Email existe mas não confirmado - reenviar confirmação
+                    print(f"📧 Email {email} existe mas não confirmado - reenviando confirmação")
+                    
+                    token_result = email_service.generate_confirmation_token(user_id, email)
+                    if token_result['success']:
+                        email_sent = email_service.send_confirmation_email(name, email, token_result['token'])
+                        if email_sent:
+                            cursor.close()
+                            conn.close()
+                            return jsonify({
+                                'success': True,
+                                'message': 'Conta já existe! Enviamos um novo email de confirmação.',
+                                'requires_confirmation': True
+                            }), 200
+                    
+                    cursor.close()
+                    conn.close()
+                    return jsonify({'success': False, 'error': 'Erro ao reenviar confirmação', 'error_code': 'EMAIL_SEND_ERROR'}), 500
+                    
+            elif conflict_type == 'ip':
+                # 🔥 VALIDAÇÃO INTELIGENTE POR IP
+                print(f"🌐 Validando IP {user_ip} - usuário existente encontrado")
                 
-                return jsonify({'success': False, 'error': 'Erro ao reenviar confirmação'}), 500
+                # Verificar quantos usuários confirmados existem neste IP
+                cursor.execute("""
+                    SELECT COUNT(*) FROM users 
+                    WHERE ip_address = %s AND email_confirmed = TRUE AND user_type != 'deleted'
+                """, (user_ip,))
+                
+                confirmed_users_count = cursor.fetchone()[0]
+                
+                # Verificar registros recentes (anti-spam)
+                cursor.execute("""
+                    SELECT COUNT(*) FROM users 
+                    WHERE ip_address = %s AND created_at > NOW() - INTERVAL '1 hour'
+                """, (user_ip,))
+                
+                recent_registrations = cursor.fetchone()[0]
+                
+                print(f"📊 IP {user_ip}: {confirmed_users_count} usuários confirmados, {recent_registrations} registros na última hora")
+                
+                # Regra 1: Máximo 3 usuários confirmados por IP
+                if confirmed_users_count >= 3:
+                    cursor.close()
+                    conn.close()
+                    return jsonify({
+                        'success': False, 
+                        'error': 'Limite de contas atingido para este local. Entre em contato conosco se precisar de mais contas.',
+                        'error_code': 'IP_USER_LIMIT'
+                    }), 400
+                
+                # Regra 2: Máximo 2 registros por hora (anti-spam)
+                if recent_registrations >= 2:
+                    cursor.close()
+                    conn.close()
+                    return jsonify({
+                        'success': False,
+                        'error': 'Muitas tentativas de registro. Aguarde 1 hora e tente novamente.',
+                        'error_code': 'IP_RATE_LIMIT'
+                    }), 400
+                
+                # Regra 3: Verificar se há usuários não confirmados muito antigos (limpeza)
+                cursor.execute("""
+                    SELECT COUNT(*) FROM users 
+                    WHERE ip_address = %s 
+                    AND email_confirmed = FALSE 
+                    AND created_at < NOW() - INTERVAL '7 days'
+                """, (user_ip,))
+                
+                old_unconfirmed = cursor.fetchone()[0]
+                
+                if old_unconfirmed >= 5:
+                    cursor.close()
+                    conn.close()
+                    return jsonify({
+                        'success': False,
+                        'error': 'Este IP tem muitas contas não confirmadas antigas. Entre em contato conosco.',
+                        'error_code': 'IP_SUSPICIOUS'
+                    }), 400
+                
+                # Se passou em todas as validações, permitir o registro
+                print(f"✅ IP {user_ip} aprovado para novo registro")
         
-        # 🔥 USAR O TRIAL SERVICE PARA CRIAR USUÁRIO COM TRIAL
+        # 🔥 CRIAR USUÁRIO COM TRIAL USANDO O TRIAL SERVICE
+        print(f"👤 Criando usuário: {name} ({email})")
         trial_result = create_trial_user(name, email, password, user_ip)
         
         if not trial_result['success']:
+            cursor.close()
+            conn.close()
             return jsonify({
                 'success': False,
-                'error': trial_result['error']
+                'error': trial_result['error'],
+                'error_code': 'TRIAL_CREATION_ERROR'
             }), 400
         
         user_id = trial_result['user_id']
+        print(f"✅ Usuário criado com ID: {user_id}")
         
-        # 🔥 AGORA PRECISAMOS ATUALIZAR O USUÁRIO PARA NÃO CONFIRMADO
-        # (porque register_user_with_trial cria confirmado por padrão)
-        conn = get_db_connection()
-        if conn:
-            cursor = conn.cursor()
-            cursor.execute("""
-                UPDATE users 
-                SET email_confirmed = FALSE, email_confirmed_at = NULL
-                WHERE id = %s
-            """, (user_id,))
-            conn.commit()
-            cursor.close()
-            conn.close()
+        # 🔥 ATUALIZAR PARA NÃO CONFIRMADO (trial service cria confirmado por padrão)
+        cursor.execute("""
+            UPDATE users 
+            SET email_confirmed = FALSE, email_confirmed_at = NULL
+            WHERE id = %s
+        """, (user_id,))
+        conn.commit()
+        
+        print(f"📧 Usuário marcado como não confirmado")
         
         # Gerar token de confirmação
         token_result = email_service.generate_confirmation_token(user_id, email)
         
         if not token_result['success']:
-            return jsonify({'success': False, 'error': 'Erro ao gerar token de confirmação'}), 500
+            cursor.close()
+            conn.close()
+            return jsonify({
+                'success': False, 
+                'error': 'Erro ao gerar token de confirmação',
+                'error_code': 'TOKEN_GENERATION_ERROR'
+            }), 500
         
         # Enviar email de confirmação
         email_sent = email_service.send_confirmation_email(name, email, token_result['token'])
         
+        cursor.close()
+        conn.close()
+        
         if email_sent:
+            print(f"✅ Email de confirmação enviado para {email}")
             return jsonify({
                 'success': True,
                 'message': '🎉 Conta criada com TRIAL de 15 dias! Verifique seu email para ativar.',
@@ -140,13 +230,32 @@ def register():
                 }
             }), 201
         else:
-            return jsonify({'success': False, 'error': 'Conta criada, mas erro ao enviar email. Tente fazer login.'}), 500
+            print(f"❌ Erro ao enviar email para {email}")
+            return jsonify({
+                'success': False, 
+                'error': 'Conta criada, mas erro ao enviar email. Tente fazer login.',
+                'error_code': 'EMAIL_SEND_ERROR'
+            }), 500
         
     except Exception as e:
         print(f"❌ Erro no registro: {e}")
         import traceback
         traceback.print_exc()
-        return jsonify({'success': False, 'error': f'Erro interno: {str(e)}'}), 500
+        
+        # Fechar conexões se ainda estiverem abertas
+        try:
+            if 'cursor' in locals():
+                cursor.close()
+            if 'conn' in locals():
+                conn.close()
+        except:
+            pass
+        
+        return jsonify({
+            'success': False, 
+            'error': f'Erro interno: {str(e)}',
+            'error_code': 'INTERNAL_ERROR'
+        }), 500
 
 # ===== ROTAS DE CONFIRMAÇÃO DE EMAIL =====
 
@@ -904,7 +1013,7 @@ def verify_token():
             else:
                 print(f"📋 USUÁRIO FREE")
             
-            print(f"🎯 RESPOSTA FINAL: {response_data}")
+            print(f" RESPOSTA FINAL: {response_data}")
             
             return jsonify(response_data), 200
             

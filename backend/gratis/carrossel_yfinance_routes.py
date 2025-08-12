@@ -61,7 +61,7 @@ def get_carrossel_stocks():
         force_refresh = request.args.get('force_refresh', 'false').lower() == 'true'
         
         if not force_refresh and is_cache_valid():
-            logger.info("🎯 Carrossel: Dados servidos do cache")
+            logger.info(" Carrossel: Dados servidos do cache")
             response_data = _cache['data'].copy()
             response_data['data']['cache_hit'] = True
             response_data['data']['response_time'] = round((time.time() - start_time) * 1000, 2)

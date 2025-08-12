@@ -297,7 +297,7 @@ class RankingService:
     def get_full_analysis(self, rank_by="iv_current", top_n=20):
         """Análise completa - método principal"""
         try:
-            print(f"🎯 Iniciando análise completa: {rank_by}")
+            print(f" Iniciando análise completa: {rank_by}")
             
             # Buscar dados
             data = self.fetch_data(rank_by=rank_by, limit=150)

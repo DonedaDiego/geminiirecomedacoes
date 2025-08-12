@@ -568,7 +568,7 @@ def verify_service_compatibility():
             'coupon_uses' in coupon_tables
         )
         
-        print(f"\n🎯 STATUS GERAL: {'✅ COMPATÍVEL' if all_good else '❌ NECESSITA CORREÇÕES'}")
+        print(f"\n STATUS GERAL: {'✅ COMPATÍVEL' if all_good else '❌ NECESSITA CORREÇÕES'}")
         
         return all_good
         

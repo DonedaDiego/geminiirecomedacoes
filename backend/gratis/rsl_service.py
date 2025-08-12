@@ -384,7 +384,7 @@ class YFinanceRSLService:
             else:
                 print(f"❌ {setor}: Falha no cálculo")
         
-        print(f"🎯 Concluído! {len(resultados)}/{len(setores)} setores processados")
+        print(f" Concluído! {len(resultados)}/{len(setores)} setores processados")
         return resultados
     
     @classmethod

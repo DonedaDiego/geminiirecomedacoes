@@ -606,7 +606,7 @@
           console.log(`📈 Total de recomendações: ${allRecommendations.length}`);
           
           recommendations = allRecommendations.filter(r => r.status === 'ATIVA');
-          console.log(`🎯 Recomendações ativas: ${recommendations.length}`);
+          console.log(` Recomendações ativas: ${recommendations.length}`);
           
           displayRecommendations();
           updateStats();
@@ -1269,7 +1269,7 @@
     });
 
     window.addEventListener('load', function() {
-      console.log('🎯 Window loaded - verificando inicialização...');
+      console.log(' Window loaded - verificando inicialização...');
       if (!userToken) {
         init();
       }

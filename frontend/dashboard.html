@@ -22,6 +22,7 @@
         }
       }
     }
+    
   </script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -146,6 +147,118 @@
     .dropdown a:hover,
     .dropdown div:hover {
       background-color: rgba(50, 50, 60, 0.8) !important;
+    }
+
+
+    /* Cards de Em Breve */
+    .coming-soon-card {
+      background: linear-gradient(135deg, rgba(255, 215, 0, 0.1), rgba(255, 140, 0, 0.05));
+      border: 2px solid rgba(255, 215, 0, 0.3);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .coming-soon-card::before {
+      content: '';
+      position: absolute;
+      top: -2px;
+      left: -100%;
+      width: 100%;
+      height: 4px;
+      background: linear-gradient(90deg, transparent, #ffd700, transparent);
+      animation: shimmer 2s infinite;
+    }
+
+    @keyframes shimmer {
+      0% { left: -100%; }
+      100% { left: 100%; }
+    }
+
+    .coming-soon-badge {
+      background: linear-gradient(135deg, #ffd700, #ff8c00);
+      color: #000;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 10px;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      animation: pulse 2s infinite;
+    }
+
+    .notify-btn {
+      background: linear-gradient(135deg, #10b981, #06b6d4);
+      border: none;
+      color: white;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .notify-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3);
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 2px;
+      overflow: hidden;
+      margin: 8px 0;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #10b981, #06b6d4);
+      border-radius: 2px;
+      transition: width 0.3s ease;
+    }
+
+    .dropdown {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: rgba(20, 20, 25, 0.98); 
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.2); 
+      border-radius: 16px;
+      padding: 12px;
+      margin-top: 8px;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(-10px);
+      transition: all 0.3s ease;
+      z-index: 1000; /* AUMENTAR O Z-INDEX */
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.8); 
+    }
+
+    .dropdown.show {
+      opacity: 1 !important;
+      visibility: visible !important;
+      transform: translateY(0) !important;
+      display: block !important;
+      z-index: 1000 !important; /* GARANTIR QUE FIQUE POR CIMA */
+    }
+
+    /* Garantir que os cards de ferramentas tenham z-index menor */
+    .tool-card {
+      position: relative;
+      z-index: 10;
+    }
+
+    /* Garantir que a seção "Em Desenvolvimento" não interfira */
+    .card {
+      position: relative;
+      z-index: 1;
     }
   </style>
 </head>
@@ -399,7 +512,7 @@
       </div>
 
       <!-- Tools Section -->
-      <div class="card rounded-2xl p-8 mb-8">
+      <div class="card rounded-2xl p-8 mb-8" style="z-index: 100; position: relative;">
         <h2 class="text-2xl font-bold text-white mb-6 flex items-center">
           <i class="fas fa-tools text-primary mr-3"></i>
           Ferramentas Disponíveis
@@ -578,6 +691,94 @@
         </div>
       </div>
 
+      <!-- Coming Soon Section -->
+      <!-- Coming Soon Section - SEM OS SUBTÍTULOS/CHECKLIST -->
+<div class="card rounded-2xl p-8 mb-8">
+  <div class="flex items-center justify-between mb-6">
+    <div>
+      <h2 class="text-2xl font-bold text-white mb-2 flex items-center">
+        <i class="fas fa-rocket text-yellow-400 mr-3"></i>
+        Em Desenvolvimento
+      </h2>
+      <p class="text-gray-300">Próximos indicadores e ferramentas exclusivas</p>
+    </div>
+    <div class="flex items-center gap-2">
+      <span class="bg-gradient-to-r from-yellow-400 to-orange-500 text-black px-3 py-1 rounded-full text-xs font-bold">
+        <i class="fas fa-star mr-1"></i>
+        NOVIDADES
+      </span>
+    </div>
+  </div>
+  
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    
+    <!-- Gamma Levels -->
+    <div class="coming-soon-card rounded-xl p-6 transition-all group hover:scale-105">
+      <div class="flex items-center gap-4 mb-4">
+        <div class="w-14 h-14 bg-yellow-500/20 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+          <i class="fas fa-layer-group text-yellow-400 text-xl"></i>
+        </div>
+        <div class="flex-1">
+          <h3 class="text-lg font-semibold text-white">Gamma Levels</h3>
+          <p class="text-sm text-gray-300">Níveis de suporte e resistência via Gamma</p>
+        </div>
+      </div>
+      
+      <span class="coming-soon-badge mb-3">
+        <i class="fas fa-clock"></i>
+        Em Breve
+      </span>
+
+    </div>
+
+    <!-- Volume Profile -->
+    <div class="coming-soon-card rounded-xl p-6 transition-all group hover:scale-105">
+      <div class="flex items-center gap-4 mb-4">
+        <div class="w-14 h-14 bg-blue-500/20 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+          <i class="fas fa-chart-bar text-blue-400 text-xl"></i>
+        </div>
+        <div class="flex-1">
+          <h3 class="text-lg font-semibold text-white">Analise De Delta</h3>
+          <p class="text-sm text-gray-300">Análise avançada do movimento do Delta da opção</p>
+        </div>
+      </div>
+      
+      <span class="coming-soon-badge mb-3">
+        <i class="fas fa-cog"></i>
+        Planejando
+      </span>
+      
+
+
+    </div>
+
+    <!-- Delta Analysis -->
+    <div class="coming-soon-card rounded-xl p-6 transition-all group hover:scale-105">
+      <div class="flex items-center gap-4 mb-4">
+        <div class="w-14 h-14 bg-purple-500/20 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+          <i class="fas fa-arrows-alt-h text-purple-400 text-xl"></i>
+        </div>
+        <div class="flex-1">
+          <h3 class="text-lg font-semibold text-white">Reinforcement Learning (RL) </h3>
+          <p class="text-sm text-gray-300">Aprendizado baseada em interação, onde o modelo testa diferentes estratégias de compra e venda, avalia os resultados</p>
+        </div>
+      </div>
+      
+      <span class="coming-soon-badge mb-3">
+        <i class="fas fa-lightbulb"></i>
+        Ideias
+      </span>
+      
+
+    </div>
+
+  </div>
+  
+
+</div>
+      
+   
+
     </div>
   </main>
 
@@ -686,6 +887,8 @@
       initDashboard();
     });
 
+
+    
     function updatePlanInterface(plan, user = null) {
       const planBadge = document.getElementById('userPlanBadge');
       const upgradeBtn = document.getElementById('upgradeBtn');

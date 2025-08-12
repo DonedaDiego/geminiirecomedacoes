@@ -112,7 +112,7 @@ def create_checkout():
         print(f"   User Name: {user_name}")
         print(f"   Device ID: {device_id}")
         
-        # ===== 🎯 APLICAR DESCONTO DO CUPOM (NOVA ADIÇÃO) =====
+        # =====  APLICAR DESCONTO DO CUPOM (NOVA ADIÇÃO) =====
         if coupon_code and discounted_price:
             print(f"🎫 CUPOM DETECTADO: {coupon_code}")
             print(f"💰 PREÇO COM DESCONTO: R$ {discounted_price}")
