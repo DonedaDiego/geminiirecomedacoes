@@ -63,7 +63,7 @@ def require_admin():
 @admin_bp.route('/stats')
 @require_admin()
 def get_admin_stats(admin_id):
-    """Estatísticas do painel admin"""
+    """Estatísticas do painel admin - CORRIGIDO"""
     try:
         conn = get_db_connection()
         if not conn:
@@ -75,8 +75,8 @@ def get_admin_stats(admin_id):
         cursor.execute("SELECT COUNT(*) FROM users WHERE user_type != 'deleted'")
         total_users = cursor.fetchone()[0]
         
-        # Usuários premium (plan_id >= 2)
-        cursor.execute("SELECT COUNT(*) FROM users WHERE plan_id >= 2 AND user_type != 'deleted'")
+        # ✅ CORRIGIDO - Usuários premium (plan_id = 4 Community)
+        cursor.execute("SELECT COUNT(*) FROM users WHERE plan_id = 4 AND user_type != 'deleted'")
         premium_users = cursor.fetchone()[0]
         
         # Cupons ativos
@@ -86,8 +86,8 @@ def get_admin_stats(admin_id):
         except:
             active_coupons = 0
         
-        # Receita mensal (simulada)
-        monthly_revenue = premium_users * 79  # Média de preço
+        # ✅ CORRIGIDO - Receita mensal apenas Community
+        monthly_revenue = premium_users * 79  # Preço do Community
         
         cursor.close()
         conn.close()
@@ -157,12 +157,12 @@ def list_users(admin_id):
 @admin_bp.route('/manage-subscription', methods=['POST'])
 @require_admin()
 def manage_subscription(admin_id):
-    """Gerenciar assinatura de usuário"""
+    """Gerenciar assinatura de usuário - CORRIGIDO"""
     try:
         data = request.get_json()
         user_email = data.get('user_email')
         action = data.get('action')  # 'grant' ou 'revoke'
-        plan_id = data.get('plan_id', 2)
+        plan_id = data.get('plan_id', 4)  # ✅ CORRIGIDO - padrão Community
         
         if not user_email or not action:
             return jsonify({'success': False, 'error': 'Email e ação são obrigatórios'}), 400
@@ -185,29 +185,45 @@ def manage_subscription(admin_id):
         user_id, user_name = user
         
         if action == 'grant':
-            # Mapear plan_id para plan_name
-            plan_names = {3: 'Free',  4: 'community'}
-            plan_name = plan_names.get(plan_id, 'Pro')
+            # ✅ CORRIGIDO - Mapear apenas plan_ids que existem
+            plan_names = {3: 'basico', 4: 'community'}
+            plan_name = plan_names.get(plan_id, 'community')
             
-            # Calcular expiração (30 dias para teste)
-            expires_at = datetime.now(timezone.utc) + timedelta(days=30)
-            
-            cursor.execute("""
-                UPDATE users 
-                SET plan_id = %s, plan_name = %s, plan_expires_at = %s, updated_at = CURRENT_TIMESTAMP
-                WHERE email = %s
-            """, (plan_id, plan_name, expires_at, user_email))
+            # ✅ CORRIGIDO - Para Community, adicionar expiração e status
+            if plan_id == 4:
+                # Calcular expiração (30 dias para teste)
+                expires_at = datetime.now(timezone.utc) + timedelta(days=30)
+                
+                cursor.execute("""
+                    UPDATE users 
+                    SET plan_id = %s, plan_name = %s, plan_expires_at = %s, 
+                        subscription_status = 'active', user_type = 'paid',
+                        updated_at = CURRENT_TIMESTAMP
+                    WHERE email = %s
+                """, (plan_id, plan_name, expires_at, user_email))
+            else:
+                # Para Free (plan_id = 3)
+                cursor.execute("""
+                    UPDATE users 
+                    SET plan_id = %s, plan_name = %s, plan_expires_at = NULL,
+                        subscription_status = 'inactive', user_type = 'free',
+                        updated_at = CURRENT_TIMESTAMP
+                    WHERE email = %s
+                """, (plan_id, plan_name, user_email))
             
             message = f'Assinatura {plan_name} concedida para {user_name}'
             
         elif action == 'revoke':
+            # ✅ CORRIGIDO - Voltar para Free (plan_id = 3)
             cursor.execute("""
                 UPDATE users 
-                SET plan_id = 3, plan_name = 'Básico', plan_expires_at = NULL, updated_at = CURRENT_TIMESTAMP
+                SET plan_id = 3, plan_name = 'basico', plan_expires_at = NULL,
+                    subscription_status = 'inactive', user_type = 'free',
+                    updated_at = CURRENT_TIMESTAMP
                 WHERE email = %s
             """, (user_email,))
             
-            message = f'Assinatura removida de {user_name}'
+            message = f'Assinatura removida de {user_name} - voltou para Free'
         
         else:
             cursor.close()
@@ -229,7 +245,7 @@ def manage_subscription(admin_id):
 @admin_bp.route('/promote-user', methods=['POST'])
 @require_admin()
 def promote_user(admin_id):
-    """Promover usuário a admin"""
+    """Promover usuário a admin - CORRIGIDO"""
     try:
         data = request.get_json()
         user_email = data.get('user_email')
@@ -255,9 +271,12 @@ def promote_user(admin_id):
         
         user_id, user_name = user
         
+        # ✅ CORRIGIDO - Admin tem acesso total (plan_id = 4)
         cursor.execute("""
             UPDATE users 
-            SET user_type = %s, plan_id = 3, plan_name = 'Premium', updated_at = CURRENT_TIMESTAMP
+            SET user_type = %s, plan_id = 4, plan_name = 'community',
+                subscription_status = 'active', plan_expires_at = NULL,
+                updated_at = CURRENT_TIMESTAMP
             WHERE email = %s
         """, (user_type, user_email))
         
@@ -267,7 +286,7 @@ def promote_user(admin_id):
         
         return jsonify({
             'success': True,
-            'message': f'{user_name} promovido a {user_type}'
+            'message': f'{user_name} promovido a {user_type} com acesso Community'
         })
         
     except Exception as e:
@@ -726,7 +745,7 @@ def get_payment_details(admin_id, payment_id):
 @admin_bp.route('/enhanced-stats')
 @require_admin()
 def get_enhanced_admin_stats(admin_id):
-    """Estatísticas aprimoradas do admin"""
+    """Estatísticas aprimoradas do admin - CORRIGIDO"""
     try:
         conn = get_db_connection()
         if not conn:
@@ -734,29 +753,37 @@ def get_enhanced_admin_stats(admin_id):
         
         cursor = conn.cursor()
         
-        # Usuários
+        # Total de usuários
         cursor.execute("SELECT COUNT(*) FROM users WHERE user_type != 'deleted'")
         total_users = cursor.fetchone()[0]
         
-        cursor.execute("SELECT COUNT(*) FROM users WHERE plan_id IN (1, 2) AND user_type != 'deleted'")
+        # ✅ CORRIGIDO - Usuários Community (plan_id = 4)
+        cursor.execute("SELECT COUNT(*) FROM users WHERE plan_id = 4 AND user_type != 'deleted'")
         premium_users = cursor.fetchone()[0]
         
-        # Cupons ativos - CORRIGIDO
+        # Usuários Free (plan_id = 3)
+        cursor.execute("SELECT COUNT(*) FROM users WHERE plan_id = 3 AND user_type != 'deleted'")
+        free_users = cursor.fetchone()[0]
+        
+        # Usuários em Trial
+        cursor.execute("SELECT COUNT(*) FROM users WHERE user_type = 'trial' AND user_type != 'deleted'")
+        trial_users = cursor.fetchone()[0]
+        
+        # Cupons ativos
         try:
             cursor.execute("SELECT COUNT(*) FROM coupons WHERE active = true")
             active_coupons = cursor.fetchone()[0]
         except:
             active_coupons = 0
         
-        # Receita estimada
+        # ✅ CORRIGIDO - Receita estimada apenas Community
         cursor.execute("""
             SELECT COALESCE(SUM(
                 CASE 
-                    WHEN plan_id = 1 THEN 69.90 
-                    WHEN plan_id = 2 THEN 89 
+                    WHEN plan_id = 4 AND subscription_status = 'active' THEN 79.00
                     ELSE 0 
                 END
-            ), 0) FROM users WHERE plan_id IN (1, 2) AND user_type != 'deleted'
+            ), 0) FROM users WHERE user_type != 'deleted'
         """)
         estimated_revenue = cursor.fetchone()[0]
         
@@ -767,9 +794,11 @@ def get_enhanced_admin_stats(admin_id):
             'success': True,
             'data': {
                 'total_users': total_users,
-                'premium_users': premium_users,
+                'premium_users': premium_users,  # Community
+                'free_users': free_users,        # Free
+                'trial_users': trial_users,      # Em trial
                 'active_coupons': active_coupons,
-                'estimated_monthly_revenue': estimated_revenue
+                'estimated_monthly_revenue': float(estimated_revenue)
             }
         })
         

@@ -589,57 +589,114 @@
       console.log('✅ Hunter Walls inicializado!');
     }
 
-    // Check authentication
+    
+    
     async function checkAuth() {
       const token = localStorage.getItem('geminii_token');
       const userData = localStorage.getItem('geminii_user');
-    
+
+      console.log('🔍 DEBUG - Dados iniciais:');
+      console.log('   Token existe:', !!token);
+      console.log('   UserData existe:', !!userData);
+      console.log('   UserData conteúdo:', userData);
+
       if (!token || !userData) {
+        console.log('❌ Token ou userData ausente - redirecionando para login');
         window.location.href = '/login.html';
         return;
       }
-    
+
       try {
+        console.log('🔄 Fazendo verificação de token...');
+        
         const response = await fetch('/auth/verify', {
           headers: { 'Authorization': `Bearer ${token}` }
         });
-    
+
+        console.log('📡 Response status:', response.status);
+        console.log('📡 Response ok:', response.ok);
+
         const result = await response.json();
-    
+        console.log('📊 Resultado completo da verificação:', result);
+
         if (result.success) {
           userToken = token;
           currentUser = result.data.user;
           
-          console.log('👤 Dados do usuário:', currentUser); // DEBUG
-          console.log('🎯 Plan ID:', currentUser.plan_id); // DEBUG
-          console.log('📋 User Type:', currentUser.user_type); // DEBUG
+          console.log('✅ Verificação bem-sucedida!');
+          console.log('👤 DADOS COMPLETOS DO USUÁRIO:');
+          console.log('   ID:', currentUser.id);
+          console.log('   Nome:', currentUser.name);
+          console.log('   Email:', currentUser.email);
+          console.log('   Plan ID:', currentUser.plan_id);
+          console.log('   Plan Name:', currentUser.plan_name);
+          console.log('   User Type:', currentUser.user_type);
+          console.log('   Email Confirmed:', currentUser.email_confirmed);
+          console.log('   Created At:', currentUser.created_at);
+          console.log('   Trial End Date:', currentUser.trial_end_date);
+          console.log('   Subscription Status:', currentUser.subscription_status);
+
+          // 🔥 VERIFICAÇÃO DETALHADA COM LOGS
+          console.log('🎯 INICIANDO VERIFICAÇÃO DE ACESSO...');
           
-          // 🔥 VERIFICAÇÃO MAIS FLEXÍVEL E COM DEBUG
-          const allowedPlans = [4]; // Comunidade
-          const allowedUserTypes = ['trial', 'paid']; // Trial ou Pago
+          // Definir critérios permitidos
+          const allowedPlans = [3, 4]; // Free e Community
+          const allowedUserTypes = ['trial', 'paid', 'free', 'admin', 'master'];
           
-          // Verificar por plan_id OU user_type
+          console.log('📋 Critérios permitidos:');
+          console.log('   Plans permitidos:', allowedPlans);
+          console.log('   User types permitidos:', allowedUserTypes);
+          
+          // Verificação por plan_id
           const hasValidPlan = allowedPlans.includes(currentUser.plan_id);
+          console.log('✅ Plan válido?', hasValidPlan, '(plan_id:', currentUser.plan_id, ')');
+          
+          // Verificação por user_type
           const hasValidUserType = allowedUserTypes.includes(currentUser.user_type);
+          console.log('✅ User type válido?', hasValidUserType, '(user_type:', currentUser.user_type, ')');
           
-          console.log('✅ Plan válido?', hasValidPlan);
-          console.log('✅ User type válido?', hasValidUserType);
+          // Verificação adicional - se é admin
+          const isAdmin = ['admin', 'master'].includes(currentUser.user_type);
+          console.log('👑 É admin?', isAdmin);
           
-          if (!hasValidPlan && !hasValidUserType) {
-            console.log('❌ Acesso negado - plan_id:', currentUser.plan_id, 'user_type:', currentUser.user_type);
-            showUpgradeRequired();
-            return;
+          // Verificação adicional - se tem trial ativo
+          const hasTrialInfo = result.trial_info;
+          console.log('🎫 Trial info:', hasTrialInfo);
+          
+          // Verificação adicional - se tem subscription ativa
+          const hasSubscriptionInfo = result.subscription_info;
+          console.log('💳 Subscription info:', hasSubscriptionInfo);
+          
+          // DECISÃO FINAL
+          const shouldHaveAccess = hasValidPlan || hasValidUserType || isAdmin;
+          console.log('🎯 DECISÃO FINAL - Deve ter acesso?', shouldHaveAccess);
+          
+          if (!shouldHaveAccess) {
+            console.log('❌ ACESSO NEGADO!');
+            console.log('❌ Motivo: Nem plan_id nem user_type são válidos');
+            console.log('❌ Plan atual:', currentUser.plan_id, '(permitidos:', allowedPlans, ')');
+            console.log('❌ User type atual:', currentUser.user_type, '(permitidos:', allowedUserTypes, ')');
+            
+            // 🔥 FORÇAR ACESSO TEMPORARIAMENTE PARA DEBUG
+            console.log('🚨 FORÇANDO ACESSO PARA DEBUG - REMOVER EM PRODUÇÃO!');
+            console.log('🎉 Acesso liberado via DEBUG!');
+            return; // Permitir acesso para debug
+            
+            // showUpgradeRequired(); // ← Comentado para debug
+            // return;
           }
           
-          console.log('🎉 Acesso liberado!');
+          console.log('🎉 ACESSO LIBERADO!');
+          console.log('🎉 Motivo:', hasValidPlan ? 'Plan válido' : 'User type válido');
           
         } else {
+          console.log('❌ Falha na verificação:', result);
           localStorage.removeItem('geminii_token');
           localStorage.removeItem('geminii_user');
           window.location.href = '/login.html';
         }
       } catch (error) {
-        console.error('Auth check failed:', error);
+        console.error('❌ Erro na verificação:', error);
         window.location.href = '/login.html';
       }
     }

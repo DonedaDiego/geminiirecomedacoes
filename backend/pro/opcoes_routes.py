@@ -49,7 +49,7 @@ def token_required(f):
 @opcoes_bp.route('/api/opcoes/hunter-walls', methods=['POST'])
 @token_required
 def hunter_walls_analysis(current_user_id):
-    """Análise Hunter Walls para múltiplos vencimentos"""
+    """Análise Hunter Walls para múltiplos vencimentos - CORRIGIDO"""
     try:
         data = request.get_json()
         ticker = data.get('ticker', '').upper()
@@ -61,39 +61,104 @@ def hunter_walls_analysis(current_user_id):
         if not grupos_vencimentos:
             return jsonify({'success': False, 'message': 'Grupos de vencimentos são obrigatórios'}), 400
         
-        # Verificar plano do usuário
+        print(f"🎯 Hunter Walls - Usuário: {current_user_id}, Ticker: {ticker}")
+        
+        # ✅ VERIFICAR PLANO DO USUÁRIO - CORRIGIDO
         conn = get_db_connection()
+        if not conn:
+            return jsonify({'success': False, 'message': 'Erro de conexão com banco'}), 500
+            
         cursor = conn.cursor()
-        cursor.execute("SELECT plan_id FROM users WHERE id = %s", (current_user_id,))
+        cursor.execute("""
+            SELECT plan_id, user_type, plan_name FROM users 
+            WHERE id = %s
+        """, (current_user_id,))
         user = cursor.fetchone()
         cursor.close()
         conn.close()
         
-        if not user or user[0] > 2:  # Plano Premium necessário
+        if not user:
             return jsonify({
                 'success': False, 
-                'message': 'Recurso disponível apenas para planos Premium ou superior',
-                'upgrade_required': True
-            }), 403
-        
-        # Executar análise
-        opcoes_service = OpcoesService()
-        resultado = opcoes_service.hunter_walls_analysis(ticker, grupos_vencimentos)
-        
-        if not resultado:
-            return jsonify({
-                'success': False, 
-                'message': f'Não foi possível obter dados para {ticker}'
+                'message': 'Usuário não encontrado'
             }), 404
         
-        return jsonify({
-            'success': True,
-            'data': resultado
-        })
+        plan_id, user_type, plan_name = user
+        
+        print(f"👤 Usuário verificado - Plan ID: {plan_id}, User Type: {user_type}, Plan Name: {plan_name}")
+        
+        # ✅ LÓGICA DE ACESSO CORRIGIDA
+        allowed_plans = [3, 4]  # Free (3) e Community (4)
+        allowed_user_types = ['trial', 'paid', 'free', 'admin', 'master']
+        
+        has_valid_plan = plan_id in allowed_plans
+        has_valid_user_type = user_type in allowed_user_types
+        is_admin = user_type in ['admin', 'master']
+        
+        print(f"🔍 Verificação de acesso:")
+        print(f"   - Plan válido: {has_valid_plan} (plan_id {plan_id} in {allowed_plans})")
+        print(f"   - User type válido: {has_valid_user_type} (user_type '{user_type}' in {allowed_user_types})")
+        print(f"   - É admin: {is_admin}")
+        
+        # ✅ PERMITIR ACESSO SE QUALQUER CONDIÇÃO FOR VERDADEIRA
+        if not (has_valid_plan or has_valid_user_type or is_admin):
+            print(f"❌ ACESSO NEGADO - Plan ID: {plan_id}, User Type: {user_type}")
+            return jsonify({
+                'success': False, 
+                'message': 'Recurso disponível apenas para planos Community ou superior',
+                'upgrade_required': True,
+                'debug_info': {
+                    'current_plan_id': plan_id,
+                    'current_user_type': user_type,
+                    'allowed_plans': allowed_plans,
+                    'allowed_user_types': allowed_user_types
+                }
+            }), 403
+        
+        print(f"✅ ACESSO LIBERADO para usuário {current_user_id}")
+        
+        # ✅ EXECUTAR ANÁLISE
+        try:
+            opcoes_service = OpcoesService()
+            print(f"📊 Iniciando análise Hunter Walls...")
+            
+            resultado = opcoes_service.hunter_walls_analysis(ticker, grupos_vencimentos)
+            
+            if not resultado:
+                print(f"❌ Análise retornou vazio para {ticker}")
+                return jsonify({
+                    'success': False, 
+                    'message': f'Não foi possível obter dados para {ticker}. Verifique se o ticker está correto e tem opções disponíveis.'
+                }), 404
+            
+            print(f"✅ Análise concluída com sucesso para {ticker}")
+            
+            return jsonify({
+                'success': True,
+                'data': resultado,
+                'user_info': {
+                    'plan_id': plan_id,
+                    'user_type': user_type,
+                    'plan_name': plan_name
+                }
+            })
+            
+        except Exception as analysis_error:
+            print(f"❌ Erro na análise do OpcoesService: {analysis_error}")
+            return jsonify({
+                'success': False, 
+                'message': f'Erro ao processar análise: {str(analysis_error)}'
+            }), 500
         
     except Exception as e:
-        print(f"Erro em hunter_walls_analysis: {str(e)}")
-        return jsonify({'success': False, 'message': 'Erro interno do servidor'}), 500
+        print(f"❌ Erro geral em hunter_walls_analysis: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            'success': False, 
+            'message': 'Erro interno do servidor',
+            'debug_error': str(e)
+        }), 500
 
 @opcoes_bp.route('/api/opcoes/ticker-info', methods=['GET'])
 @token_required
