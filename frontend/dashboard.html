@@ -798,30 +798,10 @@
       checkApiStatus();
       setInterval(checkApiStatus, 30000);
       
-      // FORÇA LIBERAÇÃO DE TUDO
-      setTimeout(forceUnlockEverything, 500);
+      // APLICAR CONTROLES DE ACESSO (substituir forceUnlockEverything)
+      setTimeout(applyAccessControls, 500);
       
       console.log('✅ Dashboard inicializado!');
-    }
-
-    function forceUnlockEverything() {
-      console.log('🔓 FORÇANDO LIBERAÇÃO TOTAL...');
-      
-      userPlan = 'trial'; // FORÇA TRIAL
-      
-      // Garantir que todos os cards estão desbloqueados
-      document.querySelectorAll('.tool-card').forEach(card => {
-        card.style.opacity = '1';
-        card.style.cursor = 'pointer';
-        card.style.pointerEvents = 'auto';
-      });
-      
-      // Garantir que todos os dropdowns estão habilitados
-      document.querySelectorAll('.dropdown').forEach(dropdown => {
-        dropdown.style.display = 'block';
-      });
-      
-      console.log('✅ TUDO LIBERADO!');
     }
 
     function tryLoadFromLocalStorage() {
@@ -840,25 +820,92 @@
     }
 
     function checkUserPlan(user) {
-      console.log('🔍 Verificando plano:', user);
+      console.log('🔍 Verificando plano do usuário:', user);
+      console.log('📊 user_type:', user.user_type, 'plan_id:', user.plan_id);
       
-      // SEMPRE RETORNA TRIAL SE TIVER plan_id = 4
-      if (user.plan_id === 4) {
-        console.log('✅ TRIAL COMMUNITY DETECTADO');
-        userPlan = 'trial';
-        return 'trial';
+      // ACESSO TOTAL: admin, paid, trial
+      if (user.user_type === 'admin') {
+        console.log('👑 ADMIN DETECTADO - ACESSO TOTAL');
+        userPlan = 'admin';
+        return 'admin';
+      }
+      
+      if (user.user_type === 'paid') {
+        console.log('💰 PAID DETECTADO - ACESSO TOTAL');
+        userPlan = 'paid';
+        return 'paid';
       }
       
       if (user.user_type === 'trial') {
-        console.log('✅ USER_TYPE TRIAL DETECTADO');
+        console.log('⏰ TRIAL DETECTADO - ACESSO TOTAL');
         userPlan = 'trial';
         return 'trial';
       }
       
+      // ACESSO FREE: regular
+      if (user.user_type === 'regular') {
+        console.log('🆓 REGULAR DETECTADO - ACESSO LIMITADO');
+        userPlan = 'free';
+        return 'free';
+      }
+      
+      // Fallback para free
+      console.log('⚠️ USER_TYPE NÃO IDENTIFICADO - DEFAULTING PARA FREE');
       userPlan = 'free';
       return 'free';
     }
 
+    function applyAccessControls() {
+      console.log('🔒 Aplicando controles de acesso para user_type:', userPlan);
+      
+      const opcoesCard = document.getElementById('opcoesCard');
+      const mlCard = document.getElementById('mlCard');
+      
+      // SÓ BLOQUEIA SE FOR REGULAR (user_type = 'regular')
+      if (userPlan === 'free') {
+        console.log('❌ BLOQUEANDO ACESSO - USUÁRIO REGULAR');
+        
+        // Bloquear cards...
+        [opcoesCard, mlCard].forEach(card => {
+          if (card) {
+            card.style.opacity = '0.5';
+            card.style.cursor = 'not-allowed';
+            card.style.pointerEvents = 'none';
+            
+            if (!card.querySelector('.access-overlay')) {
+              const overlay = document.createElement('div');
+              overlay.className = 'access-overlay absolute inset-0 bg-black/70 rounded-xl flex items-center justify-center z-20';
+              overlay.innerHTML = `
+                <div class="text-center p-4">
+                  <i class="fas fa-lock text-yellow-400 text-3xl mb-3"></i>
+                  <p class="text-white font-bold mb-2">Acesso Comunidade</p>
+                  <p class="text-gray-300 text-sm mb-3">Faça upgrade para acessar</p>
+                  <button onclick="window.open('planos.html', '_blank')" class="bg-gradient-to-r from-primary to-secondary text-white px-4 py-2 rounded-lg text-sm font-semibold hover:scale-105 transition-transform">
+                    <i class="fas fa-crown mr-2"></i>Upgrade
+                  </button>
+                </div>
+              `;
+              card.style.position = 'relative';
+              card.appendChild(overlay);
+            }
+          }
+        });
+      } else {
+        // LIBERA TUDO para admin, paid, trial
+        console.log('✅ LIBERANDO ACESSO TOTAL para user_type:', userPlan);
+        
+        [opcoesCard, mlCard].forEach(card => {
+          if (card) {
+            card.style.opacity = '1';
+            card.style.cursor = 'pointer';
+            card.style.pointerEvents = 'auto';
+            
+            const overlay = card.querySelector('.access-overlay');
+            if (overlay) overlay.remove();
+          }
+        });
+      }
+    }
 
     // Função para configurar os links dos planos
     function configurarLinksPlanos() {
@@ -895,13 +942,26 @@
       const trialInfo = document.getElementById('trialInfo');
       const trialDaysLeft = document.getElementById('trialDaysLeft');
       
-      if (plan === 'trial') {
+      if (plan === 'admin') {
+        planBadge.className = 'community-badge';
+        planBadge.innerHTML = '<i class="fas fa-crown"></i>Administrador';
+        upgradeBtn.style.display = 'inline-block'
+        upgradeBtn.classList.add('hidden');
+        trialInfo.classList.add('hidden');
+      } else if (plan === 'paid') {
+        planBadge.className = 'community-badge';
+        planBadge.innerHTML = '<i class="fas fa-star"></i>Comunidade';
+        upgradeBtn.style.display = 'inline-block'
+        upgradeBtn.classList.add('hidden');
+        trialInfo.classList.add('hidden');
+      } else if (plan === 'trial') {
         planBadge.className = 'trial-badge';
         planBadge.innerHTML = '<i class="fas fa-clock"></i>Trial Ativo';
+        upgradeBtn.style.display = 'inline-block'
         upgradeBtn.classList.remove('hidden');
         trialInfo.classList.remove('hidden');
         
-        let daysLeft = 15; // PADRÃO
+        let daysLeft = 15;
         if (user && user.trial_end_date) {
           const now = new Date();
           const trialEnd = new Date(user.trial_end_date);
@@ -1087,7 +1147,12 @@
     }
 
     function toggleMLDropdown() {
-      console.log('🧠 Abrindo ML Dropdown - userPlan:', userPlan);
+      if (userPlan === 'free') {
+        alert('🔒 Este recurso está disponível apenas para assinantes da Comunidade!\n\nFaça upgrade para acessar todas as ferramentas.');
+        return;
+      }
+      
+      console.log('🧠 Abrindo ML Dropdown - user_type:', userPlan);
       
       const dropdown = document.getElementById('mlDropdown');
       const chevron = document.getElementById('mlChevron');
@@ -1098,17 +1163,20 @@
         if (dropdown.classList.contains('show')) {
           dropdown.classList.remove('show');
           chevron.style.transform = 'rotate(0deg)';
-          console.log('🧠 ML Dropdown FECHADO');
         } else {
           dropdown.classList.add('show');
           chevron.style.transform = 'rotate(180deg)';
-          console.log('🧠 ML Dropdown ABERTO');
         }
       }
     }
 
     function toggleOpcoesDropdown() {
-      console.log('📊 Abrindo Opcoes Dropdown - userPlan:', userPlan);
+      if (userPlan === 'free') {
+        alert('🔒 Este recurso está disponível apenas para assinantes da Comunidade!\n\nFaça upgrade para acessar todas as ferramentas.');
+        return;
+      }
+      
+      console.log('📊 Abrindo Opcoes Dropdown - user_type:', userPlan);
       
       const dropdown = document.getElementById('opcoesDropdown');
       const chevron = document.getElementById('opcoesChevron');
@@ -1119,11 +1187,9 @@
         if (dropdown.classList.contains('show')) {
           dropdown.classList.remove('show');
           chevron.style.transform = 'rotate(0deg)';
-          console.log('📊 Opcoes Dropdown FECHADO');
         } else {
           dropdown.classList.add('show');
           chevron.style.transform = 'rotate(180deg)';
-          console.log('📊 Opcoes Dropdown ABERTO');
         }
       }
     }
