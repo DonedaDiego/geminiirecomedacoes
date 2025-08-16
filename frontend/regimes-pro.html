@@ -26,355 +26,627 @@
  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
  <style>
-   body {
-     font-family: 'Inter', sans-serif;
-     background: #0f0f0f;
-   }
-   
-   .card {
-     background: rgba(255, 255, 255, 0.08);
-     backdrop-filter: blur(20px);
-     border: 1px solid rgba(255, 255, 255, 0.1);
-     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-     transition: all 0.3s ease;
-   }
-   
-   .card:hover {
-     transform: translateY(-2px);
-     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
-     border-color: rgba(255, 255, 255, 0.2);
-   }
-   
-   .navbar {
-     background: rgba(15, 15, 15, 0.95);
-     backdrop-filter: blur(20px);
-     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-   }
-   
-   .pulse-glow {
-     animation: pulseGlow 2s ease-in-out infinite alternate;
-   }
-   
-   @keyframes pulseGlow {
-     from { box-shadow: 0 0 20px rgba(255, 215, 0, 0.3); }
-     to { box-shadow: 0 0 30px rgba(255, 215, 0, 0.6); }
-   }
-   
-   .loading-skeleton {
-     background: linear-gradient(90deg, #1a1a1a 25%, #2a2a2a 50%, #1a1a1a 75%);
-     background-size: 400% 100%;
-     animation: skeleton-loading 1.4s ease-in-out infinite;
-   }
+  body {
+    font-family: 'Inter', sans-serif;
+    background: #0f0f0f;
+  }
+  
+  .card {
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    transition: all 0.3s ease;
+  }
+  
+  .card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+    border-color: rgba(255, 255, 255, 0.2);
+  }
+  
+  .navbar {
+    background: rgba(15, 15, 15, 0.95);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  
+  .pulse-glow {
+    animation: pulseGlow 2s ease-in-out infinite alternate;
+  }
+  
+  @keyframes pulseGlow {
+    from { box-shadow: 0 0 20px rgba(255, 215, 0, 0.3); }
+    to { box-shadow: 0 0 30px rgba(255, 215, 0, 0.6); }
+  }
+  
+  .loading-skeleton {
+    background: linear-gradient(90deg, #1a1a1a 25%, #2a2a2a 50%, #1a1a1a 75%);
+    background-size: 400% 100%;
+    animation: skeleton-loading 1.4s ease-in-out infinite;
+  }
 
-   @keyframes skeleton-loading {
-     0% { background-position: 100% 50%; }
-     100% { background-position: 0 50%; }
-   }
-   
-   .fade-in {
-     animation: fadeIn 0.5s ease-in;
-   }
-   
-   @keyframes fadeIn {
-     from { opacity: 0; transform: translateY(20px); }
-     to { opacity: 1; transform: translateY(0); }
-   }
+  @keyframes skeleton-loading {
+    0% { background-position: 100% 50%; }
+    100% { background-position: 0 50%; }
+  }
+  
+  .fade-in {
+    animation: fadeIn 0.5s ease-in;
+  }
+  
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
 
-   .status-badge {
-     padding: 0.25rem 0.75rem;
-     border-radius: 9999px;
-     font-size: 0.75rem;
-     font-weight: 600;
-     text-transform: uppercase;
-   }
+  .status-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
 
-   .status-confiavel {
-     background-color: rgba(16, 185, 129, 0.2);
-     color: #10b981;
-     border: 1px solid rgba(16, 185, 129, 0.3);
-   }
+  .status-confiavel {
+    background-color: rgba(16, 185, 129, 0.2);
+    color: #10b981;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+  }
 
-   .status-neutro {
-     background-color: rgba(245, 158, 11, 0.2);
-     color: #f59e0b;
-     border: 1px solid rgba(245, 158, 11, 0.3);
-   }
+  .status-neutro {
+    background-color: rgba(245, 158, 11, 0.2);
+    color: #f59e0b;
+    border: 1px solid rgba(245, 158, 11, 0.3);
+  }
 
-   .status-suspeito {
-     background-color: rgba(239, 68, 68, 0.2);
-     color: #ef4444;
-     border: 1px solid rgba(239, 68, 68, 0.3);
-   }
+  .status-suspeito {
+    background-color: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+  }
 
-   .error-card {
-     background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(220, 38, 38, 0.05));
-     border: 1px solid rgba(239, 68, 68, 0.3);
-   }
+  .error-card {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(220, 38, 38, 0.05));
+    border: 1px solid rgba(239, 68, 68, 0.3);
+  }
 
-   .btn-modern {
-     background: linear-gradient(135deg, #6366f1, #8b5cf6);
-     transition: all 0.3s ease;
-     box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
-   }
+  .btn-modern {
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+  }
 
-   .btn-modern:hover {
-     transform: translateY(-2px);
-     box-shadow: 0 8px 25px rgba(99, 102, 241, 0.4);
-   }
+  .btn-modern:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(99, 102, 241, 0.4);
+  }
 
-   .btn-bands {
-     background: linear-gradient(135deg, #FFD700, #FFA500);
-     color: #1a1a2e;
-     box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
-   }
+  .btn-bands {
+    background: linear-gradient(135deg, #FFD700, #FFA500);
+    color: #1a1a2e;
+    box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
+  }
 
-   .btn-bands:hover {
-     transform: translateY(-2px);
-     box-shadow: 0 8px 25px rgba(255, 215, 0, 0.4);
-   }
+  .btn-bands:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(255, 215, 0, 0.4);
+  }
 
-   .btn-flow {
-     background: linear-gradient(135deg, #00FF88, #00CC70);
-     box-shadow: 0 4px 15px rgba(0, 255, 136, 0.3);
-   }
+  .btn-flow {
+    background: linear-gradient(135deg, #00FF88, #00CC70);
+    box-shadow: 0 4px 15px rgba(0, 255, 136, 0.3);
+  }
 
-   .btn-flow:hover {
-     transform: translateY(-2px);
-     box-shadow: 0 8px 25px rgba(0, 255, 136, 0.4);
-   }
+  .btn-flow:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 255, 136, 0.4);
+  }
 
-   .btn-export {
-     background: linear-gradient(135deg, #10b981, #059669);
-     box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
-   }
+  .btn-export {
+    background: linear-gradient(135deg, #10b981, #059669);
+    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+  }
 
-   .btn-export:hover {
-     transform: translateY(-2px);
-     box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
-   }
+  .btn-export:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
+  }
 
-   .btn-details {
-     background: linear-gradient(135deg, #ba39af, #9333ea);
-     box-shadow: 0 4px 15px rgba(186, 57, 175, 0.3);
-   }
+  .btn-details {
+    background: linear-gradient(135deg, #ba39af, #9333ea);
+    box-shadow: 0 4px 15px rgba(186, 57, 175, 0.3);
+  }
 
-   .btn-details:hover {
-     transform: translateY(-2px);
-     box-shadow: 0 8px 25px rgba(186, 57, 175, 0.4);
-   }
+  .btn-details:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(186, 57, 175, 0.4);
+  }
 
-   .btn-movement {
-     background: linear-gradient(135deg, #f59e0b, #d97706);
-     box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
-   }
+  .btn-movement {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
+  }
 
-   .btn-movement:hover {
-     transform: translateY(-2px);
-     box-shadow: 0 8px 25px rgba(245, 158, 11, 0.4);
-   }
+  .btn-movement:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(245, 158, 11, 0.4);
+  }
 
-   .spinner {
-     border: 4px solid rgba(255, 255, 255, 0.3);
-     border-top: 4px solid #FFD700;
-     border-radius: 50%;
-     width: 40px;
-     height: 40px;
-     animation: spin 1s linear infinite;
-   }
+  .spinner {
+    border: 4px solid rgba(255, 255, 255, 0.3);
+    border-top: 4px solid #FFD700;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+  }
 
-   @keyframes spin {
-     0% { transform: rotate(0deg); }
-     100% { transform: rotate(360deg); }
-   }
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
 
-   .chart-container {
-     background: rgba(255, 255, 255, 0.05);
-     backdrop-filter: blur(20px);
-     border: 1px solid rgba(255, 255, 255, 0.1);
-   }
+  /* GRÁFICOS - RESPONSIVIDADE CORRIGIDA */
+  .chart-container {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 1rem;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    overflow: hidden; /* Evita scroll horizontal */
+    position: relative;
+    width: 100%;
+    min-height: 500px; /* Altura mínima */
+  }
 
-   .metric-card {
-     background: rgba(255, 255, 255, 0.05);
-     border: 1px solid rgba(255, 255, 255, 0.1);
-     transition: all 0.3s ease;
-   }
+  /* Container dos gráficos Plotly */
+  #bandsChart, #flowChart {
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 500px !important;
+    position: relative;
+  }
 
-   .metric-card:hover {
-     background: rgba(255, 255, 255, 0.08);
-     border-color: rgba(255, 255, 255, 0.2);
-   }
+  /* Forçar responsividade do Plotly */
+  .js-plotly-plot, .plotly, .plotly-graph-div {
+    width: 100% !important;
+    height: 100% !important;
+  }
 
-   /* Gauge Styles - Estilo Velocímetro Real */
-   .gauge-container {
-     display: flex;
-     justify-content: center;
-     align-items: center;
-     position: relative;
-   }
+  /* SVG do Plotly */
+  .js-plotly-plot .plotly .svg-container {
+    width: 100% !important;
+    height: 100% !important;
+  }
 
-   .gauge-svg {
-     filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.5));
-   }
+  .metric-card {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.3s ease;
+  }
 
-   .gauge-bg {
-     fill: #2a2a2a;
-     stroke: #404040;
-     stroke-width: 3;
-   }
+  .metric-card:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.2);
+  }
 
-   .gauge-face {
-     fill: #1a1a1a;
-     stroke: #333;
-     stroke-width: 2;
-   }
+  /* Gauge Styles - Estilo Velocímetro Real */
+  .gauge-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+  }
 
-   .gauge-arc-bg {
-     fill: none;
-     stroke: #333;
-     stroke-width: 8;
-   }
+  .gauge-svg {
+    filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.5));
+  }
 
-   .gauge-arc-green {
-     fill: none;
-     stroke: #10b981;
-     stroke-width: 8;
-   }
+  .gauge-bg {
+    fill: #2a2a2a;
+    stroke: #404040;
+    stroke-width: 3;
+  }
 
-   .gauge-arc-yellow {
-     fill: none;
-     stroke: #f59e0b;
-     stroke-width: 8;
-   }
+  .gauge-face {
+    fill: #1a1a1a;
+    stroke: #333;
+    stroke-width: 2;
+  }
 
-   .gauge-arc-red {
-     fill: none;
-     stroke: #ef4444;
-     stroke-width: 8;
-   }
+  .gauge-arc-bg {
+    fill: none;
+    stroke: #333;
+    stroke-width: 8;
+  }
 
-   .gauge-needle {
-     fill: #ffffff;
-     filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
-     transform-origin: 80px 80px;
-     transition: transform 2s ease-out;
-   }
+  .gauge-arc-green {
+    fill: none;
+    stroke: #10b981;
+    stroke-width: 8;
+  }
 
-   .gauge-center {
-     fill: #666;
-     stroke: #999;
-     stroke-width: 2;
-   }
+  .gauge-arc-yellow {
+    fill: none;
+    stroke: #f59e0b;
+    stroke-width: 8;
+  }
 
-   .gauge-value-text {
-     fill: white;
-     font-size: 16px;
-     font-weight: bold;
-     font-family: 'Inter', sans-serif;
-     text-anchor: middle;
-   }
+  .gauge-arc-red {
+    fill: none;
+    stroke: #ef4444;
+    stroke-width: 8;
+  }
 
-   .gauge-label-text {
-     fill: #9CA3AF;
-     font-size: 11px;
-     font-weight: 500;
-     font-family: 'Inter', sans-serif;
-     text-anchor: middle;
-   }
+  .gauge-needle {
+    fill: #ffffff;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+    transform-origin: 80px 80px;
+    transition: transform 2s ease-out;
+  }
 
-   .gauge-scale-text {
-     fill: #9CA3AF;
-     font-size: 8px;
-     font-weight: 500;
-     font-family: 'Inter', sans-serif;
-     text-anchor: middle;
-   }
+  .gauge-center {
+    fill: #666;
+    stroke: #999;
+    stroke-width: 2;
+  }
 
-   .gauge-title {
-     fill: white;
-     font-size: 12px;
-     font-weight: 600;
-     font-family: 'Inter', sans-serif;
-     text-anchor: middle;
-   }
+  .gauge-value-text {
+    fill: white;
+    font-size: 16px;
+    font-weight: bold;
+    font-family: 'Inter', sans-serif;
+    text-anchor: middle;
+  }
 
-   input:focus {
-     outline: none;
-     border-color: #6366f1;
-     box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
-   }
+  .gauge-label-text {
+    fill: #9CA3AF;
+    font-size: 11px;
+    font-weight: 500;
+    font-family: 'Inter', sans-serif;
+    text-anchor: middle;
+  }
 
-   /* Responsividade melhorada para gráficos */
-   .chart-container {
-     background: rgba(255, 255, 255, 0.05);
-     backdrop-filter: blur(20px);
-     border: 1px solid rgba(255, 255, 255, 0.1);
-     overflow-x: auto; /* Permite scroll horizontal se necessário */
-   }
+  .gauge-scale-text {
+    fill: #9CA3AF;
+    font-size: 8px;
+    font-weight: 500;
+    font-family: 'Inter', sans-serif;
+    text-anchor: middle;
+  }
 
-   /* Responsividade específica para gráficos */
-   @media (max-width: 768px) {
-     .chart-container {
-       padding: 1rem; /* Reduz padding em mobile */
-       margin: 0 -1rem; /* Compensa padding do container pai */
-     }
-     
-     /* Força altura menor em mobile */
-     #bandsChart, #flowChart {
-       min-height: 400px !important;
-       max-height: 500px !important;
-     }
-   }
+  .gauge-title {
+    fill: white;
+    font-size: 12px;
+    font-weight: 600;
+    font-family: 'Inter', sans-serif;
+    text-anchor: middle;
+  }
 
-   @media (max-width: 480px) {
-     .chart-container {
-       padding: 0.5rem;
-       margin: 0 -1.5rem;
-       border-radius: 0.5rem;
-     }
-     
-     #bandsChart, #flowChart {
-       min-height: 350px !important;
-       max-height: 450px !important;
-     }
-   }
+  input:focus {
+    outline: none;
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+  }
 
-   /* Container principal responsivo */
-   @media (max-width: 768px) {
-     .max-w-7xl {
-       padding-left: 1rem;
-       padding-right: 1rem;
-     }
-   }
+  select:focus {
+    outline: none;
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+  }
+  
+  select option {
+    background-color: #1a1a1a;
+    color: white;
+  }
 
-   select:focus {
-     outline: none;
-     border-color: #6366f1;
-     box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
-   }
-   
-   select option {
-     background-color: #1a1a1a;
-     color: white;
-   }
+  /* Modal Styles */
+  /* Modal Styles - VERSÃO CORRIGIDA */
+.modal-backdrop {
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(12px);
+  z-index: 9999;
+}
 
-   /* Modal Styles */
-   .modal-backdrop {
-     background: rgba(0, 0, 0, 0.8);
-     backdrop-filter: blur(8px);
-   }
+.modal-content {
+  background: rgba(17, 24, 39, 0.98);
+  backdrop-filter: blur(25px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+}
 
-   .modal-content {
-     background: rgba(17, 24, 39, 0.95);
-     backdrop-filter: blur(20px);
-     border: 1px solid rgba(255, 255, 255, 0.1);
-   }
+/* Calculadora de Movimento - Layout Específico */
+#movementModal .modal-content {
+  max-width: 95vw;
+  max-height: 95vh;
+  width: 100%;
+  margin: auto;
+}
 
-   @keyframes fadeOut {
-     from { opacity: 1; transform: translateY(0); }
-     to { opacity: 0; transform: translateY(-10px); }
-   }
+/* Grid Layout para o Modal */
+.movement-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  align-items: start;
+}
 
- </style>
+/* Gráfico do Modal */
+#movementChart {
+  width: 100% !important;
+  height: 400px !important;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Cards de Resultados */
+.result-card {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.75rem;
+  padding: 1rem;
+  transition: all 0.3s ease;
+}
+
+.result-card:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Responsividade do Modal */
+@media (max-width: 1024px) {
+  .movement-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  
+  #movementChart {
+    height: 350px !important;
+  }
+}
+
+@media (max-width: 768px) {
+  #movementModal .modal-content {
+    max-width: 98vw;
+    max-height: 98vh;
+    margin: 1vh auto;
+    border-radius: 1rem;
+  }
+  
+  .movement-grid {
+    gap: 1rem;
+  }
+  
+  #movementChart {
+    height: 300px !important;
+  }
+  
+  .result-card {
+    padding: 0.75rem;
+  }
+}
+
+@media (max-width: 480px) {
+  #movementModal .modal-content {
+    border-radius: 0.5rem;
+    margin: 0.5vh auto;
+  }
+  
+  #movementChart {
+    height: 250px !important;
+  }
+}
+
+  @keyframes fadeOut {
+    from { opacity: 1; transform: translateY(0); }
+    to { opacity: 0; transform: translateY(-10px); }
+  }
+
+  /* ========== RESPONSIVIDADE MOBILE E TABLET ========== */
+  
+  /* Tablet - iPad e similares */
+  @media (max-width: 1024px) and (min-width: 769px) {
+    .chart-container {
+      padding: 1.25rem;
+      min-height: 450px;
+    }
+    
+    #bandsChart, #flowChart {
+      min-height: 450px !important;
+      max-height: 600px !important;
+    }
+  }
+
+  /* Mobile Grande - iPhone Plus, etc */
+  @media (max-width: 768px) {
+    .chart-container {
+      padding: 1rem;
+      margin: 0 -0.5rem;
+      border-radius: 0.75rem;
+      min-height: 400px;
+    }
+    
+    #bandsChart, #flowChart {
+      min-height: 400px !important;
+      max-height: 500px !important;
+    }
+
+    /* Container principal responsivo */
+    .max-w-7xl {
+      padding-left: 1rem;
+      padding-right: 1rem;
+    }
+
+    /* Ajustar gauges em mobile */
+    .gauge-container {
+      transform: scale(0.8);
+    }
+  }
+
+  /* Mobile Pequeno - iPhone SE, etc */
+  @media (max-width: 480px) {
+    .chart-container {
+      padding: 0.75rem;
+      margin: 0 -0.75rem;
+      border-radius: 0.5rem;
+      min-height: 350px;
+    }
+    
+    #bandsChart, #flowChart {
+      min-height: 350px !important;
+      max-height: 450px !important;
+    }
+
+    /* Reduzir ainda mais os gauges */
+    .gauge-container {
+      transform: scale(0.7);
+    }
+
+    /* Ajustar grid de métricas */
+    .grid.grid-cols-1.md\\:grid-cols-3 {
+      grid-template-columns: 1fr;
+      gap: 1rem;
+    }
+  }
+
+  /* Mobile Extra Pequeno */
+  @media (max-width: 360px) {
+    .chart-container {
+      padding: 0.5rem;
+      margin: 0 -1rem;
+      min-height: 320px;
+    }
+    
+    #bandsChart, #flowChart {
+      min-height: 320px !important;
+      max-height: 400px !important;
+    }
+
+    .gauge-container {
+      transform: scale(0.6);
+    }
+  }
+
+  /* ========== FIXES ESPECÍFICOS PARA PLOTLY ========== */
+  
+  /* Prevenir overflow horizontal */
+  .modebar {
+    position: absolute !important;
+    top: 10px !important;
+    right: 10px !important;
+  }
+
+  /* Legenda responsiva */
+  @media (max-width: 768px) {
+    .js-plotly-plot .legend {
+      font-size: 10px !important;
+    }
+  }
+
+  /* Eixos responsivos */
+  @media (max-width: 480px) {
+    .js-plotly-plot .xtick text,
+    .js-plotly-plot .ytick text {
+      font-size: 9px !important;
+    }
+  }
+
+  /* Container que força largura total */
+  .plotly-responsive-container {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* ========== ANIMAÇÕES E TRANSIÇÕES ========== */
+  
+  .chart-container {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .chart-container:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+    border-color: rgba(255, 255, 255, 0.15);
+  }
+
+  /* Loading state para gráficos */
+  .chart-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 400px;
+    flex-direction: column;
+  }
+
+  .chart-loading .spinner {
+    margin-bottom: 1rem;
+  }
+
+  /* ========== UTILITÁRIOS ========== */
+  
+  /* Helper para forçar recalculo de layout */
+  .force-layout-recalc {
+    transform: translateZ(0);
+    will-change: auto;
+  }
+
+  /* Classe para debugging - remover em produção */
+  .debug-border {
+    border: 2px solid red !important;
+  }
+
+  /* Otimizações de performance */
+  .chart-container * {
+    box-sizing: border-box;
+  }
+
+  /* Scroll suave se necessário */
+  .chart-container {
+    scroll-behavior: smooth;
+  }
+  /* Adicionar ao CSS existente, dentro da seção de gráficos */
+
+/* Flow Chart específico */
+#flowChart {
+  position: relative;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 0.5rem;
+}
+
+/* Ajustes específicos para dual-axis */
+#flowChart .js-plotly-plot .plotly .svg-container .svg-scrollbox {
+  overflow: visible !important;
+}
+
+/* Legenda do Flow Chart */
+@media (max-width: 768px) {
+  #flowChart .legend {
+    max-width: 100% !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+  }
+}
+
+/* Eixos Y duplos */
+.yaxis2-title {
+  fill: #00FF88 !important;
+}
+
+.yaxis-title {
+  fill: #FFD700 !important;
+}
+
+/* Hover labels */
+.hoverlayer .hovertext {
+  background: rgba(0, 0, 0, 0.9) !important;
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+}
+</style>
 </head>
 <body class="min-h-screen text-white">
  
@@ -408,86 +680,117 @@
        
        <!-- Header -->
        <div class="text-center mb-8">
-         <h1 class="text-4xl md:text-5xl font-bold mb-4">
-           <span style="color: #ba39af; font-weight: 900;">Sistema Bandas</span>
-           <span class="text-white font-light">De Volatilidade</span>
-         </h1>
-         <p class="text-neutral-300 text-lg max-w-2xl mx-auto">
-           Análise avançada com GARCH + XGBoost para previsão de volatilidade
-         </p>
-         
-         <!-- Info Expander -->
-         <div class="mt-8">
-           <button onclick="toggleInfo()" class="bg-gradient-to-r from-geminii to-purple-600 hover:from-purple-600 hover:to-geminii text-white px-6 py-3 rounded-full font-semibold text-sm transition-all duration-300 flex items-center mx-auto shadow-lg hover:shadow-xl transform hover:scale-105">
-             <i id="infoIcon" class="fas fa-info-circle mr-2 transition-transform duration-300"></i>
-             Como Funciona Nossa Tecnologia Avançada
-           </button>
-           
-           <div id="infoContent" class="hidden mt-8 max-w-5xl mx-auto">
-             <div class="card rounded-xl p-8 text-left">
-               <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                 
-                 <!-- Hybrid Volatility Bands -->
-                 <div class="space-y-4">
-                   <div class="flex items-center mb-4">
-                     <div class="w-4 h-4 rounded-full bg-gradient-to-r from-yellow-400 to-orange-500 mr-3"></div>
-                     <h3 class="text-xl font-bold text-white">Bandas de Volatilidade Híbridas</h3>
-                   </div>
-                   <p class="text-gray-300 text-sm leading-relaxed mb-4">
-                     Nosso modelo captura a <strong>volatilidade passada</strong> usando estimativa ponderada com <strong>GARCH</strong>, 
-                     depois roda machine learning <strong>XGBoost</strong> com outras <strong>15 variáveis</strong> para estimar 
-                     suportes e resistências com precisão matemática.
-                   </p>
-                   <div class="bg-white/5 rounded-lg p-4">
-                     <h4 class="text-warning font-semibold text-sm mb-3">O que você obtém:</h4>
-                     <ul class="text-gray-400 text-sm space-y-2">
-                       <li>• <span class="text-red-400 font-medium">Bandas Superiores</span>: Níveis de resistência calculados</li>
-                       <li>• <span class="text-green-400 font-medium">Bandas Inferiores</span>: Níveis de suporte calculados</li>
-                       <li>• <span class="text-yellow-400 font-medium">Linha Central</span>: Preço equilibrado estimado</li>
-                       <li>• <span class="text-blue-400 font-medium">Regime de Volatilidade</span>: Classificação atual do mercado</li>
-                     </ul>
-                   </div>
-                 </div>
-                 
-                 <!-- Geminii Flow -->
-                 <div class="space-y-4">
-                   <div class="flex items-center mb-4">
-                     <div class="w-4 h-4 rounded-full bg-gradient-to-r from-green-400 to-emerald-500 mr-3"></div>
-                     <h3 class="text-xl font-bold text-white">Geminii Flow Tracker</h3>
-                   </div>
-                   <p class="text-gray-300 text-sm leading-relaxed mb-4">
-                     Captura o <strong>prêmio e expectativa futura</strong> das calls e puts, seguindo o mercado 
-                     e monitorando realmente o <strong>prêmio das opções</strong> para identificar onde o dinheiro 
-                     inteligente está posicionado.
-                   </p>
-                   <div class="bg-white/5 rounded-lg p-4">
-                     <h4 class="text-success font-semibold text-sm mb-3">Métricas monitoradas:</h4>
-                     <ul class="text-gray-400 text-sm space-y-2">
-                       <li>• <span class="text-green-400 font-medium">Call Flow</span>: Pressão compradora no prêmio</li>
-                       <li>• <span class="text-red-400 font-medium">Put Flow</span>: Pressão vendedora no prêmio</li>
-                       <li>• <span class="text-yellow-400 font-medium">C/P Ratio</span>: Proporção entre calls e puts</li>
-                       <li>• <span class="text-purple-400 font-medium">Intensidade</span>: Força do movimento detectado</li>
-                     </ul>
-                   </div>
-                 </div>
-                 
-               </div>
-               
-               <!-- Combined Power -->
-               <div class="mt-8 pt-6 border-t border-white/10">
-                 <div class="text-center">
-                   <h4 class="text-geminii font-bold text-lg mb-3">Poder Combinado</h4>
-                   <p class="text-gray-300 text-sm max-w-3xl mx-auto">
-                     Quando as <strong>bandas identificam níveis técnicos precisos</strong> baseados em 15+ variáveis 
-                     e o <strong>flow confirma a direção através do prêmio real das opções</strong>, obtemos sinais 
-                     de altíssima probabilidade para operações de suporte e resistência.
-                   </p>
-                 </div>
-               </div>
-             </div>
-           </div>
-         </div>
-       </div>
+        <h1 class="text-4xl md:text-5xl font-bold mb-4">
+          <span style="color: #ba39af; font-weight: 900;">Sistema Bandas</span>
+          <span class="text-white font-light">De Volatilidade</span>
+        </h1>
+        <p class="text-neutral-300 text-lg max-w-2xl mx-auto">
+          Análise avançada com GARCH + XGBoost para previsão de volatilidade
+        </p>
+        
+        <!-- Info Expander -->
+        <div class="mt-8">
+          <button onclick="toggleInfo()" class="bg-gradient-to-r from-geminii to-purple-600 hover:from-purple-600 hover:to-geminii text-white px-6 py-3 rounded-full font-semibold text-sm transition-all duration-300 flex items-center mx-auto shadow-lg hover:shadow-xl transform hover:scale-105">
+            <i id="infoIcon" class="fas fa-info-circle mr-2 transition-transform duration-300"></i>
+            Como Funciona Nossa Tecnologia Avançada
+          </button>
+          
+          <div id="infoContent" class="hidden mt-8 max-w-6xl mx-auto">
+            <div class="card rounded-xl p-8 text-left">
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                
+                <!-- Hybrid Volatility Bands -->
+                <div class="space-y-4">
+                  <div class="flex items-center mb-4">
+                    <div class="w-4 h-4 rounded-full bg-gradient-to-r from-yellow-400 to-orange-500 mr-3"></div>
+                    <h3 class="text-xl font-bold text-white">Bandas de Volatilidade Híbridas</h3>
+                  </div>
+                  <p class="text-gray-300 text-sm leading-relaxed mb-4">
+                    Nosso modelo captura a <strong>volatilidade passada</strong> usando estimativa ponderada com <strong>GARCH</strong>, 
+                    depois roda machine learning <strong>XGBoost</strong> com outras <strong>15 variáveis</strong> para estimar 
+                    suportes e resistências com precisão matemática.
+                  </p>
+                  <div class="bg-white/5 rounded-lg p-4">
+                    <h4 class="text-warning font-semibold text-sm mb-3">O que você obtém:</h4>
+                    <ul class="text-gray-400 text-sm space-y-2">
+                      <li>• <span class="text-red-400 font-medium">Bandas Superiores</span>: Níveis de resistência calculados</li>
+                      <li>• <span class="text-green-400 font-medium">Bandas Inferiores</span>: Níveis de suporte calculados</li>
+                      <li>• <span class="text-yellow-400 font-medium">Linha Central</span>: Preço equilibrado estimado</li>
+                      <li>• <span class="text-blue-400 font-medium">Regime de Volatilidade</span>: Classificação atual do mercado</li>
+                    </ul>
+                  </div>
+                </div>
+                
+                <!-- Geminii Flow -->
+                <div class="space-y-4">
+                  <div class="flex items-center mb-4">
+                    <div class="w-4 h-4 rounded-full bg-gradient-to-r from-green-400 to-emerald-500 mr-3"></div>
+                    <h3 class="text-xl font-bold text-white">Geminii Flow Tracker</h3>
+                  </div>
+                  <p class="text-gray-300 text-sm leading-relaxed mb-4">
+                    Captura o <strong>prêmio e expectativa futura</strong> das calls e puts, seguindo o mercado 
+                    e monitorando realmente o <strong>prêmio das opções</strong> para identificar onde o dinheiro 
+                    inteligente está posicionado.
+                  </p>
+                  <div class="bg-white/5 rounded-lg p-4">
+                    <h4 class="text-success font-semibold text-sm mb-3">Métricas monitoradas:</h4>
+                    <ul class="text-gray-400 text-sm space-y-2">
+                      <li>• <span class="text-green-400 font-medium">Call Flow</span>: Pressão compradora no prêmio</li>
+                      <li>• <span class="text-red-400 font-medium">Put Flow</span>: Pressão vendedora no prêmio</li>
+                      <li>• <span class="text-yellow-400 font-medium">C/P Ratio</span>: Proporção entre calls e puts</li>
+                      <li>• <span class="text-purple-400 font-medium">Intensidade</span>: Força do movimento detectado</li>
+                    </ul>
+                  </div>
+                </div>
+      
+                <!-- Calculadora de Movimento Monte Carlo -->
+                <div class="space-y-4">
+                  <div class="flex items-center mb-4">
+                    <div class="w-4 h-4 rounded-full bg-gradient-to-r from-purple-400 to-pink-500 mr-3"></div>
+                    <h3 class="text-xl font-bold text-white">Calculadora Monte Carlo</h3>
+                  </div>
+                  <p class="text-gray-300 text-sm leading-relaxed mb-4">
+                    Nossa calculadora utiliza <strong>simulações Monte Carlo</strong> combinadas com o modelo <strong>Black-Scholes</strong> 
+                    para projetar movimentos esperados do ativo. Executamos <strong>10.000 simulações estocásticas</strong> 
+                    para calcular as faixas de probabilidade com precisão estatística avançada.
+                  </p>
+                  <div class="bg-white/5 rounded-lg p-4">
+                    <h4 class="text-purple-400 font-semibold text-sm mb-3">Como funciona o cálculo:</h4>
+                    <ul class="text-gray-400 text-sm space-y-2">
+                      <li>• <span class="text-blue-400 font-medium">Volatilidade Implícita</span>: Extraída das opções em tempo real</li>
+                      <li>• <span class="text-green-400 font-medium">Simulações Monte Carlo</span>: 10.000 trajetórias de preço</li>
+                      <li>• <span class="text-yellow-400 font-medium">Distribuição Normal</span>: 1σ (68%) e 2σ (95%) de probabilidade</li>
+                      <li>• <span class="text-purple-400 font-medium">Ajuste Temporal</span>: √(dias/252) para anualização</li>
+                    </ul>
+                  </div>
+                  <div class="bg-purple-500/10 border border-purple-500/20 rounded-lg p-3 mt-4">
+                    <p class="text-purple-300 text-xs font-mono">
+                      Fórmula: Movimento = Preço × VI × √(T/252) + Monte Carlo(n=10k)
+                    </p>
+                    <p class="text-gray-400 text-xs mt-1">
+                      Onde VI = volatilidade implícita, T = dias até vencimento, n = número de simulações
+                    </p>
+                  </div>
+                </div>
+                
+              </div>
+              
+              <!-- Combined Power -->
+              <div class="mt-8 pt-6 border-t border-white/10">
+                <div class="text-center">
+                  <h4 class="text-geminii font-bold text-lg mb-3">Poder Combinado</h4>
+                  <p class="text-gray-300 text-sm max-w-4xl mx-auto">
+                    Quando as <strong>bandas identificam níveis técnicos precisos</strong> baseados em 15+ variáveis, 
+                    o <strong>flow confirma a direção através do prêmio real das opções</strong>, e a <strong>calculadora 
+                    Monte Carlo projeta os movimentos esperados</strong> com precisão estatística, obtemos sinais 
+                    de altíssima probabilidade para operações de suporte e resistência.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
  
      
      <!-- Input Section -->
@@ -1536,21 +1839,25 @@
       type: 'scatter',
       mode: 'lines',
       name: 'Linha Central',
-      line: {color: 'ffd700', width: 2}
+      line: {color: '#ffd700', width: 2}
     };
   
     const data = [candlestick, bandaSuperior2, bandaInferior2, bandaSuperior4, bandaInferior4, linhaCentral];
   
-    // Layout responsivo
+    // Detectar tamanho da tela
     const isMobile = window.innerWidth <= 768;
+    const isTablet = window.innerWidth <= 1024 && window.innerWidth > 768;
     
+    // Layout responsivo aprimorado
     const layout = {
       title: {
         text: `${plotData.ticker} - Bandas de Volatilidade Híbridas`,
         font: {
           color: 'white', 
-          size: isMobile ? 14 : 18
-        }
+          size: isMobile ? 14 : isTablet ? 16 : 18
+        },
+        x: 0.5, // Centralizar título
+        xanchor: 'center'
       },
       paper_bgcolor: 'rgba(0,0,0,0)',
       plot_bgcolor: 'rgba(255,255,255,0.05)',
@@ -1561,7 +1868,9 @@
         color: 'white',
         tickfont: {
           size: isMobile ? 10 : 12
-        }
+        },
+        // Melhorar formato das datas em mobile
+        tickangle: isMobile ? -45 : 0
       },
       yaxis: {
         title: isMobile ? '' : `Preço (${plotData.currency})`,
@@ -1570,34 +1879,44 @@
         color: 'white',
         tickfont: {
           size: isMobile ? 10 : 12
-        }
+        },
+        // Fixar posição do eixo Y
+        fixedrange: false
       },
-      showlegend: !isMobile, // Remove legenda em mobile para economizar espaço
+      showlegend: !isMobile,
       legend: {
         font: {color: 'white', size: isMobile ? 10 : 12},
-        bgcolor: 'rgba(0,0,0,0.5)',
+        bgcolor: 'rgba(0,0,0,0.7)',
+        bordercolor: 'rgba(255,255,255,0.2)',
+        borderwidth: 1,
         orientation: isMobile ? 'h' : 'v',
-        x: isMobile ? 0 : 1,
-        y: isMobile ? -0.1 : 1
+        x: isMobile ? 0 : 1.02,
+        y: isMobile ? -0.15 : 1,
+        xanchor: isMobile ? 'left' : 'left',
+        yanchor: isMobile ? 'top' : 'top'
       },
-      height: isMobile ? 400 : 700,
+      // Altura dinâmica baseada no dispositivo
+      height: isMobile ? 450 : isTablet ? 600 : 700,
+      width: null, // Remover largura fixa
       margin: {
-        l: isMobile ? 40 : 60,
-        r: isMobile ? 40 : 60,
-        t: isMobile ? 40 : 60,
-        b: isMobile ? 60 : 80
+        l: isMobile ? 50 : 60,
+        r: isMobile ? 50 : 60,
+        t: isMobile ? 50 : 60,
+        b: isMobile ? 80 : 80
       },
-      // Configurações de responsividade
-      autosize: true,
-      responsive: true
+      // Configurações essenciais de responsividade
+      autosize: true
     };
   
-    // Configurações responsivas do Plotly
+    // Configurações de responsividade aprimoradas
     const config = {
       responsive: true,
-      displayModeBar: !isMobile, // Remove barra de ferramentas em mobile
-      modeBarButtonsToRemove: ['pan2d', 'lasso2d', 'select2d'],
-      displaylogo: false
+      displayModeBar: !isMobile,
+      modeBarButtonsToRemove: ['pan2d', 'lasso2d', 'select2d', 'toggleHover', 'toggleSpikelines'],
+      displaylogo: false,
+      // Forçar redimensionamento
+      autosizable: true,
+      useResizeHandler: true
     };
   
     currentBandsData = plotData.bands;
@@ -1609,213 +1928,225 @@
     const bandsChartEl = document.getElementById('bandsChart');
     if (bandsChartEl) {
       bandsChartEl.classList.remove('hidden');
-      Plotly.newPlot('bandsChart', data, layout, config);
+      
+      // Limpar gráfico anterior
+      Plotly.purge('bandsChart');
+      
+      // Criar novo gráfico
+      Plotly.newPlot('bandsChart', data, layout, config).then(() => {
+        // Forçar redimensionamento após criação
+        setTimeout(() => {
+          Plotly.Plots.resize('bandsChart');
+        }, 100);
+      });
     }
   }
 
   function renderFlowChart(plotData) {
     const isMobile = window.innerWidth <= 768;
+    const isTablet = window.innerWidth <= 1024 && window.innerWidth > 768;
     
-    const fig = {
-      data: [],
-      layout: {
+    // Dados do gráfico
+    const data = [];
+    
+    // 1. Preço do ativo (eixo Y principal)
+    data.push({
+      x: plotData.dates,
+      y: plotData.spot_prices,
+      type: 'scatter',
+      mode: 'lines',
+      name: plotData.ticker,
+      line: {color: '#FFD700', width: isMobile ? 2 : 3},
+      yaxis: 'y',
+      hovertemplate: `<b>${plotData.ticker}</b><br>` +
+                     'Preço: R$ %{y:.2f}<br>' +
+                     'Data: %{x}<br>' +
+                     '<extra></extra>'
+    });
+  
+    // 2. Call Flow (eixo Y secundário)
+    data.push({
+      x: plotData.dates,
+      y: plotData.call_flow,
+      type: 'scatter',
+      mode: 'lines',
+      name: '🟢 Call Flow',
+      fill: 'tonexty',
+      fillcolor: 'rgba(0, 255, 136, 0.3)',
+      line: {color: '#00FF88', width: isMobile ? 1.5 : 2},
+      yaxis: 'y2',
+      hovertemplate: '<b>Call Flow</b><br>' +
+                     'Valor: %{y:.0f}<br>' +
+                     'Data: %{x}<br>' +
+                     '<extra></extra>'
+    });
+  
+    // 3. Put Flow (eixo Y secundário, valores negativos)
+    data.push({
+      x: plotData.dates,
+      y: plotData.put_flow.map(v => -Math.abs(v)), // Garantir valores negativos
+      type: 'scatter',
+      mode: 'lines',
+      name: '🔴 Put Flow',
+      fill: 'tonexty',
+      fillcolor: 'rgba(255, 68, 68, 0.3)',
+      line: {color: '#FF4444', width: isMobile ? 1.5 : 2},
+      yaxis: 'y2',
+      hovertemplate: '<b>Put Flow</b><br>' +
+                     'Valor: %{y:.0f}<br>' +
+                     'Data: %{x}<br>' +
+                     '<extra></extra>'
+    });
+  
+    // 4. Linha zero para referência
+    data.push({
+      x: plotData.dates,
+      y: new Array(plotData.dates.length).fill(0),
+      type: 'scatter',
+      mode: 'lines',
+      name: 'Zero Line',
+      line: {
+        color: 'rgba(255, 255, 255, 0.3)',
+        width: 1,
+        dash: 'dash'
+      },
+      yaxis: 'y2',
+      showlegend: false,
+      hoverinfo: 'skip'
+    });
+  
+    // Layout configurado para responsividade
+    const layout = {
+      title: {
+        text: `Flow Tracker - ${plotData.ticker}`,
+        font: {
+          color: 'white',
+          size: isMobile ? 14 : isTablet ? 16 : 18
+        },
+        x: 0.5,
+        xanchor: 'center'
+      },
+      paper_bgcolor: 'rgba(0,0,0,0)',
+      plot_bgcolor: 'rgba(255,255,255,0.05)',
+      
+      // Eixo X
+      xaxis: {
+        title: isMobile ? '' : 'Data',
+        color: 'white',
+        gridcolor: 'rgba(255,255,255,0.1)',
+        tickfont: {
+          size: isMobile ? 10 : 12
+        },
+        tickangle: isMobile ? -45 : 0,
+        domain: [0, 1] // Usar toda a largura
+      },
+      
+      // Eixo Y principal (Preço)
+      yaxis: {
         title: {
-          text: `Flow Tracker - ${plotData.ticker}`,
+          text: isMobile ? 'Preço' : `${plotData.ticker} - Preço (R$)`,
           font: {
-            color: 'white', 
-            size: isMobile ? 14 : 18
+            color: '#FFD700',
+            size: isMobile ? 11 : 13
           }
         },
-        paper_bgcolor: 'rgba(0,0,0,0)',
-        plot_bgcolor: 'rgba(255,255,255,0.05)',
-        showlegend: !isMobile,
-        height: isMobile ? 450 : 900,
-        grid: {
-          rows: isMobile ? 1 : 2,
-          columns: 1,
-          pattern: 'independent',
-          roworder: 'top to bottom'
+        side: 'left',
+        color: 'white',
+        gridcolor: 'rgba(255,255,255,0.1)',
+        tickfont: {
+          size: isMobile ? 10 : 12
         },
-        legend: {
-          font: {color: 'white', size: isMobile ? 10 : 12},
-          bgcolor: 'rgba(0,0,0,0.5)',
-          orientation: isMobile ? 'h' : 'v'
+        domain: [0, 1] // Usar toda a altura
+      },
+      
+      // Eixo Y secundário (Flow)
+      yaxis2: {
+        title: {
+          text: isMobile ? 'Flow' : 'Options Flow',
+          font: {
+            color: '#00FF88',
+            size: isMobile ? 11 : 13
+          }
         },
-        margin: {
-          l: isMobile ? 40 : 60,
-          r: isMobile ? 40 : 60,
-          t: isMobile ? 40 : 60,
-          b: isMobile ? 80 : 100
+        side: 'right',
+        overlaying: 'y',
+        color: 'white',
+        gridcolor: 'rgba(255,255,255,0.05)',
+        tickfont: {
+          size: isMobile ? 10 : 12
         },
-        autosize: true
+        zeroline: true,
+        zerolinecolor: 'rgba(255,255,255,0.3)',
+        zerolinewidth: 1
+      },
+  
+      // Legenda
+      showlegend: !isMobile,
+      legend: {
+        font: {
+          color: 'white',
+          size: isMobile ? 10 : 12
+        },
+        bgcolor: 'rgba(0,0,0,0.7)',
+        bordercolor: 'rgba(255,255,255,0.2)',
+        borderwidth: 1,
+        orientation: isMobile ? 'h' : 'v',
+        x: isMobile ? 0 : 1.02,
+        y: isMobile ? -0.2 : 1,
+        xanchor: isMobile ? 'left' : 'left',
+        yanchor: isMobile ? 'top' : 'top'
+      },
+  
+      // Dimensões
+      height: isMobile ? 450 : isTablet ? 500 : 600,
+      width: null, // Deixar responsivo
+      margin: {
+        l: isMobile ? 60 : 80,
+        r: isMobile ? 60 : 80,
+        t: isMobile ? 50 : 60,
+        b: isMobile ? 80 : 100
+      },
+      autosize: true,
+  
+      // Hover mode
+      hovermode: 'x unified',
+      hoverlabel: {
+        bgcolor: 'rgba(0,0,0,0.8)',
+        bordercolor: 'rgba(255,255,255,0.3)',
+        font: {
+          color: 'white',
+          size: isMobile ? 11 : 12
+        }
       }
     };
   
-    // Em mobile, simplifica o gráfico mostrando apenas preço e flow
-    if (isMobile) {
-      // Preço do ativo
-      fig.data.push({
-        x: plotData.dates,
-        y: plotData.spot_prices,
-        type: 'scatter',
-        mode: 'lines',
-        name: plotData.ticker,
-        line: {color: '#FFD700', width: 3}
-      });
-  
-      // Call Flow simplificado
-      fig.data.push({
-        x: plotData.dates,
-        y: plotData.call_flow,
-        type: 'scatter',
-        mode: 'lines',
-        name: 'Call Flow',
-        line: {color: '#00FF88', width: 2},
-        yaxis: 'y2'
-      });
-  
-      // Put Flow simplificado
-      fig.data.push({
-        x: plotData.dates,
-        y: plotData.put_flow.map(v => -v),
-        type: 'scatter',
-        mode: 'lines',
-        name: 'Put Flow',
-        line: {color: '#FF4444', width: 2},
-        yaxis: 'y2'
-      });
-  
-      // Layout simplificado para mobile
-      fig.layout.xaxis = {
-        domain: [0, 1],
-        color: 'white',
-        gridcolor: 'rgba(255,255,255,0.1)',
-        tickfont: {size: 10}
-      };
-      fig.layout.yaxis = {
-        title: plotData.ticker,
-        titlefont: {size: 12},
-        side: 'left',
-        color: 'white',
-        gridcolor: 'rgba(255,255,255,0.1)',
-        tickfont: {size: 10}
-      };
-      fig.layout.yaxis2 = {
-        title: 'Flow',
-        titlefont: {size: 12},
-        overlaying: 'y',
-        side: 'right',
-        color: 'white',
-        tickfont: {size: 10}
-      };
-  
-    } else {
-      // Versão desktop completa (código original)
-      // Preço do ativo
-      fig.data.push({
-        x: plotData.dates,
-        y: plotData.spot_prices,
-        type: 'scatter',
-        mode: 'lines',
-        name: plotData.ticker,
-        line: {color: '#FFD700', width: 4},
-        xaxis: 'x',
-        yaxis: 'y'
-      });
-  
-      // Call Flow
-      fig.data.push({
-        x: plotData.dates,
-        y: plotData.call_flow,
-        type: 'scatter',
-        mode: 'lines',
-        name: '🟢 Call Flow',
-        fill: 'tonexty',
-        fillcolor: 'rgba(0, 255, 136, 0.5)',
-        line: {color: '#00FF88', width: 3},
-        xaxis: 'x',
-        yaxis: 'y2'
-      });
-  
-      // Put Flow (negativo)
-      fig.data.push({
-        x: plotData.dates,
-        y: plotData.put_flow.map(v => -v),
-        type: 'scatter',
-        mode: 'lines',
-        name: '🔴 Put Flow',
-        fill: 'tonexty',
-        fillcolor: 'rgba(255, 68, 68, 0.5)',
-        line: {color: '#FF4444', width: 3},
-        xaxis: 'x',
-        yaxis: 'y2'
-      });
-  
-      // Intensity bars
-      const colors = plotData.bias.map(bias => bias > 0 ? '#00FF88' : '#FF4444');
-      fig.data.push({
-        x: plotData.dates,
-        y: plotData.intensity,
-        type: 'bar',
-        name: 'Intensity',
-        marker: {color: colors},
-        xaxis: 'x2',
-        yaxis: 'y3'
-      });
-  
-      // Layout desktop
-      fig.layout.xaxis = {domain: [0, 1], anchor: 'y', color: 'white', gridcolor: 'rgba(255,255,255,0.1)'};
-      fig.layout.yaxis = {
-        title: `${plotData.ticker} - Preço (R$)`,
-        side: 'left',
-        domain: [0.3, 1],
-        color: 'white',
-        gridcolor: 'rgba(255,255,255,0.1)'
-      };
-      fig.layout.yaxis2 = {
-        title: 'Options Flow',
-        overlaying: 'y',
-        side: 'right',
-        domain: [0.3, 1],
-        color: 'white',
-        gridcolor: 'rgba(255,255,255,0.1)'
-      };
-      fig.layout.xaxis2 = {domain: [0, 1], anchor: 'y3', color: 'white', gridcolor: 'rgba(255,255,255,0.1)'};
-      fig.layout.yaxis3 = {
-        title: 'Flow Intensity',
-        domain: [0, 0.25],
-        color: 'white',
-        gridcolor: 'rgba(255,255,255,0.1)'
-      };
-  
-      // Linha zero
-      fig.layout.shapes = [{
-        type: 'line',
-        x0: plotData.dates[0],
-        y0: 0,
-        x1: plotData.dates[plotData.dates.length - 1],
-        y1: 0,
-        line: {
-          color: 'gray',
-          width: 1,
-          dash: 'dash'
-        },
-        xref: 'x',
-        yref: 'y2'
-      }];
-    }
-  
-    // Configurações responsivas do Plotly
+    // Configurações do gráfico
     const config = {
       responsive: true,
       displayModeBar: !isMobile,
-      displaylogo: false
+      modeBarButtonsToRemove: [
+        'pan2d', 'lasso2d', 'select2d', 
+        'toggleHover', 'toggleSpikelines'
+      ],
+      displaylogo: false,
+      autosizable: true,
+      useResizeHandler: true
     };
   
     const flowChartEl = document.getElementById('flowChart');
     if (flowChartEl) {
       flowChartEl.classList.remove('hidden');
-      Plotly.newPlot('flowChart', fig.data, fig.layout, config);
+      
+      // Limpar gráfico anterior
+      Plotly.purge('flowChart');
+      
+      // Criar novo gráfico
+      Plotly.newPlot('flowChart', data, layout, config).then(() => {
+        // Forçar redimensionamento após criação
+        setTimeout(() => {
+          Plotly.Plots.resize('flowChart');
+        }, 100);
+      });
     }
   }
 
@@ -2099,6 +2430,10 @@
       icon.classList.add('fa-info-circle');
     }
   }
+
+
+    
+
 </script>
 
 </body>

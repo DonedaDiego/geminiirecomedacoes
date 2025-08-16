@@ -43,7 +43,7 @@ class VolatilityImpliedService:
                 print(f"⚠️ Erro ao ler {config_path}: {e}")
                 continue
         
-        default_token = "beczK/4WCP1n9eOkIqVi4cR+qIlvNST0mq7DfBvKzU1kBRF0rakIb/wnspMQ9qSx--FiV9LR+39n8REDQPYVGc6A==--N2E2OGM3M2YzYmQwMzM0MzE0MWRjNzU4ZThhMDJkMGE="
+        default_token = "jeOTw9JanmDhlxReKlF2QwHM4Q3mNVlU3SpNENZUNIxTk24drRqdordyijyeNlfZ--bbybBgsEprbusre2drjwfA==--M2M3ZGFiNDk5ZTRhNzU3M2MxNWE3ZmJkMjcwZjQyNGE="
         return default_token
     
     def get_historical_data(self, ticker, from_date, to_date, symbol=None):

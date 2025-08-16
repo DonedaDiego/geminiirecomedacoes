@@ -17,7 +17,7 @@ class VolatilityValidator:
     """Validador de rompimentos baseado em volatilidade implícita da API OpLab"""
     
     def __init__(self, api_token=None):
-        self.api_token = api_token or "beczK/4WCP1n9eOkIqVi4cR+qIlvNST0mq7DfBvKzU1kBRF0rakIb/wnspMQ9qSx--FiV9LR+39n8REDQPYVGc6A==--N2E2OGM3M2YzYmQwMzM0MzE0MWRjNzU4ZThhMDJkMGE="
+        self.api_token = api_token or "jeOTw9JanmDhlxReKlF2QwHM4Q3mNVlU3SpNENZUNIxTk24drRqdordyijyeNlfZ--bbybBgsEprbusre2drjwfA==--M2M3ZGFiNDk5ZTRhNzU3M2MxNWE3ZmJkMjcwZjQyNGE="
         self.base_url = "https://api.oplab.com.br/v3/market/stocks"
         self.headers = {
             "Access-Token": self.api_token,
@@ -644,7 +644,7 @@ class GeminiiFlowTracker:
     """Sistema de Análise de Fluxo de Opções"""
     
     def __init__(self):
-        self.token = "beczK/4WCP1n9eOkIqVi4cR+qIlvNST0mq7DfBvKzU1kBRF0rakIb/wnspMQ9qSx--FiV9LR+39n8REDQPYVGc6A==--N2E2OGM3M2YzYmQwMzM0MzE0MWRjNzU4ZThhMDJkMGE="
+        self.token = "jeOTw9JanmDhlxReKlF2QwHM4Q3mNVlU3SpNENZUNIxTk24drRqdordyijyeNlfZ--bbybBgsEprbusre2drjwfA==--M2M3ZGFiNDk5ZTRhNzU3M2MxNWE3ZmJkMjcwZjQyNGE="
         self.base_url = "https://api.oplab.com.br/v3/market/historical/options"
         self.headers = {
             "Access-Token": self.token,
@@ -845,7 +845,7 @@ class TickerDetailsService:
     """Serviço para buscar detalhes específicos do ticker da API OpLab - VERSÃO FINAL"""
     
     def __init__(self):
-        self.api_token = "beczK/4WCP1n9eOkIqVi4cR+qIlvNST0mq7DfBvKzU1kBRF0rakIb/wnspMQ9qSx--FiV9LR+39n8REDQPYVGc6A==--N2E2OGM3M2YzYmQwMzM0MzE0MWRjNzU4ZThhMDJkMGE="
+        self.api_token = "jeOTw9JanmDhlxReKlF2QwHM4Q3mNVlU3SpNENZUNIxTk24drRqdordyijyeNlfZ--bbybBgsEprbusre2drjwfA==--M2M3ZGFiNDk5ZTRhNzU3M2MxNWE3ZmJkMjcwZjQyNGE="
         self.base_url = "https://api.oplab.com.br/v3/market/stocks"
         self.headers = {
             "Access-Token": self.api_token,

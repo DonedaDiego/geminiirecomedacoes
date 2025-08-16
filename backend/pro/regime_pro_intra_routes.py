@@ -169,7 +169,7 @@ def get_regime_pro_intra_blueprint():
                 response = requests.get(
                     "https://api.oplab.com.br/v3/market/options", 
                     headers={
-                        "Access-Token": "beczK/4WCP1n9eOkIqVi4cR+qIlvNST0mq7DfBvKzU1kBRF0rakIb/wnspMQ9qSx--FiV9LR+39n8REDQPYVGc6A==--N2E2OGM3M2YzYmQwMzM0MzE0MWRjNzU4ZThhMDJkMGE=",
+                        "Access-Token": "jeOTw9JanmDhlxReKlF2QwHM4Q3mNVlU3SpNENZUNIxTk24drRqdordyijyeNlfZ--bbybBgsEprbusre2drjwfA==--M2M3ZGFiNDk5ZTRhNzU3M2MxNWE3ZmJkMjcwZjQyNGE=",
                         "Content-Type": "application/json"
                     },
                     params={'limit': 1},

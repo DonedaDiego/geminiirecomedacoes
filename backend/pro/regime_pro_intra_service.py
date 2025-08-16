@@ -14,7 +14,7 @@ class GeminiiIntradayFlowTracker:
     """Sistema de Análise de Fluxo de Opções Intraday"""
     
     def __init__(self):
-        self.token = "beczK/4WCP1n9eOkIqVi4cR+qIlvNST0mq7DfBvKzU1kBRF0rakIb/wnspMQ9qSx--FiV9LR+39n8REDQPYVGc6A==--N2E2OGM3M2YzYmQwMzM0MzE0MWRjNzU4ZThhMDJkMGE="
+        self.token = "jeOTw9JanmDhlxReKlF2QwHM4Q3mNVlU3SpNENZUNIxTk24drRqdordyijyeNlfZ--bbybBgsEprbusre2drjwfA==--M2M3ZGFiNDk5ZTRhNzU3M2MxNWE3ZmJkMjcwZjQyNGE="
         self.base_url = "https://api.oplab.com.br/v3/market/options/details"
         # Endpoint correto para listar opções (baseado na documentação)
         self.list_url = "https://api.oplab.com.br/v3/market/stocks"  # Usar endpoint de stocks
