@@ -903,6 +903,170 @@ def get_recent_activity(admin_id):
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
+#funções novas admin dashboard
+
+## Adicione estas funções no seu admin_routes.py
+
+@admin_bp.route('/create-user', methods=['POST'])
+@require_admin()
+def create_user(admin_id):
+    """Criar novo usuário que entra automaticamente em trial"""
+    try:
+        data = request.get_json()
+        name = data.get('name', '').strip()
+        email = data.get('email', '').strip().lower()
+        trial_days = data.get('trial_days', 7)
+        
+        if not name or not email:
+            return jsonify({'success': False, 'error': 'Nome e email são obrigatórios'}), 400
+        
+        # Validar email
+        import re
+        email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+        if not re.match(email_pattern, email):
+            return jsonify({'success': False, 'error': 'Email inválido'}), 400
+        
+        conn = get_db_connection()
+        if not conn:
+            return jsonify({'success': False, 'error': 'Erro de conexão'}), 500
+            
+        cursor = conn.cursor()
+        
+        # Verificar se email já existe
+        cursor.execute("SELECT id FROM users WHERE email = %s", (email,))
+        if cursor.fetchone():
+            cursor.close()
+            conn.close()
+            return jsonify({'success': False, 'error': 'Email já cadastrado no sistema'}), 400
+        
+        # Criar senha padrão (hash de "123456")
+        import hashlib
+        default_password = hashlib.sha256("123456".encode()).hexdigest()
+        
+        # Calcular data de expiração do trial
+        from datetime import datetime, timezone, timedelta
+        expires_at = datetime.now(timezone.utc) + timedelta(days=trial_days)
+        now = datetime.now(timezone.utc)
+        
+        # Inserir novo usuário em trial
+        cursor.execute("""
+            INSERT INTO users (
+                name, email, password, plan_id, plan_name, user_type,
+                subscription_status, plan_expires_at, email_confirmed,
+                email_confirmed_at, created_at, updated_at
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            RETURNING id
+        """, (
+            name,                    # name
+            email,                   # email  
+            default_password,        # password (hash de 123456)
+            4,                       # plan_id (Community)
+            'community',             # plan_name
+            'trial',                 # user_type
+            'trial',                 # subscription_status
+            expires_at,              # plan_expires_at
+            True,                    # email_confirmed
+            now,                     # email_confirmed_at
+            now,                     # created_at
+            now                      # updated_at
+        ))
+        
+        user_id = cursor.fetchone()[0]
+        
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        return jsonify({
+            'success': True,
+            'message': f'Usuário {name} criado com sucesso!',
+            'user_info': {
+                'id': user_id,
+                'name': name,
+                'email': email,
+                'trial_days': trial_days,
+                'expires_at': expires_at.isoformat(),
+                'default_password': '123456'
+            }
+        })
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@admin_bp.route('/list-users-enhanced')
+@require_admin()
+def list_users_enhanced(admin_id):
+    """Listar usuários com informações detalhadas incluindo último login"""
+    try:
+        conn = get_db_connection()
+        if not conn:
+            return jsonify({'success': False, 'error': 'Erro de conexão'}), 500
+            
+        cursor = conn.cursor()
+        
+        # Verificar se coluna last_login existe, se não existir, adicionar
+        try:
+            cursor.execute("""
+                ALTER TABLE users ADD COLUMN IF NOT EXISTS last_login TIMESTAMP;
+            """)
+            conn.commit()
+        except:
+            pass  # Coluna já existe
+        
+        cursor.execute("""
+            SELECT u.id, u.name, u.email, u.plan_id, u.plan_name, u.user_type, 
+                   u.created_at, u.plan_expires_at, u.subscription_status, u.last_login,
+                   EXTRACT(days FROM (NOW() - u.created_at)) as days_with_us,
+                   CASE 
+                       WHEN u.plan_expires_at IS NOT NULL AND u.plan_expires_at > NOW() THEN
+                           EXTRACT(days FROM (u.plan_expires_at - NOW()))
+                       ELSE NULL
+                   END as days_until_expiry,
+                   CASE 
+                       WHEN u.plan_expires_at IS NOT NULL AND u.plan_expires_at <= NOW() THEN true
+                       ELSE false
+                   END as is_expired
+            FROM users u
+            WHERE u.user_type != 'deleted'
+            ORDER BY u.created_at DESC
+            LIMIT 100
+        """)
+        
+        users = []
+        for row in cursor.fetchall():
+            user_id, name, email, plan_id, plan_name, user_type, created_at, plan_expires_at, subscription_status, last_login, days_with_us, days_until_expiry, is_expired = row
+            
+            users.append({
+                'id': user_id,
+                'name': name,
+                'email': email,
+                'plan_id': plan_id,
+                'plan': plan_name or 'Básico',
+                'type': user_type or 'regular',
+                'subscription_status': subscription_status or 'inactive',
+                'created_at': created_at.isoformat() if created_at else None,
+                'plan_expires_at': plan_expires_at.isoformat() if plan_expires_at else None,
+                'last_login': last_login.isoformat() if last_login else None,
+                'formatted_date': created_at.strftime('%d/%m/%Y') if created_at else 'N/A',
+                'formatted_last_login': last_login.strftime('%d/%m/%Y %H:%M') if last_login else 'Nunca logou',
+                'days_with_us': int(days_with_us) if days_with_us else 0,
+                'days_until_expiry': int(days_until_expiry) if days_until_expiry else None,
+                'is_expired': is_expired,
+                'has_trial': plan_expires_at is not None
+            })
+        
+        cursor.close()
+        conn.close()
+        
+        return jsonify({
+            'success': True,
+            'users': users
+        })
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
 # ===== FUNÇÃO EXPORT =====
 def get_admin_blueprint():
     """Retornar blueprint para registrar no Flask"""

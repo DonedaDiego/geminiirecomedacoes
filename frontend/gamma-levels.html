@@ -1,0 +1,1425 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+ <meta charset="UTF-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0">
+ <title>Gamma Levels - Geminii Tech</title>
+ <script src="https://cdn.tailwindcss.com"></script>
+ <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+ <script>
+   tailwind.config = {
+     theme: {
+       extend: {
+         colors: {
+           primary: '#6366f1',
+           secondary: '#8b5cf6',
+           accent: '#06b6d4',
+           success: '#10b981',
+           warning: '#f59e0b',
+           danger: '#ef4444',
+           geminii: '#ba39af'
+         }
+       }
+     }
+   }
+ </script>
+ <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+ <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+ <style>
+  body {
+    font-family: 'Inter', sans-serif;
+    background: #0f0f0f;
+  }
+  
+  .card {
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    transition: all 0.3s ease;
+  }
+  
+  .card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+    border-color: rgba(255, 255, 255, 0.2);
+  }
+  
+  .navbar {
+    background: rgba(15, 15, 15, 0.95);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  
+  .pulse-glow {
+    animation: pulseGlow 2s ease-in-out infinite alternate;
+  }
+  
+  @keyframes pulseGlow {
+    from { box-shadow: 0 0 20px rgba(139, 92, 246, 0.3); }
+    to { box-shadow: 0 0 30px rgba(139, 92, 246, 0.6); }
+  }
+  
+  .loading-skeleton {
+    background: linear-gradient(90deg, #1a1a1a 25%, #2a2a2a 50%, #1a1a1a 75%);
+    background-size: 400% 100%;
+    animation: skeleton-loading 1.4s ease-in-out infinite;
+  }
+
+  @keyframes skeleton-loading {
+    0% { background-position: 100% 50%; }
+    100% { background-position: 0 50%; }
+  }
+  
+  .fade-in {
+    animation: fadeIn 0.5s ease-in;
+  }
+  
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .status-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+
+  .status-long-gamma {
+    background-color: rgba(16, 185, 129, 0.2);
+    color: #10b981;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+  }
+
+  .status-short-gamma {
+    background-color: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+  }
+
+  .wall-support {
+    background-color: rgba(16, 185, 129, 0.1);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+  }
+
+  .wall-resistance {
+    background-color: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+  }
+
+  .error-card {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(220, 38, 38, 0.05));
+    border: 1px solid rgba(239, 68, 68, 0.3);
+  }
+
+  .btn-modern {
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+  }
+
+  .btn-modern:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(99, 102, 241, 0.4);
+  }
+
+  .btn-gamma {
+    background: linear-gradient(135deg, #8b5cf6, #a855f7);
+    color: white;
+    box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
+  }
+
+  .btn-gamma:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(139, 92, 246, 0.4);
+  }
+
+  .btn-walls {
+    background: linear-gradient(135deg, #06b6d4, #0891b2);
+    box-shadow: 0 4px 15px rgba(6, 182, 212, 0.3);
+  }
+
+  .btn-walls:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(6, 182, 212, 0.4);
+  }
+
+  .btn-alerts {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
+  }
+
+  .btn-alerts:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(245, 158, 11, 0.4);
+  }
+
+  .spinner {
+    border: 4px solid rgba(255, 255, 255, 0.3);
+    border-top: 4px solid #8b5cf6;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+
+  /* GRÁFICOS - RESPONSIVIDADE */
+  .chart-container {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 1rem;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    overflow: hidden;
+    position: relative;
+    width: 100%;
+    min-height: 500px;
+  }
+
+  #gammaChart {
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 500px !important;
+    position: relative;
+  }
+
+  .js-plotly-plot, .plotly, .plotly-graph-div {
+    width: 100% !important;
+    height: 100% !important;
+  }
+
+  .js-plotly-plot .plotly .svg-container .svg-scrollbox {
+    width: 100% !important;
+    height: 100% !important;
+  }
+
+  .metric-card {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.3s ease;
+  }
+
+  .metric-card:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.2);
+  }
+
+  /* Gauge Styles */
+  .gauge-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+  }
+
+  .gauge-svg {
+    filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.5));
+  }
+
+  input:focus {
+    outline: none;
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+  }
+
+  select:focus {
+    outline: none;
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+  }
+  
+  select option {
+    background-color: #1a1a1a;
+    color: white;
+  }
+
+  /* Responsividade Mobile */
+  @media (max-width: 768px) {
+    .chart-container {
+      padding: 1rem;
+      margin: 0 -0.5rem;
+      border-radius: 0.75rem;
+      min-height: 400px;
+    }
+    
+    #gammaChart {
+      min-height: 400px !important;
+      max-height: 500px !important;
+    }
+
+    .max-w-7xl {
+      padding-left: 1rem;
+      padding-right: 1rem;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .chart-container {
+      padding: 0.75rem;
+      margin: 0 -0.75rem;
+      border-radius: 0.5rem;
+      min-height: 350px;
+    }
+    
+    #gammaChart {
+      min-height: 350px !important;
+      max-height: 450px !important;
+    }
+
+    .grid.grid-cols-1.md\\:grid-cols-3 {
+      grid-template-columns: 1fr;
+      gap: 1rem;
+    }
+  }
+
+  /* Termômetro Styles */
+.thermometer-container {
+  position: relative;
+  width: 80px;
+  height: 200px;
+  margin: 0 auto;
+}
+
+.thermometer-bg {
+  width: 20px;
+  height: 150px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px 10px 0 0;
+  position: relative;
+  margin: 0 auto;
+}
+
+.thermometer-bulb {
+  width: 40px;
+  height: 40px;
+  background: #333;
+  border-radius: 50%;
+  position: absolute;
+  bottom: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 3px solid rgba(255, 255, 255, 0.2);
+}
+
+.thermometer-fill {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  border-radius: 0 0 10px 10px;
+  transition: all 0.8s ease;
+}
+
+.intensity-low { background: linear-gradient(to top, #10b981, #34d399); }
+.intensity-medium { background: linear-gradient(to top, #f59e0b, #fbbf24); }
+.intensity-high { background: linear-gradient(to top, #ef4444, #f87171); }
+
+.thermometer-scale {
+  position: absolute;
+  right: -30px;
+  top: 0;
+  height: 150px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  font-size: 10px;
+  color: #888;
+}
+</style>
+</head>
+<body class="min-h-screen text-white">
+ 
+ <!-- Navigation -->
+ <nav class="fixed top-6 left-1/2 transform -translate-x-1/2 z-50 bg-opacity-5 border-opacity-10 bg-white border-white border rounded-full px-4 py-3 shadow-xl backdrop-blur-md">
+   <div class="flex items-center justify-between">
+     <div class="flex items-center">
+       <img src="logo.png" alt="Geminii Logo" class="w-6 h-6 cursor-pointer" onclick="window.location.href='/'">
+     </div>
+     <div class="hidden md:flex items-center space-x-6 text-xs text-gray-300 ml-8">
+       <a href="/dashboard" class="hover:text-white transition-colors">Dashboard</a>
+       <a href="opcoes.html" class="hover:text-white transition-colors">Hunter Walls</a>
+       <a href="vi-pro.html" class="hover:text-white transition-colors">Implícita Sigma</a>
+       <a href="regimes-pro.html" class="hover:text-white transition-colors">Bandas De Volatilidade</a>
+       <a href="rank-volatilidade.html" class="hover:text-white transition-colors">IV Scanner</a>
+       <span class="text-white font-medium">Gamma Levels</span>
+     </div>
+     <div class="flex items-center space-x-3 ml-8">
+       <div id="apiStatus" class="w-8 h-8 bg-green-500 bg-opacity-10 border border-green-500 border-opacity-30 rounded-full flex items-center justify-center relative">
+         <i class="fas fa-layer-group text-green-500 text-xs"></i>
+         <div class="absolute -top-1 -right-1 w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+       </div>
+     </div>
+   </div>
+ </nav>
+
+ <!-- Main Content -->
+ <main class="pt-24 px-6 pb-12">
+  <div class="pt-32 pb-16">
+    <div class="max-w-7xl mx-auto px-6">
+      
+      <!-- Header -->
+      <div class="text-center mb-8">
+       <h1 class="text-4xl md:text-5xl font-bold mb-4">
+         <span style="color: #8b5cf6; font-weight: 900;">Gamma</span>
+         <span class="text-white font-light">Levels</span>
+       </h1>
+       <p class="text-neutral-300 text-lg max-w-2xl mx-auto">
+         Análise avançada de exposição gamma e identificação de walls de suporte/resistência
+       </p>
+       
+       <!-- Info Expander -->
+       <div class="mt-8">
+         <button onclick="toggleInfo()" class="bg-gradient-to-r from-geminii to-purple-600 hover:from-purple-600 hover:to-geminii text-white px-6 py-3 rounded-full font-semibold text-sm transition-all duration-300 flex items-center mx-auto shadow-lg hover:shadow-xl transform hover:scale-105">
+           <i id="infoIcon" class="fas fa-info-circle mr-2 transition-transform duration-300"></i>
+           Como Funciona Nossa Tecnologia Gamma
+         </button>
+         
+         <div id="infoContent" class="hidden mt-8 max-w-6xl mx-auto">
+           <div class="card rounded-xl p-8 text-left">
+             <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+               
+               <!-- Gamma Exposure Analysis -->
+               <div class="space-y-4">
+                 <div class="flex items-center mb-4">
+                   <div class="w-4 h-4 rounded-full bg-gradient-to-r from-purple-400 to-purple-600 mr-3"></div>
+                   <h3 class="text-xl font-bold text-white">Análise de Exposição Gamma</h3>
+                 </div>
+                 <p class="text-gray-300 text-sm leading-relaxed mb-4">
+                   Nosso sistema calcula a <strong>exposição gamma dos market makers</strong> usando dados reais 
+                   de opções da API OpLab. Identificamos onde os <strong>dealers estão posicionados</strong> 
+                   e como isso afeta o comportamento do preço do ativo subjacente.
+                 </p>
+                 <div class="bg-white/5 rounded-lg p-4">
+                   <h4 class="text-purple-400 font-semibold text-sm mb-3">Métricas calculadas:</h4>
+                   <ul class="text-gray-400 text-sm space-y-2">
+                     <li>• <span class="text-green-400 font-medium">Net Gamma Exposure</span>: Exposição total do mercado</li>
+                     <li>• <span class="text-blue-400 font-medium">Regime de Volatilidade</span>: Long/Short Gamma</li>
+                     <li>• <span class="text-yellow-400 font-medium">Market Behavior</span>: Mean Reverting vs Momentum</li>
+                     <li>• <span class="text-purple-400 font-medium">Gamma Skew</span>: Viés calls vs puts</li>
+                   </ul>
+                 </div>
+               </div>
+               
+               <!-- Gamma Walls Detection -->
+               <div class="space-y-4">
+                 <div class="flex items-center mb-4">
+                   <div class="w-4 h-4 rounded-full bg-gradient-to-r from-cyan-400 to-cyan-600 mr-3"></div>
+                   <h3 class="text-xl font-bold text-white">Detecção de Gamma Walls</h3>
+                 </div>
+                 <p class="text-gray-300 text-sm leading-relaxed mb-4">
+                   Utilizamos <strong>algoritmos de detecção de picos</strong> com suavização científica 
+                   (Spline + Gaussian Filter) para identificar níveis críticos onde há concentração 
+                   massiva de <strong>exposição gamma</strong>.
+                 </p>
+                 <div class="bg-white/5 rounded-lg p-4">
+                   <h4 class="text-cyan-400 font-semibold text-sm mb-3">Tipos de Walls:</h4>
+                   <ul class="text-gray-400 text-sm space-y-2">
+                     <li>• <span class="text-green-400 font-medium">Support Walls</span>: Gamma positivo concentrado</li>
+                     <li>• <span class="text-red-400 font-medium">Resistance Walls</span>: Gamma negativo concentrado</li>
+                     <li>• <span class="text-yellow-400 font-medium">Intensidade</span>: Força relativa do wall (0-100%)</li>
+                     <li>• <span class="text-blue-400 font-medium">Distância</span>: Proximidade do preço atual</li>
+                   </ul>
+                 </div>
+               </div>
+               
+             </div>
+             
+             <!-- Combined Power -->
+             <div class="mt-8 pt-6 border-t border-white/10">
+               <div class="text-center">
+                 <h4 class="text-geminii font-bold text-lg mb-3">Poder dos Gamma Levels</h4>
+                 <p class="text-gray-300 text-sm max-w-4xl mx-auto">
+                   Quando market makers têm <strong>grandes posições gamma</strong> em strikes específicos, 
+                   eles precisam fazer <strong>hedge dinâmico</strong>, criando pressure de compra/venda 
+                   que atua como <strong>ímãs magnéticos</strong> nos preços. Nosso sistema identifica 
+                   esses pontos críticos com precisão matemática.
+                 </p>
+               </div>
+             </div>
+           </div>
+         </div>
+       </div>
+     </div>
+
+     
+     <!-- Input Section -->
+     <div class="card rounded-2xl p-8 mb-8 fade-in">
+       <h2 class="text-2xl font-bold text-white mb-6 flex items-center">
+         <i class="fas fa-cogs text-purple-400 mr-3"></i>
+         Configurações da Análise
+       </h2>
+       
+       <div class="grid grid-cols-1 gap-6 mb-8">
+         <div class="space-y-2">
+           <label for="ticker" class="block text-sm font-medium text-gray-300">Ticker</label>
+           <input type="text" id="ticker" placeholder="Ex: PETR4, VALE3" 
+                 class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 transition-all duration-300">
+         </div>
+       </div>
+       
+       <div class="flex flex-wrap gap-4 justify-center">
+         <button onclick="runGammaAnalysis()" class="btn-gamma text-white px-8 py-3 rounded-lg font-semibold transition-all duration-300 flex items-center">
+           <i class="fas fa-layer-group mr-2"></i>
+           Análise Completa
+         </button>
+       </div>
+     </div>
+
+     <!-- Loading State -->
+     <div id="loading" class="hidden">
+       <div class="card rounded-2xl p-12 text-center">
+         <div class="spinner mx-auto mb-6"></div>
+         <p class="text-xl text-gray-300">Processando análise de gamma...</p>
+         <p class="text-sm text-gray-400 mt-2">Aguarde enquanto calculamos exposição gamma e identificamos walls</p>
+       </div>
+     </div>
+
+     <!-- Results Section -->
+     <div id="results" class="space-y-8">
+       
+       <!-- Gamma Metrics -->
+       <div id="gammaMetrics" class="card rounded-xl p-6 fade-in">
+         <h3 class="text-xl font-bold text-white mb-4 flex items-center">
+           <i class="fas fa-chart-bar mr-2 text-purple-400"></i>
+           Métricas de Gamma
+         </h3>
+         <div id="gammaMetricsContent" class="space-y-3">
+           <p class="text-gray-400 text-center">Clique em "Análise Completa" para ver os resultados</p>
+         </div>
+       </div>
+       
+       <div id="gammaThermometer" class="card rounded-xl p-6 fade-in">
+        <h3 class="text-xl font-bold text-white mb-4 flex items-center">
+          <i class="fas fa-thermometer-half mr-2 text-orange-400"></i>
+          Intensidade Gamma
+        </h3>
+        <div id="thermometerContent" class="space-y-4">
+          <p class="text-gray-400 text-center">Execute a análise para ver a intensidade</p>
+        </div>
+      </div>
+
+
+       <!-- Gamma Walls -->
+       <div id="gammaWalls" class="card rounded-xl p-6 fade-in">
+         <h3 class="text-xl font-bold text-white mb-4 flex items-center">
+           <i class="fas fa-shield-alt mr-2 text-cyan-400"></i>
+           Gamma Walls Detectados
+         </h3>
+         <div id="gammaWallsContent" class="space-y-3">
+           <p class="text-gray-400 text-center">Execute a análise para identificar gamma walls</p>
+         </div>
+       </div>
+       
+       <!-- Chart -->
+       <div id="gammaChart" class="chart-container rounded-2xl p-6 hidden"></div>
+       
+     </div>
+   </div>
+ </main>
+
+ <script>
+   
+   let currentGammaData = null;
+   
+   // Verificar autenticação
+   let userToken = localStorage.getItem('geminii_token');
+   if (!userToken) {
+       window.location.href = '/login.html';
+   }
+
+   // ===== FUNÇÕES DE UI =====
+   function showLoading() {
+     document.getElementById('loading').classList.remove('hidden');
+   }
+
+   function hideLoading() {
+     document.getElementById('loading').classList.add('hidden');
+   }
+
+   function showError(message) {
+     hideLoading();
+     const resultsSection = document.getElementById('results');
+     resultsSection.innerHTML = `
+       <div class="error-card rounded-xl p-6 text-center">
+         <i class="fas fa-exclamation-triangle text-4xl text-danger mb-4"></i>
+         <h3 class="text-xl font-bold text-white mb-2">Erro na Análise</h3>
+         <p class="text-gray-300">${message}</p>
+         <button onclick="location.reload()" class="mt-4 btn-modern text-white px-6 py-2 rounded-lg">
+           <i class="fas fa-sync mr-2"></i>Tentar Novamente
+         </button>
+       </div>
+     `;
+   }
+
+   function showToast(message, type = 'info') {
+     const colors = {
+       success: 'bg-green-500',
+       error: 'bg-red-500',
+       info: 'bg-blue-500',
+       warning: 'bg-yellow-500'
+     };
+     
+     const toast = document.createElement('div');
+     toast.className = `fixed top-20 right-4 ${colors[type]} text-white px-6 py-3 rounded-lg shadow-lg z-50 transition-all duration-300`;
+     toast.textContent = message;
+
+     document.body.appendChild(toast);
+
+     setTimeout(() => {
+       toast.style.opacity = '0';
+       setTimeout(() => {
+         if (document.body.contains(toast)) {
+           document.body.removeChild(toast);
+         }
+       }, 300);
+     }, 4000);
+   }
+
+   // ===== FUNÇÕES DE ANÁLISE =====
+   async function runGammaAnalysis() {
+    const ticker = document.getElementById('ticker').value.trim();
+    if (!ticker) {
+      showError('Por favor, insira um ticker válido');
+      return;
+    }
+  
+    showLoading();
+  
+    try {
+      const response = await fetch('/pro/gamma/analyze', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${userToken}`
+        },
+        body: JSON.stringify({
+          ticker: ticker,
+          days_back: 60
+        })
+      });
+  
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Erro na requisição');
+      }
+  
+      // Renderizar resultados
+      renderGammaMetrics(data.metrics, data.spot_price, data.options_count);
+      
+      // TEMPORÁRIO: usar dados dos walls para o termômetro
+      if (data.walls && data.walls.length > 0) {
+        renderGammaThermometerSimple(data.walls);
+      } else {
+        document.getElementById('thermometerContent').innerHTML = 
+          '<p class="text-gray-400 text-center">Poucos walls detectados para o termômetro</p>';
+      }
+      
+      renderGammaWalls(data.walls, data.spot_price);
+      
+      if (data.plot_data) {
+        renderGammaChart(data.plot_data);
+      }
+  
+      currentGammaData = data;
+      hideLoading();
+  
+    } catch (error) {
+      showError('Erro de conexão: ' + error.message);
+    }
+  }
+   
+  function renderGammaThermometerSimple(walls) {
+    if (!walls || walls.length === 0) {
+      document.getElementById('thermometerContent').innerHTML = 
+        '<p class="text-gray-400 text-center">Nenhum wall detectado</p>';
+      return;
+    }
+  
+    // Usar intensidades dos walls
+    const intensities = walls.map(w => w.intensity * 100);
+    const avgIntensity = intensities.reduce((a, b) => a + b, 0) / intensities.length;
+    const maxIntensity = Math.max(...intensities);
+    const minIntensity = Math.min(...intensities);
+  
+    // Determinar cor baseado na média
+    let thermometerClass, statusText, statusColor;
+    if (avgIntensity <= 40) {
+      thermometerClass = 'intensity-low';
+      statusText = 'Walls Fracos';
+      statusColor = 'text-green-400';
+    } else if (avgIntensity <= 75) {
+      thermometerClass = 'intensity-medium';
+      statusText = 'Walls Moderados';
+      statusColor = 'text-yellow-400';
+    } else {
+      thermometerClass = 'intensity-high';
+      statusText = 'Walls Fortes';
+      statusColor = 'text-red-400';
+    }
+  
+    const html = `
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        
+        <!-- Termômetro Visual -->
+        <div class="text-center">
+          <div class="thermometer-container">
+            <div class="thermometer-bg">
+              <div class="thermometer-fill ${thermometerClass}" 
+                   style="height: ${avgIntensity}%"></div>
+              <div class="thermometer-scale">
+                <span>100%</span>
+                <span>75%</span>
+                <span>50%</span>
+                <span>25%</span>
+                <span>0%</span>
+              </div>
+            </div>
+            <div class="thermometer-bulb ${thermometerClass}"></div>
+          </div>
+          
+          <div class="mt-4">
+            <div class="text-2xl font-bold ${statusColor} mb-1">
+              ${avgIntensity.toFixed(1)}%
+            </div>
+            <div class="text-sm ${statusColor} font-medium">
+              ${statusText}
+            </div>
+          </div>
+        </div>
+        
+        <!-- Estatísticas -->
+        <div class="space-y-3">
+          <div class="metric-card rounded-lg p-4">
+            <div class="flex justify-between items-center">
+              <span class="text-gray-400 text-sm">Wall Mais Forte:</span>
+              <span class="text-white font-bold">${maxIntensity.toFixed(0)}%</span>
+            </div>
+          </div>
+          
+          <div class="metric-card rounded-lg p-4">
+            <div class="flex justify-between items-center">
+              <span class="text-gray-400 text-sm">Intensidade Média:</span>
+              <span class="text-white font-bold">${avgIntensity.toFixed(0)}%</span>
+            </div>
+          </div>
+          
+          <div class="metric-card rounded-lg p-4">
+            <div class="flex justify-between items-center">
+              <span class="text-gray-400 text-sm">Wall Mais Fraco:</span>
+              <span class="text-white font-bold">${minIntensity.toFixed(0)}%</span>
+            </div>
+          </div>
+          
+          <div class="metric-card rounded-lg p-4">
+            <div class="flex justify-between items-center">
+              <span class="text-gray-400 text-sm">Total de Walls:</span>
+              <span class="text-white font-bold">${walls.length}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    document.getElementById('thermometerContent').innerHTML = html;
+  }
+
+   async function runWallsOnly() {
+     const ticker = document.getElementById('ticker').value.trim();
+     if (!ticker) {
+       showError('Por favor, insira um ticker válido');
+       return;
+     }
+   
+     showLoading();
+   
+     try {
+       const response = await fetch('/pro/gamma/walls', {
+         method: 'POST',
+         headers: {
+           'Content-Type': 'application/json',
+           'Authorization': `Bearer ${userToken}`
+         },
+         body: JSON.stringify({
+          ticker: ticker,
+          days_back: 60,
+          max_walls: 10
+        })
+       });
+   
+       const data = await response.json();
+       
+       if (!response.ok) {
+         throw new Error(data.error || 'Erro na requisição');
+       }
+   
+       // Renderizar apenas walls
+       renderGammaWalls(data.walls, data.spot_price);
+       
+       // Limpar outras seções
+       document.getElementById('gammaMetricsContent').innerHTML = '<p class="text-gray-400 text-center">Use "Análise Completa" para ver todas as métricas</p>';
+       document.getElementById('gammaChart').classList.add('hidden');
+   
+       hideLoading();
+   
+     } catch (error) {
+       showError('Erro de conexão: ' + error.message);
+     }
+   }
+
+   function renderGammaThermometer(metrics, walls) {
+    if (!metrics || !walls || walls.length === 0) {
+      document.getElementById('thermometerContent').innerHTML = 
+        '<p class="text-gray-400 text-center">Dados insuficientes para calcular intensidade</p>';
+      return;
+    }
+  
+    // Usar apenas as intensidades dos walls (mais lógico)
+    const intensities = walls.map(w => w.intensity * 100);
+    const maxIntensity = Math.max(...intensities);
+    const avgIntensity = intensities.reduce((a, b) => a + b, 0) / intensities.length;
+    const minIntensity = Math.min(...intensities);
+  
+    // O termômetro mostra a INTENSIDADE MÉDIA dos walls
+    const thermometerLevel = avgIntensity; // ← USAR A MÉDIA!
+  
+    // Determinar cor baseado na média
+    let thermometerClass, statusText, statusColor;
+    if (thermometerLevel <= 40) {
+      thermometerClass = 'intensity-low';
+      statusText = 'Walls Fracos';
+      statusColor = 'text-green-400';
+    } else if (thermometerLevel <= 75) {
+      thermometerClass = 'intensity-medium';
+      statusText = 'Walls Moderados';
+      statusColor = 'text-yellow-400';
+    } else {
+      thermometerClass = 'intensity-high';
+      statusText = 'Walls Fortes';
+      statusColor = 'text-red-400';
+    }
+
+  
+    const html = `
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      
+      <!-- Termômetro Visual -->
+      <div class="text-center">
+        <div class="thermometer-container">
+          <div class="thermometer-bg">
+            <div class="thermometer-fill ${thermometerClass}" 
+                style="height: ${thermometerLevel}%"></div>  <!-- ← AQUI -->
+            <div class="thermometer-scale">
+              <span>100%</span>
+              <span>75%</span>
+              <span>50%</span>
+              <span>25%</span>
+              <span>0%</span>
+            </div>
+          </div>
+          <div class="thermometer-bulb ${thermometerClass}"></div>
+        </div>
+        
+        <div class="mt-4">
+          <div class="text-2xl font-bold ${statusColor} mb-1">
+            ${thermometerLevel.toFixed(1)}%  <!-- ← E AQUI -->
+          </div>
+          <div class="text-sm ${statusColor} font-medium">
+            ${statusText}
+          </div>
+        </div>
+      </div>
+        
+        <!-- Estatísticas -->
+        <div class="space-y-3">
+          
+          <div class="metric-card rounded-lg p-4">
+            <div class="flex justify-between items-center">
+              <span class="text-gray-400 text-sm">Wall Mais Forte:</span>
+              <span class="text-white font-bold">${maxIntensity.toFixed(0)}%</span>
+            </div>
+          </div>
+          
+          <div class="metric-card rounded-lg p-4">
+            <div class="flex justify-between items-center">
+              <span class="text-gray-400 text-sm">Intensidade Média:</span>
+              <span class="text-white font-bold">${avgIntensity.toFixed(0)}%</span>
+            </div>
+          </div>
+          
+          <div class="metric-card rounded-lg p-4">
+            <div class="flex justify-between items-center">
+              <span class="text-gray-400 text-sm">Wall Mais Fraco:</span>
+              <span class="text-white font-bold">${minIntensity.toFixed(0)}%</span>
+            </div>
+          </div>
+          
+          <div class="metric-card rounded-lg p-4">
+            <div class="flex justify-between items-center">
+              <span class="text-gray-400 text-sm">Total de Walls:</span>
+              <span class="text-white font-bold">${walls.length}</span>
+            </div>
+          </div>
+          
+        </div>
+      </div>
+    `;
+    
+    document.getElementById('thermometerContent').innerHTML = html;
+  }
+
+  async function fetchThermometerData(ticker) {
+    try {
+      const response = await fetch('/pro/gamma/thermometer', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${userToken}`
+        },
+        body: JSON.stringify({
+          ticker: ticker,
+          days_back: 252
+        })
+      });
+  
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Erro na requisição do termômetro');
+      }
+  
+      return data;
+  
+    } catch (error) {
+      console.error('Erro ao buscar dados do termômetro:', error);
+      return null;
+    }
+  }
+  
+  function renderGammaThermometer(thermometerData) {
+    if (!thermometerData || !thermometerData.success) {
+      document.getElementById('thermometerContent').innerHTML = 
+        '<p class="text-gray-400 text-center">Dados históricos insuficientes para o termômetro</p>';
+      return;
+    }
+  
+    const position = thermometerData.position_percentile;
+    const current = thermometerData.current_net_gamma;
+    const stats = thermometerData.historical_stats;
+  
+    // Determinar cor e status baseado na posição percentual
+    let thermometerClass, statusText, statusColor;
+    if (position <= 25) {
+      thermometerClass = 'intensity-low';
+      statusText = 'Gamma Baixo';
+      statusColor = 'text-green-400';
+    } else if (position <= 75) {
+      thermometerClass = 'intensity-medium';
+      statusText = 'Gamma Moderado';
+      statusColor = 'text-yellow-400';
+    } else {
+      thermometerClass = 'intensity-high';
+      statusText = 'Gamma Elevado';
+      statusColor = 'text-red-400';
+    }
+  
+    const html = `
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        
+        <!-- Termômetro Visual -->
+        <div class="text-center">
+          <div class="thermometer-container">
+            <div class="thermometer-bg">
+              <div class="thermometer-fill ${thermometerClass}" 
+                   style="height: ${position}%"></div>
+              <div class="thermometer-scale">
+                <span>100%</span>
+                <span>75%</span>
+                <span>50%</span>
+                <span>25%</span>
+                <span>0%</span>
+              </div>
+            </div>
+            <div class="thermometer-bulb ${thermometerClass}"></div>
+          </div>
+          
+          <div class="mt-4">
+            <div class="text-2xl font-bold ${statusColor} mb-1">
+              ${position.toFixed(1)}%
+            </div>
+            <div class="text-sm ${statusColor} font-medium">
+              ${statusText}
+            </div>
+            <div class="text-xs text-gray-400 mt-1">
+              Posição vs 252 dias
+            </div>
+          </div>
+        </div>
+        
+        <!-- Estatísticas Históricas -->
+        <div class="space-y-3">
+          
+          <div class="metric-card rounded-lg p-4">
+            <div class="flex justify-between items-center">
+              <span class="text-gray-400 text-sm">Net Gamma Atual:</span>
+              <span class="text-white font-bold">${current.toLocaleString()}</span>
+            </div>
+          </div>
+          
+          <div class="metric-card rounded-lg p-4">
+            <div class="flex justify-between items-center">
+              <span class="text-gray-400 text-sm">Média 252d:</span>
+              <span class="text-white font-bold">${stats.avg_gamma.toLocaleString()}</span>
+            </div>
+          </div>
+          
+          <div class="metric-card rounded-lg p-4">
+            <div class="flex justify-between items-center">
+              <span class="text-gray-400 text-sm">Máximo 252d:</span>
+              <span class="text-green-400 font-bold">${stats.max_gamma.toLocaleString()}</span>
+            </div>
+          </div>
+          
+          <div class="metric-card rounded-lg p-4">
+            <div class="flex justify-between items-center">
+              <span class="text-gray-400 text-sm">Mínimo 252d:</span>
+              <span class="text-red-400 font-bold">${stats.min_gamma.toLocaleString()}</span>
+            </div>
+          </div>
+          
+          <div class="metric-card rounded-lg p-4">
+            <div class="flex justify-between items-center">
+              <span class="text-gray-400 text-sm">Dias Analisados:</span>
+              <span class="text-blue-400 font-bold">${thermometerData.days_analyzed}</span>
+            </div>
+          </div>
+          
+        </div>
+      </div>
+    `;
+    
+    document.getElementById('thermometerContent').innerHTML = html;
+  }
+
+   // ===== FUNÇÕES DE RENDERIZAÇÃO =====
+   function renderGammaMetrics(metrics, spotPrice, optionsCount) {
+     if (!metrics) return;
+
+     const regimeColor = metrics.gamma_regime === 'Long Gamma' ? 'status-long-gamma' : 'status-short-gamma';
+     const regimeIcon = metrics.gamma_regime === 'Long Gamma' ? 'fa-arrow-up' : 'fa-arrow-down';
+     
+     const html = `
+       <!-- Header com NGE -->
+       <div class="metric-card rounded-lg p-6 mb-4 ${regimeColor} border-2">
+         <div class="flex justify-between items-start mb-4">
+           <div>
+             <h3 class="text-xl font-bold text-white mb-1">
+               ${metrics.net_gamma_exposure?.toLocaleString() || 'N/A'}
+             </h3>
+             <p class="text-gray-400 text-sm">Net Gamma Exposure</p>
+           </div>
+           <div class="text-right">
+             <div class="text-2xl mb-1">
+               <i class="fas ${regimeIcon}"></i>
+             </div>
+             <p class="text-xs text-gray-400">${metrics.gamma_regime || 'N/A'}</p>
+           </div>
+         </div>
+         
+         <!-- Regime Info -->
+          <!-- Regime Info -->
+        <div class="text-center mb-4 p-3 bg-black/20 rounded-lg">
+          <p class="text-white font-bold text-lg mb-1">${metrics.gamma_regime || 'N/A'}</p>
+          <p class="text-sm text-gray-300">Expectativa: ${metrics.volatility_expectation || 'N/A'} Volatility</p>
+          <p class="text-sm text-gray-300">Comportamento: ${metrics.market_behavior || 'N/A'}</p>
+        </div>
+        
+        <!-- Spot Price Info -->
+        <div class="bg-white/5 rounded-lg p-3 mb-4">
+          <div class="flex justify-between items-center">
+            <span class="text-gray-400">Preço Atual:</span>
+            <span class="text-white font-bold">R$ ${spotPrice?.toFixed(2) || 'N/A'}</span>
+          </div>
+          <div class="flex justify-between items-center">
+            <span class="text-gray-400">Opções Analisadas:</span>
+            <span class="text-white font-medium">${optionsCount || 'N/A'}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Detailed Metrics Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        
+        <!-- Call/Put Ratio -->
+        <div class="metric-card rounded-lg p-4 text-center">
+          <div class="text-2xl font-bold text-accent mb-2">
+            ${metrics.call_put_ratio?.toFixed(2) || 'N/A'}
+          </div>
+          <p class="text-gray-400 text-sm">Call/Put Ratio</p>
+          <div class="text-xs text-gray-500 mt-1">
+            ${metrics.total_calls || 0} calls / ${metrics.total_puts || 0} puts
+          </div>
+        </div>
+        
+        <!-- Gamma Skew -->
+        <div class="metric-card rounded-lg p-4 text-center">
+          <div class="text-2xl font-bold ${(metrics.gamma_skew || 0) > 0 ? 'text-green-400' : 'text-red-400'} mb-2">
+            ${(metrics.gamma_skew || 0).toFixed(3)}
+          </div>
+          <p class="text-gray-400 text-sm">Gamma Skew</p>
+          <div class="text-xs text-gray-500 mt-1">
+            ${(metrics.gamma_skew || 0) > 0 ? 'Call Biased' : 'Put Biased'}
+          </div>
+        </div>
+        
+        <!-- Total Volume -->
+        <div class="metric-card rounded-lg p-4 text-center">
+          <div class="text-2xl font-bold text-warning mb-2">
+            ${metrics.total_volume?.toLocaleString() || 'N/A'}
+          </div>
+          <p class="text-gray-400 text-sm">Volume Total</p>
+          <div class="text-xs text-gray-500 mt-1">
+            C: ${metrics.call_volume?.toLocaleString() || 0} | P: ${metrics.put_volume?.toLocaleString() || 0}
+          </div>
+        </div>
+        
+        <!-- Volatility Expectation -->
+        <div class="metric-card rounded-lg p-4 text-center">
+          <div class="text-2xl font-bold ${metrics.volatility_expectation === 'Low' ? 'text-green-400' : 'text-orange-400'} mb-2">
+            ${metrics.volatility_expectation || 'N/A'}
+          </div>
+          <p class="text-gray-400 text-sm">Vol. Esperada</p>
+          <div class="text-xs text-gray-500 mt-1">
+            ${metrics.market_behavior || 'N/A'}
+          </div>
+        </div>
+        
+      </div>
+    `;
+    
+    document.getElementById('gammaMetricsContent').innerHTML = html;
+  }
+
+  function renderGammaWalls(walls, spotPrice) {
+    if (!walls || walls.length === 0) {
+      document.getElementById('gammaWallsContent').innerHTML = 
+        '<p class="text-gray-400 text-center">Nenhum gamma wall significativo detectado</p>';
+      return;
+    }
+
+    let html = `
+      <div class="mb-4 text-center">
+        <p class="text-sm text-gray-400">
+          Preço Atual: <span class="text-white font-bold">R$ ${spotPrice?.toFixed(2) || 'N/A'}</span>
+        </p>
+      </div>
+      
+      <div class="space-y-3">
+    `;
+
+    walls.forEach((wall, index) => {
+      const wallClass = wall.type === 'Support' ? 'wall-support' : 'wall-resistance';
+      const wallIcon = wall.type === 'Support' ? 'fa-shield-alt' : 'fa-ban';
+      const wallColor = wall.type === 'Support' ? 'text-green-400' : 'text-red-400';
+      const intensityColor = wall.intensity >= 0.8 ? 'text-purple-400' : 
+                            wall.intensity >= 0.6 ? 'text-blue-400' : 'text-gray-400';
+
+      html += `
+        <div class="metric-card rounded-lg p-4 ${wallClass}">
+          <div class="flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+              <div class="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center">
+                <i class="fas ${wallIcon} ${wallColor} text-lg"></i>
+              </div>
+              <div>
+                <div class="text-white font-bold">R$ ${wall.strike?.toFixed(2) || 'N/A'}</div>
+                <div class="text-sm ${wallColor}">${wall.type} Wall</div>
+              </div>
+            </div>
+            
+            <div class="text-right">
+              <div class="text-lg font-bold ${intensityColor}">
+                ${(wall.intensity * 100)?.toFixed(0) || 'N/A'}%
+              </div>
+              <div class="text-xs text-gray-400">Intensidade</div>
+            </div>
+          </div>
+          
+          <div class="mt-3 grid grid-cols-2 gap-4 text-sm">
+            <div>
+              <span class="text-gray-400">Distância:</span>
+              <span class="text-white ml-1">${wall.distance_pct?.toFixed(2) || 'N/A'}%</span>
+            </div>
+          
+          </div>
+        </div>
+      `;
+    });
+
+    html += '</div>';
+    
+    document.getElementById('gammaWallsContent').innerHTML = html;
+  }
+
+  function renderGammaChart(plotData) {
+    if (!plotData) return;
+
+    const isMobile = window.innerWidth <= 768;
+    const isTablet = window.innerWidth <= 1024 && window.innerWidth > 768;
+
+    // Dados do gráfico
+    const data = [{
+      x: plotData.strikes,
+      y: plotData.net_gamma,
+      type: 'scatter',
+      mode: 'lines',
+      fill: 'tozeroy',
+      fillcolor: 'rgba(139, 92, 246, 0.3)',
+      line: {
+        color: '#8b5cf6',
+        width: 3
+      },
+      name: 'Net Gamma Exposure',
+      hovertemplate: `<b>Strike:</b> ${plotData.currency}%{x:.2f}<br>` +
+                     '<b>Net Gamma:</b> %{y:.2f}<br>' +
+                     '<extra></extra>'
+    }];
+
+    // Linha do preço atual
+    const spotLineData = {
+      x: [plotData.spot_price, plotData.spot_price],
+      y: [Math.min(...plotData.net_gamma), Math.max(...plotData.net_gamma)],
+      type: 'scatter',
+      mode: 'lines',
+      name: 'Preço Atual',
+      line: {
+        color: '#ffd700',
+        width: 4,
+        dash: 'solid'
+      },
+      hovertemplate: `<b>Preço Atual</b><br>` +
+                     `${plotData.currency}%{x:.2f}<br>` +
+                     '<extra></extra>'
+    };
+    
+    data.push(spotLineData);
+
+    // Linha zero
+    const zeroLineData = {
+      x: plotData.strikes,
+      y: new Array(plotData.strikes.length).fill(0),
+      type: 'scatter',
+      mode: 'lines',
+      name: 'Zero Line',
+      line: {
+        color: 'rgba(255, 255, 255, 0.3)',
+        width: 1,
+        dash: 'dash'
+      },
+      showlegend: false,
+      hoverinfo: 'skip'
+    };
+    
+    data.push(zeroLineData);
+
+    // Layout responsivo
+    const layout = {
+      title: {
+        text: `${plotData.ticker} - Gamma Exposure por Strike`,
+        font: {
+          color: 'white',
+          size: isMobile ? 14 : isTablet ? 16 : 18
+        },
+        x: 0.5,
+        xanchor: 'center'
+      },
+      paper_bgcolor: 'rgba(0,0,0,0)',
+      plot_bgcolor: 'rgba(255,255,255,0.05)',
+      
+      xaxis: {
+        title: isMobile ? 'Strike' : `Strike Price (${plotData.currency})`,
+        color: 'white',
+        gridcolor: 'rgba(255,255,255,0.1)',
+        tickfont: {
+          size: isMobile ? 10 : 12
+        },
+        tickformat: '.2f'
+      },
+      
+      yaxis: {
+        title: isMobile ? 'Gamma' : 'Net Gamma Exposure',
+        color: 'white',
+        gridcolor: 'rgba(255,255,255,0.1)',
+        tickfont: {
+          size: isMobile ? 10 : 12
+        },
+        zeroline: true,
+        zerolinecolor: 'rgba(255,255,255,0.3)',
+        zerolinewidth: 2
+      },
+
+      showlegend: !isMobile,
+      legend: {
+        font: {
+          color: 'white',
+          size: isMobile ? 10 : 12
+        },
+        bgcolor: 'rgba(0,0,0,0.7)',
+        bordercolor: 'rgba(255,255,255,0.2)',
+        borderwidth: 1,
+        orientation: isMobile ? 'h' : 'v',
+        x: isMobile ? 0 : 1.02,
+        y: isMobile ? -0.2 : 1,
+        xanchor: isMobile ? 'left' : 'left',
+        yanchor: isMobile ? 'top' : 'top'
+      },
+
+      height: isMobile ? 450 : isTablet ? 500 : 600,
+      width: null,
+      margin: {
+        l: isMobile ? 60 : 80,
+        r: isMobile ? 40 : 60,
+        t: isMobile ? 50 : 60,
+        b: isMobile ? 80 : 80
+      },
+      autosize: true,
+
+      annotations: [{
+        x: plotData.spot_price,
+        y: Math.max(...plotData.net_gamma) * 0.9,
+        text: `Spot: ${plotData.currency}${plotData.spot_price?.toFixed(2)}`,
+        showarrow: true,
+        arrowhead: 2,
+        arrowsize: 1,
+        arrowcolor: '#ffd700',
+        font: {
+          color: '#ffd700',
+          size: isMobile ? 11 : 13,
+          weight: 'bold'
+        },
+        bgcolor: 'rgba(0,0,0,0.8)',
+        bordercolor: '#ffd700',
+        borderwidth: 1
+      }]
+    };
+
+    const config = {
+      responsive: true,
+      displayModeBar: !isMobile,
+      modeBarButtonsToRemove: [
+        'pan2d', 'lasso2d', 'select2d', 
+        'toggleHover', 'toggleSpikelines'
+      ],
+      displaylogo: false,
+      autosizable: true,
+      useResizeHandler: true
+    };
+
+    const chartEl = document.getElementById('gammaChart');
+    if (chartEl) {
+      chartEl.classList.remove('hidden');
+      
+      // Limpar gráfico anterior
+      Plotly.purge('gammaChart');
+      
+      // Criar novo gráfico
+      Plotly.newPlot('gammaChart', data, layout, config).then(() => {
+        setTimeout(() => {
+          Plotly.Plots.resize('gammaChart');
+        }, 100);
+      });
+    }
+  }
+
+  // ===== UTILITÁRIOS =====
+  function logout() {
+    localStorage.removeItem('geminii_token');
+    localStorage.removeItem('geminii_user');
+    window.location.href = '/';
+  }
+
+  // Enter key handler
+  document.getElementById('ticker').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+      runGammaAnalysis();
+    }
+  });
+
+  // Initialize
+  document.addEventListener('DOMContentLoaded', function() {
+    const cards = document.querySelectorAll('.card');
+    cards.forEach((card, index) => {
+      card.style.animationDelay = `${index * 0.1}s`;
+    });
+
+    if (!userToken) {
+      showToast('Sessão expirada. Redirecionando...', 'warning');
+      setTimeout(() => {
+        window.location.href = '/login.html';
+      }, 2000);
+    }
+  });
+
+  // Connection status check
+  async function checkConnection() {
+    try {
+      const response = await fetch('/pro/gamma/health');
+      const statusEl = document.getElementById('apiStatus');
+      
+      if (statusEl) {
+        if (response.ok) {
+          statusEl.querySelector('i').className = 'fas fa-layer-group text-green-500 text-xs';
+          statusEl.querySelector('.animate-pulse').className = 'absolute -top-1 -right-1 w-2 h-2 bg-green-500 rounded-full animate-pulse';
+        } else {
+          statusEl.querySelector('i').className = 'fas fa-layer-group text-red-500 text-xs';
+          statusEl.querySelector('.animate-pulse').className = 'absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse';
+        }
+      }
+    } catch (error) {
+      const statusEl = document.getElementById('apiStatus');
+      if (statusEl) {
+        statusEl.querySelector('i').className = 'fas fa-layer-group text-red-500 text-xs';
+        statusEl.querySelector('.animate-pulse').className = 'absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse';
+      }
+    }
+  }
+
+  setInterval(checkConnection, 30000);
+  checkConnection();
+
+  // ===== FUNÇÃO DO EXPANDER =====
+  function toggleInfo() {
+    const content = document.getElementById('infoContent');
+    const icon = document.getElementById('infoIcon');
+    
+    if (content.classList.contains('hidden')) {
+      content.classList.remove('hidden');
+      content.style.animation = 'fadeIn 0.5s ease-in-out';
+      icon.classList.remove('fa-info-circle');
+      icon.classList.add('fa-times');
+    } else {
+      content.style.animation = 'fadeOut 0.3s ease-in-out';
+      setTimeout(() => {
+        content.classList.add('hidden');
+      }, 300);
+      icon.classList.remove('fa-times');
+      icon.classList.add('fa-info-circle');
+    }
+  }
+
+  // Show welcome message
+  showToast('Sistema Gamma Levels carregado com sucesso!', 'success');
+
+</script>
+
+</body>
+</html>

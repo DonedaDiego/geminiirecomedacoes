@@ -504,9 +504,11 @@ def list_unconfirmed_users():
 # ===== ROTAS DE LOGIN =====
 
 
+# Substitua sua função login() por esta versão corrigida:
+
 @auth_bp.route('/login', methods=['POST'])
 def login():
-    """🔥 Login com verificação de subscription/trial"""
+    """🔥 Login com verificação de subscription/trial + REGISTRO DE ÚLTIMO LOGIN"""
     try:
         data = request.get_json()
         
@@ -527,30 +529,42 @@ def login():
             return jsonify({'success': False, 'error': 'Erro de conexão com banco'}), 500
         
         cursor = conn.cursor()
+        
+        # 🔥 VERIFICAR SE COLUNA last_login EXISTE
+        try:
+            cursor.execute("""
+                ALTER TABLE users ADD COLUMN IF NOT EXISTS last_login TIMESTAMP;
+            """)
+            conn.commit()
+        except:
+            pass  # Coluna já existe
              
         cursor.execute("""
             SELECT id, name, email, password, plan_id, plan_name, user_type, email_confirmed,
-                plan_expires_at, subscription_status, created_at
+                plan_expires_at, subscription_status, created_at, last_login
             FROM users WHERE email = %s
         """, (email,))
                 
         user = cursor.fetchone()
-        cursor.close()
-        conn.close()
         
         if not user:
             print(f"❌ Usuário não encontrado: {email}")
+            cursor.close()
+            conn.close()
             return jsonify({'success': False, 'error': 'E-mail não encontrado'}), 401
         
-        user_id, name, user_email, stored_password, plan_id, plan_name, user_type, email_confirmed, plan_expires_at, subscription_status, created_at = user
+        user_id, name, user_email, stored_password, plan_id, plan_name, user_type, email_confirmed, plan_expires_at, subscription_status, created_at, last_login = user
         
         print(f"✅ Usuário encontrado: {name} (ID: {user_id})")
         print(f"📧 Email confirmado: {email_confirmed}")
         print(f"📊 Subscription status: {subscription_status}")
+        print(f"🕐 Último login: {last_login}")
         
         # Verificar senha
         if hash_password(password) != stored_password:
             print("❌ Senha incorreta")
+            cursor.close()
+            conn.close()
             return jsonify({'success': False, 'error': 'Senha incorreta'}), 401
         
         print("✅ Senha correta")
@@ -558,6 +572,8 @@ def login():
         # Verificar se email foi confirmado
         if not email_confirmed:
             print("⚠️ Email não confirmado")
+            cursor.close()
+            conn.close()
             return jsonify({
                 'success': False, 
                 'error': 'Email não confirmado', 
@@ -567,6 +583,23 @@ def login():
             }), 403
         
         print("✅ Email confirmado - procedendo com login")
+        
+        # 🔥 ATUALIZAR ÚLTIMO LOGIN ANTES DE VERIFICAR SUBSCRIPTION
+        try:
+            cursor.execute("""
+                UPDATE users 
+                SET last_login = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
+                WHERE id = %s
+            """, (user_id,))
+            conn.commit()
+            print(f"✅ Último login atualizado para usuário {user_id}")
+        except Exception as e:
+            print(f"⚠️ Erro ao atualizar último login: {e}")
+            # Não bloquear o login por isso
+        
+        # Fechar conexão do banco antes de chamar subscription service
+        cursor.close()
+        conn.close()
         
         # 🔥 VERIFICAR STATUS DA SUBSCRIPTION/TRIAL
         subscription_status_result = check_user_subscription_status(user_id)
@@ -602,12 +635,13 @@ def login():
                     'email_confirmed': email_confirmed,
                     'created_at': created_at.isoformat() if created_at else None,
                     'trial_end_date': plan_expires_at.isoformat() if plan_expires_at else None,
+                    'last_login': datetime.now(timezone.utc).isoformat()  # 🔥 NOVO
                 },
                 'token': token
             }
         }
         
-        # 🔥 ADICIONAR TRIAL/SUBSCRIPTION INFO
+        # 🔥 ADICIONAR TRIAL/SUBSCRIPTION INFO (resto do seu código permanece igual)
         if subscription_data.get('is_trial', False):
             days_left = subscription_data.get('days_remaining', 0)
             
@@ -672,10 +706,6 @@ def login():
         import traceback
         traceback.print_exc()
         return jsonify({'success': False, 'error': f'Erro interno: {str(e)}'}), 500
-
-
-
-
 
 
 # ===== ROTAS DE RESET DE SENHA =====

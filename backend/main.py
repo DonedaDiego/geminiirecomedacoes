@@ -20,6 +20,7 @@ from pro.bandas_pro_routes import get_bandas_pro_blueprint
 from pro.vi_routes import get_vi_blueprint
 from pro.vol_regimes_routes import vol_regimes_bp
 from pro.regimes_volatilidade_routes import regimes_bp
+from pro.gamma_routes import get_gamma_blueprint
 
 # Premium
 from premium.swing_trade_ml_routes import get_swing_trade_ml_blueprint
@@ -235,6 +236,15 @@ if ADMIN_AVAILABLE and admin_bp:
 else:
     print("❌ Admin blueprint não disponível")
 
+
+try:
+    gamma_bp = get_gamma_blueprint()
+    app.register_blueprint(gamma_bp)
+    print("✅ Gamma blueprint registrado!")
+except Exception as e:
+    print(f"❌ Erro ao registrar gamma blueprint: {e}")
+
+
 # ===== CORS =====
 CORS(app, 
      origins=['*'],
@@ -370,6 +380,10 @@ def opcoes_page():
 def regimes():
     return send_from_directory('../frontend', 'regimes-pro.html')
 
+@app.route('/gamma-levels')
+@app.route('/gamma-levels.html')
+def gamma_levels():
+    return send_from_directory('../frontend', 'gamma-levels.html')
 
 ##========== MAchine ===============##
 
