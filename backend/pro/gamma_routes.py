@@ -373,6 +373,135 @@ def get_gamma_blueprint():
                 'error': str(e)
             }), 500
 
+    @gamma_bp.route('/pro/gamma/export-walls', methods=['POST'])
+    def export_gamma_walls():
+        """Exporta os gamma walls para formato NTSL (Profit)"""
+        try:
+            data = request.get_json()
+            
+            # Validação de parâmetros
+            ticker = data.get('ticker', '').strip().upper()
+            walls_data = data.get('walls_data')
+            spot_price = data.get('spot_price')
+            
+            if not ticker:
+                return jsonify({'error': 'Ticker é obrigatório'}), 400
+            
+            if not walls_data:
+                return jsonify({'error': 'Dados dos walls são obrigatórios'}), 400
+            
+            logging.info(f"API: Exportação NTSL Gamma solicitada para {ticker}")
+            
+            # Gerar código NTSL para Gamma Walls
+            ntsl_code = generate_gamma_walls_ntsl(ticker, walls_data, spot_price)
+            
+            response = {
+                'success': True,
+                'timestamp': datetime.now().isoformat(),
+                'ticker': ticker.replace('.SA', ''),
+                'ntsl_code': ntsl_code,
+                'walls_count': len(walls_data),
+                'message': f'Código NTSL Gamma Walls gerado com sucesso para {ticker}'
+            }
+            
+            logging.info(f"API: NTSL Gamma gerado com sucesso para {ticker}")
+            return jsonify(response)
+            
+        except ValueError as e:
+            logging.error(f"Erro de validação na exportação: {str(e)}")
+            return jsonify({'error': str(e)}), 400
+            
+        except Exception as e:
+            logging.error(f"Erro na exportação NTSL Gamma: {str(e)}")
+            logging.error(traceback.format_exc())
+            return jsonify({'error': f'Erro interno: {str(e)}'}), 500
+
+    def generate_gamma_walls_ntsl(ticker, walls, spot_price):
+        """Gera o código NTSL com os gamma walls"""
+        
+        # Limpar ticker para exibição
+        display_ticker = ticker.replace('.SA', '')
+        
+        # Separar walls por tipo
+        support_walls = [w for w in walls if w['type'] == 'Support']
+        resistance_walls = [w for w in walls if w['type'] == 'Resistance']
+        
+        # Criar variáveis para os strikes
+        support_lines = []
+        resistance_lines = []
+        variables_declaration = []
+        
+        # Processar Support Walls
+        for i, wall in enumerate(support_walls[:5]):  # Máximo 5 suportes
+            var_name = f"suporte_gamma_{i+1}"
+            variables_declaration.append(f"{var_name} : Float;")
+            support_lines.append(f"{var_name} := {wall['strike']:.2f};")
+            support_lines.append(f'HorizontalLineCustom({var_name}, RGB(173, 216, 230), 3, 2, "Support Gamma {i+1} - {wall["intensity"]:.1%}", 8, tpTopRight, 0, 0, 0, 0);')
+        
+        # Processar Resistance Walls
+        for i, wall in enumerate(resistance_walls[:5]):  # Máximo 5 resistências
+            var_name = f"resistencia_gamma_{i+1}"
+            variables_declaration.append(f"{var_name} : Float;")
+            resistance_lines.append(f"{var_name} := {wall['strike']:.2f};")
+            resistance_lines.append(f'HorizontalLineCustom({var_name}, RGB(173, 216, 230), 3, 2, "Resistance Gamma {i+1} - {wall["intensity"]:.1%}", 8, tpTopRight, 0, 0, 0, 0);')
+        
+        ntsl_template = f'''
+    var
+    // Gamma Walls detectados pelo sistema avançado
+    {chr(10).join(variables_declaration)}
+
+    begin
+    // ===== VALORES DOS GAMMA WALLS =====
+
+    // --- SUPORTES GAMMA ---
+    {chr(10).join(support_lines)}
+
+    // --- RESISTÊNCIAS GAMMA ---
+    {chr(10).join(resistance_lines)}
+
+    end;
+
+    {{
+    ═══════════════════════════════════════════════════════════════
+    COMO USAR NO PROFIT ULTRA:
+    ═══════════════════════════════════════════════════════════════
+    1. Copie todo este código
+    2. Abra o Editor de Estratégias no Profit
+    3. Cole o código e salve como "{display_ticker}_Gamma_Walls"
+    4. Execute no gráfico do {display_ticker}
+    5. Os walls de gamma aparecerão automaticamente
+
+    ═══════════════════════════════════════════════════════════════
+    LEGENDA DOS GAMMA WALLS:
+    ═══════════════════════════════════════════════════════════════
+    💎 WALLS GAMMA (Azul Claro Tracejado):
+
+    🟢 SUPORTES GAMMA:
+    {chr(10).join([f"→ S{i+1}: {w['strike']:.2f} (Intensidade: {w['intensity']:.1%})" for i, w in enumerate(support_walls[:5])])}
+
+    🔴 RESISTÊNCIAS GAMMA:
+    {chr(10).join([f"→ R{i+1}: {w['strike']:.2f} (Intensidade: {w['intensity']:.1%})" for i, w in enumerate(resistance_walls[:5])])}
+
+    ═══════════════════════════════════════════════════════════════
+    ⚡ INTERPRETAÇÃO DOS GAMMA WALLS:
+    ═══════════════════════════════════════════════════════════════
+    - SUPORTE: Market makers têm gamma positivo concentrado
+    - RESISTÊNCIA: Market makers têm gamma negativo concentrado  
+    - INTENSIDADE: Força do wall (maior = mais provável de segurar)
+    - QUEBRA: Movimento forte quando wall é rompido com volume
+    - COR: Azul claro tracejado (espessura 3) para fácil identificação
+
+    ═══════════════════════════════════════════════════════════════
+    🤖 GERADO POR: Sistema Geminii Tech - Gamma Levels
+    📈 TECNOLOGIA: Net Gamma Exposure + Peak Detection
+    🎯 ALGORITMO: Detecção científica com suavização Gaussian
+    📊 PREÇO ATUAL: R$ {spot_price:.2f}
+    ═══════════════════════════════════════════════════════════════
+    }}'''
+
+        return ntsl_template
+    
+    
     @gamma_bp.route('/pro/gamma/health', methods=['GET'])
     def health_check():
         """Health check da API de Gamma"""

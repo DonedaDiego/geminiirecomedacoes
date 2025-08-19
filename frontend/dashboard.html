@@ -260,6 +260,212 @@
       position: relative;
       z-index: 1;
     }
+
+    /* Netflix-style Content Hub */
+    .netflix-container {
+      position: relative;
+      overflow: hidden;
+    }
+
+    .netflix-scroller {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .netflix-row {
+      display: flex;
+      gap: 12px;
+      padding: 0 50px;
+      overflow-x: auto;
+      scroll-behavior: smooth;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      transition: transform 0.3s ease;
+    }
+
+    .netflix-row::-webkit-scrollbar {
+      display: none;
+    }
+
+    .netflix-item {
+      flex: 0 0 240px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      overflow: hidden;
+      transition: all 0.3s ease;
+      cursor: pointer;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .netflix-item:hover {
+      transform: scale(1.05) translateY(-8px);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+      border-color: rgba(99, 102, 241, 0.3);
+      z-index: 10;
+    }
+
+    .netflix-thumbnail {
+      position: relative;
+      width: 100%;
+      height: 135px;
+      overflow: hidden;
+    }
+
+    .netflix-thumbnail img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.3s ease;
+    }
+
+    .netflix-item:hover .netflix-thumbnail img {
+      transform: scale(1.1);
+    }
+
+    .netflix-play-overlay {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 50px;
+      height: 50px;
+      background: rgba(255, 255, 255, 0.9);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: all 0.3s ease;
+    }
+
+    .netflix-item:hover .netflix-play-overlay {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1.1);
+    }
+
+    .netflix-play-overlay i {
+      color: #000;
+      font-size: 18px;
+      margin-left: 3px;
+    }
+
+    .social-overlay {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      background: rgba(0, 0, 0, 0.8);
+      border-radius: 20px;
+      padding: 6px 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .social-overlay i {
+      font-size: 14px;
+    }
+
+    .netflix-info {
+      padding: 16px;
+    }
+
+    .netflix-info h4 {
+      color: white;
+      font-size: 14px;
+      font-weight: 600;
+      margin: 0 0 4px 0;
+      line-height: 1.3;
+    }
+
+    .netflix-info p {
+      color: #9ca3af;
+      font-size: 12px;
+      margin: 0;
+      line-height: 1.4;
+    }
+
+    .netflix-nav {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      background: rgba(0, 0, 0, 0.7);
+      border: none;
+      color: white;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 20;
+      opacity: 0;
+      transition: all 0.3s ease;
+      font-size: 16px;
+    }
+
+    .netflix-container:hover .netflix-nav {
+      opacity: 1;
+    }
+
+    .netflix-nav:hover {
+      background: rgba(0, 0, 0, 0.9);
+      transform: translateY(-50%) scale(1.1);
+    }
+
+    .netflix-nav-left {
+      left: 10px;
+    }
+
+    .netflix-nav-right {
+      right: 10px;
+    }
+
+    .social-item .netflix-thumbnail {
+      height: 200px;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .netflix-item {
+        flex: 0 0 180px;
+      }
+      
+      .netflix-thumbnail {
+        height: 100px;
+      }
+      
+      .social-item .netflix-thumbnail {
+        height: 150px;
+      }
+      
+      .netflix-row {
+        padding: 0 20px;
+      }
+    }
+
+    /* Versão com ícones bem pequenos e minimalistas */
+    .social-item .netflix-thumbnail img {
+      width: 50px !important;
+      height: 50px !important;
+      object-fit: contain !important;
+      padding: 12px;
+      border-radius: 8px;
+      background: transparent;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+
+    .social-item .netflix-thumbnail {
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
   </style>
 </head>
 <body class="min-h-screen">
@@ -354,94 +560,264 @@
           </div>
         </div>
       </div>
-
-
-
-
-      
+     
       <!-- Plans Section - Inserir APÓS o Header Section e ANTES do Recommendations Free Card -->
       <div class="card rounded-2xl p-6 mb-8">
         <div class="flex items-center justify-between mb-4">
           <div>
             <h2 class="text-xl font-bold text-white mb-1 flex items-center">
               <i class="fas fa-crown text-warning mr-3"></i>
-              Geminii Research
+              Geminii Streaming
             </h2>
-            <p class="text-gray-300 text-sm">Assinaturas completas para maximizar seus investimentos</p>
+            <p class="text-gray-300 text-sm">Confira alguns dos conteúdos exclusivos que compartilhamos em nossas redes sociais</p>
           </div>
           <div class="flex items-center gap-2">
             <span class="bg-gradient-to-r from-warning to-danger text-white px-2 py-1 rounded-full text-xs font-bold">
               <i class="fas fa-fire mr-1"></i>
-              Research
+              Social
             </span>
           </div>
         </div>
-        
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          
-          <!-- Recomendação de Carteiras -->
-          <div class="bg-gradient-to-br from-blue-500/10 to-blue-600/5 border border-blue-500/20 rounded-lg p-4 hover:scale-105 transition-all group">
-            <div class="text-center">
-              <div class="w-12 h-12 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
-                <i class="fas fa-briefcase text-blue-400 text-lg"></i>
-              </div>
-              <h3 class="text-sm font-semibold text-white mb-2">Assinaturas</h3>
-              <p class="text-xs text-gray-300 mb-3">Carteiras otimizadas para diferentes perfis</p>
-              <a href="#" id="carteiraLink" target="_blank" class="btn-primary px-3 py-1.5 rounded-lg font-medium inline-block text-center w-full text-xs">
-                <i class="fas fa-external-link-alt mr-1"></i>
-                Acessar
-              </a>
-            </div>
-          </div>
 
-          <!-- Swing Trade -->
-          <div class="bg-gradient-to-br from-green-500/10 to-green-600/5 border border-green-500/20 rounded-lg p-4 hover:scale-105 transition-all group">
-            <div class="text-center">
-              <div class="w-12 h-12 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
-                <i class="fas fa-chart-line text-green-400 text-lg"></i>
-              </div>
-              <h3 class="text-sm font-semibold text-white mb-2">Swing Trade/Position</h3>
-              <p class="text-xs text-gray-300 mb-3">Operações de médio prazo e longo prazo</p>
-              <a href="#" id="swingTradeLink" target="_blank" class="btn-primary px-3 py-1.5 rounded-lg font-medium inline-block text-center w-full text-xs">
-                <i class="fas fa-external-link-alt mr-1"></i>
-                Acessar
-              </a>
-            </div>
-          </div>
 
-          <!-- Position Trade -->
-          <div class="bg-gradient-to-br from-purple-500/10 to-purple-600/5 border border-purple-500/20 rounded-lg p-4 hover:scale-105 transition-all group">
-            <div class="text-center">
-              <div class="w-12 h-12 bg-purple-500/20 rounded-full flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
-                <i class="fas fa-chart-area text-purple-400 text-lg"></i>
+         <!-- Content Hub Section - INSERIR AQUI APÓS PLANS SECTION -->
+          <div class="card rounded-2xl p-8 mb-8">
+            <div class="flex items-center justify-between mb-6">
+              <div>
+                <h2 class="text-2xl font-bold text-white mb-2 flex items-center">
+                  <i class="fas fa-play text-red-500 mr-3"></i>
+                  Geminii Hub
+                </h2>
+                <p class="text-gray-300">Conteúdos exclusivos, análises e insights do mercado</p>
               </div>
-              <h3 class="text-sm font-semibold text-white mb-2">Swing Trade (Opções)</h3>
-              <p class="text-xs text-gray-300 mb-3">Swing Trade com opções à seco</p>
-              <a href="#" id="positionTradeLink" target="_blank" class="btn-primary px-3 py-1.5 rounded-lg font-medium inline-block text-center w-full text-xs">
-                <i class="fas fa-external-link-alt mr-1"></i>
-                Acessar
-              </a>
-            </div>
-          </div>
-
-          <!-- Consultoria -->
-          <div class="bg-gradient-to-br from-yellow-500/10 to-orange-500/5 border border-yellow-500/20 rounded-lg p-4 hover:scale-105 transition-all group">
-            <div class="text-center">
-              <div class="w-12 h-12 bg-yellow-500/20 rounded-full flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
-                <i class="fas fa-user-tie text-yellow-400 text-lg"></i>
+              <div class="flex items-center gap-2">
+                <span class="bg-gradient-to-r from-red-500 to-red-600 text-white px-3 py-1 rounded-full text-xs font-bold">
+                  <i class="fas fa-fire mr-1"></i>
+                  CONTEÚDO
+                </span>
               </div>
-              <h3 class="text-sm font-semibold text-white mb-2">Consultoria</h3>
-              <p class="text-xs text-gray-300 mb-3">Consultoria personalizada</p>
-              <a href="#" id="consultoriaLink" target="_blank" class="btn-primary px-3 py-1.5 rounded-lg font-medium inline-block text-center w-full text-xs">
-                <i class="fas fa-external-link-alt mr-1"></i>
-                Acessar
-              </a>
             </div>
-          </div>
 
-        </div>
-        
-        
+            <!-- YouTube Videos Section -->
+            <div class="mb-8">
+              <h3 class="text-lg font-semibold text-white mb-4 flex items-center">
+                <i class="fab fa-youtube text-red-500 mr-2"></i>
+                Últimos Vídeos
+              </h3>
+              
+              <div class="netflix-container">
+                <div class="netflix-scroller" id="videoScroller">
+                  <button class="netflix-nav netflix-nav-left" id="videoNavLeft">
+                    <i class="fas fa-chevron-left"></i>
+                  </button>
+                  
+                  <div class="netflix-row" id="videoRow">
+                    <!-- Video 1 -->
+                    <div class="netflix-item" onclick="openVideo('https://youtube.com/@geminiiresearch')">
+                      <div class="netflix-thumbnail">
+                        <img src="https://via.placeholder.com/300x169/1a1a1a/ffffff?text=Video+1" alt="Análise Semanal">
+                        <div class="netflix-play-overlay">
+                          <i class="fas fa-play"></i>
+                        </div>
+                      </div>
+                      <div class="netflix-info">
+                        <h4>O Que é Volatilidade</h4>
+                        <p>Perspectivas simples das volatilidade </p>
+                      </div>
+                    </div>
+
+                    <!-- Video 2 -->
+                    <div class="netflix-item" onclick="openVideo('https://youtube.com/@geminiiresearch')">
+                      <div class="netflix-thumbnail">
+                        <img src="https://via.placeholder.com/300x169/2a2a2a/ffffff?text=Video+2" alt="Tutorial ML">
+                        <div class="netflix-play-overlay">
+                          <i class="fas fa-play"></i>
+                        </div>
+                      </div>
+                      <div class="netflix-info">
+                        <h4>Machine Learning no Trading</h4>
+                        <p>Como usar IA para investir</p>
+                      </div>
+                    </div>
+
+                    <!-- Video 3 -->
+                    <div class="netflix-item" onclick="openVideo('https://youtube.com/@geminiiresearch')">
+                      <div class="netflix-thumbnail">
+                        <img src="https://via.placeholder.com/300x169/3a3a3a/ffffff?text=Video+3" alt="Opções">
+                        <div class="netflix-play-overlay">
+                          <i class="fas fa-play"></i>
+                        </div>
+                      </div>
+                      <div class="netflix-info">
+                        <h4>Beta de uma ação</h4>
+                        <p>Onde está o Risco</p>
+                      </div>
+                    </div>
+
+                    <!-- Video 4 -->
+                    <div class="netflix-item" onclick="openVideo('https://youtube.com/@geminiiresearch')">
+                      <div class="netflix-thumbnail">
+                        <img src="https://via.placeholder.com/300x169/4a4a4a/ffffff?text=Video+4" alt="Mercado">
+                        <div class="netflix-play-overlay">
+                          <i class="fas fa-play"></i>
+                        </div>
+                      </div>
+                      <div class="netflix-info">
+                        <h4>Montando um Coe</h4>
+                        <p>Aprenda vocÊ mesmo a montar seu COE</p>
+                      </div>
+                    </div>
+
+                    <!-- Video 5 -->
+                    <div class="netflix-item" onclick="openVideo('https://youtube.com/@geminiiresearch')">
+                      <div class="netflix-thumbnail">
+                        <img src="https://via.placeholder.com/300x169/5a5a5a/ffffff?text=Video+5" alt="Tutorial">
+                        <div class="netflix-play-overlay">
+                          <i class="fas fa-play"></i>
+                        </div>
+                      </div>
+                      <div class="netflix-info">
+                        <h4>Introdução à Ciência de Dados</h4>
+                        <p>Para o Mercado Financeiro</p>
+                      </div>
+                    </div>
+
+                    <!-- Video 6 -->
+                    <div class="netflix-item" onclick="openVideo('https://youtube.com/@geminiiresearch')">
+                      <div class="netflix-thumbnail">
+                        <img src="https://via.placeholder.com/300x169/6a6a6a/ffffff?text=Video+6" alt="Live">
+                        <div class="netflix-play-overlay">
+                          <i class="fas fa-play"></i>
+                        </div>
+                      </div>
+                      <div class="netflix-info">
+                        <h4>Live: Comunidade Fabiones</h4>
+                        <p>Aberura da Comunidade</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <button class="netflix-nav netflix-nav-right" id="videoNavRight">
+                    <i class="fas fa-chevron-right"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Social Feed Section -->
+            <div>
+              <h3 class="text-lg font-semibold text-white mb-4 flex items-center">
+                <i class="fas fa-hashtag text-primary mr-2"></i>
+                Feed Social
+              </h3>
+              
+              <div class="netflix-container">
+                <div class="netflix-scroller" id="socialScroller">
+                  <button class="netflix-nav netflix-nav-left" id="socialNavLeft">
+                    <i class="fas fa-chevron-left"></i>
+                  </button>
+                  
+                  <div class="netflix-row" id="socialRow">
+                    <!-- Post Instagram 1 -->
+                    <div class="netflix-item social-item" onclick="openSocial('https://instagram.com/geminiiresearch')">
+                      <div class="netflix-thumbnail social-thumbnail">
+                        <img src="https://via.placeholder.com/300x300/E4405F/ffffff?text=IG+Post" alt="Instagram Post">
+                        <div class="social-overlay">
+                          <i class="fab fa-instagram"></i>
+                          <span>Instagram</span>
+                        </div>
+                      </div>
+                      <div class="netflix-info">
+                        <h4>Dica de Trading</h4>
+                        <p>Gestão de risco em opções</p>
+                      </div>
+                    </div>
+
+                    <!-- Post X/Twitter 1 -->
+                    <div class="netflix-item social-item" onclick="openSocial('https://x.com/geminiiresearch')">
+                      <div class="netflix-thumbnail social-thumbnail">
+                        <img src="https://via.placeholder.com/300x300/1DA1F2/ffffff?text=X+Post" alt="X Post">
+                        <div class="social-overlay">
+                          <i class="fab fa-x-twitter"></i>
+                          <span>X (Twitter)</span>
+                        </div>
+                      </div>
+                      <div class="netflix-info">
+                        <h4>Análise Rápida</h4>
+                        <p>PETR4 rompeu resistência</p>
+                      </div>
+                    </div>
+
+                    <!-- Post Instagram 2 -->
+                    <div class="netflix-item social-item" onclick="openSocial('https://instagram.com/geminiiresearch')">
+                      <div class="netflix-thumbnail social-thumbnail">
+                        <img src="https://via.placeholder.com/300x300/E4405F/ffffff?text=Story" alt="Instagram Story">
+                        <div class="social-overlay">
+                          <i class="fab fa-instagram"></i>
+                          <span>Stories</span>
+                        </div>
+                      </div>
+                      <div class="netflix-info">
+                        <h4>Behind the Scenes</h4>
+                        <p>Bastidores da análise</p>
+                      </div>
+                    </div>
+
+                    <!-- Post X/Twitter 2 -->
+                    <div class="netflix-item social-item" onclick="openSocial('https://x.com/geminiiresearch')">
+                      <div class="netflix-thumbnail social-thumbnail">
+                        <img src="https://via.placeholder.com/300x300/1DA1F2/ffffff?text=Thread" alt="X Thread">
+                        <div class="social-overlay">
+                          <i class="fab fa-x-twitter"></i>
+                          <span>Thread</span>
+                        </div>
+                      </div>
+                      <div class="netflix-info">
+                        <h4>Thread: Volatilidade</h4>
+                        <p>Como interpretar o VIX</p>
+                      </div>
+                    </div>
+
+                    <!-- Post Instagram 3 -->
+                    <div class="netflix-item social-item" onclick="openSocial('https://instagram.com/geminiiresearch')">
+                      <div class="netflix-thumbnail social-thumbnail">
+                        <img src="https://via.placeholder.com/300x300/E4405F/ffffff?text=Reel" alt="Instagram Reel">
+                        <div class="social-overlay">
+                          <i class="fab fa-instagram"></i>
+                          <span>Reels</span>
+                        </div>
+                      </div>
+                      <div class="netflix-info">
+                        <h4>Tutorial Rápido</h4>
+                        <p>Como usar o RSL Radar</p>
+                      </div>
+                    </div>
+
+                    <!-- Post X/Twitter 3 -->
+                    <div class="netflix-item social-item" onclick="openSocial('https://x.com/geminiiresearch')">
+                      <div class="netflix-thumbnail social-thumbnail">
+                        <img src="https://via.placeholder.com/300x300/1DA1F2/ffffff?text=Poll" alt="X Poll">
+                        <div class="social-overlay">
+                          <i class="fab fa-x-twitter"></i>
+                          <span>Enquete</span>
+                        </div>
+                      </div>
+                      <div class="netflix-info">
+                        <h4>Sua Opinião</h4>
+                        <p>IBOV: Alta ou Baixa?</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <button class="netflix-nav netflix-nav-right" id="socialNavRight">
+                    <i class="fas fa-chevron-right"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div> 
+
+                               
         <!-- CTA Section -->
         <div class="mt-6 text-center">
           <div class="bg-gradient-to-r from-warning/10 to-danger/10 border border-warning/20 rounded-lg p-4">
@@ -451,7 +827,7 @@
             </h3>
             <p class="text-gray-300 text-sm mb-4">Preza muito pela transparência e relacionamento com o cliente, sempre otimizando os processos para recomendações precisas e sem viés, apenas com dados</p>
             <div class="flex justify-center">
-              <a href="#" id="saibaMaisLink" target="_blank" class="bg-gradient-to-r from-warning to-danger text-white px-6 py-2 rounded-lg font-semibold inline-flex items-center justify-center text-sm">
+              <a href="http://www.geminii.com.br/" id="saibaMaisLink" target="_blank" class="bg-gradient-to-r from-warning to-danger text-white px-6 py-2 rounded-lg font-semibold inline-flex items-center justify-center text-sm">
                 <i class="fas fa-info-circle mr-2"></i>
                 Saiba Mais
               </a>
@@ -459,11 +835,6 @@
           </div>
         </div>
       </div>
-
-
-
-
-
 
       <!-- Recommendations Free Card -->
       <div class="card rounded-2xl p-8 mb-8">
@@ -565,13 +936,13 @@
                   </div>
                 </a>
 
-                <!-- <a href="descobertos.html" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white">
+                <a href="descobertos.html" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white">
                   <i class="fas fa-lightbulb text-yellow-400 w-6"></i>
                   <div>
                     <div class="font-medium">Novo Recurso</div>
                     <div class="text-xs text-gray-400">Descrição do recurso</div>
                   </div>
-                </a> -->                
+                </a>                
                 
                 <a href="sup_res_vol.html" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white">
                   <i class="fas fa-chart-line text-blue-400 w-6"></i>
@@ -621,13 +992,13 @@
                   </div>
                 </a>
                 
-                <!-- <a href="gamma-levels.html" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white">
+                <a href="gamma-levels.html" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white">
                   <i class="fas fa-layer-group text-purple-400 w-6"></i>
                   <div>
                     <div class="font-medium">Gamma Levels</div>
                     <div class="text-xs text-gray-400">Exposição gamma e walls de suporte/resistência</div>
                   </div>
-                </a>   -->
+                </a>  
 
                 <a href="rank-volatilidade.html" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white">
                   <i class="fas fa-search text-green-400 w-6"></i>
@@ -734,7 +1105,7 @@
       
       <span class="coming-soon-badge mb-3">
         <i class="fas fa-clock"></i>
-        Em Breve
+        Já disponível
       </span>
 
     </div>
@@ -1177,6 +1548,267 @@
         }
       }
     }
+
+    // Netflix-style navigation functions
+    function setupNetflixNavigation() {
+      // Video navigation
+      const videoRow = document.getElementById('videoRow');
+      const videoNavLeft = document.getElementById('videoNavLeft');
+      const videoNavRight = document.getElementById('videoNavRight');
+      
+      videoNavLeft.addEventListener('click', () => {
+        videoRow.scrollBy({ left: -300, behavior: 'smooth' });
+      });
+      
+      videoNavRight.addEventListener('click', () => {
+        videoRow.scrollBy({ left: 300, behavior: 'smooth' });
+      });
+
+      // Social navigation  
+      const socialRow = document.getElementById('socialRow');
+      const socialNavLeft = document.getElementById('socialNavLeft');
+      const socialNavRight = document.getElementById('socialNavRight');
+      
+      socialNavLeft.addEventListener('click', () => {
+        socialRow.scrollBy({ left: -300, behavior: 'smooth' });
+      });
+      
+      socialNavRight.addEventListener('click', () => {
+        socialRow.scrollBy({ left: 300, behavior: 'smooth' });
+      });
+    }
+
+    // NOVA FUNÇÃO: Extrai ID do YouTube da URL
+    function extractYouTubeVideoId(url) {
+      const regex = /(?:https?:\/\/)?(?:www\.)?youtu(?:be)?\.(?:com|be)\/(?:watch\?v=|embed\/|v\/|)([^#&?]+)/;
+      const match = url.match(regex);
+      return match ? match[1] : null;
+    }
+
+    // NOVA FUNÇÃO: Gera thumbnail automática do YouTube
+    function getYouTubeThumbnail(url, quality = 'maxresdefault') {
+      const videoId = extractYouTubeVideoId(url);
+      if (!videoId) return 'https://via.placeholder.com/300x169/1a1a1a/ffffff?text=Video';
+      
+      
+      return `https://img.youtube.com/vi/${videoId}/${quality}.jpg`;
+    }
+
+    // NOVA FUNÇÃO: Atualiza automaticamente as thumbnails dos vídeos
+    function updateVideoThumbnails() {
+      // Lista seus vídeos do YouTube aqui (substitua pelas URLs reais)
+      const youtubeVideos = [
+        'https://www.youtube.com/watch?v=QPjOz_tYdpE&t=190s',
+        'https://www.youtube.com/watch?v=1ifmf4AFHqw&t=393s',
+        'https://www.youtube.com/watch?v=mefy0YlS5P4&list=PLSE569v8Vpe3aT-Va2wu4zXmuXncjlBYt',
+        'https://www.youtube.com/watch?v=SJ2jtPAp8i4&t=568s',
+        'https://www.youtube.com/watch?v=10bZWx39mKI&t=496s',
+        'https://www.youtube.com/watch?v=It1UrfmvTHg&t=2309s'
+      ];
+
+      // Atualiza automaticamente as imagens
+      const videoItems = document.querySelectorAll('#videoRow .netflix-item');
+      
+      videoItems.forEach((item, index) => {
+        if (youtubeVideos[index]) {
+          const img = item.querySelector('.netflix-thumbnail img');
+          const thumbnailUrl = getYouTubeThumbnail(youtubeVideos[index]);
+          
+          if (img) {
+            img.src = thumbnailUrl;
+            img.onerror = function() {
+              // Se maxres não existir, tenta hqdefault
+              this.src = getYouTubeThumbnail(youtubeVideos[index], 'hqdefault');
+            };
+          }
+          
+          // Atualiza o link do clique
+          item.setAttribute('onclick', `openVideo('${youtubeVideos[index]}')`);
+        }
+      });
+    }
+
+    function openVideo(url) {
+      window.open(url, '_blank');
+    }
+
+    function openSocial(url) {
+      window.open(url, '_blank');
+    }
+
+    // Initialize Netflix navigation
+    // Initialize Netflix navigation
+    document.addEventListener('DOMContentLoaded', () => {
+      setupNetflixNavigation();
+      
+      // ATUALIZA AUTOMATICAMENTE VIDEOS E POSTS
+      setTimeout(() => {
+        updateVideoThumbnails();
+        updateSocialPosts();
+      }, 500);
+    });
+
+    // Make functions global
+    window.openVideo = openVideo;
+    window.openSocial = openSocial;
+    window.updateVideoThumbnails = updateVideoThumbnails;
+    window.updateSocialPosts = updateSocialPosts;
+    window.downloadSocialScreenshot = downloadSocialScreenshot;
+
+
+    //Configura posts do Instagram e X/Twitter
+    function updateSocialPosts() {
+      // Configure seus posts aqui
+      const socialPosts = [
+        {
+          type: 'instagram',
+          url: 'https://www.instagram.com/stories/highlights/18022937624723142/',  // Link do post real
+          image: 'https://cdn.jsdelivr.net/npm/simple-icons@v10/icons/instagram.svg?color=E4405F',
+          title: 'Sobre Nós',
+          description: 'Um pouco sobre a Geminii'
+        },
+        {
+          type: 'twitter',
+          url: 'https://x.com/geminiiresearch/status/1956375053106360719',
+          image: 'https://cdn.jsdelivr.net/npm/simple-icons@v10/icons/x.svg?color=1DA1F2',
+          title: 'Posição Montada',
+          description: 'BBAS3 antes da queda'
+        },
+        {
+          type: 'instagram',
+          url: 'https://www.instagram.com/p/DNWnpP0Rhlm/',
+          image: 'https://cdn.jsdelivr.net/npm/simple-icons@v10/icons/instagram.svg?color=E4405F',
+          title: 'Alerta Ou Oportunidade',
+          description: 'Bastidores da análise de bbas3'
+        },
+        {
+          type: 'twitter',
+          url: 'https://x.com/geminiiresearch/status/1945252729217065330',
+          image: 'https://cdn.jsdelivr.net/npm/simple-icons@v10/icons/x.svg?color=1DA1F2',
+          title: 'Trend Flow',
+          description: 'Uma nova visão sobre os prêmios das opções'
+        },
+        {
+          type: 'instagram',
+          url: 'https://www.instagram.com/geminiiresearch/p/DMqqQYYSxRo/',
+          image: 'https://cdn.jsdelivr.net/npm/simple-icons@v10/icons/instagram.svg?color=E4405F',
+          title: 'Dica de Leitura',
+          description: 'Expoente de Hurst'
+        },
+        {
+          type: 'twitter', 
+          url: 'https://x.com/geminiiresearch/status/POST_ID_3',
+          image: 'https://cdn.jsdelivr.net/npm/simple-icons@v10/icons/x.svg?color=1DA1F2',
+          title: 'Sua Opinião',
+          description: 'IBOV: Alta ou Baixa?'
+        }
+      ];
+
+      // Atualiza automaticamente os posts sociais
+      const socialItems = document.querySelectorAll('#socialRow .netflix-item');
+      
+      socialItems.forEach((item, index) => {
+        if (socialPosts[index]) {
+          const post = socialPosts[index];
+          const img = item.querySelector('.netflix-thumbnail img');
+          const overlay = item.querySelector('.social-overlay');
+          const title = item.querySelector('.netflix-info h4');
+          const description = item.querySelector('.netflix-info p');
+          
+          if (img) {
+            // Se você não tiver a imagem ainda, gera placeholder personalizado
+            if (post.image.includes('assets/') && !post.image.includes('http')) {
+              img.src = generateSocialPlaceholder(post.type, post.title);
+            } else {
+              img.src = post.image;
+            }
+            
+            img.onerror = function() {
+              this.src = generateSocialPlaceholder(post.type, post.title);
+            };
+          }
+          
+          if (overlay) {
+            const icon = overlay.querySelector('i');
+            const span = overlay.querySelector('span');
+            
+            if (post.type === 'instagram') {
+              icon.className = 'fab fa-instagram';
+              span.textContent = getInstagramType(post.url);
+              overlay.style.background = 'linear-gradient(45deg, #833ab4, #fd1d1d, #fcb045)';
+            } else {
+              icon.className = 'fab fa-x-twitter'; 
+              span.textContent = getTwitterType(post.url);
+              overlay.style.background = 'rgba(0, 0, 0, 0.8)';
+            }
+          }
+          
+          if (title) title.textContent = post.title;
+          if (description) description.textContent = post.description;
+          
+          // Atualiza o link do clique
+          item.setAttribute('onclick', `openSocial('${post.url}')`);
+        }
+      });
+    }
+
+    // NOVA FUNÇÃO: Gera placeholder personalizado para redes sociais
+    function generateSocialPlaceholder(type, title) {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      canvas.width = 300;
+      canvas.height = 300;
+      
+      // Background baseado na rede social
+      if (type === 'instagram') {
+        const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+        gradient.addColorStop(0, '#833ab4');
+        gradient.addColorStop(0.5, '#fd1d1d');  
+        gradient.addColorStop(1, '#fcb045');
+        ctx.fillStyle = gradient;
+      } else {
+        ctx.fillStyle = '#1DA1F2';
+      }
+      
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      
+      // Ícone da rede social
+      ctx.fillStyle = 'white';
+      ctx.font = 'bold 48px Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText(type === 'instagram' ? '📷' : '🐦', canvas.width/2, canvas.height/2 - 20);
+      
+      // Título
+      ctx.font = 'bold 16px Arial';
+      ctx.fillText(title.substring(0, 20), canvas.width/2, canvas.height/2 + 30);
+      
+      return canvas.toDataURL();
+    }
+
+    // NOVA FUNÇÃO: Detecta tipo de conteúdo do Instagram
+    function getInstagramType(url) {
+      if (url.includes('/stories/')) return 'Stories';
+      if (url.includes('/reel/')) return 'Reels';  
+      if (url.includes('/p/')) return 'Post';
+      return 'Instagram';
+    }
+
+    // NOVA FUNÇÃO: Detecta tipo de conteúdo do Twitter/X
+    function getTwitterType(url) {
+      if (url.includes('status') && url.includes('/1')) return 'Thread';
+      if (url.includes('status')) return 'Post';
+      return 'X';
+    }
+
+    // NOVA FUNÇÃO: Baixa screenshot de posts (opcional - para usar depois)
+    function downloadSocialScreenshot(url, filename) {
+      // Esta função pode ser expandida para automatizar screenshots
+      console.log(`Para fazer screenshot: ${url} -> salvar como ${filename}`);
+      alert('📸 Faça um screenshot deste post e salve como: ' + filename);
+      window.open(url, '_blank');
+    }
+
+
 
     function toggleOpcoesDropdown() {
       if (userPlan === 'free') {

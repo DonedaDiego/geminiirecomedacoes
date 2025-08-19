@@ -31,6 +31,7 @@
     background: #0f0f0f;
   }
   
+  /* ===== CARDS E CONTAINERS ===== */
   .card {
     background: rgba(255, 255, 255, 0.08);
     backdrop-filter: blur(20px);
@@ -44,13 +45,31 @@
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
     border-color: rgba(255, 255, 255, 0.2);
   }
+
+  .metric-card {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.3s ease;
+  }
+
+  .metric-card:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.2);
+  }
+
+  .error-card {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(220, 38, 38, 0.05));
+    border: 1px solid rgba(239, 68, 68, 0.3);
+  }
   
+  /* ===== NAVEGAÇÃO ===== */
   .navbar {
     background: rgba(15, 15, 15, 0.95);
     backdrop-filter: blur(20px);
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   }
   
+  /* ===== ANIMAÇÕES ===== */
   .pulse-glow {
     animation: pulseGlow 2s ease-in-out infinite alternate;
   }
@@ -80,6 +99,21 @@
     to { opacity: 1; transform: translateY(0); }
   }
 
+  .spinner {
+    border: 4px solid rgba(255, 255, 255, 0.3);
+    border-top: 4px solid #8b5cf6;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+
+  /* ===== BADGES E STATUS ===== */
   .status-badge {
     padding: 0.25rem 0.75rem;
     border-radius: 9999px;
@@ -110,11 +144,7 @@
     border: 1px solid rgba(239, 68, 68, 0.3);
   }
 
-  .error-card {
-    background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(220, 38, 38, 0.05));
-    border: 1px solid rgba(239, 68, 68, 0.3);
-  }
-
+  /* ===== BOTÕES ===== */
   .btn-modern {
     background: linear-gradient(135deg, #6366f1, #8b5cf6);
     transition: all 0.3s ease;
@@ -157,74 +187,7 @@
     box-shadow: 0 8px 25px rgba(245, 158, 11, 0.4);
   }
 
-  .spinner {
-    border: 4px solid rgba(255, 255, 255, 0.3);
-    border-top: 4px solid #8b5cf6;
-    border-radius: 50%;
-    width: 40px;
-    height: 40px;
-    animation: spin 1s linear infinite;
-  }
-
-  @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-  }
-
-  /* GRÁFICOS - RESPONSIVIDADE */
-  .chart-container {
-    background: rgba(255, 255, 255, 0.05);
-    backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 1rem;
-    padding: 1.5rem;
-    margin-bottom: 2rem;
-    overflow: hidden;
-    position: relative;
-    width: 100%;
-    min-height: 500px;
-  }
-
-  #gammaChart {
-    width: 100% !important;
-    height: 100% !important;
-    min-height: 500px !important;
-    position: relative;
-  }
-
-  .js-plotly-plot, .plotly, .plotly-graph-div {
-    width: 100% !important;
-    height: 100% !important;
-  }
-
-  .js-plotly-plot .plotly .svg-container .svg-scrollbox {
-    width: 100% !important;
-    height: 100% !important;
-  }
-
-  .metric-card {
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    transition: all 0.3s ease;
-  }
-
-  .metric-card:hover {
-    background: rgba(255, 255, 255, 0.08);
-    border-color: rgba(255, 255, 255, 0.2);
-  }
-
-  /* Gauge Styles */
-  .gauge-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    position: relative;
-  }
-
-  .gauge-svg {
-    filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.5));
-  }
-
+  /* ===== INPUTS E FORMULÁRIOS ===== */
   input:focus {
     outline: none;
     border-color: #6366f1;
@@ -242,20 +205,146 @@
     color: white;
   }
 
-  /* Responsividade Mobile */
+  /* ===== GRÁFICOS - VERSÃO DEFINITIVA ===== */
+  .chart-container {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 1rem;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    position: relative;
+    width: 100%;
+    min-height: 450px; /* ← min-height ao invés de height fixo */
+    box-sizing: border-box;
+}
+
+#gammaChart {
+    width: 100% !important;
+    min-height: 400px !important; /* ← min-height para mobile */
+    position: relative;
+}
+
+  /* Forçar Plotly a respeitar o container */
+  #gammaChart > div {
+    width: 100% !important;
+    height: 100% !important;
+  }
+
+  .js-plotly-plot {
+    width: 100% !important;
+    height: 100% !important;
+  }
+
+  .plotly {
+    width: 100% !important;
+    height: 100% !important;
+  }
+
+  .plotly-graph-div {
+    width: 100% !important;
+    height: 100% !important;
+  }
+
+  .js-plotly-plot .plotly .svg-container {
+    width: 100% !important;
+    height: 100% !important;
+  }
+
+  .js-plotly-plot .plotly .svg-container .svg-scrollbox {
+    width: 100% !important;
+    height: 100% !important;
+  }
+
+  /* ===== TERMÔMETRO ===== */
+  .thermometer-container {
+    position: relative;
+    width: 80px;
+    height: 200px;
+    margin: 0 auto;
+  }
+
+  .thermometer-bg {
+    width: 20px;
+    height: 150px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px 10px 0 0;
+    position: relative;
+    margin: 0 auto;
+  }
+
+  .thermometer-bulb {
+    width: 40px;
+    height: 40px;
+    background: #333;
+    border-radius: 50%;
+    position: absolute;
+    bottom: -20px;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 3px solid rgba(255, 255, 255, 0.2);
+  }
+
+  .thermometer-fill {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    border-radius: 0 0 10px 10px;
+    transition: all 0.8s ease;
+  }
+
+  .intensity-low { 
+    background: linear-gradient(to top, #10b981, #34d399); 
+  }
+  
+  .intensity-medium { 
+    background: linear-gradient(to top, #f59e0b, #fbbf24); 
+  }
+  
+  .intensity-high { 
+    background: linear-gradient(to top, #ef4444, #f87171); 
+  }
+
+  .thermometer-scale {
+    position: absolute;
+    right: -30px;
+    top: 0;
+    height: 150px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    font-size: 10px;
+    color: #888;
+  }
+
+  /* ===== GAUGE ===== */
+  .gauge-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+  }
+
+  .gauge-svg {
+    filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.5));
+  }
+
+  /* ===== RESPONSIVIDADE ===== */
+  @media (max-width: 1024px) {
+    .chart-container {
+      height: 600px;
+      padding: 1rem;
+    }
+  }
+
   @media (max-width: 768px) {
     .chart-container {
+      height: 500px;
       padding: 1rem;
-      margin: 0 -0.5rem;
-      border-radius: 0.75rem;
-      min-height: 400px;
+      margin: 0 -0.5rem 2rem -0.5rem;
     }
     
-    #gammaChart {
-      min-height: 400px !important;
-      max-height: 500px !important;
-    }
-
     .max-w-7xl {
       padding-left: 1rem;
       padding-right: 1rem;
@@ -264,15 +353,9 @@
 
   @media (max-width: 480px) {
     .chart-container {
+      height: 450px;
       padding: 0.75rem;
-      margin: 0 -0.75rem;
-      border-radius: 0.5rem;
-      min-height: 350px;
-    }
-    
-    #gammaChart {
-      min-height: 350px !important;
-      max-height: 450px !important;
+      margin: 0 -0.75rem 2rem -0.75rem;
     }
 
     .grid.grid-cols-1.md\\:grid-cols-3 {
@@ -281,60 +364,17 @@
     }
   }
 
-  /* Termômetro Styles */
-.thermometer-container {
-  position: relative;
-  width: 80px;
-  height: 200px;
-  margin: 0 auto;
-}
-
-.thermometer-bg {
-  width: 20px;
-  height: 150px;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 10px 10px 0 0;
-  position: relative;
-  margin: 0 auto;
-}
-
-.thermometer-bulb {
-  width: 40px;
-  height: 40px;
-  background: #333;
-  border-radius: 50%;
-  position: absolute;
-  bottom: -20px;
-  left: 50%;
-  transform: translateX(-50%);
-  border: 3px solid rgba(255, 255, 255, 0.2);
-}
-
-.thermometer-fill {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  border-radius: 0 0 10px 10px;
-  transition: all 0.8s ease;
-}
-
-.intensity-low { background: linear-gradient(to top, #10b981, #34d399); }
-.intensity-medium { background: linear-gradient(to top, #f59e0b, #fbbf24); }
-.intensity-high { background: linear-gradient(to top, #ef4444, #f87171); }
-
-.thermometer-scale {
-  position: absolute;
-  right: -30px;
-  top: 0;
-  height: 150px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  font-size: 10px;
-  color: #888;
-}
+  .btn-export {
+    background: linear-gradient(135deg, #10b981, #059669);
+    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+  }
+  
+  .btn-export:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
+  }
 </style>
+
 </head>
 <body class="min-h-screen text-white">
  
@@ -376,78 +416,129 @@
          Análise avançada de exposição gamma e identificação de walls de suporte/resistência
        </p>
        
-       <!-- Info Expander -->
-       <div class="mt-8">
-         <button onclick="toggleInfo()" class="bg-gradient-to-r from-geminii to-purple-600 hover:from-purple-600 hover:to-geminii text-white px-6 py-3 rounded-full font-semibold text-sm transition-all duration-300 flex items-center mx-auto shadow-lg hover:shadow-xl transform hover:scale-105">
-           <i id="infoIcon" class="fas fa-info-circle mr-2 transition-transform duration-300"></i>
-           Como Funciona Nossa Tecnologia Gamma
-         </button>
-         
-         <div id="infoContent" class="hidden mt-8 max-w-6xl mx-auto">
-           <div class="card rounded-xl p-8 text-left">
-             <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-               
-               <!-- Gamma Exposure Analysis -->
-               <div class="space-y-4">
-                 <div class="flex items-center mb-4">
-                   <div class="w-4 h-4 rounded-full bg-gradient-to-r from-purple-400 to-purple-600 mr-3"></div>
-                   <h3 class="text-xl font-bold text-white">Análise de Exposição Gamma</h3>
-                 </div>
-                 <p class="text-gray-300 text-sm leading-relaxed mb-4">
-                   Nosso sistema calcula a <strong>exposição gamma dos market makers</strong> usando dados reais 
-                   de opções da API OpLab. Identificamos onde os <strong>dealers estão posicionados</strong> 
-                   e como isso afeta o comportamento do preço do ativo subjacente.
-                 </p>
-                 <div class="bg-white/5 rounded-lg p-4">
-                   <h4 class="text-purple-400 font-semibold text-sm mb-3">Métricas calculadas:</h4>
-                   <ul class="text-gray-400 text-sm space-y-2">
-                     <li>• <span class="text-green-400 font-medium">Net Gamma Exposure</span>: Exposição total do mercado</li>
-                     <li>• <span class="text-blue-400 font-medium">Regime de Volatilidade</span>: Long/Short Gamma</li>
-                     <li>• <span class="text-yellow-400 font-medium">Market Behavior</span>: Mean Reverting vs Momentum</li>
-                     <li>• <span class="text-purple-400 font-medium">Gamma Skew</span>: Viés calls vs puts</li>
-                   </ul>
-                 </div>
-               </div>
-               
-               <!-- Gamma Walls Detection -->
-               <div class="space-y-4">
-                 <div class="flex items-center mb-4">
-                   <div class="w-4 h-4 rounded-full bg-gradient-to-r from-cyan-400 to-cyan-600 mr-3"></div>
-                   <h3 class="text-xl font-bold text-white">Detecção de Gamma Walls</h3>
-                 </div>
-                 <p class="text-gray-300 text-sm leading-relaxed mb-4">
-                   Utilizamos <strong>algoritmos de detecção de picos</strong> com suavização científica 
-                   (Spline + Gaussian Filter) para identificar níveis críticos onde há concentração 
-                   massiva de <strong>exposição gamma</strong>.
-                 </p>
-                 <div class="bg-white/5 rounded-lg p-4">
-                   <h4 class="text-cyan-400 font-semibold text-sm mb-3">Tipos de Walls:</h4>
-                   <ul class="text-gray-400 text-sm space-y-2">
-                     <li>• <span class="text-green-400 font-medium">Support Walls</span>: Gamma positivo concentrado</li>
-                     <li>• <span class="text-red-400 font-medium">Resistance Walls</span>: Gamma negativo concentrado</li>
-                     <li>• <span class="text-yellow-400 font-medium">Intensidade</span>: Força relativa do wall (0-100%)</li>
-                     <li>• <span class="text-blue-400 font-medium">Distância</span>: Proximidade do preço atual</li>
-                   </ul>
-                 </div>
-               </div>
-               
-             </div>
-             
-             <!-- Combined Power -->
-             <div class="mt-8 pt-6 border-t border-white/10">
-               <div class="text-center">
-                 <h4 class="text-geminii font-bold text-lg mb-3">Poder dos Gamma Levels</h4>
-                 <p class="text-gray-300 text-sm max-w-4xl mx-auto">
-                   Quando market makers têm <strong>grandes posições gamma</strong> em strikes específicos, 
-                   eles precisam fazer <strong>hedge dinâmico</strong>, criando pressure de compra/venda 
-                   que atua como <strong>ímãs magnéticos</strong> nos preços. Nosso sistema identifica 
-                   esses pontos críticos com precisão matemática.
-                 </p>
-               </div>
-             </div>
-           </div>
-         </div>
-       </div>
+        <!-- Info Expander Atualizado -->
+        <div class="mt-8">
+          <button onclick="toggleInfo()" class="bg-gradient-to-r from-geminii to-purple-600 hover:from-purple-600 hover:to-geminii text-white px-6 py-3 rounded-full font-semibold text-sm transition-all duration-300 flex items-center mx-auto shadow-lg hover:shadow-xl transform hover:scale-105">
+            <i id="infoIcon" class="fas fa-info-circle mr-2 transition-transform duration-300"></i>
+            Como Interpretar os Gamma Levels
+          </button>
+          
+          <div id="infoContent" class="hidden mt-8 max-w-6xl mx-auto">
+            <div class="card rounded-xl p-8 text-left">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                
+                <!-- Métricas de Gamma -->
+                <div class="space-y-4">
+                  <div class="flex items-center mb-4">
+                    <div class="w-4 h-4 rounded-full bg-gradient-to-r from-purple-400 to-purple-600 mr-3"></div>
+                    <h3 class="text-xl font-bold text-white">Métricas de Gamma</h3>
+                  </div>
+                  <p class="text-gray-300 text-sm leading-relaxed mb-4">
+                    As métricas mostram o <strong>estado atual do mercado de opções</strong> e como 
+                    os market makers estão posicionados. O <strong>Net Exposição	Gamma (NGE)</strong> 
+                    é o indicador principal que determina o comportamento esperado do preço.
+                  </p>
+                  <div class="bg-white/5 rounded-lg p-4">
+                    <h4 class="text-purple-400 font-semibold text-sm mb-3">Principais indicadores:</h4>
+                    <ul class="text-gray-400 text-sm space-y-2">
+                      <li>• <span class="text-green-400 font-medium">Long Gamma</span>: NGE > 0 = Mercado estabilizador</li>
+                      <li>• <span class="text-red-400 font-medium">Short Gamma</span>: NGE < 0 = Mercado amplificador</li>
+                      <li>• <span class="text-blue-400 font-medium">Call/Put Ratio</span>: Proporção entre calls e puts</li>
+                      <li>• <span class="text-yellow-400 font-medium">Gamma Skew</span>: Viés para calls (+) ou puts (-)</li>
+                    </ul>
+                  </div>
+                </div>
+                
+                <!-- Intensidade Gamma -->
+                <div class="space-y-4">
+                  <div class="flex items-center mb-4">
+                    <div class="w-4 h-4 rounded-full bg-gradient-to-r from-orange-400 to-red-400 mr-3"></div>
+                    <h3 class="text-xl font-bold text-white">Termômetro de Intensidade</h3>
+                  </div>
+                  <p class="text-gray-300 text-sm leading-relaxed mb-4">
+                    O termômetro mede a <strong>força média dos walls detectados</strong>. Quanto mais 
+                    alto, mais confiáveis são as barreiras. Use para validar se vale a pena 
+                    apostar nos níveis de <strong>suporte e resistência identificados</strong>.
+                  </p>
+                  <div class="bg-white/5 rounded-lg p-4">
+                    <h4 class="text-orange-400 font-semibold text-sm mb-3">Interpretação do termômetro:</h4>
+                    <ul class="text-gray-400 text-sm space-y-2">
+                      <li>• <span class="text-green-400 font-medium">0-40%</span>: Walls fracos - Cuidado com breakouts</li>
+                      <li>• <span class="text-yellow-400 font-medium">40-75%</span>: Walls moderados - Níveis confiáveis</li>
+                      <li>• <span class="text-red-400 font-medium">75-100%</span>: Walls fortes - Barreiras rígidas</li>
+                      <li>• <span class="text-purple-400 font-medium">Média</span>: Baseada em todos os walls detectados</li>
+                    </ul>
+                  </div>
+                </div>
+                
+              </div>
+              
+              <!-- Gamma Walls -->
+              <div class="mt-8 pt-6 border-t border-white/10">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  
+                  <div class="space-y-4">
+                    <div class="flex items-center mb-4">
+                      <div class="w-4 h-4 rounded-full bg-gradient-to-r from-green-400 to-red-400 mr-3"></div>
+                      <h3 class="text-xl font-bold text-white">Gamma Walls Detectados</h3>
+                    </div>
+                    <p class="text-gray-300 text-sm leading-relaxed mb-4">
+                      Os walls são <strong>níveis de preço específicos</strong> onde há concentração 
+                      de gamma dos market makers. Cada wall tem uma <strong>intensidade individual</strong> 
+                      que indica sua força como barreira.
+                    </p>
+                    <div class="bg-white/5 rounded-lg p-4">
+                      <h4 class="text-green-400 font-semibold text-sm mb-3">Como usar os walls:</h4>
+                      <ul class="text-gray-400 text-sm space-y-2">
+                        <li>• <span class="text-green-400 font-medium">Support Walls</span>: Pontos de compra/reversão</li>
+                        <li>• <span class="text-red-400 font-medium">Resistance Walls</span>: Pontos de venda/teto</li>
+                        <li>• <span class="text-blue-400 font-medium">Intensidade Alta</span>: >70% = Nível muito confiável</li>
+                        <li>• <span class="text-purple-400 font-medium">Strikes Exatos</span>: Use os valores precisos</li>
+                      </ul>
+                    </div>
+                  </div>
+                  
+                  <div class="space-y-4">
+                    <div class="flex items-center mb-4">
+                      <div class="w-4 h-4 rounded-full bg-gradient-to-r from-cyan-400 to-blue-400 mr-3"></div>
+                      <h3 class="text-xl font-bold text-white">Estratégia Prática</h3>
+                    </div>
+                    <p class="text-gray-300 text-sm leading-relaxed mb-4">
+                      Combine as <strong>métricas gerais</strong> com a <strong>intensidade do termômetro</strong> 
+                      e os <strong>walls específicos</strong>. Se o termômetro está alto (>75%) e você tem 
+                      um wall de 90%+ de intensidade, é um nível muito confiável.
+                    </p>
+                    <div class="bg-white/5 rounded-lg p-4">
+                      <h4 class="text-cyan-400 font-semibold text-sm mb-3">Combinações ideais:</h4>
+                      <ul class="text-gray-400 text-sm space-y-2">
+                        <li>• <span class="text-green-400 font-medium">Long Gamma + Wall forte</span>: Reversão provável</li>
+                        <li>• <span class="text-red-400 font-medium">Short Gamma + Wall fraco</span>: Breakout possível</li>
+                        <li>• <span class="text-yellow-400 font-medium">Termômetro baixo</span>: Aguardar confirmação</li>
+                        <li>• <span class="text-blue-400 font-medium">Múltiplos walls próximos</span>: Zona crítica</li>
+                      </ul>
+                    </div>
+                  </div>
+                  
+                </div>
+              </div>
+              
+              <!-- Vantagem -->
+              <div class="mt-8 pt-6 border-t border-white/10">
+                <div class="text-center">
+                  <h4 class="text-geminii font-bold text-lg mb-3">Vantagem dos Gamma Levels</h4>
+                  <p class="text-gray-300 text-sm max-w-4xl mx-auto">
+                    Você não está "desenhando" linhas no gráfico baseado em máximas e mínimas passadas. 
+                    Está vendo <strong>matematicamente onde o dinheiro dos market makers</strong> está 
+                    concentrado AGORA. É como ter <strong>acesso aos livros de posições</strong> dos 
+                    grandes players antes do mercado se mover.Todos os indicadores da ferramenta, incluindo o Gamma Levels, 
+                    são criados e desenvolvidos pela Geminii com algoritmos de machine learning, 
+                    rigor matemático/estatístico e engenharia em Python, para entregar sinais objetivos, replicáveis e auditáveis.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
      </div>
 
      
@@ -471,6 +562,12 @@
            <i class="fas fa-layer-group mr-2"></i>
            Análise Completa
          </button>
+         <button onclick="exportGammaWalls()" id="exportGammaBtn" class="hidden btn-export text-white px-8 py-3 rounded-lg font-semibold transition-all duration-300 flex items-center">
+          <i class="fas fa-download mr-2"></i>
+          Exportar Walls para Profit
+        </button>
+
+
        </div>
      </div>
 
@@ -1025,7 +1122,7 @@
              <h3 class="text-xl font-bold text-white mb-1">
                ${metrics.net_gamma_exposure?.toLocaleString() || 'N/A'}
              </h3>
-             <p class="text-gray-400 text-sm">Net Gamma Exposure</p>
+             <p class="text-gray-400 text-sm">Net Exposição	Gamma</p>
            </div>
            <div class="text-right">
              <div class="text-2xl mb-1">
@@ -1039,8 +1136,7 @@
           <!-- Regime Info -->
         <div class="text-center mb-4 p-3 bg-black/20 rounded-lg">
           <p class="text-white font-bold text-lg mb-1">${metrics.gamma_regime || 'N/A'}</p>
-          <p class="text-sm text-gray-300">Expectativa: ${metrics.volatility_expectation || 'N/A'} Volatility</p>
-          <p class="text-sm text-gray-300">Comportamento: ${metrics.market_behavior || 'N/A'}</p>
+      
         </div>
         
         <!-- Spot Price Info -->
@@ -1115,6 +1211,15 @@
         '<p class="text-gray-400 text-center">Nenhum gamma wall significativo detectado</p>';
       return;
     }
+  
+    // SALVAR DADOS DOS WALLS GLOBALMENTE
+    currentWallsData = walls;
+    
+    // MOSTRAR BOTÃO DE EXPORTAÇÃO
+    const exportBtn = document.getElementById('exportGammaBtn');
+    if (exportBtn) {
+      exportBtn.classList.remove('hidden');
+    }
 
     let html = `
       <div class="mb-4 text-center">
@@ -1188,7 +1293,7 @@
         color: '#8b5cf6',
         width: 3
       },
-      name: 'Net Gamma Exposure',
+      name: 'Net Exposição Gamma',
       hovertemplate: `<b>Strike:</b> ${plotData.currency}%{x:.2f}<br>` +
                      '<b>Net Gamma:</b> %{y:.2f}<br>' +
                      '<extra></extra>'
@@ -1231,84 +1336,88 @@
     
     data.push(zeroLineData);
 
-    // Layout responsivo
+    
     const layout = {
       title: {
-        text: `${plotData.ticker} - Gamma Exposure por Strike`,
-        font: {
-          color: 'white',
-          size: isMobile ? 14 : isTablet ? 16 : 18
-        },
-        x: 0.5,
-        xanchor: 'center'
+          text: `${plotData.ticker} - Exposição	Gamma por Strike`,
+          font: {
+              color: 'white',
+              size: isMobile ? 16 : 20
+          },
+          x: 0.5,
+          xanchor: 'center'
       },
-      paper_bgcolor: 'rgba(0,0,0,0)',
-      plot_bgcolor: 'rgba(255,255,255,0.05)',
+      paper_bgcolor: '#0f0f0f',
+      plot_bgcolor: '#1a1a1a',
       
       xaxis: {
-        title: isMobile ? 'Strike' : `Strike Price (${plotData.currency})`,
-        color: 'white',
-        gridcolor: 'rgba(255,255,255,0.1)',
-        tickfont: {
-          size: isMobile ? 10 : 12
-        },
-        tickformat: '.2f'
+          title: `Strike Price (${plotData.currency})`,
+          color: 'white',
+          gridcolor: 'rgba(255,255,255,0.1)',
+          tickfont: {
+              size: isMobile ? 10 : 12
+          },
+          tickformat: '.2f',
+          automargin: true
       },
       
       yaxis: {
-        title: isMobile ? 'Gamma' : 'Net Gamma Exposure',
-        color: 'white',
-        gridcolor: 'rgba(255,255,255,0.1)',
-        tickfont: {
-          size: isMobile ? 10 : 12
-        },
-        zeroline: true,
-        zerolinecolor: 'rgba(255,255,255,0.3)',
-        zerolinewidth: 2
+          title: 'Net Exposição	Gamma',
+          color: 'white',
+          gridcolor: 'rgba(255,255,255,0.1)',
+          tickfont: {
+              size: isMobile ? 10 : 12
+          },
+          zeroline: true,
+          zerolinecolor: 'rgba(255,255,255,0.3)',
+          zerolinewidth: 2,
+          automargin: true
       },
 
       showlegend: !isMobile,
       legend: {
-        font: {
-          color: 'white',
-          size: isMobile ? 10 : 12
-        },
-        bgcolor: 'rgba(0,0,0,0.7)',
-        bordercolor: 'rgba(255,255,255,0.2)',
-        borderwidth: 1,
-        orientation: isMobile ? 'h' : 'v',
-        x: isMobile ? 0 : 1.02,
-        y: isMobile ? -0.2 : 1,
-        xanchor: isMobile ? 'left' : 'left',
-        yanchor: isMobile ? 'top' : 'top'
+          font: {
+              color: 'white',
+              size: 12
+          },
+          bgcolor: 'rgba(0,0,0,0.7)',
+          bordercolor: 'rgba(255,255,255,0.2)',
+          borderwidth: 1,
+          x: 1.02,
+          y: 1,
+          xanchor: 'left',
+          yanchor: 'top'
       },
 
-      height: isMobile ? 450 : isTablet ? 500 : 600,
-      width: null,
-      margin: {
-        l: isMobile ? 60 : 80,
-        r: isMobile ? 40 : 60,
-        t: isMobile ? 50 : 60,
-        b: isMobile ? 80 : 80
-      },
+      // ✅ CORREÇÃO PRINCIPAL
       autosize: true,
+      width: undefined,  // ← Deixar undefined, não null
+      height: isMobile ? 400 : isTablet ? 500 : 550, // ← Altura específica
+      
+      margin: {
+          l: 80,
+          r: 50,
+          t: 80,
+          b: 80,
+          pad: 10
+      },
 
       annotations: [{
-        x: plotData.spot_price,
-        y: Math.max(...plotData.net_gamma) * 0.9,
-        text: `Spot: ${plotData.currency}${plotData.spot_price?.toFixed(2)}`,
-        showarrow: true,
-        arrowhead: 2,
-        arrowsize: 1,
-        arrowcolor: '#ffd700',
-        font: {
-          color: '#ffd700',
-          size: isMobile ? 11 : 13,
-          weight: 'bold'
-        },
-        bgcolor: 'rgba(0,0,0,0.8)',
-        bordercolor: '#ffd700',
-        borderwidth: 1
+          x: plotData.spot_price,
+          y: Math.max(...plotData.net_gamma) * 0.9,
+          text: `Spot: ${plotData.currency}${plotData.spot_price?.toFixed(2)}`,
+          showarrow: true,
+          arrowhead: 2,
+          arrowsize: 1,
+          arrowcolor: '#ffd700',
+          font: {
+              color: '#ffd700',
+              size: 13,
+              weight: 'bold'
+          },
+          bgcolor: 'rgba(0,0,0,0.8)',
+          bordercolor: '#ffd700',
+          borderwidth: 1
       }]
     };
 
@@ -1339,6 +1448,52 @@
       });
     }
   }
+
+  
+  let currentWallsData = null;
+
+  // Função para exportar walls
+  async function exportGammaWalls() {
+    const ticker = document.getElementById('ticker').value.trim();
+    if (!ticker || !currentWallsData || !currentGammaData) {
+      showToast('Execute a análise de gamma primeiro!', 'warning');
+      return;
+    }
+
+    try {
+      showLoading();
+      
+      const response = await fetch('/pro/gamma/export-walls', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${userToken}`
+        },
+        body: JSON.stringify({
+          ticker: ticker,
+          walls_data: currentWallsData,
+          spot_price: currentGammaData.spot_price
+        })
+      });
+
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Erro ao gerar código NTSL');
+      }
+
+      // Copiar para clipboard
+      await navigator.clipboard.writeText(data.ntsl_code);
+      showToast(`Código NTSL copiado! ${data.walls_count} walls exportados.`, 'success');
+
+    } catch (error) {
+      showToast('Erro ao exportar: ' + error.message, 'error');
+    } finally {
+      hideLoading();
+    }
+  }
+
+
 
   // ===== UTILITÁRIOS =====
   function logout() {
