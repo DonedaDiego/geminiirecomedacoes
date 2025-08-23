@@ -45,8 +45,8 @@ def get_bandas_pro_blueprint():
             if flow_days < 7 or flow_days > 90:
                 return jsonify({'error': 'flow_days deve estar entre 7 e 90'}), 400
             
-            if regime not in ['M', 'W', 'A', 'Q']:
-                 return jsonify({'error': 'regime deve ser M, W, A ou Q'}), 400
+            if regime not in ['M', 'W', 'A', 'Q','D']:
+                 return jsonify({'error': 'regime deve ser M, W, D, A ou Q'}), 400
             
             logging.info(f"API: Análise completa solicitada para {ticker}")
             
@@ -85,8 +85,8 @@ def get_bandas_pro_blueprint():
             period = data.get('period', '6mo')
             regime = data.get('regime', 'M')
             
-            if regime not in ['M', 'W', 'A', 'Q']:
-                return jsonify({'error': 'regime deve ser M, W, A ou Q'}), 400
+            if regime not in ['M', 'W', 'A', 'Q','D']:
+                return jsonify({'error': 'regime deve ser M, W, D, A ou Q'}), 400
         
             logging.info(f"API: Análise de bandas solicitada para {ticker} com regime {regime}")
             
