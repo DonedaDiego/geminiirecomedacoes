@@ -285,12 +285,7 @@ class VolatilityImpliedService:
             return daily_metrics
     
     def create_analysis(self, ticker, period_days=252):
-        """Análise completa de volatilidade implícita"""
-        print(f"\n{'='*60}")
-        print(f"📊 ANÁLISE DE VOLATILIDADE IMPLÍCITA - {ticker}")
-        print(f"Período: {period_days} dias")
-        print(f"{'='*60}")
-        
+          
         try:
             to_date = datetime.now()
             from_date = to_date - timedelta(days=period_days + 50)
@@ -328,7 +323,7 @@ class VolatilityImpliedService:
             
             vol_hist, vol_hist_mean = self.calculate_historical_volatility(price_data, window=30)
             
-            # Calcular sinal baseado em quartis da IV
+            # Calcular sinal baseado em quartis da VI
             daily_metrics = self.calculate_iv_quartile_signal(daily_metrics)
             
             chart_data = self.prepare_chart_data(price_data, daily_metrics, vol_hist)
@@ -343,11 +338,34 @@ class VolatilityImpliedService:
             
             signal_interpretation = self.interpret_signal(current_signal, daily_metrics)
             
+            # ===== NOVIDADE: CALCULAR MÉDIAS SEPARADAS CALLS/PUTS =====
             iv_mean = None
-            if not daily_metrics.empty and 'iv_avg' in daily_metrics.columns:
-                iv_mean_val = daily_metrics['iv_avg'].mean()
-                if not pd.isna(iv_mean_val):
-                    iv_mean = float(iv_mean_val)
+            iv_call_mean = None
+            iv_put_mean = None
+            
+            if not daily_metrics.empty:
+                # VI geral (média ponderada)
+                if 'iv_avg' in daily_metrics.columns:
+                    iv_mean_val = daily_metrics['iv_avg'].mean()
+                    if not pd.isna(iv_mean_val):
+                        iv_mean = float(iv_mean_val)
+                
+                # VI das Calls
+                if 'iv_call' in daily_metrics.columns:
+                    call_values = daily_metrics['iv_call'].dropna()
+                    if len(call_values) > 0:
+                        iv_call_mean = float(call_values.mean())
+                        print(f"📞 VI Calls média: {iv_call_mean:.1f}%")
+                
+                # VI das Puts  
+                if 'iv_put' in daily_metrics.columns:
+                    put_values = daily_metrics['iv_put'].dropna()
+                    if len(put_values) > 0:
+                        iv_put_mean = float(put_values.mean())
+                        print(f"📉 VI Puts média: {iv_put_mean:.1f}%")
+            
+            # Análise do sentimento baseada na diferença calls/puts
+            sentiment_analysis = self.analyze_calls_puts_sentiment(iv_call_mean, iv_put_mean)
             
             vol_hist_mean_safe = None
             if vol_hist_mean is not None and not pd.isna(vol_hist_mean):
@@ -362,11 +380,16 @@ class VolatilityImpliedService:
                 'signal_interpretation': signal_interpretation,
                 'vol_hist_mean': vol_hist_mean_safe,
                 'iv_mean': iv_mean,
+                'iv_call_mean': iv_call_mean,      # NOVO!
+                'iv_put_mean': iv_put_mean,        # NOVO!
+                'sentiment_analysis': sentiment_analysis,  # NOVO!
                 'chart_data': chart_data,
                 'timestamp': datetime.now().isoformat()
             }
             
-            print("✅ Análise concluída com sucesso!")
+            
+            print(f"📊 Resumo: VI Calls {iv_call_mean:.1f}% vs VI Puts {iv_put_mean:.1f}%")
+            
             return result
             
         except Exception as e:
@@ -375,6 +398,49 @@ class VolatilityImpliedService:
                 'success': False,
                 'error': str(e)
             }
+
+    def analyze_calls_puts_sentiment(self, iv_call_mean, iv_put_mean):
+        """Análise SIMPLIFICADA focando apenas na relação calls vs puts"""
+        if not iv_call_mean or not iv_put_mean:
+            return {
+                'sentiment': 'unknown',
+                'description': 'Dados insuficientes para análise',
+                'ratio': None,
+                'spread': None
+            }
+        
+        ratio = iv_call_mean / iv_put_mean
+        spread = iv_call_mean - iv_put_mean
+        
+        # LÓGICA SIMPLES: só compara calls vs puts
+        if ratio > 1.15:  # Calls 15% mais caras
+            sentiment = 'bullish'
+            description = f'Calls mais caras - VI {spread:.1f}% maior que puts (otimismo)'
+            strategy = 'Oportunidade: Vender calls - estão inflacionadas pelo otimismo'
+        elif ratio < 0.85:  # Puts 15% mais caras  
+            sentiment = 'bearish'
+            description = f'Puts mais caras - VI {abs(spread):.1f}% maior que calls (medo/proteção)'
+            strategy = 'Oportunidade: Vender puts - estão inflacionadas pelo medo'
+        elif ratio > 1.05:  # Calls ligeiramente mais caras
+            sentiment = 'mild_bullish'
+            description = f'Calls ligeiramente mais caras - VI {spread:.1f}% maior (leve otimismo)'
+            strategy = 'Estratégia: Considerar venda de calls ou estruturas neutras'
+        elif ratio < 0.95:  # Puts ligeiramente mais caras
+            sentiment = 'mild_bearish' 
+            description = f'Puts ligeiramente mais caras - VI {abs(spread):.1f}% maior (leve cautela)'
+            strategy = 'Estratégia: Considerar venda de puts ou compra de calls'
+        else:
+            sentiment = 'neutral'
+            description = f'VI equilibrada entre calls e puts - diferença mínima ({abs(spread):.1f}%)'
+            strategy = 'Neutro: Aguardar divergência maior para identificar oportunidades'
+        
+        return {
+            'sentiment': sentiment,
+            'description': description,
+            'strategy': strategy,
+            'ratio': round(ratio, 3),
+            'spread': round(spread, 2)
+        }
     
     def prepare_chart_data(self, price_data, daily_metrics, vol_hist):
         """Prepara dados para gráficos"""
@@ -469,6 +535,75 @@ class VolatilityImpliedService:
                 'confidence': 'Alta'
             }
 
+    def aggregate_daily_metrics(self, df):
+        """Agrega métricas diárias com foco em ATM e separação de calls/puts"""
+        if df.empty:
+            return pd.DataFrame()
+        
+        print("📊 Agregando métricas diárias...")
+        
+        agg_dict = {}
+        
+        if 'volatility' in df.columns:
+            agg_dict['volatility'] = 'mean'
+        if 'premium' in df.columns:
+            agg_dict['premium'] = 'mean'
+        if 'symbol' in df.columns:
+            agg_dict['symbol'] = 'count'
+        
+        print(f"Agregações a serem aplicadas: {agg_dict}")
+        
+        daily_agg = df.groupby(['time', 'type']).agg(agg_dict).round(4)
+        daily_agg = daily_agg.reset_index()
+        
+        daily_data = []
+        for date in daily_agg['time'].unique():
+            date_data = daily_agg[daily_agg['time'] == date]
+            
+            row = {'date': date}
+            
+            calls = date_data[date_data['type'] == 'CALL']
+            if not calls.empty:
+                if 'volatility' in agg_dict:
+                    row['iv_call'] = calls['volatility'].iloc[0]
+                if 'premium' in agg_dict:
+                    row['premium_call'] = calls['premium'].iloc[0]
+                if 'symbol' in agg_dict:
+                    row['count_call'] = calls['symbol'].iloc[0]
+            
+            puts = date_data[date_data['type'] == 'PUT']
+            if not puts.empty:
+                if 'volatility' in agg_dict:
+                    row['iv_put'] = puts['volatility'].iloc[0]
+                if 'premium' in agg_dict:
+                    row['premium_put'] = puts['premium'].iloc[0]
+                if 'symbol' in agg_dict:
+                    row['count_put'] = puts['symbol'].iloc[0]
+            
+            # Calcular média ponderada para o sinal principal
+            if 'iv_call' in row and 'iv_put' in row:
+                weight_call = row.get('count_call', 1)
+                weight_put = row.get('count_put', 1)
+                total_weight = weight_call + weight_put
+                
+                row['iv_avg'] = (
+                    row['iv_call'] * weight_call + 
+                    row['iv_put'] * weight_put
+                ) / total_weight
+            elif 'iv_call' in row:
+                row['iv_avg'] = row['iv_call']
+            elif 'iv_put' in row:
+                row['iv_avg'] = row['iv_put']
+            
+            daily_data.append(row)
+        
+        result = pd.DataFrame(daily_data)
+        print(f"✅ Métricas diárias agregadas: {len(result)} dias")
+        
+        if not result.empty:
+            print(f"Colunas finais: {result.columns.tolist()}")
+        
+        return result
 
 # Função standalone para uso direto
 def analyze_volatility_implied(ticker, period_days=252):

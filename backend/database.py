@@ -862,7 +862,7 @@ def setup_enhanced_database():
     
     
     if test_connection():
-        create_plans_table()
+        #create_plans_table()
         create_users_table()
         update_users_table_for_service()
         

@@ -148,6 +148,30 @@
       background: rgba(255, 255, 255, 0.08);
       border-color: rgba(186, 57, 175, 0.3);
     }
+    
+    .calls-card {
+      background: rgba(34, 197, 94, 0.1);
+      border-color: rgba(34, 197, 94, 0.2);
+      padding: 16px; 
+      min-height: 140px; 
+    }
+    
+    .calls-card:hover {
+      background: rgba(34, 197, 94, 0.15);
+      border-color: rgba(34, 197, 94, 0.4);
+    }
+    
+    .puts-card {
+      background: rgba(239, 68, 68, 0.1);
+      border-color: rgba(239, 68, 68, 0.2);
+      padding: 16px; 
+      min-height: 140px; 
+    }
+    
+    .puts-card:hover {
+      background: rgba(239, 68, 68, 0.15);
+      border-color: rgba(239, 68, 68, 0.4);
+    }
 
     .chart-container {
       height: 300px;
@@ -250,78 +274,69 @@
       <div class="text-center mb-12">
         <h1 class="text-4xl md:text-5xl font-bold mb-4">
           <span style="color: #ba39af; font-weight: 900;">Implícita Sigma</span>
-          <span class="text-white font-light">Quartis </span>
+          <span class="text-white font-light">Calls vs Puts</span>
         </h1>
         <p class="text-neutral-300 text-lg max-w-3xl mx-auto">
-          Análise quantitativa avançada de volatilidade implícita através de quartis históricos para identificação de oportunidades de compra e venda de volatilidade no mercado de opções.
+          Análise quantitativa avançada de volatilidade implícita separando calls e puts para identificação do sentimento direcional do mercado e oportunidades específicas de trading.
         </p>
         
         <!-- Info Expander -->
         <div class="mt-8">
           <button onclick="toggleInfo()" class="bg-gradient-to-r from-geminii to-purple-600 hover:from-purple-600 hover:to-geminii text-white px-6 py-3 rounded-full font-semibold text-sm transition-all duration-300 flex items-center mx-auto shadow-lg hover:shadow-xl transform hover:scale-105">
             <i id="infoIcon" class="fas fa-info-circle mr-2 transition-transform duration-300"></i>
-            Como Funciona o Sistema de Quartis
+            Como Funciona a Análise Calls vs Puts
           </button>
           
           <div id="infoContent" class="hidden mt-8 max-w-5xl mx-auto">
             <div class="vi-card p-8 text-left">
               <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                 
-                <!-- Análise por Quartis -->
+                <!-- Análise das Calls -->
                 <div class="space-y-4">
                   <div class="flex items-center mb-4">
-                    <div class="w-4 h-4 rounded-full bg-gradient-to-r from-blue-400 to-cyan-500 mr-3"></div>
-                    <h3 class="text-xl font-bold text-white">Análise por Quartis</h3>
+                    <div class="w-4 h-4 rounded-full bg-green-500 mr-3"></div>
+                    <h3 class="text-xl font-bold text-white">Análise das Calls</h3>
                   </div>
                   <p class="text-gray-300 text-sm leading-relaxed mb-4">
-                    Dividimos o histórico de <strong>1 ano da Volatilidade Implícita</strong> em 4 quartis para 
-                    identificar se a VI atual está <strong>cara ou barata</strong> em relação ao histórico, 
-                    oferecendo uma <strong>base estatística sólida</strong> para decisões de trading.
+                    Calls representam <strong>apostas de alta</strong> - quando investidores compram calls, apostam que o preço vai subir. A volatilidade implícita das calls revela o <strong>nível de otimismo</strong> do mercado.
                   </p>
                   <div class="bg-white/5 rounded-lg p-4">
-                    <h4 class="text-white font-semibold text-sm mb-3">Quartis identificados:</h4>
+                    <h4 class="text-white font-semibold text-sm mb-3">Sinais das Calls:</h4>
                     <ul class="text-gray-400 text-sm space-y-2">
-                      <li>• <span class="text-white font-medium">Q4 (75-100%)</span>: VI muito alta - Ideal para vender volatilidade</li>
-                      <li>• <span class="text-white font-medium">Q3 (50-75%)</span>: VI alta - Favorável para vender</li>
-                      <li>• <span class="text-white font-medium">Q2 (25-50%)</span>: VI normal - Condições neutras</li>
-                      <li>• <span class="text-white font-medium">Q1 (0-25%)</span>: VI baixa - Ideal para comprar volatilidade</li>
+                      <li>• <span class="text-white font-medium">VI Alta em Calls</span>: Otimismo excessivo no mercado</li>
+                      <li>• <span class="text-white font-medium">VI Calls > VI Puts</span>: Sentimento bullish predominante</li>
+                      <li>• <span class="text-white font-medium">VI Baixa em Calls</span>: Oportunidade de comprar calls baratas</li>
                     </ul>
                   </div>
                 </div>
                 
-                <!-- Estratégias por Quartil -->
+                <!-- Análise das Puts -->
                 <div class="space-y-4">
                   <div class="flex items-center mb-4">
-                    <div class="w-4 h-4 rounded-full bg-gradient-to-r from-purple-400 to-pink-500 mr-3"></div>
-                    <h3 class="text-xl font-bold text-white">Estratégias Recomendadas</h3>
+                    <div class="w-4 h-4 rounded-full bg-red-500 mr-3"></div>
+                    <h3 class="text-xl font-bold text-white">Análise das Puts</h3>
                   </div>
                   <p class="text-gray-300 text-sm leading-relaxed mb-4">
-                    Cada quartil indica um <strong>nível específico da volatilidade implícita</strong> em relação 
-                    ao histórico, direcionando para a <strong>melhor estratégia com opções</strong> baseada em 
-                    vantagem estatística comprovada.
+                    Puts são <strong>proteção ou apostas de baixa</strong> - investidores compram puts para se proteger de quedas ou lucrar com elas. VI alta nas puts indica <strong>medo ou busca por proteção</strong>.
                   </p>
                   <div class="bg-white/5 rounded-lg p-4">
-                    <h4 class="text-white font-semibold text-sm mb-3">Direcionamento estratégico:</h4>
+                    <h4 class="text-white font-semibold text-sm mb-3">Sinais das Puts:</h4>
                     <ul class="text-gray-400 text-sm space-y-2">
-                      <li>• <span class="text-white font-medium">Q4</span>: Venda de opções com alto prêmio</li>
-                      <li>• <span class="text-white font-medium">Q3</span>: Estratégias de venda com risco limitado</li>
-                      <li>• <span class="text-white font-medium">Q2</span>: Aguardar melhor oportunidade</li>
-                      <li>• <span class="text-white font-medium">Q1</span>: Compra de volatilidade barata</li>
+                      <li>• <span class="text-white font-medium">VI Alta em Puts</span>: Medo ou busca intensa por proteção</li>
+                      <li>• <span class="text-white font-medium">VI Puts > VI Calls</span>: Sentimento bearish predominante</li>
+                      <li>• <span class="text-white font-medium">VI Baixa em Puts</span>: Complacência - puts baratas para proteção</li>
                     </ul>
                   </div>
                 </div>
                 
               </div>
               
-              <!-- Vantagem Estatística -->
+              <!-- Vantagem Estratégica -->
               <div class="mt-8 pt-6 border-t border-white/10">
                 <div class="text-center">
-                  <h4 class="text-geminii font-bold text-lg mb-3">Vantagem Estatística</h4>
+                  <h4 class="text-geminii font-bold text-lg mb-3">Vantagem Estratégica</h4>
                   <p class="text-gray-300 text-sm max-w-3xl mx-auto">
-                    Ao usar <strong>quartis históricos de 252 dias</strong>, você opera com base em 
-                    <strong>probabilidades estatísticas reais</strong>, não em intuição. Quando a VI está no 
-                    <strong>Q4, estatisticamente ela tende a reverter</strong> para níveis mais baixos, 
-                    criando oportunidades consistentes de <strong>venda de volatilidade com edge matemático</strong>.
+                    Esta separação entre calls e puts revela <strong>assimetrias de sentimento</strong> que a VI geral não mostra. Quando há divergência significativa, surgem oportunidades de <strong>timing perfeito</strong> para estratégias direcionais específicas e <strong>arbitragem de volatilidade</strong>.
                   </p>
                 </div>
               </div>
@@ -358,17 +373,19 @@
         <div class="vi-card p-8">
           <div class="text-center mb-8">
             <h3 class="text-2xl font-bold mb-6 flex items-center">
-              <i class="fas fa-chart-bar text-geminii mr-3"></i>Análise de Quartis - Volatilidade Implícita
+              <i class="fas fa-balance-scale text-geminii mr-3"></i>Análise Calls vs Puts - Volatilidade Implícita
             </h3>
             <div id="signalIndicator" class="inline-block mb-6">
               <!-- Preenchido via JS -->
             </div>
           </div>
           
-          <!-- GRID REDUZIDO - Removendo o segundo card -->
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <!-- GRID EXPANDIDO - 5 Cards -->
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+            
+            <!-- Card do Quartil Atual -->
             <div class="metric-card text-center">
-              <div class="text-sm text-gray-400 mb-2">Quartil Atual</div>
+              <div class="text-sm text-gray-400 mb-2">Quartil VI Geral</div>
               <div class="relative inline-block">
                 <svg class="progress-ring">
                   <circle class="progress-ring-circle"></circle>
@@ -395,6 +412,7 @@
               </div>
             </div>
             
+            <!-- Card do Preço -->
             <div class="metric-card">
               <div class="text-sm text-gray-400 mb-1">
                 Preço Atual 
@@ -406,23 +424,59 @@
               </div>
             </div>
             
-            <div class="metric-card">
-              <div class="text-sm text-gray-400 mb-1">Volatilidades</div>
-              <div class="space-y-2">
-                <div class="flex justify-between">
-                  <span class="text-sm text-gray-300">VI Atual:</span>
-                  <span id="ivCurrent" class="text-sm font-medium text-orange-400">--</span>
-                </div>
-                <div class="flex justify-between">
-                  <span class="text-sm text-gray-300">VI Média:</span>
-                  <span id="ivMean" class="text-sm font-medium text-orange-300">--</span>
-                </div>
-                <div class="flex justify-between">
-                  <span class="text-sm text-gray-300">Vol Hist:</span>
-                  <span id="volHistMean" class="text-sm font-medium text-green-400">--</span>
+            <!-- Card VI das Calls -->
+            <div class="calls-card">
+              <div class="text-sm text-gray-400 mb-1">
+                <span class="text-green-400 font-bold">VI Calls</span>
+                <i class="fas fa-arrow-up text-green-400 text-xs ml-1" title="Apostas de alta"></i>
+              </div>
+              <div id="viCallsCurrent" class="text-2xl font-bold text-green-400 mb-1">--</div>
+              <div class="text-sm text-gray-400">
+                Média: <span id="viCallsMean" class="text-green-300 font-medium">--</span>
+              </div>
+              <div class="mt-2">
+                <div class="text-xs text-gray-500">
+                  <span id="viCallsStatus" class="font-medium">--</span>
                 </div>
               </div>
             </div>
+            
+            <!-- Card VI das Puts -->
+            <div class="puts-card">
+              <div class="text-sm text-gray-400 mb-1">
+                <span class="text-red-400 font-bold">VI Puts</span>
+                <i class="fas fa-shield-alt text-red-400 text-xs ml-1" title="Proteção/baixa"></i>
+              </div>
+              <div id="viPutsCurrent" class="text-2xl font-bold text-red-400 mb-1">--</div>
+              <div class="text-sm text-gray-400">
+                Média: <span id="viPutsMean" class="text-red-300 font-medium">--</span>
+              </div>
+              <div class="mt-2">
+                <div class="text-xs text-gray-500">
+                  <span id="viPutsStatus" class="font-medium">--</span>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Card das Volatilidades Gerais -->
+            <div class="metric-card">
+              <div class="text-sm text-gray-400 mb-1">Indicadores</div>
+              <div class="space-y-2">
+                <div class="flex justify-between">
+                  <span class="text-sm text-gray-300">VI Geral:</span>
+                  <span id="ivMean" class="text-sm font-medium text-orange-300">--</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-sm text-gray-300">C/P Ratio:</span>
+                  <span id="callPutRatio" class="text-sm font-medium text-yellow-400">--</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-sm text-gray-300">Spread C-P:</span>
+                  <span id="callPutSpread" class="text-sm font-medium text-purple-400">--</span>
+                </div>
+              </div>
+            </div>
+            
           </div>
         </div>
       </div>
@@ -438,6 +492,30 @@
           <div class="chart-container" style="height: 350px;">
             <div id="priceChart" style="width: 100%; height: 100%;"></div>
           </div>
+        </div>
+
+        
+        <!-- Gráfico Calls vs Puts -->
+        <div class="vi-card p-6 mb-6">
+          <h4 class="text-xl font-bold mb-4 text-white">
+            <i class="fas fa-balance-scale mr-2"></i>VI Calls vs Puts - Sentimento do Mercado
+          </h4>
+          <div class="mb-4 text-sm text-gray-300">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div class="flex items-center">
+                <div class="w-3 h-3 bg-green-400 rounded-full mr-2"></div>
+                <span><strong>Calls (Verde):</strong> VI alta = Otimismo excessivo</span>
+              </div>
+              <div class="flex items-center">
+                <div class="w-3 h-3 bg-red-400 rounded-full mr-2"></div>
+                <span><strong>Puts (Vermelho):</strong> VI alta = Medo/proteção</span>
+              </div>
+            </div>
+          </div>
+          <div class="chart-container" style="height: 350px;">
+            <div id="callsPutsChart" style="width: 100%; height: 100%;"></div>
+          </div>
+  
         </div>
 
         <!-- Gráfico VI vs Vol Histórica -->
@@ -477,7 +555,7 @@
     const mainSignal = document.getElementById('mainSignal');
     const chartsSection = document.getElementById('chartsSection');
     
-    // ===== FUNÇÃO DO EXPANDER =====
+    // Função do expander
     function toggleInfo() {
       const content = document.getElementById('infoContent');
       const icon = document.getElementById('infoIcon');
@@ -496,8 +574,6 @@
         icon.classList.add('fa-info-circle');
       }
     }
-
-    // Make toggleInfo global
     window.toggleInfo = toggleInfo;
     
     // Funções utilitárias
@@ -523,10 +599,10 @@
     function setLoading(button, loading) {
       if (loading) {
         button.classList.add('loading');
-        button.innerHTML = '<span class="spinner mr-2"></span>Analisando...';
+        button.innerHTML = '<span class="spinner mr-2"></span>Analizar';
       } else {
         button.classList.remove('loading');
-        button.innerHTML = '<i class="fas fa-chart-area mr-2"></i>Analisar';
+        button.innerHTML = '<i class="fas fa-chart-area mr-2"></i>Analzar';
       }
     }
     
@@ -549,6 +625,7 @@
     }
     
     // Analisar ação individual
+    // Analisar ação individual
     async function analyzeStock() {
       const symbol = stockInput.value.trim().toUpperCase();
       const period = 252; // Fixo em 1 ano
@@ -561,7 +638,7 @@
       const cleanSymbol = symbol.replace('.SA', '');
       
       setLoading(analyzeBtn, true);
-      showStatus('Executando análise de volatilidade implícita por quartis (1 ano)...', 'info');
+      showStatus('Executando análise de volatilidade implícita separando calls e puts (1 ano)...', 'info');
       
       try {
         const url = `${API_BASE}/analyze/${cleanSymbol}?period_days=${period}`;
@@ -594,7 +671,7 @@
       chartsSection.classList.remove('hidden');
     }
     
-    // Exibir sinal principal - FUNÇÃO ATUALIZADA
+    // Exibir sinal principal
     function displayMainSignal(data) {
       const signal = data.current_signal || 0;
       const interpretation = data.signal_interpretation || {};
@@ -621,22 +698,53 @@
       // Atualizar indicador de quartil na barra
       updateQuartileIndicator(signal);
       
-      // Dados complementares - REMOVIDAS AS LINHAS DAS ESTRATÉGIAS
+      // Dados complementares
       document.getElementById('signalValue').textContent = getQuartileLabel(signal);
       document.getElementById('currentPrice').textContent = formatCurrency(data.current_price || 0);
       document.getElementById('signalConfidence').textContent = interpretation.confidence || '--';
       
-      // Volatilidade atual (último valor disponível)
-      let ivCurrent = '--';
+      
+      // NOVOS CAMPOS - VI das Calls e Puts
+      let viCallsCurrent = '--', viPutsCurrent = '--';
+      let viCallsStatus = '--', viPutsStatus = '--';
+      
       if (data.chart_data && data.chart_data.daily_metrics) {
         const lastMetric = data.chart_data.daily_metrics[data.chart_data.daily_metrics.length - 1];
-        if (lastMetric && lastMetric.iv_avg) {
-          ivCurrent = `${lastMetric.iv_avg.toFixed(1)}%`;
+        
+        if (lastMetric && lastMetric.iv_call) {
+          viCallsCurrent = `${lastMetric.iv_call.toFixed(1)}%`;
+          viCallsStatus = lastMetric.iv_call > (data.iv_call_mean || 0) ? 'Acima da média' : 'Abaixo da média';
+        }
+        
+        if (lastMetric && lastMetric.iv_put) {
+          viPutsCurrent = `${lastMetric.iv_put.toFixed(1)}%`;
+          viPutsStatus = lastMetric.iv_put > (data.iv_put_mean || 0) ? 'Acima da média' : 'Abaixo da média';
         }
       }
-      document.getElementById('ivCurrent').textContent = ivCurrent;
+      
+      document.getElementById('viCallsCurrent').textContent = viCallsCurrent;
+      document.getElementById('viCallsMean').textContent = data.iv_call_mean ? `${data.iv_call_mean.toFixed(1)}%` : '--';
+      document.getElementById('viCallsStatus').textContent = viCallsStatus;
+      
+      document.getElementById('viPutsCurrent').textContent = viPutsCurrent;
+      document.getElementById('viPutsMean').textContent = data.iv_put_mean ? `${data.iv_put_mean.toFixed(1)}%` : '--';
+      document.getElementById('viPutsStatus').textContent = viPutsStatus;
+      
+      // Volatilidades gerais
       document.getElementById('ivMean').textContent = data.iv_mean ? `${data.iv_mean.toFixed(1)}%` : '--';
       document.getElementById('volHistMean').textContent = data.vol_hist_mean ? `${data.vol_hist_mean.toFixed(1)}%` : '--';
+      
+      // Call/Put Ratio e Spread
+      if (data.iv_call_mean && data.iv_put_mean) {
+        const cpRatio = (data.iv_call_mean / data.iv_put_mean).toFixed(2);
+        const cpSpread = (data.iv_call_mean - data.iv_put_mean).toFixed(1);
+        
+        document.getElementById('callPutRatio').textContent = cpRatio;
+        document.getElementById('callPutSpread').textContent = `${cpSpread}%`;
+      } else {
+        document.getElementById('callPutRatio').textContent = '--';
+        document.getElementById('callPutSpread').textContent = '--';
+      }
     }
     
     // Obter label do quartil
@@ -758,7 +866,87 @@
           }
         }
         
-        // 2. Gráfico de Volatilidade
+        // 2. Gráfico Calls vs Puts
+        try {
+          const callsPutsTraces = [];
+          
+          if (chartData.daily_metrics && chartData.daily_metrics.length > 0) {
+            const callsData = chartData.daily_metrics.filter(d => d.iv_call !== undefined && d.iv_call !== null);
+            const putsData = chartData.daily_metrics.filter(d => d.iv_put !== undefined && d.iv_put !== null);
+            
+            if (callsData.length > 0) {
+              callsPutsTraces.push({
+                x: callsData.map(d => d.date),
+                y: callsData.map(d => d.iv_call),
+                type: 'scatter',
+                mode: 'lines',
+                name: 'VI Calls',
+                line: { color: '#22c55e', width: 3 },
+                hovertemplate: '<b>Data:</b> %{x}<br><b>VI Calls:</b> %{y:.1f}%<extra></extra>'
+              });
+              
+              // Linha da média das calls
+              const callsMean = data.iv_call_mean;
+              if (callsMean) {
+                callsPutsTraces.push({
+                  x: [callsData[0].date, callsData[callsData.length - 1].date],
+                  y: [callsMean, callsMean],
+                  type: 'scatter',
+                  mode: 'lines',
+                  name: `Média Calls: ${callsMean.toFixed(1)}%`,
+                  line: { color: '#22c55e', width: 1, dash: 'dot' },
+                  showlegend: true,
+                  hoverinfo: 'skip'
+                });
+              }
+            }
+            
+            if (putsData.length > 0) {
+              callsPutsTraces.push({
+                x: putsData.map(d => d.date),
+                y: putsData.map(d => d.iv_put),
+                type: 'scatter',
+                mode: 'lines',
+                name: 'VI Puts',
+                line: { color: '#ef4444', width: 3 },
+                hovertemplate: '<b>Data:</b> %{x}<br><b>VI Puts:</b> %{y:.1f}%<extra></extra>'
+              });
+              
+              // Linha da média das puts
+              const putsMean = data.iv_put_mean;
+              if (putsMean) {
+                callsPutsTraces.push({
+                  x: [putsData[0].date, putsData[putsData.length - 1].date],
+                  y: [putsMean, putsMean],
+                  type: 'scatter',
+                  mode: 'lines',
+                  name: `Média Puts: ${putsMean.toFixed(1)}%`,
+                  line: { color: '#ef4444', width: 1, dash: 'dot' },
+                  showlegend: true,
+                  hoverinfo: 'skip'
+                });
+              }
+            }
+            
+            if (callsPutsTraces.length > 0) {
+              const callsPutsLayout = {
+                ...baseLayout,
+                yaxis: {
+                  ...baseLayout.yaxis,
+                  title: 'Volatilidade Implícita (%)'
+                }
+              };
+              
+              Plotly.newPlot('callsPutsChart', callsPutsTraces, callsPutsLayout, baseConfig);
+              updateSentimentInterpretation(data);
+              
+            }
+          }
+        } catch (error) {
+          console.error('Erro no gráfico calls vs puts:', error);
+        }
+        
+        // 3. Gráfico de Volatilidade
         try {
           const volatilityTraces = [];
           
@@ -820,7 +1008,9 @@
           console.error('Erro no gráfico de volatilidade:', error);
         }
         
-        // 3. Gráfico dos Quartis
+
+
+        // 4. Gráfico dos Quartis
         if (chartData.daily_metrics && chartData.daily_metrics.length > 0) {
           try {
             const quartileData = chartData.daily_metrics.filter(d => d.options_signal !== undefined);
@@ -898,8 +1088,68 @@
         }
         
       }, 100);
+      
     }
     
+    function updateSentimentInterpretation(data) {
+      const sentiment = data.sentiment_analysis;
+      
+      if (!sentiment || !sentiment.ratio) {
+        document.getElementById('sentimentDescription').textContent = 'Dados insuficientes para análise de sentimento.';
+        return;
+      }
+      
+      const sentimentType = sentiment.sentiment;
+      
+      // Badge do sentimento com mais categorias
+      const badge = document.getElementById('sentimentBadge');
+      let badgeClass, badgeText;
+
+      switch(sentimentType) {
+        case 'bullish':
+          badgeClass = 'bg-green-600/30 text-green-300 border border-green-500/40';
+          badgeText = 'CALLS CARAS';
+          break;
+        case 'bearish':
+          badgeClass = 'bg-red-600/30 text-red-300 border border-red-500/40';
+          badgeText = 'PUTS CARAS';
+          break;
+        case 'mild_bullish':
+          badgeClass = 'bg-green-500/20 text-green-400 border border-green-500/30';
+          badgeText = 'CALLS +CARAS';
+          break;
+        case 'mild_bearish':
+          badgeClass = 'bg-red-500/20 text-red-400 border border-red-500/30';
+          badgeText = 'PUTS +CARAS';
+          break;
+        default:
+          badgeClass = 'bg-gray-500/20 text-gray-400 border border-gray-500/30';
+          badgeText = 'EQUILIBRADO';
+      }
+      badge.className = `px-3 py-1 rounded-full text-sm font-bold ${badgeClass}`;
+      badge.textContent = badgeText;
+      
+      // Descrição e estratégia
+      document.getElementById('sentimentDescription').textContent = sentiment.description;
+      document.getElementById('sentimentStrategy').textContent = sentiment.strategy;
+      
+      // Métricas numéricas
+      document.getElementById('sentimentRatio').textContent = sentiment.ratio.toFixed(2);
+      document.getElementById('sentimentSpread').textContent = `${sentiment.spread > 0 ? '+' : ''}${sentiment.spread.toFixed(1)}%`;
+      
+      // Confiança baseada no nível de stress
+      let confidence;
+      if (sentiment.market_stress === 'alto') {
+        confidence = 'Alta'; // Stress alto = sinais mais confiáveis
+      } else if (sentiment.market_stress === 'moderado') {
+        confidence = 'Média';
+      } else {
+        confidence = 'Baixa'; // Mercado calmo = sinais mais fracos
+      }
+      
+      document.getElementById('sentimentConfidence').textContent = confidence;
+    }
+
     // Event Listeners
     analyzeBtn.addEventListener('click', analyzeStock);
     
@@ -907,22 +1157,21 @@
       if (e.key === 'Enter') analyzeStock();
     });
     
+    
     // Inicialização
     async function initialize() {
       const apiConnected = await testAPI();
       
       if (apiConnected) {
-        showStatus('Sistema de Quartis de Volatilidade Implícita carregado! Digite uma ação para analisar.', 'info');
+        showStatus('Sistema de Análise Calls vs Puts carregado! Digite uma ação para analisar.', 'info');
       } else {
         showStatus('Aviso: Erro na conectividade da API. Verifique se o servidor está rodando.', 'error');
       }
       
-      // Auto-load exemplo
-      setTimeout(() => {
-        stockInput.value = 'PETR4';
-      }, 1000);
+      // Foco no campo de input para facilitar a digitação
+      stockInput.focus();
     }
-    
+
     // Inicializar quando a página carregar
     initialize();
   </script>
