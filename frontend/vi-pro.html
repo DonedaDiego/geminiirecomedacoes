@@ -152,8 +152,8 @@
     .calls-card {
       background: rgba(34, 197, 94, 0.1);
       border-color: rgba(34, 197, 94, 0.2);
-      padding: 16px; 
-      min-height: 140px; 
+      padding: 16px; /* Reduzido de 20px para 16px */
+      min-height: 140px; /* Altura mínima reduzida */
     }
     
     .calls-card:hover {
@@ -164,8 +164,8 @@
     .puts-card {
       background: rgba(239, 68, 68, 0.1);
       border-color: rgba(239, 68, 68, 0.2);
-      padding: 16px; 
-      min-height: 140px; 
+      padding: 16px; /* Reduzido de 20px para 16px */
+      min-height: 140px; /* Altura mínima reduzida */
     }
     
     .puts-card:hover {
@@ -359,7 +359,7 @@
               <i class="fas fa-calendar-alt mr-2"></i>Análise: 1 ano (252 dias)
             </div>
             <button id="analyzeBtn" class="px-6 py-2 bg-gradient-to-r from-pink-500 to-purple-600 hover:shadow-lg rounded-lg transition-all font-medium">
-              <i class="fas fa-chart-area mr-2"></i>Analisar
+              <i class="fas fa-chart-area mr-2"></i>Analisar Calls vs Puts
             </button>
           </div>
         </div>
@@ -463,8 +463,12 @@
               <div class="text-sm text-gray-400 mb-1">Indicadores</div>
               <div class="space-y-2">
                 <div class="flex justify-between">
-                  <span class="text-sm text-gray-300">VI Geral:</span>
+                  <span class="text-sm text-gray-300">VI Média Geral:</span>
                   <span id="ivMean" class="text-sm font-medium text-orange-300">--</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-sm text-gray-300">Vol Hist Média:</span>
+                  <span id="volHistMean" class="text-sm font-medium text-cyan-400">--</span>
                 </div>
                 <div class="flex justify-between">
                   <span class="text-sm text-gray-300">C/P Ratio:</span>
@@ -494,7 +498,6 @@
           </div>
         </div>
 
-        
         <!-- Gráfico Calls vs Puts -->
         <div class="vi-card p-6 mb-6">
           <h4 class="text-xl font-bold mb-4 text-white">
@@ -515,7 +518,6 @@
           <div class="chart-container" style="height: 350px;">
             <div id="callsPutsChart" style="width: 100%; height: 100%;"></div>
           </div>
-  
         </div>
 
         <!-- Gráfico VI vs Vol Histórica -->
@@ -599,10 +601,10 @@
     function setLoading(button, loading) {
       if (loading) {
         button.classList.add('loading');
-        button.innerHTML = '<span class="spinner mr-2"></span>Analizar';
+        button.innerHTML = '<span class="spinner mr-2"></span>Analisando Calls vs Puts...';
       } else {
         button.classList.remove('loading');
-        button.innerHTML = '<i class="fas fa-chart-area mr-2"></i>Analzar';
+        button.innerHTML = '<i class="fas fa-chart-area mr-2"></i>Analisar Calls vs Puts';
       }
     }
     
@@ -702,7 +704,6 @@
       document.getElementById('signalValue').textContent = getQuartileLabel(signal);
       document.getElementById('currentPrice').textContent = formatCurrency(data.current_price || 0);
       document.getElementById('signalConfidence').textContent = interpretation.confidence || '--';
-      
       
       // NOVOS CAMPOS - VI das Calls e Puts
       let viCallsCurrent = '--', viPutsCurrent = '--';
@@ -938,8 +939,6 @@
               };
               
               Plotly.newPlot('callsPutsChart', callsPutsTraces, callsPutsLayout, baseConfig);
-              updateSentimentInterpretation(data);
-              
             }
           }
         } catch (error) {
@@ -1008,8 +1007,6 @@
           console.error('Erro no gráfico de volatilidade:', error);
         }
         
-
-
         // 4. Gráfico dos Quartis
         if (chartData.daily_metrics && chartData.daily_metrics.length > 0) {
           try {
@@ -1088,75 +1085,14 @@
         }
         
       }, 100);
-      
     }
     
-    function updateSentimentInterpretation(data) {
-      const sentiment = data.sentiment_analysis;
-      
-      if (!sentiment || !sentiment.ratio) {
-        document.getElementById('sentimentDescription').textContent = 'Dados insuficientes para análise de sentimento.';
-        return;
-      }
-      
-      const sentimentType = sentiment.sentiment;
-      
-      // Badge do sentimento com mais categorias
-      const badge = document.getElementById('sentimentBadge');
-      let badgeClass, badgeText;
-
-      switch(sentimentType) {
-        case 'bullish':
-          badgeClass = 'bg-green-600/30 text-green-300 border border-green-500/40';
-          badgeText = 'CALLS CARAS';
-          break;
-        case 'bearish':
-          badgeClass = 'bg-red-600/30 text-red-300 border border-red-500/40';
-          badgeText = 'PUTS CARAS';
-          break;
-        case 'mild_bullish':
-          badgeClass = 'bg-green-500/20 text-green-400 border border-green-500/30';
-          badgeText = 'CALLS +CARAS';
-          break;
-        case 'mild_bearish':
-          badgeClass = 'bg-red-500/20 text-red-400 border border-red-500/30';
-          badgeText = 'PUTS +CARAS';
-          break;
-        default:
-          badgeClass = 'bg-gray-500/20 text-gray-400 border border-gray-500/30';
-          badgeText = 'EQUILIBRADO';
-      }
-      badge.className = `px-3 py-1 rounded-full text-sm font-bold ${badgeClass}`;
-      badge.textContent = badgeText;
-      
-      // Descrição e estratégia
-      document.getElementById('sentimentDescription').textContent = sentiment.description;
-      document.getElementById('sentimentStrategy').textContent = sentiment.strategy;
-      
-      // Métricas numéricas
-      document.getElementById('sentimentRatio').textContent = sentiment.ratio.toFixed(2);
-      document.getElementById('sentimentSpread').textContent = `${sentiment.spread > 0 ? '+' : ''}${sentiment.spread.toFixed(1)}%`;
-      
-      // Confiança baseada no nível de stress
-      let confidence;
-      if (sentiment.market_stress === 'alto') {
-        confidence = 'Alta'; // Stress alto = sinais mais confiáveis
-      } else if (sentiment.market_stress === 'moderado') {
-        confidence = 'Média';
-      } else {
-        confidence = 'Baixa'; // Mercado calmo = sinais mais fracos
-      }
-      
-      document.getElementById('sentimentConfidence').textContent = confidence;
-    }
-
     // Event Listeners
     analyzeBtn.addEventListener('click', analyzeStock);
     
     stockInput.addEventListener('keypress', (e) => {
       if (e.key === 'Enter') analyzeStock();
     });
-    
     
     // Inicialização
     async function initialize() {
@@ -1168,10 +1104,12 @@
         showStatus('Aviso: Erro na conectividade da API. Verifique se o servidor está rodando.', 'error');
       }
       
-      // Foco no campo de input para facilitar a digitação
-      stockInput.focus();
+      // Auto-load exemplo
+      setTimeout(() => {
+        stockInput.value = 'PETR4';
+      }, 1000);
     }
-
+    
     // Inicializar quando a página carregar
     initialize();
   </script>
