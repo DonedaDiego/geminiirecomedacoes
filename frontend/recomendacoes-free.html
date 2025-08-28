@@ -1036,50 +1036,96 @@
       calculateSuccessRate();
     }
 
+    
     // ===== CALCULAR TAXA DE SUCESSO =====
-    // ===== CALCULAR TAXA DE SUCESSO =====
-    function calculateSuccessRate() {
-      try {
-        const closedRecs = allRecommendations.filter(r => r.status && r.status.startsWith('FINALIZADA'));
-        const wins = closedRecs.filter(r => r.status === 'FINALIZADA_GANHO');
-        const losses = closedRecs.filter(r => r.status === 'FINALIZADA_PERDA');
-        
-        const successRate = closedRecs.length > 0 ? (wins.length / closedRecs.length * 100) : 0;
-        const avgGain = wins.length > 0 ? wins.reduce((sum, r) => sum + (r.performance || 0), 0) / wins.length : 0;
-        const avgLoss = losses.length > 0 ? losses.reduce((sum, r) => sum + (r.performance || 0), 0) / losses.length : 0;
-        const profitFactor = Math.abs(avgLoss) > 0 ? Math.abs(avgGain / avgLoss) : 0;
-        
-        // ✅ CALCULAR RETORNO ACUMULADO LOCAL
-        const cumulativeReturn = closedRecs.reduce((sum, r) => sum + (r.performance || 0), 0);
-        
-        document.getElementById('successRate').textContent = `${successRate.toFixed(1)}%`;
-        document.getElementById('closedRecommendations').textContent = closedRecs.length;
-        document.getElementById('avgGain').textContent = `+${Math.abs(avgGain).toFixed(2)}%`;
-        document.getElementById('avgLoss').textContent = `${avgLoss.toFixed(2)}%`;
-        document.getElementById('profitFactor').textContent = profitFactor.toFixed(2);
-        
-        // ✅ MOSTRAR RETORNO ACUMULADO
-        const cumulativeEl = document.getElementById('cumulativeReturn');
-        if (cumulativeEl) {
-          cumulativeEl.textContent = `${cumulativeReturn >= 0 ? '+' : ''}${cumulativeReturn.toFixed(2)}%`;
-          cumulativeEl.className = `font-medium ${cumulativeReturn >= 0 ? 'text-success' : 'text-danger'}`;
-        }
-        
-        if (wins.length > 0) {
-          const bestWin = wins.reduce((best, current) => 
-            (current.performance || 0) > (best.performance || 0) ? current : best
-          );
-          
-          document.getElementById('bestPerformance').innerHTML = `
-            <div class="text-2xl font-bold text-success">${bestWin.ticker}</div>
-            <div class="text-lg text-success">+${(bestWin.performance || 0).toFixed(2)}%</div>
-            <div class="text-sm text-gray-400">${formatDate(bestWin.created_at)}</div>
-          `;
-        }
-      } catch (error) {
-        console.error('Erro ao calcular estatísticas:', error);
-      }
+    // ===== CALCULAR TAXA DE SUCESSO - VERSÃO DEBUG =====
+function calculateSuccessRate() {
+  try {
+    console.log('🔍 Calculando taxa de sucesso...');
+    console.log('Total de recomendações:', allRecommendations.length);
+    
+    // Filtrar apenas recomendações realmente fechadas
+    const closedRecs = allRecommendations.filter(r => {
+      const isClosed = r.status && (
+        r.status === 'FINALIZADA_GANHO' || 
+        r.status === 'FINALIZADA_PERDA' ||
+        r.status === 'FINALIZADA_MANUAL'
+      );
+      return isClosed;
+    });
+    
+    console.log('Recomendações fechadas:', closedRecs.length);
+    console.log('Status encontrados:', [...new Set(allRecommendations.map(r => r.status))]);
+    
+    const wins = closedRecs.filter(r => 
+      r.status === 'FINALIZADA_GANHO' || 
+      (r.status === 'FINALIZADA_MANUAL' && (r.performance || 0) > 0)
+    );
+    
+    const losses = closedRecs.filter(r => 
+      r.status === 'FINALIZADA_PERDA' || 
+      (r.status === 'FINALIZADA_MANUAL' && (r.performance || 0) < 0)
+    );
+    
+    console.log('Ganhos:', wins.length);
+    console.log('Perdas:', losses.length);
+    
+    // ✅ CÁLCULO CORRETO DA TAXA DE SUCESSO
+    const successRate = closedRecs.length > 0 ? (wins.length / closedRecs.length * 100) : 0;
+    
+    const avgGain = wins.length > 0 ? wins.reduce((sum, r) => sum + Math.abs(r.performance || 0), 0) / wins.length : 0;
+    const avgLoss = losses.length > 0 ? Math.abs(losses.reduce((sum, r) => sum + (r.performance || 0), 0)) / losses.length : 0;
+    const profitFactor = avgLoss > 0 ? (avgGain / avgLoss) : 0;
+    
+    // ✅ CALCULAR RETORNO ACUMULADO
+    const cumulativeReturn = closedRecs.reduce((sum, r) => sum + (r.performance || 0), 0);
+    
+    console.log('Taxa de sucesso calculada:', successRate.toFixed(1) + '%');
+    console.log('Retorno acumulado:', cumulativeReturn.toFixed(2) + '%');
+    
+    // Atualizar UI
+    document.getElementById('successRate').textContent = closedRecs.length > 0 ? `${successRate.toFixed(1)}%` : '--';
+    document.getElementById('closedRecommendations').textContent = closedRecs.length;
+    document.getElementById('avgGain').textContent = avgGain > 0 ? `+${avgGain.toFixed(2)}%` : '--';
+    document.getElementById('avgLoss').textContent = avgLoss > 0 ? `-${avgLoss.toFixed(2)}%` : '--';
+    document.getElementById('profitFactor').textContent = profitFactor > 0 ? profitFactor.toFixed(2) : '--';
+    
+    // ✅ MOSTRAR RETORNO ACUMULADO (ADICIONAR ESTE CAMPO NO HTML)
+    const cumulativeEl = document.getElementById('cumulativeReturn');
+    if (cumulativeEl) {
+      cumulativeEl.textContent = closedRecs.length > 0 ? 
+        `${cumulativeReturn >= 0 ? '+' : ''}${cumulativeReturn.toFixed(2)}%` : '--';
+      cumulativeEl.className = `font-medium ${cumulativeReturn >= 0 ? 'text-success' : 'text-danger'}`;
     }
+    
+    // Melhor performance
+    if (wins.length > 0) {
+      const bestWin = wins.reduce((best, current) => 
+        (current.performance || 0) > (best.performance || 0) ? current : best
+      );
+      
+      document.getElementById('bestPerformance').innerHTML = `
+        <div class="text-2xl font-bold text-success">${bestWin.ticker}</div>
+        <div class="text-lg text-success">+${(bestWin.performance || 0).toFixed(2)}%</div>
+        <div class="text-sm text-gray-400">${formatDate(bestWin.created_at)}</div>
+      `;
+    } else {
+      document.getElementById('bestPerformance').innerHTML = `
+        <div class="text-2xl font-bold text-gray-400">--</div>
+        <div class="text-sm text-gray-400">Nenhuma finalizada</div>
+      `;
+    }
+    
+  } catch (error) {
+    console.error('Erro ao calcular estatísticas:', error);
+    // Valores padrão em caso de erro
+    document.getElementById('successRate').textContent = '--';
+    document.getElementById('closedRecommendations').textContent = '0';
+    document.getElementById('avgGain').textContent = '--';
+    document.getElementById('avgLoss').textContent = '--';
+    document.getElementById('profitFactor').textContent = '--';
+  }
+}
 
     // ===== INICIALIZAR GRÁFICO DE PERFORMANCE =====
     function initPerformanceChart() {
