@@ -337,6 +337,10 @@
                   <span class="text-danger font-medium" id="avgLoss">-0%</span>
                 </div>
                 <div class="flex justify-between">
+                  <span class="text-gray-400">Retorno Acumulado:</span>
+                  <span class="text-white font-medium" id="cumulativeReturn">+0%</span>
+                </div>
+                <div class="flex justify-between">
                   <span class="text-gray-400">Profit Factor:</span>
                   <span class="text-white font-medium" id="profitFactor">0.0</span>
                 </div>
@@ -1033,6 +1037,7 @@
     }
 
     // ===== CALCULAR TAXA DE SUCESSO =====
+    // ===== CALCULAR TAXA DE SUCESSO =====
     function calculateSuccessRate() {
       try {
         const closedRecs = allRecommendations.filter(r => r.status && r.status.startsWith('FINALIZADA'));
@@ -1044,11 +1049,21 @@
         const avgLoss = losses.length > 0 ? losses.reduce((sum, r) => sum + (r.performance || 0), 0) / losses.length : 0;
         const profitFactor = Math.abs(avgLoss) > 0 ? Math.abs(avgGain / avgLoss) : 0;
         
+        // ✅ CALCULAR RETORNO ACUMULADO LOCAL
+        const cumulativeReturn = closedRecs.reduce((sum, r) => sum + (r.performance || 0), 0);
+        
         document.getElementById('successRate').textContent = `${successRate.toFixed(1)}%`;
         document.getElementById('closedRecommendations').textContent = closedRecs.length;
         document.getElementById('avgGain').textContent = `+${Math.abs(avgGain).toFixed(2)}%`;
         document.getElementById('avgLoss').textContent = `${avgLoss.toFixed(2)}%`;
         document.getElementById('profitFactor').textContent = profitFactor.toFixed(2);
+        
+        // ✅ MOSTRAR RETORNO ACUMULADO
+        const cumulativeEl = document.getElementById('cumulativeReturn');
+        if (cumulativeEl) {
+          cumulativeEl.textContent = `${cumulativeReturn >= 0 ? '+' : ''}${cumulativeReturn.toFixed(2)}%`;
+          cumulativeEl.className = `font-medium ${cumulativeReturn >= 0 ? 'text-success' : 'text-danger'}`;
+        }
         
         if (wins.length > 0) {
           const bestWin = wins.reduce((best, current) => 

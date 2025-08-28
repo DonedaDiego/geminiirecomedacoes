@@ -433,7 +433,7 @@ class RecommendationsServiceFree:
             
             cursor = conn.cursor()
             
-            # Estatísticas gerais
+            # Estatísticas gerais + RETORNO ACUMULADO
             cursor.execute("""
                 SELECT 
                     COUNT(*) as total,
@@ -441,7 +441,8 @@ class RecommendationsServiceFree:
                     COUNT(CASE WHEN status = 'FINALIZADA_GANHO' THEN 1 END) as wins,
                     COUNT(CASE WHEN status = 'FINALIZADA_PERDA' THEN 1 END) as losses,
                     AVG(CASE WHEN status = 'FINALIZADA_GANHO' THEN performance END) as avg_gain,
-                    AVG(CASE WHEN status = 'FINALIZADA_PERDA' THEN performance END) as avg_loss
+                    AVG(CASE WHEN status = 'FINALIZADA_PERDA' THEN performance END) as avg_loss,
+                    SUM(CASE WHEN status LIKE 'FINALIZADA%' THEN performance ELSE 0 END) as cumulative_return
                 FROM recommendations_free
                 WHERE created_at >= NOW() - INTERVAL '30 days'
             """)
@@ -462,7 +463,7 @@ class RecommendationsServiceFree:
             cursor.close()
             conn.close()
             
-            total, closed, wins, losses, avg_gain, avg_loss = stats
+            total, closed, wins, losses, avg_gain, avg_loss, cumulative_return = stats
             
             success_rate = (wins / closed * 100) if closed > 0 else 0
             profit_factor = (avg_gain / abs(avg_loss)) if avg_loss else 0
@@ -476,6 +477,7 @@ class RecommendationsServiceFree:
                 'avg_gain': avg_gain or 0,
                 'avg_loss': avg_loss or 0,
                 'profit_factor': profit_factor,
+                'cumulative_return': cumulative_return or 0,  # ✅ NOVO CAMPO
                 'best_performance': {
                     'ticker': best[0],
                     'gain': float(best[1]),
