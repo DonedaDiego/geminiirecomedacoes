@@ -1,0 +1,1623 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+ <meta charset="UTF-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0">
+ <title>Flow Tracker V2 - Geminii Tech</title>
+ <script src="https://cdn.tailwindcss.com"></script>
+ <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+ <script>
+   tailwind.config = {
+     theme: {
+       extend: {
+         colors: {
+           primary: '#6366f1',
+           secondary: '#8b5cf6',
+           accent: '#06b6d4',
+           success: '#10b981',
+           warning: '#f59e0b',
+           danger: '#ef4444',
+           geminii: '#ba39af'
+         }
+       }
+     }
+   }
+ </script>
+ <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+ <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+ <style>
+  body {
+    font-family: 'Inter', sans-serif;
+    background: #0f0f0f;
+  }
+  
+  /* ===== CARDS E CONTAINERS ===== */
+  .card {
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    transition: all 0.3s ease;
+  }
+  
+  .card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+    border-color: rgba(255, 255, 255, 0.2);
+  }
+
+  .metric-card {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.3s ease;
+  }
+
+  .metric-card:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.2);
+  }
+
+  .error-card {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(220, 38, 38, 0.05));
+    border: 1px solid rgba(239, 68, 68, 0.3);
+  }
+  
+  /* ===== NAVEGAÇÃO ===== */
+  .navbar {
+    background: rgba(15, 15, 15, 0.95);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  
+  /* ===== ANIMAÇÕES ===== */
+  .pulse-glow {
+    animation: pulseGlow 2s ease-in-out infinite alternate;
+  }
+  
+  @keyframes pulseGlow {
+    from { box-shadow: 0 0 20px rgba(139, 92, 246, 0.3); }
+    to { box-shadow: 0 0 30px rgba(139, 92, 246, 0.6); }
+  }
+  
+  .loading-skeleton {
+    background: linear-gradient(90deg, #1a1a1a 25%, #2a2a2a 50%, #1a1a1a 75%);
+    background-size: 400% 100%;
+    animation: skeleton-loading 1.4s ease-in-out infinite;
+  }
+
+  @keyframes skeleton-loading {
+    0% { background-position: 100% 50%; }
+    100% { background-position: 0 50%; }
+  }
+  
+  .fade-in {
+    animation: fadeIn 0.5s ease-in;
+  }
+  
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .spinner {
+    border: 4px solid rgba(255, 255, 255, 0.3);
+    border-top: 4px solid #8b5cf6;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+
+  /* ===== BADGES E STATUS ===== */
+  .status-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+
+  .sentiment-extremely-bullish {
+    background-color: rgba(16, 185, 129, 0.3);
+    color: #10b981;
+    border: 1px solid rgba(16, 185, 129, 0.5);
+  }
+
+  .sentiment-bullish {
+    background-color: rgba(34, 197, 94, 0.2);
+    color: #22c55e;
+    border: 1px solid rgba(34, 197, 94, 0.3);
+  }
+
+  .sentiment-bearish {
+    background-color: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+  }
+
+  .sentiment-extremely-bearish {
+    background-color: rgba(220, 38, 38, 0.3);
+    color: #dc2626;
+    border: 1px solid rgba(220, 38, 38, 0.5);
+  }
+
+  .sentiment-neutral {
+    background-color: rgba(156, 163, 175, 0.2);
+    color: #9ca3af;
+    border: 1px solid rgba(156, 163, 175, 0.3);
+  }
+
+  /* ===== BOTÕES ===== */
+  .btn-modern {
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+  }
+
+  .btn-modern:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(99, 102, 241, 0.4);
+  }
+
+  .btn-capture {
+    background: linear-gradient(135deg, #8b5cf6, #a855f7);
+    color: white;
+    box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
+  }
+
+  .btn-capture:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(139, 92, 246, 0.4);
+  }
+
+  .btn-analyze {
+    background: linear-gradient(135deg, #06b6d4, #0891b2);
+    box-shadow: 0 4px 15px rgba(6, 182, 212, 0.3);
+  }
+
+  .btn-analyze:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(6, 182, 212, 0.4);
+  }
+
+  .btn-batch {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
+  }
+
+  .btn-batch:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(245, 158, 11, 0.4);
+  }
+
+  /* ===== INPUTS E FORMULÁRIOS ===== */
+  input:focus {
+    outline: none;
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+  }
+
+  select:focus {
+    outline: none;
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+  }
+  
+  select option {
+    background-color: #1a1a1a;
+    color: white;
+  }
+
+  /* ===== GRÁFICOS ===== */
+  .chart-container {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 1rem;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    position: relative;
+    width: 100%;
+    min-height: 450px;
+    box-sizing: border-box;
+  }
+
+  #flowChart {
+    width: 100% !important;
+    min-height: 400px !important;
+    position: relative;
+  }
+
+  /* ===== RESPONSIVIDADE ===== */
+  @media (max-width: 1024px) {
+    .chart-container {
+      height: 600px;
+      padding: 1rem;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .chart-container {
+      height: 500px;
+      padding: 1rem;
+      margin: 0 -0.5rem 2rem -0.5rem;
+    }
+    
+    .max-w-7xl {
+      padding-left: 1rem;
+      padding-right: 1rem;
+    }
+  }
+
+  /* ===== FLOW ESPECÍFICO ===== */
+  .flow-indicator {
+    position: relative;
+    height: 20px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  .flow-call {
+    background: linear-gradient(90deg, #10b981, #34d399);
+    height: 100%;
+    border-radius: 10px;
+  }
+
+  .flow-put {
+    background: linear-gradient(90deg, #ef4444, #f87171);
+    height: 100%;
+    border-radius: 10px;
+  }
+
+  .realtime-badge {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    animation: pulseGlow 2s ease-in-out infinite alternate;
+  }
+
+  /* ===== TABS ===== */
+  .tab-active {
+    background: linear-gradient(135deg, #8b5cf6, #a855f7);
+    color: white;
+    box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
+  }
+
+  .tab-inactive {
+    background: rgba(255, 255, 255, 0.05);
+    color: #9ca3af;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .tab-inactive:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: white;
+  }
+</style>
+
+</head>
+<body class="min-h-screen text-white">
+ 
+ <!-- Navigation -->
+ <nav class="fixed top-6 left-1/2 transform -translate-x-1/2 z-50 bg-opacity-5 border-opacity-10 bg-white border-white border rounded-full px-4 py-3 shadow-xl backdrop-blur-md">
+   <div class="flex items-center justify-between">
+     <div class="flex items-center">
+       <img src="logo.png" alt="Geminii Logo" class="w-6 h-6 cursor-pointer" onclick="window.location.href='/'">
+     </div>
+     <div class="hidden md:flex items-center space-x-6 text-xs text-gray-300 ml-8">
+       <a href="/dashboard" class="hover:text-white transition-colors">Dashboard</a>
+       <a href="opcoes.html" class="hover:text-white transition-colors">Hunter Walls</a>
+       <a href="vi-pro.html" class="hover:text-white transition-colors">Implícita Sigma</a>
+       <a href="regimes-pro.html" class="hover:text-white transition-colors">Bandas De Volatilidade</a>
+       <a href="rank-volatilidade.html" class="hover:text-white transition-colors">IV Scanner</a>
+       <a href="gamma-levels.html" class="hover:text-white transition-colors">Gamma Levels</a>
+       <span class="text-white font-medium">Flow Tracker V2</span>
+     </div>
+     <div class="flex items-center space-x-3 ml-8">
+       <div id="apiStatus" class="w-8 h-8 bg-green-500 bg-opacity-10 border border-green-500 border-opacity-30 rounded-full flex items-center justify-center relative">
+         <i class="fas fa-chart-line text-green-500 text-xs"></i>
+         <div class="absolute -top-1 -right-1 w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+       </div>
+     </div>
+   </div>
+ </nav>
+
+ <!-- Main Content -->
+ <main class="pt-24 px-6 pb-12">
+  <div class="pt-32 pb-16">
+    <div class="max-w-7xl mx-auto px-6">
+      
+      <!-- Header -->
+      <div class="text-center mb-8">
+       <h1 class="text-4xl md:text-5xl font-bold mb-4">
+         <span style="color: #8b5cf6; font-weight: 900;">Flow</span>
+         <span class="text-white font-light">Tracker</span>
+         <span class="realtime-badge ml-4">V2.0</span>
+       </h1>
+       <p class="text-neutral-300 text-lg max-w-2xl mx-auto">
+         Sistema avançado de análise de flow de opções em tempo real com Black-Scholes próprio
+       </p>
+     </div>
+
+     <!-- Tabs Navigation -->
+     <div class="flex justify-center mb-8">
+       <div class="flex space-x-2 bg-white/5 p-2 rounded-xl">
+         <button onclick="switchTab('capture')" id="tab-capture" class="tab-active px-6 py-3 rounded-lg font-semibold transition-all duration-300">
+           <i class="fas fa-download mr-2"></i>Captura
+         </button>
+         <button onclick="switchTab('analysis')" id="tab-analysis" class="tab-inactive px-6 py-3 rounded-lg font-semibold transition-all duration-300">
+           <i class="fas fa-chart-bar mr-2"></i>Análise
+         </button>
+         <button onclick="switchTab('history')" id="tab-history" class="tab-inactive px-6 py-3 rounded-lg font-semibold transition-all duration-300">
+           <i class="fas fa-history mr-2"></i>Histórico
+         </button>
+         <button onclick="switchTab('batch')" id="tab-batch" class="tab-inactive px-6 py-3 rounded-lg font-semibold transition-all duration-300">
+           <i class="fas fa-layer-group mr-2"></i>Lote
+         </button>
+       </div>
+     </div>
+
+     <!-- Tab: Captura -->
+     <div id="content-capture" class="tab-content">
+       
+       <!-- Input Section -->
+       <div class="card rounded-2xl p-8 mb-8 fade-in">
+         <h2 class="text-2xl font-bold text-white mb-6 flex items-center">
+           <i class="fas fa-download text-purple-400 mr-3"></i>
+           Captura de Flow em Tempo Real
+         </h2>
+         
+         <div class="grid grid-cols-1 gap-6 mb-8">
+           <div class="space-y-2">
+             <label for="ticker" class="block text-sm font-medium text-gray-300">Ticker</label>
+             <input type="text" id="ticker" placeholder="Ex: PETR4, VALE3, ITUB4" 
+                   class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 transition-all duration-300">
+           </div>
+         </div>
+         
+         <div class="flex flex-wrap gap-4 justify-center">
+           <button onclick="captureCurrentFlow()" class="btn-capture text-white px-8 py-3 rounded-lg font-semibold transition-all duration-300 flex items-center">
+             <i class="fas fa-download mr-2"></i>
+             Capturar Flow Agora
+           </button>
+           <button onclick="getCurrentFlow()" class="btn-analyze text-white px-8 py-3 rounded-lg font-semibold transition-all duration-300 flex items-center">
+             <i class="fas fa-eye mr-2"></i>
+             Ver Último Snapshot
+           </button>
+         </div>
+       </div>
+
+       <!-- Results Section -->
+       <div id="results-capture" class="space-y-8">
+         
+         <!-- Flow Metrics -->
+         <div id="flowMetrics" class="card rounded-xl p-6 fade-in">
+           <h3 class="text-xl font-bold text-white mb-4 flex items-center">
+             <i class="fas fa-tachometer-alt mr-2 text-purple-400"></i>
+             Métricas de Flow
+           </h3>
+           <div id="flowMetricsContent" class="space-y-3">
+             <p class="text-gray-400 text-center">Execute a captura para ver as métricas</p>
+           </div>
+         </div>
+
+         <!-- Option Details -->
+         <div id="optionDetails" class="card rounded-xl p-6 fade-in hidden">
+           <h3 class="text-xl font-bold text-white mb-4 flex items-center">
+             <i class="fas fa-list mr-2 text-cyan-400"></i>
+             Top 10 Opções por Peso
+           </h3>
+           <div id="optionDetailsContent" class="space-y-3">
+             <p class="text-gray-400 text-center">Detalhes das opções aparecerão aqui</p>
+           </div>
+         </div>
+         
+       </div>
+     </div>
+
+     <!-- Tab: Análise -->
+     <div id="content-analysis" class="tab-content hidden">
+       
+       <!-- Analysis Input -->
+       <div class="card rounded-2xl p-8 mb-8 fade-in">
+         <h2 class="text-2xl font-bold text-white mb-6 flex items-center">
+           <i class="fas fa-chart-bar text-cyan-400 mr-3"></i>
+           Análise Detalhada de Flow
+         </h2>
+         
+         <div class="grid grid-cols-1 gap-6 mb-8">
+           <div class="space-y-2">
+             <label for="analysisTicker" class="block text-sm font-medium text-gray-300">Ticker para Análise</label>
+             <input type="text" id="analysisTicker" placeholder="Ex: PETR4" 
+                   class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 transition-all duration-300">
+           </div>
+         </div>
+         
+         <div class="flex justify-center">
+           <button onclick="analyzeFlow()" class="btn-analyze text-white px-8 py-3 rounded-lg font-semibold transition-all duration-300 flex items-center">
+             <i class="fas fa-search mr-2"></i>
+             Analisar Flow
+           </button>
+         </div>
+       </div>
+
+       <!-- Analysis Results -->
+       <div id="results-analysis" class="space-y-8">
+         <!-- Results will be inserted here -->
+       </div>
+     </div>
+
+     <!-- Tab: Histórico -->
+     <div id="content-history" class="tab-content hidden">
+       
+       <!-- History Input -->
+       <div class="card rounded-2xl p-8 mb-8 fade-in">
+         <h2 class="text-2xl font-bold text-white mb-6 flex items-center">
+           <i class="fas fa-history text-yellow-400 mr-3"></i>
+           Histórico de Flow
+         </h2>
+         
+         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+           <div class="space-y-2">
+             <label for="historyTicker" class="block text-sm font-medium text-gray-300">Ticker</label>
+             <input type="text" id="historyTicker" placeholder="Ex: PETR4" 
+                   class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 transition-all duration-300">
+           </div>
+           <div class="space-y-2">
+             <label for="historyDays" class="block text-sm font-medium text-gray-300">Dias (máx. 365)</label>
+             <select id="historyDays" class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white">
+               <option value="7">7 dias</option>
+               <option value="15">15 dias</option>
+               <option value="30" selected>30 dias</option>
+               <option value="60">60 dias</option>
+               <option value="90">90 dias</option>
+               <option value="180">180 dias</option>
+               <option value="365">1 ano</option>
+             </select>
+           </div>
+         </div>
+         
+         <div class="flex justify-center">
+           <button onclick="getFlowHistory()" class="btn-modern text-white px-8 py-3 rounded-lg font-semibold transition-all duration-300 flex items-center">
+             <i class="fas fa-clock mr-2"></i>
+             Buscar Histórico
+           </button>
+         </div>
+       </div>
+
+       <!-- History Chart -->
+       <div id="historyChart" class="chart-container rounded-2xl hidden">
+         <h3 class="text-xl font-bold text-white mb-4">Evolução do Flow</h3>
+         <div id="flowHistoryPlot" style="width:100%; height:400px;"></div>
+       </div>
+
+       <!-- History Table -->
+       <div id="historyTable" class="card rounded-xl p-6 fade-in hidden">
+         <h3 class="text-xl font-bold text-white mb-4">Histórico Detalhado</h3>
+         <div id="historyTableContent" class="overflow-x-auto">
+           <!-- Table will be inserted here -->
+         </div>
+       </div>
+     </div>
+
+     <!-- Tab: Lote -->
+     <div id="content-batch" class="tab-content hidden">
+       
+       <!-- Batch Input -->
+       <div class="card rounded-2xl p-8 mb-8 fade-in">
+         <h2 class="text-2xl font-bold text-white mb-6 flex items-center">
+           <i class="fas fa-layer-group text-orange-400 mr-3"></i>
+           Captura em Lote
+         </h2>
+         
+         <div class="space-y-4 mb-8">
+           <div class="space-y-2">
+             <label for="batchTickers" class="block text-sm font-medium text-gray-300">
+               Tickers (separados por vírgula, máx. 10)
+             </label>
+             <textarea id="batchTickers" rows="3" placeholder="PETR4, VALE3, ITUB4, BBDC4, ABEV3"
+                       class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 transition-all duration-300"></textarea>
+           </div>
+           <div class="text-sm text-gray-400">
+             <i class="fas fa-info-circle mr-2"></i>
+             Digite até 10 tickers separados por vírgula. Ex: PETR4, VALE3, ITUB4
+           </div>
+         </div>
+         
+         <div class="flex justify-center">
+           <button onclick="batchCaptureFlow()" class="btn-batch text-white px-8 py-3 rounded-lg font-semibold transition-all duration-300 flex items-center">
+             <i class="fas fa-rocket mr-2"></i>
+             Capturar Lote
+           </button>
+         </div>
+       </div>
+
+       <!-- Batch Results -->
+       <div id="results-batch" class="space-y-8">
+         <!-- Batch results will be inserted here -->
+       </div>
+     </div>
+
+     <!-- Loading State -->
+     <div id="loading" class="hidden">
+       <div class="card rounded-2xl p-12 text-center">
+         <div class="spinner mx-auto mb-6"></div>
+         <p class="text-xl text-gray-300">Processando...</p>
+         <p class="text-sm text-gray-400 mt-2" id="loadingMessage">Aguarde enquanto capturamos os dados</p>
+       </div>
+     </div>
+
+   </div>
+ </main>
+
+ <script>
+   
+   // Verificar autenticação
+   let userToken = localStorage.getItem('geminii_token');
+   if (!userToken) {
+       window.location.href = '/login.html';
+   }
+
+   let currentTab = 'capture';
+
+   // ===== FUNÇÕES DE UI =====
+   function showLoading(message = 'Processando...') {
+     document.getElementById('loadingMessage').textContent = message;
+     document.getElementById('loading').classList.remove('hidden');
+   }
+
+   function hideLoading() {
+     document.getElementById('loading').classList.add('hidden');
+   }
+
+   function showError(message) {
+     hideLoading();
+     showToast(message, 'error');
+   }
+
+   function showToast(message, type = 'info') {
+     const colors = {
+       success: 'bg-green-500',
+       error: 'bg-red-500',
+       info: 'bg-blue-500',
+       warning: 'bg-yellow-500'
+     };
+     
+     const toast = document.createElement('div');
+     toast.className = `fixed top-20 right-4 ${colors[type]} text-white px-6 py-3 rounded-lg shadow-lg z-50 transition-all duration-300`;
+     toast.textContent = message;
+
+     document.body.appendChild(toast);
+
+     setTimeout(() => {
+       toast.style.opacity = '0';
+       setTimeout(() => {
+         if (document.body.contains(toast)) {
+           document.body.removeChild(toast);
+         }
+       }, 300);
+     }, 4000);
+   }
+
+   // ===== FUNÇÃO DE TABS =====
+   function switchTab(tabName) {
+     // Hide all tab contents
+     const contents = document.querySelectorAll('.tab-content');
+     contents.forEach(content => content.classList.add('hidden'));
+     
+     // Show selected tab content
+     document.getElementById(`content-${tabName}`).classList.remove('hidden');
+     
+     // Update tab buttons
+     const tabs = document.querySelectorAll('[id^="tab-"]');
+     tabs.forEach(tab => {
+       tab.className = tab.className.replace('tab-active', 'tab-inactive');
+     });
+     
+     document.getElementById(`tab-${tabName}`).className = 
+       document.getElementById(`tab-${tabName}`).className.replace('tab-inactive', 'tab-active');
+     
+     currentTab = tabName;
+   }
+
+   // ===== FUNÇÕES DE API =====
+   
+   async function captureCurrentFlow() {
+     const ticker = document.getElementById('ticker').value.trim();
+     if (!ticker) {
+       showError('Por favor, insira um ticker válido');
+       return;
+     }
+
+     showLoading('Capturando flow em tempo real...');
+
+     try {
+       const response = await fetch('/flow/v2/capture', {
+         method: 'POST',
+         headers: {
+           'Content-Type': 'application/json',
+           'Authorization': `Bearer ${userToken}`
+         },
+         body: JSON.stringify({
+           ticker: ticker
+         })
+       });
+
+       const data = await response.json();
+       
+       if (!response.ok) {
+         throw new Error(data.error || 'Erro na requisição');
+       }
+
+       // Renderizar resultados
+       renderFlowMetrics(data);
+       
+       // Buscar detalhes das opções
+       await getCurrentFlow(ticker, false);
+
+       hideLoading();
+       showToast(`Flow capturado com sucesso! ${data.options_processed} opções processadas`, 'success');
+
+     } catch (error) {
+       showError('Erro de conexão: ' + error.message);
+     }
+   }
+
+   async function getCurrentFlow(tickerParam = null, showLoadingIndicator = true) {
+     const ticker = tickerParam || document.getElementById('ticker').value.trim();
+     if (!ticker) {
+       showError('Por favor, insira um ticker válido');
+       return;
+     }
+
+     if (showLoadingIndicator) {
+       showLoading('Buscando último snapshot...');
+     }
+
+     try {
+       const response = await fetch(`/flow/v2/current/${ticker}?include_details=true`, {
+         method: 'GET',
+         headers: {
+           'Authorization': `Bearer ${userToken}`
+         }
+       });
+
+       const data = await response.json();
+       
+       if (!response.ok) {
+         throw new Error(data.error || 'Erro na requisição');
+       }
+
+       // Renderizar métricas
+       renderFlowMetrics(data);
+       
+       // Renderizar detalhes das opções
+       renderOptionDetails(data.option_details);
+
+       if (showLoadingIndicator) {
+         hideLoading();
+       }
+
+     } catch (error) {
+       if (showLoadingIndicator) {
+         showError('Erro de conexão: ' + error.message);
+       }
+     }
+   }
+
+   async function analyzeFlow() {
+     const ticker = document.getElementById('analysisTicker').value.trim();
+     if (!ticker) {
+        showError('Por favor, insira um ticker válido');
+        return;
+      }
+  
+      showLoading('Analisando flow detalhado...');
+  
+      try {
+        const response = await fetch(`/flow/v2/analyze/${ticker}`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${userToken}`
+          }
+        });
+  
+        const data = await response.json();
+        
+        if (!response.ok) {
+          throw new Error(data.error || 'Erro na requisição');
+        }
+  
+        // Renderizar análise detalhada
+        renderFlowAnalysis(data);
+  
+        hideLoading();
+        showToast('Análise completa!', 'success');
+  
+      } catch (error) {
+        showError('Erro de conexão: ' + error.message);
+      }
+    }
+  
+    async function getFlowHistory() {
+      const ticker = document.getElementById('historyTicker').value.trim();
+      const days = document.getElementById('historyDays').value;
+      
+      if (!ticker) {
+        showError('Por favor, insira um ticker válido');
+        return;
+      }
+  
+      showLoading('Buscando histórico de flow...');
+  
+      try {
+        const response = await fetch(`/flow/v2/history/${ticker}?days_back=${days}`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${userToken}`
+          }
+        });
+  
+        const data = await response.json();
+        
+        if (!response.ok) {
+          throw new Error(data.error || 'Erro na requisição');
+        }
+  
+        // Renderizar histórico
+        renderFlowHistory(data);
+  
+        hideLoading();
+        showToast(`${data.count} registros históricos carregados`, 'success');
+  
+      } catch (error) {
+        showError('Erro de conexão: ' + error.message);
+      }
+    }
+  
+    async function batchCaptureFlow() {
+      const tickersText = document.getElementById('batchTickers').value.trim();
+      if (!tickersText) {
+        showError('Por favor, insira os tickers');
+        return;
+      }
+  
+      const tickers = tickersText.split(',').map(t => t.trim().toUpperCase()).filter(t => t);
+      if (tickers.length === 0) {
+        showError('Nenhum ticker válido encontrado');
+        return;
+      }
+  
+      if (tickers.length > 10) {
+        showError('Máximo de 10 tickers por lote');
+        return;
+      }
+  
+      showLoading(`Capturando flow para ${tickers.length} tickers...`);
+  
+      try {
+        const response = await fetch('/flow/v2/batch-capture', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${userToken}`
+          },
+          body: JSON.stringify({
+            tickers: tickers
+          })
+        });
+  
+        const data = await response.json();
+        
+        if (!response.ok) {
+          throw new Error(data.error || 'Erro na requisição');
+        }
+  
+        // Renderizar resultados do lote
+        renderBatchResults(data);
+  
+        hideLoading();
+        showToast(`Lote processado! ${data.successful}/${data.total_requested} sucessos`, 
+                  data.successful === data.total_requested ? 'success' : 'warning');
+  
+      } catch (error) {
+        showError('Erro de conexão: ' + error.message);
+      }
+    }
+  
+    // ===== FUNÇÕES DE RENDERIZAÇÃO =====
+    
+    function renderFlowMetrics(data) {
+      const flowData = data.flow_data || data.metrics || {};
+      const ticker = data.ticker;
+      
+      if (!flowData || Object.keys(flowData).length === 0) {
+        document.getElementById('flowMetricsContent').innerHTML = 
+          '<p class="text-gray-400 text-center">Dados de flow não disponíveis</p>';
+        return;
+      }
+  
+      const sentimentClass = getSentimentClass(flowData.sentiment);
+      
+      const html = `
+        <!-- Header com Ticker e Timestamp -->
+        <div class="text-center mb-6 p-4 bg-white/5 rounded-lg">
+          <h3 class="text-2xl font-bold text-white mb-2">${ticker}</h3>
+          <p class="text-gray-400 text-sm">
+            Capturado em: ${new Date(flowData.timestamp || data.timestamp).toLocaleString('pt-BR')}
+          </p>
+          <div class="mt-3">
+            <span class="status-badge ${sentimentClass}">
+              ${flowData.sentiment || 'NEUTRAL'}
+            </span>
+          </div>
+        </div>
+  
+        <!-- Grid Principal -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          
+          <!-- Call/Put Ratio -->
+          <div class="metric-card rounded-lg p-4 text-center">
+            <div class="text-2xl font-bold text-accent mb-2">
+              ${(flowData.call_put_ratio || 0).toFixed(2)}
+            </div>
+            <p class="text-gray-400 text-sm">Call/Put Ratio</p>
+          </div>
+          
+          <!-- Net Flow -->
+          <div class="metric-card rounded-lg p-4 text-center">
+            <div class="text-2xl font-bold ${flowData.net_flow >= 0 ? 'text-green-400' : 'text-red-400'} mb-2">
+              ${formatLargeNumber(flowData.net_flow || 0)}
+            </div>
+            <p class="text-gray-400 text-sm">Net Flow</p>
+          </div>
+          
+          <!-- Volume Total -->
+          <div class="metric-card rounded-lg p-4 text-center">
+            <div class="text-2xl font-bold text-warning mb-2">
+              ${formatNumber(flowData.total_volume || 0)}
+            </div>
+            <p class="text-gray-400 text-sm">Volume Total</p>
+          </div>
+          
+          <!-- IV Média -->
+          <div class="metric-card rounded-lg p-4 text-center">
+            <div class="text-2xl font-bold text-purple-400 mb-2">
+              ${((flowData.avg_iv || 0) * 100).toFixed(1)}%
+            </div>
+            <p class="text-gray-400 text-sm">IV Média</p>
+          </div>
+          
+        </div>
+  
+        <!-- Flow Visual Indicators -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          
+          <!-- Call Flow -->
+          <div class="metric-card rounded-lg p-4">
+            <div class="flex justify-between items-center mb-3">
+              <span class="text-green-400 font-medium">Call Flow</span>
+              <span class="text-white font-bold">${formatLargeNumber(flowData.call_flow || 0)}</span>
+            </div>
+            <div class="flow-indicator">
+              <div class="flow-call" style="width: ${getFlowPercentage(flowData.call_flow, flowData.call_flow + flowData.put_flow)}%"></div>
+            </div>
+            <div class="text-xs text-gray-400 mt-2">
+              ${flowData.call_options || 0} opções • ${formatNumber(flowData.call_volume || 0)} volume
+            </div>
+          </div>
+          
+          <!-- Put Flow -->
+          <div class="metric-card rounded-lg p-4">
+            <div class="flex justify-between items-center mb-3">
+              <span class="text-red-400 font-medium">Put Flow</span>
+              <span class="text-white font-bold">${formatLargeNumber(flowData.put_flow || 0)}</span>
+            </div>
+            <div class="flow-indicator">
+              <div class="flow-put" style="width: ${getFlowPercentage(flowData.put_flow, flowData.call_flow + flowData.put_flow)}%"></div>
+            </div>
+            <div class="text-xs text-gray-400 mt-2">
+              ${flowData.put_options || 0} opções • ${formatNumber(flowData.put_volume || 0)} volume
+            </div>
+          </div>
+          
+        </div>
+  
+        <!-- Resumo -->
+        <div class="bg-white/5 rounded-lg p-4">
+          <h4 class="text-white font-semibold mb-3">Resumo da Análise</h4>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+            <div>
+              <span class="text-gray-400">Total Opções:</span>
+              <span class="text-white ml-2 font-medium">${flowData.total_options || 0}</span>
+            </div>
+            <div>
+              <span class="text-gray-400">Calls:</span>
+              <span class="text-green-400 ml-2 font-medium">${flowData.call_options || 0}</span>
+            </div>
+            <div>
+              <span class="text-gray-400">Puts:</span>
+              <span class="text-red-400 ml-2 font-medium">${flowData.put_options || 0}</span>
+            </div>
+            <div>
+              <span class="text-gray-400">Snapshot ID:</span>
+              <span class="text-blue-400 ml-2 font-medium">${flowData.id || data.snapshot_id || 'N/A'}</span>
+            </div>
+          </div>
+        </div>
+      `;
+      
+      document.getElementById('flowMetricsContent').innerHTML = html;
+    }
+  
+    function renderOptionDetails(optionDetails) {
+      if (!optionDetails || optionDetails.length === 0) {
+        document.getElementById('optionDetails').classList.add('hidden');
+        return;
+      }
+  
+      // Ordenar por peso (maior para menor)
+      const sortedOptions = [...optionDetails].sort((a, b) => (b.weight || 0) - (a.weight || 0));
+      const top10 = sortedOptions.slice(0, 10);
+  
+      let html = `
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="border-b border-white/10">
+                <th class="text-left p-3 text-gray-300">Opção</th>
+                <th class="text-left p-3 text-gray-300">Tipo</th>
+                <th class="text-right p-3 text-gray-300">Strike</th>
+                <th class="text-right p-3 text-gray-300">Prêmio</th>
+                <th class="text-right p-3 text-gray-300">Volume</th>
+                <th class="text-right p-3 text-gray-300">IV</th>
+                <th class="text-right p-3 text-gray-300">Peso</th>
+                <th class="text-center p-3 text-gray-300">DTE</th>
+              </tr>
+            </thead>
+            <tbody>
+      `;
+  
+      top10.forEach((option, index) => {
+        const typeColor = option.category === 'CALL' ? 'text-green-400' : 'text-red-400';
+        const moneynessColor = 
+          option.moneyness === 'ITM' ? 'text-yellow-400' : 
+          option.moneyness === 'ATM' ? 'text-blue-400' : 'text-gray-400';
+        
+        html += `
+          <tr class="border-b border-white/5 hover:bg-white/5 transition-colors">
+            <td class="p-3">
+              <div class="font-medium text-white">${option.option_symbol}</div>
+              <div class="text-xs ${moneynessColor}">${option.moneyness}</div>
+            </td>
+            <td class="p-3">
+              <span class="text-xs ${typeColor} font-semibold">${option.category}</span>
+            </td>
+            <td class="p-3 text-right text-white font-medium">
+              R$ ${(option.strike || 0).toFixed(2)}
+            </td>
+            <td class="p-3 text-right text-white font-medium">
+              R$ ${(option.close_price || 0).toFixed(4)}
+            </td>
+            <td class="p-3 text-right text-gray-300">
+              ${formatNumber(option.volume || 0)}
+            </td>
+            <td class="p-3 text-right text-purple-400 font-medium">
+              ${((option.calculated_iv || 0) * 100).toFixed(1)}%
+            </td>
+            <td class="p-3 text-right text-accent font-bold">
+              ${formatLargeNumber(option.weight || 0)}
+            </td>
+            <td class="p-3 text-center text-gray-300">
+              ${option.days_to_maturity || 0}d
+            </td>
+          </tr>
+        `;
+      });
+  
+      html += `
+            </tbody>
+          </table>
+        </div>
+        
+        <div class="mt-4 text-center text-sm text-gray-400">
+          Mostrando top ${top10.length} de ${optionDetails.length} opções (ordenadas por peso)
+        </div>
+      `;
+  
+      document.getElementById('optionDetailsContent').innerHTML = html;
+      document.getElementById('optionDetails').classList.remove('hidden');
+    }
+  
+    function renderFlowAnalysis(data) {
+      const analysis = data.analysis || {};
+      const current = analysis.current || {};
+      const trends = analysis.trends || {};
+      const alerts = analysis.alerts || [];
+      const topOptions = data.top_options || [];
+  
+      const html = `
+        <!-- Análise Atual -->
+        <div class="card rounded-xl p-6 mb-6">
+          <h3 class="text-xl font-bold text-white mb-4">
+            <i class="fas fa-chart-line mr-2 text-cyan-400"></i>
+            Análise Atual - ${data.ticker}
+          </h3>
+          
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            
+            <!-- Current Flow -->
+            <div class="metric-card rounded-lg p-4 text-center">
+              <div class="text-2xl font-bold ${current.sentiment?.includes('BULLISH') ? 'text-green-400' : 'text-red-400'} mb-2">
+                ${(current.call_put_ratio || 0).toFixed(2)}
+              </div>
+              <p class="text-gray-400 text-sm">Call/Put Ratio Atual</p>
+              <div class="mt-2">
+                <span class="status-badge ${getSentimentClass(current.sentiment)}">
+                  ${current.sentiment || 'NEUTRAL'}
+                </span>
+              </div>
+            </div>
+            
+            <!-- Volume Trend -->
+            <div class="metric-card rounded-lg p-4 text-center">
+              <div class="text-2xl font-bold ${trends.volume_trend === 'INCREASING' ? 'text-green-400' : 'text-red-400'} mb-2">
+                ${trends.volume_change ? (trends.volume_change > 0 ? '+' : '') + trends.volume_change.toFixed(1) + '%' : 'N/A'}
+              </div>
+              <p class="text-gray-400 text-sm">Mudança Volume</p>
+              <p class="text-xs text-gray-500 mt-1">vs média 3 dias</p>
+            </div>
+            
+            <!-- CP Ratio Trend -->
+            <div class="metric-card rounded-lg p-4 text-center">
+              <div class="text-2xl font-bold ${trends.cp_ratio_trend === 'INCREASING' ? 'text-green-400' : 'text-red-400'} mb-2">
+                ${trends.cp_ratio_change ? (trends.cp_ratio_change > 0 ? '+' : '') + trends.cp_ratio_change.toFixed(1) + '%' : 'N/A'}
+              </div>
+              <p class="text-gray-400 text-sm">Tendência C/P</p>
+              <p class="text-xs text-gray-500 mt-1">vs média 3 dias</p>
+            </div>
+            
+          </div>
+        </div>
+  
+        <!-- Alertas -->
+        ${alerts.length > 0 ? `
+        <div class="card rounded-xl p-6 mb-6">
+          <h3 class="text-xl font-bold text-white mb-4">
+            <i class="fas fa-exclamation-triangle mr-2 text-yellow-400"></i>
+            Alertas Automáticos
+          </h3>
+          <div class="space-y-3">
+            ${alerts.map(alert => `
+              <div class="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-4">
+                <p class="text-yellow-300">${alert}</p>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+        ` : ''}
+  
+        <!-- Top Opções por Peso -->
+        ${topOptions.length > 0 ? `
+        <div class="card rounded-xl p-6">
+          <h3 class="text-xl font-bold text-white mb-4">
+            <i class="fas fa-trophy mr-2 text-yellow-400"></i>
+            Top Opções por Peso
+          </h3>
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="border-b border-white/10">
+                  <th class="text-left p-3 text-gray-300">Opção</th>
+                  <th class="text-left p-3 text-gray-300">Tipo</th>
+                  <th class="text-right p-3 text-gray-300">Strike</th>
+                  <th class="text-right p-3 text-gray-300">Peso</th>
+                  <th class="text-right p-3 text-gray-300">IV</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${topOptions.map(option => `
+                  <tr class="border-b border-white/5">
+                    <td class="p-3 text-white font-medium">${option.option_symbol}</td>
+                    <td class="p-3">
+                      <span class="text-xs ${option.category === 'CALL' ? 'text-green-400' : 'text-red-400'} font-semibold">
+                        ${option.category}
+                      </span>
+                    </td>
+                    <td class="p-3 text-right text-white">R$ ${(option.strike || 0).toFixed(2)}</td>
+                    <td class="p-3 text-right text-accent font-bold">${formatLargeNumber(option.weight || 0)}</td>
+                    <td class="p-3 text-right text-purple-400">${((option.calculated_iv || 0) * 100).toFixed(1)}%</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        ` : ''}
+      `;
+  
+      document.getElementById('results-analysis').innerHTML = html;
+    }
+  
+    function renderFlowHistory(data) {
+      const history = data.history || [];
+      
+      if (history.length === 0) {
+        document.getElementById('historyChart').classList.add('hidden');
+        document.getElementById('historyTable').classList.add('hidden');
+        showToast('Nenhum histórico encontrado', 'warning');
+        return;
+      }
+  
+      // Preparar dados para o gráfico
+      const dates = history.map(h => h.date).reverse();
+      const callFlow = history.map(h => h.call_flow || 0).reverse();
+      const putFlow = history.map(h => h.put_flow || 0).reverse();
+      const cpRatio = history.map(h => h.call_put_ratio || 0).reverse();
+  
+      // Criar gráfico
+      const trace1 = {
+        x: dates,
+        y: callFlow,
+        type: 'scatter',
+        mode: 'lines+markers',
+        name: 'Call Flow',
+        line: { color: '#10b981', width: 3 },
+        yaxis: 'y'
+      };
+  
+      const trace2 = {
+        x: dates,
+        y: putFlow,
+        type: 'scatter',
+        mode: 'lines+markers',
+        name: 'Put Flow', 
+        line: { color: '#ef4444', width: 3 },
+        yaxis: 'y'
+      };
+  
+      const trace3 = {
+        x: dates,
+        y: cpRatio,
+        type: 'scatter',
+        mode: 'lines+markers',
+        name: 'C/P Ratio',
+        line: { color: '#8b5cf6', width: 2, dash: 'dash' },
+        yaxis: 'y2'
+      };
+  
+      const layout = {
+        title: {
+          text: `Evolução do Flow - ${data.ticker}`,
+          font: { color: 'white', size: 16 }
+        },
+        paper_bgcolor: '#0f0f0f',
+        plot_bgcolor: '#1a1a1a',
+        xaxis: {
+          title: 'Data',
+          color: 'white',
+          gridcolor: 'rgba(255,255,255,0.1)'
+        },
+        yaxis: {
+          title: 'Flow Value',
+          color: 'white',
+          gridcolor: 'rgba(255,255,255,0.1)'
+        },
+        yaxis2: {
+          title: 'Call/Put Ratio',
+          color: 'white',
+          overlaying: 'y',
+          side: 'right'
+        },
+        legend: {
+          font: { color: 'white' },
+          bgcolor: 'rgba(0,0,0,0.5)'
+        },
+        margin: { t: 50, l: 60, r: 60, b: 50 }
+      };
+  
+      Plotly.newPlot('flowHistoryPlot', [trace1, trace2, trace3], layout, {
+        responsive: true,
+        displayModeBar: false
+      });
+  
+      // Mostrar gráfico e tabela
+      document.getElementById('historyChart').classList.remove('hidden');
+      
+      // Criar tabela
+      renderHistoryTable(history, data.ticker);
+    }
+  
+    function renderHistoryTable(history, ticker) {
+      const tableHtml = `
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="border-b border-white/10">
+                <th class="text-left p-3 text-gray-300">Data</th>
+                <th class="text-right p-3 text-gray-300">C/P Ratio</th>
+                <th class="text-right p-3 text-gray-300">Call Flow</th>
+                <th class="text-right p-3 text-gray-300">Put Flow</th>
+                <th class="text-right p-3 text-gray-300">Volume</th>
+                <th class="text-left p-3 text-gray-300">Sentimento</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${history.map(row => `
+                <tr class="border-b border-white/5 hover:bg-white/5">
+                  <td class="p-3 text-white">${new Date(row.date).toLocaleDateString('pt-BR')}</td>
+                  <td class="p-3 text-right text-white font-medium">${(row.call_put_ratio || 0).toFixed(2)}</td>
+                  <td class="p-3 text-right text-green-400">${formatLargeNumber(row.call_flow || 0)}</td>
+                  <td class="p-3 text-right text-red-400">${formatLargeNumber(row.put_flow || 0)}</td>
+                  <td class="p-3 text-right text-gray-300">${formatNumber(row.total_volume || 0)}</td>
+                  <td class="p-3">
+                    <span class="text-xs status-badge ${getSentimentClass(row.sentiment)}">
+                      ${row.sentiment || 'NEUTRAL'}
+                    </span>
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+        
+        <div class="mt-4 text-center text-sm text-gray-400">
+          ${history.length} registros históricos para ${ticker}
+        </div>
+      `;
+  
+      document.getElementById('historyTableContent').innerHTML = tableHtml;
+      document.getElementById('historyTable').classList.remove('hidden');
+    }
+  
+    function renderBatchResults(data) {
+      const results = data.results || [];
+      const errors = data.error_details || [];
+  
+      const html = `
+        <!-- Resumo do Lote -->
+        <div class="card rounded-xl p-6 mb-6">
+          <h3 class="text-xl font-bold text-white mb-4">
+            <i class="fas fa-chart-pie mr-2 text-orange-400"></i>
+            Resumo da Captura em Lote
+          </h3>
+          
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            <div class="metric-card rounded-lg p-4 text-center">
+              <div class="text-2xl font-bold text-blue-400 mb-2">${data.total_requested || 0}</div>
+              <p class="text-gray-400 text-sm">Total Solicitado</p>
+            </div>
+            <div class="metric-card rounded-lg p-4 text-center">
+              <div class="text-2xl font-bold text-green-400 mb-2">${data.successful || 0}</div>
+              <p class="text-gray-400 text-sm">Sucessos</p>
+            </div>
+            <div class="metric-card rounded-lg p-4 text-center">
+              <div class="text-2xl font-bold text-red-400 mb-2">${data.errors || 0}</div>
+              <p class="text-gray-400 text-sm">Erros</p>
+            </div>
+            <div class="metric-card rounded-lg p-4 text-center">
+              <div class="text-2xl font-bold text-accent mb-2">
+                ${data.total_requested > 0 ? ((data.successful / data.total_requested) * 100).toFixed(0) : 0}%
+              </div>
+              <p class="text-gray-400 text-sm">Taxa Sucesso</p>
+            </div>
+          </div>
+        </div>
+  
+        <!-- Resultados Individuais -->
+        ${results.length > 0 ? `
+        <div class="card rounded-xl p-6 mb-6">
+          <h3 class="text-xl font-bold text-white mb-4">
+            <i class="fas fa-check-circle mr-2 text-green-400"></i>
+            Capturas Bem-sucedidas
+          </h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            ${results.map(result => `
+              <div class="metric-card rounded-lg p-4">
+                <div class="flex justify-between items-start mb-3">
+                  <h4 class="text-white font-bold">${result.ticker}</h4>
+                  <span class="text-xs text-green-400 bg-green-400/10 px-2 py-1 rounded">
+                    ✓ Sucesso
+                  </span>
+                </div>
+                <div class="space-y-2 text-sm">
+                  <div class="flex justify-between">
+                    <span class="text-gray-400">Opções:</span>
+                    <span class="text-white">${result.options_processed || 0}</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-gray-400">Snapshot ID:</span>
+                    <span class="text-blue-400">${result.snapshot_id || 'N/A'}</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-gray-400">C/P Ratio:</span>
+                    <span class="text-white">${result.metrics ? result.metrics.call_put_ratio?.toFixed(2) : 'N/A'}</span>
+                  </div>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+        ` : ''}
+  
+        <!-- Erros -->
+        ${errors.length > 0 ? `
+        <div class="card rounded-xl p-6">
+          <h3 class="text-xl font-bold text-white mb-4">
+            <i class="fas fa-exclamation-circle mr-2 text-red-400"></i>
+            Erros Encontrados
+          </h3>
+          <div class="space-y-3">
+            ${errors.map(error => `
+              <div class="bg-red-500/10 border border-red-500/20 rounded-lg p-4">
+                <div class="flex justify-between items-start">
+                  <div>
+                    <h4 class="text-white font-medium">${error.ticker}</h4>
+                    <p class="text-red-300 text-sm mt-1">${error.error}</p>
+                  </div>
+                  <span class="text-xs text-red-400 bg-red-400/10 px-2 py-1 rounded">
+                    ✗ Erro
+                  </span>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+        ` : ''}
+      `;
+  
+      document.getElementById('results-batch').innerHTML = html;
+    }
+  
+    // ===== UTILITÁRIOS =====
+    
+    function getSentimentClass(sentiment) {
+      if (!sentiment) return 'sentiment-neutral';
+      
+      const s = sentiment.toLowerCase();
+      if (s.includes('extremely') && s.includes('bullish')) return 'sentiment-extremely-bullish';
+      if (s.includes('bullish')) return 'sentiment-bullish';
+      if (s.includes('extremely') && s.includes('bearish')) return 'sentiment-extremely-bearish';
+      if (s.includes('bearish')) return 'sentiment-bearish';
+      return 'sentiment-neutral';
+    }
+  
+    function formatNumber(num) {
+      if (num >= 1000000) {
+        return (num / 1000000).toFixed(1) + 'M';
+      }
+      if (num >= 1000) {
+        return (num / 1000).toFixed(1) + 'K';
+      }
+      return num.toString();
+  }
+
+  function formatLargeNumber(num) {
+    if (Math.abs(num) >= 1000000000) {
+      return (num / 1000000000).toFixed(2) + 'B';
+    }
+    if (Math.abs(num) >= 1000000) {
+      return (num / 1000000).toFixed(2) + 'M';
+    }
+    if (Math.abs(num) >= 1000) {
+      return (num / 1000).toFixed(2) + 'K';
+    }
+    return num.toFixed(2);
+  }
+
+  function getFlowPercentage(flow, total) {
+    if (total <= 0) return 0;
+    return Math.min(100, Math.max(0, (flow / total) * 100));
+  }
+
+  // ===== EVENTOS DE TECLADO =====
+  
+  document.getElementById('ticker').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+      captureCurrentFlow();
+    }
+  });
+
+  document.getElementById('analysisTicker').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+      analyzeFlow();
+    }
+  });
+
+  document.getElementById('historyTicker').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+      getFlowHistory();
+    }
+  });
+
+  // ===== VERIFICAÇÃO DE STATUS =====
+  
+  async function checkApiStatus() {
+    try {
+      const response = await fetch('/flow/v2/health');
+      const statusEl = document.getElementById('apiStatus');
+      
+      if (statusEl) {
+        if (response.ok) {
+          const data = await response.json();
+          const isHealthy = data.status === 'healthy';
+          
+          statusEl.querySelector('i').className = `fas fa-chart-line ${isHealthy ? 'text-green-500' : 'text-yellow-500'} text-xs`;
+          statusEl.querySelector('.animate-pulse').className = `absolute -top-1 -right-1 w-2 h-2 ${isHealthy ? 'bg-green-500' : 'bg-yellow-500'} rounded-full animate-pulse`;
+        } else {
+          statusEl.querySelector('i').className = 'fas fa-chart-line text-red-500 text-xs';
+          statusEl.querySelector('.animate-pulse').className = 'absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse';
+        }
+      }
+    } catch (error) {
+      const statusEl = document.getElementById('apiStatus');
+      if (statusEl) {
+        statusEl.querySelector('i').className = 'fas fa-chart-line text-red-500 text-xs';
+        statusEl.querySelector('.animate-pulse').className = 'absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse';
+      }
+    }
+  }
+
+  // ===== STATS DASHBOARD (FUNÇÃO EXTRA) =====
+  
+  async function loadSystemStats() {
+    try {
+      const response = await fetch('/flow/v2/stats', {
+        headers: {
+          'Authorization': `Bearer ${userToken}`
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log('System Stats:', data);
+        
+        // Você pode usar esses dados para criar um dashboard
+        // Por exemplo, mostrar top tickers, atividade recente, etc.
+        
+      }
+    } catch (error) {
+      console.error('Erro ao carregar stats:', error);
+    }
+  }
+
+  // ===== AUTO-COMPLETE TICKER (FUNÇÃO EXTRA) =====
+  
+  function setupTickerAutocomplete() {
+    const commonTickers = [
+      'PETR4', 'VALE3', 'ITUB4', 'BBDC4', 'ABEV3', 'MGLU3', 'WEGE3', 
+      'RENT3', 'LREN3', 'JBSS3', 'B3SA3', 'HAPV3', 'RAIL3', 'USIM5',
+      'CSNA3', 'GOAU4', 'GGBR4', 'SUZB3', 'EMBR3', 'AZUL4'
+    ];
+
+    const tickerInputs = ['ticker', 'analysisTicker', 'historyTicker'];
+    
+    tickerInputs.forEach(inputId => {
+      const input = document.getElementById(inputId);
+      if (input) {
+        input.addEventListener('input', function() {
+          const value = this.value.toUpperCase();
+          if (value.length >= 2) {
+            // Filtrar tickers que começam com o valor digitado
+            const matches = commonTickers.filter(t => t.startsWith(value));
+            // Aqui você pode implementar um dropdown com sugestões
+          }
+        });
+      }
+    });
+  }
+
+  // ===== INICIALIZAÇÃO =====
+  
+  document.addEventListener('DOMContentLoaded', function() {
+    console.log('🚀 Flow Tracker V2 carregado!');
+    
+    // Configurar animações dos cards
+    const cards = document.querySelectorAll('.card');
+    cards.forEach((card, index) => {
+      card.style.animationDelay = `${index * 0.1}s`;
+    });
+
+    // Verificar autenticação
+    if (!userToken) {
+      showToast('Sessão expirada. Redirecionando...', 'warning');
+      setTimeout(() => {
+        window.location.href = '/login.html';
+      }, 2000);
+    }
+
+    // Configurar auto-complete
+    setupTickerAutocomplete();
+    
+    // Carregar stats do sistema (opcional)
+    loadSystemStats();
+
+    // Verificar status inicial
+    checkApiStatus();
+  });
+
+  // ===== INTERVALOS DE VERIFICAÇÃO =====
+  
+  // Verificar status da API a cada 30 segundos
+  setInterval(checkApiStatus, 30000);
+
+  // ===== FUNÇÕES DE NAVEGAÇÃO =====
+  
+  function goToOtherTools() {
+    // Links rápidos para outras ferramentas
+    const tools = {
+      'gamma': '/gamma-levels.html',
+      'bands': '/regimes-pro.html', 
+      'iv': '/vi-pro.html',
+      'scanner': '/rank-volatilidade.html'
+    };
+    
+    // Implementar menu rápido se necessário
+  }
+
+  // ===== FUNÇÃO DE EXPORTAÇÃO (FUTURA) =====
+  
+  async function exportFlowData(ticker, format = 'json') {
+    // Função para exportar dados de flow
+    // Pode ser implementada no futuro para exports CSV, Excel, etc.
+    try {
+      const response = await fetch(`/flow/v2/current/${ticker}?include_details=true`, {
+        headers: { 'Authorization': `Bearer ${userToken}` }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        
+        if (format === 'json') {
+          const blob = new Blob([JSON.stringify(data, null, 2)], 
+                                { type: 'application/json' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `flow_${ticker}_${new Date().toISOString().split('T')[0]}.json`;
+          a.click();
+          URL.revokeObjectURL(url);
+          
+          showToast('Dados exportados com sucesso!', 'success');
+        }
+      }
+    } catch (error) {
+      showError('Erro ao exportar dados: ' + error.message);
+    }
+  }
+
+  // ===== MOSTRAR TOAST DE BOAS-VINDAS =====
+  
+  setTimeout(() => {
+    showToast('Flow Tracker V2 carregado! Sistema pronto para captura em tempo real.', 'success');
+  }, 1000);
+
+  // ===== DEBUGGING (APENAS DESENVOLVIMENTO) =====
+  
+  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+    window.flowDebug = {
+      captureFlow: captureCurrentFlow,
+      getCurrentFlow: getCurrentFlow,
+      analyzeFlow: analyzeFlow,
+      getHistory: getFlowHistory,
+      batchCapture: batchCaptureFlow,
+      checkStatus: checkApiStatus,
+      exportData: exportFlowData
+    };
+    
+    console.log('🔧 Funções de debug disponíveis em window.flowDebug');
+  }
+
+</script>
+
+</body>
+</html>

@@ -26,6 +26,7 @@ from pro.gamma_routes import get_gamma_blueprint
 from premium.swing_trade_ml_routes import get_swing_trade_ml_blueprint
 from premium.beta_regression_routes import beta_regression_bp
 from premium.atsmom_routes import register_atsmom_routes
+from premium.flow_routes_v2 import get_flow_v2_blueprint
 
 # Trial
 from pag.trial_routes import get_trial_blueprint
@@ -200,6 +201,16 @@ try:
     print("✅ Regimes blueprint registrado!")
 except Exception as e:
     print(f"❌ Erro ao registrar regimes blueprint: {e}")
+
+
+
+
+try:
+    flow_v2_bp = get_flow_v2_blueprint()
+    app.register_blueprint(flow_v2_bp)
+    print("✅ Flow V2 blueprint registrado!")
+except Exception as e:
+    print(f"❌ Erro ao registrar Flow V2 blueprint: {e}")
 
 # ===== REGISTRAR BLUEPRINTS CONDICIONAIS =====
 
@@ -401,7 +412,10 @@ def beta_regression_page():
 def atsmom_page():
     return send_from_directory('../frontend', 'atsmom.html')
 
-
+@app.route('/flow')
+@app.route('/flow.html')
+def flow_page():
+    return send_from_directory('../frontend', 'flow.html')
 
 # ===== ROTAS API =====
 

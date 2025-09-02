@@ -857,6 +857,273 @@ def get_portfolio_assets(portfolio_name):
         print(f"❌ Erro em get_portfolio_assets: {e}")
         return []
   
+def create_flow_tracker_tables():
+    """🔥 Criar tabelas do Flow Tracker integradas ao sistema"""
+    try:
+        conn = get_db_connection()
+        if not conn:
+            return False
+            
+        cursor = conn.cursor()
+        
+        print("📊 Criando tabelas do Flow Tracker...")
+        
+        # 1. Tabela principal de snapshots de flow
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS flow_snapshots (
+                id SERIAL PRIMARY KEY,
+                ticker VARCHAR(10) NOT NULL,
+                date DATE NOT NULL,
+                timestamp TIMESTAMP NOT NULL,
+                call_flow DECIMAL(15,2) DEFAULT 0,
+                put_flow DECIMAL(15,2) DEFAULT 0,
+                net_flow DECIMAL(15,2) DEFAULT 0,
+                call_put_ratio DECIMAL(8,4) DEFAULT 0,
+                total_volume INTEGER DEFAULT 0,
+                call_volume INTEGER DEFAULT 0,
+                put_volume INTEGER DEFAULT 0,
+                total_options INTEGER DEFAULT 0,
+                call_options INTEGER DEFAULT 0,
+                put_options INTEGER DEFAULT 0,
+                avg_iv DECIMAL(6,4) DEFAULT 0,
+                sentiment VARCHAR(30) DEFAULT 'NEUTRAL',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                CONSTRAINT unique_ticker_date UNIQUE(ticker, date)
+            );
+        """)
+        
+        # 2. Tabela de detalhes das opções
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS option_details (
+                id SERIAL PRIMARY KEY,
+                snapshot_id INTEGER REFERENCES flow_snapshots(id) ON DELETE CASCADE,
+                option_symbol VARCHAR(30) NOT NULL,
+                strike DECIMAL(10,2) NOT NULL,
+                category VARCHAR(4) NOT NULL CHECK (category IN ('CALL', 'PUT')),
+                due_date DATE NOT NULL,
+                days_to_maturity INTEGER NOT NULL,
+                close_price DECIMAL(8,4) NOT NULL,
+                volume INTEGER DEFAULT 0,
+                bid DECIMAL(8,4) DEFAULT 0,
+                ask DECIMAL(8,4) DEFAULT 0,
+                bid_volume INTEGER DEFAULT 0,
+                ask_volume INTEGER DEFAULT 0,
+                calculated_iv DECIMAL(6,4) DEFAULT 0,
+                bs_theoretical DECIMAL(8,4) DEFAULT 0,
+                moneyness VARCHAR(10) DEFAULT 'OTM' CHECK (moneyness IN ('ITM', 'ATM', 'OTM')),
+                weight DECIMAL(15,4) DEFAULT 0,
+                spot_price DECIMAL(10,2) NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        """)
+        
+        # 3. Tabela de configurações do Flow Tracker
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS flow_tracker_settings (
+                id SERIAL PRIMARY KEY,
+                user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+                watchlist TEXT[], -- Array de tickers favoritos
+                alert_threshold DECIMAL(6,4) DEFAULT 2.0, -- Threshold para alertas
+                auto_capture BOOLEAN DEFAULT false,
+                capture_interval INTEGER DEFAULT 300, -- segundos
+                preferred_tickers TEXT[] DEFAULT ARRAY['PETR4', 'VALE3', 'ITUB4'],
+                notifications_enabled BOOLEAN DEFAULT true,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(user_id)
+            );
+        """)
+        
+        # 4. Tabela de alertas de flow
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS flow_alerts (
+                id SERIAL PRIMARY KEY,
+                user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+                ticker VARCHAR(10) NOT NULL,
+                alert_type VARCHAR(20) NOT NULL, -- 'HIGH_CP_RATIO', 'UNUSUAL_FLOW', etc
+                threshold_value DECIMAL(8,4),
+                current_value DECIMAL(8,4),
+                message TEXT,
+                is_read BOOLEAN DEFAULT false,
+                snapshot_id INTEGER REFERENCES flow_snapshots(id),
+                triggered_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        """)
+        
+        # 5. Índices para performance otimizada
+        flow_indexes = [
+            "CREATE INDEX IF NOT EXISTS idx_flow_ticker_date ON flow_snapshots(ticker, date);",
+            "CREATE INDEX IF NOT EXISTS idx_flow_timestamp ON flow_snapshots(timestamp);",
+            "CREATE INDEX IF NOT EXISTS idx_flow_ticker ON flow_snapshots(ticker);",
+            "CREATE INDEX IF NOT EXISTS idx_flow_sentiment ON flow_snapshots(sentiment);",
+            
+            "CREATE INDEX IF NOT EXISTS idx_option_details_snapshot ON option_details(snapshot_id);",
+            "CREATE INDEX IF NOT EXISTS idx_option_symbol ON option_details(option_symbol);",
+            "CREATE INDEX IF NOT EXISTS idx_option_category ON option_details(category);",
+            "CREATE INDEX IF NOT EXISTS idx_option_strike ON option_details(strike);",
+            "CREATE INDEX IF NOT EXISTS idx_option_due_date ON option_details(due_date);",
+            "CREATE INDEX IF NOT EXISTS idx_option_moneyness ON option_details(moneyness);",
+            
+            "CREATE INDEX IF NOT EXISTS idx_flow_settings_user ON flow_tracker_settings(user_id);",
+            "CREATE INDEX IF NOT EXISTS idx_flow_alerts_user ON flow_alerts(user_id);",
+            "CREATE INDEX IF NOT EXISTS idx_flow_alerts_ticker ON flow_alerts(ticker);",
+            "CREATE INDEX IF NOT EXISTS idx_flow_alerts_read ON flow_alerts(is_read);"
+        ]
+        
+        print("   🔍 Criando índices de performance...")
+        for index in flow_indexes:
+            cursor.execute(index)
+        
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        print("✅ Tabelas do Flow Tracker criadas com sucesso!")
+        return True
+        
+    except Exception as e:
+        print(f"❌ Erro ao criar tabelas do Flow Tracker: {e}")
+        return False
+
+def get_flow_snapshots(ticker=None, limit=50):
+    """Buscar snapshots de flow com filtros"""
+    try:
+        conn = get_db_connection()
+        if not conn:
+            return []
+            
+        cursor = conn.cursor()
+        
+        if ticker:
+            cursor.execute("""
+                SELECT id, ticker, date, timestamp, call_flow, put_flow, net_flow,
+                       call_put_ratio, total_volume, sentiment, avg_iv
+                FROM flow_snapshots 
+                WHERE ticker = %s
+                ORDER BY timestamp DESC 
+                LIMIT %s
+            """, (ticker.upper(), limit))
+        else:
+            cursor.execute("""
+                SELECT id, ticker, date, timestamp, call_flow, put_flow, net_flow,
+                       call_put_ratio, total_volume, sentiment, avg_iv
+                FROM flow_snapshots 
+                ORDER BY timestamp DESC 
+                LIMIT %s
+            """, (limit,))
+        
+        snapshots = []
+        for row in cursor.fetchall():
+            snapshots.append({
+                'id': row[0],
+                'ticker': row[1],
+                'date': row[2].isoformat() if row[2] else None,
+                'timestamp': row[3].isoformat() if row[3] else None,
+                'call_flow': float(row[4]) if row[4] else 0,
+                'put_flow': float(row[5]) if row[5] else 0,
+                'net_flow': float(row[6]) if row[6] else 0,
+                'call_put_ratio': float(row[7]) if row[7] else 0,
+                'total_volume': row[8] or 0,
+                'sentiment': row[9] or 'NEUTRAL',
+                'avg_iv': float(row[10]) if row[10] else 0
+            })
+        
+        cursor.close()
+        conn.close()
+        
+        return snapshots
+        
+    except Exception as e:
+        print(f"❌ Erro em get_flow_snapshots: {e}")
+        return []
+
+def get_user_flow_settings(user_id):
+    """Buscar configurações do Flow Tracker do usuário"""
+    try:
+        conn = get_db_connection()
+        if not conn:
+            return None
+            
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            SELECT watchlist, alert_threshold, auto_capture, capture_interval,
+                   preferred_tickers, notifications_enabled
+            FROM flow_tracker_settings 
+            WHERE user_id = %s
+        """, (user_id,))
+        
+        row = cursor.fetchone()
+        cursor.close()
+        conn.close()
+        
+        if row:
+            return {
+                'watchlist': row[0] or [],
+                'alert_threshold': float(row[1]) if row[1] else 2.0,
+                'auto_capture': row[2] or False,
+                'capture_interval': row[3] or 300,
+                'preferred_tickers': row[4] or ['PETR4', 'VALE3', 'ITUB4'],
+                'notifications_enabled': row[5] or True
+            }
+        else:
+            # Criar configuração padrão
+            cursor = conn.cursor()
+            cursor.execute("""
+                INSERT INTO flow_tracker_settings (user_id)
+                VALUES (%s)
+                RETURNING watchlist, alert_threshold, auto_capture, capture_interval,
+                         preferred_tickers, notifications_enabled
+            """, (user_id,))
+            
+            row = cursor.fetchone()
+            conn.commit()
+            cursor.close()
+            conn.close()
+            
+            return {
+                'watchlist': [],
+                'alert_threshold': 2.0,
+                'auto_capture': False,
+                'capture_interval': 300,
+                'preferred_tickers': ['PETR4', 'VALE3', 'ITUB4'],
+                'notifications_enabled': True
+            }
+        
+    except Exception as e:
+        print(f"❌ Erro em get_user_flow_settings: {e}")
+        return None
+
+def create_flow_alert(user_id, ticker, alert_type, threshold_value, current_value, message, snapshot_id=None):
+    """Criar um alerta de flow"""
+    try:
+        conn = get_db_connection()
+        if not conn:
+            return False
+            
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            INSERT INTO flow_alerts (user_id, ticker, alert_type, threshold_value, 
+                                   current_value, message, snapshot_id)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
+            RETURNING id
+        """, (user_id, ticker.upper(), alert_type, threshold_value, current_value, message, snapshot_id))
+        
+        alert_id = cursor.fetchone()[0]
+        
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        return alert_id
+        
+    except Exception as e:
+        print(f"❌ Erro ao criar alerta: {e}")
+        return False 
+  
+  
+  
 def setup_enhanced_database():
     """🔥 Configurar banco SINCRONIZADO com MercadoPago Service"""
     
@@ -874,7 +1141,11 @@ def setup_enhanced_database():
         create_portfolio_tables()  
         create_email_confirmations_table() 
         create_opcoes_recommendations_table()
+        create_flow_tracker_tables()
         create_initial_admin()
+        
+        
+        
         
         return True
     else:
