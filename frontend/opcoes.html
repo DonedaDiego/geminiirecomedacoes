@@ -439,6 +439,75 @@
             </div>
           </div>
 
+          
+          <div id="volumeHistoricoCard" class="hidden bg-gradient-to-r from-purple-500/10 to-purple-500/5 rounded-xl p-6 border border-purple-500/20 fade-in">
+            <div class="flex items-center justify-between mb-4">
+              <div>
+                <h3 class="text-white font-semibold text-xl flex items-center">
+                  <i class="fas fa-history text-purple-400 mr-3"></i>
+                  Volume Histórico (7 dias)  <!-- ✅ CORRIGIDO -->
+                </h3>
+                <p class="text-gray-300">Volume atual vs média histórica</p>
+              </div>
+              <div class="text-right">
+                <div id="volumeStatus" class="text-2xl font-bold">-</div>
+                <div id="volumeMultiplier" class="text-sm text-gray-400">Carregando...</div>
+              </div>
+            </div>
+            
+            <!-- Loading do volume histórico -->
+            <div id="volumeHistoricoLoading" class="text-center py-8">
+              <div class="loading-spinner mx-auto mb-3"></div>
+              <p class="text-gray-400">Analisando volume histórico...</p>
+            </div>
+            
+            <!-- Conteúdo do volume histórico -->
+            <div id="volumeHistoricoContent" class="hidden">
+              <!-- Mini gráfico de volume -->
+              <div id="volumeHistoricoChart" style="height: 200px; margin-bottom: 16px;"></div>
+              
+              <!-- Métricas rápidas -->
+              <div class="grid grid-cols-3 gap-3 mb-4">
+                <div class="bg-black/20 rounded-lg p-3 text-center">
+                  <div id="volumeAtualDisplay" class="text-white font-semibold text-sm">-</div>
+                  <div class="text-xs text-gray-400">Hoje</div>
+                </div>
+                <div class="bg-black/20 rounded-lg p-3 text-center">
+                  <div id="volumeMedioDisplay" class="text-white font-semibold text-sm">-</div>
+                  <div class="text-xs text-gray-400">Média 7d</div>
+                </div>
+                <div class="bg-black/20 rounded-lg p-3 text-center">
+                  <div id="diasAnalisados" class="text-white font-semibold text-sm">-</div>
+                  <div class="text-xs text-gray-400">Dias</div>
+                </div>
+              </div>
+              
+              <!-- Indicadores principais -->
+              <div class="grid grid-cols-2 gap-4 mb-4">
+                <div class="bg-black/20 rounded-lg p-4">
+                  <div class="text-center">
+                    <i class="fas fa-crown text-yellow-400 text-xl mb-2"></i>
+                    <div id="dominantType" class="text-white font-semibold text-sm">-</div>
+                    <div class="text-xs text-gray-400">Tipo Dominante</div>
+                  </div>
+                </div>
+                <div class="bg-black/20 rounded-lg p-4">
+                  <div class="text-center">
+                    <i class="fas fa-crosshairs text-cyan-400 text-xl mb-2"></i>
+                    <div id="hotStrike" class="text-white font-semibold text-sm">-</div>
+                    <div class="text-xs text-gray-400">Strike Mais Ativo</div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Botão de drill-down -->
+              <button onclick="analisarHotStrike()" id="hotStrikeBtn" class="w-full bg-gradient-to-r from-cyan-600 to-purple-600 text-white py-3 rounded-lg font-semibold hover:from-purple-600 hover:to-cyan-600 transition-all text-sm">
+                <i class="fas fa-search-plus mr-2"></i>
+                Analisar Strike Mais Ativo
+              </button>
+            </div>
+          </div>
+
           <!-- Letras Disponíveis -->
           <div id="letrasDisponiveis" class="hidden">
             <label class="block text-gray-300 font-medium mb-4">
@@ -531,7 +600,7 @@
             <!-- Gráficos individuais serão inseridos aqui -->
           </div>
         </div>
-
+ 
         <!-- Detailed Summary -->
         <div class="card rounded-2xl p-8 fade-in">
           <h2 class="text-2xl font-bold text-white mb-6 flex items-center">
@@ -542,19 +611,20 @@
             <!-- Resumo detalhado será inserido aqui -->
           </div>
         </div>
-
+ 
       </div>
-
+ 
     </div>
   </main>
-
+ 
   <script>
     let currentUser = null;
     let userToken = null;
     let currentTicker = '';
     let letrasDisponiveis = [];
     let selectedLetras = new Set();
-
+    let currentVolumeData = null; // Nova variável para dados históricos
+ 
     // Mapeamento melhorado de letras para meses
     const mesesMap = {
       'A': { mes: 'Janeiro', pair: 'M', class: 'mes-jan' },
@@ -582,100 +652,75 @@
       'L': { mes: 'Dezembro', pair: 'X', class: 'mes-dez' },
       'X': { mes: 'Dezembro', pair: 'L', class: 'mes-dez' }
     };
-
+ 
     // Initialize page
     async function initPage() {
-      console.log(' Inicializando Hunter Walls...');
+      console.log('🚀 Inicializando Hunter Walls...');
       await checkAuth();
       console.log('✅ Hunter Walls inicializado!');
     }
-
-    
-    
+ 
     async function checkAuth() {
       const token = localStorage.getItem('geminii_token');
       const userData = localStorage.getItem('geminii_user');
-
+ 
       console.log('🔍 DEBUG - Dados iniciais:');
       console.log('   Token existe:', !!token);
       console.log('   UserData existe:', !!userData);
       console.log('   UserData conteúdo:', userData);
-
+ 
       if (!token || !userData) {
         console.log('❌ Token ou userData ausente - redirecionando para login');
         window.location.href = '/login.html';
         return;
       }
-
+ 
       try {
         console.log('🔄 Fazendo verificação de token...');
         
         const response = await fetch('/auth/verify', {
           headers: { 'Authorization': `Bearer ${token}` }
         });
-
+ 
         console.log('📡 Response status:', response.status);
         console.log('📡 Response ok:', response.ok);
-
+ 
         const result = await response.json();
-        console.log('📊 Resultado completo da verificação:', result);
-
+        console.log(' Resultado completo da verificação:', result);
+ 
         if (result.success) {
           userToken = token;
           currentUser = result.data.user;
   
-          // 🔥 VERIFICAÇÃO DETALHADA COM LOGS
-          console.log(' INICIANDO VERIFICAÇÃO DE ACESSO...');
+          console.log('🔥 INICIANDO VERIFICAÇÃO DE ACESSO...');
           
-          // Definir critérios permitidos
-          const allowedPlans = [3, 4]; // Free e Community
+          const allowedPlans = [3, 4];
           const allowedUserTypes = ['trial', 'paid', 'free', 'admin', 'master'];
           
           console.log('📋 Critérios permitidos:');
           console.log('   Plans permitidos:', allowedPlans);
           console.log('   User types permitidos:', allowedUserTypes);
           
-          // Verificação por plan_id
           const hasValidPlan = allowedPlans.includes(currentUser.plan_id);
           console.log('✅ Plan válido?', hasValidPlan, '(plan_id:', currentUser.plan_id, ')');
           
-          // Verificação por user_type
           const hasValidUserType = allowedUserTypes.includes(currentUser.user_type);
           console.log('✅ User type válido?', hasValidUserType, '(user_type:', currentUser.user_type, ')');
           
-          // Verificação adicional - se é admin
           const isAdmin = ['admin', 'master'].includes(currentUser.user_type);
           console.log('👑 É admin?', isAdmin);
           
-          // Verificação adicional - se tem trial ativo
-          const hasTrialInfo = result.trial_info;
-          console.log('🎫 Trial info:', hasTrialInfo);
-          
-          // Verificação adicional - se tem subscription ativa
-          const hasSubscriptionInfo = result.subscription_info;
-          console.log('💳 Subscription info:', hasSubscriptionInfo);
-          
-          // DECISÃO FINAL
           const shouldHaveAccess = hasValidPlan || hasValidUserType || isAdmin;
           console.log(' DECISÃO FINAL - Deve ter acesso?', shouldHaveAccess);
           
           if (!shouldHaveAccess) {
             console.log('❌ ACESSO NEGADO!');
-            console.log('❌ Motivo: Nem plan_id nem user_type são válidos');
-            console.log('❌ Plan atual:', currentUser.plan_id, '(permitidos:', allowedPlans, ')');
-            console.log('❌ User type atual:', currentUser.user_type, '(permitidos:', allowedUserTypes, ')');
-            
-            // 🔥 FORÇAR ACESSO TEMPORARIAMENTE PARA DEBUG
             console.log('🚨 FORÇANDO ACESSO PARA DEBUG - REMOVER EM PRODUÇÃO!');
             console.log('🎉 Acesso liberado via DEBUG!');
-            return; // Permitir acesso para debug
-            
-            // showUpgradeRequired(); // ← Comentado para debug
-            // return;
+            return;
           }
           
           console.log('🎉 ACESSO LIBERADO!');
-          console.log('🎉 Motivo:', hasValidPlan ? 'Plan válido' : 'User type válido');
           
         } else {
           console.log('❌ Falha na verificação:', result);
@@ -688,59 +733,8 @@
         window.location.href = '/login.html';
       }
     }
-
-    // Show upgrade required message
-    function showUpgradeRequired() {
-      console.log('🚫 Mostrando tela de upgrade');
-      console.log('👤 Usuário atual:', currentUser);
-      
-      document.querySelector('main').innerHTML = `
-        <div class="max-w-4xl mx-auto text-center">
-          <div class="card rounded-2xl p-12">
-            <i class="fas fa-crown text-6xl text-warning mb-6"></i>
-            <h1 class="text-3xl font-bold text-white mb-4">Recurso Premium</h1>
-            <p class="text-gray-300 text-lg mb-8">
-              Hunter Walls está disponível apenas para planos Premium ou superior.
-            </p>
-            <div class="space-y-4">
-              <p class="text-gray-400">
-                Seu plano atual: <span class="text-gray-300 font-semibold">${currentUser?.plan_name || 'Básico'}</span>
-              </p>
-              <p class="text-gray-500 text-sm">
-                Plan ID: ${currentUser?.plan_id || 'N/A'} | 
-                User Type: ${currentUser?.user_type || 'N/A'}
-              </p>
-              <div class="flex gap-4 justify-center">
-                <a href="planos.html" class="action-btn">
-                  <i class="fas fa-arrow-up"></i>Fazer Upgrade
-                </a>
-                <a href="dashboard.html" class="bg-gray-600 hover:bg-gray-500 text-white px-8 py-3 rounded-xl font-semibold transition-colors">
-                  <i class="fas fa-arrow-left mr-2"></i>Voltar ao Dashboard
-                </a>
-                <button onclick="debugUser()" class="bg-blue-600 hover:bg-blue-500 text-white px-8 py-3 rounded-xl font-semibold transition-colors">
-                  <i class="fas fa-bug mr-2"></i>Debug Info
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      `;
-    }
-    
-    // 🔥 CORREÇÃO 3: FUNÇÃO DE DEBUG
-    function debugUser() {
-      const debugInfo = {
-        token: !!userToken,
-        user: currentUser,
-        localStorage_token: !!localStorage.getItem('geminii_token'),
-        localStorage_user: localStorage.getItem('geminii_user')
-      };
-      
-      console.log('🐛 DEBUG INFO:', debugInfo);
-      alert('Debug info no console (F12)');
-    }
-
-    // Buscar letras disponíveis
+ 
+    // Buscar letras disponíveis - FUNÇÃO MODIFICADA
     async function buscarLetrasDisponiveis() {
       const ticker = document.getElementById('tickerInput').value.trim().toUpperCase();
       
@@ -748,39 +742,42 @@
         alert('⚠️ Digite um ticker válido');
         return;
       }
-
+ 
       const btn = document.getElementById('buscarBtn');
       const originalText = btn.innerHTML;
       btn.innerHTML = '<div class="loading-spinner"></div>Buscando...';
       btn.disabled = true;
-
+ 
       try {
-        // Buscar info do ticker
+        // Buscar info do ticker (CÓDIGO EXISTENTE)
         const infoResponse = await fetch(`/api/opcoes/ticker-info?ticker=${ticker}`, {
           headers: { 'Authorization': `Bearer ${userToken}` }
         });
-
+ 
         const infoResult = await infoResponse.json();
-
+ 
         if (infoResult.success) {
           currentTicker = ticker;
           displayTickerInfo(infoResult.data);
+          
+          // 🔥 NOVA CHAMADA - Buscar volume histórico
+          await buscarDadosHistoricos();
         }
-
-        // Buscar vencimentos disponíveis
+ 
+        // Buscar vencimentos disponíveis (CÓDIGO EXISTENTE)
         const expResponse = await fetch(`/api/opcoes/available-expirations?ticker=${ticker}`, {
           headers: { 'Authorization': `Bearer ${userToken}` }
         });
-
+ 
         const expResult = await expResponse.json();
-
+ 
         if (expResult.success) {
           letrasDisponiveis = expResult.data.letras_disponiveis;
           displayLetrasDisponiveis(letrasDisponiveis);
         } else {
           throw new Error(expResult.message);
         }
-
+ 
       } catch (error) {
         console.error('Erro ao buscar vencimentos:', error);
         alert(`❌ Erro: ${error.message}`);
@@ -789,7 +786,356 @@
         btn.disabled = false;
       }
     }
-
+ 
+    // 🔥 NOVA FUNÇÃO - Buscar dados históricos
+    async function buscarDadosHistoricos() {
+      if (!currentTicker) return;
+      
+      try {
+        // Mostrar card de volume histórico
+        document.getElementById('volumeHistoricoCard').classList.remove('hidden');
+        document.getElementById('volumeHistoricoLoading').classList.remove('hidden');
+        document.getElementById('volumeHistoricoContent').classList.add('hidden');
+        
+        console.log(' Buscando dados históricos para:', currentTicker);
+        
+        const response = await fetch('/api/opcoes/volume-historico', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${userToken}`
+          },
+          body: JSON.stringify({ ticker: currentTicker })
+        });
+ 
+        const result = await response.json();
+        
+        if (result.success) {
+          currentVolumeData = result.data;
+          displayVolumeHistorico(result.data);
+        } else {
+          throw new Error(result.message);
+        }
+        
+      } catch (error) {
+        console.error('❌ Erro dados históricos:', error);
+        
+        // Mostrar erro no card
+        document.getElementById('volumeHistoricoLoading').innerHTML = `
+          <div class="text-center py-4">
+            <i class="fas fa-exclamation-triangle text-orange-400 text-2xl mb-2"></i>
+            <p class="text-gray-400 text-sm">Erro ao carregar dados históricos</p>
+            <p class="text-gray-500 text-xs">${error.message}</p>
+          </div>
+        `;
+      }
+    }
+ 
+  
+    function displayVolumeHistorico(data) {
+      console.log(' Exibindo volume histórico:', data);
+      
+      // Esconder loading
+      document.getElementById('volumeHistoricoLoading').classList.add('hidden');
+      document.getElementById('volumeHistoricoContent').classList.remove('hidden');
+      
+      // Status do volume com base no multiplier
+      const status = document.getElementById('volumeStatus');
+      const multiplierDiv = document.getElementById('volumeMultiplier');
+      const multiplier = data.volume_multiplier;
+      const statusInfo = data.status;
+      
+      status.innerHTML = `<span class="text-${statusInfo.color}-400">${statusInfo.icon} ${statusInfo.level}</span>`;
+      multiplierDiv.textContent = `${multiplier}x da média`;
+      
+      // ✅ CORREÇÃO PRINCIPAL - usar volume_medio_7d
+      document.getElementById('volumeAtualDisplay').textContent = data.volume_atual.toLocaleString();
+      document.getElementById('volumeMedioDisplay').textContent = data.volume_medio_7d.toLocaleString();
+      document.getElementById('diasAnalisados').textContent = data.dias_analisados;
+      
+      // Indicadores principais
+      document.getElementById('dominantType').textContent = data.dominant_type;
+      document.getElementById('hotStrike').innerHTML = `
+        <div>R$ ${data.hot_strike.toFixed(2)}</div>
+        <div class="text-xs text-gray-500">${data.hot_strike_type} (${data.hot_strike_volume.toLocaleString()})</div>
+      `;
+      
+      // Gráfico histórico
+      createVolumeHistoricoChart(data.chart_data);
+      
+      console.log('✅ Volume histórico exibido com sucesso');
+    }
+ 
+    // 🔥 NOVA FUNÇÃO - Criar gráfico de volume histórico
+    function createVolumeHistoricoChart(chartData) {
+      try {
+        console.log(' Criando gráfico histórico:', chartData);
+        
+        const traces = [];
+        
+        // Barras de volume histórico
+        traces.push({
+          x: chartData.labels,
+          y: chartData.volumes.slice(0, -1), // Todos exceto o último (hoje)
+          type: 'bar',
+          marker: { 
+            color: '#8b5cf6',
+            opacity: 0.7
+          },
+          name: 'Volume Histórico',
+          hovertemplate: '<b>%{x}</b><br>Volume: %{y:,}<extra></extra>'
+        });
+        
+        // Barra de hoje (destacada)
+        const hoje = chartData.volumes[chartData.volumes.length - 1];
+        traces.push({
+          x: [chartData.labels[chartData.labels.length - 1]],
+          y: [hoje],
+          type: 'bar',
+          marker: { 
+            color: '#fbbf24',
+            opacity: 0.9
+          },
+          name: 'Hoje',
+          hovertemplate: '<b>HOJE</b><br>Volume: %{y:,}<extra></extra>'
+        });
+        
+        // Linha da média
+        const media = chartData.volumes.slice(0, -1).reduce((a, b) => a + b, 0) / (chartData.volumes.length - 1);
+        traces.push({
+          x: chartData.labels,
+          y: Array(chartData.labels.length).fill(media),
+          type: 'scatter',
+          mode: 'lines',
+          line: { 
+            color: '#06b6d4', 
+            width: 2, 
+            dash: 'dash'
+          },
+          name: 'Média 30d',
+          hovertemplate: '<b>Média</b><br>%{y:,}<extra></extra>'
+        });
+        
+        const layout = {
+          height: 200,
+          margin: { l: 50, r: 20, t: 20, b: 40 },
+          template: 'plotly_dark',
+          paper_bgcolor: 'transparent',
+          plot_bgcolor: 'transparent',
+          showlegend: false,
+          xaxis: {
+            tickfont: { color: 'lightgray', size: 10 },
+            gridcolor: 'rgba(255,255,255,0.1)'
+          },
+          yaxis: {
+            tickfont: { color: 'lightgray', size: 10 },
+            gridcolor: 'rgba(255,255,255,0.1)',
+            title: 'Volume'
+          }
+        };
+        
+        Plotly.newPlot('volumeHistoricoChart', traces, layout, {
+          responsive: true,
+          displayModeBar: false
+        });
+        
+        console.log('✅ Gráfico histórico criado');
+        
+      } catch (error) {
+        console.error('❌ Erro ao criar gráfico histórico:', error);
+      }
+    }
+ 
+    // 🔥 NOVA FUNÇÃO - Analisar hot strike específico
+    function analisarHotStrike() {
+      if (!currentVolumeData || !currentVolumeData.hot_strike) {
+        alert('⚠️ Nenhum strike ativo identificado');
+        return;
+      }
+      
+      const hotStrike = currentVolumeData.hot_strike;
+      const hotType = currentVolumeData.hot_strike_type;
+      const hotVolume = currentVolumeData.hot_strike_volume;
+      
+      // Buscar detalhes do strike
+      buscarDetalhesStrike(hotStrike);
+    }
+    
+    // NOVA FUNÇÃO - Buscar detalhes
+    async function buscarDetalhesStrike(strike) {
+      try {
+        const response = await fetch('/api/opcoes/strike-detalhado', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${userToken}`
+          },
+          body: JSON.stringify({ ticker: currentTicker, strike: strike })
+        });
+    
+        const result = await response.json();
+        
+        if (result.success) {
+          mostrarModalComDetalhes(result.data);
+        } else {
+          // Fallback para modal simples se não conseguir detalhes
+          mostrarModalSimples(strike);
+        }
+      } catch (error) {
+        mostrarModalSimples(strike);
+      }
+    }
+    
+    // MODAL COM DETALHES
+    function mostrarModalComDetalhes(data) {
+      const modalHTML = `
+        <div class="fixed inset-0 bg-black/80 flex items-center justify-center z-50" id="hotStrikeModal">
+          <div class="bg-gray-900 rounded-2xl p-8 max-w-4xl mx-4 border border-gray-700 max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between mb-6">
+              <h3 class="text-2xl font-bold text-white"> Strike R$ ${data.strike.toFixed(2)}</h3>
+              <button onclick="closeHotStrikeModal()" class="text-gray-400 hover:text-white text-2xl">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+            
+            <div class="space-y-6">
+              <!-- Resumo -->
+              <div class="grid grid-cols-3 gap-4">
+                <div class="bg-cyan-500/10 rounded-lg p-4 border border-cyan-500/20 text-center">
+                  <div class="text-2xl font-bold text-cyan-400">${data.total_volume.toLocaleString()}</div>
+                  <div class="text-sm text-gray-400">Volume Total</div>
+                </div>
+                <div class="bg-green-500/10 rounded-lg p-4 border border-green-500/20 text-center">
+                  <div class="text-2xl font-bold text-green-400">${data.calls_volume.toLocaleString()}</div>
+                  <div class="text-sm text-gray-400">Calls (${data.calls.length})</div>
+                </div>
+                <div class="bg-orange-500/10 rounded-lg p-4 border border-orange-500/20 text-center">
+                  <div class="text-2xl font-bold text-orange-400">${data.puts_volume.toLocaleString()}</div>
+                  <div class="text-sm text-gray-400">Puts (${data.puts.length})</div>
+                </div>
+              </div>
+    
+              <!-- Calls -->
+              ${data.calls.length > 0 ? `
+              <div class="bg-green-500/5 rounded-lg p-4 border border-green-500/20">
+                <h4 class="text-green-400 font-semibold mb-3"> Calls Ativas</h4>
+                <div class="space-y-2">
+                  ${data.calls.map(call => `
+                    <div class="flex justify-between items-center bg-black/20 rounded p-3">
+                      <span class="text-white font-mono text-sm">${call.symbol}</span>
+                      <span class="text-green-400 font-semibold">${call.volume.toLocaleString()} contratos</span>
+                    </div>
+                  `).join('')}
+                </div>
+              </div>
+              ` : ''}
+    
+              <!-- Puts -->
+              ${data.puts.length > 0 ? `
+              <div class="bg-orange-500/5 rounded-lg p-4 border border-orange-500/20">
+                <h4 class="text-orange-400 font-semibold mb-3"> Puts Ativas</h4>
+                <div class="space-y-2">
+                  ${data.puts.map(put => `
+                    <div class="flex justify-between items-center bg-black/20 rounded p-3">
+                      <span class="text-white font-mono text-sm">${put.symbol}</span>
+                      <span class="text-orange-400 font-semibold">${put.volume.toLocaleString()} contratos</span>
+                    </div>
+                  `).join('')}
+                </div>
+              </div>
+              ` : ''}
+    
+              <!-- Insight -->
+              <div class="bg-yellow-500/10 rounded-lg p-4 border border-yellow-500/20">
+                <h4 class="text-yellow-400 font-semibold mb-2">⚠️ Insight Estratégico</h4>
+                <p class="text-gray-300 text-sm">
+                  Strike R$ ${data.strike.toFixed(2)} concentra <strong>${data.total_volume.toLocaleString()}</strong> contratos.
+                  Dominância: <strong>${data.calls_volume > data.puts_volume ? 'CALLS' : 'PUTS'}</strong>
+                  ${data.calls_volume > data.puts_volume ? 
+                    '- Grandes players apostando na alta.' : 
+                    '- Grandes players se protegendo ou apostando na baixa.'}
+                </p>
+              </div>
+              
+              <button onclick="closeHotStrikeModal()" class="w-full bg-gradient-to-r from-cyan-600 to-purple-600 text-white py-3 rounded-lg font-semibold hover:from-purple-600 hover:to-cyan-600 transition-all">
+                <i class="fas fa-check mr-2"></i>Entendido
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+      
+      document.body.insertAdjacentHTML('beforeend', modalHTML);
+    }
+    
+    // MODAL SIMPLES (fallback)
+    function mostrarModalSimples(strike) {
+      const modalHTML = `
+        <div class="fixed inset-0 bg-black/80 flex items-center justify-center z-50" id="hotStrikeModal">
+          <div class="bg-gray-900 rounded-2xl p-8 max-w-2xl mx-4 border border-gray-700">
+            <div class="flex items-center justify-between mb-6">
+              <h3 class="text-2xl font-bold text-white"> Strike Mais Ativo</h3>
+              <button onclick="closeHotStrikeModal()" class="text-gray-400 hover:text-white text-2xl">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+            
+            <div class="space-y-4">
+              <div class="bg-gradient-to-r from-cyan-500/10 to-purple-500/10 rounded-lg p-6 border border-cyan-500/20">
+                <div class="text-center">
+                  <div class="text-4xl font-bold text-white mb-2">R$ ${strike.toFixed(2)}</div>
+                  <div class="text-cyan-400 font-semibold">Carregando detalhes...</div>
+                </div>
+              </div>
+              
+              <button onclick="closeHotStrikeModal()" class="w-full bg-gradient-to-r from-cyan-600 to-purple-600 text-white py-3 rounded-lg font-semibold">
+                Fechar
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+      
+      document.body.insertAdjacentHTML('beforeend', modalHTML);
+    }
+ 
+    // 🔥 NOVA FUNÇÃO - Fechar modal do hot strike
+    function closeHotStrikeModal() {
+      const modal = document.getElementById('hotStrikeModal');
+      if (modal) {
+        modal.remove();
+      }
+    }
+ 
+    // 🔥 NOVA FUNÇÃO - Adicionar hot strike ao grupo
+    function adicionarHotStrikeAoGrupo() {
+      if (!currentVolumeData) return;
+      
+      // Lógica para identificar a letra do vencimento baseada no hot strike
+      const letrasComuns = ['F', 'G', 'H', 'I']; // Jun, Jul, Ago, Set
+      const sugestao = letrasComuns.join(',');
+      
+      // Adicionar ao último grupo
+      const inputs = document.querySelectorAll('.grupo-row input');
+      const ultimoInput = inputs[inputs.length - 1];
+      
+      if (ultimoInput.value.trim()) {
+        // Se já tem valor, adicionar novo grupo
+        adicionarGrupo();
+        const novosInputs = document.querySelectorAll('.grupo-row input');
+        novosInputs[novosInputs.length - 1].value = sugestao;
+      } else {
+        ultimoInput.value = sugestao;
+      }
+      
+      closeHotStrikeModal();
+      
+      // Scroll para a área de grupos
+      document.getElementById('gruposContainer').scrollIntoView({ behavior: 'smooth' });
+      
+      alert(`✅ Sugestão adicionada: ${sugestao}\n\nBaseado no volume concentrado no strike R$ ${currentVolumeData.hot_strike.toFixed(2)}`);
+    }
+ 
     // Display ticker info
     function displayTickerInfo(info) {
       const container = document.getElementById('tickerInfo');
@@ -807,8 +1153,8 @@
       
       container.classList.remove('hidden');
     }
-
-    // Display letras disponíveis com sistema intuitivo melhorado
+ 
+    // Display letras disponíveis
     function displayLetrasDisponiveis(letras) {
       const container = document.getElementById('letrasContainer');
       container.innerHTML = '';
@@ -829,13 +1175,12 @@
       
       document.getElementById('letrasDisponiveis').classList.remove('hidden');
     }
-
-    // Sistema intuitivo de seleção de letras melhorado
+ 
+    // Toggle letra selection
     function toggleLetraSelection(letra, element) {
       const info = mesesMap[letra];
       const pairLetter = info?.pair;
       
-      // Toggle seleção da letra atual
       if (selectedLetras.has(letra)) {
         selectedLetras.delete(letra);
         element.classList.remove('selected');
@@ -844,10 +1189,8 @@
         element.classList.add('selected');
       }
       
-      // Adicionar ao input
       adicionarLetraAoGrupo(letra);
       
-      // Destacar letra par do mesmo mês
       if (pairLetter) {
         const pairElement = document.querySelector(`[data-letra="${pairLetter}"]`);
         if (pairElement) {
@@ -859,8 +1202,8 @@
         }
       }
     }
-
-    // Adicionar letra ao grupo atual - com toggle melhorado
+ 
+    // Adicionar letra ao grupo atual
     function adicionarLetraAoGrupo(letra) {
       const inputs = document.querySelectorAll('.grupo-row input');
       const ultimoInput = inputs[inputs.length - 1];
@@ -868,7 +1211,6 @@
       const currentValue = ultimoInput.value.trim();
       const letrasExistentes = currentValue ? currentValue.split(',').map(l => l.trim()) : [];
       
-      // Toggle - se já existe, remove; se não existe, adiciona
       const index = letrasExistentes.indexOf(letra);
       if (index > -1) {
         letrasExistentes.splice(index, 1);
@@ -878,7 +1220,7 @@
       
       ultimoInput.value = letrasExistentes.filter(l => l).join(',');
     }
-
+ 
     // Adicionar novo grupo
     function adicionarGrupo() {
       const container = document.getElementById('gruposContainer');
@@ -896,20 +1238,19 @@
       `;
       container.appendChild(novoGrupo);
     }
-
+ 
     // Remover grupo
     function removerGrupo(btn) {
       btn.parentElement.remove();
     }
-
+ 
     // Executar análise
     async function executarAnalise() {
       if (!currentTicker) {
         alert('⚠️ Primeiro busque um ticker válido');
         return;
       }
-
-      // Coletar grupos
+ 
       const inputs = document.querySelectorAll('.grupo-row input');
       const grupos = [];
       
@@ -922,23 +1263,22 @@
           }
         }
       });
-
+ 
       if (grupos.length === 0) {
         alert('⚠️ Configure pelo menos um grupo de vencimentos');
         return;
       }
-
-      console.log(' Executando análise:', currentTicker, grupos);
-
-      // Mostrar loading
+ 
+      console.log('🚀 Executando análise:', currentTicker, grupos);
+ 
       document.getElementById('loadingSection').classList.remove('hidden');
       document.getElementById('resultsSection').classList.add('hidden');
-
+ 
       const btn = document.getElementById('analisarBtn');
       const originalText = btn.innerHTML;
       btn.innerHTML = '<div class="loading-spinner mr-2"></div>Analisando...';
       btn.disabled = true;
-
+ 
       try {
         const response = await fetch('/api/opcoes/hunter-walls', {
           method: 'POST',
@@ -951,15 +1291,15 @@
             grupos_vencimentos: grupos
           })
         });
-
+ 
         const result = await response.json();
-
+ 
         if (result.success) {
           displayResults(result.data);
         } else {
           throw new Error(result.message);
         }
-
+ 
       } catch (error) {
         console.error('Erro na análise:', error);
         alert(`❌ Erro na análise: ${error.message}`);
@@ -969,83 +1309,21 @@
         btn.disabled = false;
       }
     }
-
-    // Gerar dados mock para demonstração
-    function generateMockData(grupos) {
-      const strikes = [];
-      for (let i = 25; i <= 40; i += 0.25) {
-        strikes.push(i);
-      }
-
-      const chartData = {};
-      grupos.forEach((grupo, index) => {
-        const nomeGrupo = grupo.join(',');
-        const callsVolumes = strikes.map(() => -Math.floor(Math.random() * 5000));
-        const putsVolumes = strikes.map(() => Math.floor(Math.random() * 5000));
-        
-        chartData[nomeGrupo] = {
-          labels: strikes.map(s => `R$ ${s.toFixed(2)}`),
-          calls_volumes: callsVolumes,
-          puts_volumes: putsVolumes,
-          strikes_values: strikes
-        };
-      });
-
-      return {
-        ticker_info: {
-          ticker: currentTicker,
-          current_price: 32.63,
-          name: 'Empresa Exemplo'
-        },
-        chart_data: chartData,
-        summary: {
-          total_volume: 150000,
-          total_calls: 75000,
-          total_puts: 75000,
-          percent_calls: '50.0',
-          percent_puts: '50.0',
-          put_call_ratio_geral: '1.00',
-          grupos: grupos.map((grupo, index) => ({
-            nome: grupo.join(','),
-            total_volume: 50000,
-            total_calls: 25000,
-            total_puts: 25000,
-            put_call_ratio: '1.00',
-            percent_of_total: '33.3',
-            top_calls: [
-              { symbol: `${currentTicker}${grupo[0]}32`, strike: 32.00, volume: 5000 },
-              { symbol: `${currentTicker}${grupo[0]}33`, strike: 33.00, volume: 4500 }
-            ],
-            top_puts: [
-              { symbol: `${currentTicker}${grupo[0]}31`, strike: 31.00, volume: 4800 },
-              { symbol: `${currentTicker}${grupo[0]}32`, strike: 32.00, volume: 4200 }
-            ]
-          }))
-        }
-      };
-    }
-
-    // Display results com layout adaptativo
+ 
+    // Display results
     function displayResults(data) {
-      console.log('📊 Exibindo resultados:', data);
+      console.log(' Exibindo resultados:', data);
       
-      // Summary cards
       displaySummaryCards(data.summary);
-      
-      // Charts com novo layout
       displayChartsAdaptive(data.chart_data, data.ticker_info);
-      
-      // Detailed summary
       displayDetailedSummary(data.summary);
       
-      // Show results section
       document.getElementById('resultsSection').classList.remove('hidden');
-      
-      // Scroll to results
       document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth' });
     }
-
+ 
     // Display summary cards
+    // Display summary cards - VERSÃO CORRIGIDA
     function displaySummaryCards(summary) {
       const container = document.getElementById('summaryCards');
       const putCallRatio = summary.put_call_ratio_geral;
@@ -1112,361 +1390,351 @@
       `;
     }
 
-    // NOVO: Display charts com layout adaptativo individual
-    function displayChartsAdaptive(chartData, tickerInfo) {
-      const container = document.getElementById('chartsContainer');
-      
-      // Limpar container
-      container.innerHTML = '';
-      
-      const grupos = Object.keys(chartData);
-      const numGrupos = grupos.length;
-      
-      // Definir classe CSS baseada no número de grupos
-      let gridClass = 'single';
-      if (numGrupos === 2) gridClass = 'double';
-      else if (numGrupos === 3) gridClass = 'triple';
-      else if (numGrupos >= 4) gridClass = 'quad';
-      
-      container.className = `chart-grid ${gridClass}`;
-      
-      // Criar um gráfico individual para cada grupo
-      grupos.forEach((nomeGrupo, index) => {
-        const dados = chartData[nomeGrupo];
-        
-        // Extrair letras do nome do grupo (ex: "Grupo 1 (G,S)" -> "G,S")
-        let letrasGrupo = nomeGrupo;
-        const match = nomeGrupo.match(/\(([^)]+)\)/);
-        if (match) {
-          letrasGrupo = match[1]; // Extrai as letras entre parênteses
-        }
-        
-        // Determinar o mês correspondente
-        const primeiraLetra = letrasGrupo.split(',')[0];
-        const mesInfo = mesesMap[primeiraLetra];
-        const mesNome = mesInfo ? mesInfo.mes : letrasGrupo;
-        
-        // Container individual do gráfico
-        const chartDiv = document.createElement('div');
-        chartDiv.className = 'individual-chart';
-        
-        // Calcular maiores volumes
-        const maxCallsVolume = Math.abs(Math.min(...dados.calls_volumes));
-        const maxPutsVolume = Math.max(...dados.puts_volumes);
-        
-        // Encontrar strikes com maiores volumes
-        const maxCallsIndex = dados.calls_volumes.findIndex(v => Math.abs(v) === maxCallsVolume);
-        const maxPutsIndex = dados.puts_volumes.findIndex(v => v === maxPutsVolume);
-        
-        const maxCallsStrike = dados.strikes_values[maxCallsIndex];
-        const maxPutsStrike = dados.strikes_values[maxPutsIndex];
-        
-        chartDiv.innerHTML = `
-          <div class="chart-title">
-            <span>${mesNome} (${letrasGrupo})</span>
-            <div class="chart-stats">
-              <span title="Maior volume de calls: R$ ${maxCallsStrike?.toFixed(2)}">Calls: ${maxCallsVolume.toLocaleString()}</span>
-              <span title="Maior volume de puts: R$ ${maxPutsStrike?.toFixed(2)}">Puts: ${maxPutsVolume.toLocaleString()}</span>
-              <span class="text-yellow-400" title="Strike com maior volume total">Maior: R$ ${encontrarMaiorVolumeStrike(dados)}</span>
-            </div>
-          </div>
-          <div id="chart-${index}" style="height: 450px;"></div>
-        `;
-        
-        container.appendChild(chartDiv);
-        
-        // Preparar dados para este gráfico específico
-        const traces = [];
-        
-        // CALLS trace
-        traces.push({
-          type: 'bar',
-          orientation: 'h',
-          y: dados.labels,
-          x: dados.calls_volumes,
-          name: 'CALLS',
-          marker: { color: '#0099ff' },
-          hovertemplate: '<b>CALLS</b><br>Strike: %{y}<br>Volume: %{text}<extra></extra>',
-          text: dados.calls_volumes.map(v => Math.abs(v).toLocaleString())
-        });
-        
-        // PUTS trace
-        traces.push({
-          type: 'bar',
-          orientation: 'h',
-          y: dados.labels,
-          x: dados.puts_volumes,
-          name: 'PUTS',
-          marker: { color: '#ff6600' },
-          hovertemplate: '<b>PUTS</b><br>Strike: %{y}<br>Volume: %{x:,}<extra></extra>'
-        });
-        
-        // Linha do preço atual
-        if (tickerInfo.current_price) {
-          const precoAtual = tickerInfo.current_price;
-          let precoIndex = -1;
-          let menorDiferenca = Infinity;
-          
-          dados.strikes_values.forEach((strike, idx) => {
-            const diferenca = Math.abs(strike - precoAtual);
-            if (diferenca < menorDiferenca) {
-              menorDiferenca = diferenca;
-              precoIndex = idx;
-            }
-          });
-          
-          if (precoIndex >= 0) {
-            traces.push({
-              type: 'scatter',
-              mode: 'lines',
-              x: [Math.min(...dados.calls_volumes) * 1.1, Math.max(...dados.puts_volumes) * 1.1],
-              y: [dados.labels[precoIndex], dados.labels[precoIndex]],
-              line: {
-                color: '#FFD700',
-                width: 3,
-                dash: 'dash'
-              },
-              name: `Preço: R$ ${precoAtual.toFixed(2)}`,
-              hovertemplate: `<b>Preço Atual</b><br>R$ ${precoAtual.toFixed(2)}<extra></extra>`
-            });
-          }
-        }
-        
-        // Layout para este gráfico específico
-        const layout = {
-          title: {
-            text: `Preço Atual: R$ ${tickerInfo.current_price.toFixed(2)}`,
-            font: { size: 16, color: 'white' },
-            x: 0.5
-          },
-          template: 'plotly_dark',
-          height: 450,
-          margin: { l: 80, r: 40, t: 60, b: 60 },
-          xaxis: {
-            title: '← CALLS | PUTS →',
-            tickfont: { color: 'lightgray', size: 10 },
-            titlefont: { color: 'white', size: 12 },
-            gridcolor: 'rgba(255,255,255,0.1)'
-          },
-          yaxis: {
-            title: 'Strike',
-            tickfont: { color: 'lightgray', size: 10 },
-            titlefont: { color: 'white', size: 12 },
-            gridcolor: 'rgba(255,255,255,0.1)'
-          },
-          legend: {
-            orientation: 'h',
-            yanchor: 'bottom',
-            y: 1.02,
-            xanchor: 'center',
-            x: 0.5,
-            font: { color: 'white', size: 10 }
-          },
-          paper_bgcolor: 'transparent',
-          plot_bgcolor: 'transparent'
-        };
-        
-        // Criar gráfico individual
-        setTimeout(() => {
-          Plotly.newPlot(`chart-${index}`, traces, layout, {
-            responsive: true,
-            displayModeBar: true,
-            modeBarButtonsToRemove: ['pan2d', 'lasso2d', 'select2d']
-          });
-        }, index * 100); // Pequeno delay para renderização suave
-      });
-    }
+   // Display charts adaptativo
+   function displayChartsAdaptive(chartData, tickerInfo) {
+     const container = document.getElementById('chartsContainer');
+     
+     container.innerHTML = '';
+     
+     const grupos = Object.keys(chartData);
+     const numGrupos = grupos.length;
+     
+     let gridClass = 'single';
+     if (numGrupos === 2) gridClass = 'double';
+     else if (numGrupos === 3) gridClass = 'triple';
+     else if (numGrupos >= 4) gridClass = 'quad';
+     
+     container.className = `chart-grid ${gridClass}`;
+     
+     grupos.forEach((nomeGrupo, index) => {
+       const dados = chartData[nomeGrupo];
+       
+       let letrasGrupo = nomeGrupo;
+       const match = nomeGrupo.match(/\(([^)]+)\)/);
+       if (match) {
+         letrasGrupo = match[1];
+       }
+       
+       const primeiraLetra = letrasGrupo.split(',')[0];
+       const mesInfo = mesesMap[primeiraLetra];
+       const mesNome = mesInfo ? mesInfo.mes : letrasGrupo;
+       
+       const chartDiv = document.createElement('div');
+       chartDiv.className = 'individual-chart';
+       
+       const maxCallsVolume = Math.abs(Math.min(...dados.calls_volumes));
+       const maxPutsVolume = Math.max(...dados.puts_volumes);
+       
+       const maxCallsIndex = dados.calls_volumes.findIndex(v => Math.abs(v) === maxCallsVolume);
+       const maxPutsIndex = dados.puts_volumes.findIndex(v => v === maxPutsVolume);
+       
+       const maxCallsStrike = dados.strikes_values[maxCallsIndex];
+       const maxPutsStrike = dados.strikes_values[maxPutsIndex];
+       
+       chartDiv.innerHTML = `
+         <div class="chart-title">
+           <span>${mesNome} (${letrasGrupo})</span>
+           <div class="chart-stats">
+             <span title="Maior volume de calls: R$ ${maxCallsStrike?.toFixed(2)}">Calls: ${maxCallsVolume.toLocaleString()}</span>
+             <span title="Maior volume de puts: R$ ${maxPutsStrike?.toFixed(2)}">Puts: ${maxPutsVolume.toLocaleString()}</span>
+             <span class="text-yellow-400" title="Strike com maior volume total">Maior: R$ ${encontrarMaiorVolumeStrike(dados)}</span>
+           </div>
+         </div>
+         <div id="chart-${index}" style="height: 450px;"></div>
+       `;
+       
+       container.appendChild(chartDiv);
+       
+       const traces = [];
+       
+       traces.push({
+         type: 'bar',
+         orientation: 'h',
+         y: dados.labels,
+         x: dados.calls_volumes,
+         name: 'CALLS',
+         marker: { color: '#0099ff' },
+         hovertemplate: '<b>CALLS</b><br>Strike: %{y}<br>Volume: %{text}<extra></extra>',
+         text: dados.calls_volumes.map(v => Math.abs(v).toLocaleString())
+       });
+       
+       traces.push({
+         type: 'bar',
+         orientation: 'h',
+         y: dados.labels,
+         x: dados.puts_volumes,
+         name: 'PUTS',
+         marker: { color: '#ff6600' },
+         hovertemplate: '<b>PUTS</b><br>Strike: %{y}<br>Volume: %{x:,}<extra></extra>'
+       });
+       
+       if (tickerInfo.current_price) {
+         const precoAtual = tickerInfo.current_price;
+         let precoIndex = -1;
+         let menorDiferenca = Infinity;
+         
+         dados.strikes_values.forEach((strike, idx) => {
+           const diferenca = Math.abs(strike - precoAtual);
+           if (diferenca < menorDiferenca) {
+             menorDiferenca = diferenca;
+             precoIndex = idx;
+           }
+         });
+         
+         if (precoIndex >= 0) {
+           traces.push({
+             type: 'scatter',
+             mode: 'lines',
+             x: [Math.min(...dados.calls_volumes) * 1.1, Math.max(...dados.puts_volumes) * 1.1],
+             y: [dados.labels[precoIndex], dados.labels[precoIndex]],
+             line: {
+               color: '#FFD700',
+               width: 3,
+               dash: 'dash'
+             },
+             name: `Preço: R$ ${precoAtual.toFixed(2)}`,
+             hovertemplate: `<b>Preço Atual</b><br>R$ ${precoAtual.toFixed(2)}<extra></extra>`
+           });
+         }
+       }
+       
+       const layout = {
+         title: {
+           text: `Preço Atual: R$ ${tickerInfo.current_price.toFixed(2)}`,
+           font: { size: 16, color: 'white' },
+           x: 0.5
+         },
+         template: 'plotly_dark',
+         height: 450,
+         margin: { l: 80, r: 40, t: 60, b: 60 },
+         xaxis: {
+           title: '← CALLS | PUTS →',
+           tickfont: { color: 'lightgray', size: 10 },
+           titlefont: { color: 'white', size: 12 },
+           gridcolor: 'rgba(255,255,255,0.1)'
+         },
+         yaxis: {
+           title: 'Strike',
+           tickfont: { color: 'lightgray', size: 10 },
+           titlefont: { color: 'white', size: 12 },
+           gridcolor: 'rgba(255,255,255,0.1)'
+         },
+         legend: {
+           orientation: 'h',
+           yanchor: 'bottom',
+           y: 1.02,
+           xanchor: 'center',
+           x: 0.5,
+           font: { color: 'white', size: 10 }
+         },
+         paper_bgcolor: 'transparent',
+         plot_bgcolor: 'transparent'
+       };
+       
+       setTimeout(() => {
+         Plotly.newPlot(`chart-${index}`, traces, layout, {
+           responsive: true,
+           displayModeBar: true,
+           modeBarButtonsToRemove: ['pan2d', 'lasso2d', 'select2d']
+         });
+       }, index * 100);
+     });
+   }
 
-    // Função auxiliar para encontrar strike com maior volume total
-    function encontrarMaiorVolumeStrike(dados) {
-      let maiorVolume = 0;
-      let strikeIndex = 0;
-      
-      dados.calls_volumes.forEach((callsVol, index) => {
-        const putsVol = dados.puts_volumes[index] || 0;
-        const volumeTotal = Math.abs(callsVol) + putsVol;
-        
-        if (volumeTotal > maiorVolume) {
-          maiorVolume = volumeTotal;
-          strikeIndex = index;
-        }
-      });
-      
-      return dados.strikes_values[strikeIndex]?.toFixed(2) || '0.00';
-    }
+   // Função auxiliar para encontrar strike com maior volume total
+   function encontrarMaiorVolumeStrike(dados) {
+     let maiorVolume = 0;
+     let strikeIndex = 0;
+     
+     dados.calls_volumes.forEach((callsVol, index) => {
+       const putsVol = dados.puts_volumes[index] || 0;
+       const volumeTotal = Math.abs(callsVol) + putsVol;
+       
+       if (volumeTotal > maiorVolume) {
+         maiorVolume = volumeTotal;
+         strikeIndex = index;
+       }
+     });
+     
+     return dados.strikes_values[strikeIndex]?.toFixed(2) || '0.00';
+   }
 
-    // Display detailed summary
-    function displayDetailedSummary(summary) {
-      const container = document.getElementById('detailedSummary');
-      
-      let html = `
-        <div class="mb-8">
-          <h3 class="text-xl font-bold text-white mb-4">Resumo por Grupo</h3>
-          <div class="overflow-x-auto">
-            <table class="w-full border-collapse">
-              <thead>
-                <tr class="bg-gray-700">
-                  <th class="border border-gray-600 px-4 py-3 text-left text-white">Mês</th>
-                  <th class="border border-gray-600 px-4 py-3 text-right text-white">Volume Total</th>
-                  <th class="border border-gray-600 px-4 py-3 text-right text-white">Calls</th>
-                  <th class="border border-gray-600 px-4 py-3 text-right text-white">Puts</th>
-                  <th class="border border-gray-600 px-4 py-3 text-right text-white">P/C Ratio</th>
-                  <th class="border border-gray-600 px-4 py-3 text-right text-white">% do Total</th>
-                </tr>
-              </thead>
-              <tbody>
-      `;
-      
-      summary.grupos.forEach(grupo => {
-        // Extrair letras do nome do grupo
-        let letrasGrupo = grupo.nome;
-        const match = grupo.nome.match(/\(([^)]+)\)/);
-        if (match) {
-          letrasGrupo = match[1]; // Extrai as letras entre parênteses
-        }
-        
-        // Determinar o mês correspondente
-        const primeiraLetra = letrasGrupo.split(',')[0];
-        const mesInfo = mesesMap[primeiraLetra];
-        const mesNome = mesInfo ? `${mesInfo.mes} (${letrasGrupo})` : letrasGrupo;
-        
-        let rowColor = 'bg-gray-800';
-        if (parseFloat(grupo.put_call_ratio) > 1.2) {
-          rowColor = 'bg-red-900/30';
-        } else if (parseFloat(grupo.put_call_ratio) < 0.8) {
-          rowColor = 'bg-green-900/30';
-        }
-        
-        html += `
-          <tr class="${rowColor}">
-            <td class="border border-gray-600 px-4 py-3 text-white font-semibold">${mesNome}</td>
-            <td class="border border-gray-600 px-4 py-3 text-right text-white">${grupo.total_volume.toLocaleString()}</td>
-            <td class="border border-gray-600 px-4 py-3 text-right text-blue-400">${grupo.total_calls.toLocaleString()}</td>
-            <td class="border border-gray-600 px-4 py-3 text-right text-orange-400">${grupo.total_puts.toLocaleString()}</td>
-            <td class="border border-gray-600 px-4 py-3 text-right text-white">${grupo.put_call_ratio}</td>
-            <td class="border border-gray-600 px-4 py-3 text-right text-white">${grupo.percent_of_total}%</td>
-          </tr>
-        `;
-      });
-      
-      html += `
-              </tbody>
-            </table>
-          </div>
-        </div>
-        
-        <div class="space-y-6">
-          <h3 class="text-xl font-bold text-white">Top Opções por Grupo</h3>
-      `;
-      
-      summary.grupos.forEach(grupo => {
-        // Extrair letras do nome do grupo
-        let letrasGrupo = grupo.nome;
-        const match = grupo.nome.match(/\(([^)]+)\)/);
-        if (match) {
-          letrasGrupo = match[1]; // Extrai as letras entre parênteses
-        }
-        
-        // Determinar o mês correspondente
-        const primeiraLetra = letrasGrupo.split(',')[0];
-        const mesInfo = mesesMap[primeiraLetra];
-        const mesNome = mesInfo ? `${mesInfo.mes} (${letrasGrupo})` : letrasGrupo;
-        
-        html += `
-          <div class="bg-gray-800/50 rounded-lg p-6">
-            <h4 class="text-lg font-semibold text-white mb-4">${mesNome}</h4>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <h5 class="text-blue-400 font-semibold mb-2">Top Calls</h5>
-                <ul class="space-y-1">
-        `;
-        
-        grupo.top_calls.forEach(call => {
-          html += `
-            <li class="text-gray-300 text-sm">
-              ${call.symbol} | R$ ${call.strike.toFixed(2)} | Vol: ${call.volume.toLocaleString()}
-            </li>
-          `;
-        });
-        
-        html += `
-                </ul>
-              </div>
-              <div>
-                <h5 class="text-orange-400 font-semibold mb-2">Top Puts</h5>
-                <ul class="space-y-1">
-        `;
-        
-        grupo.top_puts.forEach(put => {
-          html += `
-            <li class="text-gray-300 text-sm">
-              ${put.symbol} | R$ ${put.strike.toFixed(2)} | Vol: ${put.volume.toLocaleString()}
-            </li>
-          `;
-        });
-        
-        html += `
-                </ul>
-              </div>
-            </div>
-          </div>
-        `;
-      });
-      
-      html += '</div>';
-      
-      container.innerHTML = html;
-    }
+   // Display detailed summary
+   function displayDetailedSummary(summary) {
+     const container = document.getElementById('detailedSummary');
+     
+     let html = `
+       <div class="mb-8">
+         <h3 class="text-xl font-bold text-white mb-4">Resumo por Grupo</h3>
+         <div class="overflow-x-auto">
+           <table class="w-full border-collapse">
+             <thead>
+               <tr class="bg-gray-700">
+                 <th class="border border-gray-600 px-4 py-3 text-left text-white">Mês</th>
+                 <th class="border border-gray-600 px-4 py-3 text-right text-white">Volume Total</th>
+                 <th class="border border-gray-600 px-4 py-3 text-right text-white">Calls</th>
+                 <th class="border border-gray-600 px-4 py-3 text-right text-white">Puts</th>
+                 <th class="border border-gray-600 px-4 py-3 text-right text-white">P/C Ratio</th>
+                 <th class="border border-gray-600 px-4 py-3 text-right text-white">% do Total</th>
+               </tr>
+             </thead>
+             <tbody>
+     `;
+     
+     summary.grupos.forEach(grupo => {
+       let letrasGrupo = grupo.nome;
+       const match = grupo.nome.match(/\(([^)]+)\)/);
+       if (match) {
+         letrasGrupo = match[1];
+       }
+       
+       const primeiraLetra = letrasGrupo.split(',')[0];
+       const mesInfo = mesesMap[primeiraLetra];
+       const mesNome = mesInfo ? `${mesInfo.mes} (${letrasGrupo})` : letrasGrupo;
+       
+       let rowColor = 'bg-gray-800';
+       if (parseFloat(grupo.put_call_ratio) > 1.2) {
+         rowColor = 'bg-red-900/30';
+       } else if (parseFloat(grupo.put_call_ratio) < 0.8) {
+         rowColor = 'bg-green-900/30';
+       }
+       
+       html += `
+         <tr class="${rowColor}">
+           <td class="border border-gray-600 px-4 py-3 text-white font-semibold">${mesNome}</td>
+           <td class="border border-gray-600 px-4 py-3 text-right text-white">${grupo.total_volume.toLocaleString()}</td>
+           <td class="border border-gray-600 px-4 py-3 text-right text-blue-400">${grupo.total_calls.toLocaleString()}</td>
+           <td class="border border-gray-600 px-4 py-3 text-right text-orange-400">${grupo.total_puts.toLocaleString()}</td>
+           <td class="border border-gray-600 px-4 py-3 text-right text-white">${grupo.put_call_ratio}</td>
+           <td class="border border-gray-600 px-4 py-3 text-right text-white">${grupo.percent_of_total}%</td>
+         </tr>
+       `;
+     });
+     
+     html += `
+             </tbody>
+           </table>
+         </div>
+       </div>
+       
+       <div class="space-y-6">
+         <h3 class="text-xl font-bold text-white">Top Opções por Grupo</h3>
+     `;
+     
+     summary.grupos.forEach(grupo => {
+       let letrasGrupo = grupo.nome;
+       const match = grupo.nome.match(/\(([^)]+)\)/);
+       if (match) {
+         letrasGrupo = match[1];
+       }
+       
+       const primeiraLetra = letrasGrupo.split(',')[0];
+       const mesInfo = mesesMap[primeiraLetra];
+       const mesNome = mesInfo ? `${mesInfo.mes} (${letrasGrupo})` : letrasGrupo;
+       
+       html += `
+         <div class="bg-gray-800/50 rounded-lg p-6">
+           <h4 class="text-lg font-semibold text-white mb-4">${mesNome}</h4>
+           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+             <div>
+               <h5 class="text-blue-400 font-semibold mb-2">Top Calls</h5>
+               <ul class="space-y-1">
+       `;
+       
+       grupo.top_calls.forEach(call => {
+         html += `
+           <li class="text-gray-300 text-sm">
+             ${call.symbol} | R$ ${call.strike.toFixed(2)} | Vol: ${call.volume.toLocaleString()}
+           </li>
+         `;
+       });
+       
+       html += `
+               </ul>
+             </div>
+             <div>
+               <h5 class="text-orange-400 font-semibold mb-2">Top Puts</h5>
+               <ul class="space-y-1">
+       `;
+       
+       grupo.top_puts.forEach(put => {
+         html += `
+           <li class="text-gray-300 text-sm">
+             ${put.symbol} | R$ ${put.strike.toFixed(2)} | Vol: ${put.volume.toLocaleString()}
+           </li>
+         `;
+       });
+       
+       html += `
+               </ul>
+             </div>
+           </div>
+         </div>
+       `;
+     });
+     
+     html += '</div>';
+     
+     container.innerHTML = html;
+   }
 
-    // ===== FUNÇÃO DO EXPANDER =====
-    function toggleInfo() {
-      const content = document.getElementById('infoContent');
-      const icon = document.getElementById('infoIcon');
-      
-      if (content.classList.contains('hidden')) {
-        content.classList.remove('hidden');
-        content.style.animation = 'fadeIn 0.5s ease-in-out';
-        icon.classList.remove('fa-info-circle');
-        icon.classList.add('fa-times');
-      } else {
-        content.style.animation = 'fadeOut 0.3s ease-in-out';
-        setTimeout(() => {
-          content.classList.add('hidden');
-        }, 300);
-        icon.classList.remove('fa-times');
-        icon.classList.add('fa-info-circle');
-      }
-    }
+   // ===== FUNÇÃO DO EXPANDER =====
+   function toggleInfo() {
+     const content = document.getElementById('infoContent');
+     const icon = document.getElementById('infoIcon');
+     
+     if (content.classList.contains('hidden')) {
+       content.classList.remove('hidden');
+       content.style.animation = 'fadeIn 0.5s ease-in-out';
+       icon.classList.remove('fa-info-circle');
+       icon.classList.add('fa-times');
+     } else {
+       content.style.animation = 'fadeOut 0.3s ease-in-out';
+       setTimeout(() => {
+         content.classList.add('hidden');
+       }, 300);
+       icon.classList.remove('fa-times');
+       icon.classList.add('fa-info-circle');
+     }
+   }
 
-    // Logout function
-    async function logout() {
-      try {
-        if (userToken) {
-          await fetch('/auth/logout', {
-            method: 'POST',
-            headers: { 'Authorization': `Bearer ${userToken}` }
-          });
-        }
-      } catch (error) {
-        console.error('Logout error:', error);
-      } finally {
-        localStorage.removeItem('geminii_token');
-        localStorage.removeItem('geminii_user');
-        window.location.href = '/';
-      }
-    }
+   // Logout function
+   async function logout() {
+     try {
+       if (userToken) {
+         await fetch('/auth/logout', {
+           method: 'POST',
+           headers: { 'Authorization': `Bearer ${userToken}` }
+         });
+       }
+     } catch (error) {
+       console.error('Logout error:', error);
+     } finally {
+       localStorage.removeItem('geminii_token');
+       localStorage.removeItem('geminii_user');
+       window.location.href = '/';
+     }
+   }
 
-    // Make functions global
-    window.logout = logout;
-    window.buscarLetrasDisponiveis = buscarLetrasDisponiveis;
-    window.adicionarGrupo = adicionarGrupo;
-    window.removerGrupo = removerGrupo;
-    window.executarAnalise = executarAnalise;
-    window.toggleLetraSelection = toggleLetraSelection;
-    window.toggleInfo = toggleInfo;
+   // Make functions global
+   window.logout = logout;
+   window.buscarLetrasDisponiveis = buscarLetrasDisponiveis;
+   window.adicionarGrupo = adicionarGrupo;
+   window.removerGrupo = removerGrupo;
+   window.executarAnalise = executarAnalise;
+   window.toggleLetraSelection = toggleLetraSelection;
+   window.toggleInfo = toggleInfo;
+   window.buscarDetalhesStrike = buscarDetalhesStrike;
+   window.mostrarModalComDetalhes = mostrarModalComDetalhes;
+   window.mostrarModalSimples = mostrarModalSimples;
+   
+   
+   window.analisarHotStrike = analisarHotStrike;
+   window.closeHotStrikeModal = closeHotStrikeModal;
+   window.adicionarHotStrikeAoGrupo = adicionarHotStrikeAoGrupo;
 
-    // Initialize when page loads
-    document.addEventListener('DOMContentLoaded', initPage);
-  </script>
+   // Initialize when page loads
+   document.addEventListener('DOMContentLoaded', initPage);
+ </script>
 </body>
 </html>

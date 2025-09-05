@@ -248,7 +248,7 @@ class OptionsCalculatorService:
             df[f'banda_superior_{d}sigma'] = reference_price * (1 + d * vol_ajustada)
             df[f'banda_inferior_{d}sigma'] = reference_price * (1 - d * vol_ajustada)
             
-            print(f"📊 Banda {d}σ: Superior R$ {df[f'banda_superior_{d}sigma'].iloc[-1]:.2f} | Inferior R$ {df[f'banda_inferior_{d}sigma'].iloc[-1]:.2f}")
+            print(f" Banda {d}σ: Superior R$ {df[f'banda_superior_{d}sigma'].iloc[-1]:.2f} | Inferior R$ {df[f'banda_inferior_{d}sigma'].iloc[-1]:.2f}")
         
         # Manter compatibilidade - criar banda 4σ como alias da 2σ para não quebrar código
         df['banda_superior_4sigma'] = df['banda_superior_2sigma']

@@ -30,7 +30,7 @@ def get_iv_ranking():
         rank_by = request.args.get('rank_by', 'iv_current')
         top_n = int(request.args.get('top_n', 20))
         
-        print(f"📊 Ranking solicitado: {rank_by}, top {top_n}")
+        print(f" Ranking solicitado: {rank_by}, top {top_n}")
         
         # **USAR O SERVIÇO** - método principal
         result = ranking_service.get_full_analysis(rank_by=rank_by, top_n=top_n)
@@ -102,7 +102,7 @@ def get_iv_vs_volume():
     try:
         top_n = int(request.args.get('top_n', 20))
         
-        print(f"📊 IV vs Volume: top {top_n}")
+        print(f" IV vs Volume: top {top_n}")
         
         # Buscar e processar dados usando o serviço
         data = ranking_service.fetch_data(limit=150)
@@ -145,7 +145,7 @@ def get_iv_percentil():
     try:
         top_n = int(request.args.get('top_n', 20))
         
-        print(f"📊 IV Percentil: top {top_n}")
+        print(f" IV Percentil: top {top_n}")
         
         # Buscar dados específicos para percentil
         data = ranking_service.fetch_data(rank_by='iv_6m_percentile', limit=150)
@@ -189,7 +189,7 @@ def get_iv_6m_comparison():
     try:
         top_n = int(request.args.get('top_n', 20))
         
-        print(f"📊 IV 6M Comparison: top {top_n}")
+        print(f" IV 6M Comparison: top {top_n}")
         
         # Buscar e processar dados
         data = ranking_service.fetch_data(limit=150)
@@ -231,7 +231,7 @@ def get_iv_6m_comparison():
 def get_estatisticas():
     """Estatísticas gerais - USA O SERVIÇO"""
     try:
-        print("📊 Estatísticas gerais solicitadas")
+        print(" Estatísticas gerais solicitadas")
         
         # **USAR MÉTODO PRINCIPAL DO SERVIÇO**
         result = ranking_service.get_full_analysis(top_n=5)

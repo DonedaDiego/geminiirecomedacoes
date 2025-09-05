@@ -588,7 +588,7 @@
           cache: 'no-cache'
         });
 
-        console.log('📊 Status da resposta:', response.status, response.statusText);
+        console.log(' Status da resposta:', response.status, response.statusText);
 
         if (response.status === 401) {
           console.log('🔑 Token expirado - tentando renovar...');
@@ -607,7 +607,7 @@
         
         if (result.success) {
           allRecommendations = result.recommendations || [];
-          console.log(`📈 Total de recomendações: ${allRecommendations.length}`);
+          console.log(` Total de recomendações: ${allRecommendations.length}`);
           
           recommendations = allRecommendations.filter(r => r.status === 'ATIVA');
           console.log(` Recomendações ativas: ${recommendations.length}`);

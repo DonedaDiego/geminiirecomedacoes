@@ -27,7 +27,7 @@ class RankingService:
             'VBBR3', 'VIVA3', 'VIVT3', 'WEGE3', 'YDUQ3'
         ]
         
-        print(f"📊 RankingService inicializado com {len(self.options_stocks)} ações")
+        print(f" RankingService inicializado com {len(self.options_stocks)} ações")
     
     def _get_token(self):
         """Busca token do .env ou Railway"""
@@ -370,7 +370,7 @@ if __name__ == "__main__":
     
     if resultado['success']:
         print(f"✅ Teste executado!")
-        print(f"📊 {resultado['total_acoes']} ações analisadas")
+        print(f" {resultado['total_acoes']} ações analisadas")
         
         if resultado['rankings']['iv_atual']:
             print(f"\n🏆 Top 5:")

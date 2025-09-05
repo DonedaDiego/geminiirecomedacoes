@@ -190,7 +190,7 @@ class YFinanceRSLService:
             if not symbol.endswith('.SA'):
                 symbol += '.SA'
             
-            print(f"📈 Buscando histórico de {symbol} para RSL...")
+            print(f" Buscando histórico de {symbol} para RSL...")
             
             stock = yf.Ticker(symbol)
             data = stock.history(period=period)
@@ -309,7 +309,7 @@ class YFinanceRSLService:
         Calcula RSL médio de um setor usando nosso dicionário de tickers
         """
         try:
-            print(f"📊 Calculando RSL do setor: {setor_nome}")
+            print(f" Calculando RSL do setor: {setor_nome}")
             
             # ✅ BUSCAR TICKERS DO SETOR NO NOSSO DICIONÁRIO
             tickers_do_setor = cls.get_tickers_by_setor(setor_nome)
@@ -374,7 +374,7 @@ class YFinanceRSLService:
         resultados = {}
         
         for i, setor in enumerate(setores, 1):
-            print(f"📊 Processando setor {i}/{len(setores)}: {setor}")
+            print(f" Processando setor {i}/{len(setores)}: {setor}")
             
             rsl_data = cls.get_sector_rsl_data(setor, period)
             

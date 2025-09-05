@@ -263,7 +263,7 @@ if __name__ == "__main__":
         
         # Mostrar status
         status = get_scheduler_status()
-        print(f"\n📊 Status: {status}")
+        print(f"\n Status: {status}")
         
         # Testar execução manual
         print("\n🧪 Testando execução manual...")

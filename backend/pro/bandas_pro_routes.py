@@ -85,8 +85,8 @@ def get_bandas_pro_blueprint():
             period = data.get('period', '6mo')
             regime = data.get('regime', 'M')
             
-            if regime not in ['M', 'W', 'A', 'Q','D']:
-                return jsonify({'error': 'regime deve ser M, W, D, A ou Q'}), 400
+            if regime not in ['M', 'W', 'A', 'Q', 'D', 'Y']:
+                return jsonify({'error': 'regime deve ser M, W, D, Q, Y ou A'}), 400
         
             logging.info(f"API: Análise de bandas solicitada para {ticker} com regime {regime}")
             
@@ -379,7 +379,7 @@ def get_bandas_pro_blueprint():
 
         ═══════════════════════════════════════════════════════════════
         🤖 GERADO POR: Sistema Geminii Tech - Bandas Híbridas
-        📈 TECNOLOGIA: GARCH + Machine Learning (XGBoost)
+         TECNOLOGIA: GARCH + Machine Learning (XGBoost)
         🎲 VARIÁVEIS: 15+ indicadores técnicos e estatísticos
         ═══════════════════════════════════════════════════════════════
         }}'''

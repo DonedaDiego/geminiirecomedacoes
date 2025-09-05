@@ -254,13 +254,13 @@ if __name__ == "__main__":
     if carrossel_data['success']:
         data = carrossel_data['data']
         print(f"✅ {data['total_stocks']} ações carregadas")
-        print(f"📊 Mercado: {data['market_stats']['positive']} ↗️  {data['market_stats']['negative']} ↘️")
+        print(f" Mercado: {data['market_stats']['positive']} ↗️  {data['market_stats']['negative']} ↘️")
         print(f"⏰ Última atualização: {data['last_update']}")
         
         # Mostrar primeiras 3 ações
-        print("\n📈 Primeiras ações:")
+        print("\n Primeiras ações:")
         for i, stock in enumerate(data['stocks'][:3]):
-            status = "📈" if stock['change_percent'] > 0 else "📉" if stock['change_percent'] < 0 else "➡️"
+            status = "" if stock['change_percent'] > 0 else "" if stock['change_percent'] < 0 else "➡️"
             print(f"   {status} {stock['symbol']}: R$ {stock['price']} ({stock['change_percent']:+.2f}%)")
     else:
         print(f"❌ Erro: {carrossel_data['error']}")

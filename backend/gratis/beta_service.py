@@ -282,7 +282,7 @@ if __name__ == "__main__":
         for period, analysis in data['periods'].items():
             beta = analysis['beta']
             interpretation = analysis['interpretation']
-            print(f"  📊 {period.upper()} ({analysis['days']} dias):")
+            print(f"   {period.upper()} ({analysis['days']} dias):")
             print(f"     Beta: {beta:.3f} ({interpretation['classification']})")
             print(f"     R²: {analysis['r_squared']:.3f}")
             print(f"     Retorno Ação: {analysis['stock_return']:.2f}%")

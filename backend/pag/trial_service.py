@@ -476,7 +476,7 @@ def can_access_premium_features(user_id):
             
         plan_id, user_type, plan_expires_at, plan_name, email = user
         
-        print(f"📊 Dados do usuário: plan_id={plan_id}, user_type={user_type}, plan_name={plan_name}, email={email}")
+        print(f" Dados do usuário: plan_id={plan_id}, user_type={user_type}, plan_name={plan_name}, email={email}")
         
         # 🔥 REGRA 1: Se é regular com plano Free (3), NEGAR
         if user_type == 'regular' and plan_id == 3:
@@ -541,7 +541,7 @@ def can_access_pro_features(user_id):
             
         plan_id, user_type, plan_expires_at, plan_name, email = user
         
-        print(f"📊 Dados do usuário: plan_id={plan_id}, user_type={user_type}, plan_name={plan_name}, email={email}")
+        print(f" Dados do usuário: plan_id={plan_id}, user_type={user_type}, plan_name={plan_name}, email={email}")
         
         # 🔥 REGRA 1: Se é regular com plano Free (3), NEGAR
         if user_type == 'regular' and plan_id == 3:
@@ -707,7 +707,7 @@ if __name__ == "__main__":
     print("=" * 50)
     
     # Testar estatísticas
-    print("📊 Estatísticas atuais:")
+    print(" Estatísticas atuais:")
     stats = get_trial_stats()
     if stats['success']:
         print(f"   - Trials ativos: {stats['stats']['total_trials']}")

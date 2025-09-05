@@ -26,7 +26,7 @@ from pro.gamma_routes import get_gamma_blueprint
 from premium.swing_trade_ml_routes import get_swing_trade_ml_blueprint
 from premium.beta_regression_routes import beta_regression_bp
 from premium.atsmom_routes import register_atsmom_routes
-from premium.flow_routes_v2 import get_flow_v2_blueprint
+
 
 # Trial
 from pag.trial_routes import get_trial_blueprint
@@ -201,16 +201,6 @@ try:
     print("✅ Regimes blueprint registrado!")
 except Exception as e:
     print(f"❌ Erro ao registrar regimes blueprint: {e}")
-
-
-
-
-try:
-    flow_v2_bp = get_flow_v2_blueprint()
-    app.register_blueprint(flow_v2_bp)
-    print("✅ Flow V2 blueprint registrado!")
-except Exception as e:
-    print(f"❌ Erro ao registrar Flow V2 blueprint: {e}")
 
 # ===== REGISTRAR BLUEPRINTS CONDICIONAIS =====
 
@@ -412,11 +402,6 @@ def beta_regression_page():
 def atsmom_page():
     return send_from_directory('../frontend', 'atsmom.html')
 
-@app.route('/flow')
-@app.route('/flow.html')
-def flow_page():
-    return send_from_directory('../frontend', 'flow.html')
-
 # ===== ROTAS API =====
 
 @app.route('/api/status')
@@ -433,57 +418,6 @@ def status():
         }
     })
 
-# @app.route('/api/test-db')
-# def test_db():
-#     """Testar conexão com banco"""
-#     try:
-#         conn = get_db_connection()
-#         if conn:
-#             cursor = conn.cursor()
-#             cursor.execute("SELECT COUNT(*) FROM plans")
-#             plans_count = cursor.fetchone()[0]
-#             cursor.execute("SELECT COUNT(*) FROM users")
-#             users_count = cursor.fetchone()[0]
-#             cursor.close()
-#             conn.close()
-            
-#             return jsonify({
-#                 'success': True,
-#                 'message': 'Banco conectado!',
-#                 'data': {
-#                     'plans': plans_count,
-#                     'users': users_count
-#                 }
-#             })
-#         else:
-#             return jsonify({'success': False, 'error': 'Falha na conexão'}), 500
-#     except Exception as e:
-#         return jsonify({'success': False, 'error': str(e)}), 500
-
-# @app.route('/test-routes')
-# def test_routes():
-#     """Rota para verificar quais rotas estão registradas"""
-#     routes = []
-#     for rule in app.url_map.iter_rules():
-#         routes.append({
-#             'endpoint': rule.endpoint,
-#             'methods': list(rule.methods),
-#             'rule': str(rule)
-#         })
-    
-#     auth_routes = [r for r in routes if '/auth/' in r['rule']]
-#     api_routes = [r for r in routes if '/api/' in r['rule']]
-    
-#     return jsonify({
-#         'total_routes': len(routes),
-#         'auth_routes': auth_routes,
-#         'api_routes': api_routes,
-#         'blueprints_status': {
-#             'auth': AUTH_AVAILABLE,
-#             'newsletter': NEWSLETTER_AVAILABLE,
-#             'admin': ADMIN_AVAILABLE
-#         }
-#     })
 
 @app.route('/api/dashboard')
 def dashboard_api():

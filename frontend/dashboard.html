@@ -1200,7 +1200,7 @@
 
     function checkUserPlan(user) {
       console.log('🔍 Verificando plano do usuário:', user);
-      console.log('📊 user_type:', user.user_type, 'plan_id:', user.plan_id);
+      console.log(' user_type:', user.user_type, 'plan_id:', user.plan_id);
       
       // ACESSO TOTAL: admin, paid, trial
       if (user.user_type === 'admin') {
@@ -1817,7 +1817,7 @@
         return;
       }
       
-      console.log('📊 Abrindo Opcoes Dropdown - user_type:', userPlan);
+      console.log(' Abrindo Opcoes Dropdown - user_type:', userPlan);
       
       const dropdown = document.getElementById('opcoesDropdown');
       const chevron = document.getElementById('opcoesChevron');

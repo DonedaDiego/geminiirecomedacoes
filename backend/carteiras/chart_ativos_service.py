@@ -273,7 +273,7 @@ class ChartAtivosService:
     def calculate_portfolio_metrics(self, assets: List[Dict]) -> Dict:
         """Calcula métricas da carteira"""
         try:
-            logger.info("📊 Calculando métricas da carteira")
+            logger.info(" Calculando métricas da carteira")
             
             if not assets:
                 return {'error': 'Portfolio sem ativos', 'total_return': 0.0}
@@ -364,7 +364,7 @@ class ChartAtivosService:
             portfolio_display_name = portfolio_data['name']
             
             logger.info(f"✅ Carteira carregada: {portfolio_display_name}")
-            logger.info(f"📈 {len(assets)} ativos encontrados")
+            logger.info(f" {len(assets)} ativos encontrados")
             
             # ETAPA 3: Calcular métricas
             metrics = self.calculate_portfolio_metrics(assets)

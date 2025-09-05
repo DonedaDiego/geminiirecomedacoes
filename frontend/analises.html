@@ -258,7 +258,7 @@
         if (response.ok) {
           data = await response.json();
           if (data.success && data.portfolios && data.portfolios.length > 0) {
-            console.log('📊 Usando sistema REAL:', data.portfolios.length, 'carteiras');
+            console.log(' Usando sistema REAL:', data.portfolios.length, 'carteiras');
             displayPortfolios(data.portfolios, source);
             return;
           }
@@ -287,7 +287,7 @@
         source = 'API_ANTIGA';
         
         if (data.success && data.portfolios) {
-          console.log('📊 Usando API antiga:', data.portfolios.length, 'carteiras');
+          console.log(' Usando API antiga:', data.portfolios.length, 'carteiras');
           displayPortfolios(data.portfolios, source);
         } else {
           throw new Error('Nenhuma carteira encontrada');
@@ -346,7 +346,7 @@
                   ${data.creation_date ? `<span class="bg-green-900/30 text-green-400 px-2 py-1 rounded">Criada em: ${formatDate(data.creation_date)}</span>` : ''}
                   ${data.granted_at ? `<span class="bg-purple-900/30 text-purple-400 px-2 py-1 rounded">Acesso: ${formatDate(data.granted_at)}</span>` : ''}
                   <span class="px-2 py-1 rounded text-xs ${source === 'REAL' ? 'bg-green-900/30 text-green-400' : 'bg-blue-900/30 text-blue-400'}">
-                    ${source === 'REAL' ? '🔄 Sistema Real' : '📊 API Clássica'}
+                    ${source === 'REAL' ? '🔄 Sistema Real' : ' API Clássica'}
                   </span>
                 </div>
               </div>
@@ -442,7 +442,7 @@
 
     // ===== ABRIR ANALYTICS =====
     async function openAnalytics(portfolioId, portfolioName, source) {
-      console.log(`📊 Abrindo Analytics para: ${portfolioId} (${source})`);
+      console.log(` Abrindo Analytics para: ${portfolioId} (${source})`);
       
       currentPortfolioId = portfolioId;
       currentPortfolioName = portfolioName;
@@ -484,8 +484,8 @@
         }
         
         const portfolioResult = await portfolioResponse.json();
-        console.log('📈 Portfolio analytics:', portfolioResult);
-        console.log('📊 IBOVESPA data:', ibovResponse);
+        console.log(' Portfolio analytics:', portfolioResult);
+        console.log(' IBOVESPA data:', ibovResponse);
         
         if (portfolioResult.success && portfolioResult.data) {
           // 🔥 ENRIQUECER COM DATAS DE ENTRADA
@@ -510,7 +510,7 @@
     // ===== BUSCAR DADOS DO IBOVESPA =====
     async function fetchIbovData() {
       try {
-        console.log('📊 Buscando IBOVESPA...');
+        console.log(' Buscando IBOVESPA...');
         
         // Tentar via API do sistema
         let response = await fetch('/api/stocks/BVSP', {
@@ -706,7 +706,7 @@
           <div class="bg-gradient-to-r from-purple-900/30 to-blue-900/30 border border-purple-500/30 rounded-xl p-6">
             <h3 class="text-xl font-bold text-white mb-4 flex items-center">
               <i class="fas fa-chart-area text-purple-400 mr-3"></i>
-              📊 Performance: ${data.portfolio_name} vs IBOVESPA
+               Performance: ${data.portfolio_name} vs IBOVESPA
               <span class="text-xs bg-yellow-600 text-yellow-200 px-2 py-1 rounded ml-2">SOMA SIMPLES</span>
             </h3>
             
@@ -1060,15 +1060,15 @@
       if (alpha >= 5) return 'Excelente!';
       if (alpha >= 0) return 'Superando';
       if (alpha >= -5) return 'Próximo';
-      return '📉 Abaixo';
+      return ' Abaixo';
     }
 
     function getPerformanceEmoji(returnPercent) {
       if (returnPercent >= 15) return '<span class="text-green-400 text-lg">🚀</span>';
-      if (returnPercent >= 5) return '<span class="text-green-400 text-lg">📈</span>';
+      if (returnPercent >= 5) return '<span class="text-green-400 text-lg"></span>';
       if (returnPercent >= 0) return '<span class="text-yellow-400 text-lg">😊</span>';
       if (returnPercent >= -10) return '<span class="text-orange-400 text-lg">😐</span>';
-      return '<span class="text-red-400 text-lg">📉</span>';
+      return '<span class="text-red-400 text-lg"></span>';
     }
 
     function getPerformanceAnalysis(portfolioReturn, ibovReturn, days) {
@@ -1126,7 +1126,7 @@
       
       let html = `
         <div class="mb-4 text-center">
-          <p class="text-white font-semibold">📊 ${assets.length} ativos • Peso total: ${totalWeight || 0}%</p>
+          <p class="text-white font-semibold"> ${assets.length} ativos • Peso total: ${totalWeight || 0}%</p>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-h-80 overflow-y-auto">
       `;

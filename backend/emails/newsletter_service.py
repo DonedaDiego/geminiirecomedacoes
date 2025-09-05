@@ -105,7 +105,7 @@ class NewsletterService:
             url = f"{self.base_url}/subscribers/{subscriber_id}/groups/{self.group_id}"
             response = requests.post(url, headers=self.headers, timeout=30)
             
-            print(f"📊 Adicionar ao grupo: {response.status_code}")
+            print(f" Adicionar ao grupo: {response.status_code}")
             
             if response.status_code in [200, 201]:
                 print("✅ Adicionado ao grupo com sucesso!")

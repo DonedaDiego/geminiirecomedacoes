@@ -769,7 +769,7 @@ if __name__ == "__main__":
     print("=" * 60)
     
     # Teste das funções principais
-    print("📊 Estatísticas:")
+    print(" Estatísticas:")
     stats = get_subscription_stats()
     if stats['success']:
         print(f"✅ Stats carregadas: {stats['stats']}")

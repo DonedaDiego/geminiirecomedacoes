@@ -493,9 +493,9 @@ def get_gamma_blueprint():
 
     ═══════════════════════════════════════════════════════════════
     🤖 GERADO POR: Sistema Geminii Tech - Gamma Levels
-    📈 TECNOLOGIA: Net Gamma Exposure + Peak Detection
-    🎯 ALGORITMO: Detecção científica com suavização Gaussian
-    📊 PREÇO ATUAL: R$ {spot_price:.2f}
+     TECNOLOGIA: Net Gamma Exposure + Peak Detection
+     ALGORITMO: Detecção científica com suavização Gaussian
+     PREÇO ATUAL: R$ {spot_price:.2f}
     ═══════════════════════════════════════════════════════════════
     }}'''
 

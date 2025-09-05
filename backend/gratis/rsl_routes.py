@@ -305,7 +305,7 @@ def get_radar_setores():
     try:
         period = request.args.get('period', '1y')
         
-        print(f"📊 Gerando dados para Radar de Setores (período: {period})")
+        print(f" Gerando dados para Radar de Setores (período: {period})")
         
         service = YFinanceRSLService()
         all_rsl_data = service.get_all_sectors_rsl(period)
@@ -364,7 +364,7 @@ def get_rsl_blueprint():
 
 # ===== LOG DE INICIALIZAÇÃO =====
 # print("✅ RSL Routes Blueprint criado com sucesso!")
-# print("📊 Rotas disponíveis:")
+# print(" Rotas disponíveis:")
 # print("  GET  /api/setores - Lista todos os setores")
 # print("  GET  /api/setor/<nome> - Empresas de um setor")
 # print("  GET  /api/rsl-setor/<nome> - RSL de um setor")

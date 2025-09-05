@@ -506,7 +506,7 @@ class EmailService:
                             </div>
                             
                             <div class="benefit-item">
-                                <div class="benefit-icon">📈</div>
+                                <div class="benefit-icon"></div>
                                 <div class="benefit-title">Estratégias</div>
                                 <div class="benefit-desc">Acompanhamento direto das estratégias do dia a dia</div>
                             </div>

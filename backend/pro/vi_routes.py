@@ -32,7 +32,7 @@ def analyze_ticker(ticker):
         # Limpar ticker
         clean_ticker = ticker.upper().replace('.SA', '')
         
-        print(f"📊 Análise VI solicitada: {clean_ticker}, período: {period_days} dias")
+        print(f" Análise VI solicitada: {clean_ticker}, período: {period_days} dias")
         
         # Executar análise usando o serviço
         result = vi_service.create_analysis(clean_ticker, period_days)
@@ -115,7 +115,7 @@ def get_chart_data(ticker):
         # Limpar ticker
         clean_ticker = ticker.upper().replace('.SA', '')
         
-        print(f"📈 Dados de gráfico solicitados: {clean_ticker}")
+        print(f" Dados de gráfico solicitados: {clean_ticker}")
         
         # Executar análise usando o serviço
         result = vi_service.create_analysis(clean_ticker, period_days)
@@ -183,7 +183,7 @@ def compare_tickers():
         for ticker in tickers:
             try:
                 clean_ticker = ticker.upper().replace('.SA', '')
-                print(f"📊 Analisando {clean_ticker} para comparação...")
+                print(f" Analisando {clean_ticker} para comparação...")
                 
                 result = vi_service.create_analysis(clean_ticker, period_days)
                 
@@ -232,7 +232,7 @@ def compare_tickers():
 def get_statistics():
     """Estatísticas gerais do sistema de VI"""
     try:
-        print("📊 Estatísticas gerais solicitadas")
+        print(" Estatísticas gerais solicitadas")
         
         # Lista de principais ações para estatísticas
         sample_tickers = ['PETR4', 'VALE3', 'ITUB4', 'BBDC4', 'ABEV3']

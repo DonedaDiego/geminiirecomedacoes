@@ -30,7 +30,7 @@ def verify_user_access(auth_header):
 def get_portfolio_analytics(portfolio_id):
     """Endpoint principal para análise de carteiras com auto-atualização"""
     try:
-        logger.info(f"📊 Analytics solicitado para: {portfolio_id}")
+        logger.info(f" Analytics solicitado para: {portfolio_id}")
         
         # Verificar autenticação
         auth_header = request.headers.get('Authorization')

@@ -238,7 +238,7 @@ def confirm_email():
                 <p>Seu email foi confirmado com sucesso. Agora você pode fazer login na plataforma.</p>
                 
                 <a href="/login" class="btn">🔐 Fazer Login</a>
-                <a href="/dashboard" class="btn">📊 Ir ao Dashboard</a>
+                <a href="/dashboard" class="btn"> Ir ao Dashboard</a>
             </div>
             
             <script>

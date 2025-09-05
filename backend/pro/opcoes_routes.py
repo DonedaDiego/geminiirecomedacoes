@@ -120,7 +120,7 @@ def hunter_walls_analysis(current_user_id):
         # ✅ EXECUTAR ANÁLISE
         try:
             opcoes_service = OpcoesService()
-            print(f"📊 Iniciando análise Hunter Walls...")
+            print(f" Iniciando análise Hunter Walls...")
             
             resultado = opcoes_service.hunter_walls_analysis(ticker, grupos_vencimentos)
             
@@ -158,6 +158,167 @@ def hunter_walls_analysis(current_user_id):
             'success': False, 
             'message': 'Erro interno do servidor',
             'debug_error': str(e)
+        }), 500
+
+
+# ===== ADICIONAR APÓS A ROTA hunter-walls =====
+
+@opcoes_bp.route('/api/opcoes/volume-historico', methods=['POST'])
+@token_required
+def volume_historico_analysis(current_user_id):
+    """🔥 NOVA ROTA - Análise de volume histórico vs atual"""
+    try:
+        data = request.get_json()
+        ticker = data.get('ticker', '').upper()
+        
+        if not ticker:
+            return jsonify({'success': False, 'message': 'Ticker é obrigatório'}), 400
+        
+        print(f" Volume Histórico - Usuário: {current_user_id}, Ticker: {ticker}")
+        
+        # ✅ MESMA VERIFICAÇÃO DE ACESSO DO HUNTER WALLS
+        conn = get_db_connection()
+        if not conn:
+            return jsonify({'success': False, 'message': 'Erro de conexão com banco'}), 500
+            
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT plan_id, user_type, plan_name FROM users 
+            WHERE id = %s
+        """, (current_user_id,))
+        user = cursor.fetchone()
+        cursor.close()
+        conn.close()
+        
+        if not user:
+            return jsonify({
+                'success': False, 
+                'message': 'Usuário não encontrado'
+            }), 404
+        
+        plan_id, user_type, plan_name = user
+        
+        # ✅ LÓGICA DE ACESSO IGUAL AO HUNTER WALLS
+        allowed_plans = [3, 4]  # Free (3) e Community (4)
+        allowed_user_types = ['trial', 'paid', 'free', 'admin', 'master']
+        
+        has_valid_plan = plan_id in allowed_plans
+        has_valid_user_type = user_type in allowed_user_types
+        is_admin = user_type in ['admin', 'master']
+        
+        if not (has_valid_plan or has_valid_user_type or is_admin):
+            return jsonify({
+                'success': False, 
+                'message': 'Recurso disponível apenas para planos Community ou superior',
+                'upgrade_required': True
+            }), 403
+        
+        # ✅ EXECUTAR ANÁLISE HISTÓRICA
+        try:
+            opcoes_service = OpcoesService()
+            resultado = opcoes_service.volume_historico_analysis(ticker)
+            
+            if not resultado or 'error' in resultado:
+                return jsonify({
+                    'success': False, 
+                    'message': f'Não foi possível obter dados históricos para {ticker}'
+                }), 404
+            
+            return jsonify({
+                'success': True,
+                'data': resultado
+            })
+            
+        except Exception as analysis_error:
+            print(f"❌ Erro na análise histórica: {analysis_error}")
+            return jsonify({
+                'success': False, 
+                'message': f'Erro ao processar análise histórica: {str(analysis_error)}'
+            }), 500
+        
+    except Exception as e:
+        print(f"❌ Erro geral em volume_historico_analysis: {str(e)}")
+        return jsonify({
+            'success': False, 
+            'message': 'Erro interno do servidor'
+        }), 500
+
+@opcoes_bp.route('/api/opcoes/strike-detalhado', methods=['POST'])
+@token_required
+def strike_detalhado_analysis(current_user_id):
+    """ NOVA ROTA - Análise detalhada de um strike específico"""
+    try:
+        data = request.get_json()
+        ticker = data.get('ticker', '').upper()
+        strike = float(data.get('strike', 0))
+        
+        if not ticker or strike <= 0:
+            return jsonify({'success': False, 'message': 'Ticker e strike são obrigatórios'}), 400
+        
+        print(f" Strike Detalhado - Usuário: {current_user_id}, Ticker: {ticker}, Strike: R$ {strike}")
+        
+        # Mesma verificação de acesso
+        conn = get_db_connection()
+        if not conn:
+            return jsonify({'success': False, 'message': 'Erro de conexão com banco'}), 500
+            
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT plan_id, user_type, plan_name FROM users 
+            WHERE id = %s
+        """, (current_user_id,))
+        user = cursor.fetchone()
+        cursor.close()
+        conn.close()
+        
+        if not user:
+            return jsonify({'success': False, 'message': 'Usuário não encontrado'}), 404
+        
+        plan_id, user_type, plan_name = user
+        
+        # Verificação de acesso
+        allowed_plans = [3, 4]
+        allowed_user_types = ['trial', 'paid', 'free', 'admin', 'master']
+        
+        has_valid_plan = plan_id in allowed_plans
+        has_valid_user_type = user_type in allowed_user_types
+        is_admin = user_type in ['admin', 'master']
+        
+        if not (has_valid_plan or has_valid_user_type or is_admin):
+            return jsonify({
+                'success': False, 
+                'message': 'Recurso disponível apenas para planos Community ou superior',
+                'upgrade_required': True
+            }), 403
+        
+        # Executar análise
+        try:
+            opcoes_service = OpcoesService()
+            resultado = opcoes_service.analisar_strike_detalhado(ticker, strike)
+            
+            if not resultado:
+                return jsonify({
+                    'success': False, 
+                    'message': f'Não foi possível analisar o strike R$ {strike} para {ticker}'
+                }), 404
+            
+            return jsonify({
+                'success': True,
+                'data': resultado
+            })
+            
+        except Exception as analysis_error:
+            print(f"❌ Erro na análise do strike: {analysis_error}")
+            return jsonify({
+                'success': False, 
+                'message': f'Erro ao analisar strike: {str(analysis_error)}'
+            }), 500
+        
+    except Exception as e:
+        print(f"❌ Erro geral em strike_detalhado_analysis: {str(e)}")
+        return jsonify({
+            'success': False, 
+            'message': 'Erro interno do servidor'
         }), 500
 
 @opcoes_bp.route('/api/opcoes/ticker-info', methods=['GET'])

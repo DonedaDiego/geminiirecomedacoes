@@ -13,7 +13,7 @@ golden_cross_eua_bp = Blueprint('golden_cross_eua', __name__, url_prefix='/api/g
 def obter_estatisticas():
     """Obtém estatísticas gerais do Golden Cross EUA"""
     try:
-        logger.info("📊 Solicitação de estatísticas Golden Cross EUA")
+        logger.info(" Solicitação de estatísticas Golden Cross EUA")
         
         estatisticas = golden_cross_eua_service.obter_estatisticas_golden_cross()
         
@@ -43,7 +43,7 @@ def obter_ranking():
                 'erro': 'Limite deve estar entre 1 e 100'
             }), 400
         
-        logger.info(f"📈 Solicitação de ranking Golden Cross EUA (limite: {limite})")
+        logger.info(f" Solicitação de ranking Golden Cross EUA (limite: {limite})")
         
         # Gerar ranking
         ranking = golden_cross_eua_service.obter_ranking_golden_cross(limite)

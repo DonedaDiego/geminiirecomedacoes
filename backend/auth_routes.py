@@ -124,7 +124,7 @@ def register():
                 
                 recent_registrations = cursor.fetchone()[0]
                 
-                print(f"📊 IP {user_ip}: {confirmed_users_count} usuários confirmados, {recent_registrations} registros na última hora")
+                print(f" IP {user_ip}: {confirmed_users_count} usuários confirmados, {recent_registrations} registros na última hora")
                 
                 # Regra 1: Máximo 3 usuários confirmados por IP
                 if confirmed_users_count >= 3:
@@ -315,7 +315,7 @@ def confirm_email_page():
                 </div>
                 
                 <a href="/login" class="btn">🔐 Fazer Login</a>
-                <a href="/dashboard" class="btn">📊 Ir ao Dashboard</a>
+                <a href="/dashboard" class="btn"> Ir ao Dashboard</a>
             </div>
             
             <script>
@@ -557,7 +557,7 @@ def login():
         
         print(f"✅ Usuário encontrado: {name} (ID: {user_id})")
         print(f"📧 Email confirmado: {email_confirmed}")
-        print(f"📊 Subscription status: {subscription_status}")
+        print(f" Subscription status: {subscription_status}")
         print(f"🕐 Último login: {last_login}")
         
         # Verificar senha
@@ -603,7 +603,7 @@ def login():
         
         # 🔥 VERIFICAR STATUS DA SUBSCRIPTION/TRIAL
         subscription_status_result = check_user_subscription_status(user_id)
-        print(f"📊 Status da subscription: {subscription_status_result}")
+        print(f" Status da subscription: {subscription_status_result}")
         
         # 🔥 VERIFICAR SE A FUNÇÃO RETORNOU SUCESSO
         if not subscription_status_result.get('success', False):

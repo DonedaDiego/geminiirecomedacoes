@@ -155,449 +155,560 @@ class VolatilityValidator:
         return confidence
 
 class HybridVolatilityBands:
-    """Sistema de Bandas de Volatilidade Híbridas com Validação IV"""
-    
-    def __init__(self, ticker, period='2y', regime="M"): 
-        if not ticker.endswith('.SA') and not ticker.startswith('^'):
-            ticker = ticker + '.SA'
-            
-        self.ticker = ticker
-        self.ticker_display = ticker.replace('.SA', '')
-        self.period = period
-        self.regime = regime  
-        self.data = None  
-        self.df = None    
-        self.xgb_model = None
-        self.scaler = RobustScaler()
-        self.iv_validator = VolatilityValidator()
-            
-    def load_data(self):      
-        try:
-            
-            ticker = self.ticker
-            
-            
-            if not ticker.endswith('.SA') and not ticker.startswith('^'):
-                ticker = ticker + '.SA'
-            
-            # MESMO método de download com period fixo
-            self.df = yf.download(ticker, start=None, end=None, period='2y', interval='1d')
-            
-            # MESMO tratamento de colunas multinível
-            if hasattr(self.df.columns, 'get_level_values') and ticker in self.df.columns.get_level_values(1):
-                self.df = self.df.xs(ticker, axis=1, level=1)
-            
-            if self.df.empty:
-                logging.error(f"Nenhum dado encontrado para {ticker}")
-                return None
-            
-            self.df = self.df[(self.df['Open'] > 0) & 
-                        (self.df['High'] > 0) & 
-                        (self.df['Low'] > 0) & 
-                        (self.df['Close'] > 0)]
-        
-            self.df.reset_index(inplace=True)
-            self.df['Returns'] = self.df['Close'].pct_change()
-            self.df['Log_Returns'] = np.log(self.df['Close'] / self.df['Close'].shift(1))
-            self.df.dropna(inplace=True)
-            
-            logging.info(f"Dados carregados: {len(self.df)} registros de {self.df['Date'].iloc[0]} até {self.df['Date'].iloc[-1]}")
-            return self
-            
-        except Exception as e:
-            logging.error(f"Erro ao carregar dados: {e}")
-            raise
-    
-    def calculate_base_volatility(self):
-        try:
-            # Verificar se temos dados válidos para GARCH
-            returns_data = self.df['Log_Returns'].dropna() * 100
-            if len(returns_data) < 50:
-                raise ValueError("Dados insuficientes para modelo GARCH")
-            
-            garch_model = arch_model(returns_data, vol='Garch', p=1, q=1, dist='Normal')
-            garch_result = garch_model.fit(disp='off')
-            
-            # Ajustar o tamanho dos dados de volatilidade condicional
-            garch_vol = garch_result.conditional_volatility / 100
-            
-            # Garantir que o tamanho seja correto
-            if len(garch_vol) < len(self.df):
-                # Preencher valores iniciais com média
-                vol_mean = garch_vol.mean()
-                missing_count = len(self.df) - len(garch_vol)
-                garch_vol = np.concatenate([np.full(missing_count, vol_mean), garch_vol])
-            
-            self.df['garch_vol'] = garch_vol[:len(self.df)]
-            
-        except Exception as e:
-            logging.warning(f"GARCH falhou: {e}. Usando fallback com rolling std.")
-            # Fallback se GARCH falhar
-            self.df['garch_vol'] = self.df['Returns'].rolling(20, min_periods=5).std().fillna(0.02)
-        
-        # Calcular volatilidades realizadas
-        for window in [3, 5, 10, 20]:
-            self.df[f'realized_vol_{window}d'] = (
-                self.df['Returns'].rolling(window=window, min_periods=1)
-                .apply(lambda x: np.sqrt(np.sum(x**2)) if len(x) > 0 else 0.02)
-            )
-        return self
-    
-    def engineer_features(self):
-        df = self.df
-        
-        # Volatilidades de diferentes janelas
-        for window in [5, 10, 20, 60]:
-            df[f'vol_std_{window}d'] = df['Returns'].rolling(window, min_periods=1).std()
-        
-        # Features com lags
-        for lag in [1, 2, 5]:
-            df[f'garch_lag_{lag}'] = df['garch_vol'].shift(lag)
-            df[f'returns_lag_{lag}'] = df['Returns'].shift(lag)
-        
-        # Range diário
-        df['daily_range'] = (df['High'] - df['Low']) / df['Close']
-        df['price_momentum_5d'] = df['Close'] / df['Close'].shift(5) - 1
-        
-        # Volume
-        if 'Volume' in df.columns:
-            df['volume_ma_20'] = df['Volume'].rolling(20, min_periods=1).mean()
-            df['volume_ratio'] = df['Volume'] / df['volume_ma_20']
-            df['volume_ratio'].fillna(1, inplace=True)
-        else:
-            df['volume_ratio'] = 1
-        
-        # Regimes de tendência e volatilidade
-        df['sma_50'] = df['Close'].rolling(50, min_periods=1).mean()
-        df['sma_200'] = df['Close'].rolling(200, min_periods=1).mean()
-        df['trend_regime'] = np.where(df['sma_50'] > df['sma_200'], 1, 0)
-        df['vol_regime'] = np.where(df['garch_vol'] > df['garch_vol'].rolling(60, min_periods=1).mean(), 1, 0)
-        df['vol_percentile'] = df['garch_vol'].rolling(252, min_periods=20).rank(pct=True)
-        
-        # Preencher NaNs com métodos apropriados
-        numeric_columns = df.select_dtypes(include=[np.number]).columns
-        for col in numeric_columns:
-            if col in df.columns:
-                df[col].fillna(method='ffill', inplace=True)
-                df[col].fillna(method='bfill', inplace=True)
-                df[col].fillna(0, inplace=True)
-        
-        return self
-    
-    def train_xgboost(self):
-        feature_cols = [
-            'garch_lag_1', 'garch_lag_2', 'garch_lag_5',
-            'realized_vol_10d', 'realized_vol_20d', 'realized_vol_3d',
-            'vol_std_10d', 'vol_std_20d', 'vol_std_5d',
-            'vol_percentile', 'vol_regime', 'returns_lag_1',
-            'daily_range', 'price_momentum_5d', 'volume_ratio', 'trend_regime'
-        ]
-        
-        # Verificar se todas as features existem
-        available_features = [col for col in feature_cols if col in self.df.columns]
-        if len(available_features) < len(feature_cols) * 0.7:  # Pelo menos 70% das features
-            logging.warning(f"Poucas features disponíveis para XGBoost. Usando apenas volatilidade GARCH.")
-            self.df['xgb_vol'] = self.df['garch_vol']
-            return self
-        
-        df_ml = self.df[available_features + ['garch_vol']].copy()
-        df_ml.dropna(inplace=True)
-        
-        if len(df_ml) < 50:  # Reduzir requisito mínimo
-            logging.warning("Dados insuficientes para XGBoost. Usando apenas volatilidade GARCH.")
-            self.df['xgb_vol'] = self.df['garch_vol']
-            return self
-        
-        X = df_ml[available_features]
-        y = df_ml['garch_vol']
-        
-        X_scaled = self.scaler.fit_transform(X)
-        X_scaled = pd.DataFrame(X_scaled, columns=available_features, index=X.index)
-        
-        train_size = int(len(X_scaled) * 0.8)
-        X_train, X_test = X_scaled[:train_size], X_scaled[train_size:]
-        y_train, y_test = y[:train_size], y[train_size:]
-        
-        self.xgb_model = xgb.XGBRegressor(
-            n_estimators=100,  # Reduzir para datasets menores
-            max_depth=6,
-            learning_rate=0.1,
-            subsample=0.8,
-            colsample_bytree=0.8,
-            reg_alpha=0.1,
-            reg_lambda=0.1,
-            random_state=42,
-            verbosity=0
-        )
-        
-        self.xgb_model.fit(X_train, y_train)
-        xgb_pred = self.xgb_model.predict(X_test)
-        
-        self.df['xgb_vol'] = self.df['garch_vol']  # Inicializar com garch
-        test_indices = df_ml.index[train_size:]
-        self.df.loc[test_indices, 'xgb_vol'] = xgb_pred
-        
-        return self
-    
-    def create_hybrid_model(self):
-        df = self.df
-        
-        df['vol_regime_adaptive'] = df['garch_vol'].rolling(30, min_periods=5).std()
-        df['vol_regime_normalized'] = (
-            df['vol_regime_adaptive'] / df['vol_regime_adaptive'].rolling(252, min_periods=20).mean()
-        )
-        df['vol_regime_normalized'].fillna(1.0, inplace=True)
-        
-        df['weight_garch'] = np.clip(0.3 + 0.4 * df['vol_regime_normalized'], 0.3, 0.7)
-        df['weight_xgb'] = 1 - df['weight_garch']
-        
-        df['hybrid_vol'] = (
-            df['weight_garch'] * df['garch_vol'] + 
-            df['weight_xgb'] * df['xgb_vol']
-        )
-        
-        # Garantir que não temos valores nulos ou muito pequenos
-        df['hybrid_vol'].fillna(df['garch_vol'], inplace=True)
-        df['hybrid_vol'].fillna(0.02, inplace=True)
-        df['hybrid_vol'] = np.maximum(df['hybrid_vol'], 0.001)  # Mínimo de 0.1%
-        
-        return self
-    
-    def create_bands(self):
-        df = self.df.copy()
-        
-        # Garantir que temos a coluna Date como datetime
-        if 'Date' not in df.columns:
-            df.reset_index(inplace=True)
-        df['Date'] = pd.to_datetime(df['Date'])
-        
-        # Criar referência mensal
-        df['Period'] = df['Date'].dt.to_period(self.regime)
-        
-        period_ref = df.groupby('Period').agg(
-            reference_price=('Close', 'last'),
-            # ANTES: monthly_vol=('hybrid_vol', 'last')
-            # DEPOIS:
-            period_vol=('hybrid_vol', 'last')
-        ).reset_index()
-        
-        period_ref['Next_Period'] = period_ref['Period'] + 1
-        df = df.merge(
-            period_ref[['Next_Period', 'reference_price', 'period_vol']],
-            left_on='Period', right_on='Next_Period', how='left'
-        )
-        
-        # Preenchimento forward fill
-        df['period_vol'].fillna(method='ffill', inplace=True)
-        df['reference_price'].fillna(method='ffill', inplace=True)
-        df['period_vol'].fillna(df['hybrid_vol'], inplace=True)
-        df['reference_price'].fillna(df['Close'], inplace=True)
-        
-        # Criar bandas
-        for d in [2, 4]:
-            self.df[f'banda_superior_{d}sigma'] = (
-                (1 + d * df['period_vol']) * df['reference_price']
-            )
-            self.df[f'banda_inferior_{d}sigma'] = (
-                (1 - d * df['period_vol']) * df['reference_price']
-            )
-        
-        self.df['linha_central'] = (self.df['banda_superior_2sigma'] + self.df['banda_inferior_2sigma']) / 2
-        
-        # Garantir que não temos NaNs nas bandas
-        band_columns = ['banda_superior_2sigma', 'banda_inferior_2sigma', 'linha_central', 
-                       'banda_superior_4sigma', 'banda_inferior_4sigma']
-        
-        for col in band_columns:
-            if col in self.df.columns:
-                self.df[col].fillna(method='ffill', inplace=True)
-                self.df[col].fillna(method='bfill', inplace=True)
-                # Se ainda temos NaNs, usar preço atual com volatilidade padrão
-                if self.df[col].isna().any():
-                    vol_fallback = 0.02
-                    multiplier = 2 if '2sigma' in col else 4 if '4sigma' in col else 1
-                    if 'superior' in col:
-                        self.df[col].fillna(self.df['Close'] * (1 + multiplier * vol_fallback), inplace=True)
-                    elif 'inferior' in col:
-                        self.df[col].fillna(self.df['Close'] * (1 - multiplier * vol_fallback), inplace=True)
-                    else:  # linha_central
-                        self.df[col].fillna(self.df['Close'], inplace=True)
-        
-        return self
-    
-    def get_current_signals(self):
-        """Sinais atuais de trading COM validação IV e lógica expandida de 4σ"""
-        latest = self.df.iloc[-1]
-        current_price = latest['Close']
-        
-        def safe_get(col_name, fallback_value):
-            value = latest[col_name] if not pd.isna(latest[col_name]) else fallback_value
-            return value
-        
-        vol_fallback = latest['garch_vol'] if not pd.isna(latest['garch_vol']) else 0.02
-        
-        signals = {
-            'price': float(current_price),
-            'volatility': float(latest['hybrid_vol'] if not pd.isna(latest['hybrid_vol']) else vol_fallback),
-            'trend_regime': 'Bull' if latest['trend_regime'] == 1 else 'Bear',
-            'vol_regime': 'High' if latest['vol_regime'] == 1 else 'Low',
-            'bandas': {
-                'superior_2σ': float(safe_get('banda_superior_2sigma', current_price * (1 + 2 * vol_fallback))),
-                'inferior_2σ': float(safe_get('banda_inferior_2sigma', current_price * (1 - 2 * vol_fallback))),
-                'superior_4σ': float(safe_get('banda_superior_4sigma', current_price * (1 + 4 * vol_fallback))),
-                'inferior_4σ': float(safe_get('banda_inferior_4sigma', current_price * (1 - 4 * vol_fallback))),
-                'linha_central': float(safe_get('linha_central', current_price))
-            }
-        }
-        
-        # ===== LÓGICA EXPANDIDA COM 4 DESVIOS =====
-        sup_4sigma = signals['bandas']['superior_4σ']
-        sup_2sigma = signals['bandas']['superior_2σ']
-        central = signals['bandas']['linha_central']
-        inf_2sigma = signals['bandas']['inferior_2σ']
-        inf_4sigma = signals['bandas']['inferior_4σ']
-        
-        # Calcular distâncias percentuais para melhor análise
-        dist_4sup = ((current_price - sup_4sigma) / sup_4sigma) * 100 if sup_4sigma > 0 else 0
-        dist_2sup = ((current_price - sup_2sigma) / sup_2sigma) * 100 if sup_2sigma > 0 else 0
-        dist_central = ((current_price - central) / central) * 100 if central > 0 else 0
-        dist_2inf = ((current_price - inf_2sigma) / inf_2sigma) * 100 if inf_2sigma > 0 else 0
-        dist_4inf = ((current_price - inf_4sigma) / inf_4sigma) * 100 if inf_4sigma > 0 else 0
-        
-        # CLASSIFICAÇÃO DETALHADA
-        if current_price > sup_4sigma:
-            # ===== ZONA EXTREMA SUPERIOR (>4σ) =====
-            signals['position'] = '🔴 ZONA EXTREMA - Acima Banda 4σ'
-            signals['position_detail'] = 'SOBRECOMPRADO EXTREMO'
-            signals['risk_level'] = 'MUITO ALTO'
-            signals['action_suggestion'] = 'VENDA IMEDIATA ou HEDGE URGENTE'
-            signals['probability_reversal'] = 'MUITO ALTA (>80%)'
-            signals['zone_color'] = '🔴'
-            signals['zone_name'] = 'DANGER ZONE'
-            
-        elif current_price > sup_2sigma:
-            # ===== ZONA SUPERIOR (2σ - 4σ) =====
-            signals['position'] = '🟠 ZONA ALTA - Acima Banda 2σ'
-            signals['position_detail'] = 'SOBRECOMPRADO FORTE'
-            signals['risk_level'] = 'ALTO'
-            signals['action_suggestion'] = 'REALIZAR LUCROS ou REDUZIR POSIÇÃO'
-            signals['probability_reversal'] = 'ALTA (60-80%)'
-            signals['zone_color'] = '🟠'
-            signals['zone_name'] = 'OVERBOUGHT ZONE'
-            
-        elif current_price > central:
-            # ===== ZONA SUPERIOR NEUTRA (Central - 2σ) =====
-            signals['position'] = '🟡 METADE SUPERIOR - Bullish'
-            signals['position_detail'] = 'TENDÊNCIA ALTA SAUDÁVEL'
-            signals['risk_level'] = 'MODERADO'
-            signals['action_suggestion'] = 'MANTER POSIÇÃO ou COMPRA PARCIAL'
-            signals['probability_reversal'] = 'BAIXA (20-40%)'
-            signals['zone_color'] = '🟡'
-            signals['zone_name'] = 'BULLISH ZONE'
-            
-        elif current_price > inf_2sigma:
-            # ===== ZONA INFERIOR NEUTRA (2σ inf - Central) =====
-            signals['position'] = '🟡 METADE INFERIOR - Bearish'
-            signals['position_detail'] = 'TENDÊNCIA BAIXA CONTROLADA'
-            signals['risk_level'] = 'MODERADO'
-            signals['action_suggestion'] = 'AGUARDAR ou COMPRA GRADUAL'
-            signals['probability_reversal'] = 'BAIXA (20-40%)'
-            signals['zone_color'] = '🟡'
-            signals['zone_name'] = 'BEARISH ZONE'
-            
-        elif current_price > inf_4sigma:
-            # ===== ZONA INFERIOR (4σ inf - 2σ inf) =====
-            signals['position'] = '🟢 ZONA BAIXA - Abaixo Banda 2σ'
-            signals['position_detail'] = 'SOBREVENDIDO FORTE'
-            signals['risk_level'] = 'ALTO'
-            signals['action_suggestion'] = 'OPORTUNIDADE DE COMPRA'
-            signals['probability_reversal'] = 'ALTA (60-80%)'
-            signals['zone_color'] = '🟢'
-            signals['zone_name'] = 'OVERSOLD ZONE'
-            
-        else:
-            # ===== ZONA EXTREMA INFERIOR (<4σ) =====
-            signals['position'] = '🟢 ZONA EXTREMA - Abaixo Banda 4σ'
-            signals['position_detail'] = 'SOBREVENDIDO EXTREMO'
-            signals['risk_level'] = 'MUITO ALTO'
-            signals['action_suggestion'] = 'COMPRA AGRESSIVA ou CONTRARIAN PLAY'
-            signals['probability_reversal'] = 'MUITO ALTA (>80%)'
-            signals['zone_color'] = '🟢'
-            signals['zone_name'] = 'FIRE SALE ZONE'
-        
-        # ===== MÉTRICAS ADICIONAIS =====
-        signals['distance_metrics'] = {
-            'dist_4sigma_sup': round(dist_4sup, 2),
-            'dist_2sigma_sup': round(dist_2sup, 2),
-            'dist_central': round(dist_central, 2),
-            'dist_2sigma_inf': round(dist_2inf, 2),
-            'dist_4sigma_inf': round(dist_4inf, 2)
-        }
-        
-        # ===== ALERTAS ESPECIAIS =====
-        alerts = []
-        
-        # Alertas para zona extrema
-        if abs(dist_4sup) < 2 and current_price < sup_4sigma:
-            alerts.append("PRÓXIMO DA BANDA 4σ SUPERIOR - Prepare para reversão")
-        elif abs(dist_4inf) < 2 and current_price > inf_4sigma:
-            alerts.append("PRÓXIMO DA BANDA 4σ INFERIOR - Oportunidade se aproximando")
-        
-        # Alertas de momentum
-        if current_price > sup_4sigma and signals['vol_regime'] == 'High':
-            alerts.append("RISCO EXTREMO: Preço >4σ + Alta Volatilidade")
-        elif current_price < inf_4sigma and signals['vol_regime'] == 'High':
-            alerts.append("OPORTUNIDADE EXTREMA: Preço <4σ + Alta Volatilidade")
-        
-        # Alertas de tendência vs posição
-        if current_price > sup_2sigma and signals['trend_regime'] == 'Bear':
-            alerts.append("DIVERGÊNCIA: Preço alto mas tendência baixista")
-        elif current_price < inf_2sigma and signals['trend_regime'] == 'Bull':
-            alerts.append("DIVERGÊNCIA: Preço baixo mas tendência altista")
-        
-        signals['alerts'] = alerts
-        
-        # ===== SCORE DE OPORTUNIDADE (0-100) =====
-        opportunity_score = 50  # Base neutra
-        
-        # Ajustar baseado na zona
-        if current_price > sup_4sigma:
-            opportunity_score = 10  # Muito baixo - venda
-        elif current_price > sup_2sigma:
-            opportunity_score = 25  # Baixo - realizar lucros
-        elif current_price < inf_4sigma:
-            opportunity_score = 90  # Muito alto - compra
-        elif current_price < inf_2sigma:
-            opportunity_score = 75  # Alto - oportunidade
-        elif current_price > central:
-            opportunity_score = 40  # Ligeiramente baixo
-        else:
-            opportunity_score = 60  # Ligeiramente alto
-        
-        # Ajustar por volatilidade
-        if signals['vol_regime'] == 'High':
-            if opportunity_score > 50:
-                opportunity_score += 10  # Mais oportunidade em alta vol
-            else:
-                opportunity_score -= 10  # Mais risco em alta vol
-        
-        signals['opportunity_score'] = max(0, min(100, opportunity_score))
-        
-        # ===== VALIDAÇÃO IV (mantida) =====
-        try:
-            iv_analysis = self.iv_validator.validate_breakout(self.ticker, signals)
-            signals['iv_validation'] = iv_analysis
-        except Exception as e:
-            logging.error(f"Erro na validação IV: {e}")
-            signals['iv_validation'] = {
-                'score': 50, 'status': 'INDISPONÍVEL', 'status_emoji': '⚪',
-                'recommendation': 'Use apenas análise técnica',
-                'details': ['Dados IV indisponíveis']
-            }
-        
-        return signals
-    
-    def get_plot_data(self, days_back=180):
+   """Sistema de Bandas de Volatilidade Híbridas com Validação IV"""
+   
+   def __init__(self, ticker, period='2y', regime="M"): 
+       if not ticker.endswith('.SA') and not ticker.startswith('^'):
+           ticker = ticker + '.SA'
+           
+       self.ticker = ticker
+       self.ticker_display = ticker.replace('.SA', '')
+       self.period = period
+       self.regime = regime  
+       self.data = None  
+       self.df = None    
+       self.xgb_model = None
+       self.scaler = RobustScaler()
+       self.iv_validator = VolatilityValidator()
+           
+   def load_data(self):      
+       try:
+           ticker = self.ticker
+           
+           if not ticker.endswith('.SA') and not ticker.startswith('^'):
+               ticker = ticker + '.SA'
+           
+           # MESMO método de download com period fixo
+           self.df = yf.download(ticker, start=None, end=None, period='2y', interval='1d')
+           
+           # MESMO tratamento de colunas multinível
+           if hasattr(self.df.columns, 'get_level_values') and ticker in self.df.columns.get_level_values(1):
+               self.df = self.df.xs(ticker, axis=1, level=1)
+           
+           if self.df.empty:
+               logging.error(f"Nenhum dado encontrado para {ticker}")
+               return None
+           
+           self.df = self.df[(self.df['Open'] > 0) & 
+                       (self.df['High'] > 0) & 
+                       (self.df['Low'] > 0) & 
+                       (self.df['Close'] > 0)]
+       
+           self.df.reset_index(inplace=True)
+           self.df['Returns'] = self.df['Close'].pct_change()
+           self.df['Log_Returns'] = np.log(self.df['Close'] / self.df['Close'].shift(1))
+           self.df.dropna(inplace=True)
+           
+           logging.info(f"Dados carregados: {len(self.df)} registros de {self.df['Date'].iloc[0]} até {self.df['Date'].iloc[-1]}")
+           return self
+           
+       except Exception as e:
+           logging.error(f"Erro ao carregar dados: {e}")
+           raise
+   
+   def calculate_base_volatility(self):
+       try:
+           # Verificar se temos dados válidos para GARCH
+           returns_data = self.df['Log_Returns'].dropna() * 100
+           if len(returns_data) < 50:
+               raise ValueError("Dados insuficientes para modelo GARCH")
+           
+           garch_model = arch_model(returns_data, vol='Garch', p=1, q=1, dist='Normal')
+           garch_result = garch_model.fit(disp='off')
+           
+           # Ajustar o tamanho dos dados de volatilidade condicional
+           garch_vol = garch_result.conditional_volatility / 100
+           
+           # Garantir que o tamanho seja correto
+           if len(garch_vol) < len(self.df):
+               # Preencher valores iniciais com média
+               vol_mean = garch_vol.mean()
+               missing_count = len(self.df) - len(garch_vol)
+               garch_vol = np.concatenate([np.full(missing_count, vol_mean), garch_vol])
+           
+           self.df['garch_vol'] = garch_vol[:len(self.df)]
+           
+       except Exception as e:
+           logging.warning(f"GARCH falhou: {e}. Usando fallback com rolling std.")
+           # Fallback se GARCH falhar
+           self.df['garch_vol'] = self.df['Returns'].rolling(20, min_periods=5).std().fillna(0.02)
+       
+       # Calcular volatilidades realizadas
+       for window in [3, 5, 10, 20]:
+           self.df[f'realized_vol_{window}d'] = (
+               self.df['Returns'].rolling(window=window, min_periods=1)
+               .apply(lambda x: np.sqrt(np.sum(x**2)) if len(x) > 0 else 0.02)
+           )
+       return self
+   
+   def engineer_features(self):
+       df = self.df
+       
+       # Volatilidades de diferentes janelas
+       for window in [5, 10, 20, 60]:
+           df[f'vol_std_{window}d'] = df['Returns'].rolling(window, min_periods=1).std()
+       
+       # Features com lags
+       for lag in [1, 2, 5]:
+           df[f'garch_lag_{lag}'] = df['garch_vol'].shift(lag)
+           df[f'returns_lag_{lag}'] = df['Returns'].shift(lag)
+       
+       # Range diário
+       df['daily_range'] = (df['High'] - df['Low']) / df['Close']
+       df['price_momentum_5d'] = df['Close'] / df['Close'].shift(5) - 1
+       
+       # Volume
+       if 'Volume' in df.columns:
+           df['volume_ma_20'] = df['Volume'].rolling(20, min_periods=1).mean()
+           df['volume_ratio'] = df['Volume'] / df['volume_ma_20']
+           df['volume_ratio'].fillna(1, inplace=True)
+       else:
+           df['volume_ratio'] = 1
+       
+       # Regimes de tendência e volatilidade
+       df['sma_50'] = df['Close'].rolling(50, min_periods=1).mean()
+       df['sma_200'] = df['Close'].rolling(200, min_periods=1).mean()
+       df['trend_regime'] = np.where(df['sma_50'] > df['sma_200'], 1, 0)
+       df['vol_regime'] = np.where(df['garch_vol'] > df['garch_vol'].rolling(60, min_periods=1).mean(), 1, 0)
+       df['vol_percentile'] = df['garch_vol'].rolling(252, min_periods=20).rank(pct=True)
+       
+       # Preencher NaNs com métodos apropriados
+       numeric_columns = df.select_dtypes(include=[np.number]).columns
+       for col in numeric_columns:
+           if col in df.columns:
+               df[col].fillna(method='ffill', inplace=True)
+               df[col].fillna(method='bfill', inplace=True)
+               df[col].fillna(0, inplace=True)
+       
+       return self
+   
+   def train_xgboost(self):
+       feature_cols = [
+           'garch_lag_1', 'garch_lag_2', 'garch_lag_5',
+           'realized_vol_10d', 'realized_vol_20d', 'realized_vol_3d',
+           'vol_std_10d', 'vol_std_20d', 'vol_std_5d',
+           'vol_percentile', 'vol_regime', 'returns_lag_1',
+           'daily_range', 'price_momentum_5d', 'volume_ratio', 'trend_regime'
+       ]
+       
+       # Verificar se todas as features existem
+       available_features = [col for col in feature_cols if col in self.df.columns]
+       if len(available_features) < len(feature_cols) * 0.7:  # Pelo menos 70% das features
+           logging.warning(f"Poucas features disponíveis para XGBoost. Usando apenas volatilidade GARCH.")
+           self.df['xgb_vol'] = self.df['garch_vol']
+           return self
+       
+       df_ml = self.df[available_features + ['garch_vol']].copy()
+       df_ml.dropna(inplace=True)
+       
+       if len(df_ml) < 50:  # Reduzir requisito mínimo
+           logging.warning("Dados insuficientes para XGBoost. Usando apenas volatilidade GARCH.")
+           self.df['xgb_vol'] = self.df['garch_vol']
+           return self
+       
+       X = df_ml[available_features]
+       y = df_ml['garch_vol']
+       
+       X_scaled = self.scaler.fit_transform(X)
+       X_scaled = pd.DataFrame(X_scaled, columns=available_features, index=X.index)
+       
+       train_size = int(len(X_scaled) * 0.8)
+       X_train, X_test = X_scaled[:train_size], X_scaled[train_size:]
+       y_train, y_test = y[:train_size], y[train_size:]
+       
+       self.xgb_model = xgb.XGBRegressor(
+           n_estimators=100,  # Reduzir para datasets menores
+           max_depth=6,
+           learning_rate=0.1,
+           subsample=0.8,
+           colsample_bytree=0.8,
+           reg_alpha=0.1,
+           reg_lambda=0.1,
+           random_state=42,
+           verbosity=0
+       )
+       
+       self.xgb_model.fit(X_train, y_train)
+       xgb_pred = self.xgb_model.predict(X_test)
+       
+       self.df['xgb_vol'] = self.df['garch_vol']  # Inicializar com garch
+       test_indices = df_ml.index[train_size:]
+       self.df.loc[test_indices, 'xgb_vol'] = xgb_pred
+       
+       return self
+   
+   def create_hybrid_model(self):
+       df = self.df
+       
+       # Configurar janelas baseado no regime
+       if self.regime == 'D':
+           adaptive_window = 5
+           mean_window = 21
+       elif self.regime == 'W':
+           adaptive_window = 10
+           mean_window = 50
+       elif self.regime == 'M':
+           adaptive_window = 30
+           mean_window = 252
+       else:  # 'Y'
+           adaptive_window = 60
+           mean_window = 504
+       
+       df['vol_regime_adaptive'] = df['garch_vol'].rolling(adaptive_window, min_periods=5).std()
+       df['vol_regime_normalized'] = (
+           df['vol_regime_adaptive'] / df['vol_regime_adaptive'].rolling(mean_window, min_periods=20).mean()
+       )
+       df['vol_regime_normalized'].fillna(1.0, inplace=True)
+       
+       # ===== PESOS ESPECÍFICOS POR REGIME =====
+       if self.regime == 'D':
+           # DIÁRIO: Mais peso no GARCH (reação rápida)
+           base_garch = 0.7
+           variacao = 0.2
+           df['weight_garch'] = np.clip(
+               base_garch + variacao * (df['vol_regime_normalized'] - 1), 
+               0.5, 0.8
+           )
+           
+       elif self.regime == 'W':
+           # SEMANAL: Equilibrado entre GARCH e XGB
+           base_garch = 0.5
+           variacao = 0.3
+           df['weight_garch'] = np.clip(
+               base_garch + variacao * (df['vol_regime_normalized'] - 1), 
+               0.3, 0.7
+           )
+           
+       elif self.regime == 'M':
+           # MENSAL: Mais peso no XGB (padrões de longo prazo)
+           base_garch = 0.4
+           variacao = 0.3
+           df['weight_garch'] = np.clip(
+               base_garch + variacao * (df['vol_regime_normalized'] - 1), 
+               0.2, 0.6
+           )
+           
+       else:  # 'Y' - ANUAL
+           # ANUAL: Muito mais peso no XGB (machine learning para longo prazo)
+           base_garch = 0.3
+           variacao = 0.2
+           df['weight_garch'] = np.clip(
+               base_garch + variacao * (df['vol_regime_normalized'] - 1), 
+               0.2, 0.5
+           )
+       
+       df['weight_xgb'] = 1 - df['weight_garch']
+       
+       # Criar modelo híbrido com pesos específicos do regime
+       df['hybrid_vol'] = (
+           df['weight_garch'] * df['garch_vol'] + 
+           df['weight_xgb'] * df['xgb_vol']
+       )
+       
+       # Garantir que não temos valores nulos ou muito pequenos
+       df['hybrid_vol'].fillna(df['garch_vol'], inplace=True)
+       df['hybrid_vol'].fillna(0.02, inplace=True)
+       df['hybrid_vol'] = np.maximum(df['hybrid_vol'], 0.001)  # Mínimo de 0.1%
+       
+       return self
+   
+   def create_bands(self):
+       df_temp = self.df.copy()
+       df_temp['reference_price'] = np.nan
+       df_temp['period_vol'] = np.nan
+       
+       # Garantir que temos a coluna Date como datetime
+       if 'Date' not in df_temp.columns:
+           df_temp.reset_index(inplace=True)
+       df_temp['Date'] = pd.to_datetime(df_temp['Date'])
+       
+       # LÓGICA CORRETA POR REGIME (igual ao primeiro código)
+       if self.regime == 'D':  # DIÁRIO
+           # DIÁRIO: Atualiza TODOS OS DIAS
+           df_temp['reference_price'] = df_temp['Close']
+           df_temp['period_vol'] = df_temp['hybrid_vol']
+           
+       elif self.regime == 'W':  # SEMANAL
+           # SEMANAL: Trava na SEGUNDA-FEIRA e mantém a semana toda
+           df_temp['Week'] = df_temp['Date'].dt.to_period('W-MON')
+           
+           # Para cada semana, pega o primeiro dia útil (segunda-feira)
+           weekly_reference = df_temp.groupby('Week').agg({
+               'Close': 'first',     # Preço da segunda-feira
+               'hybrid_vol': 'first' # Vol da segunda-feira
+           }).reset_index()
+           weekly_reference.columns = ['Week', 'week_price', 'week_vol']
+           
+           # Merge para aplicar o mesmo valor para toda a semana
+           df_temp = df_temp.merge(weekly_reference, on='Week', how='left')
+           df_temp['reference_price'] = df_temp['week_price']
+           df_temp['period_vol'] = df_temp['week_vol']
+           
+       elif self.regime == 'M':  # MENSAL
+           # MENSAL: Trava no PRIMEIRO DIA ÚTIL e mantém o mês todo
+           df_temp['Month'] = df_temp['Date'].dt.to_period('M')
+           
+           # Para cada mês, pega o primeiro dia útil
+           monthly_reference = df_temp.groupby('Month').agg({
+               'Close': 'first',     # Preço do 1º dia útil
+               'hybrid_vol': 'first' # Vol do 1º dia útil
+           }).reset_index()
+           monthly_reference.columns = ['Month', 'month_price', 'month_vol']
+           
+           # Merge para aplicar o mesmo valor para todo o mês
+           df_temp = df_temp.merge(monthly_reference, on='Month', how='left')
+           df_temp['reference_price'] = df_temp['month_price']
+           df_temp['period_vol'] = df_temp['month_vol']
+           
+       elif self.regime == 'Y':  # ANUAL
+           # ANUAL: Trava no PRIMEIRO DIA ÚTIL DO ANO e mantém o ano todo
+           df_temp['Year'] = df_temp['Date'].dt.year
+           
+           # Para cada ano, pega o primeiro dia útil
+           yearly_reference = df_temp.groupby('Year').agg({
+               'Close': 'first',     # Preço do 1º dia útil do ano
+               'hybrid_vol': 'first' # Vol do 1º dia útil do ano
+           }).reset_index()
+           yearly_reference.columns = ['Year', 'year_price', 'year_vol']
+           
+           # Merge para aplicar o mesmo valor para todo o ano
+           df_temp = df_temp.merge(yearly_reference, on='Year', how='left')
+           df_temp['reference_price'] = df_temp['year_price']
+           df_temp['period_vol'] = df_temp['year_vol']
+       
+       else:
+           # Fallback para regime 'M' (mensal) se não reconhecer
+           df_temp['Month'] = df_temp['Date'].dt.to_period('M')
+           monthly_reference = df_temp.groupby('Month').agg({
+               'Close': 'first',
+               'hybrid_vol': 'first'
+           }).reset_index()
+           monthly_reference.columns = ['Month', 'month_price', 'month_vol']
+           df_temp = df_temp.merge(monthly_reference, on='Month', how='left')
+           df_temp['reference_price'] = df_temp['month_price']
+           df_temp['period_vol'] = df_temp['month_vol']
+       
+       # Preencher valores ausentes (fallback)
+       df_temp['period_vol'].fillna(method='ffill', inplace=True)
+       df_temp['reference_price'].fillna(method='ffill', inplace=True)
+       df_temp['period_vol'].fillna(self.df['hybrid_vol'].mean(), inplace=True)
+       df_temp['reference_price'].fillna(self.df['Close'], inplace=True)
+       
+       # Multiplicadores para diferenciação visual das bandas
+       regime_multiplier = {
+           'D': 0.5,    # Bandas mais estreitas (oscila todo dia)
+           'W': 0.75,   # Bandas intermediárias (oscila toda semana)
+           'M': 1.0,    # Bandas padrão (oscila todo mês)
+           'Y': 1.5     # Bandas mais largas (oscila todo ano)
+       }
+       
+       multiplier = regime_multiplier.get(self.regime, 1.0)
+       
+       # Criar as bandas com base na linha central TRAVADA
+       for d in [2, 4]:
+           self.df[f'banda_superior_{d}sigma'] = (
+               df_temp['reference_price'] * (1 + d * df_temp['period_vol'] * multiplier)
+           )
+           self.df[f'banda_inferior_{d}sigma'] = (
+               df_temp['reference_price'] * (1 - d * df_temp['period_vol'] * multiplier)
+           )
+       
+       self.df['linha_central'] = df_temp['reference_price']
+       
+       # Preencher valores ausentes nas bandas
+       band_columns = ['banda_superior_2sigma', 'banda_inferior_2sigma', 'linha_central', 
+                      'banda_superior_4sigma', 'banda_inferior_4sigma']
+       
+       for col in band_columns:
+           if col in self.df.columns:
+               self.df[col].fillna(method='ffill', inplace=True)
+               self.df[col].fillna(method='bfill', inplace=True)
+               # Se ainda temos NaNs, usar preço atual com volatilidade padrão
+               if self.df[col].isna().any():
+                   vol_fallback = 0.02
+                   multiplier_calc = 2 if '2sigma' in col else 4 if '4sigma' in col else 1
+                   if 'superior' in col:
+                       self.df[col].fillna(self.df['Close'] * (1 + multiplier_calc * vol_fallback), inplace=True)
+                   elif 'inferior' in col:
+                       self.df[col].fillna(self.df['Close'] * (1 - multiplier_calc * vol_fallback), inplace=True)
+                   else:  # linha_central
+                       self.df[col].fillna(self.df['Close'], inplace=True)
+       
+       return self
+   
+   def get_current_signals(self):
+       """Sinais atuais de trading COM validação IV e lógica expandida de 4σ"""
+       latest = self.df.iloc[-1]
+       current_price = latest['Close']
+       
+       def safe_get(col_name, fallback_value):
+           value = latest[col_name] if not pd.isna(latest[col_name]) else fallback_value
+           return value
+       
+       vol_fallback = latest['garch_vol'] if not pd.isna(latest['garch_vol']) else 0.02
+       
+       signals = {
+           'price': float(current_price),
+           'volatility': float(latest['hybrid_vol'] if not pd.isna(latest['hybrid_vol']) else vol_fallback),
+           'trend_regime': 'Bull' if latest['trend_regime'] == 1 else 'Bear',
+           'vol_regime': 'High' if latest['vol_regime'] == 1 else 'Low',
+           'bandas': {
+               'superior_2σ': float(safe_get('banda_superior_2sigma', current_price * (1 + 2 * vol_fallback))),
+               'inferior_2σ': float(safe_get('banda_inferior_2sigma', current_price * (1 - 2 * vol_fallback))),
+               'superior_4σ': float(safe_get('banda_superior_4sigma', current_price * (1 + 4 * vol_fallback))),
+               'inferior_4σ': float(safe_get('banda_inferior_4sigma', current_price * (1 - 4 * vol_fallback))),
+               'linha_central': float(safe_get('linha_central', current_price))
+           }
+       }
+       
+       # ===== LÓGICA EXPANDIDA COM 4 DESVIOS =====
+       sup_4sigma = signals['bandas']['superior_4σ']
+       sup_2sigma = signals['bandas']['superior_2σ']
+       central = signals['bandas']['linha_central']
+       inf_2sigma = signals['bandas']['inferior_2σ']
+       inf_4sigma = signals['bandas']['inferior_4σ']
+       
+       # Calcular distâncias percentuais para melhor análise
+       dist_4sup = ((current_price - sup_4sigma) / sup_4sigma) * 100 if sup_4sigma > 0 else 0
+       dist_2sup = ((current_price - sup_2sigma) / sup_2sigma) * 100 if sup_2sigma > 0 else 0
+       dist_central = ((current_price - central) / central) * 100 if central > 0 else 0
+       dist_2inf = ((current_price - inf_2sigma) / inf_2sigma) * 100 if inf_2sigma > 0 else 0
+       dist_4inf = ((current_price - inf_4sigma) / inf_4sigma) * 100 if inf_4sigma > 0 else 0
+       
+       # CLASSIFICAÇÃO DETALHADA
+       if current_price > sup_4sigma:
+           # ===== ZONA EXTREMA SUPERIOR (>4σ) =====
+           signals['position'] = '🔴 ZONA EXTREMA - Acima Banda 4σ'
+           signals['position_detail'] = 'SOBRECOMPRADO EXTREMO'
+           signals['risk_level'] = 'MUITO ALTO'
+           signals['action_suggestion'] = 'VENDA IMEDIATA ou HEDGE URGENTE'
+           signals['probability_reversal'] = 'MUITO ALTA (>80%)'
+           signals['zone_color'] = '🔴'
+           signals['zone_name'] = 'DANGER ZONE'
+           
+       elif current_price > sup_2sigma:
+           # ===== ZONA SUPERIOR (2σ - 4σ) =====
+           signals['position'] = '🟠 ZONA ALTA - Acima Banda 2σ'
+           signals['position_detail'] = 'SOBRECOMPRADO FORTE'
+           signals['risk_level'] = 'ALTO'
+           signals['action_suggestion'] = 'REALIZAR LUCROS ou REDUZIR POSIÇÃO'
+           signals['probability_reversal'] = 'ALTA (60-80%)'
+           signals['zone_color'] = '🟠'
+           signals['zone_name'] = 'OVERBOUGHT ZONE'
+           
+       elif current_price > central:
+           # ===== ZONA SUPERIOR NEUTRA (Central - 2σ) =====
+           signals['position'] = '🟡 METADE SUPERIOR - Bullish'
+           signals['position_detail'] = 'TENDÊNCIA ALTA SAUDÁVEL'
+           signals['risk_level'] = 'MODERADO'
+           signals['action_suggestion'] = 'MANTER POSIÇÃO ou COMPRA PARCIAL'
+           signals['probability_reversal'] = 'BAIXA (20-40%)'
+           signals['zone_color'] = '🟡'
+           signals['zone_name'] = 'BULLISH ZONE'
+           
+       elif current_price > inf_2sigma:
+           # ===== ZONA INFERIOR NEUTRA (2σ inf - Central) =====
+           signals['position'] = '🟡 METADE INFERIOR - Bearish'
+           signals['position_detail'] = 'TENDÊNCIA BAIXA CONTROLADA'
+           signals['risk_level'] = 'MODERADO'
+           signals['action_suggestion'] = 'AGUARDAR ou COMPRA GRADUAL'
+           signals['probability_reversal'] = 'BAIXA (20-40%)'
+           signals['zone_color'] = '🟡'
+           signals['zone_name'] = 'BEARISH ZONE'
+           
+       elif current_price > inf_4sigma:
+           # ===== ZONA INFERIOR (4σ inf - 2σ inf) =====
+           signals['position'] = '🟢 ZONA BAIXA - Abaixo Banda 2σ'
+           signals['position_detail'] = 'SOBREVENDIDO FORTE'
+           signals['risk_level'] = 'ALTO'
+           signals['action_suggestion'] = 'OPORTUNIDADE DE COMPRA'
+           signals['probability_reversal'] = 'ALTA (60-80%)'
+           signals['zone_color'] = '🟢'
+           signals['zone_name'] = 'OVERSOLD ZONE'
+           
+       else:
+           # ===== ZONA EXTREMA INFERIOR (<4σ) =====
+           signals['position'] = '🟢 ZONA EXTREMA - Abaixo Banda 4σ'
+           signals['position_detail'] = 'SOBREVENDIDO EXTREMO'
+           signals['risk_level'] = 'MUITO ALTO'
+           signals['action_suggestion'] = 'COMPRA AGRESSIVA ou CONTRARIAN PLAY'
+           signals['probability_reversal'] = 'MUITO ALTA (>80%)'
+           signals['zone_color'] = '🟢'
+           signals['zone_name'] = 'FIRE SALE ZONE'
+       
+       # ===== MÉTRICAS ADICIONAIS =====
+       signals['distance_metrics'] = {
+           'dist_4sigma_sup': round(dist_4sup, 2),
+           'dist_2sigma_sup': round(dist_2sup, 2),
+           'dist_central': round(dist_central, 2),
+           'dist_2sigma_inf': round(dist_2inf, 2),
+           'dist_4sigma_inf': round(dist_4inf, 2)
+       }
+       
+       # ===== ALERTAS ESPECIAIS =====
+       alerts = []
+       
+       # Alertas para zona extrema
+       if abs(dist_4sup) < 2 and current_price < sup_4sigma:
+           alerts.append("PRÓXIMO DA BANDA 4σ SUPERIOR - Prepare para reversão")
+       elif abs(dist_4inf) < 2 and current_price > inf_4sigma:
+           alerts.append("PRÓXIMO DA BANDA 4σ INFERIOR - Oportunidade se aproximando")
+       
+       # Alertas de momentum
+       if current_price > sup_4sigma and signals['vol_regime'] == 'High':
+           alerts.append("RISCO EXTREMO: Preço >4σ + Alta Volatilidade")
+       elif current_price < inf_4sigma and signals['vol_regime'] == 'High':
+           alerts.append("OPORTUNIDADE EXTREMA: Preço <4σ + Alta Volatilidade")
+       
+       # Alertas de tendência vs posição
+       if current_price > sup_2sigma and signals['trend_regime'] == 'Bear':
+           alerts.append("DIVERGÊNCIA: Preço alto mas tendência baixista")
+       elif current_price < inf_2sigma and signals['trend_regime'] == 'Bull':
+           alerts.append("DIVERGÊNCIA: Preço baixo mas tendência altista")
+       
+       signals['alerts'] = alerts
+       
+       # ===== SCORE DE OPORTUNIDADE (0-100) =====
+       opportunity_score = 50  # Base neutra
+       
+       # Ajustar baseado na zona
+       if current_price > sup_4sigma:
+           opportunity_score = 10  # Muito baixo - venda
+       elif current_price > sup_2sigma:
+           opportunity_score = 25  # Baixo - realizar lucros
+       elif current_price < inf_4sigma:
+           opportunity_score = 90  # Muito alto - compra
+       elif current_price < inf_2sigma:
+           opportunity_score = 75  # Alto - oportunidade
+       elif current_price > central:
+           opportunity_score = 40  # Ligeiramente baixo
+       else:
+           opportunity_score = 60  # Ligeiramente alto
+       
+       # Ajustar por volatilidade
+       if signals['vol_regime'] == 'High':
+           if opportunity_score > 50:
+               opportunity_score += 10  # Mais oportunidade em alta vol
+           else:
+               opportunity_score -= 10  # Mais risco em alta vol
+       
+       signals['opportunity_score'] = max(0, min(100, opportunity_score))
+       
+       # ===== VALIDAÇÃO IV (mantida) =====
+       try:
+           iv_analysis = self.iv_validator.validate_breakout(self.ticker, signals)
+           signals['iv_validation'] = iv_analysis
+       except Exception as e:
+           logging.error(f"Erro na validação IV: {e}")
+           signals['iv_validation'] = {
+               'score': 50, 'status': 'INDISPONÍVEL', 'status_emoji': '⚪',
+               'recommendation': 'Use apenas análise técnica',
+               'details': ['Dados IV indisponíveis']
+           }
+       
+       return signals
+   
+   def get_plot_data(self, days_back=180):
         """Preparar dados para o gráfico frontend"""
         df_plot = self.df.tail(days_back).copy()
         
@@ -1333,7 +1444,7 @@ class BandasProService:
                    ('BEARISH' in flow_sentiment and 'Inferior' in bands_position):
                     recommendation = "🚀 SINAL FORTE: Rompimento confiável confirmado pelo flow"
                 else:
-                    recommendation = "📊 MOVIMENTO CONFIÁVEL: IV confirma rompimento genuíno"
+                    recommendation = " MOVIMENTO CONFIÁVEL: IV confirma rompimento genuíno"
             elif iv_score < 40:
                 if ('BEARISH' in flow_sentiment and 'Superior' in bands_position) or \
                    ('BULLISH' in flow_sentiment and 'Inferior' in bands_position):

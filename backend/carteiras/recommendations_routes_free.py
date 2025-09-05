@@ -426,7 +426,7 @@ def close_recommendation(rec_id):
         final_price = data.get('final_price')
         
         print(f"🔄 Encerrando recomendação {rec_id}")
-        print(f"📊 Status: {status}")
+        print(f" Status: {status}")
         print(f"💰 Preço final: {final_price} (tipo: {type(final_price)})")
         
         from database import get_db_connection
@@ -463,7 +463,7 @@ def close_recommendation(rec_id):
         else:  # VENDA
             performance = ((entry_price_float - final_price_float) / entry_price_float * 100)
         
-        print(f"📈 Performance calculada: {performance}%")
+        print(f" Performance calculada: {performance}%")
         
         # Atualizar recomendação - USANDO VALORES CONVERTIDOS
         cursor.execute("""

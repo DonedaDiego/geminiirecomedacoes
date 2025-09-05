@@ -76,7 +76,7 @@ class VolatilityImpliedService:
         try:
             ticker_yf = f"{ticker}.SA" if not ticker.endswith('.SA') else ticker
             
-            print(f"📈 Buscando preço do ativo: {ticker_yf}")
+            print(f" Buscando preço do ativo: {ticker_yf}")
             stock = yf.Ticker(ticker_yf)
             hist = stock.history(start=from_date, end=to_date)
             
@@ -96,7 +96,7 @@ class VolatilityImpliedService:
         if not data:
             return pd.DataFrame()
         
-        print("📊 Processando dados das opções...")
+        print(" Processando dados das opções...")
         df = pd.DataFrame(data)
         
         print(f"Colunas disponíveis: {df.columns.tolist()}")
@@ -142,7 +142,7 @@ class VolatilityImpliedService:
         if price_data is None or price_data.empty:
             return pd.Series(), None
         
-        print(f"📊 Calculando volatilidade histórica (janela: {window} dias)")
+        print(f" Calculando volatilidade histórica (janela: {window} dias)")
         
         returns = np.log(price_data['Close'] / price_data['Close'].shift(1))
         vol_hist = returns.rolling(window=window).std() * np.sqrt(252) * 100
@@ -155,7 +155,7 @@ class VolatilityImpliedService:
         if df.empty:
             return pd.DataFrame()
         
-        print("📊 Agregando métricas diárias...")
+        print(" Agregando métricas diárias...")
         
         agg_dict = {}
         
@@ -240,7 +240,7 @@ class VolatilityImpliedService:
             q2 = iv_values.quantile(0.50)  # Mediana
             q3 = iv_values.quantile(0.75)
             
-            print(f"📊 Quartis IV: Q1={q1:.1f}%, Q2={q2:.1f}%, Q3={q3:.1f}%")
+            print(f" Quartis IV: Q1={q1:.1f}%, Q2={q2:.1f}%, Q3={q3:.1f}%")
             
             # Calcular sinal baseado na posição da VI atual nos quartis
             signal_list = []
@@ -362,7 +362,7 @@ class VolatilityImpliedService:
                     put_values = daily_metrics['iv_put'].dropna()
                     if len(put_values) > 0:
                         iv_put_mean = float(put_values.mean())
-                        print(f"📉 VI Puts média: {iv_put_mean:.1f}%")
+                        print(f" VI Puts média: {iv_put_mean:.1f}%")
             
             # Análise do sentimento baseada na diferença calls/puts
             sentiment_analysis = self.analyze_calls_puts_sentiment(iv_call_mean, iv_put_mean)
@@ -388,7 +388,7 @@ class VolatilityImpliedService:
             }
             
             
-            print(f"📊 Resumo: VI Calls {iv_call_mean:.1f}% vs VI Puts {iv_put_mean:.1f}%")
+            print(f" Resumo: VI Calls {iv_call_mean:.1f}% vs VI Puts {iv_put_mean:.1f}%")
             
             return result
             
@@ -540,7 +540,7 @@ class VolatilityImpliedService:
         if df.empty:
             return pd.DataFrame()
         
-        print("📊 Agregando métricas diárias...")
+        print(" Agregando métricas diárias...")
         
         agg_dict = {}
         

@@ -295,7 +295,7 @@ def close_opcoes_recommendation_service(recommendation_id, status, resultado_fin
                 # ✅ GARANTIR QUE AMBOS SÃO FLOAT
                 resultado_final_float = float(resultado_final)
                 performance = ((resultado_final_float - valor_entrada_float) / valor_entrada_float) * 100
-                print(f"📊 Performance calculada: {performance:.2f}%")
+                print(f" Performance calculada: {performance:.2f}%")
             except (ValueError, ZeroDivisionError) as calc_error:
                 print(f"❌ Erro no cálculo da performance: {calc_error}")
                 performance = 0.0

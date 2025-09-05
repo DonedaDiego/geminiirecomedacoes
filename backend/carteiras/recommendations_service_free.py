@@ -128,7 +128,7 @@ class RecommendationsServiceFree:
         else:
             score -= 3  # Tendência de baixa confirmada
         
-        # 📊 RSI para confirmar (5 pontos)
+        #  RSI para confirmar (5 pontos)
         if 40 < last_row['RSI'] < 60:  # Zona neutra
             score += 2
         elif last_row['RSI'] < 35:  # Oversold + cruzamento = forte compra
@@ -136,7 +136,7 @@ class RecommendationsServiceFree:
         elif last_row['RSI'] > 65:  # Overbought + cruzamento = forte venda
             score -= 3
         
-        # 📈 Volume confirmação (3 pontos)
+        #  Volume confirmação (3 pontos)
         avg_volume = df['Volume'].rolling(window=20).mean().iloc[-1]
         if last_row['Volume'] > avg_volume * 1.5:
             score += 3  # Volume confirma o movimento
