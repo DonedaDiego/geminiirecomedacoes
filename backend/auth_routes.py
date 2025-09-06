@@ -127,7 +127,7 @@ def register():
                 print(f" IP {user_ip}: {confirmed_users_count} usuários confirmados, {recent_registrations} registros na última hora")
                 
                 # Regra 1: Máximo 3 usuários confirmados por IP
-                if confirmed_users_count >= 3:
+                if confirmed_users_count >= 10:
                     cursor.close()
                     conn.close()
                     return jsonify({
