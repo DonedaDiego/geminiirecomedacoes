@@ -28,7 +28,7 @@ class Config:
     
     # API OpLab
     OPLAB_API_TOKEN = os.getenv('OPLAB_API_TOKEN', 
-        "jeOTw9JanmDhlxReKlF2QwHM4Q3mNVlU3SpNENZUNIxTk24drRqdordyijyeNlfZ--bbybBgsEprbusre2drjwfA==--M2M3ZGFiNDk5ZTRhNzU3M2MxNWE3ZmJkMjcwZjQyNGE=")
+        "7gMd+LaFRJ6u6bmjgv9gxeGd5fAc6EHtpM4UoQ41tLivobEa4YTd5dA9xi00s/yd--NJ1uhr4hX+m6KeMsjdVfog==--ZTMyNzIyMjM3OGIxYThmN2YzNzdmZmYzOTZjY2RhYzc=")
     OPLAB_BASE_URL = "https://api.oplab.com.br/v3"
     
     # Configurações de Trading
