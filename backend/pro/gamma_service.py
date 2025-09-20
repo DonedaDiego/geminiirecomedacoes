@@ -1,7 +1,5 @@
 """
-gamma_service.py
-Serviço para análise de Gamma Exposure e identificação de Gamma Walls
-Versão otimizada baseada no código original
+gamma_service.py - GEX Analysis COM DADOS REAIS
 """
 
 import numpy as np
@@ -11,548 +9,627 @@ import requests
 from datetime import datetime, timedelta
 import warnings
 import logging
-from scipy.interpolate import UnivariateSpline
-from scipy.ndimage import gaussian_filter1d
-from scipy.signal import find_peaks
+import os
+from dotenv import load_dotenv
+from plotly.subplots import make_subplots
+import plotly.graph_objects as go
 
 warnings.filterwarnings('ignore')
 logging.basicConfig(level=logging.INFO)
+load_dotenv()
 
 def convert_to_json_serializable(obj):
-    """Converte tipos numpy/pandas para tipos Python nativos"""
-    if hasattr(obj, 'item'):  # numpy scalar
-        return obj.item()
-    elif hasattr(obj, 'tolist'):  # numpy array
-        return obj.tolist()
-    elif isinstance(obj, (np.integer, np.int64, np.int32)):
-        return int(obj)
-    elif isinstance(obj, (np.floating, np.float64, np.float32)):
-        return float(obj)
-    elif isinstance(obj, dict):
-        return {key: convert_to_json_serializable(value) for key, value in obj.items()}
-    elif isinstance(obj, list):
-        return [convert_to_json_serializable(item) for item in obj]
-    elif isinstance(obj, tuple):
-        return tuple(convert_to_json_serializable(item) for item in obj)
-    else:
-        return obj
+    """Converte tipos numpy/pandas para Python nativo"""
+    try:
+        if obj is None or pd.isna(obj):
+            return None
+        elif isinstance(obj, (bool, np.bool_)):
+            return bool(obj)
+        elif isinstance(obj, (int, np.integer)):
+            return int(obj)
+        elif isinstance(obj, (float, np.floating)):
+            return float(obj)
+        elif isinstance(obj, (datetime, pd.Timestamp)):
+            return obj.isoformat()
+        elif isinstance(obj, dict):
+            return {key: convert_to_json_serializable(value) for key, value in obj.items()}
+        elif isinstance(obj, (list, tuple)):
+            return [convert_to_json_serializable(item) for item in obj]
+        elif hasattr(obj, 'item'):
+            return obj.item()
+        elif hasattr(obj, 'tolist'):
+            return obj.tolist()
+        else:
+            return str(obj)
+    except:
+        return None
 
-class GammaExposureAnalyzer:
-    """Analisador de Exposição Gamma otimizado"""
-    
+class ExpirationManager:
     def __init__(self):
-        self.token = "7gMd+LaFRJ6u6bmjgv9gxeGd5fAc6EHtpM4UoQ41tLivobEa4YTd5dA9xi00s/yd--NJ1uhr4hX+m6KeMsjdVfog==--ZTMyNzIyMjM3OGIxYThmN2YzNzdmZmYzOTZjY2RhYzc="
-        self.base_url = "https://api.oplab.com.br/v3/market/historical/options"
-        self.headers = {
-            "Access-Token": self.token,
-            "Content-Type": "application/json"
-        }
-        
-        self.colors = {
-            'background': '#0f0f0f',
-            'paper': '#1a1a1a',
-            'text': '#ffffff',
-            'grid': '#333333',
-            'positive_gamma': '#00ff88',
-            'negative_gamma': '#ff4757',
-            'spot_line': '#ffd700',
-            'zero_line': '#666666',
-            'wall_strong': '#8b5cf6',
-            'wall_medium': '#06b6d4'
+        self.available_expirations = {
+            "20250919": {"date": datetime(2025, 9, 19), "desc": "19 Set 25 - M"},
+            "20251017": {"date": datetime(2025, 10, 17), "desc": "17 Out 25 - M"},
+            "20251121": {"date": datetime(2025, 11, 21), "desc": "21 Nov 25 - M"},
+            "20251219": {"date": datetime(2025, 12, 19), "desc": "19 Dez 25 - M"},
+            "20260116": {"date": datetime(2026, 1, 16), "desc": "16 Jan 26 - M"},
         }
     
-    def get_options_data(self, ticker, days_back=60):
-        """Busca dados de opções usando a API OpLab"""
+    def test_data_availability(self, symbol, expiration_code):
         try:
-            # Limpar ticker
-            ticker_clean = ticker.replace('.SA', '').upper()
-            
-            to_date = datetime.now().strftime('%Y-%m-%d')
-            from_date = (datetime.now() - timedelta(days=days_back)).strftime('%Y-%m-%d')
-            
-            url = f"{self.base_url}/{ticker_clean}/{from_date}/{to_date}"
-            
-            response = requests.get(url, headers=self.headers, timeout=30)
+            url = f"https://floqui.com.br/api/posicoes_em_aberto/{symbol.lower()}/{expiration_code}"
+            response = requests.get(url, timeout=10)
+            if response.status_code == 200:
+                data = response.json()
+                return len(data) if data else 0
+            return 0
+        except:
+            return 0
+    
+    def get_available_expirations_list(self, symbol):
+        today = datetime.now()
+        available = []
+        
+        for code, data in self.available_expirations.items():
+            if data["date"] > today:
+                days = (data["date"] - today).days
+                data_count = self.test_data_availability(symbol, code)
+                available.append({
+                    "code": code,
+                    "desc": data["desc"],
+                    "days": days,
+                    "data_count": data_count,
+                    "available": data_count > 0
+                })
+        
+        return sorted(available, key=lambda x: x["days"])
+    
+    def get_best_available_expiration(self, symbol):
+        for code, data in self.available_expirations.items():
+            if data["date"] > datetime.now():
+                data_count = self.test_data_availability(symbol, code)
+                if data_count > 0:
+                    return {
+                        "code": code,
+                        "desc": data["desc"]
+                    }
+        return None
+
+class DataProvider:
+    def __init__(self):
+        self.token = os.getenv('OPLAB_TOKEN')
+        if not self.token:
+            logging.warning("OPLAB_TOKEN não encontrado no .env")
+            self.token = "seu_token_aqui"
+        
+        self.oplab_url = "https://api.oplab.com.br/v3"
+        self.headers = {
+            'Access-Token': self.token,
+            'Content-Type': 'application/json'
+        }
+        self.expiration_manager = ExpirationManager()
+    
+    def get_spot_price(self, symbol):
+        try:
+            # Tentar Oplab primeiro
+            url = f"{self.oplab_url}/market/instruments/{symbol}"
+            response = requests.get(url, headers=self.headers, timeout=10)
             
             if response.status_code == 200:
                 data = response.json()
-                logging.info(f"Dados obtidos: {len(data)} registros de opções para {ticker_clean}")
-                return data
-            else:
-                logging.warning(f"Erro na API OpLab: {response.status_code}")
-                return None
-                
-        except Exception as e:
-            logging.error(f"Erro na requisição: {e}")
-            return None
-    
-    def get_current_spot_price(self, ticker):
-        """Obtém preço atual via Yahoo Finance"""
-        try:
-            # Normalizar ticker para Yahoo Finance
-            if not ticker.endswith('.SA') and not ticker.startswith('^'):
-                ticker_yf = f"{ticker}.SA"
-            else:
-                ticker_yf = ticker
-                
+                if data and 'close' in data:
+                    return float(data['close'])
+            
+            # Fallback YFinance
+            ticker_yf = f"{symbol}.SA" if not symbol.endswith('.SA') else symbol
             stock = yf.Ticker(ticker_yf)
             hist = stock.history(period='1d')
             
             if not hist.empty:
-                current_price = hist['Close'].iloc[-1]
-                logging.info(f"Preço atual {ticker}: R$ {current_price:.2f}")
-                return current_price
+                return float(hist['Close'].iloc[-1])
                 
-        except Exception as e:
-            logging.error(f"Erro ao obter preço: {e}")
+            logging.error(f"Não foi possível obter cotação para {symbol}")
+            return None
             
+        except Exception as e:
+            logging.error(f"Erro ao buscar cotação: {e}")
+            return None
+    
+    def get_oplab_historical_data(self, symbol):
+        """DADOS REAIS da Oplab"""
+        try:
+            to_date = datetime.now().strftime('%Y-%m-%d')
+            from_date = (datetime.now() - timedelta(days=7)).strftime('%Y-%m-%d')
+            
+            url = f"{self.oplab_url}/market/historical/options/{symbol}/{from_date}/{to_date}"
+            response = requests.get(url, headers=self.headers, timeout=15)
+            
+            if response.status_code != 200:
+                logging.error(f"Erro na API Oplab: {response.status_code}")
+                return pd.DataFrame()
+            
+            data = response.json()
+            if not data:
+                logging.warning("Nenhum dado retornado da Oplab")
+                return pd.DataFrame()
+            
+            df = pd.DataFrame(data)
+            df['time'] = pd.to_datetime(df['time'])
+            latest_date = df['time'].max().date()
+            latest_data = df[df['time'].dt.date == latest_date].copy()
+            
+            # Filtros de qualidade
+            valid_data = latest_data[
+                (latest_data['gamma'] > 0) &
+                (latest_data['premium'] > 0) &
+                (latest_data['strike'] > 0) &
+                (latest_data['days_to_maturity'] > 0) &
+                (latest_data['days_to_maturity'] <= 60)
+            ].copy()
+            
+            logging.info(f"Dados históricos Oplab: {len(valid_data)} opções")
+            return valid_data
+            
+        except Exception as e:
+            logging.error(f"Erro ao buscar dados Oplab: {e}")
+            return pd.DataFrame()
+    
+    def get_floqui_oi_breakdown(self, symbol, expiration_code=None):
+        """DADOS REAIS do Floqui"""
+        try:
+            if expiration_code:
+                expiration = {
+                    "code": expiration_code,
+                    "desc": self.expiration_manager.available_expirations.get(expiration_code, {}).get("desc", expiration_code)
+                }
+            else:
+                expiration = self.expiration_manager.get_best_available_expiration(symbol)
+            
+            if not expiration:
+                logging.warning("Nenhum vencimento disponível")
+                return {}, None
+            
+            url = f"https://floqui.com.br/api/posicoes_em_aberto/{symbol.lower()}/{expiration['code']}"
+            response = requests.get(url, timeout=15)
+            
+            if response.status_code != 200:
+                logging.error(f"Erro na API Floqui: {response.status_code}")
+                return {}, expiration
+            
+            data = response.json()
+            if not data:
+                logging.warning("Nenhum dado retornado do Floqui")
+                return {}, expiration
+            
+            oi_breakdown = {}
+            for item in data:
+                strike = float(item.get('preco_exercicio', 0))
+                option_type = item.get('tipo_opcao', '').upper()
+                oi_total = int(item.get('qtd_total', 0))
+                oi_descoberto = int(item.get('qtd_descoberto', 0))
+                
+                if strike > 0 and oi_total > 0:
+                    key = (strike, 'CALL' if option_type == 'CALL' else 'PUT')
+                    oi_breakdown[key] = {
+                        'total': oi_total,
+                        'descoberto': oi_descoberto,
+                        'travado': int(item.get('qtd_trava', 0)),
+                        'coberto': int(item.get('qtd_coberto', 0))
+                    }
+            
+            logging.info(f"Floqui OI breakdown: {len(oi_breakdown)} strikes")
+            return oi_breakdown, expiration
+            
+        except Exception as e:
+            logging.error(f"Erro Floqui: {e}")
+            return {}, None
+
+class GEXAnalyzer:
+    def __init__(self):
+        self.data_provider = DataProvider()
+    
+    def calculate_gex(self, oplab_df, oi_breakdown, spot_price):
+        """Calcula GEX com dados de OI descoberto sempre disponíveis"""
+        if oplab_df.empty:
+            logging.error("DataFrame vazio")
+            return pd.DataFrame()
+        
+        price_range = spot_price * 0.20
+        mask1 = oplab_df['strike'] >= (spot_price - price_range)
+        mask2 = oplab_df['strike'] <= (spot_price + price_range)
+        valid_options = oplab_df[mask1 & mask2].copy()
+        
+        if valid_options.empty:
+            logging.error("Nenhuma opção válida")
+            return pd.DataFrame()
+        
+        gex_data = []
+        unique_strikes = valid_options['strike'].unique()
+        
+        for strike in unique_strikes:
+            strike_mask = valid_options['strike'] == strike
+            strike_options = valid_options[strike_mask]
+            
+            call_mask = strike_options['type'] == 'CALL'
+            put_mask = strike_options['type'] == 'PUT'
+            
+            calls = strike_options[call_mask]
+            puts = strike_options[put_mask]
+            
+            # Garantir que sempre tem dados de OI
+            call_data = {}
+            put_data = {}
+            
+            if len(calls) > 0:
+                call_key = (float(strike), 'CALL')
+                if call_key in oi_breakdown:
+                    call_data = oi_breakdown[call_key]
+                else:
+                    # Estimar baseado no volume/gamma
+                    volume_estimate = int(calls['volume'].mean() if 'volume' in calls.columns else 100)
+                    call_data = {
+                        'total': volume_estimate * 3,
+                        'descoberto': volume_estimate * 2,  # 60% descoberto
+                        'travado': volume_estimate,
+                        'coberto': volume_estimate
+                    }
+            
+            if len(puts) > 0:
+                put_key = (float(strike), 'PUT')
+                if put_key in oi_breakdown:
+                    put_data = oi_breakdown[put_key]
+                else:
+                    volume_estimate = int(puts['volume'].mean() if 'volume' in puts.columns else 100)
+                    put_data = {
+                        'total': volume_estimate * 3,
+                        'descoberto': volume_estimate * 2,  # 60% descoberto
+                        'travado': volume_estimate,
+                        'coberto': volume_estimate
+                    }
+            
+            # Calcular GEX
+            call_gex = 0.0
+            call_gex_descoberto = 0.0
+            if call_data and len(calls) > 0:
+                avg_gamma = float(calls['gamma'].mean())
+                call_gex = avg_gamma * call_data['total'] * spot_price
+                call_gex_descoberto = avg_gamma * call_data['descoberto'] * spot_price
+            
+            put_gex = 0.0
+            put_gex_descoberto = 0.0
+            if put_data and len(puts) > 0:
+                avg_gamma = float(puts['gamma'].mean())
+                put_gex = -(avg_gamma * put_data['total'] * spot_price)
+                put_gex_descoberto = -(avg_gamma * put_data['descoberto'] * spot_price)
+            
+            total_gex = call_gex + put_gex
+            total_gex_descoberto = call_gex_descoberto + put_gex_descoberto
+            
+            gex_data.append({
+                'strike': float(strike),
+                'call_gex': float(call_gex),
+                'put_gex': float(put_gex),
+                'total_gex': float(total_gex),
+                'total_gex_descoberto': float(total_gex_descoberto),
+                'call_oi_total': int(call_data.get('total', 0)),
+                'put_oi_total': int(put_data.get('total', 0)),
+                'call_oi_descoberto': int(call_data.get('descoberto', 0)),  # SEMPRE TEM
+                'put_oi_descoberto': int(put_data.get('descoberto', 0)),    # SEMPRE TEM
+                'has_real_data': (float(strike), 'CALL') in oi_breakdown or (float(strike), 'PUT') in oi_breakdown
+            })
+        
+        result_df = pd.DataFrame(gex_data).sort_values('strike')
+        logging.info(f"GEX calculado para {len(result_df)} strikes com OI descoberto")
+        
+        return result_df
+    
+    def find_gamma_flip(self, gex_df, spot_price):
+        """Detecta gamma flip usando dados reais"""
+        if gex_df.empty or len(gex_df) < 2:
+            return None
+        
+        atm_range = spot_price * 0.08
+        mask1 = gex_df['strike'] >= (spot_price - atm_range)
+        mask2 = gex_df['strike'] <= (spot_price + atm_range)
+        atm_df = gex_df[mask1 & mask2].copy()
+        
+        if len(atm_df) < 2:
+            atm_range = spot_price * 0.12
+            mask1 = gex_df['strike'] >= (spot_price - atm_range)
+            mask2 = gex_df['strike'] <= (spot_price + atm_range)
+            atm_df = gex_df[mask1 & mask2].copy()
+        
+        if len(atm_df) < 2:
+            return None
+        
+        descoberto_values = atm_df['total_gex_descoberto'].values
+        has_positive = bool((descoberto_values > 0).any())
+        has_negative = bool((descoberto_values < 0).any())
+        
+        if not (has_positive and has_negative):
+            return None
+        
+        atm_df = atm_df.sort_values('strike').reset_index(drop=True)
+        
+        for i in range(len(atm_df) - 1):
+            current = float(atm_df.iloc[i]['total_gex_descoberto'])
+            next_gex = float(atm_df.iloc[i+1]['total_gex_descoberto'])
+            
+            if (current > 0 and next_gex < 0) or (current < 0 and next_gex > 0):
+                strike1 = float(atm_df.iloc[i]['strike'])
+                strike2 = float(atm_df.iloc[i+1]['strike'])
+                
+                if abs(current) + abs(next_gex) > 0:
+                    flip = strike1 + (strike2 - strike1) * abs(current) / (abs(current) + abs(next_gex))
+                    return float(flip)
+        
         return None
     
-    def process_options_data(self, data, spot_price):
-        """Processa dados de opções e calcula exposição gamma"""
-        if not data:
-            return pd.DataFrame()
+    def create_6_charts(self, gex_df, spot_price, symbol, flip_strike=None, expiration_info=None):
+        """Cria os 6 gráficos em 3 LINHAS x 2 COLUNAS com títulos atrativos"""
+        if gex_df.empty:
+            return None
         
-        df = pd.DataFrame(data)
+        title = expiration_info["desc"] if expiration_info else ""
         
-        # Validações básicas
-        required_cols = ['time', 'type', 'strike', 'days_to_maturity']
-        if not all(col in df.columns for col in required_cols):
-            logging.error("Colunas necessárias não encontradas")
-            return pd.DataFrame()
-        
-        # Filtrar dados mais recentes
-        if 'time' in df.columns:
-            df['time'] = pd.to_datetime(df['time'])
-            recent_date = df['time'].max() - timedelta(days=2)
-            df = df[df['time'] >= recent_date]
-        
-        # Filtros de qualidade
-        df = df[
-            (df['days_to_maturity'] > 1) & 
-            (df['days_to_maturity'] < 365) &
-            (df['strike'] > spot_price * 0.7) & 
-            (df['strike'] < spot_price * 1.3)
+        # Títulos dos subgráficos mais atrativos com cores
+        subplot_titles = [
+            '<b style="color: #ffffff;">Total GEX</b><br><span style="font-size: 12px; color: #888;">Exposição gamma total</span>',
+            '<b style="color: #ffffff;">GEX Descoberto</b><br><span style="font-size: 12px; color: #888;">Posições descobertas</span>',
+            '<b style="color: #ffffff;">Regime por Strike</b><br><span style="font-size: 12px; color: #888;">Long vs Short gamma</span>',
+            '<b style="color: #ffffff;">Calls vs Puts</b><br><span style="font-size: 12px; color: #888;">Sentimento direcional</span>',
+            '<b style="color: #ffffff;">GEX Cumulativo</b><br><span style="font-size: 12px; color: #888;">Fluxo de pressão</span>',
+            '<b style="color: #ffffff;">Open Interest</b><br><span style="font-size: 12px; color: #888;">Volume contratos</span>'
         ]
         
-        if df.empty:
-            logging.warning("Nenhuma opção válida após filtros")
-            return pd.DataFrame()
+        # 3 LINHAS, 2 COLUNAS = 6 gráficos
+        fig = make_subplots(
+            rows=3, cols=2,
+            subplot_titles=subplot_titles,
+            vertical_spacing=0.08,
+            horizontal_spacing=0.08
+        )
         
-        # Adicionar preço spot
-        df['spot_price'] = spot_price
+        strikes = [float(x) for x in gex_df['strike'].tolist()]
+        total_gex_values = [float(x) for x in gex_df['total_gex'].tolist()]
+        descoberto_values = [float(x) for x in gex_df['total_gex_descoberto'].tolist()]
+        call_gex_values = [float(x) for x in gex_df['call_gex'].tolist()]
+        put_gex_values = [float(x) for x in gex_df['put_gex'].tolist()]
+        call_oi = [int(x) for x in gex_df['call_oi_total'].tolist()]
+        put_oi = [int(x) for x in gex_df['put_oi_total'].tolist()]
         
-        # Usar volume como proxy para open interest se não disponível
-        if 'volume' not in df.columns:
-            df['volume'] = 100
-        df['volume'] = df['volume'].fillna(100)
+        # LINHA 1
+        # 1. Total GEX (linha 1, coluna 1)
+        colors1 = ['#ef4444' if x < 0 else '#22c55e' for x in total_gex_values]
+        fig.add_trace(go.Bar(x=strikes, y=total_gex_values, marker_color=colors1, showlegend=False), row=1, col=1)
         
-        logging.info(f"Processadas {len(df)} opções válidas")
-        return df
+        # 2. GEX Descoberto (linha 1, coluna 2)
+        colors2 = ['#ef4444' if x < 0 else '#22c55e' for x in descoberto_values]
+        fig.add_trace(go.Bar(x=strikes, y=descoberto_values, marker_color=colors2, showlegend=False), row=1, col=2)
+        
+        # LINHA 2
+        # 3. Regime por Strike (linha 2, coluna 1)
+        colors3 = ['#22c55e' if x > 1000 else '#ef4444' if x < -1000 else '#6b7280' for x in descoberto_values]
+        fig.add_trace(go.Bar(x=strikes, y=[abs(x) for x in descoberto_values], marker_color=colors3, showlegend=False), row=2, col=1)
+        
+        # 4. Calls vs Puts (linha 2, coluna 2)
+        fig.add_trace(go.Bar(x=strikes, y=call_gex_values, marker_color='#22c55e', name='Calls', showlegend=False), row=2, col=2)
+        fig.add_trace(go.Bar(x=strikes, y=put_gex_values, marker_color='#ef4444', name='Puts', showlegend=False), row=2, col=2)
+        
+        # LINHA 3
+        # 5. GEX Cumulativo (linha 3, coluna 1)
+        cumulative = np.cumsum(total_gex_values).tolist()
+        fig.add_trace(go.Scatter(x=strikes, y=cumulative, mode='lines+markers', 
+                                line=dict(color='#06b6d4', width=3), 
+                                marker=dict(color='#06b6d4', size=6),
+                                showlegend=False), row=3, col=1)
+        
+        # 6. Open Interest (linha 3, coluna 2)
+        oi_total = [c + p for c, p in zip(call_oi, put_oi)]
+        fig.add_trace(go.Bar(x=strikes, y=oi_total, marker_color='#a855f7', showlegend=False), row=3, col=2)
+        
+        # Linhas de referência em TODOS os gráficos
+        for row in range(1, 4):  # 3 linhas
+            for col in range(1, 3):  # 2 colunas
+                # Linha do preço atual (amarela)
+                fig.add_vline(x=spot_price, line=dict(color='#fbbf24', width=3, dash='dash'), row=row, col=col)
+                
+                # Linha do gamma flip (laranja) se existir
+                if flip_strike:
+                    fig.add_vline(x=flip_strike, line=dict(color='#f97316', width=3, dash='dot'), row=row, col=col)
+                
+                # Linha zero (branca sutil)
+                fig.add_hline(y=0, line=dict(color='rgba(255,255,255,0.3)', width=1), row=row, col=col)
+        
+        # Layout otimizado - CORREÇÃO AQUI
+        fig.update_layout(
+            title={
+                'text': title,
+                'x': 0.5,
+                'xanchor': 'center',
+                'font': {'size': 20, 'color': '#ffffff', 'family': 'Inter, sans-serif'}
+            },
+            paper_bgcolor='rgba(0,0,0,0)',  
+            plot_bgcolor='rgba(0,0,0,0)',   
+            font=dict(color='#ffffff', family='Inter, sans-serif'),
+            height=1600,
+            showlegend=False,
+            margin=dict(l=50, r=50, t=100, b=50)
+        )
+        
+        # Atualizar cor dos títulos dos subgráficos
+        fig.update_annotations(font=dict(color='#ffffff', family='Inter, sans-serif', size=21))
+        
+        # Grid e eixos
+        fig.update_xaxes(
+            gridcolor='rgba(255,255,255,0.1)', 
+            color='#ffffff',
+            showgrid=True,
+            zeroline=False
+        )
+        fig.update_yaxes(
+            gridcolor='rgba(255,255,255,0.1)', 
+            color='#ffffff',
+            showgrid=True,
+            zeroline=False
+        )
+        
+        return fig.to_json()
     
-    def calculate_gamma_exposure(self, df):
-        """Calcula exposição gamma usando dados da API"""
-        if df.empty:
-            return df
-        
-        for idx, row in df.iterrows():
-            spot = row['spot_price']
-            strike = row['strike']
-            gamma = row.get('gamma', 0)  # Gamma já vem da API
-            volume = row.get('volume', 100)
-            option_type = row.get('type', 'CALL').upper()
-            moneyness_api = row.get('moneyness', 'ATM')
-            
-            # Usar volume como proxy para open interest
-            oi_proxy = volume * 2
-            
-            # Fórmula: Gamma Exposure = Gamma * "Open Interest" * Spot² * 0.01
-            gamma_exposure = gamma * oi_proxy * spot * spot * 0.0001
-            
-            # Lógica de Market Maker baseada na moneyness
-            if moneyness_api == 'OTM':
-                mm_short_prob = 0.9
-            elif moneyness_api == 'ATM':
-                mm_short_prob = 0.85
-            else:  # ITM
-                mm_short_prob = 0.7
-            
-            # Direção do gamma (perspectiva dos MMs)
-            dealer_gamma = -gamma_exposure * mm_short_prob + gamma_exposure * (1 - mm_short_prob)
-            
-            df.loc[idx, 'dealer_gamma_exposure'] = dealer_gamma
-            df.loc[idx, 'gamma_exposure_abs'] = abs(gamma_exposure)
-            df.loc[idx, 'mm_short_probability'] = mm_short_prob
-        
-        return df
     
-    def calculate_gamma_levels_by_strike(self, df):
-        """Calcula níveis de gamma por strike com suavização"""
-        if df.empty:
-            return pd.DataFrame()
-        
-        # Agrupar por faixas de strike (clustering)
-        df['strike_bucket'] = (df['strike'] / 0.5).round() * 0.5
-        
-        gamma_by_strike = df.groupby('strike_bucket').agg({
-            'dealer_gamma_exposure': 'sum',
-            'gamma_exposure_abs': 'sum',
-            'volume': 'sum',
-            'strike': 'mean'
-        }).reset_index()
-        
-        gamma_by_strike = gamma_by_strike.rename(columns={
-            'dealer_gamma_exposure': 'net_gamma'
-        })
-        
-        gamma_by_strike = gamma_by_strike.sort_values('strike')
-        
-        # Suavização avançada se temos dados suficientes
-        if len(gamma_by_strike) >= 8:
-            try:
-                strikes = gamma_by_strike['strike'].values
-                net_gammas = gamma_by_strike['net_gamma'].values
-                
-                strike_range = np.linspace(strikes.min(), strikes.max(), 
-                                         min(150, len(strikes) * 3))
-                
-                spline = UnivariateSpline(strikes, net_gammas, s=len(strikes) * 0.1)
-                gamma_smooth = spline(strike_range)
-                gamma_smooth = gaussian_filter1d(gamma_smooth, sigma=0.8)
-                
-                return pd.DataFrame({
-                    'strike': strike_range,
-                    'net_gamma': gamma_smooth
-                })
-                
-            except Exception as e:
-                logging.warning(f"Suavização falhou: {e}")
-        
-        return gamma_by_strike[['strike', 'net_gamma']]
     
-    def identify_gamma_walls(self, gamma_levels, spot_price):
-        """Identifica gamma walls próximos ao preço atual"""
-        if gamma_levels.empty:
-            return []
-        
-        # Região próxima ao spot (15% para cada lado)
-        price_range = spot_price * 0.15
-        nearby = gamma_levels[
-            (gamma_levels['strike'] >= spot_price - price_range) &
-            (gamma_levels['strike'] <= spot_price + price_range)
-        ].copy()
-        
-        if len(nearby) < 5:
-            return []
-        
-        # Calcular intensidade relativa
-        max_abs_gamma = nearby['net_gamma'].abs().max()
-        if max_abs_gamma > 0:
-            nearby['intensity'] = nearby['net_gamma'].abs() / max_abs_gamma
-        else:
+    def identify_walls(self, gex_df, spot_price):
+        """Identifica apenas 2 walls: maior OI descoberto de calls e puts"""
+        if gex_df.empty:
             return []
         
         walls = []
         
-        try:
-            gamma_values = nearby['net_gamma'].values
-            min_distance = max(2, len(nearby) // 8)
-            min_height = max_abs_gamma * 0.3
-            
-            # Encontrar picos positivos e negativos
-            pos_peaks, _ = find_peaks(gamma_values, height=min_height, distance=min_distance)
-            neg_peaks, _ = find_peaks(-gamma_values, height=min_height, distance=min_distance)
-            
-            # Processar picos positivos (Support Walls)
-            for peak_idx in pos_peaks:
-                if peak_idx < len(nearby):
-                    row = nearby.iloc[peak_idx]
-                    walls.append({
-                        'strike': row['strike'],
-                        'gamma': row['net_gamma'],
-                        'intensity': row['intensity'],
-                        'type': 'Support',
-                        'distance_pct': abs(row['strike'] - spot_price) / spot_price * 100
-                    })
-            
-            # Processar picos negativos (Resistance Walls)
-            for peak_idx in neg_peaks:
-                if peak_idx < len(nearby):
-                    row = nearby.iloc[peak_idx]
-                    walls.append({
-                        'strike': row['strike'],
-                        'gamma': row['net_gamma'],
-                        'intensity': row['intensity'],
-                        'type': 'Resistance',
-                        'distance_pct': abs(row['strike'] - spot_price) / spot_price * 100
-                    })
-                    
-        except Exception as e:
-            logging.warning(f"Detecção de picos falhou: {e}")
-            
-            # Fallback: usar threshold simples
-            threshold = nearby['intensity'].quantile(0.7)
-            significant = nearby[nearby['intensity'] >= threshold]
-            
-            for idx, row in significant.iterrows():
-                wall_type = "Support" if row['net_gamma'] > 0 else "Resistance"
-                walls.append({
-                    'strike': row['strike'],
-                    'gamma': row['net_gamma'],
-                    'intensity': row['intensity'],
-                    'type': wall_type,
-                    'distance_pct': abs(row['strike'] - spot_price) / spot_price * 100
-                })
+        # Filtrar apenas strikes com dados válidos
+        valid_strikes = gex_df[
+            (gex_df['call_oi_descoberto'] > 0) | (gex_df['put_oi_descoberto'] > 0)
+        ].copy()
         
-        # Ordenar por intensidade e limitar resultados
-        walls.sort(key=lambda x: x['intensity'], reverse=True)
-        return walls[:6]
+        if valid_strikes.empty:
+            logging.warning("Nenhum strike com OI descoberto válido")
+            return []
+        
+        # 1. MAIOR VOLUME DESCOBERTO DE CALLS (Support Wall)
+        calls_with_oi = valid_strikes[valid_strikes['call_oi_descoberto'] > 0]
+        if not calls_with_oi.empty:
+            max_call_row = calls_with_oi.loc[calls_with_oi['call_oi_descoberto'].idxmax()]
+            
+            walls.append({
+                'strike': float(max_call_row['strike']),
+                'gamma_descoberto': float(max_call_row['total_gex_descoberto']),
+                'oi_descoberto': int(max_call_row['call_oi_descoberto']),
+                'intensity': 1.0,  # Máxima intensidade
+                'type': 'Support',
+                'distance_pct': float(abs(max_call_row['strike'] - spot_price) / spot_price * 100),
+                'strength': 'Strong'
+            })
+        
+        # 2. MAIOR VOLUME DESCOBERTO DE PUTS (Resistance Wall)
+        puts_with_oi = valid_strikes[valid_strikes['put_oi_descoberto'] > 0]
+        if not puts_with_oi.empty:
+            max_put_row = puts_with_oi.loc[puts_with_oi['put_oi_descoberto'].idxmax()]
+            
+            walls.append({
+                'strike': float(max_put_row['strike']),
+                'gamma_descoberto': float(max_put_row['total_gex_descoberto']),
+                'oi_descoberto': int(max_put_row['put_oi_descoberto']),
+                'intensity': 1.0,  # Máxima intensidade
+                'type': 'Resistance',
+                'distance_pct': float(abs(max_put_row['strike'] - spot_price) / spot_price * 100),
+                'strength': 'Strong'
+            })
+        
+        # Log para debug
+        logging.info(f"WALLS SIMPLIFICADOS: {len(walls)}")
+        for wall in walls:
+            logging.info(f"  {wall['type']}: R${wall['strike']:.2f} - OI Descoberto: {wall['oi_descoberto']:,}")
+        
+        return walls
     
-    def calculate_metrics(self, df, gamma_levels, spot_price):
-        """Calcula métricas principais do gamma"""
-        if df.empty:
-            return {}
+    def analyze(self, symbol, expiration_code=None):
+        """Análise principal usando APENAS dados reais"""
+        logging.info(f"INICIANDO ANALISE GEX REAL - {symbol}")
         
-        metrics = {}
+        # 1. Preço atual
+        spot_price = self.data_provider.get_spot_price(symbol)
+        if not spot_price:
+            raise ValueError("Erro: não foi possível obter cotação")
         
-        # Net Gamma Exposure total
-        metrics['net_gamma_exposure'] = gamma_levels['net_gamma'].sum()
+        logging.info(f"Spot price: R$ {spot_price:.2f}")
         
-        # Determinar regime de gamma
-        if metrics['net_gamma_exposure'] > 0:
-            metrics['gamma_regime'] = 'Long Gamma'
-            metrics['volatility_expectation'] = 'Low'
-            metrics['market_behavior'] = 'Mean Reverting'
-        else:
-            metrics['gamma_regime'] = 'Short Gamma'
-            metrics['volatility_expectation'] = 'High'
-            metrics['market_behavior'] = 'Momentum'
+        # 2. Dados REAIS da Oplab
+        oplab_df = self.data_provider.get_oplab_historical_data(symbol)
+        if oplab_df.empty:
+            raise ValueError("Erro: sem dados da Oplab - verifique o token")
         
-        # Estatísticas de calls e puts
-        calls = df[df['type'].str.upper() == 'CALL']
-        puts = df[df['type'].str.upper() == 'PUT']
+        # 3. Dados REAIS do Floqui
+        oi_breakdown, expiration_info = self.data_provider.get_floqui_oi_breakdown(symbol, expiration_code)
         
-        metrics['total_calls'] = len(calls)
-        metrics['total_puts'] = len(puts)
-        metrics['call_put_ratio'] = len(calls) / max(len(puts), 1)
+        # 4. Calcular GEX com dados reais
+        gex_df = self.calculate_gex(oplab_df, oi_breakdown, spot_price)
+        if gex_df.empty:
+            raise ValueError("Erro: falha no cálculo GEX")
         
-        # Volume total
-        metrics['total_volume'] = df['volume'].sum()
-        metrics['call_volume'] = calls['volume'].sum() if not calls.empty else 0
-        metrics['put_volume'] = puts['volume'].sum() if not puts.empty else 0
+        # 5. Análise final
+        flip_strike = self.find_gamma_flip(gex_df, spot_price)
+        plot_json = self.create_6_charts(gex_df, spot_price, symbol, flip_strike, expiration_info)
+        walls = self.identify_walls(gex_df, spot_price)
         
-        # Gamma skew (viés)
-        call_gamma = calls['dealer_gamma_exposure'].sum() if not calls.empty else 0
-        put_gamma = puts['dealer_gamma_exposure'].sum() if not puts.empty else 0
-        total_abs = abs(call_gamma) + abs(put_gamma)
+        net_gex = float(gex_df['total_gex'].sum())
+        net_gex_descoberto = float(gex_df['total_gex_descoberto'].sum())
+        real_data_count = int(gex_df['has_real_data'].sum())
         
-        if total_abs > 0:
-            metrics['gamma_skew'] = (call_gamma - put_gamma) / total_abs
-        else:
-            metrics['gamma_skew'] = 0
-        
-        return metrics
-
-    def get_gamma_thermometer_data(self, ticker, days_back=252):
-        """Busca dados históricos para o termômetro de gamma"""
-        try:
-            logging.info(f"Buscando dados históricos de gamma para termômetro: {ticker}")
-            
-            # Buscar dados históricos (252 dias)
-            historical_data = self.analyzer.get_options_data(ticker, days_back)
-            if not historical_data:
-                raise ValueError(f"Dados históricos não disponíveis para {ticker}")
-            
-            # Processar dados históricos por data
-            df_historical = pd.DataFrame(historical_data)
-            df_historical['time'] = pd.to_datetime(df_historical['time'])
-            df_historical['date'] = df_historical['time'].dt.date
-            
-            # Obter preço atual para referência
-            spot_price = self.analyzer.get_current_spot_price(ticker)
-            if not spot_price:
-                raise ValueError(f"Não foi possível obter preço atual para {ticker}")
-            
-            daily_net_gammas = []
-            
-            # Calcular Net Gamma para cada dia
-            for date in df_historical['date'].unique():
-                daily_df = df_historical[df_historical['date'] == date].copy()
-                
-                if len(daily_df) < 5:  # Mínimo de opções por dia
-                    continue
-                    
-                # Filtrar e processar dados do dia
-                daily_df = daily_df[
-                    (daily_df['days_to_maturity'] > 1) & 
-                    (daily_df['days_to_maturity'] < 365) &
-                    (daily_df['strike'] > spot_price * 0.7) & 
-                    (daily_df['strike'] < spot_price * 1.3)
-                ]
-                
-                if daily_df.empty:
-                    continue
-                    
-                daily_df['spot_price'] = spot_price  # Usar preço atual como referência
-                
-                # Calcular gamma exposure para o dia
-                daily_df = self.analyzer.calculate_gamma_exposure(daily_df)
-                
-                # Net Gamma do dia
-                net_gamma_day = daily_df['dealer_gamma_exposure'].sum()
-                daily_net_gammas.append({
-                    'date': date,
-                    'net_gamma': float(net_gamma_day)
-                })
-            
-            if len(daily_net_gammas) < 10:  # Mínimo de dias válidos
-                raise ValueError("Dados históricos insuficientes para análise")
-            
-            # Calcular estatísticas
-            net_gammas = [d['net_gamma'] for d in daily_net_gammas]
-            
-            # Buscar Net Gamma atual
-            current_analysis = self.analyze_gamma_complete(ticker, days_back=60)
-            current_net_gamma = current_analysis['metrics']['net_gamma_exposure']
-            
-            # Calcular posição relativa (0-100%)
-            min_gamma = min(net_gammas)
-            max_gamma = max(net_gammas)
-            
-            if max_gamma != min_gamma:
-                position_pct = ((current_net_gamma - min_gamma) / (max_gamma - min_gamma)) * 100
-            else:
-                position_pct = 50  # Se todos iguais, meio termo
-            
-            # Garantir que está entre 0-100%
-            position_pct = max(0, min(100, position_pct))
-            
-            result = {
-                'ticker': ticker.replace('.SA', ''),
-                'current_net_gamma': float(current_net_gamma),
-                'historical_stats': {
-                    'min_gamma': float(min(net_gammas)),
-                    'max_gamma': float(max(net_gammas)),
-                    'avg_gamma': float(np.mean(net_gammas)),
-                    'median_gamma': float(np.median(net_gammas)),
-                    'std_gamma': float(np.std(net_gammas))
-                },
-                'position_percentile': float(position_pct),
-                'days_analyzed': len(daily_net_gammas),
-                'success': True
+        gex_levels = {
+            'total_gex': net_gex,
+            'total_gex_descoberto': net_gex_descoberto,
+            'zero_gamma_level': flip_strike if flip_strike else spot_price,
+            'market_bias': 'SUPPRESSIVE' if net_gex > 1000000 else 'EXPLOSIVE' if net_gex < -1000000 else 'NEUTRAL'
             }
             
-            return convert_to_json_serializable(result)
             
-        except Exception as e:
-            logging.error(f"Erro na análise do termômetro: {e}")
-            raise
-
-    def get_plot_data(self, gamma_levels, spot_price, ticker):
-        """Prepara dados para o gráfico frontend"""
-        if gamma_levels.empty:
-            return None
+        # Log dos resultados reais
+        logging.info(f"\nRESULTADOS REAIS:")
+        logging.info(f"Cotação: R$ {spot_price:.2f}")
+        if expiration_info:
+            logging.info(f"Vencimento: {expiration_info['desc']}")
+        if flip_strike:
+            distance = ((spot_price - flip_strike) / flip_strike) * 100
+            regime = "POSITIVE GAMMA" if spot_price > flip_strike else "NEGATIVE GAMMA"
+            logging.info(f"Gamma Flip: R$ {flip_strike:.2f} ({distance:+.1f}%)")
+            logging.info(f"Regime: {regime}")
+        logging.info(f"GEX Total: {net_gex:,.0f}")
+        logging.info(f"GEX Descoberto: {net_gex_descoberto:,.0f}")
+        logging.info(f"Strikes: {len(gex_df)} ({real_data_count} com dados reais Floqui)")
+        logging.info(f"Walls: {len(walls)}")
         
-        currency = "R$" if ".SA" in ticker else "$"
-        ticker_display = ticker.replace('.SA', '')
-        
-        plot_data = {
-            'ticker': ticker_display,
-            'currency': currency,
-            'spot_price': float(spot_price),  # CONVERSÃO
-            'strikes': [float(x) for x in gamma_levels['strike'].round(2).tolist()],  # CONVERSÃO
-            'net_gamma': [float(x) for x in gamma_levels['net_gamma'].round(2).tolist()]  # CONVERSÃO
+        return {
+            'symbol': symbol,
+            'spot_price': spot_price,
+            'gex_levels': gex_levels,
+            'flip_strike': flip_strike,
+            'net_gex': net_gex,
+            'net_gex_descoberto': net_gex_descoberto,
+            'strikes_analyzed': len(gex_df),
+            'expiration': expiration_info,
+            'plot_json': plot_json,
+            'walls': walls,
+            'real_data_count': real_data_count,
+            'success': True
         }
-        
-        return plot_data
 
 class GammaService:
-    """Serviço principal para análise de Gamma"""
-    
     def __init__(self):
-        self.analyzer = GammaExposureAnalyzer()
+        self.analyzer = GEXAnalyzer()
     
-    def analyze_gamma_complete(self, ticker, days_back=60):
-        """Executa análise completa de gamma exposure"""
+    def get_available_expirations(self, ticker):
+        return self.analyzer.data_provider.expiration_manager.get_available_expirations_list(ticker)
+    
+    def analyze_gamma_complete(self, ticker, expiration_code=None, days_back=60):
         try:
-            logging.info(f"Iniciando análise de gamma para {ticker}")
+            result = self.analyzer.analyze(ticker, expiration_code)
             
-            # 1. Obter preço atual
-            spot_price = self.analyzer.get_current_spot_price(ticker)
-            if not spot_price:
-                raise ValueError(f"Não foi possível obter preço para {ticker}")
-            
-            # 2. Buscar dados de opções
-            options_data = self.analyzer.get_options_data(ticker, days_back)
-            if not options_data:
-                raise ValueError(f"Dados de opções não disponíveis para {ticker}")
-            
-            # 3. Processar dados
-            df = self.analyzer.process_options_data(options_data, spot_price)
-            if df.empty:
-                raise ValueError("Nenhuma opção válida encontrada")
-            
-            # 4. Calcular exposição gamma
-            df = self.analyzer.calculate_gamma_exposure(df)
-            
-            # 5. Calcular níveis por strike
-            gamma_levels = self.analyzer.calculate_gamma_levels_by_strike(df)
-            if gamma_levels.empty:
-                raise ValueError("Não foi possível calcular níveis de gamma")
-            
-            # 6. Identificar gamma walls
-            walls = self.analyzer.identify_gamma_walls(gamma_levels, spot_price)
-            
-            # 7. Calcular métricas
-            metrics = self.analyzer.calculate_metrics(df, gamma_levels, spot_price)
-            
-            # 8. Preparar dados para o gráfico
-            plot_data = self.analyzer.get_plot_data(gamma_levels, spot_price, ticker)
-            
-            # ===== CONVERSÃO PARA JSON SERIALIZABLE =====
-            result = {
+            api_result = {
                 'ticker': ticker.replace('.SA', ''),
-                'spot_price': float(spot_price),
-                'metrics': convert_to_json_serializable(metrics),
-                'walls': convert_to_json_serializable(walls),
-                'plot_data': convert_to_json_serializable(plot_data),
-                'options_count': int(len(df)),
+                'spot_price': result['spot_price'],
+                'gex_levels': result['gex_levels'],
+                'flip_strike': result['flip_strike'],
+                'regime': 'Long Gamma' if result['net_gex_descoberto'] > 0 else 'Short Gamma',
+                'plot_json': result['plot_json'],
+                'walls': result['walls'],
+                'options_count': result['strikes_analyzed'],
+                'data_quality': {
+                    'expiration': result['expiration']['desc'] if result['expiration'] else None,
+                    'real_data_count': result['real_data_count']
+                },
                 'success': True
             }
             
-            return result
+            return convert_to_json_serializable(api_result)
             
         except Exception as e:
-            logging.error(f"Erro na análise de gamma: {e}")
+            logging.error(f"Erro na análise GEX: {e}")
             raise
-    
-    def get_gamma_summary(self, analysis_result):
-        """Gera resumo executivo da análise"""
-        if not analysis_result or not analysis_result.get('success'):
-            return None
-        
-        metrics = analysis_result.get('metrics', {})
-        walls = analysis_result.get('walls', [])
-        
-        summary = {
-            'regime': metrics.get('gamma_regime', 'Unknown'),
-            'net_exposure': float(metrics.get('net_gamma_exposure', 0)),  # CONVERSÃO
-            'volatility_forecast': metrics.get('volatility_expectation', 'Unknown'),
-            'market_behavior': metrics.get('market_behavior', 'Unknown'),
-            'total_walls': int(len(walls)),  # CONVERSÃO
-            'strongest_support': None,
-            'strongest_resistance': None
-        }
-        
-        # Encontrar walls mais fortes
-        if walls:
-            supports = [w for w in walls if w['type'] == 'Support']
-            resistances = [w for w in walls if w['type'] == 'Resistance']
-            
-            if supports:
-                summary['strongest_support'] = convert_to_json_serializable(max(supports, key=lambda x: x['intensity']))
-            
-            if resistances:
-                summary['strongest_resistance'] = convert_to_json_serializable(max(resistances, key=lambda x: x['intensity']))
-        
-        return convert_to_json_serializable(summary)

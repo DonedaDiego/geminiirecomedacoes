@@ -21,6 +21,9 @@ from pro.vi_routes import get_vi_blueprint
 from pro.vol_regimes_routes import vol_regimes_bp
 from pro.regimes_volatilidade_routes import regimes_bp
 from pro.gamma_routes import get_gamma_blueprint
+from pro.delta_routes import get_delta_blueprint
+from pro.vega_routes import get_vega_blueprint
+from pro.theta_routes import get_theta_blueprint
 
 # Premium
 from premium.swing_trade_ml_routes import get_swing_trade_ml_blueprint
@@ -111,7 +114,37 @@ except Exception as e:
 app.register_blueprint(beta_bp)
 app.register_blueprint(opcoes_bp)
 
-# RSL
+
+
+# TEX
+try:
+    
+    theta_bp = get_theta_blueprint()
+    app.register_blueprint(theta_bp)
+    print("✅ TEX blueprint registrado!")
+except Exception as e:
+    print(f"❌ Erro ao registrar TEX blueprint: {e}")
+
+
+
+try:
+    vega_bp = get_vega_blueprint()
+    app.register_blueprint(vega_bp)
+    print("✅ VEX blueprint registrado!")
+except Exception as e:
+    print(f"❌ Erro ao registrar VEX blueprint: {e}")
+
+
+# DEX
+try:
+    
+    delta_bp = get_delta_blueprint()
+    app.register_blueprint(delta_bp)
+    print("✅ DEX blueprint registrado!")
+except Exception as e:
+    print(f"❌ Erro ao registrar DEX blueprint: {e}")
+
+
 try:
     rsl_bp = get_rsl_blueprint()
     app.register_blueprint(rsl_bp)
@@ -385,6 +418,25 @@ def regimes():
 @app.route('/gamma-levels.html')
 def gamma_levels():
     return send_from_directory('../frontend', 'gamma-levels.html')
+
+@app.route('/delta-levels')
+@app.route('/delta-levels.html')
+def delta_levels():
+    return send_from_directory('../frontend', 'delta-levels.html')
+
+@app.route('/vega-levels')
+@app.route('/vega-levels.html')
+def vega_levels():
+    return send_from_directory('../frontend', 'vega-levels.html')
+
+
+@app.route('/theta-level')
+@app.route('/theta-levels.html')
+def theta_levels():
+    return send_from_directory('../frontend', 'theta-levels.html')
+
+
+
 
 ##========== MAchine ===============##
 

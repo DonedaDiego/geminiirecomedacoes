@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GEX Analysis - Geminii Tech</title>
+  <title>TEX Analysis - Geminii Tech</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
   <script>
@@ -33,7 +33,7 @@
       min-height: 100vh;
     }
     
-    .gex-card {
+    .tex-card {
       background: rgba(255, 255, 255, 0.08);
       backdrop-filter: blur(20px);
       border: 1px solid rgba(255, 255, 255, 0.2);
@@ -41,7 +41,7 @@
       transition: all 0.3s ease;
     }
     
-    .gex-card:hover {
+    .tex-card:hover {
       transform: translateY(-2px);
       box-shadow: 0 20px 40px rgba(186, 57, 175, 0.15);
       border-color: rgba(186, 57, 175, 0.3);
@@ -99,24 +99,35 @@
       color: white;
       backdrop-filter: blur(10px);
     }
-    
+
     #expirationSelect option {
       background-color: #1a1a1a;
       color: white;
       padding: 8px;
     }
-    
+
     #expirationSelect option:disabled {
       color: #666;
       background-color: #2a2a2a;
     }
-    
+
     #expirationSelect:focus {
       outline: none;
       border-color: #ba39af;
       box-shadow: 0 0 0 2px rgba(186, 57, 175, 0.2);
     }
 
+    #texTotal, #texDescoberto, #maxBleedStrike, #weightedDays {
+      color: #ffffff;
+      font-size: 1.875rem;
+      font-weight: 900;
+    }
+
+    #weightedDays {
+      color: #f97316;
+      font-size: 1.875rem;
+      font-weight: 900;
+    }
   </style>
 </head>
 
@@ -132,10 +143,10 @@
 
       </div>
       <div class="hidden md:flex items-center space-x-6 text-xs text-gray-300 ml-8">
-        <span class="text-white font-medium">Gamma Exposure</span>
-        <a href="delta-levels.html" class="hover:text-white transition-colors">Delta Exposure</a>
+        <span class="text-white font-medium">Theta Exposure</span>
+        <a href="gamma-levels.html" class="hover:text-white transition-colors">Gamma Exposure</a>
         <a href="vega-levels.html" class="hover:text-white transition-colors">Vega Exposure</a>
-        <a href="theta-levels.html" class="hover:text-white transition-colors">Theta Exposure</a>
+        <a href="delta-levels.html" class="hover:text-white transition-colors">Delta Exposure</a>
       </div>
       <div class="flex items-center space-x-3 ml-8">
         <div class="w-8 h-8 bg-green-500 bg-opacity-10 border border-green-500 border-opacity-30 rounded-full flex items-center justify-center relative">
@@ -153,113 +164,106 @@
       <!-- Header -->
       <div class="text-center mb-12">
         <h1 class="text-4xl md:text-5xl font-bold mb-4">
-          <span style="color: #ba39af; font-weight: 900;">Gamma</span>
+          <span style="color: #ba39af; font-weight: 900;">Theta</span>
           <span class="text-white font-light">Exposure</span>
         </h1>
         <p class="text-neutral-300 text-lg max-w-3xl mx-auto">
-          Análise completa de Gamma Exposure usando dados reais de posições descobertas dos market makers. Identifica pontos de suporte e resistência baseados em opções.
+          Análise completa de Theta Exposure usando dados reais. Mede o impacto da passagem do tempo e identifica sangramento diário das posições de opções.
         </p>
         
         <!-- Info Expander -->
         <div class="mt-8">
-          <button onclick="toggleInfo()" class="bg-gradient-to-r from-geminii to-purple-600 hover:from-purple-600 hover:to-geminii text-white px-4 py-2 rounded-full font-semibold text-sm transition-all duration-300 flex items-center mx-auto shadow-lg hover:shadow-xl transform hover:scale-105">
+          <button onclick="toggleInfo()" class="bg-gradient-to-r from-geminii to-purple-600 hover:from-purple-600 hover:to-geminii text-white px-6 py-3 rounded-full font-semibold text-sm transition-all duration-300 flex items-center mx-auto shadow-lg hover:shadow-xl transform hover:scale-105">
             <i id="infoIcon" class="fas fa-info-circle mr-2 transition-transform duration-300"></i>
-            Como Funciona a Análise GEX - Guia Completo
+            Como Funciona a Análise TEX
           </button>
           
           <div id="infoContent" class="hidden mt-8 max-w-6xl mx-auto">
-            <div class="gex-card p-8 text-left">
+            <div class="tex-card p-8 text-left">
               
               <!-- Explicação Geral -->
               <div class="mb-8 text-center">
-                <h3 class="text-2xl font-bold text-white mb-4">O que é Gamma Exposure (GEX)</h3>
+                <h3 class="text-2xl font-bold text-white mb-4">O que é Theta Exposure (TEX)</h3>
                 <p class="text-gray-300 text-sm leading-relaxed max-w-4xl mx-auto">
-                  O GEX mede a exposição dos market makers ao risco gamma e revela como eles precisam ajustar suas posições quando o preço se move. Esta análise determina se o mercado vai <strong class="text-green-400">estabilizar</strong> ou <strong class="text-red-400">amplificar</strong> movimentos.
+                  O TEX mede <strong>quanto dinheiro os market makers ganham ou perdem por dia</strong> devido ao decaimento temporal das opções. Theta sempre trabalha contra quem compra opções e a favor de quem vende. É o "aluguel" que se paga por ter uma opção.
                 </p>
               </div>
-        
-              <!-- Conceitos Fundamentais -->
+
               <div class="mb-8 p-6 bg-gray-800/50 rounded-lg">
-                <h4 class="text-xl font-bold text-white mb-4 text-center">Conceitos Fundamentais</h4>
+                <h4 class="text-xl font-bold text-white mb-4 text-center">Mecânica do Theta</h4>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
                   <div>
-                    <h5 class="font-bold text-green-400 mb-2">Long Gamma (GEX Positivo)</h5>
+                    <h5 class="font-bold text-green-400 mb-2">TEX Positivo (+)</h5>
                     <p class="text-gray-300 leading-relaxed">
-                      Market makers <strong>compraram opções</strong> do mercado. Agem como <strong>estabilizadores</strong>:
-                      <br>• Preço sobe → MM vende ações (cria resistência)
-                      <br>• Preço desce → MM compra ações (cria suporte)
-                      <br>• <strong>Resultado:</strong> Compressão de volatilidade, mercado em range
+                      Market makers <strong>ganham dinheiro</strong> com a passagem do tempo:
+                      <br>• Venderam opções (coletam theta)
+                      <br>• Cada dia que passa = lucro automático
+                      <br>• Tempo é o melhor amigo dos vendedores
                     </p>
                   </div>
                   <div>
-                    <h5 class="font-bold text-red-400 mb-2">Short Gamma (GEX Negativo)</h5>
+                    <h5 class="font-bold text-red-400 mb-2">TEX Negativo (-)</h5>
                     <p class="text-gray-300 leading-relaxed">
-                      Market makers <strong>venderam opções</strong> para o mercado. Agem como <strong>amplificadores</strong>:
-                      <br>• Preço sobe → MM compra ações (acelera alta)
-                      <br>• Preço desce → MM vende ações (acelera queda)
-                      <br>• <strong>Resultado:</strong> Expansão de volatilidade, movimentos extremos
+                      Market makers <strong>perdem dinheiro</strong> com a passagem do tempo:
+                      <br>• Compraram opções (pagam theta)
+                      <br>• Cada dia que passa = sangramento automático  
+                      <br>• Tempo é o pior inimigo dos compradores
                     </p>
                   </div>
                 </div>
               </div>
         
-              <!-- Gamma Flip -->
-              <div class="mb-8 p-6 bg-purple-900/30 rounded-lg border border-purple-500/20">
-                <h4 class="text-xl font-bold text-purple-400 mb-4 text-center">Gamma Flip - O Ponto Crítico</h4>
+              <!-- Fórmula -->
+              <div class="mb-8 p-6 bg-red-900/30 rounded-lg border border-red-500/20">
+                <h4 class="text-xl font-bold text-red-400 mb-4 text-center">Cálculo do TEX</h4>
                 <p class="text-gray-300 text-sm leading-relaxed text-center max-w-4xl mx-auto">
-                  O <strong>Gamma Flip</strong> é onde o GEX muda de positivo para negativo. É o divisor de águas que determina o comportamento do mercado:
+                  <strong>TEX = Open Interest × Theta × 100</strong>
                   <br><br>
-                  <strong class="text-green-400">Acima do Flip:</strong> Long Gamma → Market makers estabilizam o preço
-                  <br>
-                  <strong class="text-red-400">Abaixo do Flip:</strong> Short Gamma → Market makers amplificam movimentos
+                  Exemplo: Strike 30 com 50.000 calls compradas (Theta -0.05)<br>
+                  TEX = 50.000 × (-0.05) × 100 = <strong class="text-red-400">-250.000</strong><br>
+                  <em>MMs perdem R$ 250k por dia nesse strike pelo decaimento</em>
                 </p>
               </div>
         
-              <!-- Grid dos  -->
+              <!-- Grid dos 6 Gráficos -->
               <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                 
                 <!-- Gráfico 1 -->
                 <div class="explanation-card rounded-lg p-6">
                   <h4 class="text-lg font-bold text-white mb-3 flex items-center">
-                    <span class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white text-sm font-bold mr-3">1</span>
-                    Total GEX por Strike
+                    <span class="w-8 h-8 bg-red-600 rounded-full flex items-center justify-center text-white text-sm font-bold mr-3">1</span>
+                    Total TEX por Strike (Sangramento)
                   </h4>
                   <p class="text-gray-300 text-sm leading-relaxed">
-                    Mostra o GEX total calculado por strike. <strong class="text-green-400">Barras verdes</strong> = GEX positivo, <strong class="text-red-400">barras vermelhas</strong> = GEX negativo. 
+                    Mostra quanto cada strike ganha/perde por dia devido ao theta. <strong class="text-red-400">Barras vermelhas para baixo</strong> = sangramento (theta negativo).
                     <br><br>
-                    O que realmente importa são as <strong>posições descobertas</strong> - apenas elas forçam hedge dos market makers e impactam o preço.
+                    <strong>Altura da barra</strong> = R$ perdidos/ganhos por dia naquele strike
                   </p>
                 </div>
         
                 <!-- Gráfico 2 -->
-                <div class="explanation-card rounded-lg p-6">
+                <div class="explanation-card rounded-lg p-6 border-2 border-red-500/50">
                   <h4 class="text-lg font-bold text-white mb-3 flex items-center">
-                    <span class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-bold mr-3">2</span>
-                    GEX Descoberto (Focus)
+                    <span class="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center text-white text-sm font-bold mr-3">2</span>
+                    TEX Descoberto (Risco Temporal)
                   </h4>
                   <p class="text-gray-300 text-sm leading-relaxed">
-                    <strong>O mais importante!</strong> Filtra apenas posições descobertas - as que realmente forçam hedge dos MMs e movem preço. 
+                    <strong class="text-red-400">O mais importante!</strong> Mostra apenas o sangramento real das posições descobertas.
                     <br><br>
-                    <strong>Remove o ruído:</strong> Elimina posições cobertas que se cancelam
-                    <br>
-                    <strong>Dados precisos:</strong> Mostra onde MMs estão verdadeiramente expostos
+                    Remove hedge natural e revela onde o <strong>tempo realmente corrói valor</strong> todos os dias
                   </p>
                 </div>
         
                 <!-- Gráfico 3 -->
                 <div class="explanation-card rounded-lg p-6">
                   <h4 class="text-lg font-bold text-white mb-3 flex items-center">
-                    <span class="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center text-white text-sm font-bold mr-3">3</span>
-                    Regime por Strike
+                    <span class="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center text-white text-sm font-bold mr-3">3</span>
+                    Pressão Temporal Concentrada (%)
                   </h4>
                   <p class="text-gray-300 text-sm leading-relaxed">
-                    Classificação visual do comportamento esperado por nível de preço:
-                    <br>
-                    <strong class="text-green-400">Verde = Long Gamma:</strong> Strike tende a estabilizar preço
-                    <br>
-                    <strong class="text-red-400">Vermelho = Short Gamma:</strong> Strike tende a amplificar movimento
+                    Concentração percentual do risco theta por strike. <strong class="text-orange-400">Barras altas</strong> = maior concentração de sangramento temporal.
                     <br><br>
-                    Ajuda a identificar <strong>zonas de transição</strong> de comportamento
+                    Pelos gráficos: <strong>máxima concentração no strike 30-31</strong> (≈10% do sangramento total)
                   </p>
                 </div>
         
@@ -267,16 +271,16 @@
                 <div class="explanation-card rounded-lg p-6">
                   <h4 class="text-lg font-bold text-white mb-3 flex items-center">
                     <span class="w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center text-white text-sm font-bold mr-3">4</span>
-                    Calls vs Puts
+                    Calls vs Puts TEX
                   </h4>
                   <p class="text-gray-300 text-sm leading-relaxed">
-                    Separação visual do GEX por tipo de opção para análise de distribuição:
+                    Separação do TEX por tipo de opção para análise de distribuição:
                     <br>
-                    <strong class="text-green-400">Calls (verde):</strong> Posições em opções de compra
+                    <strong class="text-green-400">Calls (verde):</strong> Theta exposure das opções de compra
                     <br>
-                    <strong class="text-red-400">Puts (vermelho):</strong> Posições em opções de venda
+                    <strong class="text-red-400">Puts (vermelho):</strong> Theta exposure das opções de venda
                     <br><br>
-                    <em>Mostra apenas a distribuição por strike - não indica direcionalmente sentimento específico</em>
+                    <em>Mostra qual tipo contribui mais para o sangramento temporal</em>
                   </p>
                 </div>
         
@@ -284,89 +288,90 @@
                 <div class="explanation-card rounded-lg p-6 border-2 border-cyan-500/50">
                   <h4 class="text-lg font-bold text-white mb-3 flex items-center">
                     <span class="w-8 h-8 bg-cyan-500 rounded-full flex items-center justify-center text-white text-sm font-bold mr-3">5</span>
-                    GEX Cumulativo - O MAPA DO TESOURO
+                    TEX Cumulativo - A Cascata do Tempo
                   </h4>
                   <p class="text-gray-300 text-sm leading-relaxed">
-                    <strong class="text-cyan-400">O gráfico mais revelador!</strong> Soma acumulada que mostra o fluxo de hedge:
+                    <strong class="text-cyan-400">Mostra o sangramento acumulado!</strong> Preenchimento vermelho revela:
                     <br><br>
-                    <strong>Descendo (mais negativo):</strong> Mais vendas de gamma acontecendo
+                    <strong>Descida abrupta:</strong> Concentração de sangramento entre strikes 30-32
                     <br>
-                    <strong>Subindo (menos negativo):</strong> Compras neutralizando o efeito
+                    <strong>Platô:</strong> Após strike 35, pouco sangramento adicional
                     <br>
-                    <strong>Vales profundos:</strong> Zonas magnéticas de máxima exposição
+                    <strong>Vale profundo:</strong> Máxima perda temporal concentrada
                     <br><br>
-                    <em class="text-cyan-300">Revela onde o preço tende a ser "sugado" devido à concentração de hedge</em>
+                    <em class="text-cyan-300">Cada dia que passa sem movimento corrói valor nessa região</em>
                   </p>
                 </div>
         
                 <!-- Gráfico 6 -->
                 <div class="explanation-card rounded-lg p-6">
                   <h4 class="text-lg font-bold text-white mb-3 flex items-center">
-                    <span class="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center text-white text-sm font-bold mr-3">6</span>
-                    Open Interest - A Base de Tudo
+                    <span class="w-8 h-8 bg-amber-500 rounded-full flex items-center justify-center text-white text-sm font-bold mr-3">6</span>
+                    Velocidade de Sangramento (R$/dia)
                   </h4>
                   <p class="text-gray-300 text-sm leading-relaxed">
-                    Volume de contratos em aberto por strike - a <strong>"matéria-prima"</strong> de todos os cálculos:
+                    Mostra exatamente <strong>quantos reais por dia</strong> estão sendo perdidos por strike:
                     <br><br>
-                    <strong>Fórmula:</strong> GEX = OI × Gamma × 100 × Spot × 0.01
+                    <strong>Picos vermelhos:</strong> Strikes com maior sangramento diário
                     <br>
-                    <strong>OI Alto:</strong> Strike com alta negociação, maior relevância
+                    <strong>Concentração 30-31:</strong> Máximo sangramento (40-60M/dia)
                     <br>
-                    <strong>OI Baixo:</strong> Strike com pouca atividade, menor impacto
+                    <strong>Zonas seguras:</strong> Strikes com baixo decaimento temporal
                   </p>
                 </div>
                 
               </div>
         
               <!-- Seção Prática -->
-              <div class="mt-8 p-6 bg-gradient-to-r from-green-900/30 to-red-900/30 rounded-lg">
-                <h4 class="text-xl font-bold text-white mb-4 text-center">Como Interpretar na Prática</h4>
+              <div class="mt-8 p-6 bg-gradient-to-r from-red-900/30 to-amber-900/30 rounded-lg">
+                <h4 class="text-xl font-bold text-white mb-4 text-center">Interpretação Prática do TEX</h4>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
                   <div>
-                    <h5 class="font-bold text-green-400 mb-3">Cenário Long Gamma (Estável)</h5>
+                    <h5 class="font-bold text-green-400 mb-3">Alto TEX Positivo</h5>
                     <div class="space-y-2 text-gray-300">
-                      <p>• <strong>GEX Cumulativo:</strong> Vale profundo = zona magnética</p>
-                      <p>• <strong>Descobertos:</strong> Concentração em strikes específicos</p>
-                      <p>• <strong>Comportamento:</strong> Mercado tende a retornar ao centro</p>
-                      
+                      <p>• <strong>MMs coletam theta:</strong> Venderam muitas opções</p>
+                      <p>• <strong>Tempo a favor:</strong> Cada dia = lucro automático</p>
+                      <p>• <strong>Estratégia:</strong> Mercado lateral favorece vendedores</p>
+                      <p>• <strong>Cuidado:</strong> Movimentos grandes podem apagar dias de lucro</p>
                     </div>
                   </div>
                   <div>
-                    <h5 class="font-bold text-red-400 mb-3">Cenário Short Gamma (Volátil)</h5>
+                    <h5 class="font-bold text-red-400 mb-3">Alto TEX Negativo</h5>
                     <div class="space-y-2 text-gray-300">
-                      <p>• <strong>GEX Cumulativo:</strong> Sem vales = caminho livre</p>
-                      <p>• <strong>Poucas Barreiras:</strong> Movimento pode acelerar</p>
-                      <p>• <strong>Amplificação:</strong> MMs alimentam o movimento</p>
-                      
+                      <p>• <strong>MMs pagam theta:</strong> Compraram muitas opções</p>
+                      <p>• <strong>Tempo contra:</strong> Cada dia = sangramento automático</p>
+                      <p>• <strong>Pressão:</strong> Precisam de movimento para compensar</p>
+                      <p>• <strong>Urgência:</strong> Quanto mais próximo do vencimento, pior</p>
                     </div>
                   </div>
                 </div>
               </div>
-        
+              
+
               <!-- Pontos-Chave -->
               <div class="mt-8 pt-6 border-t border-white/10">
-                <h4 class="text-geminii font-bold text-lg mb-4 text-center">Pontos-Chave da Estratégia</h4>
+                <h4 class="text-geminii font-bold text-lg mb-4 text-center">Pontos-Chave da Análise TEX</h4>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-sm">
                   <div class="text-center">
-                    <div class="w-12 h-12 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-3">
-                      <i class="fas fa-arrow-up text-green-400"></i>
+                    <div class="w-12 h-12 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-3">
+                      <i class="fas fa-tint text-red-400"></i>
                     </div>
-                    <h5 class="font-bold text-white mb-2">Gamma Flip</h5>
-                    <p class="text-gray-400">Ponto crítico que determina se mercado vai estabilizar (acima) ou amplificar (abaixo).</p>
+                    <h5 class="font-bold text-white mb-2">Sangramento Diário</h5>
+                    <p class="text-gray-400">TEX mostra quantos reais são perdidos/ganhos por dia com decaimento temporal.</p>
                   </div>
                   <div class="text-center">
                     <div class="w-12 h-12 bg-cyan-500/20 rounded-full flex items-center justify-center mx-auto mb-3">
-                      <i class="fas fa-mountain text-cyan-400"></i>
+                      <i class="fas fa-chart-area text-cyan-400"></i>
                     </div>
-                    <h5 class="font-bold text-white mb-2">GEX Cumulativo</h5>
-                    <p class="text-gray-400">Revela o fluxo de hedge e zonas magnéticas onde preço tende a retornar.</p>
+                    <h5 class="font-bold text-white mb-2">Cascata Cumulativa</h5>
+                    <p class="text-gray-400">Cumulativo revela onde tempo concentra máximo impacto no valor das posições.</p>
                   </div>
                   <div class="text-center">
-                    <div class="w-12 h-12 bg-purple-500/20 rounded-full flex items-center justify-center mx-auto mb-3">
-                      <i class="fas fa-eye text-purple-400"></i>
+                    <div class="w-12 h-12 bg-amber-500/20 rounded-full flex items-center justify-center mx-auto mb-3">
+                      <i class="fas fa-clock text-amber-400"></i>
                     </div>
-                    <h5 class="font-bold text-white mb-2">Posições Descobertas</h5>
-                    <p class="text-gray-400">O que realmente importa - posições que forçam hedge e impactam preço.</p>
+                    <h5 class="font-bold text-white mb-2">Pressão Temporal</h5>
+                    <p class="text-gray-400">Descobertos mostram onde tempo realmente corrói valor sem hedge natural.</p>
                   </div>
                 </div>
               </div>
@@ -376,7 +381,7 @@
       </div>
 
       <!-- Controles -->
-      <div class="gex-card p-6 mb-8">
+      <div class="tex-card p-6 mb-8">
         <div class="flex flex-col md:flex-row gap-4 items-center justify-center">
           <input 
             id="tickerInput" 
@@ -386,9 +391,9 @@
           >
           <select 
             id="expirationSelect" 
-            class="px-4 py-2 bg-white bg-opacity-10 border border-white border-opacity-20 rounded-lg text-white focus:outline-none focus:border-geminii backdrop-blur-sm"
+            class="px-4 py-2 rounded-lg focus:outline-none focus:border-geminii backdrop-blur-sm"
           >
-            <option value="">Vencimento Atual</option>
+            <option value="">Vencimento Automático</option>
           </select>
           <button 
             id="loadExpirationsBtn" 
@@ -400,7 +405,7 @@
             id="analyzeBtn" 
             class="px-6 py-2 bg-gradient-to-r from-geminii to-purple-600 hover:shadow-lg rounded-lg transition-all font-medium"
           >
-            <i class="fas fa-rocket mr-2"></i>Executar GEX
+            <i class="fas fa-rocket mr-2"></i>Executar TEX
           </button>
         </div>
       </div>
@@ -412,49 +417,49 @@
       <div id="resultsSection" class="hidden">
         
         <!-- Métricas Principais -->
-        <div class="gex-card p-6 mb-8">
+        <div class="tex-card p-6 mb-8">
           <div class="text-center mb-8">
-            <div id="regimeIndicator" class="inline-block px-8 py-4 rounded-2xl text-2xl font-black">
-              <!-- Long Gamma / Short Gamma -->
-            </div>
-            <div class="mt-2">
-              <span id="behaviorBadge" class="inline-block px-3 py-1 rounded-full text-xs font-bold text-white bg-gray-500">
-                <!-- Supressivo / Explosivo -->
-              </span>
+            <div id="pressureIndicator" class="inline-block px-8 py-4 rounded-2xl text-2xl font-black">
+              <!-- Preenchido via JS -->
             </div>
           </div>
           
-          <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+          <div class="grid grid-cols-2 md:grid-cols-5 gap-6">
             <div class="metric-card text-center">
               <div class="text-3xl font-black text-white mb-2" id="spotPrice">--</div>
               <div class="text-white font-bold">SPOT PRICE</div>
             </div>
             
             <div class="metric-card text-center">
-              <div class="text-3xl font-black text-orange-400 mb-2" id="flipStrike">--</div>
-              <div class="text-white font-bold">GAMMA FLIP</div>
+              <div class="mb-2" id="weightedDays">--</div>
+              <div class="text-white font-bold">DIAS CORRIDOS</div>
             </div>
             
             <div class="metric-card text-center">
-              <div class="text-3xl font-black text-cyan-400 mb-2" id="optionsCount">--</div>
-              <div class="text-white font-bold">GEX TOTAL</div>
+              <div class="mb-2" id="maxBleedStrike">--</div>
+              <div class="text-white font-bold">MAX SANGRAMENTO</div>
             </div>
             
             <div class="metric-card text-center">
-              <div class="text-3xl font-black text-cyan-400 mb-2" id="expirationInfo">--</div>
-              <div class="text-white font-bold">GEX DESCOBERTO</div>
+              <div class="mb-2" id="texTotal">--</div>
+              <div class="text-white font-bold">TEX TOTAL</div>
+            </div>
+            
+            <div class="metric-card text-center">
+              <div class="mb-2" id="texDescoberto">--</div>
+              <div class="text-white font-bold">TEX DESCOBERTO</div>
             </div>
           </div>
         </div>
 
-        <!-- Gráficos GEX -->
-        <div class="gex-card p-6">
+        <!-- Gráficos TEX -->
+        <div class="tex-card p-6">
           <h3 class="text-2xl font-bold mb-6 text-center">
             <i class="fas fa-chart-area mr-3" style="color: #ba39af;"></i>
-            Análise GEX Completa
+            Análise TEX Completa
           </h3>
           <div class="chart-container">
-            <div id="gexChart" style="width: 100%; height: 100%;"></div>
+            <div id="texChart" style="width: 100%; height: 100%;"></div>
           </div>
         </div>
 
@@ -478,6 +483,7 @@
     const statusMsg = document.getElementById('statusMsg');
     const resultsSection = document.getElementById('resultsSection');
 
+    // Funções utilitárias
     function formatLargeNumber(value) {
       const absValue = Math.abs(value);
       if (absValue >= 1000000000) {
@@ -490,7 +496,6 @@
       return value.toFixed(0);
     }
 
-    // Funções utilitárias
     function showStatus(message, type = 'info') {
       const bgClass = type === 'success' ? 'bg-green-600 bg-opacity-20 border-green-500 border-opacity-30' : 
                      type === 'error' ? 'bg-red-600 bg-opacity-20 border-red-500 border-opacity-30' : 
@@ -526,7 +531,7 @@
       }
     }
     window.toggleInfo = toggleInfo;
-    
+
     // Carregar vencimentos
     async function loadExpirations() {
       const ticker = tickerInput.value.trim().toUpperCase();
@@ -538,7 +543,7 @@
       setLoading(loadExpirationsBtn, true, '<i class="fas fa-calendar mr-2"></i>Carregar Vencimentos', 'Carregando...');
 
       try {
-        const response = await fetch('/pro/gamma/expirations', {
+        const response = await fetch('/pro/theta/expirations', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -551,7 +556,7 @@
         
         if (!response.ok) throw new Error(data.error);
 
-        expirationSelect.innerHTML = '<option value="">Vencimento Atual</option>';
+        expirationSelect.innerHTML = '<option value="">Vencimento Automático</option>';
         
         data.expirations.forEach(exp => {
           const option = document.createElement('option');
@@ -561,7 +566,6 @@
           expirationSelect.appendChild(option);
         });
         
-        // Mudar o botão para indicar sucesso
         loadExpirationsBtn.innerHTML = '<i class="fas fa-check mr-2"></i>Vencimentos Carregados';
         loadExpirationsBtn.classList.remove('from-blue-500', 'to-blue-600');
         loadExpirationsBtn.classList.add('from-green-500', 'to-green-600');
@@ -570,30 +574,29 @@
 
       } catch (error) {
         showStatus('Erro: ' + error.message, 'error');
-        // Resetar botão em caso de erro
         loadExpirationsBtn.innerHTML = '<i class="fas fa-calendar mr-2"></i>Carregar Vencimentos';
       } finally {
         setLoading(loadExpirationsBtn, false);
       }
     }
 
-    // Executar análise GEX
-    async function runGEXAnalysis() {
+    // Executar análise TEX
+    async function runTEXAnalysis() {
       const ticker = tickerInput.value.trim().toUpperCase();
       if (!ticker) {
         showStatus('Digite um ticker', 'error');
         return;
       }
 
-      setLoading(analyzeBtn, true, '<i class="fas fa-rocket mr-2"></i>Executar GEX', 'Processando GEX...');
-      showStatus('Executando análise GEX completa...', 'info');
+      setLoading(analyzeBtn, true, '<i class="fas fa-rocket mr-2"></i>Executar TEX', 'Processando TEX...');
+      showStatus('Executando análise TEX completa...', 'info');
 
       try {
         const requestBody = { ticker, days_back: 60 };
         const expiration = expirationSelect.value;
         if (expiration) requestBody.expiration_code = expiration;
 
-        const response = await fetch('/pro/gamma/analyze', {
+        const response = await fetch('/pro/theta/analyze', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -607,7 +610,7 @@
         if (!response.ok) throw new Error(data.error);
 
         displayResults(data);
-        showStatus(`Análise GEX de ${ticker} concluída`, 'success');
+        showStatus(`Análise TEX de ${ticker} concluída`, 'success');
 
       } catch (error) {
         showStatus('Erro: ' + error.message, 'error');
@@ -616,92 +619,55 @@
       }
     }
 
-    // Exibir resultados - **AQUI ESTÁ O FIX DOS BOTÕES UNDEFINED**
+    // Exibir resultados
     function displayResults(data) {
-      const gex_levels = data.gex_levels || {};
+      const decay_regime = data.decay_regime || {};
       
-      // Regime principal - Long/Short Gamma
-      const regimeClass = data.regime === 'Long Gamma' ? 
-        'bg-gradient-to-r from-green-400 to-green-600' : 
-        'bg-gradient-to-r from-red-400 to-red-600';
+      // Pressure indicator - usando apenas decay_regime
+      const pressure = decay_regime.time_pressure || 'LOW';
+      let pressureClass = 'bg-gradient-to-r ';
+      let pressureText = pressure;
       
-      const regimeElement = document.getElementById('regimeIndicator');
-      if (regimeElement) {
-        regimeElement.className = `inline-block px-8 py-4 rounded-2xl text-2xl font-black ${regimeClass}`;
-        regimeElement.textContent = data.regime || 'N/A';
-      }
-
-      // Comportamento do mercado (Supressivo/Explosivo)
-      const bias = gex_levels.market_bias || 'NEUTRAL';
-      let behaviorText = 'Neutro';
-      let behaviorClass = 'bg-gray-500';
-      
-      if (bias === 'SUPPRESSIVE') {
-        behaviorText = 'Comprimir Vol';
-        behaviorClass = 'bg-red-500';
-      } else if (bias === 'EXPLOSIVE') {
-        behaviorText = 'Expandir Vol';
-        behaviorClass = 'bg-green-500';
+      if (pressure === 'HIGH') {
+        pressureClass += 'from-red-400 to-red-600';
+        pressureText = 'Alta Pressão';
+      } else if (pressure === 'MODERATE') {
+        pressureClass += 'from-yellow-400 to-yellow-600';
+        pressureText = 'Pressão Moderada';
+      } else {
+        pressureClass += 'from-green-400 to-green-600';
+        pressureText = 'Baixa Pressão';
       }
       
-      const behaviorElement = document.getElementById('behaviorBadge');
-      if (behaviorElement) {
-        behaviorElement.textContent = behaviorText;
-        behaviorElement.className = `inline-block px-3 py-1 rounded-full text-xs font-bold text-white mt-2 ${behaviorClass}`;
-      }
-
-      // Resto das métricas
-      const spotElement = document.getElementById('spotPrice');
-      if (spotElement) {
-        spotElement.textContent = data.spot_price ? `R$ ${data.spot_price.toFixed(2)}` : '--';
-      }
+      document.getElementById('pressureIndicator').className = 
+        `inline-block px-8 py-4 rounded-2xl text-2xl font-black ${pressureClass}`;
+      document.getElementById('pressureIndicator').textContent = pressureText;
+    
+      // Métricas - apenas decay_regime
+      document.getElementById('spotPrice').textContent = `R$ ${data.spot_price?.toFixed(2)}`;
       
-      const flipElement = document.getElementById('flipStrike');
-      if (flipElement) {
-        flipElement.textContent = data.flip_strike ? `R$ ${data.flip_strike.toFixed(2)}` : 'N/A';
-      }
+      const weightedDays = decay_regime.weighted_days || 0;
+      document.getElementById('weightedDays').textContent = `${Math.round(weightedDays)} dias`;
       
-      const gexTotal = gex_levels.total_gex || 0;
-      const optionsElement = document.getElementById('optionsCount');
-      if (optionsElement) {
-        optionsElement.textContent = formatLargeNumber(gexTotal);
-      }
+      const maxBleedStrike = decay_regime.max_bleed_strike || 0;
+      document.getElementById('maxBleedStrike').textContent = `R$ ${maxBleedStrike.toFixed(2)}`;
       
-      const gexDescoberto = gex_levels.total_gex_descoberto || 0;
-      const expirationElement = document.getElementById('expirationInfo');
-      if (expirationElement) {
-        expirationElement.textContent = formatLargeNumber(gexDescoberto);
-      }
-
+      const texTotal = decay_regime.total_tex || 0;
+      document.getElementById('texTotal').textContent = formatLargeNumber(texTotal);
+      
+      const texDescoberto = decay_regime.total_tex_descoberto || 0;
+      document.getElementById('texDescoberto').textContent = formatLargeNumber(texDescoberto);
+    
+      // Gráfico
       if (data.plot_json) {
         renderChart(data.plot_json);
       }
-
+    
       resultsSection.classList.remove('hidden');
     }
 
-    window.addEventListener('DOMContentLoaded', function() {
-      // Verificar se Plotly carregou
-      if (typeof Plotly === 'undefined') {
-        console.error('Plotly não carregou - usando versão local ou CDN alternativo');
-        // Tentar carregar de outro CDN
-        const script = document.createElement('script');
-        script.src = 'https://unpkg.com/plotly.js-dist@2.26.0/plotly.min.js';
-        document.head.appendChild(script);
-      }
-    });
-    
-    // E modifique a função renderChart para ter fallback:
+    // Renderizar gráfico
     function renderChart(plotJson) {
-      if (typeof Plotly === 'undefined') {
-        document.getElementById('gexChart').innerHTML = 
-          '<div class="text-center text-white p-8">Carregando biblioteca de gráficos...</div>';
-        
-        // Tentar novamente em 2 segundos
-        setTimeout(() => renderChart(plotJson), 2000);
-        return;
-      }
-    
       try {
         const plotData = JSON.parse(plotJson);
         
@@ -710,25 +676,27 @@
           displayModeBar: false,
           displaylogo: false
         };
-    
-        plotData.layout.height = 1200;
-        plotData.layout.margin = { l: 80, r: 80, t: 120, b: 80 };
-        plotData.layout.paper_bgcolor = 'transparent';
-        plotData.layout.plot_bgcolor = 'transparent';
-    
-        Plotly.newPlot('gexChart', plotData.data, plotData.layout, config);
-        setTimeout(() => Plotly.Plots.resize('gexChart'), 100);
-    
+
+        plotData.layout.height = 1600;
+        plotData.layout.margin = { l: 50, r: 50, t: 100, b: 50 };
+        
+        plotData.layout.paper_bgcolor = 'rgba(0,0,0,0)';
+        plotData.layout.plot_bgcolor = 'rgba(0,0,0,0)';
+
+        Plotly.newPlot('texChart', plotData.data, plotData.layout, config);
+        
+        setTimeout(() => Plotly.Plots.resize('texChart'), 100);
+
       } catch (error) {
         console.error('Erro no gráfico:', error);
-        document.getElementById('gexChart').innerHTML = 
+        document.getElementById('texChart').innerHTML = 
           '<div class="text-center text-red-400 p-8">Erro ao carregar gráfico</div>';
       }
     }
 
     // Event listeners
     loadExpirationsBtn.addEventListener('click', loadExpirations);
-    analyzeBtn.addEventListener('click', runGEXAnalysis);
+    analyzeBtn.addEventListener('click', runTEXAnalysis);
     
     tickerInput.addEventListener('keypress', (e) => {
       if (e.key === 'Enter') loadExpirations();
@@ -736,18 +704,18 @@
 
     // Resize handler
     window.addEventListener('resize', function() {
-      const chartElement = document.getElementById('gexChart');
+      const chartElement = document.getElementById('texChart');
       if (chartElement && chartElement.children.length > 0) {
-        setTimeout(() => Plotly.Plots.resize('gexChart'), 100);
+        setTimeout(() => Plotly.Plots.resize('texChart'), 100);
       }
     });
 
     // Inicializar
     document.addEventListener('DOMContentLoaded', function() {
-      showStatus('Sistema GEX carregado. Digite um ticker para começar.', 'info');
-    });
-
-  </script>
-
-</body>
-</html>
+        showStatus('Sistema TEX carregado. Digite um ticker para começar.', 'info');
+      });
+  
+    </script>
+  
+  </body>
+  </html>

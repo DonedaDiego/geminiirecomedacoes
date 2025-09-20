@@ -1,5 +1,5 @@
 """
-gamma_routes.py - Rotas GEX simplificadas
+vega_routes.py - Rotas VEX simplificadas
 """
 
 from flask import Blueprint, request, jsonify
@@ -7,16 +7,16 @@ from datetime import datetime
 import logging
 import traceback
 
-from .gamma_service import GammaService
+from .vega_service import VegaService
 
-def get_gamma_blueprint():
-    """Factory function para criar o blueprint do GEX"""
+def get_vega_blueprint():
+    """Factory function para criar o blueprint do VEX"""
     
-    gamma_bp = Blueprint('gamma', __name__)
+    vega_bp = Blueprint('vega', __name__)
     logging.basicConfig(level=logging.INFO)
-    service = GammaService()
+    service = VegaService()
 
-    @gamma_bp.route('/pro/gamma/expirations', methods=['POST'])
+    @vega_bp.route('/pro/vega/expirations', methods=['POST'])
     def get_available_expirations():
         """Retorna vencimentos disponíveis"""
         try:
@@ -44,9 +44,9 @@ def get_gamma_blueprint():
             logging.error(f"Erro ao buscar vencimentos: {str(e)}")
             return jsonify({'error': f'Erro interno: {str(e)}'}), 500
 
-    @gamma_bp.route('/pro/gamma/analyze', methods=['POST'])
-    def analyze_gex_complete():
-        """Análise completa de GEX com os 6 gráficos"""
+    @vega_bp.route('/pro/vega/analyze', methods=['POST'])
+    def analyze_vex_complete():
+        """Análise completa de VEX com os 6 gráficos"""
         try:
             data = request.get_json()
             
@@ -57,48 +57,47 @@ def get_gamma_blueprint():
             expiration_code = data.get('expiration_code')
             days_back = data.get('days_back', 60)
             
-            logging.info(f"API: Análise GEX solicitada para {ticker}")
+            logging.info(f"API: Análise VEX solicitada para {ticker}")
             if expiration_code:
                 logging.info(f"Vencimento específico: {expiration_code}")
             
-            # Executar análise GEX
-            result = service.analyze_gamma_complete(ticker, expiration_code, days_back)
+            result = service.analyze_vega_complete(ticker, expiration_code, days_back)
             
             response = {
                 'success': True,
                 'timestamp': datetime.now().isoformat(),
                 'ticker': ticker.replace('.SA', ''),
-                'analysis_type': 'GEX_COMPLETE_6_CHARTS',
+                'analysis_type': 'VEX_COMPLETE_6_CHARTS',
                 **result
             }
             
-            logging.info(f"API: Análise GEX concluída para {ticker}")
+            logging.info(f"API: Análise VEX concluída para {ticker}")
             return jsonify(response)
             
         except ValueError as e:
-            logging.error(f"Erro de validação GEX: {str(e)}")
+            logging.error(f"Erro de validação VEX: {str(e)}")
             return jsonify({'error': str(e)}), 404
             
         except Exception as e:
-            logging.error(f"Erro na análise GEX: {str(e)}")
+            logging.error(f"Erro na análise VEX: {str(e)}")
             logging.error(traceback.format_exc())
             return jsonify({'error': f'Erro interno: {str(e)}'}), 500
 
-    @gamma_bp.route('/pro/gamma/health', methods=['GET'])
-    def gex_health_check():
-        """Health check do sistema GEX"""
+    @vega_bp.route('/pro/vega/health', methods=['GET'])
+    def vex_health_check():
+        """Health check do sistema VEX"""
         return jsonify({
-            'service': 'GEX Analysis',
+            'service': 'VEX Analysis',
             'status': 'healthy',
             'timestamp': datetime.now().isoformat(),
-            'version': '2.0-simplified',
+            'version': '1.0-simplified',
             'features': [
                 ' Automáticos',
                 'Seleção de Vencimentos',
-                'Gamma Flip Detection', 
-                'Wall Detection',
+                'Análise de Volatilidade',
+                'Regime Detection',
                 'Real-time Analysis'
             ]
         })
 
-    return gamma_bp
+    return vega_bp

@@ -1,5 +1,5 @@
 """
-gamma_routes.py - Rotas GEX simplificadas
+delta_routes.py - Rotas DEX simplificadas
 """
 
 from flask import Blueprint, request, jsonify
@@ -7,16 +7,16 @@ from datetime import datetime
 import logging
 import traceback
 
-from .gamma_service import GammaService
+from .delta_service import DeltaService
 
-def get_gamma_blueprint():
-    """Factory function para criar o blueprint do GEX"""
+def get_delta_blueprint():
+    """Factory function para criar o blueprint do DEX"""
     
-    gamma_bp = Blueprint('gamma', __name__)
+    delta_bp = Blueprint('delta', __name__)
     logging.basicConfig(level=logging.INFO)
-    service = GammaService()
+    service = DeltaService()
 
-    @gamma_bp.route('/pro/gamma/expirations', methods=['POST'])
+    @delta_bp.route('/pro/delta/expirations', methods=['POST'])
     def get_available_expirations():
         """Retorna vencimentos disponíveis"""
         try:
@@ -44,9 +44,9 @@ def get_gamma_blueprint():
             logging.error(f"Erro ao buscar vencimentos: {str(e)}")
             return jsonify({'error': f'Erro interno: {str(e)}'}), 500
 
-    @gamma_bp.route('/pro/gamma/analyze', methods=['POST'])
-    def analyze_gex_complete():
-        """Análise completa de GEX com os 6 gráficos"""
+    @delta_bp.route('/pro/delta/analyze', methods=['POST'])
+    def analyze_dex_complete():
+        """Análise completa de DEX com os 6 gráficos"""
         try:
             data = request.get_json()
             
@@ -57,48 +57,48 @@ def get_gamma_blueprint():
             expiration_code = data.get('expiration_code')
             days_back = data.get('days_back', 60)
             
-            logging.info(f"API: Análise GEX solicitada para {ticker}")
+            logging.info(f"API: Análise DEX solicitada para {ticker}")
             if expiration_code:
                 logging.info(f"Vencimento específico: {expiration_code}")
             
-            # Executar análise GEX
-            result = service.analyze_gamma_complete(ticker, expiration_code, days_back)
+            # Executar análise DEX
+            result = service.analyze_delta_complete(ticker, expiration_code, days_back)
             
             response = {
                 'success': True,
                 'timestamp': datetime.now().isoformat(),
                 'ticker': ticker.replace('.SA', ''),
-                'analysis_type': 'GEX_COMPLETE_6_CHARTS',
+                'analysis_type': 'DEX_COMPLETE_6_CHARTS',
                 **result
             }
             
-            logging.info(f"API: Análise GEX concluída para {ticker}")
+            logging.info(f"API: Análise DEX concluída para {ticker}")
             return jsonify(response)
             
         except ValueError as e:
-            logging.error(f"Erro de validação GEX: {str(e)}")
+            logging.error(f"Erro de validação DEX: {str(e)}")
             return jsonify({'error': str(e)}), 404
             
         except Exception as e:
-            logging.error(f"Erro na análise GEX: {str(e)}")
+            logging.error(f"Erro na análise DEX: {str(e)}")
             logging.error(traceback.format_exc())
             return jsonify({'error': f'Erro interno: {str(e)}'}), 500
 
-    @gamma_bp.route('/pro/gamma/health', methods=['GET'])
-    def gex_health_check():
-        """Health check do sistema GEX"""
+    @delta_bp.route('/pro/delta/health', methods=['GET'])
+    def dex_health_check():
+        """Health check do sistema DEX"""
         return jsonify({
-            'service': 'GEX Analysis',
+            'service': 'DEX Analysis',
             'status': 'healthy',
             'timestamp': datetime.now().isoformat(),
-            'version': '2.0-simplified',
+            'version': '1.0-simplified',
             'features': [
                 ' Automáticos',
                 'Seleção de Vencimentos',
-                'Gamma Flip Detection', 
-                'Wall Detection',
+                'Pressão Direcional',
+                'Target Detection',
                 'Real-time Analysis'
             ]
         })
 
-    return gamma_bp
+    return delta_bp

@@ -1,5 +1,5 @@
 """
-gamma_routes.py - Rotas GEX simplificadas
+theta_routes.py - Rotas TEX simplificadas
 """
 
 from flask import Blueprint, request, jsonify
@@ -7,16 +7,16 @@ from datetime import datetime
 import logging
 import traceback
 
-from .gamma_service import GammaService
+from .theta_service import ThetaService
 
-def get_gamma_blueprint():
-    """Factory function para criar o blueprint do GEX"""
+def get_theta_blueprint():
+    """Factory function para criar o blueprint do TEX"""
     
-    gamma_bp = Blueprint('gamma', __name__)
+    theta_bp = Blueprint('theta', __name__)
     logging.basicConfig(level=logging.INFO)
-    service = GammaService()
+    service = ThetaService()
 
-    @gamma_bp.route('/pro/gamma/expirations', methods=['POST'])
+    @theta_bp.route('/pro/theta/expirations', methods=['POST'])
     def get_available_expirations():
         """Retorna vencimentos disponíveis"""
         try:
@@ -44,9 +44,9 @@ def get_gamma_blueprint():
             logging.error(f"Erro ao buscar vencimentos: {str(e)}")
             return jsonify({'error': f'Erro interno: {str(e)}'}), 500
 
-    @gamma_bp.route('/pro/gamma/analyze', methods=['POST'])
-    def analyze_gex_complete():
-        """Análise completa de GEX com os 6 gráficos"""
+    @theta_bp.route('/pro/theta/analyze', methods=['POST'])
+    def analyze_tex_complete():
+        """Análise completa de TEX com os 6 gráficos"""
         try:
             data = request.get_json()
             
@@ -57,48 +57,55 @@ def get_gamma_blueprint():
             expiration_code = data.get('expiration_code')
             days_back = data.get('days_back', 60)
             
-            logging.info(f"API: Análise GEX solicitada para {ticker}")
+            logging.info(f"API: Análise TEX solicitada para {ticker}")
             if expiration_code:
                 logging.info(f"Vencimento específico: {expiration_code}")
             
-            # Executar análise GEX
-            result = service.analyze_gamma_complete(ticker, expiration_code, days_back)
+            result = service.analyze_theta_complete(ticker, expiration_code, days_back)
             
+            # VERIFICAR SE RESULT NÃO É NONE
+            if result is None:
+                logging.error("Service retornou None")
+                return jsonify({'error': 'Falha na análise TEX - resultado nulo'}), 500
+            
+            # CONSTRUIR RESPONSE SEGURA
             response = {
                 'success': True,
                 'timestamp': datetime.now().isoformat(),
                 'ticker': ticker.replace('.SA', ''),
-                'analysis_type': 'GEX_COMPLETE_6_CHARTS',
-                **result
+                'analysis_type': 'TEX_COMPLETE_6_CHARTS'
             }
             
-            logging.info(f"API: Análise GEX concluída para {ticker}")
+            # ADICIONAR RESULT APENAS SE VÁLIDO
+            response.update(result)
+            
+            logging.info(f"API: Análise TEX concluída para {ticker}")
             return jsonify(response)
             
         except ValueError as e:
-            logging.error(f"Erro de validação GEX: {str(e)}")
+            logging.error(f"Erro de validação TEX: {str(e)}")
             return jsonify({'error': str(e)}), 404
             
         except Exception as e:
-            logging.error(f"Erro na análise GEX: {str(e)}")
+            logging.error(f"Erro na análise TEX: {str(e)}")
             logging.error(traceback.format_exc())
             return jsonify({'error': f'Erro interno: {str(e)}'}), 500
 
-    @gamma_bp.route('/pro/gamma/health', methods=['GET'])
-    def gex_health_check():
-        """Health check do sistema GEX"""
+    @theta_bp.route('/pro/theta/health', methods=['GET'])
+    def tex_health_check():
+        """Health check do sistema TEX"""
         return jsonify({
-            'service': 'GEX Analysis',
+            'service': 'TEX Analysis',
             'status': 'healthy',
             'timestamp': datetime.now().isoformat(),
-            'version': '2.0-simplified',
+            'version': '1.0-simplified',
             'features': [
                 ' Automáticos',
                 'Seleção de Vencimentos',
-                'Gamma Flip Detection', 
-                'Wall Detection',
+                'Análise Decaimento',
+                'Regime Detection',
                 'Real-time Analysis'
             ]
         })
 
-    return gamma_bp
+    return theta_bp
