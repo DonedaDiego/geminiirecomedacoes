@@ -30,7 +30,7 @@ def generate_jwt_token(user_id, email, secret_key):
 
 @auth_bp.route('/register', methods=['POST'])
 def register():
-    """🔥 Registro CORRIGIDO com validação inteligente por IP"""
+    
     try:
         data = request.get_json()
         
@@ -508,7 +508,7 @@ def list_unconfirmed_users():
 
 @auth_bp.route('/login', methods=['POST'])
 def login():
-    """🔥 Login com verificação de subscription/trial + REGISTRO DE ÚLTIMO LOGIN"""
+ 
     try:
         data = request.get_json()
         
@@ -518,10 +518,10 @@ def login():
         email = data.get('email', '').strip().lower()
         password = data.get('password', '')
         
+        
         if not email or not password:
             return jsonify({'success': False, 'error': 'E-mail e senha são obrigatórios'}), 400
         
-        print(f"🔐 Tentativa de login: {email}")
         
         conn = get_db_connection()
         if not conn:
@@ -591,13 +591,21 @@ def login():
                 SET last_login = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
                 WHERE id = %s
             """, (user_id,))
+            
+            # Verificar quantas linhas foram afetadas
+            affected_rows = cursor.rowcount
             conn.commit()
-            print(f"✅ Último login atualizado para usuário {user_id}")
+            
+            # Verificar se realmente foi atualizado
+            cursor.execute("SELECT last_login FROM users WHERE id = %s", (user_id,))
+            updated_login = cursor.fetchone()[0]
+            
+            print(f"✅ Último login atualizado - Rows: {affected_rows}, Novo valor: {updated_login}")
+            
         except Exception as e:
             print(f"⚠️ Erro ao atualizar último login: {e}")
-            # Não bloquear o login por isso
         
-        # Fechar conexão do banco antes de chamar subscription service
+        
         cursor.close()
         conn.close()
         
