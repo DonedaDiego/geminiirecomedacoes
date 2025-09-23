@@ -427,6 +427,10 @@
       }
     }
 
+    .absolute {
+      position: absolute;
+      animation: pulse 2s infinite;
+    }
 
   </style>
 </head>
@@ -1445,6 +1449,10 @@
       }
     }
 
+   
+    
+   
+   
     // Netflix-style navigation functions
     function setupNetflixNavigation() {
       // Apenas navegação de vídeos
@@ -1479,35 +1487,69 @@
 
     // NOVA FUNÇÃO: Atualiza automaticamente as thumbnails dos vídeos
     function updateVideoThumbnails() {
-      // Lista seus vídeos do YouTube aqui (substitua pelas URLs reais)
-      const youtubeVideos = [
-        'https://www.youtube.com/watch?v=oDiKYRmYPrU&t=10s',
-        'https://www.youtube.com/watch?v=QPjOz_tYdpE&t=190s',
-        
-        'https://www.youtube.com/watch?v=mefy0YlS5P4&list=PLSE569v8Vpe3aT-Va2wu4zXmuXncjlBYt',
-        'https://www.youtube.com/watch?v=SJ2jtPAp8i4&t=568s',
-        'https://www.youtube.com/watch?v=10bZWx39mKI&t=496s',
-        'https://www.youtube.com/watch?v=It1UrfmvTHg&t=2309s'
+      // SEUS VÍDEOS - SÓ MEXER AQUI:
+      const videos = [
+        {
+          url: 'https://www.youtube.com/watch?v=UeT8a03zCk4',
+          title: 'Gamma Exposure',
+          desc: 'Passando ponto a ponto sobre o indicador gamma',
+          novo: true  // true = aparece "NOVO"
+        },
+        {
+          url: 'https://www.youtube.com/watch?v=oDiKYRmYPrU&t=10', 
+          title: 'Conhecendo o App',
+          desc: 'Pontos Importantes para Trade',
+          novo: false
+        },
+        {
+          url: 'https://www.youtube.com/watch?v=QPjOz_tYdpE&t=190s',
+          title: 'Volatilidade Implícita', 
+          desc: 'Entendo a volatiliade Implícita',
+          novo: false
+        },
+        {
+          url: 'https://www.youtube.com/watch?v=mefy0YlS5P4&list=PLSE569v8Vpe3aT-Va2wu4zXmuXncjlBYt',
+          title: 'Beta e Correlação',
+          desc: 'Entender a diferença entre os 2 é fundamental',
+          novo: false
+        },
+        {
+          url: 'https://www.youtube.com/watch?v=SJ2jtPAp8i4&t=568s',
+          title: 'COE',
+          desc: 'Monte Você mesmo seu COE',
+          novo: false
+        },
+        {
+          url: 'https://www.youtube.com/watch?v=10bZWx39mKI&t=496s',
+          title: 'Ciência De Dados', 
+          desc: 'Aplicando no Mercado Financeiro',
+          novo: false
+        }
       ];
-
-      // Atualiza automaticamente as imagens
+    
       const videoItems = document.querySelectorAll('#videoRow .netflix-item');
       
       videoItems.forEach((item, index) => {
-        if (youtubeVideos[index]) {
+        if (videos[index]) {
+          const video = videos[index];
           const img = item.querySelector('.netflix-thumbnail img');
-          const thumbnailUrl = getYouTubeThumbnail(youtubeVideos[index]);
+          const title = item.querySelector('.netflix-info h4');
+          const desc = item.querySelector('.netflix-info p');
           
-          if (img) {
-            img.src = thumbnailUrl;
-            img.onerror = function() {
-              // Se maxres não existir, tenta hqdefault
-              this.src = getYouTubeThumbnail(youtubeVideos[index], 'hqdefault');
-            };
+          if (img) img.src = getYouTubeThumbnail(video.url);
+          if (title) title.textContent = video.title;
+          if (desc) desc.textContent = video.desc;
+          
+          item.setAttribute('onclick', `openVideo('${video.url}')`);
+          
+          // Badge NOVO
+          if (video.novo) {
+            const badge = document.createElement('div');
+            badge.className = 'absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full font-bold z-10';
+            badge.textContent = 'NOVO';
+            item.querySelector('.netflix-thumbnail').style.position = 'relative';
+            item.querySelector('.netflix-thumbnail').appendChild(badge);
           }
-          
-          // Atualiza o link do clique
-          item.setAttribute('onclick', `openVideo('${youtubeVideos[index]}')`);
         }
       });
     }
