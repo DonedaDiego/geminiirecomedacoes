@@ -1449,10 +1449,7 @@
       }
     }
 
-   
-    
-   
-   
+      
     // Netflix-style navigation functions
     function setupNetflixNavigation() {
       // Apenas navegação de vídeos
@@ -1489,18 +1486,19 @@
     function updateVideoThumbnails() {
       // SEUS VÍDEOS - SÓ MEXER AQUI:
       const videos = [
+      {
+        url: 'https://www.youtube.com/watch?v=iNvolslZljE', 
+        title: 'Delta Exposure',
+        desc: 'Aprimorando conhecimentos do 4d',
+        novo: true
+       },
         {
           url: 'https://www.youtube.com/watch?v=UeT8a03zCk4',
           title: 'Gamma Exposure',
           desc: 'Passando ponto a ponto sobre o indicador gamma',
-          novo: true  // true = aparece "NOVO"
-        },
-        {
-          url: 'https://www.youtube.com/watch?v=oDiKYRmYPrU&t=10', 
-          title: 'Conhecendo o App',
-          desc: 'Pontos Importantes para Trade',
-          novo: false
-        },
+          novo: false 
+        },     
+
         {
           url: 'https://www.youtube.com/watch?v=QPjOz_tYdpE&t=190s',
           title: 'Volatilidade Implícita', 

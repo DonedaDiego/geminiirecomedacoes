@@ -1,5 +1,5 @@
 """
-delta_service.py - DEX Analysis COMPLETO
+vega_service.py - VEX Analysis COMPLETO
 """
 
 import numpy as np
@@ -154,14 +154,15 @@ class DataProvider:
             latest_data = df[df['time'].dt.date == latest_date].copy()
             
             valid_data = latest_data[
-                (latest_data['delta'] != 0) &
+                (latest_data['vega'] > 0) &
+                (latest_data['volatility'] > 0) &
                 (latest_data['premium'] > 0) &
                 (latest_data['strike'] > 0) &
                 (latest_data['days_to_maturity'] > 0) &
                 (latest_data['days_to_maturity'] <= 60)
             ].copy()
             
-            logging.info(f"Dados Delta Oplab: {len(valid_data)} opções")
+            logging.info(f"Dados Vega Oplab: {len(valid_data)} opções")
             return valid_data
             
         except Exception as e:
@@ -212,16 +213,16 @@ class DataProvider:
                         'coberto': oi_coberto
                     }
             
-            logging.info(f"OI breakdown DEX: {len(oi_breakdown)} strikes")
+            logging.info(f"OI breakdown VEX: {len(oi_breakdown)} strikes")
             return oi_breakdown, expiration
             
         except Exception as e:
             logging.error(f"Erro Floqui: {e}")
             return {}, None
 
-class DEXCalculator:
-    def calculate_dex(self, oplab_df, oi_breakdown, spot_price):
-        """Calcula DEX = Delta × Open Interest × 100"""
+class VEXCalculator:
+    def calculate_vex(self, oplab_df, oi_breakdown, spot_price):
+        """Calcula VEX = Vega × Open Interest × 100"""
         if oplab_df.empty:
             return pd.DataFrame()
         
@@ -234,7 +235,7 @@ class DEXCalculator:
         if valid_options.empty:
             return pd.DataFrame()
         
-        dex_data = []
+        vex_data = []
         
         for strike in valid_options['strike'].unique():
             strike_options = valid_options[valid_options['strike'] == strike]
@@ -271,123 +272,121 @@ class DEXCalculator:
                         'coberto': volume_estimate
                     }
             
-            call_dex = 0
-            call_dex_descoberto = 0
+            call_vex = 0
+            call_vex_descoberto = 0
+            call_iv = 0
             if call_data and not calls.empty:
-                avg_delta = float(calls['delta'].mean())
-                call_dex = avg_delta * call_data['total'] * 100
-                call_dex_descoberto = avg_delta * call_data['descoberto'] * 100
+                avg_vega = float(calls['vega'].mean())
+                avg_iv = float(calls['volatility'].mean())
+                call_vex = avg_vega * call_data['total'] * 100
+                call_vex_descoberto = avg_vega * call_data['descoberto'] * 100
+                call_iv = avg_iv
             
-            put_dex = 0
-            put_dex_descoberto = 0
+            put_vex = 0
+            put_vex_descoberto = 0
+            put_iv = 0
             if put_data and not puts.empty:
-                avg_delta = float(puts['delta'].mean())
-                put_dex = avg_delta * put_data['total'] * 100
-                put_dex_descoberto = avg_delta * put_data['descoberto'] * 100
+                avg_vega = float(puts['vega'].mean())
+                avg_iv = float(puts['volatility'].mean())
+                put_vex = avg_vega * put_data['total'] * 100
+                put_vex_descoberto = avg_vega * put_data['descoberto'] * 100
+                put_iv = avg_iv
             
-            total_dex = call_dex + put_dex
-            total_dex_descoberto = call_dex_descoberto + put_dex_descoberto
+            total_vex = call_vex + put_vex
+            total_vex_descoberto = call_vex_descoberto + put_vex_descoberto
             
-            dex_data.append({
+            # IV média ponderada
+            weighted_iv = 0
+            if call_data and put_data:
+                total_oi = call_data['total'] + put_data['total']
+                if total_oi > 0:
+                    weighted_iv = (call_iv * call_data['total'] + put_iv * put_data['total']) / total_oi
+            elif call_data:
+                weighted_iv = call_iv
+            elif put_data:
+                weighted_iv = put_iv
+            
+            vex_data.append({
                 'strike': float(strike),
-                'call_dex': float(call_dex),
-                'put_dex': float(put_dex),
-                'total_dex': float(total_dex),
-                'call_dex_descoberto': float(call_dex_descoberto),
-                'put_dex_descoberto': float(put_dex_descoberto),
-                'total_dex_descoberto': float(total_dex_descoberto),
+                'call_vex': float(call_vex),
+                'put_vex': float(put_vex),
+                'total_vex': float(total_vex),
+                'call_vex_descoberto': float(call_vex_descoberto),
+                'put_vex_descoberto': float(put_vex_descoberto),
+                'total_vex_descoberto': float(total_vex_descoberto),
                 'call_oi_total': int(call_data.get('total', 0)),
                 'put_oi_total': int(put_data.get('total', 0)),
                 'call_oi_descoberto': int(call_data.get('descoberto', 0)),
                 'put_oi_descoberto': int(put_data.get('descoberto', 0)),
+                'implied_volatility': float(weighted_iv),
                 'has_real_data': (float(strike), 'CALL') in oi_breakdown or (float(strike), 'PUT') in oi_breakdown
             })
         
-        result_df = pd.DataFrame(dex_data).sort_values('strike')
-        logging.info(f"DEX calculado para {len(result_df)} strikes")
+        result_df = pd.DataFrame(vex_data).sort_values('strike')
+        logging.info(f"VEX calculado para {len(result_df)} strikes")
         
         return result_df
 
-class DirectionalPressureDetector:
-    """Detector de pressão direcional baseada em DEX"""
-    
-    def __init__(self):
-        pass
-    
-    def find_max_pressure_levels(self, dex_df, spot_price):
-        """Encontra níveis de máxima pressão direcional"""
-        if dex_df.empty:
+class VolatilityRegimeDetector:
+    def analyze_volatility_regime(self, vex_df, spot_price):
+        """Analisa regime de volatilidade baseado em VEX"""
+        if vex_df.empty:
             return None
         
-        # Pressão compradora (DEX positivo máximo)
-        max_bullish_idx = dex_df['total_dex'].idxmax()
-        bullish_strike = dex_df.loc[max_bullish_idx, 'strike']
-        bullish_pressure = dex_df.loc[max_bullish_idx, 'total_dex']
+        total_vex = float(vex_df['total_vex'].sum())
+        total_vex_descoberto = float(vex_df['total_vex_descoberto'].sum())
         
-        # Pressão vendedora (DEX negativo máximo)
-        max_bearish_idx = dex_df['total_dex'].idxmin()
-        bearish_strike = dex_df.loc[max_bearish_idx, 'strike']
-        bearish_pressure = dex_df.loc[max_bearish_idx, 'total_dex']
+        # IV média ponderada
+        total_oi = (vex_df['call_oi_total'] + vex_df['put_oi_total']).sum()
+        if total_oi > 0:
+            weighted_iv = float((vex_df['implied_volatility'] * (vex_df['call_oi_total'] + vex_df['put_oi_total'])).sum() / total_oi)
+        else:
+            weighted_iv = float(vex_df['implied_volatility'].mean())
         
-        # Pressão líquida do mercado
-        net_pressure = dex_df['total_dex'].sum()
-        net_pressure_descoberto = dex_df['total_dex_descoberto'].sum()
+        # Strike de máxima sensibilidade
+        max_vex_idx = vex_df['total_vex'].idxmax()
+        max_vex_strike = float(vex_df.loc[max_vex_idx, 'strike'])
         
-        # Análise de concentração
-        total_abs_pressure = dex_df['total_dex'].abs().sum()
-        concentration_ratio = abs(net_pressure) / total_abs_pressure if total_abs_pressure > 0 else 0
+        # Classificação do regime
+        if total_vex_descoberto > 30000:
+            volatility_risk = 'HIGH'
+            interpretation = 'Alta sensibilidade à volatilidade'
+        elif total_vex_descoberto > 10000:
+            volatility_risk = 'MODERATE'
+            interpretation = 'Sensibilidade moderada à volatilidade'
+        else:
+            volatility_risk = 'LOW'
+            interpretation = 'Baixa sensibilidade à volatilidade'
         
         return {
-            'bullish_target': bullish_strike,
-            'bullish_pressure': bullish_pressure,
-            'bearish_target': bearish_strike,
-            'bearish_pressure': bearish_pressure,
-            'net_pressure': net_pressure,
-            'net_pressure_descoberto': net_pressure_descoberto,
-            'concentration_ratio': concentration_ratio,
-            'market_bias': 'BULLISH' if net_pressure > 1000 else 'BEARISH' if net_pressure < -1000 else 'NEUTRAL'
+            'total_vex': total_vex,
+            'total_vex_descoberto': total_vex_descoberto,
+            'weighted_iv': weighted_iv,
+            'max_vex_strike': max_vex_strike,
+            'volatility_risk': volatility_risk,
+            'interpretation': interpretation
         }
 
-class DEXAnalyzer:
+class VEXAnalyzer:
     def __init__(self):
         self.data_provider = DataProvider()
-        self.dex_calculator = DEXCalculator()
+        self.vex_calculator = VEXCalculator()
+        self.vol_detector = VolatilityRegimeDetector()
     
-    def find_targets(self, dex_df, spot_price):
-        """Encontra maiores concentrações de calls e puts"""
-        if dex_df.empty:
-            return None, None
-        
-        # MAIOR CONCENTRAÇÃO DE CALLS: Strike com maior call_oi_descoberto
-        calls_with_oi = dex_df[dex_df['call_oi_descoberto'] > 0]
-        if not calls_with_oi.empty:
-            max_calls_strike = float(calls_with_oi.loc[calls_with_oi['call_oi_descoberto'].idxmax(), 'strike'])
-        else:
-            max_calls_strike = None
-        
-        # MAIOR CONCENTRAÇÃO DE PUTS: Strike com maior put_oi_descoberto
-        puts_with_oi = dex_df[dex_df['put_oi_descoberto'] > 0]
-        if not puts_with_oi.empty:
-            max_puts_strike = float(puts_with_oi.loc[puts_with_oi['put_oi_descoberto'].idxmax(), 'strike'])
-        else:
-            max_puts_strike = None
-        
-        return max_calls_strike, max_puts_strike
-
-    def create_6_charts(self, dex_df, spot_price, symbol, max_calls_strike=None, max_puts_strike=None, expiration_info=None):
-        """Cria os 6 gráficos DEX"""
-        if dex_df.empty:
+    def create_6_charts(self, vex_df, spot_price, symbol, expiration_info=None):
+        """Cria os 6 gráficos VEX"""
+        if vex_df.empty:
             return None
         
         title = expiration_info["desc"] if expiration_info else ""
         
         subplot_titles = [
-            '<b style="color: #ffffff;">Total DEX</b><br><span style="font-size: 12px; color: #888;">Pressão direcional total</span>',
-            '<b style="color: #ffffff;">DEX Descoberto</b><br><span style="font-size: 12px; color: #888;">Pressão real descoberta</span>',
-            '<b style="color: #ffffff;">Pressão Direcional</b><br><span style="font-size: 12px; color: #888;">Intensidade absoluta</span>',
-            '<b style="color: #ffffff;">Calls vs Puts</b><br><span style="font-size: 12px; color: #888;">Sentimento direcional</span>',
-            '<b style="color: #ffffff;">DEX Cumulativo</b><br><span style="font-size: 12px; color: #888;">Fluxo de pressão</span>',
-            '<b style="color: #ffffff;">Momentum</b><br><span style="font-size: 12px; color: #888;">Velocidade mudança</span>'
+            '<b style="color: #ffffff;">Total VEX</b><br><span style="font-size: 10px; color: #888;">Sensibilidade total vega</span>',
+            '<b style="color: #ffffff;">VEX Descoberto</b><br><span style="font-size: 10px; color: #888;">Risco real volatilidade</span>',
+            '<b style="color: #ffffff;">Volatilidade Implícita</b><br><span style="font-size: 10px; color: #888;">IV por strike</span>',
+            '<b style="color: #ffffff;">Calls vs Puts</b><br><span style="font-size: 10px; color: #888;">VEX por tipo</span>',
+            '<b style="color: #ffffff;">VEX Cumulativo</b><br><span style="font-size: 10px; color: #888;">Acúmulo sensibilidade</span>',
+            '<b style="color: #ffffff;">Concentração Risco</b><br><span style="font-size: 10px; color: #888;">% risco por strike</span>'
         ]
         
         fig = make_subplots(
@@ -397,64 +396,53 @@ class DEXAnalyzer:
             horizontal_spacing=0.08
         )
         
-        strikes = [float(x) for x in dex_df['strike'].tolist()]
-        total_dex_values = [float(x) for x in dex_df['total_dex'].tolist()]
-        descoberto_values = [float(x) for x in dex_df['total_dex_descoberto'].tolist()]
-        call_dex_values = [float(x) for x in dex_df['call_dex'].tolist()]
-        put_dex_values = [float(x) for x in dex_df['put_dex'].tolist()]
+        strikes = [float(x) for x in vex_df['strike'].tolist()]
+        total_vex_values = [float(x) for x in vex_df['total_vex'].tolist()]
+        descoberto_values = [float(x) for x in vex_df['total_vex_descoberto'].tolist()]
+        call_vex_values = [float(x) for x in vex_df['call_vex'].tolist()]
+        put_vex_values = [float(x) for x in vex_df['put_vex'].tolist()]
+        iv_values = [float(x) for x in vex_df['implied_volatility'].tolist()]
         
-        # 1. Total DEX
-        colors1 = ['#ef4444' if x < 0 else '#22c55e' for x in total_dex_values]
-        fig.add_trace(go.Bar(x=strikes, y=total_dex_values, marker_color=colors1, showlegend=False), row=1, col=1)
+        # 1. Total VEX
+        fig.add_trace(go.Bar(x=strikes, y=total_vex_values, marker_color='#9333ea', showlegend=False), row=1, col=1)
         
-        # 2. DEX Descoberto
-        colors2 = ['#ef4444' if x < 0 else '#22c55e' for x in descoberto_values]
-        fig.add_trace(go.Bar(x=strikes, y=descoberto_values, marker_color=colors2, showlegend=False), row=1, col=2)
+        # 2. VEX Descoberto
+        fig.add_trace(go.Bar(x=strikes, y=descoberto_values, marker_color='#dc2626', showlegend=False), row=1, col=2)
         
-        # 3. Pressão Direcional
-        pressure_values = [abs(x) for x in descoberto_values]
-        fig.add_trace(go.Bar(x=strikes, y=pressure_values, marker_color='#f97316', showlegend=False), row=2, col=1)
+        # 3. Volatilidade Implícita
+        fig.add_trace(go.Scatter(x=strikes, y=iv_values, mode='lines+markers', 
+                                line=dict(color='#f97316', width=3), 
+                                marker=dict(color='#f97316', size=6),
+                                showlegend=False), row=2, col=1)
         
         # 4. Calls vs Puts
-        fig.add_trace(go.Bar(x=strikes, y=call_dex_values, marker_color='#22c55e', showlegend=False), row=2, col=2)
-        fig.add_trace(go.Bar(x=strikes, y=put_dex_values, marker_color='#ef4444', showlegend=False), row=2, col=2)
+        fig.add_trace(go.Bar(x=strikes, y=call_vex_values, marker_color='#22c55e', showlegend=False), row=2, col=2)
+        fig.add_trace(go.Bar(x=strikes, y=put_vex_values, marker_color='#ef4444', showlegend=False), row=2, col=2)
         
-        # 5. DEX Cumulativo - COM PREENCHIMENTO IGUAL À IMAGEM
-        cumulative = np.cumsum(total_dex_values).tolist()
-        fig.add_trace(go.Scatter(
-            x=strikes, 
-            y=cumulative, 
-            mode='lines', 
-            line=dict(color='#a855f7', width=4),
-            fill='tozeroy',  # Preenchimento até o zero
-            fillcolor='rgba(168, 85, 247, 0.3)',  # Cor roxa com transparência
-            showlegend=False
-        ), row=3, col=1)
+        # 5. VEX Cumulativo
+        cumulative = np.cumsum(total_vex_values).tolist()
+        fig.add_trace(go.Scatter(x=strikes, y=cumulative, mode='lines', 
+                                line=dict(color='#06b6d4', width=4),
+                                fill='tozeroy',
+                                fillcolor='rgba(6, 182, 212, 0.3)',
+                                showlegend=False), row=3, col=1)
         
-        # 6. Momentum
-        momentum_values = []
-        for i in range(len(descoberto_values)):
-            if i > 0:
-                momentum = descoberto_values[i] - descoberto_values[i-1]
-            else:
-                momentum = descoberto_values[i]
-            momentum_values.append(momentum)
+        # 6. Concentração de Risco
+        total_vex_abs = sum([abs(x) for x in total_vex_values])
+        if total_vex_abs > 0:
+            concentration_pct = [(abs(x) / total_vex_abs) * 100 for x in total_vex_values]
+        else:
+            concentration_pct = [0] * len(total_vex_values)
         
-        momentum_colors = ['#22c55e' if x > 0 else '#ef4444' for x in momentum_values]
-        fig.add_trace(go.Bar(x=strikes, y=momentum_values, marker_color=momentum_colors, showlegend=False), row=3, col=2)
+        risk_colors = ['#ef4444' if x > 20 else '#f97316' if x > 10 else '#22c55e' for x in concentration_pct]
+        fig.add_trace(go.Bar(x=strikes, y=concentration_pct, marker_color=risk_colors, showlegend=False), row=3, col=2)
         
         # Linhas de referência
         for row in range(1, 4):
             for col in range(1, 3):
                 fig.add_vline(x=spot_price, line=dict(color='#fbbf24', width=2, dash='dash'), row=row, col=col)
-                
-                # Linhas das maiores concentrações
-                # if max_calls_strike:
-                #     fig.add_vline(x=max_calls_strike, line=dict(color='#22c55e', width=2, dash='dot'), row=row, col=col)
-                # if max_puts_strike:
-                #     fig.add_vline(x=max_puts_strike, line=dict(color='#ef4444', width=2, dash='dot'), row=row, col=col)
-                
-                fig.add_hline(y=0, line=dict(color='rgba(255,255,255,0.3)', width=1), row=row, col=col)
+                if not (row == 2 and col == 1):  # Não adiciona linha zero no gráfico de IV
+                    fig.add_hline(y=0, line=dict(color='rgba(255,255,255,0.3)', width=1), row=row, col=col)
         
         fig.update_layout(
             title={
@@ -478,8 +466,8 @@ class DEXAnalyzer:
         return fig.to_json()
     
     def analyze(self, symbol, expiration_code=None):
-        """Análise principal DEX"""
-        logging.info(f"INICIANDO ANALISE DEX - {symbol}")
+        """Análise principal VEX"""
+        logging.info(f"INICIANDO ANALISE VEX - {symbol}")
         
         spot_price = self.data_provider.get_spot_price(symbol)
         if not spot_price:
@@ -491,115 +479,41 @@ class DEXAnalyzer:
         
         oi_breakdown, expiration_info = self.data_provider.get_floqui_oi_breakdown(symbol, expiration_code)
         
-        dex_df = self.dex_calculator.calculate_dex(oplab_df, oi_breakdown, spot_price)
-        if dex_df.empty:
-            raise ValueError("Erro: falha no cálculo DEX")
+        vex_df = self.vex_calculator.calculate_vex(oplab_df, oi_breakdown, spot_price)
+        if vex_df.empty:
+            raise ValueError("Erro: falha no cálculo VEX")
         
-        pressure_detector = DirectionalPressureDetector()
-        pressure_levels = pressure_detector.find_max_pressure_levels(dex_df, spot_price)
-        
-        # CORREÇÃO AQUI - Buscar os targets primeiro
-        max_calls_strike, max_puts_strike = self.find_targets(dex_df, spot_price)
-        
-        # Agora chamar com parâmetros corretos
-        plot_json = self.create_6_charts(
-            dex_df, 
-            spot_price, 
-            symbol, 
-            max_calls_strike=max_calls_strike,
-            max_puts_strike=max_puts_strike,
-            expiration_info=expiration_info
-        )
-        
-        net_dex = float(dex_df['total_dex'].sum())
-        net_dex_descoberto = float(dex_df['total_dex_descoberto'].sum())
-        real_data_count = int(dex_df['has_real_data'].sum())
+        vol_regime = self.vol_detector.analyze_volatility_regime(vex_df, spot_price)
+        plot_json = self.create_6_charts(vex_df, spot_price, symbol, expiration_info)
         
         return {
             'symbol': symbol,
             'spot_price': spot_price,
-            'pressure_levels': pressure_levels,
-            'net_dex': net_dex,
-            'net_dex_descoberto': net_dex_descoberto,
-            'strikes_analyzed': len(dex_df),
+            'vol_regime': vol_regime,
+            'strikes_analyzed': len(vex_df),
             'expiration': expiration_info,
             'plot_json': plot_json,
-            'real_data_count': real_data_count,
-            'dex_df': dex_df,
+            'real_data_count': int(vex_df['has_real_data'].sum()),
             'success': True
         }
 
-class DeltaService:
+class VegaService:
     def __init__(self):
-        self.analyzer = DEXAnalyzer()
+        self.analyzer = VEXAnalyzer()
     
     def get_available_expirations(self, ticker):
         return self.analyzer.data_provider.expiration_manager.get_available_expirations_list(ticker)
     
-    def analyze_delta_complete(self, ticker, expiration_code=None, days_back=60):
+    def analyze_vega_complete(self, ticker, expiration_code=None, days_back=60):
         try:
             result = self.analyzer.analyze(ticker, expiration_code)
             
-            pressure_levels = result.get('pressure_levels', {})
-            net_dex_descoberto = result['net_dex_descoberto']
-            
-            # Calcular pressão restante automaticamente
-            dex_df = result.get('dex_df', None)  # Precisa vir do analyzer
-            spot_price = result['spot_price']
-            
-            print(f"=== DEBUG PRESSÃO RESTANTE ===")
-            print(f"dex_df existe: {dex_df is not None}")
-            print(f"spot_price: {spot_price}")
-            
-            remaining_pressure = 0
-            if dex_df is not None and len(dex_df) > 0:
-                print(f"dex_df length: {len(dex_df)}")
-                print(f"colunas dex_df: {list(dex_df.columns)}")
-                
-                if 'total_dex_descoberto' in dex_df.columns:
-                    cumulative_values = np.cumsum(dex_df['total_dex'].values)
-                    print(f"cumulative_values: {cumulative_values[:5]}...")  
-                    print(f"max_cumulative: {max(cumulative_values) if len(cumulative_values) > 0 else 0}")
-                    
-                    current_spot_idx = None
-                    max_cumulative = max(cumulative_values) if len(cumulative_values) > 0 else 0
-                    
-                    # Encontrar índice mais próximo do spot price
-                    for i, strike in enumerate(dex_df['strike'].values):
-                        if current_spot_idx is None or abs(strike - spot_price) < abs(dex_df['strike'].iloc[current_spot_idx] - spot_price):
-                            current_spot_idx = i
-                    
-                    print(f"current_spot_idx: {current_spot_idx}")
-                    
-                    # Calcular pressão restante
-                    if current_spot_idx is not None:
-                        current_cumulative = cumulative_values[current_spot_idx]
-                        remaining_pressure = max_cumulative - current_cumulative
-                        print(f"current_cumulative: {current_cumulative}")
-                        print(f"remaining_pressure: {remaining_pressure}")
-                    else:
-                        print("current_spot_idx é None")
-                else:
-                    print("Coluna 'total_dex_descoberto' não encontrada")
-            else:
-                print("dex_df é None ou vazio")
-            
-            print(f"remaining_pressure final: {remaining_pressure}")
-            print(f"=== FIM DEBUG ===")
-            
-            # FAZER IGUAL O GEX - COLOCAR TUDO DENTRO DE UM OBJETO
-            dex_levels = {
-                'total_dex': result['net_dex'],
-                'total_dex_descoberto': net_dex_descoberto,
-                'market_bias': pressure_levels.get('market_bias', 'NEUTRAL'),
-                'concentration_ratio': pressure_levels.get('concentration_ratio', 0),
-                'remaining_pressure': remaining_pressure
-            }
+            vol_regime = result.get('vol_regime', {})
             
             api_result = {
                 'ticker': ticker.replace('.SA', ''),
                 'spot_price': result['spot_price'],
-                'dex_levels': dex_levels,  # TUDO JUNTO COMO NO GEX
+                'vol_regime': vol_regime,
                 'plot_json': result['plot_json'],
                 'options_count': result['strikes_analyzed'],
                 'data_quality': {
@@ -612,5 +526,5 @@ class DeltaService:
             return convert_to_json_serializable(api_result)
             
         except Exception as e:
-            logging.error(f"Erro na análise DEX: {e}")
+            logging.error(f"Erro na análise VEX: {e}")
             raise

@@ -129,9 +129,29 @@
       font-weight: 900;
     }
 
+    #historicalIV {
+      color: #06b6d4;
+      font-size: 1.875rem;
+      font-weight: 900;
+    }
+
+    #ivTrend {
+      font-size: 1.875rem;
+      font-weight: 900;
+    }
+
     #volatilityRisk {
       font-size: 1.875rem;
       font-weight: 900;
+    }
+
+    .iv-distortion-alert {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      border-radius: 12px;
+      padding: 16px;
+      margin-top: 16px;
+      text-align: center;
     }
   </style>
 </head>
@@ -173,14 +193,14 @@
           <span class="text-white font-light">Exposure</span>
         </h1>
         <p class="text-neutral-300 text-lg max-w-3xl mx-auto">
-          Análise completa de Vega Exposure usando dados reais. Mede sensibilidade à volatilidade implícita e identifica concentração de risco vega por strike.
+          Análise completa de Vega Exposure usando dados reais com contexto histórico. Mede sensibilidade à volatilidade implícita e identifica concentração de risco vega por strike comparando com médias históricas.
         </p>
         
         <!-- Info Expander -->
         <div class="mt-8">
           <button onclick="toggleInfo()" class="bg-gradient-to-r from-geminii to-purple-600 hover:from-purple-600 hover:to-geminii text-white px-4 py-2 rounded-full font-semibold text-sm transition-all duration-300 flex items-center mx-auto shadow-lg hover:shadow-xl transform hover:scale-105">
             <i id="infoIcon" class="fas fa-info-circle mr-2 transition-transform duration-300"></i>
-            Como Funciona a Análise VEX - Vega Exposure
+            Como Funciona a Análise VEX - Vega Exposure com Contexto Histórico
           </button>
           
           <div id="infoContent" class="hidden mt-8 max-w-6xl mx-auto">
@@ -188,32 +208,34 @@
               
               <!-- Explicação Geral -->
               <div class="mb-8 text-center">
-                <h3 class="text-2xl font-bold text-white mb-4">O que é Vega Exposure (VEX)</h3>
+                <h3 class="text-2xl font-bold text-white mb-4">O que é Vega Exposure (VEX) com Contexto</h3>
                 <p class="text-gray-300 text-sm leading-relaxed max-w-4xl mx-auto">
-                  O VEX mede <strong>quanto os market makers ganham ou perdem</strong> com cada 1% de mudança na volatilidade implícita. Revela onde estão as maiores exposições ao risco de volatilidade e como mudanças na IV impactam o mercado de opções.
+                  O VEX com contexto histórico mede <strong>quanto os market makers ganham ou perdem</strong> com cada 1% de mudança na volatilidade implícita, comparando com médias históricas dos últimos 10 dias. Permite identificar se a IV está alta, baixa ou normal para cada strike, revelando oportunidades de arbitragem temporal.
                 </p>
               </div>
         
               <!-- Conceitos Fundamentais -->
               <div class="mb-8 p-6 bg-gray-800/50 rounded-lg">
-                <h4 class="text-xl font-bold text-white mb-4 text-center">Mecânica do Vega</h4>
+                <h4 class="text-xl font-bold text-white mb-4 text-center">Mecânica do Vega com Contexto Histórico</h4>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
                   <div>
-                    <h5 class="font-bold text-green-400 mb-2">VEX Positivo (+)</h5>
+                    <h5 class="font-bold text-green-400 mb-2">VEX Positivo + IV Baixa vs Histórico</h5>
                     <p class="text-gray-300 leading-relaxed">
-                      Market makers <strong>ganham dinheiro</strong> se volatilidade implícita subir:
-                      <br>• Geralmente compraram opções (long vega)
-                      <br>• Beneficiados por aumento de IV
-                      <br>• Tendem a "apostar" em mais volatilidade
+                      <strong>Setup ideal para comprar volatilidade:</strong>
+                      <br>• MMs vulneráveis (short vega descoberto)
+                      <br>• IV comprimida vs média histórica
+                      <br>• Opções relativamente baratas
+                      <br>• <strong>Estratégia:</strong> Long straddles/strangles
                     </p>
                   </div>
                   <div>
-                    <h5 class="font-bold text-red-400 mb-2">VEX Negativo (-)</h5>
+                    <h5 class="font-bold text-red-400 mb-2">VEX Negativo + IV Alta vs Histórico</h5>
                     <p class="text-gray-300 leading-relaxed">
-                      Market makers <strong>perdem dinheiro</strong> se volatilidade implícita subir:
-                      <br>• Geralmente venderam opções (short vega)  
-                      <br>• Prejudicados por aumento de IV
-                      <br>• Tendem a "torcer" por menos volatilidade
+                      <strong>Setup ideal para vender volatilidade:</strong>
+                      <br>• MMs long vega (querem IV alta)  
+                      <br>• IV inflada vs média histórica
+                      <br>• Opções relativamente caras
+                      <br>• <strong>Estratégia:</strong> Short straddles/iron condors
                     </p>
                   </div>
                 </div>
@@ -221,13 +243,15 @@
         
               <!-- Fórmula -->
               <div class="mb-8 p-6 bg-purple-900/30 rounded-lg border border-purple-500/20">
-                <h4 class="text-xl font-bold text-purple-400 mb-4 text-center">Cálculo do VEX</h4>
+                <h4 class="text-xl font-bold text-purple-400 mb-4 text-center">Cálculo do VEX com Contexto</h4>
                 <p class="text-gray-300 text-sm leading-relaxed text-center max-w-4xl mx-auto">
-                  <strong>VEX = Open Interest × Vega × 100</strong>
+                  <strong>VEX = Open Interest × Vega × 100</strong><br>
+                  <strong>Contexto = IV Atual vs Média 10 dias</strong>
                   <br><br>
                   Exemplo: Strike 140 com 10.000 calls vendidas (Vega 0.12)<br>
                   VEX = 10.000 × 0.12 × 100 = <strong class="text-purple-400">120.000</strong><br>
-                  <em>Se IV subir 1%, MMs perdem R$ 120k nesse strike</em>
+                  IV Atual: 25% vs Média 10d: 18% = <strong class="text-orange-400">+38% inflada</strong><br>
+                  <em>IV alta + VEX negativo = Opportunity para short straddle</em>
                 </p>
               </div>
         
@@ -241,9 +265,7 @@
                     Total VEX por Strike
                   </h4>
                   <p class="text-gray-300 text-sm leading-relaxed">
-                    Exposição total ao risco de volatilidade por strike. <strong class="text-purple-400">Barras maiores</strong> = maior sensibilidade a mudanças de IV.
-                    <br><br>
-                    <strong>Altura da barra</strong> = quanto MMs ganham/perdem por 1% de mudança na volatilidade
+                    Exposição total ao risco de volatilidade por strike. <strong class="text-purple-400">Barras maiores</strong> indicam maior sensibilidade a mudanças de IV. Combina calls e puts para mostrar exposição agregada dos market makers em cada nível de preço.
                   </p>
                 </div>
         
@@ -254,24 +276,23 @@
                     VEX Descoberto (Risco Real)
                   </h4>
                   <p class="text-gray-300 text-sm leading-relaxed">
-                    <strong class="text-red-400">O mais crítico!</strong> Mostra apenas posições descobertas que criam risco real de volatilidade.
-                    <br><br>
-                    Remove hedge natural e revela onde MMs estão verdadeiramente expostos a mudanças de IV
+                    <strong class="text-red-400">O mais crítico!</strong> Mostra apenas posições descobertas que criam risco real de volatilidade. Remove hedge natural entre posições e revela onde MMs estão verdadeiramente expostos a mudanças de IV sem proteção.
                   </p>
                 </div>
         
-                <!-- Gráfico 3 -->
-                <div class="explanation-card rounded-lg p-6">
+                <!-- Gráfico 3 - ATUALIZADO COM CONTEXTO -->
+                <div class="explanation-card rounded-lg p-6 border-2 border-orange-500/50">
                   <h4 class="text-lg font-bold text-white mb-3 flex items-center">
                     <span class="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center text-white text-sm font-bold mr-3">3</span>
-                    Concentração de Risco
+                    Volatilidade Implícita com Contexto Histórico
                   </h4>
                   <p class="text-gray-300 text-sm leading-relaxed">
-                    Mostra o percentual de risco vega concentrado em cada strike. <strong class="text-orange-400">Barras maiores</strong> indicam maior concentração de sensibilidade à volatilidade.
+                    <strong class="text-orange-400">AGORA COM CONTEXTO HISTÓRICO!</strong> Compara IV atual vs média de 10 dias por strike:
                     <br><br>
-                    <strong>Exemplo:</strong> Strike com 12% = concentra 12% de todo o risco de volatilidade do mercado naquele nível
-                    <br>
-                    <strong>Zona crítica:</strong> Strikes com >10% merecem atenção especial
+                    <strong class="text-orange-400">Linha laranja grossa:</strong> IV atual por strike<br>
+                    <strong class="text-cyan-400">Linha azul tracejada:</strong> Média histórica (10 dias)<br>
+                    <strong class="text-gray-400">Área sombreada:</strong> Range mín-máx histórico<br>
+                    <em class="text-orange-300">Agora você vê SE a IV está alta ou baixa vs histórico!</em>
                   </p>
                 </div>
         
@@ -282,13 +303,7 @@
                     Calls vs Puts VEX
                   </h4>
                   <p class="text-gray-300 text-sm leading-relaxed">
-                    Separação do VEX por tipo de opção para análise de distribuição:
-                    <br>
-                    <strong class="text-green-400">Calls (verde):</strong> Vega exposure de opções de compra
-                    <br>
-                    <strong class="text-red-400">Puts (vermelho):</strong> Vega exposure de opções de venda
-                    <br><br>
-                    <em>Shows origem do VEX por strike, sem interpretação direcional específica</em>
+                    Separação do VEX por tipo de opção para análise de distribuição. <strong class="text-green-400">Calls verdes</strong> mostram vega exposure das opções de compra, enquanto <strong class="text-red-400">puts vermelhas</strong> mostram vega exposure das opções de venda. Permite identificar assimetrias na exposição vega.
                   </p>
                 </div>
         
@@ -299,15 +314,7 @@
                     VEX Cumulativo - Mapeamento do Risco
                   </h4>
                   <p class="text-gray-300 text-sm leading-relaxed">
-                    <strong class="text-cyan-400">Mostra acúmulo de risco vega!</strong> Revela regiões de maior sensibilidade:
-                    <br><br>
-                    <strong>Curva íngreme:</strong> Alta concentração de risco vega
-                    <br>
-                    <strong>Platôs:</strong> Regiões com menor sensibilidade
-                    <br>
-                    <strong>Picos:</strong> Zonas de máxima exposição à volatilidade
-                    <br><br>
-                    <em class="text-cyan-300">Identifica onde mudanças de IV terão maior impacto no mercado</em>
+                    <strong class="text-cyan-400">Mostra acúmulo geográfico de risco vega!</strong> Revela regiões de maior concentração de sensibilidade à volatilidade por faixa de strikes. Curva íngreme indica alta concentração de risco vega, enquanto platôs mostram regiões com menor sensibilidade. O topo da montanha representa a zona de máxima exposição à volatilidade.
                   </p>
                 </div>
         
@@ -315,16 +322,10 @@
                 <div class="explanation-card rounded-lg p-6">
                   <h4 class="text-lg font-bold text-white mb-3 flex items-center">
                     <span class="w-8 h-8 bg-indigo-500 rounded-full flex items-center justify-center text-white text-sm font-bold mr-3">6</span>
-                    Volatilidade Implícita por Strike
+                    Concentração de Risco por Strike
                   </h4>
                   <p class="text-gray-300 text-sm leading-relaxed">
-                    Distribuição da IV pelos strikes - a base para entender o VEX:
-                    <br><br>
-                    <strong>IV Alta:</strong> Opções mais caras, maior vega
-                    <br>
-                    <strong>IV Baixa:</strong> Opções mais baratas, menor vega
-                    <br>
-                    <strong>Assimetrias:</strong> Diferenças de IV entre strikes revelam distorções
+                    Mostra o percentual de risco vega total concentrado em cada strike. Barras vermelhas indicam concentração crítica (acima de 20%), laranja mostra concentração moderada (10-20%) e verde indica concentração baixa. Permite identificar strikes que concentram parcela significativa do risco sistêmico de volatilidade.
                   </p>
                 </div>
                 
@@ -332,24 +333,24 @@
         
               <!-- Seção Prática -->
               <div class="mt-8 p-6 bg-gradient-to-r from-purple-900/30 to-red-900/30 rounded-lg">
-                <h4 class="text-xl font-bold text-white mb-4 text-center">Interpretação Prática do VEX</h4>
+                <h4 class="text-xl font-bold text-white mb-4 text-center">Interpretação Prática do VEX com Contexto</h4>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
                   <div>
-                    <h5 class="font-bold text-green-400 mb-3">Alto VEX Positivo (Long Vega)</h5>
+                    <h5 class="font-bold text-green-400 mb-3">VEX Positivo + IV Baixa vs Histórico</h5>
                     <div class="space-y-2 text-gray-300">
-                      <p>• <strong>MMs compraram opções:</strong> Querem alta volatilidade</p>
-                      <p>• <strong>IV pode subir:</strong> MMs não vão suprimir volatilidade</p>
-                      <p>• <strong>Ambiente favorável:</strong> Compra de opções, straddles</p>
-                      <p>• <strong>Cuidado:</strong> IV muito alta pode não se sustentar</p>
+                      <p>• <strong>MMs vulneráveis:</strong> Short vega descoberto</p>
+                      <p>• <strong>IV comprimida:</strong> Opções relativamente baratas</p>
+                      <p>• <strong>Estratégias:</strong> Long straddles, calendars, ratio backspreads</p>
+                      <p>• <strong>Timing:</strong> Aguardar catalisador para explosão IV</p>
                     </div>
                   </div>
                   <div>
-                    <h5 class="font-bold text-red-400 mb-3">Alto VEX Negativo (Short Vega)</h5>
+                    <h5 class="font-bold text-red-400 mb-3">VEX Negativo + IV Alta vs Histórico</h5>
                     <div class="space-y-2 text-gray-300">
-                      <p>• <strong>MMs venderam opções:</strong> Querem baixa volatilidade</p>
-                      <p>• <strong>IV pode cair:</strong> MMs vão tentar suprimir volatilidade</p>
-                      <p>• <strong>Ambiente favorável:</strong> Venda de opções, iron condors</p>
-                      <p>• <strong>Risco:</strong> Eventos podem disparar IV rapidamente</p>
+                      <p>• <strong>MMs long vega:</strong> Querem manter IV alta</p>
+                      <p>• <strong>IV inflada:</strong> Opções relativamente caras</p>
+                      <p>• <strong>Estratégias:</strong> Short straddles, iron condors, calendars reversos</p>
+                      <p>• <strong>Timing:</strong> Após eventos, esperando compressão natural</p>
                     </div>
                   </div>
                 </div>
@@ -357,28 +358,28 @@
         
               <!-- Pontos-Chave -->
               <div class="mt-8 pt-6 border-t border-white/10">
-                <h4 class="text-geminii font-bold text-lg mb-4 text-center">Pontos-Chave da Análise VEX</h4>
+                <h4 class="text-geminii font-bold text-lg mb-4 text-center">Pontos-Chave da Análise VEX com Contexto</h4>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-sm">
                   <div class="text-center">
                     <div class="w-12 h-12 bg-purple-500/20 rounded-full flex items-center justify-center mx-auto mb-3">
                       <i class="fas fa-chart-line text-purple-400"></i>
                     </div>
-                    <h5 class="font-bold text-white mb-2">Risco de Volatilidade</h5>
-                    <p class="text-gray-400">VEX mostra quanto MMs ganham/perdem por cada 1% de mudança na volatilidade.</p>
+                    <h5 class="font-bold text-white mb-2">Risco Contextualizado</h5>
+                    <p class="text-gray-400">VEX com contexto histórico mostra se IV está alta ou baixa vs padrão, revelando oportunidades temporais.</p>
                   </div>
                   <div class="text-center">
                     <div class="w-12 h-12 bg-cyan-500/20 rounded-full flex items-center justify-center mx-auto mb-3">
                       <i class="fas fa-crosshairs text-cyan-400"></i>
                     </div>
-                    <h5 class="font-bold text-white mb-2">Zonas de Impacto</h5>
-                    <p class="text-gray-400">Cumulativo revela onde mudanças de IV terão maior efeito no mercado.</p>
+                    <h5 class="font-bold text-white mb-2">Arbitragem Temporal</h5>
+                    <p class="text-gray-400">Explorar distorções entre IV atual e média histórica para timing ideal de entrada.</p>
                   </div>
                   <div class="text-center">
                     <div class="w-12 h-12 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-3">
                       <i class="fas fa-shield-alt text-red-400"></i>
                     </div>
-                    <h5 class="font-bold text-white mb-2">Exposição Descoberta</h5>
-                    <p class="text-gray-400">Foco nas posições que criam risco real de volatilidade para os MMs.</p>
+                    <h5 class="font-bold text-white mb-2">Exposição Inteligente</h5>
+                    <p class="text-gray-400">Combinar VEX descoberto com contexto IV para estratégias de alta probabilidade.</p>
                   </div>
                 </div>
               </div>
@@ -423,7 +424,7 @@
         <!-- Resultados -->
         <div id="resultsSection" class="hidden">
         
-        <!-- Métricas Principais -->
+        <!-- Métricas Principais - EXPANDIDAS -->
         <div class="vex-card p-6 mb-8">
           <div class="text-center mb-8">
             <div id="riskIndicator" class="inline-block px-8 py-4 rounded-2xl text-2xl font-black">
@@ -431,39 +432,49 @@
             </div>
           </div>
           
-          <div class="grid grid-cols-2 md:grid-cols-5 gap-6">
+          <div class="grid grid-cols-2 md:grid-cols-6 gap-4">
             <div class="metric-card text-center">
               <div class="text-3xl font-black text-white mb-2" id="spotPrice">--</div>
-              <div class="text-white font-bold">SPOT PRICE</div>
+              <div class="text-white font-bold text-xs">SPOT PRICE</div>
             </div>
             
             <div class="metric-card text-center">
               <div class="mb-2" id="weightedIV">--</div>
-              <div class="text-white font-bold">IV MÉDIA</div>
+              <div class="text-white font-bold text-xs">IV ATUAL</div>
+            </div>
+            
+            <!-- NOVO CARD -->
+            <div class="metric-card text-center">
+              <div class="mb-2" id="historicalIV">--</div>
+              <div class="text-white font-bold text-xs">IV MÉDIA 10D</div>
+            </div>
+            
+            <!-- NOVO CARD -->
+            <div class="metric-card text-center">
+              <div class="mb-2" id="ivTrend">--</div>
+              <div class="text-white font-bold text-xs">TENDÊNCIA IV</div>
             </div>
             
             <div class="metric-card text-center">
               <div class="mb-2" id="maxStrike">--</div>
-              <div class="text-white font-bold">MAX SENSIBILIDADE</div>
-            </div>
-            
-            <div class="metric-card text-center">
-              <div class="mb-2" id="vexTotal">--</div>
-              <div class="text-white font-bold">VEX TOTAL</div>
+              <div class="text-white font-bold text-xs">MAX SENSIBILIDADE</div>
             </div>
             
             <div class="metric-card text-center">
               <div class="mb-2" id="vexDescoberto">--</div>
-              <div class="text-white font-bold">VEX DESCOBERTO</div>
+              <div class="text-white font-bold text-xs">VEX DESCOBERTO</div>
             </div>
           </div>
+
+          <!-- Container para alertas dinâmicos -->
+          <div id="alertContainer"></div>
         </div>
 
         <!-- Gráficos VEX -->
         <div class="vex-card p-6">
           <h3 class="text-2xl font-bold mb-6 text-center">
             <i class="fas fa-chart-area mr-3" style="color: #ba39af;"></i>
-            Análise VEX Completa
+            Análise VEX Completa com Contexto Histórico
           </h3>
           <div class="chart-container">
             <div id="vexChart" style="width: 100%; height: 100%;"></div>
@@ -596,7 +607,7 @@
       }
 
       setLoading(analyzeBtn, true, '<i class="fas fa-rocket mr-2"></i>Executar VEX', 'Processando VEX...');
-      showStatus('Executando análise VEX completa...', 'info');
+      showStatus('Executando análise VEX completa com contexto histórico...', 'info');
 
       try {
         const requestBody = { ticker, days_back: 60 };
@@ -617,7 +628,7 @@
         if (!response.ok) throw new Error(data.error);
 
         displayResults(data);
-        showStatus(`Análise VEX de ${ticker} concluída`, 'success');
+        showStatus(`Análise VEX de ${ticker} concluída com contexto histórico`, 'success');
 
       } catch (error) {
         showStatus('Erro: ' + error.message, 'error');
@@ -626,9 +637,10 @@
       }
     }
 
-    // Exibir resultados
+    // Exibir resultados - EXPANDIDO COM CONTEXTO
     function displayResults(data) {
       const vol_regime = data.vol_regime || {};
+      const iv_context = vol_regime.iv_context || {};
       
       // Risk indicator
       const risk = vol_regime.volatility_risk || 'LOW';
@@ -637,7 +649,7 @@
       
       if (risk === 'HIGH') {
         riskClass += 'from-red-400 to-red-600';
-        riskText = 'Alto Risco';
+        riskText = 'Alto Risco Volatilidade';
       } else if (risk === 'MODERATE') {
         riskClass += 'from-yellow-400 to-yellow-600';
         riskText = 'Risco Moderado';
@@ -650,20 +662,119 @@
         `inline-block px-8 py-4 rounded-2xl text-2xl font-black ${riskClass}`;
       document.getElementById('riskIndicator').textContent = riskText;
 
-      // Métricas
+      // Métricas existentes
       document.getElementById('spotPrice').textContent = `R$ ${data.spot_price?.toFixed(2)}`;
       
       const weightedIV = vol_regime.weighted_iv || 0;
       document.getElementById('weightedIV').textContent = `${weightedIV.toFixed(1)}%`;
       
+      // NOVAS MÉTRICAS COM CONTEXTO
+      const historicalIV = iv_context.historical_avg_iv || weightedIV;
+      document.getElementById('historicalIV').textContent = `${historicalIV.toFixed(1)}%`;
+      
+      // Tendência IV com cor dinâmica
+      const ivTrend = iv_context.iv_trend || 'ESTAVEL';
+      const ivTrendElement = document.getElementById('ivTrend');
+      
+      let trendColor = '#6b7280'; // cinza padrão
+      let trendText = ivTrend;
+      
+      if (ivTrend === 'ALTA') {
+        trendColor = '#ef4444';
+        trendText = '↑ ALTA';
+      } else if (ivTrend === 'BAIXA') {
+        trendColor = '#22c55e';
+        trendText = '↓ BAIXA';
+      } else {
+        trendColor = '#06b6d4';
+        trendText = '→ ESTÁVEL';
+      }
+      
+      ivTrendElement.style.color = trendColor;
+      ivTrendElement.textContent = trendText;
+      
+      // Métricas restantes
       const maxStrike = vol_regime.max_vex_strike || 0;
       document.getElementById('maxStrike').textContent = `R$ ${maxStrike.toFixed(2)}`;
       
-      const vexTotal = vol_regime.total_vex || 0;
-      document.getElementById('vexTotal').textContent = formatLargeNumber(vexTotal);
-      
       const vexDescoberto = vol_regime.total_vex_descoberto || 0;
       document.getElementById('vexDescoberto').textContent = formatLargeNumber(vexDescoberto);
+
+      // ALERTAS DINÂMICOS BASEADOS EM DISTORÇÃO IV
+      const alertContainer = document.getElementById('alertContainer');
+      alertContainer.innerHTML = ''; // Limpar alertas anteriores
+      
+      const ivDistortion = iv_context.iv_distortion_pct || 0;
+      
+      if (Math.abs(ivDistortion) > 15) {
+        const alertDiv = document.createElement('div');
+        alertDiv.className = 'iv-distortion-alert mt-4';
+        
+        let alertIcon, alertColor, alertMessage, strategyTip;
+        
+        if (ivDistortion > 15) {
+          alertIcon = 'fas fa-exclamation-triangle';
+          alertColor = 'text-red-400';
+          alertMessage = `IV INFLADA: +${ivDistortion.toFixed(1)}% vs média histórica`;
+          strategyTip = vexDescoberto < 0 ? 
+            '💡 Oportunidade: Short Straddles/Iron Condors (MMs querem IV alta)' :
+            '⚠️ Cuidado: IV alta mas MMs vulneráveis - aguardar compressão';
+        } else {
+          alertIcon = 'fas fa-compress-arrows-alt';
+          alertColor = 'text-green-400';
+          alertMessage = `IV COMPRIMIDA: ${ivDistortion.toFixed(1)}% vs média histórica`;
+          strategyTip = vexDescoberto > 0 ? 
+            '💡 Oportunidade: Long Straddles/Calendars (IV baixa + MMs vulneráveis)' :
+            '📊 Neutro: IV baixa mas MMs protegidos - aguardar setup';
+        }
+        
+        alertDiv.innerHTML = `
+          <div class="flex items-center justify-center mb-2">
+            <i class="${alertIcon} ${alertColor} mr-2"></i>
+            <strong class="${alertColor}">${alertMessage}</strong>
+          </div>
+          <div class="text-gray-300 text-sm">
+            ${strategyTip}
+          </div>
+        `;
+        
+        alertContainer.appendChild(alertDiv);
+      }
+
+      // Status distribution alert
+      const statusDistribution = iv_context.status_distribution || {};
+      const highIVCount = (statusDistribution['MUITO_ALTA'] || 0) + (statusDistribution['ALTA'] || 0);
+      const lowIVCount = (statusDistribution['MUITO_BAIXA'] || 0) + (statusDistribution['BAIXA'] || 0);
+      const totalStrikes = Object.values(statusDistribution).reduce((a, b) => a + b, 0);
+      
+      if (totalStrikes > 0 && (highIVCount > totalStrikes * 0.6 || lowIVCount > totalStrikes * 0.6)) {
+        const alertDiv = document.createElement('div');
+        alertDiv.className = 'iv-distortion-alert mt-4';
+        
+        if (highIVCount > totalStrikes * 0.6) {
+          alertDiv.innerHTML = `
+            <div class="flex items-center justify-center mb-2">
+              <i class="fas fa-fire text-red-400 mr-2"></i>
+              <strong class="text-red-400">REGIME IV ALTA DOMINANTE</strong>
+            </div>
+            <div class="text-gray-300 text-sm">
+              ${Math.round(highIVCount/totalStrikes*100)}% dos strikes com IV elevada - Ambiente para venda de volatilidade
+            </div>
+          `;
+        } else {
+          alertDiv.innerHTML = `
+            <div class="flex items-center justify-center mb-2">
+              <i class="fas fa-compress text-green-400 mr-2"></i>
+              <strong class="text-green-400">REGIME IV BAIXA DOMINANTE</strong>
+            </div>
+            <div class="text-gray-300 text-sm">
+              ${Math.round(lowIVCount/totalStrikes*100)}% dos strikes com IV comprimida - Ambiente para compra de volatilidade
+            </div>
+          `;
+        }
+        
+        alertContainer.appendChild(alertDiv);
+      }
 
       // Gráfico
       if (data.plot_json) {
@@ -677,6 +788,27 @@
     function renderChart(plotJson) {
       try {
         const plotData = JSON.parse(plotJson);
+        
+        // Limpar dados inválidos
+        plotData.data.forEach(trace => {
+          if (trace.x) {
+            trace.x = trace.x.map(val => {
+              const num = parseFloat(val);
+              return isNaN(num) ? 0 : num;
+            });
+          }
+          
+          if (trace.y) {
+            trace.y = trace.y.map(val => {
+              const num = parseFloat(val);
+              return isNaN(num) ? 0 : num;
+            });
+          }
+          
+          // Filtrar valores infinitos
+          if (trace.x) trace.x = trace.x.filter(val => isFinite(val));
+          if (trace.y) trace.y = trace.y.filter(val => isFinite(val));
+        });
         
         const config = {
           responsive: true,
@@ -696,8 +828,9 @@
 
       } catch (error) {
         console.error('Erro no gráfico:', error);
+        console.error('plotJson recebido:', plotJson);
         document.getElementById('vexChart').innerHTML = 
-          '<div class="text-center text-red-400 p-8">Erro ao carregar gráfico</div>';
+          '<div class="text-center text-red-400 p-8">Erro ao carregar gráfico: ' + error.message + '</div>';
       }
     }
 
@@ -719,10 +852,10 @@
 
     // Inicializar
     document.addEventListener('DOMContentLoaded', function() {
-        showStatus('Sistema VEX carregado. Digite um ticker para começar.', 'info');
-      });
-  
-    </script>
-  
-  </body>
-  </html>
+      showStatus('Sistema VEX com contexto histórico carregado. Digite um ticker para começar.', 'info');
+    });
+
+  </script>
+
+</body>
+</html>

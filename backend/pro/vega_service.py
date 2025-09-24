@@ -220,8 +220,46 @@ class DataProvider:
             logging.error(f"Erro Floqui: {e}")
             return {}, None
 
+    def get_historical_iv_context(self, symbol, days=10):
+        """Busca contexto histórico de IV para comparação"""
+        try:
+            to_date = datetime.now().strftime('%Y-%m-%d')
+            from_date = (datetime.now() - timedelta(days=days)).strftime('%Y-%m-%d')
+            
+            url = f"{self.oplab_url}/market/historical/options/{symbol}/{from_date}/{to_date}"
+            response = requests.get(url, headers=self.headers, timeout=15)
+            
+            if response.status_code != 200:
+                logging.warning(f"Erro histórico IV: {response.status_code}")
+                return pd.DataFrame()
+            
+            data = response.json()
+            if not data:
+                return pd.DataFrame()
+            
+            df = pd.DataFrame(data)
+            df['time'] = pd.to_datetime(df['time'])
+            
+            # Filtra dados válidos
+            valid_data = df[
+                (df['volatility'] > 0) &
+                (df['volatility'] < 300) &  # Remove outliers absurdos
+                (df['premium'] > 0) &
+                (df['strike'] > 0)
+            ].copy()
+            
+            logging.info(f"Contexto IV histórico: {len(valid_data)} registros")
+            return valid_data
+            
+        except Exception as e:
+            logging.error(f"Erro contexto IV: {e}")
+            return pd.DataFrame()
+
+
+
 class VEXCalculator:
-    def calculate_vex(self, oplab_df, oi_breakdown, spot_price):
+    
+    def calculate_vex_with_context(self, oplab_df, oi_breakdown, spot_price, historical_df=None):
         """Calcula VEX = Vega × Open Interest × 100"""
         if oplab_df.empty:
             return pd.DataFrame()
@@ -242,6 +280,8 @@ class VEXCalculator:
             
             calls = strike_options[strike_options['type'] == 'CALL']
             puts = strike_options[strike_options['type'] == 'PUT']
+            
+            iv_context = self._calculate_iv_context(strike, historical_df) if historical_df is not None else {}
             
             call_data = {}
             put_data = {}
@@ -295,7 +335,7 @@ class VEXCalculator:
             total_vex = call_vex + put_vex
             total_vex_descoberto = call_vex_descoberto + put_vex_descoberto
             
-            # IV média ponderada
+            # IV média ponderada atual
             weighted_iv = 0
             if call_data and put_data:
                 total_oi = call_data['total'] + put_data['total']
@@ -306,6 +346,7 @@ class VEXCalculator:
             elif put_data:
                 weighted_iv = put_iv
             
+            # NOVO: Adicionar contexto histórico
             vex_data.append({
                 'strike': float(strike),
                 'call_vex': float(call_vex),
@@ -319,13 +360,64 @@ class VEXCalculator:
                 'call_oi_descoberto': int(call_data.get('descoberto', 0)),
                 'put_oi_descoberto': int(put_data.get('descoberto', 0)),
                 'implied_volatility': float(weighted_iv),
+                # CONTEXTO HISTÓRICO NOVO
+                'iv_10d_avg': float(iv_context.get('iv_10d_avg', weighted_iv)),
+                'iv_10d_min': float(iv_context.get('iv_10d_min', weighted_iv * 0.8)),
+                'iv_10d_max': float(iv_context.get('iv_10d_max', weighted_iv * 1.2)),
+                'iv_percentile': float(iv_context.get('iv_percentile', 50)),
+                'iv_status': iv_context.get('iv_status', 'NEUTRAL'),
                 'has_real_data': (float(strike), 'CALL') in oi_breakdown or (float(strike), 'PUT') in oi_breakdown
             })
         
         result_df = pd.DataFrame(vex_data).sort_values('strike')
-        logging.info(f"VEX calculado para {len(result_df)} strikes")
+        logging.info(f"VEX com contexto calculado para {len(result_df)} strikes")
         
         return result_df
+    
+    def _calculate_iv_context(self, strike, historical_df):
+        """Calcula contexto histórico para um strike específico"""
+        if historical_df.empty:
+            return {}
+        
+        # Filtrar dados do strike (com tolerância de ±1)
+        strike_data = historical_df[
+            (historical_df['strike'] >= strike - 1) &
+            (historical_df['strike'] <= strike + 1)
+        ]
+        
+        if strike_data.empty:
+            return {}
+        
+        iv_values = strike_data['volatility'].values
+        
+        iv_10d_avg = float(np.mean(iv_values))
+        iv_10d_min = float(np.min(iv_values))  
+        iv_10d_max = float(np.max(iv_values))
+        
+        # Calcular percentil da IV atual
+        current_iv = iv_values[-1] if len(iv_values) > 0 else iv_10d_avg
+        iv_percentile = float(np.percentile(iv_values, 50))  # Mediana como referência
+        
+        # Classificar status da IV
+        if current_iv > iv_10d_avg * 1.3:
+            iv_status = 'MUITO_ALTA'
+        elif current_iv > iv_10d_avg * 1.1:
+            iv_status = 'ALTA'
+        elif current_iv < iv_10d_avg * 0.7:
+            iv_status = 'MUITO_BAIXA'
+        elif current_iv < iv_10d_avg * 0.9:
+            iv_status = 'BAIXA'
+        else:
+            iv_status = 'NORMAL'
+        
+        return {
+            'iv_10d_avg': iv_10d_avg,
+            'iv_10d_min': iv_10d_min,
+            'iv_10d_max': iv_10d_max,
+            'iv_percentile': iv_percentile,
+            'iv_status': iv_status
+        }
+    
 
 class VolatilityRegimeDetector:
     def analyze_volatility_regime(self, vex_df, spot_price):
@@ -374,7 +466,7 @@ class VEXAnalyzer:
         self.vol_detector = VolatilityRegimeDetector()
     
     def create_6_charts(self, vex_df, spot_price, symbol, expiration_info=None):
-        """Cria os 6 gráficos VEX"""
+        """Cria os 6 gráficos VEX com contexto histórico"""
         if vex_df.empty:
             return None
         
@@ -397,6 +489,10 @@ class VEXAnalyzer:
         )
         
         strikes = [float(x) for x in vex_df['strike'].tolist()]
+        iv_current = [float(x) for x in vex_df['implied_volatility'].tolist()]
+        iv_10d_avg = [float(x) for x in vex_df['iv_10d_avg'].tolist()]
+        iv_10d_min = [float(x) for x in vex_df['iv_10d_min'].tolist()]
+        iv_10d_max = [float(x) for x in vex_df['iv_10d_max'].tolist()]
         total_vex_values = [float(x) for x in vex_df['total_vex'].tolist()]
         descoberto_values = [float(x) for x in vex_df['total_vex_descoberto'].tolist()]
         call_vex_values = [float(x) for x in vex_df['call_vex'].tolist()]
@@ -410,10 +506,46 @@ class VEXAnalyzer:
         fig.add_trace(go.Bar(x=strikes, y=descoberto_values, marker_color='#dc2626', showlegend=False), row=1, col=2)
         
         # 3. Volatilidade Implícita
-        fig.add_trace(go.Scatter(x=strikes, y=iv_values, mode='lines+markers', 
-                                line=dict(color='#f97316', width=3), 
-                                marker=dict(color='#f97316', size=6),
-                                showlegend=False), row=2, col=1)
+        fig.add_trace(go.Scatter(
+        x=strikes, 
+        y=iv_10d_max, 
+        fill=None, 
+        mode='lines', 
+        line=dict(color='rgba(0,0,0,0)'), 
+        showlegend=False
+    ), row=2, col=1)
+    
+        fig.add_trace(go.Scatter(
+            x=strikes, 
+            y=iv_10d_min, 
+            fill='tonexty', 
+            fillcolor='rgba(100,100,100,0.2)', 
+            mode='lines', 
+            line=dict(color='rgba(0,0,0,0)'), 
+            name='Range 10d',
+            showlegend=False
+        ), row=2, col=1)
+        
+        # Linha da média histórica (referência)
+        fig.add_trace(go.Scatter(
+            x=strikes, 
+            y=iv_10d_avg, 
+            mode='lines', 
+            line=dict(color='#06b6d4', width=2, dash='dash'), 
+            name='Média 10d',
+            showlegend=False
+        ), row=2, col=1)
+        
+        # Linha da IV atual (destaque)
+        fig.add_trace(go.Scatter(
+            x=strikes, 
+            y=iv_current, 
+            mode='lines+markers', 
+            line=dict(color='#f97316', width=4), 
+            marker=dict(color='#f97316', size=8),
+            name='IV Atual',
+            showlegend=False
+        ), row=2, col=1)
         
         # 4. Calls vs Puts
         fig.add_trace(go.Bar(x=strikes, y=call_vex_values, marker_color='#22c55e', showlegend=False), row=2, col=2)
@@ -466,7 +598,7 @@ class VEXAnalyzer:
         return fig.to_json()
     
     def analyze(self, symbol, expiration_code=None):
-        """Análise principal VEX"""
+        """Análise principal VEX com contexto histórico"""
         logging.info(f"INICIANDO ANALISE VEX - {symbol}")
         
         spot_price = self.data_provider.get_spot_price(symbol)
@@ -477,13 +609,21 @@ class VEXAnalyzer:
         if oplab_df.empty:
             raise ValueError("Erro: sem dados da Oplab")
         
+        # NOVO: Buscar contexto histórico
+        historical_df = self.data_provider.get_historical_iv_context(symbol, days=10)
+        
         oi_breakdown, expiration_info = self.data_provider.get_floqui_oi_breakdown(symbol, expiration_code)
         
-        vex_df = self.vex_calculator.calculate_vex(oplab_df, oi_breakdown, spot_price)
+        # USAR NOVO MÉTODO COM CONTEXTO
+        vex_df = self.vex_calculator.calculate_vex_with_context(oplab_df, oi_breakdown, spot_price, historical_df)
         if vex_df.empty:
             raise ValueError("Erro: falha no cálculo VEX")
         
         vol_regime = self.vol_detector.analyze_volatility_regime(vex_df, spot_price)
+        
+        # NOVO: Adicionar estatísticas de contexto
+        vol_regime['iv_context'] = self._analyze_iv_context(vex_df)
+        
         plot_json = self.create_6_charts(vex_df, spot_price, symbol, expiration_info)
         
         return {
@@ -495,6 +635,28 @@ class VEXAnalyzer:
             'plot_json': plot_json,
             'real_data_count': int(vex_df['has_real_data'].sum()),
             'success': True
+        }
+
+    def _analyze_iv_context(self, vex_df):
+        """Análise do contexto geral de IV"""
+        if vex_df.empty:
+            return {}
+        
+        # Contar strikes por status
+        status_counts = vex_df['iv_status'].value_counts().to_dict()
+        
+        # IV média vs histórica
+        current_avg = vex_df['implied_volatility'].mean()
+        historical_avg = vex_df['iv_10d_avg'].mean()
+        
+        iv_trend = 'ALTA' if current_avg > historical_avg * 1.1 else 'BAIXA' if current_avg < historical_avg * 0.9 else 'ESTAVEL'
+        
+        return {
+            'status_distribution': status_counts,
+            'current_avg_iv': float(current_avg),
+            'historical_avg_iv': float(historical_avg),
+            'iv_trend': iv_trend,
+            'iv_distortion_pct': float((current_avg - historical_avg) / historical_avg * 100)
         }
 
 class VegaService:
