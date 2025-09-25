@@ -24,6 +24,7 @@ from pro.gamma_routes import get_gamma_blueprint
 from pro.delta_routes import get_delta_blueprint
 from pro.vega_routes import get_vega_blueprint
 from pro.theta_routes import get_theta_blueprint
+from pro.mm_temporal_routes import mm_temporal_bp
 
 # Premium
 from premium.swing_trade_ml_routes import get_swing_trade_ml_blueprint
@@ -114,6 +115,16 @@ except Exception as e:
 app.register_blueprint(beta_bp)
 app.register_blueprint(opcoes_bp)
 
+
+# market maker
+
+# MM TEMPORAL
+try:
+    from pro.mm_temporal_routes import mm_temporal_bp
+    app.register_blueprint(mm_temporal_bp)
+    print("✅ MM Temporal blueprint registrado!")
+except Exception as e:
+    print(f"❌ Erro ao registrar MM Temporal blueprint: {e}")
 
 
 # TEX
@@ -429,11 +440,17 @@ def delta_levels():
 def vega_levels():
     return send_from_directory('../frontend', 'vega-levels.html')
 
-
 @app.route('/theta-level')
 @app.route('/theta-levels.html')
 def theta_levels():
     return send_from_directory('../frontend', 'theta-levels.html')
+
+
+@app.route('/marketmaker')
+@app.route('/marketmaker.html')
+def mm_levels():
+    return send_from_directory('../frontend', 'marketmaker.html')
+
 
 
 

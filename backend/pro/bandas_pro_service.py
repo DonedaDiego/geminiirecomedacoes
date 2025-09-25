@@ -413,128 +413,181 @@ class HybridVolatilityBands:
        return self
    
    def create_bands(self):
-       df_temp = self.df.copy()
-       df_temp['reference_price'] = np.nan
-       df_temp['period_vol'] = np.nan
-       
-       # Garantir que temos a coluna Date como datetime
-       if 'Date' not in df_temp.columns:
-           df_temp.reset_index(inplace=True)
-       df_temp['Date'] = pd.to_datetime(df_temp['Date'])
-       
-       # LÓGICA CORRETA POR REGIME (igual ao primeiro código)
-       if self.regime == 'D':  # DIÁRIO
-           # DIÁRIO: Atualiza TODOS OS DIAS
-           df_temp['reference_price'] = df_temp['Close']
-           df_temp['period_vol'] = df_temp['hybrid_vol']
-           
-       elif self.regime == 'W':  # SEMANAL
-           # SEMANAL: Trava na SEGUNDA-FEIRA e mantém a semana toda
-           df_temp['Week'] = df_temp['Date'].dt.to_period('W-MON')
-           
-           # Para cada semana, pega o primeiro dia útil (segunda-feira)
-           weekly_reference = df_temp.groupby('Week').agg({
-               'Close': 'first',     # Preço da segunda-feira
-               'hybrid_vol': 'first' # Vol da segunda-feira
-           }).reset_index()
-           weekly_reference.columns = ['Week', 'week_price', 'week_vol']
-           
-           # Merge para aplicar o mesmo valor para toda a semana
-           df_temp = df_temp.merge(weekly_reference, on='Week', how='left')
-           df_temp['reference_price'] = df_temp['week_price']
-           df_temp['period_vol'] = df_temp['week_vol']
-           
-       elif self.regime == 'M':  # MENSAL
-           # MENSAL: Trava no PRIMEIRO DIA ÚTIL e mantém o mês todo
-           df_temp['Month'] = df_temp['Date'].dt.to_period('M')
-           
-           # Para cada mês, pega o primeiro dia útil
-           monthly_reference = df_temp.groupby('Month').agg({
-               'Close': 'first',     # Preço do 1º dia útil
-               'hybrid_vol': 'first' # Vol do 1º dia útil
-           }).reset_index()
-           monthly_reference.columns = ['Month', 'month_price', 'month_vol']
-           
-           # Merge para aplicar o mesmo valor para todo o mês
-           df_temp = df_temp.merge(monthly_reference, on='Month', how='left')
-           df_temp['reference_price'] = df_temp['month_price']
-           df_temp['period_vol'] = df_temp['month_vol']
-           
-       elif self.regime == 'Y':  # ANUAL
-           # ANUAL: Trava no PRIMEIRO DIA ÚTIL DO ANO e mantém o ano todo
-           df_temp['Year'] = df_temp['Date'].dt.year
-           
-           # Para cada ano, pega o primeiro dia útil
-           yearly_reference = df_temp.groupby('Year').agg({
-               'Close': 'first',     # Preço do 1º dia útil do ano
-               'hybrid_vol': 'first' # Vol do 1º dia útil do ano
-           }).reset_index()
-           yearly_reference.columns = ['Year', 'year_price', 'year_vol']
-           
-           # Merge para aplicar o mesmo valor para todo o ano
-           df_temp = df_temp.merge(yearly_reference, on='Year', how='left')
-           df_temp['reference_price'] = df_temp['year_price']
-           df_temp['period_vol'] = df_temp['year_vol']
-       
-       else:
-           # Fallback para regime 'M' (mensal) se não reconhecer
-           df_temp['Month'] = df_temp['Date'].dt.to_period('M')
-           monthly_reference = df_temp.groupby('Month').agg({
-               'Close': 'first',
-               'hybrid_vol': 'first'
-           }).reset_index()
-           monthly_reference.columns = ['Month', 'month_price', 'month_vol']
-           df_temp = df_temp.merge(monthly_reference, on='Month', how='left')
-           df_temp['reference_price'] = df_temp['month_price']
-           df_temp['period_vol'] = df_temp['month_vol']
-       
-       # Preencher valores ausentes (fallback)
-       df_temp['period_vol'].fillna(method='ffill', inplace=True)
-       df_temp['reference_price'].fillna(method='ffill', inplace=True)
-       df_temp['period_vol'].fillna(self.df['hybrid_vol'].mean(), inplace=True)
-       df_temp['reference_price'].fillna(self.df['Close'], inplace=True)
-       
-       # Multiplicadores para diferenciação visual das bandas
-       regime_multiplier = {
-           'D': 0.5,    # Bandas mais estreitas (oscila todo dia)
-           'W': 0.75,   # Bandas intermediárias (oscila toda semana)
-           'M': 1.0,    # Bandas padrão (oscila todo mês)
-           'Y': 1.5     # Bandas mais largas (oscila todo ano)
-       }
-       
-       multiplier = regime_multiplier.get(self.regime, 1.0)
-       
-       # Criar as bandas com base na linha central TRAVADA
-       for d in [2, 4]:
-           self.df[f'banda_superior_{d}sigma'] = (
-               df_temp['reference_price'] * (1 + d * df_temp['period_vol'] * multiplier)
-           )
-           self.df[f'banda_inferior_{d}sigma'] = (
-               df_temp['reference_price'] * (1 - d * df_temp['period_vol'] * multiplier)
-           )
-       
-       self.df['linha_central'] = df_temp['reference_price']
-       
-       # Preencher valores ausentes nas bandas
-       band_columns = ['banda_superior_2sigma', 'banda_inferior_2sigma', 'linha_central', 
-                      'banda_superior_4sigma', 'banda_inferior_4sigma']
-       
-       for col in band_columns:
-           if col in self.df.columns:
-               self.df[col].fillna(method='ffill', inplace=True)
-               self.df[col].fillna(method='bfill', inplace=True)
-               # Se ainda temos NaNs, usar preço atual com volatilidade padrão
-               if self.df[col].isna().any():
-                   vol_fallback = 0.02
-                   multiplier_calc = 2 if '2sigma' in col else 4 if '4sigma' in col else 1
-                   if 'superior' in col:
-                       self.df[col].fillna(self.df['Close'] * (1 + multiplier_calc * vol_fallback), inplace=True)
-                   elif 'inferior' in col:
-                       self.df[col].fillna(self.df['Close'] * (1 - multiplier_calc * vol_fallback), inplace=True)
-                   else:  # linha_central
-                       self.df[col].fillna(self.df['Close'], inplace=True)
-       
-       return self
+        df_temp = self.df.copy()
+        df_temp['reference_price'] = np.nan
+        df_temp['period_vol'] = np.nan
+        
+        # Garantir que Date é datetime
+        if 'Date' not in df_temp.columns:
+            df_temp.reset_index(inplace=True)
+        df_temp['Date'] = pd.to_datetime(df_temp['Date'])
+        
+        # LÓGICA CORRETA: SEMPRE USAR DADOS DO PERÍODO ANTERIOR
+        if self.regime == 'D':  # DIÁRIO
+            # DIÁRIO: Preço de ONTEM, volatilidade de ONTEM
+            df_temp['reference_price'] = df_temp['Close'].shift(1)  # PREÇO DE ONTEM
+            df_temp['period_vol'] = df_temp['hybrid_vol'].shift(1)  # VOL DE ONTEM
+            
+        elif self.regime == 'W':  # SEMANAL
+            # SEMANAL: Preço da segunda-feira PASSADA, vol da sexta PASSADA
+            df_temp['Week'] = df_temp['Date'].dt.to_period('W-MON')
+            
+            # Preço da segunda-feira de cada semana
+            weekly_price = df_temp.groupby('Week')['Close'].first().reset_index()
+            weekly_price.columns = ['Week', 'week_price']
+            weekly_price['week_price_previous'] = weekly_price['week_price'].shift(1)
+            
+            # Volatilidade da sexta-feira de cada semana
+            weekly_vol = df_temp.groupby('Week')['hybrid_vol'].last().reset_index()
+            weekly_vol.columns = ['Week', 'week_vol']
+            weekly_vol['week_vol_previous'] = weekly_vol['week_vol'].shift(1)
+            
+            # Merge
+            weekly_ref = weekly_price.merge(weekly_vol[['Week', 'week_vol_previous']], on='Week')
+            weekly_ref = weekly_ref[['Week', 'week_price_previous', 'week_vol_previous']]
+            weekly_ref.columns = ['Week', 'week_price', 'week_vol']
+            
+            df_temp = df_temp.merge(weekly_ref, on='Week', how='left')
+            df_temp['reference_price'] = df_temp['week_price']  # SEGUNDA DA SEMANA PASSADA
+            df_temp['period_vol'] = df_temp['week_vol']  # SEXTA DA SEMANA PASSADA
+            
+        elif self.regime == 'M':  # MENSAL
+            # MENSAL: Preço do 1º dia do mês PASSADO, vol do último dia do mês PASSADO
+            df_temp['Month'] = df_temp['Date'].dt.to_period('M')
+            
+            # Preço do primeiro dia de cada mês
+            monthly_price = df_temp.groupby('Month')['Close'].first().reset_index()
+            monthly_price.columns = ['Month', 'month_price']
+            monthly_price['month_price_previous'] = monthly_price['month_price'].shift(1)
+            
+            # Volatilidade do último dia de cada mês
+            monthly_vol = df_temp.groupby('Month')['hybrid_vol'].last().reset_index()
+            monthly_vol.columns = ['Month', 'month_vol']
+            monthly_vol['month_vol_previous'] = monthly_vol['month_vol'].shift(1)
+            
+            # Merge
+            monthly_ref = monthly_price.merge(monthly_vol[['Month', 'month_vol_previous']], on='Month')
+            monthly_ref = monthly_ref[['Month', 'month_price_previous', 'month_vol_previous']]
+            monthly_ref.columns = ['Month', 'month_price', 'month_vol']
+            
+            df_temp = df_temp.merge(monthly_ref, on='Month', how='left')
+            df_temp['reference_price'] = df_temp['month_price']  # 1º DIA MÊS PASSADO
+            df_temp['period_vol'] = df_temp['month_vol']  # ÚLTIMO DIA MÊS PASSADO
+            
+        elif self.regime == 'Q':  # TRIMESTRAL
+            # TRIMESTRAL: Preço do 1º dia do trimestre PASSADO, vol do último dia do trimestre PASSADO
+            df_temp['Quarter'] = df_temp['Date'].dt.to_period('Q')
+            
+            # Preço do primeiro dia de cada trimestre
+            quarterly_price = df_temp.groupby('Quarter')['Close'].first().reset_index()
+            quarterly_price.columns = ['Quarter', 'quarter_price']
+            quarterly_price['quarter_price_previous'] = quarterly_price['quarter_price'].shift(1)
+            
+            # Volatilidade do último dia de cada trimestre
+            quarterly_vol = df_temp.groupby('Quarter')['hybrid_vol'].last().reset_index()
+            quarterly_vol.columns = ['Quarter', 'quarter_vol']
+            quarterly_vol['quarter_vol_previous'] = quarterly_vol['quarter_vol'].shift(1)
+            
+            # Merge
+            quarterly_ref = quarterly_price.merge(quarterly_vol[['Quarter', 'quarter_vol_previous']], on='Quarter')
+            quarterly_ref = quarterly_ref[['Quarter', 'quarter_price_previous', 'quarter_vol_previous']]
+            quarterly_ref.columns = ['Quarter', 'quarter_price', 'quarter_vol']
+            
+            df_temp = df_temp.merge(quarterly_ref, on='Quarter', how='left')
+            df_temp['reference_price'] = df_temp['quarter_price']  # 1º DIA TRIMESTRE PASSADO
+            df_temp['period_vol'] = df_temp['quarter_vol']  # ÚLTIMO DIA TRIMESTRE PASSADO
+            
+        elif self.regime == 'Y' or self.regime == 'A':  # ANUAL
+            # ANUAL: Preço do 1º dia do ano PASSADO, vol do último dia do ano PASSADO
+            df_temp['Year'] = df_temp['Date'].dt.year
+            
+            # Preço do primeiro dia de cada ano
+            yearly_price = df_temp.groupby('Year')['Close'].first().reset_index()
+            yearly_price.columns = ['Year', 'year_price']
+            yearly_price['year_price_previous'] = yearly_price['year_price'].shift(1)
+            
+            # Volatilidade do último dia de cada ano
+            yearly_vol = df_temp.groupby('Year')['hybrid_vol'].last().reset_index()
+            yearly_vol.columns = ['Year', 'year_vol']
+            yearly_vol['year_vol_previous'] = yearly_vol['year_vol'].shift(1)
+            
+            # Merge
+            yearly_ref = yearly_price.merge(yearly_vol[['Year', 'year_vol_previous']], on='Year')
+            yearly_ref = yearly_ref[['Year', 'year_price_previous', 'year_vol_previous']]
+            yearly_ref.columns = ['Year', 'year_price', 'year_vol']
+            
+            df_temp = df_temp.merge(yearly_ref, on='Year', how='left')
+            df_temp['reference_price'] = df_temp['year_price']  # 1º DIA ANO PASSADO
+            df_temp['period_vol'] = df_temp['year_vol']  # ÚLTIMO DIA ANO PASSADO
+        
+        else:
+            # Fallback para regime 'M' (mensal)
+            df_temp['Month'] = df_temp['Date'].dt.to_period('M')
+            
+            monthly_price = df_temp.groupby('Month')['Close'].first().reset_index()
+            monthly_price.columns = ['Month', 'month_price']
+            monthly_price['month_price_previous'] = monthly_price['month_price'].shift(1)
+            
+            monthly_vol = df_temp.groupby('Month')['hybrid_vol'].last().reset_index()
+            monthly_vol.columns = ['Month', 'month_vol']
+            monthly_vol['month_vol_previous'] = monthly_vol['month_vol'].shift(1)
+            
+            monthly_ref = monthly_price.merge(monthly_vol[['Month', 'month_vol_previous']], on='Month')
+            monthly_ref = monthly_ref[['Month', 'month_price_previous', 'month_vol_previous']]
+            monthly_ref.columns = ['Month', 'month_price', 'month_vol']
+            
+            df_temp = df_temp.merge(monthly_ref, on='Month', how='left')
+            df_temp['reference_price'] = df_temp['month_price']
+            df_temp['period_vol'] = df_temp['month_vol']
+        
+        # Preencher valores ausentes (fallback)
+        df_temp['period_vol'].fillna(method='ffill', inplace=True)
+        df_temp['reference_price'].fillna(method='ffill', inplace=True)
+        df_temp['period_vol'].fillna(self.df['hybrid_vol'].mean(), inplace=True)
+        df_temp['reference_price'].fillna(self.df['Close'], inplace=True)
+        
+        # Multiplicadores para diferenciação visual das bandas
+        regime_multiplier = {
+            'D': 0.5,    # Bandas mais estreitas (muda todo dia)
+            'W': 0.75,   # Bandas intermediárias (muda toda semana)
+            'M': 1.0,    # Bandas padrão (muda todo mês)
+            'Q': 1.25,   # Bandas mais largas (muda todo trimestre)
+            'Y': 1.5,    # Bandas mais largas (muda todo ano)
+            'A': 1.5     # Anual (mesmo que Y)
+        }
+        
+        multiplier = regime_multiplier.get(self.regime, 1.0)
+        
+        # Criar bandas com base na linha central e volatilidade do PERÍODO ANTERIOR
+        for d in [2, 4]:
+            self.df[f'banda_superior_{d}sigma'] = (
+                df_temp['reference_price'] * (1 + d * df_temp['period_vol'] * multiplier)
+            )
+            self.df[f'banda_inferior_{d}sigma'] = (
+                df_temp['reference_price'] * (1 - d * df_temp['period_vol'] * multiplier)
+            )
+        
+        self.df['linha_central'] = df_temp['reference_price']
+        
+        # Preencher valores ausentes nas bandas
+        band_columns = ['banda_superior_2sigma', 'banda_inferior_2sigma', 'linha_central', 
+                    'banda_superior_4sigma', 'banda_inferior_4sigma']
+        
+        for col in band_columns:
+            if col in self.df.columns:
+                self.df[col].fillna(method='ffill', inplace=True)
+                self.df[col].fillna(method='bfill', inplace=True)
+                if self.df[col].isna().any():
+                    vol_fallback = 0.02
+                    multiplier_calc = 2 if '2sigma' in col else 4 if '4sigma' in col else 1
+                    if 'superior' in col:
+                        self.df[col].fillna(self.df['Close'] * (1 + multiplier_calc * vol_fallback), inplace=True)
+                    elif 'inferior' in col:
+                        self.df[col].fillna(self.df['Close'] * (1 - multiplier_calc * vol_fallback), inplace=True)
+                    else:  # linha_central
+                        self.df[col].fillna(self.df['Close'], inplace=True)
+        
+        return self
    
    def get_current_signals(self):
        """Sinais atuais de trading COM validação IV e lógica expandida de 4σ"""

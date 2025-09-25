@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Market Maker Temporal - Geminii Tech</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            dark: '#000000',
+            light: '#ffffff',
+            subtle: 'rgba(255,255,255,0.1)',
+            geminii: '#ba39af'
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <style>
+    body { 
+      font-family: 'Inter', sans-serif; 
+      background: linear-gradient(135deg, #0c0c0c 0%, #1a1a1a 100%);
+      min-height: 100vh;
+    }
+    
+    .mm-card {
+      background: rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 16px;
+      transition: all 0.3s ease;
+    }
+    
+    .mm-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 20px 40px rgba(186, 57, 175, 0.15);
+      border-color: rgba(186, 57, 175, 0.3);
+    }
+    
+    .spinner {
+      border: 2px solid rgba(255, 255, 255, 0.1);
+      border-radius: 50%;
+      border-top: 2px solid #ba39af;
+      width: 20px;
+      height: 20px;
+      animation: spin 1s linear infinite;
+      display: inline-block;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .temporal-chart-container {
+      height: 1000px;
+      background: transparent;
+      border-radius: 12px;
+      padding: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .metric-card {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      padding: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      transition: all 0.3s ease;
+    }
+
+    .metric-card:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(186, 57, 175, 0.3);
+    }
+
+    .explanation-card {
+      background: linear-gradient(135deg, rgba(186, 57, 175, 0.1) 0%, rgba(147, 51, 234, 0.1) 100%);
+      border: 1px solid rgba(186, 57, 175, 0.3);
+    }
+
+    .loading {
+      opacity: 0.6;
+      pointer-events: none;
+    }
+
+    .timeline-container {
+      position: relative;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      padding: 20px;
+      margin: 16px 0;
+    }
+
+    .timeline-point {
+      position: relative;
+      padding: 12px 20px;
+      margin: 12px 0;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 8px;
+      border-left: 3px solid;
+    }
+
+    .timeline-point.bullish {
+      border-left-color: #22c55e;
+    }
+
+    .timeline-point.bearish {
+      border-left-color: #ef4444;
+    }
+
+    .timeline-point.neutral {
+      border-left-color: #6b7280;
+    }
+
+    .distortion-alert {
+      background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(220, 38, 38, 0.1) 100%);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      border-radius: 12px;
+      padding: 16px;
+      margin: 16px 0;
+    }
+
+    .insight-card {
+      background: linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(16, 185, 129, 0.1) 100%);
+      border: 1px solid rgba(34, 197, 94, 0.3);
+      border-radius: 12px;
+      padding: 16px;
+      margin: 8px 0;
+    }
+  </style>
+</head>
+
+<body class="text-white">
+  
+  <!-- Navbar -->
+  <nav class="fixed top-6 left-1/2 transform -translate-x-1/2 z-50 bg-opacity-5 border-opacity-10 bg-white border-white border rounded-full px-4 py-3 shadow-xl backdrop-blur-md">
+    <div class="flex items-center justify-between">
+      <div class="flex items-center">
+        <a href="/dashboard.html">
+          <img src="logo.png" alt="Geminii Logo" class="w-6 h-6 cursor-pointer">
+        </a>       
+      </div>
+      <div class="hidden md:flex items-center space-x-6 text-xs text-gray-300 ml-8">
+        <span class="text-white font-medium">Market Maker Temporal</span>
+        <a href="gamma-levels.html" class="hover:text-white transition-colors">Gamma Exposure</a>
+        <a href="delta-levels.html" class="hover:text-white transition-colors">Delta Exposure</a>
+        <a href="vega-levels.html" class="hover:text-white transition-colors">Vega Exposure</a>
+        <a href="theta-levels.html" class="hover:text-white transition-colors">Theta Exposure</a>
+      </div>
+      <div class="flex items-center space-x-3 ml-8">
+        <div class="w-8 h-8 bg-green-500 bg-opacity-10 border border-green-500 border-opacity-30 rounded-full flex items-center justify-center relative">
+          <i class="fas fa-clock text-green-500 text-xs"></i>
+          <div class="absolute -top-1 -right-1 w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Content -->
+  <div class="pt-32 pb-16">
+    <div class="max-w-7xl mx-auto px-6">
+      
+      <!-- Header -->
+      <div class="text-center mb-12">
+        <h1 class="text-4xl md:text-5xl font-bold mb-4">
+          <span style="color: #ba39af; font-weight: 900;">Market Maker</span>
+          <span class="text-white font-light">Temporal</span>
+        </h1>
+        <p class="text-neutral-300 text-lg max-w-3xl mx-auto">
+          Análise histórica das posições descobertas dos market makers. Revela padrões temporais, persistência de regimes e mudanças estruturais ao longo de 5 dias úteis.
+        </p>
+        
+        <!-- Info Expander -->
+        <div class="mt-8">
+          <button onclick="toggleInfo()" class="bg-gradient-to-r from-geminii to-purple-600 hover:from-purple-600 hover:to-geminii text-white px-4 py-2 rounded-full font-semibold text-sm transition-all duration-300 flex items-center mx-auto shadow-lg hover:shadow-xl transform hover:scale-105">
+            <i id="infoIcon" class="fas fa-info-circle mr-2 transition-transform duration-300"></i>
+            Como Funciona a Análise Temporal
+          </button>
+          
+          <div id="infoContent" class="hidden mt-8 max-w-6xl mx-auto">
+            <div class="mm-card p-8 text-left">
+              
+              <div class="mb-8 text-center">
+                <h3 class="text-2xl font-bold text-white mb-4">6 Dimensões da Análise Temporal</h3>
+                <p class="text-gray-300 text-sm leading-relaxed max-w-4xl mx-auto">
+                  Diferente das análises pontuais, a temporal examina <strong>como as posições descobertas evoluem ao longo de 5 dias úteis</strong>. Revela padrões comportamentais e antecipa mudanças estruturais dos market makers.
+                </p>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+                <div class="explanation-card rounded-lg p-4">
+                  <h4 class="text-lg font-bold text-blue-400 mb-2">1. Contexto Histórico</h4>
+                  <p class="text-gray-300">
+                    Compara descobertos atuais com média de 5 dias. Identifica concentrações anormais que sugerem expectativas direcionais específicas dos MMs.
+                  </p>
+                </div>
+                
+                <div class="explanation-card rounded-lg p-4">
+                  <h4 class="text-lg font-bold text-purple-400 mb-2">2. Evolução Gamma Flip</h4>
+                  <p class="text-gray-300">
+                    Rastreia migração do ponto crítico ao longo do tempo. Movimentos consistentes revelam reposicionamento estrutural dos MMs.
+                  </p>
+                </div>
+                
+                <div class="explanation-card rounded-lg p-4">
+                  <h4 class="text-lg font-bold text-orange-400 mb-2">3. Pressão Acumulada</h4>
+                  <p class="text-gray-300">
+                    Mede quanto da pressão gamma foi "consumida" vs restante. Revela se zonas de pressão estão esgotando ou intensificando.
+                  </p>
+                </div>
+                
+                <div class="explanation-card rounded-lg p-4">
+                  <h4 class="text-lg font-bold text-green-400 mb-2">4. Regime Persistência</h4>
+                  <p class="text-gray-300">
+                    Analisa quantos dias consecutivos no mesmo regime. Persistência cria padrões comportamentais mais previsíveis.
+                  </p>
+                </div>
+                
+                <div class="explanation-card rounded-lg p-4">
+                  <h4 class="text-lg font-bold text-red-400 mb-2">5. Velocidade Acumulação</h4>
+                  <p class="text-gray-300">
+                    Taxa de mudança dia-a-dia nas posições descobertas. Aceleração sugere expectativas crescentes de movimento.
+                  </p>
+                </div>
+                
+                <div class="explanation-card rounded-lg p-4">
+                  <h4 class="text-lg font-bold text-yellow-400 mb-2">6. Distorções Temporais</h4>
+                  <p class="text-gray-300">
+                    Detecta quando distribuição atual está fora do padrão histórico. Identifica janelas onde MMs estão mal posicionados.
+                  </p>
+                </div>
+              </div>
+
+              <div class="mt-8 pt-6 border-t border-white/10 text-center">
+                <h4 class="text-geminii font-bold text-lg mb-4">Vantagem da Análise Temporal</h4>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-sm">
+                  <div class="text-center">
+                    <div class="w-12 h-12 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto mb-3">
+                      <i class="fas fa-search text-blue-400"></i>
+                    </div>
+                    <h5 class="font-bold text-white mb-2">Detecta Padrões Ocultos</h5>
+                    <p class="text-gray-400">Análises pontuais mostram o "que", temporal revela o "por quê" e "para onde".</p>
+                  </div>
+                  <div class="text-center">
+                    <div class="w-12 h-12 bg-purple-500/20 rounded-full flex items-center justify-center mx-auto mb-3">
+                      <i class="fas fa-crystal-ball text-purple-400"></i>
+                    </div>
+                    <h5 class="font-bold text-white mb-2">Antecipa Movimentos</h5>
+                    <p class="text-gray-400">Reposicionamento estrutural dos MMs precede mudanças de preço.</p>
+                  </div>
+                  <div class="text-center">
+                    <div class="w-12 h-12 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-3">
+                      <i class="fas fa-shield-alt text-green-400"></i>
+                    </div>
+                    <h5 class="font-bold text-white mb-2">Reduz Falsos Sinais</h5>
+                    <p class="text-gray-400">Confirma se mudanças pontuais são ruído ou tendência estrutural.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Controles -->
+      <div class="mm-card p-6 mb-8">
+        <div class="flex flex-col md:flex-row gap-4 items-center justify-center">
+          <input 
+            id="tickerInput" 
+            type="text" 
+            placeholder="Digite o código da ação (ex: PETR4)" 
+            class="px-4 py-2 bg-white bg-opacity-10 border border-white border-opacity-20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-geminii backdrop-blur-sm"
+          >
+          <select 
+            id="daysBackSelect" 
+            class="px-4 py-2 bg-white bg-opacity-10 border border-white border-opacity-20 rounded-lg text-white focus:outline-none focus:border-geminii backdrop-blur-sm"
+          >
+            <option value="5">5 Dias Úteis (Recomendado)</option>
+            <option value="4">4 Dias Úteis</option>
+            <option value="3">3 Dias Úteis (Mínimo)</option>
+          </select>
+          <button 
+            id="analyzeBtn" 
+            class="px-6 py-2 bg-gradient-to-r from-geminii to-purple-600 hover:shadow-lg rounded-lg transition-all font-medium"
+          >
+            <i class="fas fa-chart-line mr-2"></i>Executar Análise Temporal
+          </button>
+        </div>
+      </div>
+
+      <!-- Status -->
+      <div id="statusMsg" class="mb-6 p-4 rounded-lg hidden backdrop-blur-sm"></div>
+
+      <!-- Resultados -->
+      <div id="resultsSection" class="hidden">
+        
+        <!-- Timeline -->
+        <div class="mm-card p-6 mb-8">
+          <h3 class="text-2xl font-bold mb-6 text-center">
+            <i class="fas fa-timeline mr-3" style="color: #ba39af;"></i>
+            Evolução do Regime - 5 Dias
+          </h3>
+          <div class="timeline-container">
+            <div id="regimeTimeline">
+              <!-- Preenchido via JavaScript -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Métricas -->
+        <div class="mm-card p-6 mb-8">
+          <div class="text-center mb-8">
+            <div id="persistenceIndicator" class="inline-block px-8 py-4 rounded-2xl text-2xl font-black">
+              <!-- Status persistência -->
+            </div>
+          </div>
+          
+          <div class="grid grid-cols-2 md:grid-cols-6 gap-4">
+            <div class="metric-card text-center">
+              <div class="text-2xl font-black text-white mb-2" id="currentRegime">--</div>
+              <div class="text-white font-bold text-xs">REGIME ATUAL</div>
+            </div>
+            
+            <div class="metric-card text-center">
+              <div class="text-2xl font-black text-blue-400 mb-2" id="persistenceDays">--</div>
+              <div class="text-white font-bold text-xs">PERSISTÊNCIA</div>
+            </div>
+            
+            <div class="metric-card text-center">
+              <div class="text-2xl font-black text-purple-400 mb-2" id="flipTrend">--</div>
+              <div class="text-white font-bold text-xs">FLIP TREND</div>
+            </div>
+            
+            <div class="metric-card text-center">
+              <div class="text-2xl font-black text-orange-400 mb-2" id="pressureStatus">--</div>
+              <div class="text-white font-bold text-xs">PRESSÃO</div>
+            </div>
+            
+            <div class="metric-card text-center">
+              <div class="text-2xl font-black text-red-400 mb-2" id="velocityTrend">--</div>
+              <div class="text-white font-bold text-xs">VELOCIDADE</div>
+            </div>
+            
+            <div class="metric-card text-center">
+              <div class="text-2xl font-black text-yellow-400 mb-2" id="distortionCount">--</div>
+              <div class="text-white font-bold text-xs">DISTORÇÕES</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Insights -->
+        <div id="insightsSection" class="mb-8">
+          <!-- Preenchido dinamicamente -->
+        </div>
+
+        <!-- Distorções -->
+        <div id="distortionsSection" class="mb-8">
+          <!-- Preenchido dinamicamente -->
+        </div>
+
+        <!-- Gráficos -->
+        <div class="mm-card p-6">
+          <h3 class="text-2xl font-bold mb-6 text-center">
+            <i class="fas fa-chart-area mr-3" style="color: #ba39af;"></i>
+            Análise Temporal Completa
+          </h3>
+          <div class="temporal-chart-container">
+            <div id="temporalChart" style="width: 100%; height: 100%;"></div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    let userToken = localStorage.getItem('geminii_token');
+    
+    if (!userToken) {
+      window.location.href = '/login.html';
+    }
+
+    // Elementos DOM
+    const tickerInput = document.getElementById('tickerInput');
+    const daysBackSelect = document.getElementById('daysBackSelect');
+    const analyzeBtn = document.getElementById('analyzeBtn');
+    const statusMsg = document.getElementById('statusMsg');
+    const resultsSection = document.getElementById('resultsSection');
+
+    // Utilitários
+    function formatLargeNumber(value) {
+      const absValue = Math.abs(value);
+      if (absValue >= 1000000000) {
+        return (value / 1000000000).toFixed(1) + 'B';
+      } else if (absValue >= 1000000) {
+        return (value / 1000000).toFixed(1) + 'M';
+      } else if (absValue >= 1000) {
+        return (value / 1000).toFixed(1) + 'K';
+      }
+      return value.toFixed(0);
+    }
+
+    function showStatus(message, type = 'info') {
+      const bgClass = type === 'success' ? 'bg-green-600 bg-opacity-20 border-green-500 border-opacity-30' : 
+                     type === 'error' ? 'bg-red-600 bg-opacity-20 border-red-500 border-opacity-30' : 
+                     type === 'warning' ? 'bg-yellow-600 bg-opacity-20 border-yellow-500 border-opacity-30' :
+                     'bg-blue-600 bg-opacity-20 border-blue-500 border-opacity-30';
+      
+      statusMsg.className = `mb-6 p-4 rounded-lg border backdrop-blur-sm ${bgClass}`;
+      statusMsg.textContent = message;
+      statusMsg.classList.remove('hidden');
+      
+      setTimeout(() => statusMsg.classList.add('hidden'), 8000);
+    }
+
+    function setLoading(button, loading, originalText, loadingText) {
+      if (loading) {
+        button.classList.add('loading');
+        button.innerHTML = `<span class="spinner mr-2"></span>${loadingText}`;
+      } else {
+        button.classList.remove('loading');
+        button.innerHTML = originalText;
+      }
+    }
+
+    function toggleInfo() {
+      const content = document.getElementById('infoContent');
+      const icon = document.getElementById('infoIcon');
+      
+      if (content.classList.contains('hidden')) {
+        content.classList.remove('hidden');
+        icon.classList.replace('fa-info-circle', 'fa-times');
+      } else {
+        content.classList.add('hidden');
+        icon.classList.replace('fa-times', 'fa-info-circle');
+      }
+    }
+    window.toggleInfo = toggleInfo;
+
+    // Análise temporal direta
+    async function runTemporalAnalysis() {
+      const ticker = tickerInput.value.trim().toUpperCase();
+      if (!ticker) {
+        showStatus('Digite um ticker', 'error');
+        return;
+      }
+
+      const daysBack = parseInt(daysBackSelect.value);
+      
+      setLoading(analyzeBtn, true, 
+        '<i class="fas fa-chart-line mr-2"></i>Executar Análise Temporal', 
+        'Analisando...');
+
+      showStatus('Executando análise temporal dos market makers...', 'info');
+
+      try {
+        // Tentar endpoint de teste primeiro
+        const response = await fetch(`/pro/mm-temporal/test-data/${ticker}`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${userToken}`
+          }
+        });
+
+        const data = await response.json();
+        
+        if (!response.ok) throw new Error(data.error);
+
+        displayTemporalResults(data);
+        showStatus(`Análise temporal de ${ticker} concluída`, 'success');
+
+      } catch (error) {
+        // Se teste falhar, tentar endpoint real
+        try {
+          const realResponse = await fetch('/pro/mm-temporal/analyze', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${userToken}`
+            },
+            body: JSON.stringify({
+              ticker: ticker,
+              days_back: daysBack
+            })
+          });
+
+          const realData = await realResponse.json();
+          
+          if (realResponse.ok) {
+            displayTemporalResults(realData);
+            showStatus(`Análise temporal real de ${ticker} concluída`, 'success');
+          } else {
+            throw new Error(realData.error);
+          }
+
+        } catch (realError) {
+          showStatus('Erro na análise temporal: ' + realError.message, 'error');
+        }
+      } finally {
+        setLoading(analyzeBtn, false, 
+          '<i class="fas fa-chart-line mr-2"></i>Executar Análise Temporal', '');
+      }
+    }
+
+    // Exibir resultados
+    function displayTemporalResults(data) {
+      const metrics = data.temporal_metrics || {};
+      
+      updateMainMetrics(metrics);
+      createRegimeTimeline(metrics.regime_persistence);
+      displayInsights(data.insights || []);
+      displayDistortions(metrics.temporal_distortions || []);
+      renderTemporalCharts(metrics);
+      
+      resultsSection.classList.remove('hidden');
+    }
+
+    function updateMainMetrics(metrics) {
+      const regimePersistence = metrics.regime_persistence || {};
+      const flipEvolution = metrics.flip_evolution || {};
+      const pressureDynamics = metrics.pressure_dynamics || {};
+      const velocityAnalysis = metrics.accumulation_velocity || {};
+      const distortions = metrics.temporal_distortions || [];
+      
+      // Persistência
+      const persistenceDays = regimePersistence.persistence_days || 0;
+      const currentRegime = regimePersistence.current_regime || 'UNKNOWN';
+      
+      let persistenceClass = 'bg-gradient-to-r ';
+      let persistenceText = `${persistenceDays} Dias`;
+      
+      if (persistenceDays >= 4) {
+        persistenceClass += 'from-green-400 to-green-600';
+        persistenceText += ' - Estável';
+      } else if (persistenceDays >= 2) {
+        persistenceClass += 'from-yellow-400 to-yellow-600';
+        persistenceText += ' - Moderado';
+      } else {
+        persistenceClass += 'from-red-400 to-red-600';
+        persistenceText += ' - Instável';
+      }
+      
+      document.getElementById('persistenceIndicator').className = 
+        `inline-block px-8 py-4 rounded-2xl text-2xl font-black ${persistenceClass}`;
+      document.getElementById('persistenceIndicator').textContent = persistenceText;
+      
+      // Métricas individuais
+      document.getElementById('currentRegime').textContent = 
+        currentRegime.replace('_', ' ') || '--';
+      
+      document.getElementById('persistenceDays').textContent = 
+        persistenceDays.toString() || '--';
+      
+      document.getElementById('flipTrend').textContent = 
+        flipEvolution.trend_analysis?.direction || '--';
+      
+      // Status de pressão
+      const pressureEntries = Object.values(pressureDynamics);
+      const predominantStatus = pressureEntries.length > 0 ? 
+        getMostCommonValue(pressureEntries.map(p => p.pressure_status)) : '--';
+      document.getElementById('pressureStatus').textContent = predominantStatus;
+      
+      // Velocidade
+      const velocityEntries = Object.values(velocityAnalysis);
+      const predominantTrend = velocityEntries.length > 0 ?
+        getMostCommonValue(velocityEntries.map(v => v.trend)) : '--';
+      document.getElementById('velocityTrend').textContent = predominantTrend;
+      
+      // Distorções
+      document.getElementById('distortionCount').textContent = distortions.length.toString();
+    }
+
+    function createRegimeTimeline(regimePersistence) {
+      const timeline = document.getElementById('regimeTimeline');
+      const regimeHistory = regimePersistence?.regime_history || [];
+      
+      timeline.innerHTML = '';
+      
+      regimeHistory.forEach((regime, index) => {
+        const timelinePoint = document.createElement('div');
+        const dayLabel = index === regimeHistory.length - 1 ? 'Hoje' : `D-${regimeHistory.length - 1 - index}`;
+        
+        const regimeClass = regime === 'LONG_GAMMA' ? 'bullish' : 
+                          regime === 'SHORT_GAMMA' ? 'bearish' : 'neutral';
+        
+        const regimeText = regime === 'LONG_GAMMA' ? 'Long Gamma - Estabilizador' :
+                         regime === 'SHORT_GAMMA' ? 'Short Gamma - Amplificador' : 'Indefinido';
+        
+        timelinePoint.className = `timeline-point ${regimeClass}`;
+        timelinePoint.innerHTML = `
+          <div class="flex justify-between items-center">
+            <span class="font-bold">${dayLabel}</span>
+            <span class="text-sm">${regimeText}</span>
+          </div>
+        `;
+        
+        timeline.appendChild(timelinePoint);
+      });
+    }
+
+    function displayInsights(insights) {
+      const insightsSection = document.getElementById('insightsSection');
+      
+      if (insights.length === 0) {
+        insightsSection.innerHTML = '';
+        return;
+      }
+      
+      let insightsHTML = `
+        <div class="mm-card p-6">
+          <h3 class="text-xl font-bold mb-4 text-center">
+            <i class="fas fa-lightbulb mr-3 text-yellow-400"></i>
+            Insights Acionáveis
+          </h3>
+          <div class="space-y-3">
+      `;
+      
+      insights.forEach(insight => {
+        const priorityClass = insight.priority === 'HIGH' ? 'border-red-500/50 bg-red-500/10' :
+                             insight.priority === 'MEDIUM' ? 'border-yellow-500/50 bg-yellow-500/10' :
+                             'border-green-500/50 bg-green-500/10';
+        
+        const priorityIcon = insight.priority === 'HIGH' ? 'fas fa-exclamation-triangle text-red-400' :
+                            insight.priority === 'MEDIUM' ? 'fas fa-exclamation-circle text-yellow-400' :
+                            'fas fa-info-circle text-green-400';
+        
+        insightsHTML += `
+          <div class="insight-card ${priorityClass}">
+            <div class="flex items-start space-x-3">
+              <i class="${priorityIcon}"></i>
+              <div>
+                <div class="font-semibold text-white text-sm">${insight.type.replace('_', ' ')}</div>
+                <div class="text-gray-300 text-sm mt-1">${insight.message}</div>
+              </div>
+            </div>
+          </div>
+        `;
+      });
+      
+      insightsHTML += `</div></div>`;
+      insightsSection.innerHTML = insightsHTML;
+    }
+
+    function displayDistortions(distortions) {
+      const distortionsSection = document.getElementById('distortionsSection');
+      
+      if (distortions.length === 0) {
+        distortionsSection.innerHTML = '';
+        return;
+      }
+      
+      let distortionsHTML = `
+        <div class="mm-card p-6">
+          <h3 class="text-xl font-bold mb-4 text-center">
+            <i class="fas fa-exclamation-triangle mr-3 text-red-400"></i>
+            Distorções Temporais Detectadas
+          </h3>
+          <div class="space-y-4">
+      `;
+      
+      distortions.forEach(distortion => {
+        const severityClass = distortion.severity === 'EXTREMA' ? 'border-red-500 bg-red-500/20' :
+                             'border-orange-500 bg-orange-500/20';
+        
+        distortionsHTML += `
+          <div class="distortion-alert ${severityClass}">
+            <div class="flex items-center justify-between mb-3">
+              <span class="font-bold text-white">${distortion.distortion_type.replace('_', ' ')}</span>
+              <span class="px-2 py-1 rounded text-xs font-bold ${distortion.severity === 'EXTREMA' ? 'bg-red-600 text-white' : 'bg-orange-600 text-white'}">
+                ${distortion.severity}
+              </span>
+            </div>
+            <p class="text-gray-300 text-sm mb-2">${distortion.interpretation}</p>
+            <div class="text-xs text-gray-400">
+              Z-Score: ${distortion.z_score?.toFixed(2)} | 
+              Atual: ${distortion.current_call_pct?.toFixed(1)}% | 
+              Histórico: ${distortion.historical_call_pct?.toFixed(1)}%
+            </div>
+          </div>
+        `;
+      });
+      
+      distortionsHTML += `</div></div>`;
+      distortionsSection.innerHTML = distortionsHTML;
+    }
+
+    function renderTemporalCharts(metrics) {
+      // Dados de exemplo para os gráficos temporais
+      const dates = ['15/01', '16/01', '17/01', '18/01', 'Hoje'];
+      const flipEvolution = metrics.flip_evolution?.evolution || [];
+      
+      // Extrair dados para gráfico de evolução do flip
+      const flipStrikes = flipEvolution.map(item => item.flip_strike || 143.5);
+      const flipDates = flipEvolution.map((item, index) => 
+        item.date === 'current' ? 'Hoje' : dates[index] || `D-${index}`
+      );
+
+      // Gráfico principal de evolução temporal
+      const traces = [
+        {
+          x: flipDates,
+          y: flipStrikes,
+          type: 'scatter',
+          mode: 'lines+markers',
+          name: 'Evolução Gamma Flip',
+          line: { 
+            color: '#ba39af', 
+            width: 4,
+            shape: 'spline'
+          },
+          marker: {
+            color: '#ba39af',
+            size: 10,
+            line: {
+              color: '#ffffff',
+              width: 2
+            }
+          }
+        }
+      ];
+
+      // Adicionar dados de pressão se disponível
+      const pressureDynamics = metrics.pressure_dynamics || {};
+      const strikes = Object.keys(pressureDynamics).slice(0, 3); // Primeiros 3 strikes
+      
+      strikes.forEach((strikeKey, index) => {
+        const pressureData = pressureDynamics[strikeKey];
+        const consumptionRate = pressureData?.consumption_rate || 0;
+        const colors = ['#22c55e', '#f97316', '#ef4444'];
+        
+        traces.push({
+          x: dates,
+          y: Array(5).fill(consumptionRate * 100), // Simular série temporal
+          type: 'scatter',
+          mode: 'lines',
+          name: `Strike ${pressureData?.strike || strikeKey} - Pressão`,
+          line: {
+            color: colors[index],
+            width: 2,
+            dash: 'dot'
+          },
+          yaxis: 'y2'
+        });
+      });
+
+      const layout = {
+        title: {
+          text: 'Análise Temporal dos Market Makers',
+          font: { size: 18, color: '#ffffff' }
+        },
+        paper_bgcolor: 'rgba(0,0,0,0)',
+        plot_bgcolor: 'rgba(0,0,0,0)',
+        font: { color: '#ffffff', family: 'Inter, sans-serif' },
+        
+        xaxis: {
+          title: 'Período',
+          gridcolor: 'rgba(255,255,255,0.1)',
+          color: '#ffffff',
+          showgrid: true
+        },
+        
+        yaxis: {
+          title: 'Gamma Flip Strike (R$)',
+          gridcolor: 'rgba(255,255,255,0.1)',
+          color: '#ffffff',
+          showgrid: true,
+          side: 'left'
+        },
+        
+        yaxis2: {
+          title: 'Taxa Consumo Pressão (%)',
+          overlaying: 'y',
+          side: 'right',
+          color: '#ffffff',
+          showgrid: false
+        },
+
+        legend: {
+          x: 0.02,
+          y: 0.98,
+          bgcolor: 'rgba(0,0,0,0.5)',
+          bordercolor: 'rgba(255,255,255,0.2)',
+          borderwidth: 1,
+          font: { color: '#ffffff', size: 10 }
+        },
+
+        margin: { l: 60, r: 60, t: 80, b: 60 },
+        height: 900
+      };
+
+      const config = {
+        responsive: true,
+        displayModeBar: false,
+        displaylogo: false
+      };
+
+      try {
+        Plotly.newPlot('temporalChart', traces, layout, config);
+        
+        setTimeout(() => {
+          Plotly.Plots.resize('temporalChart');
+        }, 100);
+        
+      } catch (error) {
+        console.error('Erro ao renderizar gráfico:', error);
+        document.getElementById('temporalChart').innerHTML = `
+          <div class="flex items-center justify-center h-full">
+            <div class="text-center">
+              <i class="fas fa-exclamation-triangle text-4xl text-red-400 mb-4"></i>
+              <p class="text-white">Erro ao carregar gráfico temporal</p>
+              <p class="text-gray-400 text-sm">Verifique os dados e tente novamente</p>
+            </div>
+          </div>
+        `;
+      }
+    }
+
+    function getMostCommonValue(arr) {
+      if (arr.length === 0) return '--';
+      
+      const frequency = {};
+      arr.forEach(item => frequency[item] = (frequency[item] || 0) + 1);
+      
+      return Object.keys(frequency).reduce((a, b) => 
+        frequency[a] > frequency[b] ? a : b
+      );
+    }
+
+    // Event listeners
+    analyzeBtn.addEventListener('click', runTemporalAnalysis);
+    
+    tickerInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') runTemporalAnalysis();
+    });
+
+    // Resize handler
+    window.addEventListener('resize', function() {
+      const chartElement = document.getElementById('temporalChart');
+      if (chartElement && chartElement.children.length > 0) {
+        setTimeout(() => {
+          if (typeof Plotly !== 'undefined') {
+            Plotly.Plots.resize('temporalChart');
+          }
+        }, 100);
+      }
+    });
+
+    // Inicialização
+    document.addEventListener('DOMContentLoaded', function() {
+      showStatus('Sistema de Análise Temporal carregado. Digite um ticker e execute a análise.', 'info');
+      
+      // Auto-foco no input do ticker
+      tickerInput.focus();
+    });
+
+  </script>
+
+</body>
+</html>
