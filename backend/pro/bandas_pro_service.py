@@ -429,50 +429,42 @@ class HybridVolatilityBands:
             df_temp['period_vol'] = df_temp['hybrid_vol'].shift(1)  # VOL DE ONTEM
             
         elif self.regime == 'W':  # SEMANAL
-            # SEMANAL: Preço da segunda-feira PASSADA, vol da sexta PASSADA
             df_temp['Week'] = df_temp['Date'].dt.to_period('W-MON')
             
-            # Preço da segunda-feira de cada semana
-            weekly_price = df_temp.groupby('Week')['Close'].first().reset_index()
-            weekly_price.columns = ['Week', 'week_price']
-            weekly_price['week_price_previous'] = weekly_price['week_price'].shift(1)
-            
-            # Volatilidade da sexta-feira de cada semana
-            weekly_vol = df_temp.groupby('Week')['hybrid_vol'].last().reset_index()
-            weekly_vol.columns = ['Week', 'week_vol']
-            weekly_vol['week_vol_previous'] = weekly_vol['week_vol'].shift(1)
-            
-            # Merge
-            weekly_ref = weekly_price.merge(weekly_vol[['Week', 'week_vol_previous']], on='Week')
-            weekly_ref = weekly_ref[['Week', 'week_price_previous', 'week_vol_previous']]
+            # Preço E volatilidade da SEXTA-FEIRA de cada semana
+            weekly_ref = df_temp.groupby('Week').agg({
+                'Close': 'last',      # Sexta-feira
+                'hybrid_vol': 'last'  # Sexta-feira
+            }).reset_index()
             weekly_ref.columns = ['Week', 'week_price', 'week_vol']
             
-            df_temp = df_temp.merge(weekly_ref, on='Week', how='left')
-            df_temp['reference_price'] = df_temp['week_price']  # SEGUNDA DA SEMANA PASSADA
-            df_temp['period_vol'] = df_temp['week_vol']  # SEXTA DA SEMANA PASSADA
+            # Shiftar para semana ANTERIOR
+            weekly_ref['week_price_previous'] = weekly_ref['week_price'].shift(1)
+            weekly_ref['week_vol_previous'] = weekly_ref['week_vol'].shift(1)
+            
+            df_temp = df_temp.merge(weekly_ref[['Week', 'week_price_previous', 'week_vol_previous']], on='Week')
+            df_temp['reference_price'] = df_temp['week_price_previous']  # SEXTA DA SEMANA PASSADA
+            df_temp['period_vol'] = df_temp['week_vol_previous']  # SEXTA DA SEMANA PASSADA
             
         elif self.regime == 'M':  # MENSAL
-            # MENSAL: Preço do 1º dia do mês PASSADO, vol do último dia do mês PASSADO
+            # MENSAL: Preço E volatilidade do ÚLTIMO dia do mês PASSADO
             df_temp['Month'] = df_temp['Date'].dt.to_period('M')
             
-            # Preço do primeiro dia de cada mês
-            monthly_price = df_temp.groupby('Month')['Close'].first().reset_index()
-            monthly_price.columns = ['Month', 'month_price']
-            monthly_price['month_price_previous'] = monthly_price['month_price'].shift(1)
-            
-            # Volatilidade do último dia de cada mês
-            monthly_vol = df_temp.groupby('Month')['hybrid_vol'].last().reset_index()
-            monthly_vol.columns = ['Month', 'month_vol']
-            monthly_vol['month_vol_previous'] = monthly_vol['month_vol'].shift(1)
-            
-            # Merge
-            monthly_ref = monthly_price.merge(monthly_vol[['Month', 'month_vol_previous']], on='Month')
-            monthly_ref = monthly_ref[['Month', 'month_price_previous', 'month_vol_previous']]
+            # Preço E volatilidade do ÚLTIMO dia de cada mês
+            monthly_ref = df_temp.groupby('Month').agg({
+                'Close': 'last',      # ÚLTIMO dia do mês
+                'hybrid_vol': 'last'  # ÚLTIMO dia do mês
+            }).reset_index()
             monthly_ref.columns = ['Month', 'month_price', 'month_vol']
             
-            df_temp = df_temp.merge(monthly_ref, on='Month', how='left')
-            df_temp['reference_price'] = df_temp['month_price']  # 1º DIA MÊS PASSADO
-            df_temp['period_vol'] = df_temp['month_vol']  # ÚLTIMO DIA MÊS PASSADO
+            # Shiftar para pegar mês ANTERIOR
+            monthly_ref['month_price_previous'] = monthly_ref['month_price'].shift(1)
+            monthly_ref['month_vol_previous'] = monthly_ref['month_vol'].shift(1)
+            
+            # Merge
+            df_temp = df_temp.merge(monthly_ref[['Month', 'month_price_previous', 'month_vol_previous']], on='Month')
+            df_temp['reference_price'] = df_temp['month_price_previous']  # ÚLTIMO DIA MÊS PASSADO
+            df_temp['period_vol'] = df_temp['month_vol_previous']   # ÚLTIMO DIA MÊS PASSADO
             
         elif self.regime == 'Q':  # TRIMESTRAL
             # TRIMESTRAL: Preço do 1º dia do trimestre PASSADO, vol do último dia do trimestre PASSADO
@@ -521,24 +513,24 @@ class HybridVolatilityBands:
             df_temp['period_vol'] = df_temp['year_vol']  # ÚLTIMO DIA ANO PASSADO
         
         else:
-            # Fallback para regime 'M' (mensal)
+            # Fallback para regime 'M' (mensal) - CORRIGIDO
             df_temp['Month'] = df_temp['Date'].dt.to_period('M')
             
-            monthly_price = df_temp.groupby('Month')['Close'].first().reset_index()
-            monthly_price.columns = ['Month', 'month_price']
-            monthly_price['month_price_previous'] = monthly_price['month_price'].shift(1)
-            
-            monthly_vol = df_temp.groupby('Month')['hybrid_vol'].last().reset_index()
-            monthly_vol.columns = ['Month', 'month_vol']
-            monthly_vol['month_vol_previous'] = monthly_vol['month_vol'].shift(1)
-            
-            monthly_ref = monthly_price.merge(monthly_vol[['Month', 'month_vol_previous']], on='Month')
-            monthly_ref = monthly_ref[['Month', 'month_price_previous', 'month_vol_previous']]
+            # Preço E volatilidade do ÚLTIMO dia de cada mês
+            monthly_ref = df_temp.groupby('Month').agg({
+                'Close': 'last',      # ÚLTIMO dia do mês
+                'hybrid_vol': 'last'  # ÚLTIMO dia do mês
+            }).reset_index()
             monthly_ref.columns = ['Month', 'month_price', 'month_vol']
             
-            df_temp = df_temp.merge(monthly_ref, on='Month', how='left')
-            df_temp['reference_price'] = df_temp['month_price']
-            df_temp['period_vol'] = df_temp['month_vol']
+            # Shiftar para pegar mês ANTERIOR
+            monthly_ref['month_price_previous'] = monthly_ref['month_price'].shift(1)
+            monthly_ref['month_vol_previous'] = monthly_ref['month_vol'].shift(1)
+            
+            # Merge
+            df_temp = df_temp.merge(monthly_ref[['Month', 'month_price_previous', 'month_vol_previous']], on='Month')
+            df_temp['reference_price'] = df_temp['month_price_previous']
+            df_temp['period_vol'] = df_temp['month_vol_previous']
         
         # Preencher valores ausentes (fallback)
         df_temp['period_vol'].fillna(method='ffill', inplace=True)
