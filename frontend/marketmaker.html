@@ -62,14 +62,6 @@
       100% { transform: rotate(360deg); }
     }
 
-    .temporal-chart-container {
-      height: 1000px;
-      background: transparent;
-      border-radius: 12px;
-      padding: 20px;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-    }
-
     .metric-card {
       background: rgba(255, 255, 255, 0.05);
       border-radius: 12px;
@@ -93,50 +85,49 @@
       pointer-events: none;
     }
 
-    .timeline-container {
-      position: relative;
+    .trend-badge {
+      display: inline-block;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-weight: 700;
+      font-size: 12px;
+      text-transform: uppercase;
+    }
+
+    .trend-crescendo { background: linear-gradient(135deg, #22c55e, #16a34a); }
+    .trend-diminuindo { background: linear-gradient(135deg, #ef4444, #dc2626); }
+    .trend-estavel { background: linear-gradient(135deg, #6b7280, #4b5563); }
+
+    .insight-high { border-left: 4px solid #ef4444; background: rgba(239, 68, 68, 0.1); }
+    .insight-medium { border-left: 4px solid #f59e0b; background: rgba(245, 158, 11, 0.1); }
+    .insight-low { border-left: 4px solid #22c55e; background: rgba(34, 197, 94, 0.1); }
+
+    .region-card {
       background: rgba(255, 255, 255, 0.05);
-      border-radius: 12px;
-      padding: 20px;
-      margin: 16px 0;
-    }
-
-    .timeline-point {
-      position: relative;
-      padding: 12px 20px;
-      margin: 12px 0;
-      background: rgba(255, 255, 255, 0.08);
       border-radius: 8px;
-      border-left: 3px solid;
-    }
-
-    .timeline-point.bullish {
-      border-left-color: #22c55e;
-    }
-
-    .timeline-point.bearish {
-      border-left-color: #ef4444;
-    }
-
-    .timeline-point.neutral {
-      border-left-color: #6b7280;
-    }
-
-    .distortion-alert {
-      background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(220, 38, 38, 0.1) 100%);
-      border: 1px solid rgba(239, 68, 68, 0.3);
-      border-radius: 12px;
-      padding: 16px;
-      margin: 16px 0;
-    }
-
-    .insight-card {
-      background: linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(16, 185, 129, 0.1) 100%);
-      border: 1px solid rgba(34, 197, 94, 0.3);
-      border-radius: 12px;
       padding: 16px;
       margin: 8px 0;
+      border: 1px solid rgba(255, 255, 255, 0.1);
     }
+
+    .pressure-bar {
+      height: 8px;
+      border-radius: 4px;
+      background: linear-gradient(90deg, rgba(34, 197, 94, 0.3), rgba(34, 197, 94, 0.8));
+      transition: all 0.3s ease;
+    }
+
+    .consumption-indicator {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 8px;
+    }
+
+    .consuming { background: #ef4444; }
+    .stable { background: #22c55e; }
+    .building { background: #f59e0b; }
   </style>
 </head>
 
@@ -155,11 +146,10 @@
         <a href="gamma-levels.html" class="hover:text-white transition-colors">Gamma Exposure</a>
         <a href="delta-levels.html" class="hover:text-white transition-colors">Delta Exposure</a>
         <a href="vega-levels.html" class="hover:text-white transition-colors">Vega Exposure</a>
-        <a href="theta-levels.html" class="hover:text-white transition-colors">Theta Exposure</a>
       </div>
       <div class="flex items-center space-x-3 ml-8">
         <div class="w-8 h-8 bg-green-500 bg-opacity-10 border border-green-500 border-opacity-30 rounded-full flex items-center justify-center relative">
-          <i class="fas fa-clock text-green-500 text-xs"></i>
+          <i class="fas fa-history text-green-500 text-xs"></i>
           <div class="absolute -top-1 -right-1 w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
         </div>
       </div>
@@ -177,7 +167,7 @@
           <span class="text-white font-light">Temporal</span>
         </h1>
         <p class="text-neutral-300 text-lg max-w-3xl mx-auto">
-          Análise histórica das posições descobertas dos market makers. Revela padrões temporais, persistência de regimes e mudanças estruturais ao longo de 5 dias úteis.
+          Análise evolutiva das posições descobertas dos market makers. Monitora como as pressões GEX, DEX e VEX estão mudando ao longo de 5 dias úteis para identificar tendências e pontos de inflexão.
         </p>
         
         <!-- Info Expander -->
@@ -191,82 +181,60 @@
             <div class="mm-card p-8 text-left">
               
               <div class="mb-8 text-center">
-                <h3 class="text-2xl font-bold text-white mb-4">6 Dimensões da Análise Temporal</h3>
+                <h3 class="text-2xl font-bold text-white mb-4">Evolução das Posições MM</h3>
                 <p class="text-gray-300 text-sm leading-relaxed max-w-4xl mx-auto">
-                  Diferente das análises pontuais, a temporal examina <strong>como as posições descobertas evoluem ao longo de 5 dias úteis</strong>. Revela padrões comportamentais e antecipa mudanças estruturais dos market makers.
+                  Monitora <strong>evolução de pressão, consumo de liquidez e desequilíbrios</strong> nas posições descobertas dos MMs. Identifica se estão aumentando ou reduzindo exposições e em quais regiões do mercado.
                 </p>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-sm mb-8">
+                <div class="explanation-card rounded-lg p-4">
+                  <h4 class="text-lg font-bold text-green-400 mb-2">Evolução de Pressão</h4>
+                  <p class="text-gray-300">
+                    <strong>Por região: ATM vs OTM</strong><br>
+                    Calls ATM, Puts ATM, Calls OTM, Puts OTM. Mostra onde MMs estão concentrando ou reduzindo posições.
+                  </p>
+                </div>
+                
+                <div class="explanation-card rounded-lg p-4">
+                  <h4 class="text-lg font-bold text-blue-400 mb-2">Consumo de Liquidez</h4>
+                  <p class="text-gray-300">
+                    <strong>Liquidez ATM sendo consumida</strong><br>
+                    Taxa de consumo diária na região ATM (±10%). Identifica quando pressão está se esgotando.
+                  </p>
+                </div>
+                
+                <div class="explanation-card rounded-lg p-4">
+                  <h4 class="text-lg font-bold text-purple-400 mb-2">Mudanças de Desequilíbrio</h4>
+                  <p class="text-gray-300">
+                    <strong>Call/Put Ratio Shifts</strong><br>
+                    Como proporção calls vs puts está mudando. Indica reposicionamento direcional dos MMs.
+                  </p>
+                </div>
               </div>
 
               <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
                 <div class="explanation-card rounded-lg p-4">
-                  <h4 class="text-lg font-bold text-blue-400 mb-2">1. Contexto Histórico</h4>
-                  <p class="text-gray-300">
-                    Compara descobertos atuais com média de 5 dias. Identifica concentrações anormais que sugerem expectativas direcionais específicas dos MMs.
-                  </p>
+                  <h4 class="text-lg font-bold text-orange-400 mb-2">Insights Acionáveis</h4>
+                  <ul class="text-gray-300 space-y-1 text-xs">
+                    <li><strong>Pressure Building:</strong> Posições descobertas crescendo >15%</li>
+                    <li><strong>Pressure Reducing:</strong> MMs reduzindo risco >15%</li>
+                    <li><strong>Liquidity Consumed:</strong> ATM sendo consumida >10%/dia</li>
+                    <li><strong>Imbalance Shift:</strong> Mudança calls/puts >10%</li>
+                  </ul>
                 </div>
                 
                 <div class="explanation-card rounded-lg p-4">
-                  <h4 class="text-lg font-bold text-purple-400 mb-2">2. Evolução Gamma Flip</h4>
-                  <p class="text-gray-300">
-                    Rastreia migração do ponto crítico ao longo do tempo. Movimentos consistentes revelam reposicionamento estrutural dos MMs.
-                  </p>
-                </div>
-                
-                <div class="explanation-card rounded-lg p-4">
-                  <h4 class="text-lg font-bold text-orange-400 mb-2">3. Pressão Acumulada</h4>
-                  <p class="text-gray-300">
-                    Mede quanto da pressão gamma foi "consumida" vs restante. Revela se zonas de pressão estão esgotando ou intensificando.
-                  </p>
-                </div>
-                
-                <div class="explanation-card rounded-lg p-4">
-                  <h4 class="text-lg font-bold text-green-400 mb-2">4. Regime Persistência</h4>
-                  <p class="text-gray-300">
-                    Analisa quantos dias consecutivos no mesmo regime. Persistência cria padrões comportamentais mais previsíveis.
-                  </p>
-                </div>
-                
-                <div class="explanation-card rounded-lg p-4">
-                  <h4 class="text-lg font-bold text-red-400 mb-2">5. Velocidade Acumulação</h4>
-                  <p class="text-gray-300">
-                    Taxa de mudança dia-a-dia nas posições descobertas. Aceleração sugere expectativas crescentes de movimento.
-                  </p>
-                </div>
-                
-                <div class="explanation-card rounded-lg p-4">
-                  <h4 class="text-lg font-bold text-yellow-400 mb-2">6. Distorções Temporais</h4>
-                  <p class="text-gray-300">
-                    Detecta quando distribuição atual está fora do padrão histórico. Identifica janelas onde MMs estão mal posicionados.
-                  </p>
+                  <h4 class="text-lg font-bold text-red-400 mb-2">Interpretação</h4>
+                  <ul class="text-gray-300 space-y-1 text-xs">
+                    <li><strong>Crescendo:</strong> MMs aumentando exposição/hedge</li>
+                    <li><strong>Diminuindo:</strong> MMs reduzindo risco</li>
+                    <li><strong>Liquidez consumindo:</strong> Pressão se esgotando</li>
+                    <li><strong>Estável:</strong> Sem mudanças estruturais</li>
+                  </ul>
                 </div>
               </div>
 
-              <div class="mt-8 pt-6 border-t border-white/10 text-center">
-                <h4 class="text-geminii font-bold text-lg mb-4">Vantagem da Análise Temporal</h4>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-sm">
-                  <div class="text-center">
-                    <div class="w-12 h-12 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto mb-3">
-                      <i class="fas fa-search text-blue-400"></i>
-                    </div>
-                    <h5 class="font-bold text-white mb-2">Detecta Padrões Ocultos</h5>
-                    <p class="text-gray-400">Análises pontuais mostram o "que", temporal revela o "por quê" e "para onde".</p>
-                  </div>
-                  <div class="text-center">
-                    <div class="w-12 h-12 bg-purple-500/20 rounded-full flex items-center justify-center mx-auto mb-3">
-                      <i class="fas fa-crystal-ball text-purple-400"></i>
-                    </div>
-                    <h5 class="font-bold text-white mb-2">Antecipa Movimentos</h5>
-                    <p class="text-gray-400">Reposicionamento estrutural dos MMs precede mudanças de preço.</p>
-                  </div>
-                  <div class="text-center">
-                    <div class="w-12 h-12 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-3">
-                      <i class="fas fa-shield-alt text-green-400"></i>
-                    </div>
-                    <h5 class="font-bold text-white mb-2">Reduz Falsos Sinais</h5>
-                    <p class="text-gray-400">Confirma se mudanças pontuais são ruído ou tendência estrutural.</p>
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
         </div>
@@ -293,7 +261,7 @@
             id="analyzeBtn" 
             class="px-6 py-2 bg-gradient-to-r from-geminii to-purple-600 hover:shadow-lg rounded-lg transition-all font-medium"
           >
-            <i class="fas fa-chart-line mr-2"></i>Executar Análise Temporal
+            <i class="fas fa-history mr-2"></i>Análise Temporal MM
           </button>
         </div>
       </div>
@@ -304,79 +272,90 @@
       <!-- Resultados -->
       <div id="resultsSection" class="hidden">
         
-        <!-- Timeline -->
+        <!-- Header de Resultados -->
         <div class="mm-card p-6 mb-8">
-          <h3 class="text-2xl font-bold mb-6 text-center">
-            <i class="fas fa-timeline mr-3" style="color: #ba39af;"></i>
-            Evolução do Regime - 5 Dias
+          <div class="text-center">
+            <div class="mb-4">
+              <div id="tickerDisplay" class="text-3xl font-black text-white mb-2">TICKER</div>
+              <div id="spotPriceDisplay" class="text-lg text-gray-300">R$ 0.00</div>
+            </div>
+            
+            <div class="flex flex-col md:flex-row items-center justify-center space-y-4 md:space-y-0 md:space-x-8">
+              <div>
+                <div class="text-sm text-gray-400 mb-1">TENDÊNCIA GERAL</div>
+                <div id="generalTrendDisplay" class="trend-badge trend-estavel">ANALISANDO</div>
+              </div>
+              
+              <div>
+                <div class="text-sm text-gray-400 mb-1">STATUS LIQUIDEZ</div>
+                <div id="liquidityStatusDisplay" class="px-4 py-2 rounded-full font-bold text-sm bg-gray-600">CALCULANDO</div>
+              </div>
+              
+              <div>
+                <div class="text-sm text-gray-400 mb-1">LADO DOMINANTE</div>
+                <div id="dominantSideDisplay" class="px-4 py-2 rounded-full font-bold text-sm bg-gray-600">BALANCEADO</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Resumo Executivo -->
+        <div class="mm-card p-6 mb-8">
+          <h3 class="text-xl font-bold mb-6 text-center">
+            <i class="fas fa-chart-line mr-3 text-geminii"></i>
+            Resumo Executivo
           </h3>
-          <div class="timeline-container">
-            <div id="regimeTimeline">
-              <!-- Preenchido via JavaScript -->
-            </div>
-          </div>
-        </div>
-
-        <!-- Métricas -->
-        <div class="mm-card p-6 mb-8">
-          <div class="text-center mb-8">
-            <div id="persistenceIndicator" class="inline-block px-8 py-4 rounded-2xl text-2xl font-black">
-              <!-- Status persistência -->
-            </div>
-          </div>
           
-          <div class="grid grid-cols-2 md:grid-cols-6 gap-4">
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div class="metric-card text-center">
-              <div class="text-2xl font-black text-white mb-2" id="currentRegime">--</div>
-              <div class="text-white font-bold text-xs">REGIME ATUAL</div>
+              <div class="text-2xl font-black text-white mb-2" id="totalDescobertoDisplay">--</div>
+              <div class="text-gray-400 font-bold text-xs">TOTAL DESCOBERTO</div>
             </div>
             
             <div class="metric-card text-center">
-              <div class="text-2xl font-black text-blue-400 mb-2" id="persistenceDays">--</div>
-              <div class="text-white font-bold text-xs">PERSISTÊNCIA</div>
+              <div class="text-2xl font-black text-blue-400 mb-2" id="trendMagnitudeDisplay">--</div>
+              <div class="text-gray-400 font-bold text-xs">MAGNITUDE MUDANÇA</div>
             </div>
             
             <div class="metric-card text-center">
-              <div class="text-2xl font-black text-purple-400 mb-2" id="flipTrend">--</div>
-              <div class="text-white font-bold text-xs">FLIP TREND</div>
+              <div class="text-2xl font-black text-green-400 mb-2" id="daysAnalyzedDisplay">--</div>
+              <div class="text-gray-400 font-bold text-xs">DIAS ANALISADOS</div>
             </div>
             
             <div class="metric-card text-center">
-              <div class="text-2xl font-black text-orange-400 mb-2" id="pressureStatus">--</div>
-              <div class="text-white font-bold text-xs">PRESSÃO</div>
-            </div>
-            
-            <div class="metric-card text-center">
-              <div class="text-2xl font-black text-red-400 mb-2" id="velocityTrend">--</div>
-              <div class="text-white font-bold text-xs">VELOCIDADE</div>
-            </div>
-            
-            <div class="metric-card text-center">
-              <div class="text-2xl font-black text-yellow-400 mb-2" id="distortionCount">--</div>
-              <div class="text-white font-bold text-xs">DISTORÇÕES</div>
+              <div class="text-2xl font-black text-purple-400 mb-2" id="consumptionRateDisplay">--</div>
+              <div class="text-gray-400 font-bold text-xs">TAXA CONSUMO ATM</div>
             </div>
           </div>
         </div>
 
-        <!-- Insights -->
+        <!-- Evolução por Região -->
+        <div class="mm-card p-6 mb-8">
+          <h3 class="text-xl font-bold mb-6 text-center">
+            <i class="fas fa-layer-group mr-3 text-geminii"></i>
+            Evolução das Pressões por Região
+          </h3>
+          
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-4" id="regionEvolutionContainer">
+            <!-- Preenchido dinamicamente -->
+          </div>
+        </div>
+
+        <!-- Consumo de Liquidez -->
+        <div class="mm-card p-6 mb-8">
+          <h3 class="text-xl font-bold mb-6 text-center">
+            <i class="fas fa-tint mr-3 text-geminii"></i>
+            Análise de Liquidez ATM
+          </h3>
+          
+          <div id="liquidityAnalysisContainer">
+            <!-- Preenchido dinamicamente -->
+          </div>
+        </div>
+
+        <!-- Insights Acionáveis -->
         <div id="insightsSection" class="mb-8">
           <!-- Preenchido dinamicamente -->
-        </div>
-
-        <!-- Distorções -->
-        <div id="distortionsSection" class="mb-8">
-          <!-- Preenchido dinamicamente -->
-        </div>
-
-        <!-- Gráficos -->
-        <div class="mm-card p-6">
-          <h3 class="text-2xl font-bold mb-6 text-center">
-            <i class="fas fa-chart-area mr-3" style="color: #ba39af;"></i>
-            Análise Temporal Completa
-          </h3>
-          <div class="temporal-chart-container">
-            <div id="temporalChart" style="width: 100%; height: 100%;"></div>
-          </div>
         </div>
 
       </div>
@@ -448,7 +427,7 @@
     }
     window.toggleInfo = toggleInfo;
 
-    // Análise temporal direta
+    // Análise Temporal MM
     async function runTemporalAnalysis() {
       const ticker = tickerInput.value.trim().toUpperCase();
       if (!ticker) {
@@ -459,14 +438,13 @@
       const daysBack = parseInt(daysBackSelect.value);
       
       setLoading(analyzeBtn, true, 
-        '<i class="fas fa-chart-line mr-2"></i>Executar Análise Temporal', 
-        'Analisando...');
+        '<i class="fas fa-history mr-2"></i>Análise Temporal MM', 
+        'Analisando evolução...');
 
-      showStatus('Executando análise temporal dos market makers...', 'info');
+      showStatus(`Analisando evolução temporal de ${ticker} nos últimos ${daysBack} dias úteis...`, 'info');
 
       try {
-        // Tentar endpoint de teste primeiro
-        const response = await fetch(`/pro/mm-temporal/test-data/${ticker}`, {
+        const response = await fetch(`/api/mm-temporal/${ticker}?days_back=${daysBack}`, {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${userToken}`
@@ -481,167 +459,217 @@
         showStatus(`Análise temporal de ${ticker} concluída`, 'success');
 
       } catch (error) {
-        // Se teste falhar, tentar endpoint real
-        try {
-          const realResponse = await fetch('/pro/mm-temporal/analyze', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${userToken}`
-            },
-            body: JSON.stringify({
-              ticker: ticker,
-              days_back: daysBack
-            })
-          });
-
-          const realData = await realResponse.json();
-          
-          if (realResponse.ok) {
-            displayTemporalResults(realData);
-            showStatus(`Análise temporal real de ${ticker} concluída`, 'success');
-          } else {
-            throw new Error(realData.error);
-          }
-
-        } catch (realError) {
-          showStatus('Erro na análise temporal: ' + realError.message, 'error');
-        }
+        showStatus('Erro na análise temporal: ' + error.message, 'error');
       } finally {
         setLoading(analyzeBtn, false, 
-          '<i class="fas fa-chart-line mr-2"></i>Executar Análise Temporal', '');
+          '<i class="fas fa-history mr-2"></i>Análise Temporal MM', '');
       }
     }
 
-    // Exibir resultados
+    // FUNÇÃO PRINCIPAL PARA EXIBIR RESULTADOS
     function displayTemporalResults(data) {
-      const metrics = data.temporal_metrics || {};
+      console.log('Dados recebidos:', data); // Debug
       
-      updateMainMetrics(metrics);
-      createRegimeTimeline(metrics.regime_persistence);
+      // Header básico
+      document.getElementById('tickerDisplay').textContent = data.ticker || '--';
+      document.getElementById('spotPriceDisplay').textContent = 
+        data.market_context?.spot_price ? `R$ ${data.market_context.spot_price.toFixed(2)}` : 'R$ --';
+      
+      const summary = data.summary || {};
+      
+      // Tendência geral
+      const trendDirection = summary.trend_direction || 'ESTAVEL';
+      const trendDisplay = document.getElementById('generalTrendDisplay');
+      if (trendDisplay) {
+        trendDisplay.textContent = trendDirection;
+        trendDisplay.className = `trend-badge ${
+          trendDirection === 'CRESCENDO' ? 'trend-crescendo' : 
+          trendDirection === 'DIMINUINDO' ? 'trend-diminuindo' : 'trend-estavel'
+        }`;
+      }
+      
+      // Status de liquidez
+      const liquidityStatus = summary.liquidity_status || 'STABLE';
+      const liquidityDisplay = document.getElementById('liquidityStatusDisplay');
+      if (liquidityDisplay) {
+        liquidityDisplay.textContent = liquidityStatus === 'BEING_CONSUMED' ? 'CONSUMINDO' : 'ESTÁVEL';
+        liquidityDisplay.className = `px-4 py-2 rounded-full font-bold text-sm ${
+          liquidityStatus === 'BEING_CONSUMED' ? 'bg-red-600' : 'bg-green-600'
+        } text-white`;
+      }
+      
+      // Lado dominante
+      const dominantSide = summary.dominant_side || 'BALANCED';
+      const dominantDisplay = document.getElementById('dominantSideDisplay');
+      if (dominantDisplay) {
+        dominantDisplay.textContent = dominantSide === 'CALLS' ? 'CALLS' : 
+                                     dominantSide === 'PUTS' ? 'PUTS' : 'BALANCEADO';
+        dominantDisplay.className = `px-4 py-2 rounded-full font-bold text-sm ${
+          dominantSide === 'CALLS' ? 'bg-green-600' : 
+          dominantSide === 'PUTS' ? 'bg-red-600' : 'bg-gray-600'
+        } text-white`;
+      }
+      
+      // Resumo executivo
+      const totalDisplay = document.getElementById('totalDescobertoDisplay');
+      if (totalDisplay) {
+        totalDisplay.textContent = formatLargeNumber(summary.total_descoberto_current || 0);
+      }
+      
+      const magnitudeDisplay = document.getElementById('trendMagnitudeDisplay');
+      if (magnitudeDisplay) {
+        magnitudeDisplay.textContent = summary.trend_magnitude_pct ? `${summary.trend_magnitude_pct.toFixed(1)}%` : '--';
+      }
+      
+      const daysDisplay = document.getElementById('daysAnalyzedDisplay');
+      if (daysDisplay) {
+        daysDisplay.textContent = summary.days_analyzed || '--';
+      }
+      
+      // Evolução por região
+      displayRegionEvolution(data.temporal_metrics?.pressure_evolution);
+      
+      // Consumo de liquidez
+      displayLiquidityAnalysis(data.temporal_metrics?.liquidity_consumption);
+      
+      // Insights
       displayInsights(data.insights || []);
-      displayDistortions(metrics.temporal_distortions || []);
-      renderTemporalCharts(metrics);
       
+      // Mostrar seção de resultados
       resultsSection.classList.remove('hidden');
     }
 
-    function updateMainMetrics(metrics) {
-      const regimePersistence = metrics.regime_persistence || {};
-      const flipEvolution = metrics.flip_evolution || {};
-      const pressureDynamics = metrics.pressure_dynamics || {};
-      const velocityAnalysis = metrics.accumulation_velocity || {};
-      const distortions = metrics.temporal_distortions || [];
+    function displayRegionEvolution(pressureEvolution) {
+      const container = document.getElementById('regionEvolutionContainer');
+      if (!container) return;
       
-      // Persistência
-      const persistenceDays = regimePersistence.persistence_days || 0;
-      const currentRegime = regimePersistence.current_regime || 'UNKNOWN';
-      
-      let persistenceClass = 'bg-gradient-to-r ';
-      let persistenceText = `${persistenceDays} Dias`;
-      
-      if (persistenceDays >= 4) {
-        persistenceClass += 'from-green-400 to-green-600';
-        persistenceText += ' - Estável';
-      } else if (persistenceDays >= 2) {
-        persistenceClass += 'from-yellow-400 to-yellow-600';
-        persistenceText += ' - Moderado';
-      } else {
-        persistenceClass += 'from-red-400 to-red-600';
-        persistenceText += ' - Instável';
+      if (!pressureEvolution || !pressureEvolution.regions || typeof pressureEvolution.regions !== 'object') {
+        container.innerHTML = '<div class="col-span-4 text-center text-gray-400">Dados não disponíveis</div>';
+        return;
       }
       
-      document.getElementById('persistenceIndicator').className = 
-        `inline-block px-8 py-4 rounded-2xl text-2xl font-black ${persistenceClass}`;
-      document.getElementById('persistenceIndicator').textContent = persistenceText;
+      const regions = pressureEvolution.regions;
+      const regionNames = {
+        'calls_atm': 'Calls ATM',
+        'puts_atm': 'Puts ATM', 
+        'calls_otm': 'Calls OTM',
+        'puts_otm': 'Puts OTM'
+      };
       
-      // Métricas individuais
-      document.getElementById('currentRegime').textContent = 
-        currentRegime.replace('_', ' ') || '--';
+      let html = '';
       
-      document.getElementById('persistenceDays').textContent = 
-        persistenceDays.toString() || '--';
-      
-      document.getElementById('flipTrend').textContent = 
-        flipEvolution.trend_analysis?.direction || '--';
-      
-      // Status de pressão
-      const pressureEntries = Object.values(pressureDynamics);
-      const predominantStatus = pressureEntries.length > 0 ? 
-        getMostCommonValue(pressureEntries.map(p => p.pressure_status)) : '--';
-      document.getElementById('pressureStatus').textContent = predominantStatus;
-      
-      // Velocidade
-      const velocityEntries = Object.values(velocityAnalysis);
-      const predominantTrend = velocityEntries.length > 0 ?
-        getMostCommonValue(velocityEntries.map(v => v.trend)) : '--';
-      document.getElementById('velocityTrend').textContent = predominantTrend;
-      
-      // Distorções
-      document.getElementById('distortionCount').textContent = distortions.length.toString();
-    }
-
-    function createRegimeTimeline(regimePersistence) {
-      const timeline = document.getElementById('regimeTimeline');
-      const regimeHistory = regimePersistence?.regime_history || [];
-      
-      timeline.innerHTML = '';
-      
-      regimeHistory.forEach((regime, index) => {
-        const timelinePoint = document.createElement('div');
-        const dayLabel = index === regimeHistory.length - 1 ? 'Hoje' : `D-${regimeHistory.length - 1 - index}`;
+      Object.entries(regions).forEach(([regionKey, values]) => {
+        if (!Array.isArray(values) || values.length === 0) return;
         
-        const regimeClass = regime === 'LONG_GAMMA' ? 'bullish' : 
-                          regime === 'SHORT_GAMMA' ? 'bearish' : 'neutral';
+        const current = values[values.length - 1] || 0;
+        const previous = values[values.length - 2] || current;
+        const change = previous > 0 ? ((current - previous) / previous * 100) : 0;
         
-        const regimeText = regime === 'LONG_GAMMA' ? 'Long Gamma - Estabilizador' :
-                         regime === 'SHORT_GAMMA' ? 'Short Gamma - Amplificador' : 'Indefinido';
+        const trendClass = change > 5 ? 'trend-crescendo' :
+                          change < -5 ? 'trend-diminuindo' : 'trend-estavel';
         
-        timelinePoint.className = `timeline-point ${regimeClass}`;
-        timelinePoint.innerHTML = `
-          <div class="flex justify-between items-center">
-            <span class="font-bold">${dayLabel}</span>
-            <span class="text-sm">${regimeText}</span>
+        html += `
+          <div class="region-card">
+            <div class="text-center">
+              <div class="text-lg font-bold text-white mb-2">${regionNames[regionKey] || regionKey}</div>
+              <div class="text-2xl font-black mb-2 ${
+                regionKey.includes('calls') ? 'text-green-400' : 'text-red-400'
+              }">${formatLargeNumber(current)}</div>
+              <div class="trend-badge ${trendClass}">${change.toFixed(1)}%</div>
+            </div>
           </div>
         `;
-        
-        timeline.appendChild(timelinePoint);
       });
+      
+      if (html === '') {
+        html = '<div class="col-span-4 text-center text-gray-400">Nenhum dado de região disponível</div>';
+      }
+      
+      container.innerHTML = html;
     }
-
+    
+    function displayLiquidityAnalysis(liquidityConsumption) {
+      const container = document.getElementById('liquidityAnalysisContainer');
+      if (!container) return;
+      
+      if (!Array.isArray(liquidityConsumption) || liquidityConsumption.length === 0) {
+        container.innerHTML = '<div class="text-center text-gray-400">Dados não disponíveis</div>';
+        return;
+      }
+      
+      const current = liquidityConsumption[liquidityConsumption.length - 1] || {};
+      const consumptionRate = (current.consumption_rate * 100) || 0;
+      
+      const consumptionDisplay = document.getElementById('consumptionRateDisplay');
+      if (consumptionDisplay) {
+        consumptionDisplay.textContent = `${consumptionRate.toFixed(1)}%`;
+      }
+      
+      const indicatorClass = consumptionRate > 10 ? 'consuming' : 
+                            consumptionRate > 0 ? 'building' : 'stable';
+      
+      const statusText = consumptionRate > 10 ? 'ALTA TAXA DE CONSUMO' :
+                        consumptionRate > 0 ? 'CONSUMO MODERADO' : 'ESTÁVEL';
+      
+      container.innerHTML = `
+        <div class="flex items-center justify-center space-x-4 text-center">
+          <div>
+            <div class="consumption-indicator ${indicatorClass}"></div>
+            <span class="font-bold text-white">${statusText}</span>
+          </div>
+          <div class="text-gray-400">
+            <div class="text-sm">Liquidez ATM Atual</div>
+            <div class="text-xl font-bold text-white">${formatLargeNumber(current.atm_liquidity || 0)}</div>
+          </div>
+        </div>
+      `;
+    }
+    
     function displayInsights(insights) {
       const insightsSection = document.getElementById('insightsSection');
+      if (!insightsSection) return;
       
-      if (insights.length === 0) {
+      if (!Array.isArray(insights) || insights.length === 0) {
         insightsSection.innerHTML = '';
         return;
       }
       
       let insightsHTML = `
         <div class="mm-card p-6">
-          <h3 class="text-xl font-bold mb-4 text-center">
+          <h3 class="text-xl font-bold mb-6 text-center">
             <i class="fas fa-lightbulb mr-3 text-yellow-400"></i>
-            Insights Acionáveis
+            Insights Temporais
           </h3>
-          <div class="space-y-3">
+          <div class="space-y-4">
       `;
       
       insights.forEach(insight => {
-        const priorityClass = insight.priority === 'HIGH' ? 'border-red-500/50 bg-red-500/10' :
-                             insight.priority === 'MEDIUM' ? 'border-yellow-500/50 bg-yellow-500/10' :
-                             'border-green-500/50 bg-green-500/10';
+        if (!insight || typeof insight !== 'object') return;
+        
+        const priorityClass = insight.priority === 'HIGH' ? 'insight-high' :
+                             insight.priority === 'MEDIUM' ? 'insight-medium' : 'insight-low';
         
         const priorityIcon = insight.priority === 'HIGH' ? 'fas fa-exclamation-triangle text-red-400' :
                             insight.priority === 'MEDIUM' ? 'fas fa-exclamation-circle text-yellow-400' :
                             'fas fa-info-circle text-green-400';
         
+        const typeText = (insight.type || '').replace('_', ' ').toLowerCase();
+        
         insightsHTML += `
-          <div class="insight-card ${priorityClass}">
+          <div class="mm-card p-4 ${priorityClass}">
             <div class="flex items-start space-x-3">
-              <i class="${priorityIcon}"></i>
-              <div>
-                <div class="font-semibold text-white text-sm">${insight.type.replace('_', ' ')}</div>
-                <div class="text-gray-300 text-sm mt-1">${insight.message}</div>
+              <i class="${priorityIcon} mt-1"></i>
+              <div class="flex-1">
+                <div class="flex items-center justify-between mb-2">
+                  <span class="font-bold text-white text-sm uppercase">${typeText}</span>
+                  <span class="text-xs px-2 py-1 rounded ${
+                    insight.priority === 'HIGH' ? 'bg-red-600' : 
+                    insight.priority === 'MEDIUM' ? 'bg-yellow-600' : 'bg-green-600'
+                  } text-white">
+                    ${insight.priority || 'LOW'}
+                  </span>
+                </div>
+                <p class="text-gray-300 text-sm">${insight.message || 'Sem detalhes disponíveis'}</p>
               </div>
             </div>
           </div>
@@ -651,220 +679,28 @@
       insightsHTML += `</div></div>`;
       insightsSection.innerHTML = insightsHTML;
     }
-
-    function displayDistortions(distortions) {
-      const distortionsSection = document.getElementById('distortionsSection');
-      
-      if (distortions.length === 0) {
-        distortionsSection.innerHTML = '';
-        return;
-      }
-      
-      let distortionsHTML = `
-        <div class="mm-card p-6">
-          <h3 class="text-xl font-bold mb-4 text-center">
-            <i class="fas fa-exclamation-triangle mr-3 text-red-400"></i>
-            Distorções Temporais Detectadas
-          </h3>
-          <div class="space-y-4">
-      `;
-      
-      distortions.forEach(distortion => {
-        const severityClass = distortion.severity === 'EXTREMA' ? 'border-red-500 bg-red-500/20' :
-                             'border-orange-500 bg-orange-500/20';
-        
-        distortionsHTML += `
-          <div class="distortion-alert ${severityClass}">
-            <div class="flex items-center justify-between mb-3">
-              <span class="font-bold text-white">${distortion.distortion_type.replace('_', ' ')}</span>
-              <span class="px-2 py-1 rounded text-xs font-bold ${distortion.severity === 'EXTREMA' ? 'bg-red-600 text-white' : 'bg-orange-600 text-white'}">
-                ${distortion.severity}
-              </span>
-            </div>
-            <p class="text-gray-300 text-sm mb-2">${distortion.interpretation}</p>
-            <div class="text-xs text-gray-400">
-              Z-Score: ${distortion.z_score?.toFixed(2)} | 
-              Atual: ${distortion.current_call_pct?.toFixed(1)}% | 
-              Histórico: ${distortion.historical_call_pct?.toFixed(1)}%
-            </div>
-          </div>
-        `;
-      });
-      
-      distortionsHTML += `</div></div>`;
-      distortionsSection.innerHTML = distortionsHTML;
-    }
-
-    function renderTemporalCharts(metrics) {
-      // Dados de exemplo para os gráficos temporais
-      const dates = ['15/01', '16/01', '17/01', '18/01', 'Hoje'];
-      const flipEvolution = metrics.flip_evolution?.evolution || [];
-      
-      // Extrair dados para gráfico de evolução do flip
-      const flipStrikes = flipEvolution.map(item => item.flip_strike || 143.5);
-      const flipDates = flipEvolution.map((item, index) => 
-        item.date === 'current' ? 'Hoje' : dates[index] || `D-${index}`
-      );
-
-      // Gráfico principal de evolução temporal
-      const traces = [
-        {
-          x: flipDates,
-          y: flipStrikes,
-          type: 'scatter',
-          mode: 'lines+markers',
-          name: 'Evolução Gamma Flip',
-          line: { 
-            color: '#ba39af', 
-            width: 4,
-            shape: 'spline'
-          },
-          marker: {
-            color: '#ba39af',
-            size: 10,
-            line: {
-              color: '#ffffff',
-              width: 2
-            }
-          }
-        }
-      ];
-
-      // Adicionar dados de pressão se disponível
-      const pressureDynamics = metrics.pressure_dynamics || {};
-      const strikes = Object.keys(pressureDynamics).slice(0, 3); // Primeiros 3 strikes
-      
-      strikes.forEach((strikeKey, index) => {
-        const pressureData = pressureDynamics[strikeKey];
-        const consumptionRate = pressureData?.consumption_rate || 0;
-        const colors = ['#22c55e', '#f97316', '#ef4444'];
-        
-        traces.push({
-          x: dates,
-          y: Array(5).fill(consumptionRate * 100), // Simular série temporal
-          type: 'scatter',
-          mode: 'lines',
-          name: `Strike ${pressureData?.strike || strikeKey} - Pressão`,
-          line: {
-            color: colors[index],
-            width: 2,
-            dash: 'dot'
-          },
-          yaxis: 'y2'
-        });
-      });
-
-      const layout = {
-        title: {
-          text: 'Análise Temporal dos Market Makers',
-          font: { size: 18, color: '#ffffff' }
-        },
-        paper_bgcolor: 'rgba(0,0,0,0)',
-        plot_bgcolor: 'rgba(0,0,0,0)',
-        font: { color: '#ffffff', family: 'Inter, sans-serif' },
-        
-        xaxis: {
-          title: 'Período',
-          gridcolor: 'rgba(255,255,255,0.1)',
-          color: '#ffffff',
-          showgrid: true
-        },
-        
-        yaxis: {
-          title: 'Gamma Flip Strike (R$)',
-          gridcolor: 'rgba(255,255,255,0.1)',
-          color: '#ffffff',
-          showgrid: true,
-          side: 'left'
-        },
-        
-        yaxis2: {
-          title: 'Taxa Consumo Pressão (%)',
-          overlaying: 'y',
-          side: 'right',
-          color: '#ffffff',
-          showgrid: false
-        },
-
-        legend: {
-          x: 0.02,
-          y: 0.98,
-          bgcolor: 'rgba(0,0,0,0.5)',
-          bordercolor: 'rgba(255,255,255,0.2)',
-          borderwidth: 1,
-          font: { color: '#ffffff', size: 10 }
-        },
-
-        margin: { l: 60, r: 60, t: 80, b: 60 },
-        height: 900
-      };
-
-      const config = {
-        responsive: true,
-        displayModeBar: false,
-        displaylogo: false
-      };
-
-      try {
-        Plotly.newPlot('temporalChart', traces, layout, config);
-        
-        setTimeout(() => {
-          Plotly.Plots.resize('temporalChart');
-        }, 100);
-        
-      } catch (error) {
-        console.error('Erro ao renderizar gráfico:', error);
-        document.getElementById('temporalChart').innerHTML = `
-          <div class="flex items-center justify-center h-full">
-            <div class="text-center">
-              <i class="fas fa-exclamation-triangle text-4xl text-red-400 mb-4"></i>
-              <p class="text-white">Erro ao carregar gráfico temporal</p>
-              <p class="text-gray-400 text-sm">Verifique os dados e tente novamente</p>
-            </div>
-          </div>
-        `;
-      }
-    }
-
-    function getMostCommonValue(arr) {
-      if (arr.length === 0) return '--';
-      
-      const frequency = {};
-      arr.forEach(item => frequency[item] = (frequency[item] || 0) + 1);
-      
-      return Object.keys(frequency).reduce((a, b) => 
-        frequency[a] > frequency[b] ? a : b
-      );
-    }
-
-    // Event listeners
-    analyzeBtn.addEventListener('click', runTemporalAnalysis);
     
-    tickerInput.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') runTemporalAnalysis();
-    });
-
-    // Resize handler
-    window.addEventListener('resize', function() {
-      const chartElement = document.getElementById('temporalChart');
-      if (chartElement && chartElement.children.length > 0) {
-        setTimeout(() => {
-          if (typeof Plotly !== 'undefined') {
-            Plotly.Plots.resize('temporalChart');
-          }
-        }, 100);
-      }
-    });
-
+    // Event listeners
+    if (analyzeBtn) {
+      analyzeBtn.addEventListener('click', runTemporalAnalysis);
+    }
+    
+    if (tickerInput) {
+      tickerInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') runTemporalAnalysis();
+      });
+    }
+    
     // Inicialização
     document.addEventListener('DOMContentLoaded', function() {
-      showStatus('Sistema de Análise Temporal carregado. Digite um ticker e execute a análise.', 'info');
+      showStatus('Sistema de Análise Temporal MM carregado. Digite um ticker para começar.', 'info');
       
-      // Auto-foco no input do ticker
-      tickerInput.focus();
+      if (tickerInput) {
+        tickerInput.focus();
+      }
     });
 
-  </script>
-
-</body>
-</html>
+</script>
+    
+    </body>
+    </html>

@@ -255,7 +255,6 @@ class GEXAnalyzer:
             calls = strike_options[call_mask]
             puts = strike_options[put_mask]
             
-            # Garantir que sempre tem dados de OI
             call_data = {}
             put_data = {}
             
@@ -264,11 +263,10 @@ class GEXAnalyzer:
                 if call_key in oi_breakdown:
                     call_data = oi_breakdown[call_key]
                 else:
-                    # Estimar baseado no volume/gamma
                     volume_estimate = int(calls['volume'].mean() if 'volume' in calls.columns else 100)
                     call_data = {
                         'total': volume_estimate * 3,
-                        'descoberto': volume_estimate * 2,  # 60% descoberto
+                        'descoberto': volume_estimate * 2,
                         'travado': volume_estimate,
                         'coberto': volume_estimate
                     }
@@ -281,25 +279,26 @@ class GEXAnalyzer:
                     volume_estimate = int(puts['volume'].mean() if 'volume' in puts.columns else 100)
                     put_data = {
                         'total': volume_estimate * 3,
-                        'descoberto': volume_estimate * 2,  # 60% descoberto
+                        'descoberto': volume_estimate * 2,
                         'travado': volume_estimate,
                         'coberto': volume_estimate
                     }
             
-            # Calcular GEX
+            # Calcular GEX - COMO ESTAVA ANTES (CORRETO)
             call_gex = 0.0
             call_gex_descoberto = 0.0
             if call_data and len(calls) > 0:
                 avg_gamma = float(calls['gamma'].mean())
-                call_gex = avg_gamma * call_data['total'] * spot_price
-                call_gex_descoberto = avg_gamma * call_data['descoberto'] * spot_price
+                call_gex = avg_gamma * call_data['total'] * spot_price * 100
+                call_gex_descoberto = avg_gamma * call_data['descoberto'] * spot_price * 100
             
             put_gex = 0.0
             put_gex_descoberto = 0.0
             if put_data and len(puts) > 0:
                 avg_gamma = float(puts['gamma'].mean())
-                put_gex = -(avg_gamma * put_data['total'] * spot_price)
-                put_gex_descoberto = -(avg_gamma * put_data['descoberto'] * spot_price)
+                # VOLTA O SINAL NEGATIVO - ESTAVA CERTO!
+                put_gex = -(avg_gamma * put_data['total'] * spot_price * 100)
+                put_gex_descoberto = -(avg_gamma * put_data['descoberto'] * spot_price * 100)
             
             total_gex = call_gex + put_gex
             total_gex_descoberto = call_gex_descoberto + put_gex_descoberto
@@ -312,8 +311,8 @@ class GEXAnalyzer:
                 'total_gex_descoberto': float(total_gex_descoberto),
                 'call_oi_total': int(call_data.get('total', 0)),
                 'put_oi_total': int(put_data.get('total', 0)),
-                'call_oi_descoberto': int(call_data.get('descoberto', 0)),  # SEMPRE TEM
-                'put_oi_descoberto': int(put_data.get('descoberto', 0)),    # SEMPRE TEM
+                'call_oi_descoberto': int(call_data.get('descoberto', 0)),
+                'put_oi_descoberto': int(put_data.get('descoberto', 0)),
                 'has_real_data': (float(strike), 'CALL') in oi_breakdown or (float(strike), 'PUT') in oi_breakdown
             })
         
@@ -612,12 +611,24 @@ class GammaService:
         try:
             result = self.analyzer.analyze(ticker, expiration_code)
             
+            # CORREÇÃO AQUI - Determinar regime pelo FLIP, não pelo sinal do GEX
+            flip_strike = result.get('flip_strike')
+            spot_price = result['spot_price']
+            
+            if flip_strike:
+                # Se spot > flip = Long Gamma (comprimido)
+                # Se spot < flip = Short Gamma (explosivo)
+                regime = 'Long Gamma' if spot_price > flip_strike else 'Short Gamma'
+            else:
+                # Fallback se não encontrar flip: usar sinal do GEX
+                regime = 'Long Gamma' if result['net_gex_descoberto'] > 0 else 'Short Gamma'
+            
             api_result = {
                 'ticker': ticker.replace('.SA', ''),
-                'spot_price': result['spot_price'],
+                'spot_price': spot_price,
                 'gex_levels': result['gex_levels'],
-                'flip_strike': result['flip_strike'],
-                'regime': 'Long Gamma' if result['net_gex_descoberto'] > 0 else 'Short Gamma',
+                'flip_strike': flip_strike,
+                'regime': regime,  # USAR A VARIÁVEL CORRIGIDA
                 'plot_json': result['plot_json'],
                 'walls': result['walls'],
                 'options_count': result['strikes_analyzed'],
@@ -629,6 +640,10 @@ class GammaService:
             }
             
             return convert_to_json_serializable(api_result)
+            
+        except Exception as e:
+            logging.error(f"Erro na análise GEX: {e}")
+            raise
             
         except Exception as e:
             logging.error(f"Erro na análise GEX: {e}")

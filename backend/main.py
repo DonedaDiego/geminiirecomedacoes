@@ -118,13 +118,14 @@ app.register_blueprint(opcoes_bp)
 
 # market maker
 
-# MM TEMPORAL
 try:
-    from pro.mm_temporal_routes import mm_temporal_bp
-    app.register_blueprint(mm_temporal_bp)
-    print("✅ MM Temporal blueprint registrado!")
+    from pro.historical_routes import get_historical_blueprint
+    
+    historical_bp = get_historical_blueprint()
+    app.register_blueprint(historical_bp)
+    print("✅ HISTORICAL blueprint registrado!")
 except Exception as e:
-    print(f"❌ Erro ao registrar MM Temporal blueprint: {e}")
+    print(f"❌ Erro ao registrar HISTORICAL blueprint: {e}")
 
 
 # TEX
@@ -451,9 +452,14 @@ def theta_levels():
 def mm_levels():
     return send_from_directory('../frontend', 'marketmaker.html')
 
+@app.route('/historical-levels')
+@app.route('/historical-levels.html')
+def hisles_levels():
+    return send_from_directory('../frontend', 'historical-levels.html')
 
 
 
+#historical-levels
 
 ##========== MAchine ===============##
 

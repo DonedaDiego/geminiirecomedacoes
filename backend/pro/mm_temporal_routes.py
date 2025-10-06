@@ -1,262 +1,329 @@
 """
-mm_temporal_routes.py - Routes para Market Maker Temporal Analysis
+mm_temporal_routes.py - Rotas para análise temporal de Market Makers
 """
 
-from flask import Blueprint, request, jsonify
-import logging
+from flask import Blueprint, jsonify, request
 from .mm_temporal_service import mm_temporal_service
-from .gamma_service import GammaService  # Para obter dados atuais
+from .gamma_service import GammaService
+import logging
 
-# Criar blueprint
-mm_temporal_bp = Blueprint('mm_temporal', __name__, url_prefix='/pro/mm-temporal')
+# Configurar logging
+logging.basicConfig(level=logging.INFO)
 
-# Instância do serviço gamma para obter dados atuais
+# Blueprint
+mm_temporal_bp = Blueprint('mm_temporal', __name__)
+
+# Instanciar serviços
 gamma_service = GammaService()
 
-@mm_temporal_bp.route('/analyze', methods=['POST'])
-def analyze_mm_temporal():
+@mm_temporal_bp.route('/api/mm-temporal/<ticker>', methods=['GET'])
+def get_mm_temporal_analysis(ticker):
     """
-    Endpoint principal - INTEGRADO com dados reais
+    Análise temporal completa de Market Makers
+    
+    Query params:
+    - days_back: número de dias para análise (default: 5)
+    - expiration: código do vencimento (opcional)
     """
     try:
-        data = request.get_json()
+        # Parâmetros
+        days_back = int(request.args.get('days_back', 5))
+        expiration_code = request.args.get('expiration')
         
-        if not data:
-            return jsonify({'error': 'JSON payload obrigatório'}), 400
+        # Validações
+        if not ticker or len(ticker) < 3:
+            return jsonify({
+                'error': 'Ticker inválido',
+                'success': False
+            }), 400
         
-        ticker = data.get('ticker')
-        if not ticker:
-            return jsonify({'error': 'Campo ticker obrigatório'}), 400
+        if days_back < 3 or days_back > 10:
+            return jsonify({
+                'error': 'days_back deve ser entre 3 e 10',
+                'success': False
+            }), 400
         
-        days_back = data.get('days_back', 5)
-        expiration_code = data.get('expiration_code')  # Opcional
+        logging.info(f"Iniciando análise temporal MM para {ticker} ({days_back} dias)")
         
-        # MUDANÇA PRINCIPAL: Obter dados atuais automaticamente
-        logging.info(f"Obtendo dados atuais do GEX para {ticker}")
-        
+        # 1. OBTER DADOS ATUAIS DO GEX (para ter current_oi_breakdown)
         try:
-            # Usar o GammaService para obter dados atuais
-            gex_result = gamma_service.analyze_gamma_complete(ticker, expiration_code)
+            gamma_result = gamma_service.analyze_gamma_complete(ticker, expiration_code)
             
-            if not gex_result.get('success'):
+            if not gamma_result.get('success'):
                 return jsonify({
-                    'error': 'Falha ao obter dados atuais de GEX',
-                    'details': gex_result.get('error', 'Erro desconhecido'),
+                    'error': 'Erro ao obter dados atuais de OI descoberto',
                     'success': False
                 }), 500
             
-            spot_price = gex_result['spot_price']
-            
-            # Extrair OI breakdown dos dados GEX (simulado por enquanto)
-            current_oi_breakdown = {
-                f"{strike}_{option_type}": {
-                    'descoberto': 15000 + int(strike) * 100,  # Simulado baseado no strike
-                    'total': 25000 + int(strike) * 150
-                }
-                for strike in [135, 140, 145, 150, 155]
-                for option_type in ['CALL', 'PUT']
-            }
+            # Precisamos extrair o current_oi_breakdown do gamma service
+            # Isso requer uma pequena modificação no gamma service ou usar os dados diretamente
             
         except Exception as e:
-            logging.error(f"Erro ao obter dados GEX: {e}")
+            logging.error(f"Erro ao buscar dados gamma para temporal: {e}")
             return jsonify({
-                'error': f'Erro ao obter dados atuais: {str(e)}',
+                'error': 'Erro ao obter dados base para análise temporal',
                 'success': False
             }), 500
         
-        # Executar análise temporal
-        logging.info(f"Iniciando análise temporal para {ticker}")
-        result = mm_temporal_service.analyze_mm_temporal_complete(
-            ticker, spot_price, current_oi_breakdown, days_back
+        # 2. OBTER SPOT PRICE
+        try:
+            # Usar o mesmo data provider do gamma service
+            spot_price = gamma_service.analyzer.data_provider.get_spot_price(ticker)
+            if not spot_price:
+                return jsonify({
+                    'error': 'Não foi possível obter cotação atual',
+                    'success': False
+                }), 500
+                
+        except Exception as e:
+            logging.error(f"Erro ao obter spot price: {e}")
+            return jsonify({
+                'error': 'Erro ao obter cotação',
+                'success': False
+            }), 500
+        
+        # 3. OBTER CURRENT_OI_BREAKDOWN
+        try:
+            # Buscar dados atuais de OI
+            oi_breakdown, expiration_info = gamma_service.analyzer.data_provider.get_floqui_oi_breakdown(
+                ticker, expiration_code
+            )
+            
+            if not oi_breakdown:
+                return jsonify({
+                    'error': 'Não foi possível obter dados de Open Interest atual',
+                    'success': False
+                }), 500
+                
+        except Exception as e:
+            logging.error(f"Erro ao obter OI breakdown: {e}")
+            return jsonify({
+                'error': 'Erro ao buscar dados de Open Interest',
+                'success': False
+            }), 500
+        
+        # 4. EXECUTAR ANÁLISE TEMPORAL
+        try:
+            temporal_result = mm_temporal_service.analyze_mm_temporal_complete(
+                ticker=ticker,
+                spot_price=spot_price,
+                current_oi_breakdown=oi_breakdown,
+                days_back=days_back
+            )
+            
+            if not temporal_result.get('success'):
+                return jsonify({
+                    'error': temporal_result.get('error', 'Erro na análise temporal'),
+                    'success': False
+                }), 500
+            
+            # 5. ENRIQUECER COM DADOS ADICIONAIS
+            enriched_result = {
+                **temporal_result,
+                'market_context': {
+                    'spot_price': spot_price,
+                    'expiration_used': expiration_info.get('desc') if expiration_info else None,
+                    'total_oi_strikes': len(oi_breakdown)
+                }
+            }
+            
+            logging.info(f"Análise temporal MM concluída para {ticker}")
+            return jsonify(enriched_result)
+            
+        except Exception as e:
+            logging.error(f"Erro na análise temporal: {e}")
+            return jsonify({
+                'error': f'Erro na análise temporal: {str(e)}',
+                'success': False
+            }), 500
+    
+    except Exception as e:
+        logging.error(f"Erro geral na rota temporal: {e}")
+        return jsonify({
+            'error': 'Erro interno do servidor',
+            'success': False
+        }), 500
+
+@mm_temporal_bp.route('/api/mm-temporal/<ticker>/summary', methods=['GET'])
+def get_mm_temporal_summary(ticker):
+    """
+    Resumo executivo da análise temporal (resposta mais rápida)
+    """
+    try:
+        # Usar apenas 3 dias para resposta mais rápida
+        days_back = int(request.args.get('days_back', 3))
+        expiration_code = request.args.get('expiration')
+        
+        logging.info(f"Buscando resumo temporal MM para {ticker}")
+        
+        # Obter dados necessários
+        spot_price = gamma_service.analyzer.data_provider.get_spot_price(ticker)
+        if not spot_price:
+            return jsonify({'error': 'Erro ao obter cotação', 'success': False}), 500
+        
+        oi_breakdown, expiration_info = gamma_service.analyzer.data_provider.get_floqui_oi_breakdown(
+            ticker, expiration_code
         )
         
-        # Adicionar dados extras para frontend
-        if result.get('success'):
-            result['spot_price'] = spot_price
-            result['analysis_timestamp'] = data.get('timestamp', 'now')
-            
-        return jsonify(result), 200 if result.get('success') else 500
-            
-    except Exception as e:
-        logging.error(f"Erro no endpoint analyze_mm_temporal: {e}")
-        return jsonify({
-            'error': f'Erro interno: {str(e)}',
-            'success': False
-        }), 500
-
-@mm_temporal_bp.route('/availability', methods=['POST'])
-def check_data_availability():
-    """
-    Endpoint de disponibilidade - SIMPLIFICADO
-    """
-    try:
-        data = request.get_json()
+        if not oi_breakdown:
+            return jsonify({'error': 'Erro ao obter dados OI', 'success': False}), 500
         
-        if not data:
-            return jsonify({'error': 'JSON payload obrigatório'}), 400
+        # Análise temporal
+        temporal_result = mm_temporal_service.analyze_mm_temporal_complete(
+            ticker=ticker,
+            spot_price=spot_price,
+            current_oi_breakdown=oi_breakdown,
+            days_back=days_back
+        )
         
-        ticker = data.get('ticker')
-        if not ticker:
-            return jsonify({'error': 'Campo ticker obrigatório'}), 400
+        if not temporal_result.get('success'):
+            return jsonify({'error': 'Erro na análise', 'success': False}), 500
         
-        days_back = data.get('days_back', 10)
-        
-        # Usar o serviço
-        result = mm_temporal_service.get_available_analysis_dates(ticker, days_back)
-        
-        return jsonify(result), 200 if result.get('success') else 500
-            
-    except Exception as e:
-        logging.error(f"Erro no endpoint check_data_availability: {e}")
-        return jsonify({
-            'error': f'Erro interno: {str(e)}',
-            'success': False
-        }), 500
-
-@mm_temporal_bp.route('/test-data/<ticker>', methods=['GET'])
-def get_test_data(ticker):
-    """
-    NOVO ENDPOINT: Para testar sem dados reais
-    """
-    try:
-        # Dados simulados realistas para teste
-        mock_data = {
-            'ticker': ticker.upper(),
+        # Retornar apenas o essencial
+        summary_result = {
+            'ticker': temporal_result['ticker'],
             'success': True,
-            'spot_price': 143.50,
-            'temporal_metrics': {
-                'regime_persistence': {
-                    'current_regime': 'SHORT_GAMMA',
-                    'persistence_days': 1,
-                    'total_changes': 2,
-                    'stability_score': 0.6,
-                    'regime_history': ['LONG_GAMMA', 'LONG_GAMMA', 'SHORT_GAMMA', 'SHORT_GAMMA', 'SHORT_GAMMA'],
-                    'interpretation': 'Regime em formação - aguardar confirmação'
-                },
-                'flip_evolution': {
-                    'evolution': [
-                        {'date': '2024-01-15', 'flip_strike': 144.2, 'distance_from_spot': 0.5},
-                        {'date': '2024-01-16', 'flip_strike': 143.8, 'distance_from_spot': 0.2},
-                        {'date': '2024-01-17', 'flip_strike': 143.5, 'distance_from_spot': 0.0},
-                        {'date': '2024-01-18', 'flip_strike': 143.1, 'distance_from_spot': 0.3},
-                        {'date': 'current', 'flip_strike': 142.8, 'distance_from_spot': 0.5}
-                    ],
-                    'trend_analysis': {
-                        'direction': 'DESCENDO',
-                        'slope': -0.35,
-                        'velocity': 0.35,
-                        'consistency': 0.8
-                    }
-                },
-                'pressure_dynamics': {
-                    '140.0_CALL': {
-                        'strike': 140.0,
-                        'current_pressure': 18000,
-                        'max_pressure': 25000,
-                        'consumption_rate': 0.28,
-                        'pressure_status': 'ESGOTANDO'
-                    },
-                    '145.0_CALL': {
-                        'strike': 145.0,
-                        'current_pressure': 22000,
-                        'max_pressure': 20000,
-                        'consumption_rate': -0.1,
-                        'pressure_status': 'ACUMULANDO'
-                    }
-                },
-                'accumulation_velocity': {
-                    '140.0_CALL': {
-                        'strike': 140.0,
-                        'current_velocity': 2500,
-                        'avg_velocity': 1200,
-                        'trend': 'ACELERANDO_POSITIVO',
-                        'velocity_magnitude': 2500
-                    },
-                    '145.0_PUT': {
-                        'strike': 145.0,
-                        'current_velocity': -800,
-                        'avg_velocity': -400,
-                        'trend': 'ACELERANDO_NEGATIVO',
-                        'velocity_magnitude': 800
-                    }
-                },
-                'temporal_distortions': [
-                    {
-                        'type': 'DISTRIBUICAO_TIPO',
-                        'distortion_type': 'CALLS_CONCENTRADAS',
-                        'severity': 'MODERADA',
-                        'z_score': 1.8,
-                        'current_call_pct': 65.2,
-                        'historical_call_pct': 52.1,
-                        'interpretation': 'Concentração atual em calls está moderada vs padrão histórico'
-                    }
-                ]
-            },
-            'insights': [
-                {
-                    'type': 'FLIP_TREND',
-                    'priority': 'MEDIUM',
-                    'message': 'Gamma flip DESCENDO - MMs reposicionando estruturalmente'
-                },
-                {
-                    'type': 'REGIME_STABILITY',
-                    'priority': 'LOW',
-                    'message': 'Regime SHORT_GAMMA há apenas 1 dia - aguardar confirmação'
-                }
-            ]
+            'summary': temporal_result['summary'],
+            'top_insights': temporal_result['insights'][:3],  # Apenas top 3 insights
+            'analysis_date': temporal_result['analysis_metadata']['analysis_date']
         }
         
-        return jsonify(mock_data), 200
+        return jsonify(summary_result)
         
     except Exception as e:
+        logging.error(f"Erro no resumo temporal: {e}")
+        return jsonify({
+            'error': 'Erro ao gerar resumo',
+            'success': False
+        }), 500
+
+@mm_temporal_bp.route('/api/mm-temporal/<ticker>/pressure-evolution', methods=['GET'])
+def get_pressure_evolution(ticker):
+    """
+    Endpoint específico para evolução de pressão (para gráficos)
+    """
+    try:
+        days_back = int(request.args.get('days_back', 5))
+        expiration_code = request.args.get('expiration')
+        
+        # Buscar dados
+        spot_price = gamma_service.analyzer.data_provider.get_spot_price(ticker)
+        oi_breakdown, _ = gamma_service.analyzer.data_provider.get_floqui_oi_breakdown(ticker, expiration_code)
+        
+        if not spot_price or not oi_breakdown:
+            return jsonify({'error': 'Dados insuficientes', 'success': False}), 500
+        
+        # Análise
+        temporal_result = mm_temporal_service.analyze_mm_temporal_complete(
+            ticker, spot_price, oi_breakdown, days_back
+        )
+        
+        if not temporal_result.get('success'):
+            return jsonify({'error': 'Erro na análise', 'success': False}), 500
+        
+        # Retornar apenas dados de evolução
+        pressure_data = {
+            'ticker': ticker,
+            'pressure_evolution': temporal_result['temporal_metrics']['pressure_evolution'],
+            'summary': {
+                'trend_direction': temporal_result['summary']['trend_direction'],
+                'trend_magnitude_pct': temporal_result['summary']['trend_magnitude_pct']
+            },
+            'success': True
+        }
+        
+        return jsonify(pressure_data)
+        
+    except Exception as e:
+        logging.error(f"Erro na evolução de pressão: {e}")
         return jsonify({'error': str(e), 'success': False}), 500
 
-@mm_temporal_bp.route('/health', methods=['GET'])
-def health_check():
-    """Health check com mais detalhes"""
-    return jsonify({
-        'service': 'MM Temporal Analysis',
-        'status': 'healthy',
-        'version': '1.0.0',
-        'endpoints': {
-            'analyze': '/pro/mm-temporal/analyze',
-            'availability': '/pro/mm-temporal/availability', 
-            'test_data': '/pro/mm-temporal/test-data/<ticker>',
-            'health': '/pro/mm-temporal/health'
-        },
-        'features': [
-            'Contexto Histórico dos Descobertos',
-            'Evolução do Gamma Flip', 
-            'Pressão Acumulada vs Liberada',
-            'Regime de Persistência',
-            'Velocidade de Acumulação',
-            'Distorções Temporais'
-        ]
-    }), 200
+@mm_temporal_bp.route('/api/mm-temporal/<ticker>/liquidity-status', methods=['GET'])
+def get_liquidity_status(ticker):
+    """
+    Status de liquidez ATM em tempo real
+    """
+    try:
+        expiration_code = request.args.get('expiration')
+        
+        # Dados necessários
+        spot_price = gamma_service.analyzer.data_provider.get_spot_price(ticker)
+        oi_breakdown, expiration_info = gamma_service.analyzer.data_provider.get_floqui_oi_breakdown(ticker, expiration_code)
+        
+        if not spot_price or not oi_breakdown:
+            return jsonify({'error': 'Dados insuficientes', 'success': False}), 500
+        
+        # Análise focada em liquidez
+        temporal_result = mm_temporal_service.analyze_mm_temporal_complete(
+            ticker, spot_price, oi_breakdown, days_back=3  # Apenas 3 dias para liquidez
+        )
+        
+        if not temporal_result.get('success'):
+            return jsonify({'error': 'Erro na análise', 'success': False}), 500
+        
+        # Extrair dados de liquidez
+        liquidity_consumption = temporal_result['temporal_metrics']['liquidity_consumption']
+        current_liquidity = liquidity_consumption[-1]
+        
+        liquidity_status = {
+            'ticker': ticker,
+            'atm_liquidity_current': current_liquidity['atm_liquidity'],
+            'consumption_rate': current_liquidity['consumption_rate'],
+            'liquidity_status': temporal_result['summary']['liquidity_status'],
+            'spot_price': spot_price,
+            'expiration': expiration_info.get('desc') if expiration_info else None,
+            'analysis_time': temporal_result['analysis_metadata']['analysis_date'],
+            'success': True
+        }
+        
+        return jsonify(liquidity_status)
+        
+    except Exception as e:
+        logging.error(f"Erro no status de liquidez: {e}")
+        return jsonify({'error': str(e), 'success': False}), 500
 
-# Error handlers melhorados
+@mm_temporal_bp.route('/api/mm-temporal/health', methods=['GET'])
+def health_check():
+    """Health check para o serviço temporal"""
+    try:
+        return jsonify({
+            'service': 'mm_temporal',
+            'status': 'healthy',
+            'timestamp': logging.Formatter().formatTime(logging.LogRecord(
+                name='', level=0, pathname='', lineno=0,
+                msg='', args=(), exc_info=None
+            )),
+            'available_endpoints': [
+                '/api/mm-temporal/<ticker>',
+                '/api/mm-temporal/<ticker>/summary',
+                '/api/mm-temporal/<ticker>/pressure-evolution',
+                '/api/mm-temporal/<ticker>/liquidity-status'
+            ]
+        })
+    except Exception as e:
+        return jsonify({
+            'service': 'mm_temporal',
+            'status': 'unhealthy',
+            'error': str(e)
+        }), 500
+
+# Registro de erro handlers
 @mm_temporal_bp.errorhandler(404)
 def not_found(error):
     return jsonify({
         'error': 'Endpoint não encontrado',
-        'available_endpoints': {
-            'POST /pro/mm-temporal/analyze': 'Análise temporal completa',
-            'POST /pro/mm-temporal/availability': 'Verificar dados disponíveis',
-            'GET /pro/mm-temporal/test-data/<ticker>': 'Dados de teste',
-            'GET /pro/mm-temporal/health': 'Health check'
-        }
+        'success': False,
+        'available_endpoints': [
+            '/api/mm-temporal/<ticker>',
+            '/api/mm-temporal/<ticker>/summary', 
+            '/api/mm-temporal/<ticker>/pressure-evolution',
+            '/api/mm-temporal/<ticker>/liquidity-status'
+        ]
     }), 404
 
 @mm_temporal_bp.errorhandler(500)
 def internal_error(error):
-    logging.error(f"Erro interno MM Temporal: {error}")
     return jsonify({
         'error': 'Erro interno do servidor',
-        'service': 'MM Temporal Analysis',
-        'suggestion': 'Tente novamente ou use o endpoint de test-data para validar'
+        'success': False
     }), 500
-
-# Logging middleware
-@mm_temporal_bp.before_request
-def log_request():
-    logging.info(f"MM Temporal: {request.method} {request.endpoint}")
