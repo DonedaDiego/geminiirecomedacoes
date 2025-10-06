@@ -368,6 +368,8 @@ class GEXAnalyzer:
         if gex_df.empty:
             return None
         
+        gex_df = gex_df.sort_values('strike').reset_index(drop=True)
+        
         title = expiration_info["desc"] if expiration_info else ""
         
         # Títulos dos subgráficos mais atrativos com cores
@@ -553,13 +555,22 @@ class GEXAnalyzer:
         if gex_df.empty:
             raise ValueError("Erro: falha no cálculo GEX")
         
+        # Garantir ordenação por strike
+        gex_df = gex_df.sort_values('strike').reset_index(drop=True)
+        
         # 5. Análise final
         flip_strike = self.find_gamma_flip(gex_df, spot_price)
         plot_json = self.create_6_charts(gex_df, spot_price, symbol, flip_strike, expiration_info)
         walls = self.identify_walls(gex_df, spot_price)
         
-        net_gex = float(gex_df['total_gex'].sum())
-        net_gex_descoberto = float(gex_df['total_gex_descoberto'].sum())
+        # CORREÇÃO: Usar valores do cumulativo (igual ao gráfico)
+        # Isso garante consistência lógica: descoberto sempre <= total
+        cumulative_total = np.cumsum(gex_df['total_gex'].values)
+        cumulative_descoberto = np.cumsum(gex_df['total_gex_descoberto'].values)
+        
+        net_gex = float(cumulative_total[-1])
+        net_gex_descoberto = float(cumulative_descoberto[-1])
+        
         real_data_count = int(gex_df['has_real_data'].sum())
         
         gex_levels = {
@@ -567,9 +578,8 @@ class GEXAnalyzer:
             'total_gex_descoberto': net_gex_descoberto,
             'zero_gamma_level': flip_strike if flip_strike else spot_price,
             'market_bias': 'SUPPRESSIVE' if net_gex > 1000000 else 'EXPLOSIVE' if net_gex < -1000000 else 'NEUTRAL'
-            }
-            
-            
+        }
+        
         # Log dos resultados reais
         logging.info(f"\nRESULTADOS REAIS:")
         logging.info(f"Cotação: R$ {spot_price:.2f}")
@@ -599,7 +609,7 @@ class GEXAnalyzer:
             'real_data_count': real_data_count,
             'success': True
         }
-
+        
 class GammaService:
     def __init__(self):
         self.analyzer = GEXAnalyzer()
