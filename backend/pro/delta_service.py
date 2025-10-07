@@ -383,23 +383,34 @@ class DEXAnalyzer:
         self.dex_calculator = DEXCalculator()
     
     def find_targets(self, dex_df, spot_price):
-        """Encontra maiores concentrações de calls e puts"""
+        """Encontra maiores concentrações de calls e puts COM DADOS REAIS"""
         if dex_df.empty:
             return None, None
         
-        # MAIOR CONCENTRAÇÃO DE CALLS: Strike com maior call_oi_descoberto
-        calls_with_oi = dex_df[dex_df['call_oi_descoberto'] > 0]
+        # FILTRAR APENAS DADOS REAIS (IGUAL AO GEX)
+        dex_real_data = dex_df[dex_df['has_real_data'] == True].copy()
+        
+        if len(dex_real_data) < 2:
+            logging.warning("Menos de 2 strikes com dados reais do Floqui (DEX)")
+            return None, None
+        
+        logging.info(f"DEX Targets: {len(dex_real_data)} strikes com dados reais de {len(dex_df)}")
+        
+        # MAIOR CONCENTRAÇÃO DE CALLS
+        calls_with_oi = dex_real_data[dex_real_data['call_oi_descoberto'] > 0]
+        max_calls_strike = None
         if not calls_with_oi.empty:
             max_calls_strike = float(calls_with_oi.loc[calls_with_oi['call_oi_descoberto'].idxmax(), 'strike'])
-        else:
-            max_calls_strike = None
+            max_calls_oi = int(calls_with_oi.loc[calls_with_oi['call_oi_descoberto'].idxmax(), 'call_oi_descoberto'])
+            logging.info(f"  Target CALLS: R$ {max_calls_strike:.2f} (OI: {max_calls_oi:,})")
         
-        # MAIOR CONCENTRAÇÃO DE PUTS: Strike com maior put_oi_descoberto
-        puts_with_oi = dex_df[dex_df['put_oi_descoberto'] > 0]
+        # MAIOR CONCENTRAÇÃO DE PUTS
+        puts_with_oi = dex_real_data[dex_real_data['put_oi_descoberto'] > 0]
+        max_puts_strike = None
         if not puts_with_oi.empty:
             max_puts_strike = float(puts_with_oi.loc[puts_with_oi['put_oi_descoberto'].idxmax(), 'strike'])
-        else:
-            max_puts_strike = None
+            max_puts_oi = int(puts_with_oi.loc[puts_with_oi['put_oi_descoberto'].idxmax(), 'put_oi_descoberto'])
+            logging.info(f"  Target PUTS: R$ {max_puts_strike:.2f} (OI: {max_puts_oi:,})")
         
         return max_calls_strike, max_puts_strike
 

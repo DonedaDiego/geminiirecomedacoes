@@ -57,7 +57,7 @@ class PaymentScheduler:
                 time.sleep(60)  # Verificar a cada minuto
                 
             except Exception as e:
-                print(f"❌ Erro no scheduler: {e}")
+                print(f" Erro no scheduler: {e}")
                 time.sleep(300)  # Se der erro, esperar 5 min
     
     def job_process_expired(self):
@@ -71,7 +71,7 @@ class PaymentScheduler:
             
             if result['success']:
                 processed = result.get('processed_count', 0)
-                print(f"✅ Job concluído: {processed} assinaturas processadas")
+                print(f" Job concluído: {processed} assinaturas processadas")
                 
                 # Log detalhado se houver processamentos
                 if processed > 0:
@@ -80,10 +80,10 @@ class PaymentScheduler:
                         print(f"   - {user['name']} ({user['email']}) - {user['old_plan']} → Básico")
                 
             else:
-                print(f"❌ Job falhou: {result['error']}")
+                print(f" Job falhou: {result['error']}")
             
         except Exception as e:
-            print(f"❌ Erro crítico no job process_expired: {e}")
+            print(f" Erro crítico no job process_expired: {e}")
     
     def job_process_expired_trials(self):
         """Job: Processar trials expirados"""
@@ -100,7 +100,7 @@ class PaymentScheduler:
                 processed = result.get('processed_count', 0)
                 emails_sent = result.get('emails_sent', 0)
                 
-                print(f"✅ Job concluído:")
+                print(f" Job concluído:")
                 print(f"   - Trials processados: {processed}")
                 print(f"   - Emails enviados: {emails_sent}")
                 
@@ -111,10 +111,10 @@ class PaymentScheduler:
                         print(f"   - {user['name']} ({user['email']}) - Trial → Básico")
                 
             else:
-                print(f"❌ Job falhou: {result['error']}")
+                print(f" Job falhou: {result['error']}")
             
         except Exception as e:
-            print(f"❌ Erro crítico no job process_expired_trials: {e}")
+            print(f" Erro crítico no job process_expired_trials: {e}")
     
     def job_send_warnings(self):
         """Job: Enviar avisos de renovação"""
@@ -130,16 +130,16 @@ class PaymentScheduler:
                 emails_failed = result.get('emails_failed', 0)
                 total_expiring = result.get('total_expiring', 0)
                 
-                print(f"✅ Job concluído:")
+                print(f" Job concluído:")
                 print(f"   - Emails enviados: {emails_sent}")
                 print(f"   - Emails falharam: {emails_failed}")
                 print(f"   - Total expirando: {total_expiring}")
                 
             else:
-                print(f"❌ Job falhou: {result['error']}")
+                print(f" Job falhou: {result['error']}")
             
         except Exception as e:
-            print(f"❌ Erro crítico no job send_warnings: {e}")
+            print(f" Erro crítico no job send_warnings: {e}")
     
     def job_integrity_check(self):
         """Job: Verificação de integridade (semanal)"""
@@ -157,7 +157,7 @@ class PaymentScheduler:
                 summary = integrity.get('summary', {})
                 total_issues = summary.get('total_issues', 0)
                 
-                print(f"✅ Verificação concluída:")
+                print(f" Verificação concluída:")
                 print(f"   - Total de problemas: {total_issues}")
                 print(f"   - Status do sistema: {summary.get('system_health', 'unknown')}")
                 
@@ -174,10 +174,10 @@ class PaymentScheduler:
                         print(f"     ⚠️ {user['name']} ({user['email']}) - Plano: {user['plan']}")
                 
             else:
-                print(f"❌ Verificação falhou: {result['error']}")
+                print(f" Verificação falhou: {result['error']}")
             
         except Exception as e:
-            print(f"❌ Erro crítico no job integrity_check: {e}")
+            print(f" Erro crítico no job integrity_check: {e}")
     
     def stop(self):
         """Parar o scheduler"""
@@ -192,7 +192,7 @@ class PaymentScheduler:
             self.scheduler_thread.join(timeout=5)
         
         schedule.clear()
-        print("✅ Payment Scheduler parado")
+        print(" Payment Scheduler parado")
     
     def status(self):
         """Retornar status do scheduler"""
@@ -277,8 +277,8 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         print("\n🛑 Teste interrompido pelo usuário")
     except Exception as e:
-        print(f"\n❌ Erro no teste: {e}")
+        print(f"\n Erro no teste: {e}")
     finally:
         # Parar
         stop_payment_scheduler()
-        print("\n✅ Teste concluído!")
+        print("\n Teste concluído!")

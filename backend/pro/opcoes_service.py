@@ -35,7 +35,7 @@ class OpcoesService:
             hist = stock.history(period="5d")
             
             if hist.empty:
-                print(f"❌ Nenhum histórico para {ticker}")
+                print(f" Nenhum histórico para {ticker}")
                 return None
             
             current_price = float(hist['Close'].iloc[-1])
@@ -43,7 +43,7 @@ class OpcoesService:
             change = current_price - prev_close
             change_pct = (change / prev_close * 100) if prev_close != 0 else 0
             
-            print(f"✅ {ticker}: R$ {current_price:.2f} ({change:+.2f} / {change_pct:+.2f}%)")
+            print(f" {ticker}: R$ {current_price:.2f} ({change:+.2f} / {change_pct:+.2f}%)")
             
             return {
                 'ticker': ticker,
@@ -56,14 +56,14 @@ class OpcoesService:
             }
             
         except Exception as e:
-            print(f"❌ Erro yfinance {ticker}: {e}")
+            print(f" Erro yfinance {ticker}: {e}")
             return None
     
     def get_options_data(self, ticker: str) -> Optional[List[Dict]]:
         """Obtém dados de opções via OpLab"""
         try:
             if not self.oplab_token:
-                print("❌ OPLAB_TOKEN não configurado")
+                print(" OPLAB_TOKEN não configurado")
                 return None
             
             url = f"https://api.oplab.com.br/v3/market/options/{ticker}"
@@ -78,16 +78,16 @@ class OpcoesService:
             print(f"📡 OpLab Status: {response.status_code}")
             
             if response.status_code != 200:
-                print(f"❌ OpLab erro HTTP: {response.status_code}")
+                print(f" OpLab erro HTTP: {response.status_code}")
                 return None
             
             dados_opcoes = response.json()
             
             if not dados_opcoes:
-                print(f"❌ OpLab retornou vazio para {ticker}")
+                print(f" OpLab retornou vazio para {ticker}")
                 return None
             
-            print(f"✅ OpLab: {len(dados_opcoes)} opções brutas")
+            print(f" OpLab: {len(dados_opcoes)} opções brutas")
             
             # Processar opções
             options_list = []
@@ -107,11 +107,11 @@ class OpcoesService:
                         'letra_vencimento': self.extrair_letra_vencimento(symbol)
                     })
             
-            print(f"✅ {len(options_list)} opções com volume > 0")
+            print(f" {len(options_list)} opções com volume > 0")
             return options_list if options_list else None
             
         except Exception as e:
-            print(f"❌ Erro OpLab {ticker}: {e}")
+            print(f" Erro OpLab {ticker}: {e}")
             return None
     
     def extrair_letra_vencimento(self, symbol: str) -> str:
@@ -140,7 +140,7 @@ class OpcoesService:
                 elif categoria == 'PUT':
                     puts_data.append(opcao)
         
-        print(f"✅ Filtro {letras}: {len(calls_data)} calls + {len(puts_data)} puts")
+        print(f" Filtro {letras}: {len(calls_data)} calls + {len(puts_data)} puts")
         return calls_data, puts_data
     
     def agrupar_por_strike(self, calls_data: List[Dict], puts_data: List[Dict]) -> Dict:
@@ -222,10 +222,10 @@ class OpcoesService:
                     'grupo_letras': grupo
                 }
                 
-                print(f"✅ {nome_grupo}: {len(strikes_ordenados)} strikes")
+                print(f" {nome_grupo}: {len(strikes_ordenados)} strikes")
             
             if not grupos_processados:
-                print("❌ Nenhum grupo processado")
+                print(" Nenhum grupo processado")
                 return None
             
             # 4. Preparar dados para frontend
@@ -237,7 +237,7 @@ class OpcoesService:
             }
             
         except Exception as e:
-            print(f"❌ Erro Hunter Walls: {e}")
+            print(f" Erro Hunter Walls: {e}")
             return None
     
     def preparar_dados_grafico(self, grupos: Dict, preco_atual: float) -> Dict:
@@ -328,18 +328,18 @@ class OpcoesService:
             # 4. Processar análise
             resultado = self.processar_analise_historica(opcoes_hoje, historico_7d)
             
-            print(f"✅ Análise histórica OTIMIZADA concluída para {ticker}")
+            print(f" Análise histórica OTIMIZADA concluída para {ticker}")
             return resultado
             
         except Exception as e:
-            print(f"❌ Erro na análise histórica: {e}")
+            print(f" Erro na análise histórica: {e}")
             return None
 
     def get_historical_volume_data_real(self, tickers_reais: List[str], days: int = 7) -> List[Dict]:
         """Buscar dados históricos OTIMIZADO - apenas 7 dias úteis"""
         try:
             if not self.oplab_token:
-                print("❌ OPLAB_TOKEN não configurado")
+                print(" OPLAB_TOKEN não configurado")
                 return []
             
             dados_consolidados = []
@@ -357,7 +357,7 @@ class OpcoesService:
             
             for i in range(max_dias_busca):
                 if dias_coletados >= days:  # Parar quando atingir 7 dias úteis
-                    print(f"✅ Meta atingida: {dias_coletados} dias úteis coletados")
+                    print(f" Meta atingida: {dias_coletados} dias úteis coletados")
                     break
                     
                 date = end_date - timedelta(days=i+1)
@@ -422,7 +422,7 @@ class OpcoesService:
                         'num_opcoes': opcoes_ativas_dia
                     })
                     
-                    print(f"✅ {date_str}: {volume_dia_total:,} volume")
+                    print(f" {date_str}: {volume_dia_total:,} volume")
                     dias_coletados += 1
                 else:
                     print(f"📭 {date_str}: sem volume")
@@ -431,7 +431,7 @@ class OpcoesService:
             return dados_consolidados
             
         except Exception as e:
-            print(f"❌ Erro busca histórica otimizada: {e}")
+            print(f" Erro busca histórica otimizada: {e}")
             return []
 
     def preparar_chart_historico(self, historico: List[Dict], volume_atual: int) -> Dict:
@@ -456,7 +456,7 @@ class OpcoesService:
             }
             
         except Exception as e:
-            print(f"❌ Erro chart histórico: {e}")
+            print(f" Erro chart histórico: {e}")
             return self.preparar_chart_historico_basico(volume_atual)
 
     def preparar_chart_historico_basico(self, volume_atual: int) -> Dict:
@@ -484,7 +484,7 @@ class OpcoesService:
             }
             
         except Exception as e:
-            print(f"❌ Erro chart básico: {e}")
+            print(f" Erro chart básico: {e}")
             return {'dates': [], 'volumes': [], 'current_volume': volume_atual, 'labels': []}
 
     def encontrar_hot_strike(self, opcoes_hoje: List[Dict]) -> Dict:
@@ -511,7 +511,7 @@ class OpcoesService:
             }
             
         except Exception as e:
-            print(f"❌ Erro hot strike: {e}")
+            print(f" Erro hot strike: {e}")
             return {'strike': 0, 'volume': 0, 'type': 'N/A'}
 
     def processar_analise_historica(self, opcoes_hoje: List[Dict], historico: List[Dict]) -> Dict:
@@ -579,7 +579,7 @@ class OpcoesService:
             }
             
         except Exception as e:
-            print(f"❌ Erro processamento histórico: {e}")
+            print(f" Erro processamento histórico: {e}")
             return {'error': str(e)}
 
     def analisar_strike_detalhado(self, ticker: str, strike: float) -> Optional[Dict]:
@@ -599,7 +599,7 @@ class OpcoesService:
             ]
             
             if not opcoes_strike:
-                print(f"❌ Nenhuma opção encontrada para strike R$ {strike}")
+                print(f" Nenhuma opção encontrada para strike R$ {strike}")
                 return None
             
             # 3. Separar calls e puts
@@ -611,7 +611,7 @@ class OpcoesService:
             total_puts_volume = sum(put['volume'] for put in puts)
             total_volume = total_calls_volume + total_puts_volume
             
-            print(f"✅ Strike R$ {strike}: {total_calls_volume} calls + {total_puts_volume} puts = {total_volume} total")
+            print(f" Strike R$ {strike}: {total_calls_volume} calls + {total_puts_volume} puts = {total_volume} total")
             
             # 5. Preparar resposta (SEM buscar dados detalhados da OpLab)
             return {
@@ -630,7 +630,7 @@ class OpcoesService:
             }
             
         except Exception as e:
-            print(f"❌ Erro análise strike detalhado: {e}")
+            print(f" Erro análise strike detalhado: {e}")
             return None
 
     def get_strike_market_data(self, ticker: str, strike: float, opcoes_strike: List[Dict]) -> Dict:
@@ -687,7 +687,7 @@ class OpcoesService:
             return market_data
             
         except Exception as e:
-            print(f"❌ Erro dados mercado: {e}")
+            print(f" Erro dados mercado: {e}")
             return {}
 
     def get_option_detailed_data(self, symbol: str) -> Dict:
@@ -741,14 +741,14 @@ class OpcoesService:
             ]
             
             if not opcoes_strike:
-                print(f"❌ Nenhuma opção encontrada para strike R$ {strike}")
+                print(f" Nenhuma opção encontrada para strike R$ {strike}")
                 return None
             
             # Separar calls e puts
             calls = [opt for opt in opcoes_strike if opt['category'] == 'CALL']
             puts = [opt for opt in opcoes_strike if opt['category'] == 'PUT']
             
-            print(f"✅ Strike R$ {strike}: {len(calls)} calls + {len(puts)} puts")
+            print(f" Strike R$ {strike}: {len(calls)} calls + {len(puts)} puts")
             
             return {
                 'ticker': ticker,
@@ -761,7 +761,7 @@ class OpcoesService:
             }
             
         except Exception as e:
-            print(f"❌ Erro detalhes strike: {e}")
+            print(f" Erro detalhes strike: {e}")
             return None
     
     

@@ -1990,7 +1990,7 @@
       y: plotData.put_flow.map(v => -Math.abs(v)), // Garantir valores negativos
       type: 'scatter',
       mode: 'lines',
-      name: '🔴 Put Flow',
+      name: ' Put Flow',
       fill: 'tonexty',
       fillcolor: 'rgba(255, 68, 68, 0.3)',
       line: {color: '#FF4444', width: isMobile ? 1.5 : 2},
@@ -2171,7 +2171,7 @@
     // Função para determinar cor da zona
     const getZoneColorClass = (zoneColor) => {
       switch(zoneColor) {
-        case '🔴': return 'border-red-500 bg-red-500/10';
+        case '': return 'border-red-500 bg-red-500/10';
         case '🟠': return 'border-orange-500 bg-orange-500/10';
         case '🟡': return 'border-yellow-500 bg-yellow-500/10';
         case '🟢': return 'border-green-500 bg-green-500/10';

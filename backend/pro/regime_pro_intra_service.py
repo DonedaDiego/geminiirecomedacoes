@@ -117,9 +117,9 @@ class GeminiiIntradayFlowTracker:
             details = self.get_option_details(symbol)
             if details:
                 valid_options.append(details)
-                logging.info(f"✅ Opção válida encontrada: {symbol}")
+                logging.info(f" Opção válida encontrada: {symbol}")
             else:
-                logging.info(f"❌ Opção não encontrada: {symbol}")
+                logging.info(f" Opção não encontrada: {symbol}")
         
         return valid_options
     

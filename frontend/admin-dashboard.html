@@ -536,7 +536,7 @@
           const isAdmin = currentUser.user_type === 'admin' || currentUser.user_type === 'master';
           
           if (!isAdmin) {
-            alert('❌ Acesso negado! Você não tem privilégios de administrador.');
+            alert(' Acesso negado! Você não tem privilégios de administrador.');
             window.location.href = '/dashboard.html';
             return;
           }
@@ -775,16 +775,16 @@
         const result = await response.json();
         
         if (result.success) {
-          alert('✅ ' + result.message);
+          alert(' ' + result.message);
           document.getElementById('manageUserEmail').value = '';
           loadUsers();
           loadDashboardStats();
         } else {
-          alert('❌ ' + result.error);
+          alert(' ' + result.error);
         }
         
       } catch (error) {
-        alert('❌ Erro de conexão');
+        alert(' Erro de conexão');
       }
     }
 
@@ -815,16 +815,16 @@
         const result = await response.json();
         
         if (result.success) {
-          alert('✅ ' + result.message);
+          alert(' ' + result.message);
           document.getElementById('manageUserEmail').value = '';
           loadUsers();
           loadDashboardStats();
         } else {
-          alert('❌ ' + result.error);
+          alert(' ' + result.error);
         }
         
       } catch (error) {
-        alert('❌ Erro de conexão');
+        alert(' Erro de conexão');
       }
     }
 
@@ -855,15 +855,15 @@
         const result = await response.json();
         
         if (result.success) {
-          alert('✅ ' + result.message);
+          alert(' ' + result.message);
           document.getElementById('manageUserEmail').value = '';
           loadUsers();
         } else {
-          alert('❌ ' + result.error);
+          alert(' ' + result.error);
         }
         
       } catch (error) {
-        alert('❌ Erro de conexão');
+        alert(' Erro de conexão');
       }
     }
 
@@ -893,17 +893,17 @@
         const result = await response.json();
         
         if (result.success) {
-          alert('✅ ' + result.message);
+          alert(' ' + result.message);
           document.getElementById('manageUserEmail').value = '';
           loadUsers();
           loadDashboardStats();
         } else {
-          alert('❌ ' + result.error);
+          alert(' ' + result.error);
         }
         
       } catch (error) {
         console.error('Error deleting user:', error);
-        alert('❌ Erro de conexão');
+        alert(' Erro de conexão');
       }
     }
 
@@ -1223,7 +1223,7 @@
       const days = document.getElementById('trialDays').value;
       
       if (!email) {
-        alert('❌ Digite o email do usuário');
+        alert(' Digite o email do usuário');
         return;
       }
       
@@ -1244,15 +1244,15 @@
         const result = await response.json();
         
         if (result.success) {
-          alert('✅ ' + result.message);
+          alert(' ' + result.message);
           document.getElementById('manageUserEmail').value = '';
           loadUsersEnhanced();
         } else {
-          alert('❌ ' + result.error);
+          alert(' ' + result.error);
         }
         
       } catch (error) {
-        alert('❌ Erro de conexão');
+        alert(' Erro de conexão');
       }
     }
 
@@ -1260,7 +1260,7 @@
       const email = document.getElementById('manageUserEmail').value;
       
       if (!email) {
-        alert('❌ Digite o email do usuário');
+        alert(' Digite o email do usuário');
         return;
       }
       
@@ -1280,15 +1280,15 @@
         const result = await response.json();
         
         if (result.success) {
-          alert('✅ ' + result.message);
+          alert(' ' + result.message);
           document.getElementById('manageUserEmail').value = '';
           loadUsersEnhanced();
         } else {
-          alert('❌ ' + result.error);
+          alert(' ' + result.error);
         }
         
       } catch (error) {
-        alert('❌ Erro de conexão');
+        alert(' Erro de conexão');
       }
     }
 
@@ -1334,7 +1334,7 @@ async function createNewUser() {
   const trialDays = document.getElementById('newUserTrialDays').value;
   
   if (!name || !email) {
-    alert('❌ Nome e email são obrigatórios');
+    alert(' Nome e email são obrigatórios');
     return;
   }
   
@@ -1357,7 +1357,7 @@ async function createNewUser() {
     const result = await response.json();
     
     if (result.success) {
-      alert(`✅ Usuário criado!\nEmail: ${email}\nSenha: 123456\nTrial: ${trialDays} dias`);
+      alert(` Usuário criado!\nEmail: ${email}\nSenha: 123456\nTrial: ${trialDays} dias`);
       
       // Limpar formulário
       document.getElementById('newUserName').value = '';
@@ -1367,11 +1367,11 @@ async function createNewUser() {
       loadUsersEnhanced();
       loadDashboardStats();
     } else {
-      alert('❌ ' + result.error);
+      alert(' ' + result.error);
     }
     
   } catch (error) {
-    alert('❌ Erro de conexão');
+    alert(' Erro de conexão');
   }
 }
 
@@ -1500,7 +1500,7 @@ function displayUsersEnhanced(users) {
 
       // Validations
       if (!formData.ticker || !formData.action || !formData.entry_price || !formData.stop_loss || !formData.target_price) {
-        alert('❌ Preencha todos os campos obrigatórios!');
+        alert(' Preencha todos os campos obrigatórios!');
         return;
       }
 
@@ -1517,7 +1517,7 @@ function displayUsersEnhanced(users) {
         const result = await response.json();
         
         if (result.success) {
-          alert('✅ Recomendação criada com sucesso!');
+          alert(' Recomendação criada com sucesso!');
           
           // Clear form
           document.getElementById('recFreeTicker').value = '';
@@ -1530,12 +1530,12 @@ function displayUsersEnhanced(users) {
           // Reload list
           loadRecommendationsFree();
         } else {
-          alert('❌ ' + result.error);
+          alert(' ' + result.error);
         }
         
       } catch (error) {
         console.error('Error creating recommendation:', error);
-        alert('❌ Erro de conexão com o servidor');
+        alert(' Erro de conexão com o servidor');
       }
     }
 
@@ -1558,15 +1558,15 @@ function displayUsersEnhanced(users) {
         const result = await response.json();
         
         if (result.success) {
-          alert('✅ Recomendação encerrada com sucesso!');
+          alert(' Recomendação encerrada com sucesso!');
           loadRecommendationsFree();
         } else {
-          alert('❌ ' + result.error);
+          alert(' ' + result.error);
         }
         
       } catch (error) {
         console.error('Error closing recommendation:', error);
-        alert('❌ Erro de conexão com o servidor');
+        alert(' Erro de conexão com o servidor');
       }
     }
 
@@ -1586,15 +1586,15 @@ function displayUsersEnhanced(users) {
         const result = await response.json();
         
         if (result.success) {
-          alert('✅ Recomendação removida com sucesso!');
+          alert(' Recomendação removida com sucesso!');
           loadRecommendationsFree();
         } else {
-          alert('❌ ' + result.error);
+          alert(' ' + result.error);
         }
         
       } catch (error) {
         console.error('Error deleting recommendation:', error);
-        alert('❌ Erro de conexão com o servidor');
+        alert(' Erro de conexão com o servidor');
       }
     }
 
@@ -1619,15 +1619,15 @@ function displayUsersEnhanced(users) {
         const result = await response.json();
         
         if (result.success) {
-          alert(`✅ ${result.message}\n\n${result.recommendations.length} recomendações criadas!`);
+          alert(` ${result.message}\n\n${result.recommendations.length} recomendações criadas!`);
           loadRecommendationsFree();
         } else {
-          alert('❌ ' + result.error);
+          alert(' ' + result.error);
         }
         
       } catch (error) {
         console.error('Error generating recommendations:', error);
-        alert('❌ Erro de conexão com o servidor');
+        alert(' Erro de conexão com o servidor');
       } finally {
         button.disabled = false;
         button.innerHTML = originalText;
@@ -1653,15 +1653,15 @@ function displayUsersEnhanced(users) {
         const result = await response.json();
         
         if (result.success) {
-          alert('✅ Preços atualizados com sucesso!');
+          alert(' Preços atualizados com sucesso!');
           loadRecommendationsFree();
         } else {
-          alert('❌ ' + result.error);
+          alert(' ' + result.error);
         }
         
       } catch (error) {
         console.error('Error updating prices:', error);
-        alert('❌ Erro de conexão com o servidor');
+        alert(' Erro de conexão com o servidor');
       } finally {
         button.disabled = false;
         button.innerHTML = originalText;
@@ -1685,7 +1685,7 @@ function displayUsersEnhanced(users) {
       await loadDashboardStats();
       loadRecentActivity();
       
-      console.log('✅ Admin Dashboard carregado!');
+      console.log(' Admin Dashboard carregado!');
     }
 
     // Initialize when page loads

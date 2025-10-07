@@ -43,7 +43,7 @@ def check_email_rate_limit(user_email, email_type='renewal'):
         return True
         
     except Exception as e:
-        print(f"❌ Erro no rate limit: {e}")
+        print(f" Erro no rate limit: {e}")
         return True  # Em caso de erro, permitir envio
 
 def increment_email_counter(user_email, email_type='renewal'):
@@ -65,7 +65,7 @@ def increment_email_counter(user_email, email_type='renewal'):
         print(f"📧 Email counter: {user_email} = {email_rate_limit_cache[cache_key]['count']}")
         
     except Exception as e:
-        print(f"❌ Erro ao incrementar contador: {e}")
+        print(f" Erro ao incrementar contador: {e}")
 
 def get_email_stats():
     """
@@ -101,7 +101,7 @@ def get_email_stats():
         return stats
         
     except Exception as e:
-        print(f"❌ Erro nas estatísticas: {e}")
+        print(f" Erro nas estatísticas: {e}")
         return {}
 
 
@@ -415,10 +415,10 @@ def process_expired_paid_subscriptions():
                     'expired_at': expires_at.isoformat() if expires_at else None
                 })
                 
-                print(f"✅ Downgrade realizado: {name} ({email}) - {old_plan_name} → Básico")
+                print(f" Downgrade realizado: {name} ({email}) - {old_plan_name} → Básico")
                 
             except Exception as e:
-                print(f"❌ Erro no downgrade do usuário {user_id}: {e}")
+                print(f" Erro no downgrade do usuário {user_id}: {e}")
         
         conn.commit()
         cursor.close()
@@ -459,14 +459,14 @@ def send_renewal_warning_email(user_info, days_remaining):
         
         if success:
             increment_email_counter(user_email, 'renewal')
-            print(f"✅ Email de renovação enviado para: {user_email} ({days_remaining} dias)")
+            print(f" Email de renovação enviado para: {user_email} ({days_remaining} dias)")
             return True
         else:
-            print(f"❌ Falha no envio para: {user_email}")
+            print(f" Falha no envio para: {user_email}")
             return False
         
     except Exception as e:
-        print(f"❌ Erro ao enviar email para {user_email}: {e}")
+        print(f" Erro ao enviar email para {user_email}: {e}")
         return False
 
 def send_renewal_warnings():
@@ -614,7 +614,7 @@ def fix_payment_expiration(payment_id, cycle):
         return expires_at
         
     except Exception as e:
-        print(f"❌ Erro ao calcular expiração: {e}")
+        print(f" Erro ao calcular expiração: {e}")
         return datetime.now(timezone.utc) + timedelta(days=30)  # Fallback para mensal
 
 # ===== VERIFICAÇÕES DE INTEGRIDADE =====
@@ -765,16 +765,16 @@ def verify_payments_integrity():
     
 
 if __name__ == "__main__":
-    print("🔧 Control Pay Service - Sistema de Controle de Pagamentos")
+    print("Control Pay Service - Sistema de Controle de Pagamentos")
     print("=" * 60)
     
     # Teste das funções principais
     print(" Estatísticas:")
     stats = get_subscription_stats()
     if stats['success']:
-        print(f"✅ Stats carregadas: {stats['stats']}")
+        print(f" Stats carregadas: {stats['stats']}")
     
     print("\n🔍 Verificação de integridade:")
     integrity = verify_payments_integrity()
     if integrity['success']:
-        print(f"✅ Integridade: {integrity['integrity_check']}")
+        print(f" Integridade: {integrity['integrity_check']}")

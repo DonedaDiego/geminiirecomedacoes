@@ -1382,7 +1382,7 @@ function GEMINII_WALLS_criarGrafico(dados, filtro = 'all') {
         window.GEMINII_WALLS.chart = new Chart(ctx, config);
         window.GEMINII_WALLS.currentFilter = filtro;
         
-        console.log(`✅ Gráfico criado com linha de preço: R$ ${precoFechamento.toFixed(2)}`);
+        console.log(` Gráfico criado com linha de preço: R$ ${precoFechamento.toFixed(2)}`);
     } catch (error) {
         console.error('Erro ao criar gráfico:', error);
         GEMINII_WALLS_exibirErro(`Erro na renderização: ${error.message}`);
@@ -1641,7 +1641,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // AGUARDAR CHART.JS E PLUGIN
     function aguardarChartJS(tentativas = 0) {
         if (typeof Chart !== 'undefined' && Chart.registry.plugins.get('annotation')) {
-            console.log('✅ Chart.js e Plugin Annotation carregados com sucesso');
+            console.log(' Chart.js e Plugin Annotation carregados com sucesso');
             
             // CONFIGURAR EVENT LISTENERS
             const btn = document.getElementById('GEMINII_WALLS_analyze');

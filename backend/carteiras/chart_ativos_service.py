@@ -88,7 +88,7 @@ class ChartAtivosService:
                 
                 if cursor.rowcount > 0:
                     updated_count += 1
-                    logger.info(f"✅ {ticker}: R$ {new_price}")
+                    logger.info(f" {ticker}: R$ {new_price}")
             
             conn.commit()
             cursor.close()
@@ -105,7 +105,7 @@ class ChartAtivosService:
             }
             
         except Exception as e:
-            logger.error(f"❌ Erro ao atualizar preços: {str(e)}")
+            logger.error(f" Erro ao atualizar preços: {str(e)}")
             return {'success': False, 'error': str(e)}
 
     def fetch_current_prices(self, tickers: List[str]) -> Dict[str, float]:
@@ -165,7 +165,7 @@ class ChartAtivosService:
                             continue
                             
             except Exception as e:
-                logger.error(f"❌ Erro na busca em lote: {e}")
+                logger.error(f" Erro na busca em lote: {e}")
                 
                 # Fallback total para busca individual
                 for ticker in tickers:
@@ -176,11 +176,11 @@ class ChartAtivosService:
                     except:
                         continue
             
-            logger.info(f"✅ {len(prices)}/{len(tickers)} preços obtidos")
+            logger.info(f" {len(prices)}/{len(tickers)} preços obtidos")
             return prices
             
         except Exception as e:
-            logger.error(f"❌ Erro ao buscar preços: {str(e)}")
+            logger.error(f" Erro ao buscar preços: {str(e)}")
             return {}
 
     def fetch_single_price(self, ticker: str) -> Optional[float]:
@@ -267,7 +267,7 @@ class ChartAtivosService:
             }
             
         except Exception as e:
-            logger.error(f"❌ Erro ao buscar dados: {str(e)}")
+            logger.error(f" Erro ao buscar dados: {str(e)}")
             return None
 
     def calculate_portfolio_metrics(self, assets: List[Dict]) -> Dict:
@@ -318,11 +318,11 @@ class ChartAtivosService:
                 'needs_refresh': self.check_needs_refresh(last_update)
             }
             
-            logger.info(f"✅ Métricas calculadas - Retorno: {total_return:.2f}%")
+            logger.info(f" Métricas calculadas - Retorno: {total_return:.2f}%")
             return result
             
         except Exception as e:
-            logger.error(f"❌ Erro no cálculo: {str(e)}")
+            logger.error(f" Erro no cálculo: {str(e)}")
             return {'error': str(e), 'total_return': 0.0}
 
     def check_needs_refresh(self, last_update: datetime) -> bool:
@@ -363,7 +363,7 @@ class ChartAtivosService:
             assets = portfolio_data['assets']
             portfolio_display_name = portfolio_data['name']
             
-            logger.info(f"✅ Carteira carregada: {portfolio_display_name}")
+            logger.info(f" Carteira carregada: {portfolio_display_name}")
             logger.info(f" {len(assets)} ativos encontrados")
             
             # ETAPA 3: Calcular métricas
@@ -385,11 +385,11 @@ class ChartAtivosService:
                 }
             }
             
-            logger.info(f"✅ Análise concluída para {portfolio_display_name}")
+            logger.info(f" Análise concluída para {portfolio_display_name}")
             return result
             
         except Exception as e:
-            logger.error(f"❌ Erro na análise: {str(e)}")
+            logger.error(f" Erro na análise: {str(e)}")
             
             return {
                 'success': False,

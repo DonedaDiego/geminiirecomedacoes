@@ -61,7 +61,7 @@ class VolatilityValidator:
         if iv_rank_1y is not None:
             if iv_rank_1y < 0.2:
                 score += 30
-                details.append(f"✅ IV Rank Baixo ({iv_rank_1y:.1%}) - Movimento genuíno")
+                details.append(f" IV Rank Baixo ({iv_rank_1y:.1%}) - Movimento genuíno")
             elif iv_rank_1y < 0.5:
                 score += 15
                 details.append(f"🟡 IV Rank Médio ({iv_rank_1y:.1%}) - Neutro")
@@ -70,7 +70,7 @@ class VolatilityValidator:
                 details.append(f"⚠️ IV Rank Alto ({iv_rank_1y:.1%}) - Cuidado")
             else:
                 score -= 25
-                details.append(f"🔴 IV Rank Muito Alto ({iv_rank_1y:.1%}) - Movimento suspeito")
+                details.append(f" IV Rank Muito Alto ({iv_rank_1y:.1%}) - Movimento suspeito")
         
         # IV vs EWMA Spread
         iv_current = iv_data.get('iv_current')
@@ -81,7 +81,7 @@ class VolatilityValidator:
             
             if iv_spread < -0.1:
                 score += 25
-                details.append(f"✅ IV Subestimada ({iv_spread:.1%}) - Movimento não precificado")
+                details.append(f" IV Subestimada ({iv_spread:.1%}) - Movimento não precificado")
             elif iv_spread < 0.1:
                 score += 10
                 details.append(f"🟡 IV vs EWMA Neutro ({iv_spread:.1%})")
@@ -90,7 +90,7 @@ class VolatilityValidator:
                 details.append(f"⚠️ IV Superestimada ({iv_spread:.1%})")
             else:
                 score -= 20
-                details.append(f"🔴 IV Muito Superestimada ({iv_spread:.1%}) - Movimento exagerado")
+                details.append(f" IV Muito Superestimada ({iv_spread:.1%}) - Movimento exagerado")
         
         # Volatilidade Realizada vs IV
         stdv_5d = iv_data.get('stdv_5d')
@@ -99,10 +99,10 @@ class VolatilityValidator:
             
             if vol_ratio < 0.7:
                 score += 15
-                details.append(f"✅ Vol Realizada Baixa vs IV ({vol_ratio:.2f}) - Espaço para movimento")
+                details.append(f" Vol Realizada Baixa vs IV ({vol_ratio:.2f}) - Espaço para movimento")
             elif vol_ratio > 1.3:
                 score -= 15
-                details.append(f"🔴 Vol Realizada Alta vs IV ({vol_ratio:.2f}) - Movimento já aconteceu")
+                details.append(f" Vol Realizada Alta vs IV ({vol_ratio:.2f}) - Movimento já aconteceu")
         
         score = max(0, min(100, score))
         
@@ -114,7 +114,7 @@ class VolatilityValidator:
             status_emoji = "🟡"
         else:
             status = "SUSPEITO"
-            status_emoji = "🔴"
+            status_emoji = ""
         
         return {
             'score': score,
@@ -623,12 +623,12 @@ class HybridVolatilityBands:
        # CLASSIFICAÇÃO DETALHADA
        if current_price > sup_4sigma:
            # ===== ZONA EXTREMA SUPERIOR (>4σ) =====
-           signals['position'] = '🔴 ZONA EXTREMA - Acima Banda 4σ'
+           signals['position'] = ' ZONA EXTREMA - Acima Banda 4σ'
            signals['position_detail'] = 'SOBRECOMPRADO EXTREMO'
            signals['risk_level'] = 'MUITO ALTO'
            signals['action_suggestion'] = 'VENDA IMEDIATA ou HEDGE URGENTE'
            signals['probability_reversal'] = 'MUITO ALTA (>80%)'
-           signals['zone_color'] = '🔴'
+           signals['zone_color'] = ''
            signals['zone_name'] = 'DANGER ZONE'
            
        elif current_price > sup_2sigma:
@@ -1039,7 +1039,7 @@ class TickerDetailsService:
                 # Parse JSON
                 stock_data = response.json()
                 
-                logging.info(f"✅ Resposta recebida com sucesso para {ticker_clean}")
+                logging.info(f" Resposta recebida com sucesso para {ticker_clean}")
                 logging.info(f"   Symbol: {stock_data.get('symbol')}")
                 logging.info(f"   IV Current: {stock_data.get('iv_current')}")
                 
@@ -1134,7 +1134,7 @@ class TickerDetailsService:
                 'data_source': 'oplab_api_success'
             }
             
-            logging.info(f"✅ Dados extraídos com sucesso para {ticker_clean}")
+            logging.info(f" Dados extraídos com sucesso para {ticker_clean}")
             logging.info(f"   IV Current: {ticker_data.get('iv_current')}")
             logging.info(f"   IV Rank 1Y: {ticker_data.get('iv_1y_rank')}")
             logging.info(f"   IV Percentile 1Y: {ticker_data.get('iv_1y_percentile')}")
@@ -1281,7 +1281,7 @@ class TickerDetailsService:
                         iv_color = "🟠"
                     else:
                         iv_status = "MUITO ALTA"
-                        iv_color = "🔴"
+                        iv_color = ""
                 except:
                     iv_status = "INVÁLIDA"
                     iv_color = "⚪"
@@ -1493,7 +1493,7 @@ class BandasProService:
             elif iv_score < 40:
                 if ('BEARISH' in flow_sentiment and 'Superior' in bands_position) or \
                    ('BULLISH' in flow_sentiment and 'Inferior' in bands_position):
-                    recommendation = "🔴 SINAL REVERSAL: IV suspeita + flow contrário"
+                    recommendation = " SINAL REVERSAL: IV suspeita + flow contrário"
                 else:
                     recommendation = "⚠️ MOVIMENTO SUSPEITO: IV indica falso rompimento"
             else:

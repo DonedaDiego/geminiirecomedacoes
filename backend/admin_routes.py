@@ -35,7 +35,7 @@ def verify_admin_token(token):
         return admin[0] if admin else None
         
     except Exception as e:
-        print(f"❌ Erro na verificação admin: {e}")
+        print(f" Erro na verificação admin: {e}")
         return None
 
 def require_admin():
@@ -75,7 +75,7 @@ def get_admin_stats(admin_id):
         cursor.execute("SELECT COUNT(*) FROM users WHERE user_type != 'deleted'")
         total_users = cursor.fetchone()[0]
         
-        # ✅ CORRIGIDO - Usuários premium (plan_id = 4 Community)
+        #  CORRIGIDO - Usuários premium (plan_id = 4 Community)
         cursor.execute("SELECT COUNT(*) FROM users WHERE plan_id = 4 AND user_type != 'deleted'")
         premium_users = cursor.fetchone()[0]
         
@@ -86,7 +86,7 @@ def get_admin_stats(admin_id):
         except:
             active_coupons = 0
         
-        # ✅ CORRIGIDO - Receita mensal apenas Community
+        #  CORRIGIDO - Receita mensal apenas Community
         monthly_revenue = premium_users * 79  # Preço do Community
         
         cursor.close()
@@ -162,7 +162,7 @@ def manage_subscription(admin_id):
         data = request.get_json()
         user_email = data.get('user_email')
         action = data.get('action')  # 'grant' ou 'revoke'
-        plan_id = data.get('plan_id', 4)  # ✅ CORRIGIDO - padrão Community
+        plan_id = data.get('plan_id', 4)  #  CORRIGIDO - padrão Community
         
         if not user_email or not action:
             return jsonify({'success': False, 'error': 'Email e ação são obrigatórios'}), 400
@@ -185,11 +185,11 @@ def manage_subscription(admin_id):
         user_id, user_name = user
         
         if action == 'grant':
-            # ✅ CORRIGIDO - Mapear apenas plan_ids que existem
+            #  CORRIGIDO - Mapear apenas plan_ids que existem
             plan_names = {3: 'basico', 4: 'community'}
             plan_name = plan_names.get(plan_id, 'community')
             
-            # ✅ CORRIGIDO - Para Community, adicionar expiração e status
+            #  CORRIGIDO - Para Community, adicionar expiração e status
             if plan_id == 4:
                 # Calcular expiração (30 dias para teste)
                 expires_at = datetime.now(timezone.utc) + timedelta(days=30)
@@ -214,7 +214,7 @@ def manage_subscription(admin_id):
             message = f'Assinatura {plan_name} concedida para {user_name}'
             
         elif action == 'revoke':
-            # ✅ CORRIGIDO - Voltar para Free (plan_id = 3)
+            #  CORRIGIDO - Voltar para Free (plan_id = 3)
             cursor.execute("""
                 UPDATE users 
                 SET plan_id = 3, plan_name = 'basico', plan_expires_at = NULL,
@@ -271,7 +271,7 @@ def promote_user(admin_id):
         
         user_id, user_name = user
         
-        # ✅ CORRIGIDO - Admin tem acesso total (plan_id = 4)
+        #  CORRIGIDO - Admin tem acesso total (plan_id = 4)
         cursor.execute("""
             UPDATE users 
             SET user_type = %s, plan_id = 4, plan_name = 'community',
@@ -757,7 +757,7 @@ def get_enhanced_admin_stats(admin_id):
         cursor.execute("SELECT COUNT(*) FROM users WHERE user_type != 'deleted'")
         total_users = cursor.fetchone()[0]
         
-        # ✅ CORRIGIDO - Usuários Community (plan_id = 4)
+        #  CORRIGIDO - Usuários Community (plan_id = 4)
         cursor.execute("SELECT COUNT(*) FROM users WHERE plan_id = 4 AND user_type != 'deleted'")
         premium_users = cursor.fetchone()[0]
         
@@ -776,7 +776,7 @@ def get_enhanced_admin_stats(admin_id):
         except:
             active_coupons = 0
         
-        # ✅ CORRIGIDO - Receita estimada apenas Community
+        #  CORRIGIDO - Receita estimada apenas Community
         cursor.execute("""
             SELECT COALESCE(SUM(
                 CASE 

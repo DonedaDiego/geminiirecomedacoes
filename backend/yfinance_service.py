@@ -210,10 +210,10 @@ if __name__ == "__main__":
     result = YFinanceService.get_stock_data('PETR4')
     if result['success']:
         data = result['data']
-        print(f"✅ {data['name']} ({data['symbol']})")
+        print(f" {data['name']} ({data['symbol']})")
         print(f"💰 Preço: R$ {data['current_price']} ({data['change_percent']:+.2f}%)")
     else:
-        print(f"❌ {result['error']}")
+        print(f" {result['error']}")
     
     # Teste 2: Múltiplas ações
     print("\n2️⃣ Testando múltiplas ações:")
@@ -222,20 +222,20 @@ if __name__ == "__main__":
     if result['success']:
         for symbol, data in result['data'].items():
             if data['status'] == 'success':
-                print(f"✅ {symbol}: R$ {data['current_price']} ({data['change_percent']:+.2f}%)")
+                print(f" {symbol}: R$ {data['current_price']} ({data['change_percent']:+.2f}%)")
             else:
-                print(f"❌ {symbol}: {data['error']}")
+                print(f" {symbol}: {data['error']}")
     else:
-        print(f"❌ {result['error']}")
+        print(f" {result['error']}")
     
     # Teste 3: Histórico
     print("\n3️⃣ Testando histórico VALE3 (5 dias):")
     result = YFinanceService.get_stock_history('VALE3', '5d')
     if result['success']:
         history = result['data']['history']
-        print(f"✅ {len(history)} dias de dados")
+        print(f" {len(history)} dias de dados")
         print(f"Último dia: {history[-1]['date']} - Close: R$ {history[-1]['close']}")
     else:
-        print(f"❌ {result['error']}")
+        print(f" {result['error']}")
     
     print("\n🎉 Testes concluídos!")

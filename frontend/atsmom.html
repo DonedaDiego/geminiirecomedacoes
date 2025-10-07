@@ -1163,10 +1163,10 @@
           }
         });
 
-        console.log('✅ Gráfico de Sinal ATSMOM criado com sucesso');
+        console.log(' Gráfico de Sinal ATSMOM criado com sucesso');
         
       } catch (error) {
-        console.error('❌ Erro ao criar gráficos ATSMOM:', error);
+        console.error(' Erro ao criar gráficos ATSMOM:', error);
         document.getElementById('plotly-chart').innerHTML = `
           <div style="color: white; text-align: center; padding: 50px;">
             <i class="fas fa-exclamation-triangle" style="font-size: 48px; color: #ef4444; margin-bottom: 20px;"></i>
@@ -1376,12 +1376,12 @@
         const data = await response.json();
         
         if (data.status === 'OK') {
-          console.log('✅ Serviço ATSMOM funcionando:', data.message);
+          console.log(' Serviço ATSMOM funcionando:', data.message);
         } else {
           console.warn('⚠️ Serviço com problemas:', data.message);
         }
       } catch (error) {
-        console.error('❌ Erro ao verificar saúde do serviço:', error);
+        console.error(' Erro ao verificar saúde do serviço:', error);
       }
     }
 

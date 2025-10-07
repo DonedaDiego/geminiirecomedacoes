@@ -9,7 +9,7 @@ from typing import Dict, List, Optional
 class YFinanceRSLService:
     """Serviço completo para cálculo de RSL usando YFinance + banco de dados"""
     
-    # ✅ DICIONÁRIO DE TICKERS E SETORES (BASE DE DADOS)
+    #  DICIONÁRIO DE TICKERS E SETORES (BASE DE DADOS)
     TICKERS_SETORES = {
         'BRAV3': 'Petróleo, Gás e Bio',
         'CSAN3': 'Petróleo, Gás e Bio',
@@ -202,7 +202,7 @@ class YFinanceRSLService:
             return data['Close']
             
         except Exception as e:
-            print(f"❌ Erro ao buscar histórico de {symbol}: {e}")
+            print(f" Erro ao buscar histórico de {symbol}: {e}")
             return None
     
     @staticmethod
@@ -215,7 +215,7 @@ class YFinanceRSLService:
             if price_series is None or len(price_series) < periodo_mm:
                 return None
             
-            # ✅ FÓRMULA IDÊNTICA AO METATRADER
+            #  FÓRMULA IDÊNTICA AO METATRADER
             # Calcular Média Móvel
             mm = price_series.rolling(window=periodo_mm).mean()
             
@@ -231,7 +231,7 @@ class YFinanceRSLService:
             return float(rsl_atual.values[0])
             
         except Exception as e:
-            print(f"❌ Erro ao calcular RSL: {e}")
+            print(f" Erro ao calcular RSL: {e}")
             return None
     
     @staticmethod
@@ -240,7 +240,7 @@ class YFinanceRSLService:
             if price_series is None or len(price_series) < 30:
                 return None
             
-            # ✅ FÓRMULA IDÊNTICA AO METATRADER
+            #  FÓRMULA IDÊNTICA AO METATRADER
             # Calcular retornos percentuais
             returns = price_series.pct_change()
             
@@ -250,7 +250,7 @@ class YFinanceRSLService:
             return float(vol) if np.isfinite(vol) else None
             
         except Exception as e:
-            print(f"❌ Erro ao calcular volatilidade: {e}")
+            print(f" Erro ao calcular volatilidade: {e}")
             return None
     
     @staticmethod
@@ -300,7 +300,7 @@ class YFinanceRSLService:
             }
             
         except Exception as e:
-            print(f"❌ Erro ao calcular RSL para {symbol}: {e}")
+            print(f" Erro ao calcular RSL para {symbol}: {e}")
             return None
     
     @classmethod
@@ -311,7 +311,7 @@ class YFinanceRSLService:
         try:
             print(f" Calculando RSL do setor: {setor_nome}")
             
-            # ✅ BUSCAR TICKERS DO SETOR NO NOSSO DICIONÁRIO
+            #  BUSCAR TICKERS DO SETOR NO NOSSO DICIONÁRIO
             tickers_do_setor = cls.get_tickers_by_setor(setor_nome)
             
             if not tickers_do_setor:
@@ -322,7 +322,7 @@ class YFinanceRSLService:
             
             resultados_individuais = []
             
-            # ✅ CALCULAR RSL PARA CADA TICKER DO SETOR
+            #  CALCULAR RSL PARA CADA TICKER DO SETOR
             for ticker in tickers_do_setor:
                 print(f"  ⚡ Processando {ticker}...")
                 
@@ -331,15 +331,15 @@ class YFinanceRSLService:
                 
                 if rsl_data:
                     resultados_individuais.append(rsl_data)
-                    print(f"    ✅ {ticker}: RSL={rsl_data['rsl']}%, Vol={rsl_data['volatilidade']}%")
+                    print(f"     {ticker}: RSL={rsl_data['rsl']}%, Vol={rsl_data['volatilidade']}%")
                 else:
-                    print(f"    ❌ {ticker}: Sem dados RSL")
+                    print(f"     {ticker}: Sem dados RSL")
             
             if not resultados_individuais:
                 print(f"  ⚠️ Nenhum ticker válido para RSL em {setor_nome}")
                 return None
             
-            # ✅ CALCULAR MÉDIAS COMO NO METATRADER
+            #  CALCULAR MÉDIAS COMO NO METATRADER
             rsl_values = [r['rsl'] for r in resultados_individuais]
             vol_values = [r['volatilidade'] for r in resultados_individuais if r.get('volatilidade') is not None and np.isfinite(r['volatilidade'])]
 
@@ -362,7 +362,7 @@ class YFinanceRSLService:
             }
             
         except Exception as e:
-            print(f"❌ Erro ao calcular RSL do setor {setor_nome}: {e}")
+            print(f" Erro ao calcular RSL do setor {setor_nome}: {e}")
             return None
     
     @classmethod
@@ -380,9 +380,9 @@ class YFinanceRSLService:
             
             if rsl_data:
                 resultados[setor] = rsl_data
-                print(f"✅ {setor}: RSL={rsl_data['rsl']}%, Vol={rsl_data['volatilidade']}%")
+                print(f" {setor}: RSL={rsl_data['rsl']}%, Vol={rsl_data['volatilidade']}%")
             else:
-                print(f"❌ {setor}: Falha no cálculo")
+                print(f" {setor}: Falha no cálculo")
         
         print(f" Concluído! {len(resultados)}/{len(setores)} setores processados")
         return resultados
@@ -431,7 +431,7 @@ class YFinanceRSLService:
             'hit_rate': round((cache_info.hits / (cache_info.hits + cache_info.misses)) * 100, 2) if (cache_info.hits + cache_info.misses) > 0 else 0
         }
 
-# ✅ EXEMPLO DE USO (para testes)
+#  EXEMPLO DE USO (para testes)
 if __name__ == "__main__":
     # Teste básico
     service = YFinanceRSLService()

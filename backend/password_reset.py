@@ -14,7 +14,7 @@ def get_db_connection():
         )
         return conn
     except Exception as e:
-        print(f"❌ Erro ao conectar no banco: {e}")
+        print(f" Erro ao conectar no banco: {e}")
         return None
 
 def create_password_reset_table():
@@ -53,7 +53,7 @@ def create_password_reset_table():
         return True
         
     except Exception as e:
-        print(f"❌ Erro ao criar tabela: {e}")
+        print(f" Erro ao criar tabela: {e}")
         return False
 
 def generate_reset_token(email):
@@ -234,7 +234,7 @@ def cleanup_expired_tokens():
         return {'success': False, 'error': f'Erro interno: {str(e)}'}
 
 if __name__ == "__main__":
-    print("🔧 Configurando sistema de recuperação de senha...")
+    print("Configurando sistema de recuperação de senha...")
     
     if create_password_reset_table():
         
@@ -244,4 +244,4 @@ if __name__ == "__main__":
         result = generate_reset_token("teste@exemplo.com")
         
     else:
-        print("❌ Falha na configuração")
+        print(" Falha na configuração")

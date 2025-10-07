@@ -24,7 +24,7 @@ class VolatilityImpliedService:
     def _load_token(self):
         token = os.environ.get('OPLAB_TOKEN')
         if token:
-            print("✅ Token OpLab carregado da variável de ambiente")
+            print(" Token OpLab carregado da variável de ambiente")
             return token
         
         config_paths = ['config.json', 'backend/config.json', '../config.json']
@@ -37,7 +37,7 @@ class VolatilityImpliedService:
                     
                     token = config.get('token') or config.get('oplab_token')
                     if token:
-                        print(f"✅ Token OpLab carregado de {config_path}")
+                        print(f" Token OpLab carregado de {config_path}")
                         return token
             except Exception as e:
                 print(f"⚠️ Erro ao ler {config_path}: {e}")
@@ -61,14 +61,14 @@ class VolatilityImpliedService:
             
             if response.status_code == 200:
                 data = response.json()
-                print(f"✅ Dados das opções obtidos: {len(data)} registros")
+                print(f" Dados das opções obtidos: {len(data)} registros")
                 return data
             else:
-                print(f"❌ Erro na API: {response.status_code} - {response.text}")
+                print(f" Erro na API: {response.status_code} - {response.text}")
                 return None
                 
         except requests.exceptions.RequestException as e:
-            print(f"❌ Erro na requisição: {e}")
+            print(f" Erro na requisição: {e}")
             return None
     
     def get_spot_price(self, ticker, from_date, to_date):
@@ -81,14 +81,14 @@ class VolatilityImpliedService:
             hist = stock.history(start=from_date, end=to_date)
             
             if not hist.empty:
-                print(f"✅ Preços obtidos: {len(hist)} registros")
+                print(f" Preços obtidos: {len(hist)} registros")
                 return hist
             else:
-                print("❌ Nenhum dado de preço encontrado")
+                print(" Nenhum dado de preço encontrado")
                 return None
                 
         except Exception as e:
-            print(f"❌ Erro ao buscar preços: {e}")
+            print(f" Erro ao buscar preços: {e}")
             return None
     
     def process_options_data(self, data):
@@ -133,7 +133,7 @@ class VolatilityImpliedService:
             else:
                 print(f"Mantendo todos os registros: {len(df)}")
         
-        print(f"✅ Após filtros: {len(df)} registros (era {initial_count})")
+        print(f" Após filtros: {len(df)} registros (era {initial_count})")
         
         return df
     
@@ -212,7 +212,7 @@ class VolatilityImpliedService:
             daily_data.append(row)
         
         result = pd.DataFrame(daily_data)
-        print(f"✅ Métricas diárias agregadas: {len(result)} dias")
+        print(f" Métricas diárias agregadas: {len(result)} dias")
         
         if not result.empty:
             print(f"Colunas finais: {result.columns.tolist()}")
@@ -275,12 +275,12 @@ class VolatilityImpliedService:
             daily_metrics.attrs['q2'] = q2
             daily_metrics.attrs['q3'] = q3
             
-            print(f"✅ IV Quartile Signal calculado para {len(signal_list)} registros")
+            print(f" IV Quartile Signal calculado para {len(signal_list)} registros")
             
             return daily_metrics
             
         except Exception as e:
-            print(f"❌ Erro ao calcular IV Quartile Signal: {e}")
+            print(f" Erro ao calcular IV Quartile Signal: {e}")
             daily_metrics['options_signal'] = 0
             return daily_metrics
     
@@ -355,7 +355,7 @@ class VolatilityImpliedService:
                     call_values = daily_metrics['iv_call'].dropna()
                     if len(call_values) > 0:
                         iv_call_mean = float(call_values.mean())
-                        print(f"📞 VI Calls média: {iv_call_mean:.1f}%")
+                        print(f" VI Calls média: {iv_call_mean:.1f}%")
                 
                 # VI das Puts  
                 if 'iv_put' in daily_metrics.columns:
@@ -393,7 +393,7 @@ class VolatilityImpliedService:
             return result
             
         except Exception as e:
-            print(f"❌ Erro durante análise: {e}")
+            print(f" Erro durante análise: {e}")
             return {
                 'success': False,
                 'error': str(e)
@@ -481,7 +481,7 @@ class VolatilityImpliedService:
             return chart_data
             
         except Exception as e:
-            print(f"❌ Erro ao preparar dados do gráfico: {e}")
+            print(f" Erro ao preparar dados do gráfico: {e}")
             import traceback
             traceback.print_exc()
             return {
@@ -598,7 +598,7 @@ class VolatilityImpliedService:
             daily_data.append(row)
         
         result = pd.DataFrame(daily_data)
-        print(f"✅ Métricas diárias agregadas: {len(result)} dias")
+        print(f" Métricas diárias agregadas: {len(result)} dias")
         
         if not result.empty:
             print(f"Colunas finais: {result.columns.tolist()}")

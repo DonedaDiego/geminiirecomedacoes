@@ -47,7 +47,7 @@ class RecommendationsServiceFree:
     def calculate_technical_indicators(df):
         """Calcular indicadores técnicos com foco em cruzamento"""
         
-        # ✅ MÉDIAS MAIS RÁPIDAS PARA SINAIS PRECISOS
+        #  MÉDIAS MAIS RÁPIDAS PARA SINAIS PRECISOS
         df['EMA_9'] = df['Close'].ewm(span=9, adjust=False).mean()   # Média rápida
         df['EMA_21'] = df['Close'].ewm(span=21, adjust=False).mean() # Média lenta
         
@@ -191,7 +191,7 @@ class RecommendationsServiceFree:
         
         signal = RecommendationsServiceFree.generate_ml_signal(stock_data)
         
-        # ✅ SÓ RETORNA SE FOR COMPRA
+        #  SÓ RETORNA SE FOR COMPRA
         if signal and signal['action'] == 'COMPRA':
             return signal
         else:
@@ -210,7 +210,7 @@ class RecommendationsServiceFree:
             if not stock_data:
                 continue
             
-            # ✅ USAR VERSÃO SÓ COMPRAS
+            #  USAR VERSÃO SÓ COMPRAS
             signal = RecommendationsServiceFree.generate_ml_signal_buy_only(stock_data)
             
             if signal and signal['confidence'] >= 75:  # Confiança maior para compras
@@ -227,7 +227,7 @@ class RecommendationsServiceFree:
                     'technical_data': signal['technical_data']
                 })
                 
-                # ✅ APENAS 2 RECOMENDAÇÕES
+                #  APENAS 2 RECOMENDAÇÕES
                 if len(recommendations) >= 2:
                     break
         
@@ -357,7 +357,7 @@ class RecommendationsServiceFree:
                         
                     current_price = float(hist['Close'].iloc[-1])
                     
-                    # ✅ CONVERSÕES EXPLÍCITAS PARA EVITAR CONFLITO DE TIPOS
+                    #  CONVERSÕES EXPLÍCITAS PARA EVITAR CONFLITO DE TIPOS
                     entry_price_float = float(rec['entry_price'])
                     target_price_float = float(rec['target_price'])
                     stop_loss_float = float(rec['stop_loss'])
@@ -383,7 +383,7 @@ class RecommendationsServiceFree:
                         elif current_price >= stop_loss_float:
                             status = 'FINALIZADA_PERDA'
                     
-                    # ✅ ATUALIZAR NO BANCO COM VALORES CONVERTIDOS
+                    #  ATUALIZAR NO BANCO COM VALORES CONVERTIDOS
                     cursor.execute("""
                         UPDATE recommendations_free
                         SET current_price = %s, 
@@ -392,8 +392,8 @@ class RecommendationsServiceFree:
                             updated_at = %s
                         WHERE id = %s
                     """, (
-                        current_price,  # ✅ Já é float
-                        round(performance, 2),  # ✅ Arredondar para evitar problemas
+                        current_price,  #  Já é float
+                        round(performance, 2),  #  Arredondar para evitar problemas
                         status, 
                         datetime.now(timezone.utc), 
                         rec['id']
@@ -410,7 +410,7 @@ class RecommendationsServiceFree:
                             """, (datetime.now(timezone.utc), rec['id']))
                     
                 except Exception as e:
-                    print(f"❌ Erro ao atualizar {ticker}: {e}")
+                    print(f" Erro ao atualizar {ticker}: {e}")
                     continue
             
             conn.commit()
@@ -420,7 +420,7 @@ class RecommendationsServiceFree:
             return True
             
         except Exception as e:
-            print(f"❌ Erro geral ao atualizar preços: {e}")
+            print(f" Erro geral ao atualizar preços: {e}")
             return False
     
     @staticmethod
@@ -477,7 +477,7 @@ class RecommendationsServiceFree:
                 'avg_gain': avg_gain or 0,
                 'avg_loss': avg_loss or 0,
                 'profit_factor': profit_factor,
-                'cumulative_return': cumulative_return or 0,  # ✅ NOVO CAMPO
+                'cumulative_return': cumulative_return or 0,  #  NOVO CAMPO
                 'best_performance': {
                     'ticker': best[0],
                     'gain': float(best[1]),
@@ -589,9 +589,9 @@ def create_recommendations_table():
         cursor.close()
         conn.close()
         
-        print("✅ Tabela recommendations_free criada com sucesso!")
+        print(" Tabela recommendations_free criada com sucesso!")
         return True
         
     except Exception as e:
-        print(f"❌ Erro ao criar tabela: {e}")
+        print(f" Erro ao criar tabela: {e}")
         return False

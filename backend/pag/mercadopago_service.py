@@ -29,9 +29,9 @@ try:
     preference_client = mp_sdk.preference()
     
 except ImportError:
-    print("❌ Módulo mercadopago não encontrado. Instale: pip install mercadopago")
+    print(" Módulo mercadopago não encontrado. Instale: pip install mercadopago")
 except Exception as e:
-    print(f"❌ Erro ao carregar SDK: {e}")
+    print(f" Erro ao carregar SDK: {e}")
 
 # ===== CONFIGURAÇÃO DOS PLANOS =====
 PLANS = {
@@ -78,7 +78,7 @@ def validate_device_id(device_id):
 def ensure_tables_exist(cursor):
     """Verificar e criar tabelas necessárias"""
     try:
-        print("   🔧 Verificando estrutura do banco...")
+        print("   Verificando estrutura do banco...")
         
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS payments (
@@ -101,9 +101,9 @@ def ensure_tables_exist(cursor):
         cursor.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS subscription_plan VARCHAR(50)")
         cursor.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS plan_expires_at TIMESTAMP")
         
-        print("   ✅ Estrutura do banco verificada")
+        print("    Estrutura do banco verificada")
     except Exception as e:
-        print(f"   ❌ Erro ao preparar tabelas: {e}")
+        print(f"    Erro ao preparar tabelas: {e}")
         raise e
 
 # ===== FUNÇÕES PRINCIPAIS =====
@@ -251,7 +251,7 @@ def create_checkout_service(plan, cycle, customer_email, user_id=None, user_emai
         
         if device_id and validate_device_id(device_id):
             preference_data["additional_info"] = {"device_id": device_id}
-            print(f"   ✅ Device ID válido adicionado: {device_id[:20]}...")
+            print(f"    Device ID válido adicionado: {device_id[:20]}...")
         elif device_id:
             print(f"   ⚠️ Device ID inválido ignorado: {device_id}")
         
@@ -267,7 +267,7 @@ def create_checkout_service(plan, cycle, customer_email, user_id=None, user_emai
                 preference_response = preference_client.create(preference_data)
                 break
             except Exception as retry_error:
-                print(f"❌ Tentativa {attempt + 1} falhou: {retry_error}")
+                print(f" Tentativa {attempt + 1} falhou: {retry_error}")
                 if attempt == 2:
                     raise retry_error
                 time.sleep(1)
@@ -279,7 +279,7 @@ def create_checkout_service(plan, cycle, customer_email, user_id=None, user_emai
             checkout_url = preference.get("init_point", "")
             sandbox_url = preference.get("sandbox_init_point", "")
             
-            print(f"✅ Checkout criado com sucesso - {preference_id}")
+            print(f" Checkout criado com sucesso - {preference_id}")
             
             return {
                 "success": True,
@@ -301,7 +301,7 @@ def create_checkout_service(plan, cycle, customer_email, user_id=None, user_emai
             }
         else:
             error_info = preference_response.get("response", {}) if preference_response else {}
-            print(f"❌ Erro no checkout: {error_info}")
+            print(f" Erro no checkout: {error_info}")
             
             return {
                 "success": False,
@@ -310,7 +310,7 @@ def create_checkout_service(plan, cycle, customer_email, user_id=None, user_emai
             }
             
     except Exception as e:
-        print(f"❌ Erro crítico no checkout: {e}")
+        print(f" Erro crítico no checkout: {e}")
         return {"success": False, "error": "Erro interno do servidor", "details": str(e)}
 
 def check_payment_status_service(payment_id):
@@ -372,10 +372,10 @@ def get_payment_from_mercadopago(payment_id):
         if response.status_code == 200:
             return response.json()
         else:
-            print(f"❌ Erro MP API: Status {response.status_code}")
+            print(f" Erro MP API: Status {response.status_code}")
             return None
     except Exception as e:
-        print(f"❌ Erro ao consultar MP: {e}")
+        print(f" Erro ao consultar MP: {e}")
         return None
 
 def extract_user_id_from_reference(external_ref):
@@ -454,10 +454,10 @@ def find_or_create_user(cursor, payment_data):
         result = cursor.fetchone()
         
         if result:
-            print(f"✅ Usuário encontrado por ID: {result[1]} (ID: {result[0]})")
+            print(f" Usuário encontrado por ID: {result[1]} (ID: {result[0]})")
             return {'id': result[0], 'name': result[1], 'email': result[2]}
         else:
-            print(f"❌ Usuário ID {user_id} não encontrado")
+            print(f" Usuário ID {user_id} não encontrado")
     
     # 🔥 ESTRATÉGIA 2: BUSCAR POR EMAIL (FALLBACK)
     if user_email:
@@ -465,10 +465,10 @@ def find_or_create_user(cursor, payment_data):
         result = cursor.fetchone()
         
         if result:
-            print(f"✅ Usuário encontrado por email: {result[1]} (ID: {result[0]})")
+            print(f" Usuário encontrado por email: {result[1]} (ID: {result[0]})")
             return {'id': result[0], 'name': result[1], 'email': result[2]}
         else:
-            print(f"❌ Usuário email {user_email} não encontrado")
+            print(f" Usuário email {user_email} não encontrado")
     
     # 🔥 ESTRATÉGIA 3: BUSCAR USUÁRIOS RECENTES (ÚLTIMO RECURSO)
     print("🔍 Tentando encontrar usuário recente...")
@@ -489,7 +489,7 @@ def find_or_create_user(cursor, payment_data):
         # Por enquanto, não auto-selecionar
         # return {'id': recent_users[0][0], 'name': recent_users[0][1], 'email': recent_users[0][2]}
     
-    print(f"❌ Nenhum usuário encontrado - ID: {user_id}, Email: {user_email}")
+    print(f" Nenhum usuário encontrado - ID: {user_id}, Email: {user_email}")
     return None
 
 def calculate_expiration(cycle):
@@ -540,7 +540,7 @@ def update_user_plan_with_correct_expiration(cursor, user_id, plan_db_id, plan_n
     """, (plan_db_id, plan_name, plan_name, expires_at, user_id))
     
     rows_updated = cursor.rowcount
-    print(f"✅ {rows_updated} linha(s) atualizada(s)")
+    print(f" {rows_updated} linha(s) atualizada(s)")
     
     if rows_updated == 0:
         raise Exception("ERRO: Nenhuma linha foi atualizada!")
@@ -564,7 +564,7 @@ def update_user_plan(cursor, user_id, plan_db_id, plan_name, expires_at):
     """, (plan_db_id, plan_name, plan_name, expires_at, user_id))
     
     rows_updated = cursor.rowcount
-    print(f"   ✅ {rows_updated} linha(s) atualizada(s)")
+    print(f"    {rows_updated} linha(s) atualizada(s)")
     
     if rows_updated == 0:
         raise Exception("ERRO: Nenhuma linha foi atualizada!")
@@ -581,7 +581,7 @@ def insert_payment_record(cursor, payment_id, user_id, payment_data, device_id=N
         payment_data['plan_id'], payment_data['plan_name'], 
         payment_data['cycle'], payment_data['external_reference'], device_id
     ))
-    print("   ✅ Pagamento inserido na tabela payments")
+    print("    Pagamento inserido na tabela payments")
 
 def insert_payment_history(cursor, user_id, payment_data, payment_id):
     """Inserir histórico de pagamento"""
@@ -596,7 +596,7 @@ def insert_payment_history(cursor, user_id, payment_data, payment_id):
             user_id, payment_data['plan_db_id'], str(payment_id), 
             payment_data['amount'], 'approved', 'BRL'
         ))
-        print("   ✅ Histórico registrado")
+        print("    Histórico registrado")
     except Exception as e:
         print(f"   ⚠️ Erro no histórico (não crítico): {e}")
 
@@ -624,7 +624,7 @@ def process_payment(payment_id):
         device_id = device_info.get('device_id')
         
         if device_id and validate_device_id(device_id):
-            print(f"   ✅ Device ID válido: {device_id[:20]}...")
+            print(f"    Device ID válido: {device_id[:20]}...")
         
         # 3. Extrair dados
         payment_data = extract_payment_data(mp_data)
@@ -673,7 +673,7 @@ def process_payment(payment_id):
         cursor.close()
         conn.close()
         
-        print("✅ PROCESSAMENTO CONCLUÍDO COM SUCESSO!")
+        print(" PROCESSAMENTO CONCLUÍDO COM SUCESSO!")
         
         return {
             'status': 'success',
@@ -689,7 +689,7 @@ def process_payment(payment_id):
         }
         
     except Exception as e:
-        print(f"❌ ERRO CRÍTICO: {str(e)}")
+        print(f" ERRO CRÍTICO: {str(e)}")
         return {'status': 'error', 'payment_id': payment_id, 'error': str(e)}
 
 # ===== FUNÇÕES DE AUTENTICAÇÃO =====
@@ -761,7 +761,7 @@ def send_reset_email(user_email, user_name, reset_token):
         return True
         
     except Exception as e:
-        print(f"❌ Erro ao enviar email: {e}")
+        print(f" Erro ao enviar email: {e}")
         return False
 
 def generate_reset_token_service(email):
@@ -955,8 +955,8 @@ if __name__ == "__main__":
     if mp_sdk:
         test_result = test_mercadopago_connection()
         if test_result['success']:
-            print("✅ Conexão MP: OK")
+            print(" Conexão MP: OK")
         else:
-            print(f"❌ Conexão MP: {test_result['error']}")
+            print(f" Conexão MP: {test_result['error']}")
     
 

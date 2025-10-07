@@ -46,7 +46,7 @@ def get_db_connection():
             return conn
             
         except Exception as e:
-            print(f"❌ Tentativa {attempt + 1} falhou: {e}")
+            print(f" Tentativa {attempt + 1} falhou: {e}")
             
             if attempt < max_retries - 1:
                 print(f"⏳ Tentando novamente em {retry_delay}s...")
@@ -54,7 +54,7 @@ def get_db_connection():
                 time.sleep(retry_delay)
                 retry_delay *= 2
             else:
-                print("❌ Todas as tentativas falharam")
+                print(" Todas as tentativas falharam")
                 return None
     
     return None
@@ -70,10 +70,10 @@ def test_connection():
             conn.close()
             return True
         else:
-            print("❌ Falha na conexão")
+            print(" Falha na conexão")
             return False
     except Exception as e:
-        print(f"❌ Erro no teste: {e}")
+        print(f" Erro no teste: {e}")
         return False
 
 def create_plans_table():
@@ -102,7 +102,7 @@ def create_plans_table():
         # 🔥 NOVA ESTRUTURA DE PLANOS: APENAS BÁSICO E COMUNIDADE
         cursor.execute("DELETE FROM plans")
         
-        # ✅ CORREÇÃO: Adicionada aspa faltante no 'Free'
+        #  CORREÇÃO: Adicionada aspa faltante no 'Free'
         cursor.execute("""
             INSERT INTO plans (id, name, display_name, price_monthly, price_annual, description, features) VALUES
             (3, 'Free', 'Free', 0.00, 0.00, 'Acesso básico ao sistema', 
@@ -119,11 +119,11 @@ def create_plans_table():
         cursor.close()
         conn.close()
         
-        print("✅ Planos criados com sucesso!")
+        print(" Planos criados com sucesso!")
         return True
         
     except Exception as e:
-        print(f"❌ Erro ao criar planos: {e}")
+        print(f" Erro ao criar planos: {e}")
         return False
 
 def create_users_table():
@@ -177,7 +177,7 @@ def create_users_table():
         return True
         
     except Exception as e:
-        print(f"❌ Erro ao criar tabela users: {e}")
+        print(f" Erro ao criar tabela users: {e}")
         return False
 
 def update_users_table_for_service():
@@ -218,7 +218,7 @@ def update_users_table_for_service():
         return True
         
     except Exception as e:
-        print(f"❌ Erro ao atualizar tabela users: {e}")
+        print(f" Erro ao atualizar tabela users: {e}")
         return False
 
 def create_payments_table():
@@ -259,7 +259,7 @@ def create_payments_table():
         return True
         
     except Exception as e:
-        print(f"❌ Erro ao criar tabela payments: {e}")
+        print(f" Erro ao criar tabela payments: {e}")
         return False
 
 def create_payment_history():
@@ -303,7 +303,7 @@ def create_payment_history():
         return True
         
     except Exception as e:
-        print(f"❌ Erro ao criar payment_history: {e}")
+        print(f" Erro ao criar payment_history: {e}")
         return False
 
 def create_coupons_table():
@@ -360,7 +360,7 @@ def create_coupons_table():
         return True
         
     except Exception as e:
-        print(f"❌ Erro ao criar sistema de cupons: {e}")
+        print(f" Erro ao criar sistema de cupons: {e}")
         return False
 
 def create_password_reset_table():
@@ -394,7 +394,7 @@ def create_password_reset_table():
         return True
         
     except Exception as e:
-        print(f"❌ Erro ao criar tabela de reset: {e}")
+        print(f" Erro ao criar tabela de reset: {e}")
         return False
 
 def create_initial_admin():
@@ -445,7 +445,7 @@ def create_initial_admin():
         return True
         
     except Exception as e:
-        print(f"❌ Erro ao criar admin: {e}")
+        print(f" Erro ao criar admin: {e}")
         return False
 
 def create_opcoes_recommendations_table():
@@ -491,11 +491,11 @@ def create_opcoes_recommendations_table():
         cursor.close()
         conn.close()
         
-        print("✅ Tabela opcoes_recommendations criada com sucesso!")
+        print(" Tabela opcoes_recommendations criada com sucesso!")
         return True
         
     except Exception as e:
-        print(f"❌ Erro ao criar tabela opcoes_recommendations: {e}")
+        print(f" Erro ao criar tabela opcoes_recommendations: {e}")
         return False
 
 def verify_service_compatibility():
@@ -527,7 +527,7 @@ def verify_service_compatibility():
         print(f"\n👤 Campos necessários na tabela users:")
         required_fields = ['subscription_status', 'subscription_plan', 'plan_expires_at']
         for field in required_fields:
-            status = "✅" if field in user_fields else "❌"
+            status = "" if field in user_fields else ""
             print(f"   {status} {field}")
         
         # 3. Verificar tabela payments
@@ -539,7 +539,7 @@ def verify_service_compatibility():
         """)
         has_device_id = cursor.fetchone() is not None
         print(f"\n💳 Tabela payments:")
-        print(f"   {'✅' if has_device_id else '❌'} device_id")
+        print(f"   {'' if has_device_id else ''} device_id")
         
         # 4. Verificar tabela coupon_uses (não coupon_usage)
         cursor.execute("""
@@ -549,7 +549,7 @@ def verify_service_compatibility():
         """)
         coupon_tables = [row[0] for row in cursor.fetchall()]
         print(f"\n🎫 Tabelas de cupons:")
-        print(f"   {'✅' if 'coupon_uses' in coupon_tables else '❌'} coupon_uses (necessária)")
+        print(f"   {'' if 'coupon_uses' in coupon_tables else ''} coupon_uses (necessária)")
         print(f"   {'⚠️' if 'coupon_usage' in coupon_tables else ''} coupon_usage (desnecessária)")
         
         # 5. Verificar usuários de teste
@@ -568,12 +568,12 @@ def verify_service_compatibility():
             'coupon_uses' in coupon_tables
         )
         
-        print(f"\n STATUS GERAL: {'✅ COMPATÍVEL' if all_good else '❌ NECESSITA CORREÇÕES'}")
+        print(f"\n STATUS GERAL: {' COMPATÍVEL' if all_good else ' NECESSITA CORREÇÕES'}")
         
         return all_good
         
     except Exception as e:
-        print(f"❌ Erro na verificação: {e}")
+        print(f" Erro na verificação: {e}")
         return False
 
 def cleanup_expired_tokens():
@@ -596,12 +596,12 @@ def cleanup_expired_tokens():
         conn.close()
         
         if deleted_count > 0:
-            print(f"✅ {deleted_count} tokens expirados removidos!")
+            print(f" {deleted_count} tokens expirados removidos!")
         
         return True
         
     except Exception as e:
-        print(f"❌ Erro ao limpar tokens: {e}")
+        print(f" Erro ao limpar tokens: {e}")
         return False
 
 def create_email_confirmations_table():
@@ -636,7 +636,7 @@ def create_email_confirmations_table():
         return True
         
     except Exception as e:
-        print(f"❌ Erro ao criar tabela email_confirmations: {e}")
+        print(f" Erro ao criar tabela email_confirmations: {e}")
         return False
 
 def validate_coupon(code, plan_name, user_id):
@@ -809,7 +809,7 @@ def create_portfolio_tables():
         return True
         
     except Exception as e:
-        print(f"❌ Erro ao criar tabelas de portfolio: {e}")
+        print(f" Erro ao criar tabelas de portfolio: {e}")
         return False
 
 def get_portfolio_assets(portfolio_name):
@@ -854,7 +854,7 @@ def get_portfolio_assets(portfolio_name):
         return assets
         
     except Exception as e:
-        print(f"❌ Erro em get_portfolio_assets: {e}")
+        print(f" Erro em get_portfolio_assets: {e}")
         return []
   
  
@@ -881,7 +881,7 @@ def setup_enhanced_database():
         
         return True
     else:
-        print("❌ Falha na configuração do banco")
+        print(" Falha na configuração do banco")
         return False
     
 if __name__ == "__main__":

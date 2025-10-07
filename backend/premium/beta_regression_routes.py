@@ -326,7 +326,7 @@ def format_signal(value):
     """Formatar sinal de trading"""
     signal_map = {
         'COMPRA': '🟢 COMPRA',
-        'VENDA': '🔴 VENDA', 
+        'VENDA': ' VENDA', 
         'NEUTRO': '⚪ NEUTRO'
     }
     return signal_map.get(value, value)
@@ -337,7 +337,7 @@ def format_proximity_status(value):
     status_map = {
         'NOVA COMPRA': '🚀 NOVA COMPRA',
         'PREPARANDO COMPRA': '🟡 PREPARANDO COMPRA',
-        'IMINENTE VENDA': '🔴 IMINENTE VENDA',
+        'IMINENTE VENDA': ' IMINENTE VENDA',
         'PREPARANDO VENDA': '🟠 PREPARANDO VENDA',
         'NEUTRO': '⚪ NEUTRO'
     }

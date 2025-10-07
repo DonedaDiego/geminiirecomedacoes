@@ -104,7 +104,7 @@ def create_trial_user(name, email, password, ip_address=None):
             email_service.send_trial_welcome_email(name, email)
             print(f"📧 Email de boas-vindas enviado para: {email}")
         except Exception as e:
-            print(f"❌ Erro ao enviar boas-vindas: {e}")
+            print(f" Erro ao enviar boas-vindas: {e}")
                 
         return {
             'success': True,
@@ -264,7 +264,7 @@ def get_all_trial_users():
                     status_text = f'⏰ {days_remaining} dias restantes'
                 else:
                     status = 'active'
-                    status_text = f'✅ {days_remaining} dias restantes'
+                    status_text = f' {days_remaining} dias restantes'
             else:
                 status = 'no_expiry'
                 status_text = 'Sem data de expiração'
@@ -346,9 +346,9 @@ def process_expired_trials():
         print("📧 Enviando avisos de trial expirando...")
         warnings_result = send_trial_expiring_warnings()
         if warnings_result['success']:
-            print(f"   ✅ {warnings_result['emails_sent']} emails enviados")
+            print(f"    {warnings_result['emails_sent']} emails enviados")
         else:
-            print(f"   ❌ Erro nos avisos: {warnings_result['error']}")
+            print(f"    Erro nos avisos: {warnings_result['error']}")
         
         # Limpar cache de todos os usuários processados
         for user_id, name, email in expired_users:
@@ -456,7 +456,7 @@ def can_access_premium_features(user_id):
         
         conn = get_db_connection()
         if not conn:
-            print("❌ Erro de conexão com banco")
+            print(" Erro de conexão com banco")
             return False
             
         cursor = conn.cursor()
@@ -471,7 +471,7 @@ def can_access_premium_features(user_id):
         conn.close()
         
         if not user:
-            print(f"❌ Usuário {user_id} não encontrado")
+            print(f" Usuário {user_id} não encontrado")
             return False
             
         plan_id, user_type, plan_expires_at, plan_name, email = user
@@ -480,34 +480,34 @@ def can_access_premium_features(user_id):
         
         # 🔥 REGRA 1: Se é regular com plano Free (3), NEGAR
         if user_type == 'regular' and plan_id == 3:
-            print(f"❌ ACESSO NEGADO: Usuário regular com plano Free")
+            print(f" ACESSO NEGADO: Usuário regular com plano Free")
             return False
             
         # 🔥 REGRA 2: Se é trial Community (4), verificar se não expirou
         if user_type == 'trial' and plan_id == 4:
             if plan_expires_at and plan_expires_at < datetime.now(timezone.utc):
-                print(f"❌ ACESSO NEGADO: Trial expirado em {plan_expires_at}")
+                print(f" ACESSO NEGADO: Trial expirado em {plan_expires_at}")
                 return False
             else:
-                print(f"✅ ACESSO LIBERADO: Trial Community válido até {plan_expires_at}")
+                print(f" ACESSO LIBERADO: Trial Community válido até {plan_expires_at}")
                 return True
         
         # 🔥 REGRA 3: Para usuários pagantes, verificar plano
         if user_type in ['regular', 'pro', 'premium']:
             has_access = plan_id == 2  # Apenas Premium
-            print(f"{'✅' if has_access else '❌'} ACESSO {'LIBERADO' if has_access else 'NEGADO'}: Usuário pagante com plan_id={plan_id}")
+            print(f"{'' if has_access else ''} ACESSO {'LIBERADO' if has_access else 'NEGADO'}: Usuário pagante com plan_id={plan_id}")
             return has_access
             
         # 🔥 REGRA 4: Admin sempre tem acesso
         if user_type in ['admin', 'master']:
-            print(f"✅ ACESSO LIBERADO: Usuário admin")
+            print(f" ACESSO LIBERADO: Usuário admin")
             return True
         
-        print(f"❌ ACESSO NEGADO: Caso não coberto - user_type={user_type}, plan_id={plan_id}")
+        print(f" ACESSO NEGADO: Caso não coberto - user_type={user_type}, plan_id={plan_id}")
         return False
         
     except Exception as e:
-        print(f"❌ Erro na verificação Premium: {e}")
+        print(f" Erro na verificação Premium: {e}")
         import traceback
         traceback.print_exc()
         return False
@@ -521,7 +521,7 @@ def can_access_pro_features(user_id):
         
         conn = get_db_connection()
         if not conn:
-            print("❌ Erro de conexão com banco")
+            print(" Erro de conexão com banco")
             return False
             
         cursor = conn.cursor()
@@ -536,7 +536,7 @@ def can_access_pro_features(user_id):
         conn.close()
         
         if not user:
-            print(f"❌ Usuário {user_id} não encontrado")
+            print(f" Usuário {user_id} não encontrado")
             return False
             
         plan_id, user_type, plan_expires_at, plan_name, email = user
@@ -545,34 +545,34 @@ def can_access_pro_features(user_id):
         
         # 🔥 REGRA 1: Se é regular com plano Free (3), NEGAR
         if user_type == 'regular' and plan_id == 3:
-            print(f"❌ ACESSO NEGADO: Usuário regular com plano Free")
+            print(f" ACESSO NEGADO: Usuário regular com plano Free")
             return False
             
         # 🔥 REGRA 2: Se é trial Community (4), verificar se não expirou
         if user_type == 'trial' and plan_id == 4:
             if plan_expires_at and plan_expires_at < datetime.now(timezone.utc):
-                print(f"❌ ACESSO NEGADO: Trial expirado em {plan_expires_at}")
+                print(f" ACESSO NEGADO: Trial expirado em {plan_expires_at}")
                 return False
             else:
-                print(f"✅ ACESSO LIBERADO: Trial Community válido até {plan_expires_at}")
+                print(f" ACESSO LIBERADO: Trial Community válido até {plan_expires_at}")
                 return True
         
         # 🔥 REGRA 3: Para usuários pagantes, verificar plano
         if user_type in ['regular', 'pro', 'premium']:
             has_access = plan_id in [1, 2]  # Pro ou Premium
-            print(f"{'✅' if has_access else '❌'} ACESSO {'LIBERADO' if has_access else 'NEGADO'}: Usuário pagante com plan_id={plan_id}")
+            print(f"{'' if has_access else ''} ACESSO {'LIBERADO' if has_access else 'NEGADO'}: Usuário pagante com plan_id={plan_id}")
             return has_access
             
         # 🔥 REGRA 4: Admin sempre tem acesso
         if user_type in ['admin', 'master']:
-            print(f"✅ ACESSO LIBERADO: Usuário admin")
+            print(f" ACESSO LIBERADO: Usuário admin")
             return True
         
-        print(f"❌ ACESSO NEGADO: Caso não coberto - user_type={user_type}, plan_id={plan_id}")
+        print(f" ACESSO NEGADO: Caso não coberto - user_type={user_type}, plan_id={plan_id}")
         return False
         
     except Exception as e:
-        print(f"❌ Erro na verificação Pro: {e}")
+        print(f" Erro na verificação Pro: {e}")
         import traceback
         traceback.print_exc()
         return False
@@ -597,14 +597,14 @@ def send_trial_expiring_email(user_info, days_remaining):
         
         if success:
             increment_email_counter(user_email, 'trial')
-            print(f"✅ Email enviado: {user_email} ({days_remaining} dias)")
+            print(f" Email enviado: {user_email} ({days_remaining} dias)")
             return True
         else:
-            print(f"❌ Falha no envio: {user_email}")
+            print(f" Falha no envio: {user_email}")
             return False
         
     except Exception as e:
-        print(f"❌ Erro: {e}")
+        print(f" Erro: {e}")
         return False
 
 def send_trial_expiring_warnings():
@@ -683,7 +683,7 @@ def manually_remove_expired_trials():
         
         if result['success']:
             processed_count = result['processed_count']
-            print(f"✅ Processamento concluído: {processed_count} usuários movidos para Free")
+            print(f" Processamento concluído: {processed_count} usuários movidos para Free")
             
             if processed_count > 0:
                 downgraded_users = result.get('downgraded_users', [])
@@ -693,12 +693,12 @@ def manually_remove_expired_trials():
             
             return result
         else:
-            print(f"❌ Erro no processamento: {result['error']}")
+            print(f" Erro no processamento: {result['error']}")
             return result
             
     except Exception as e:
         error_msg = f"Erro no processamento manual: {str(e)}"
-        print(f"❌ {error_msg}")
+        print(f" {error_msg}")
         return {'success': False, 'error': error_msg}
 
 # ===== TESTE MANUAL =====
@@ -721,4 +721,4 @@ if __name__ == "__main__":
         for user in users['trial_users'][:5]:  # Mostrar apenas 5
             print(f"   - {user['name']}: {user['status_text']}")
     
-    print("\n🔧 Para executar processamento manual: manually_remove_expired_trials()")
+    print("\nPara executar processamento manual: manually_remove_expired_trials()")

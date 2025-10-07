@@ -164,7 +164,7 @@ class CarrosselYFinanceService:
             # Estatísticas do mercado
             market_stats = CarrosselYFinanceService.calculate_market_stats(successful_stocks)
             
-            logger.info(f"✅ Carrossel: {len(successful_stocks)} ações carregadas, {len(failed_stocks)} falharam")
+            logger.info(f" Carrossel: {len(successful_stocks)} ações carregadas, {len(failed_stocks)} falharam")
             
             return {
                 'success': True,
@@ -179,7 +179,7 @@ class CarrosselYFinanceService:
             }
             
         except Exception as e:
-            logger.error(f"❌ Erro no serviço do carrossel: {e}")
+            logger.error(f" Erro no serviço do carrossel: {e}")
             return {
                 'success': False,
                 'error': str(e),
@@ -242,10 +242,10 @@ if __name__ == "__main__":
     print("\n1️⃣ Teste: Uma ação específica (PETR4)")
     result = CarrosselYFinanceService.get_stock_by_symbol('PETR4')
     if result:
-        print(f"✅ {result['name']} ({result['symbol']})")
+        print(f" {result['name']} ({result['symbol']})")
         print(f"💰 Preço: R$ {result['price']} ({result['change_percent']:+.2f}%)")
     else:
-        print("❌ Falha ao buscar PETR4")
+        print(" Falha ao buscar PETR4")
     
     # Teste 2: Dados completos do carrossel
     print("\n2️⃣ Teste: Dados completos do carrossel")
@@ -253,7 +253,7 @@ if __name__ == "__main__":
     
     if carrossel_data['success']:
         data = carrossel_data['data']
-        print(f"✅ {data['total_stocks']} ações carregadas")
+        print(f" {data['total_stocks']} ações carregadas")
         print(f" Mercado: {data['market_stats']['positive']} ↗️  {data['market_stats']['negative']} ↘️")
         print(f"⏰ Última atualização: {data['last_update']}")
         
@@ -263,6 +263,6 @@ if __name__ == "__main__":
             status = "" if stock['change_percent'] > 0 else "" if stock['change_percent'] < 0 else "➡️"
             print(f"   {status} {stock['symbol']}: R$ {stock['price']} ({stock['change_percent']:+.2f}%)")
     else:
-        print(f"❌ Erro: {carrossel_data['error']}")
+        print(f" Erro: {carrossel_data['error']}")
     
     print("\n🎉 Testes concluídos!")

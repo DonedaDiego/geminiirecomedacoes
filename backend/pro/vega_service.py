@@ -465,7 +465,8 @@ class VEXAnalyzer:
         self.vex_calculator = VEXCalculator()
         self.vol_detector = VolatilityRegimeDetector()
     
-    def create_6_charts(self, vex_df, spot_price, symbol, expiration_info=None):
+    def create_6_charts(self, vex_df, spot_price, symbol, vol_zones=None, expiration_info=None):
+
         """Cria os 6 gráficos VEX com contexto histórico"""
         if vex_df.empty:
             return None
@@ -569,11 +570,24 @@ class VEXAnalyzer:
         risk_colors = ['#ef4444' if x > 20 else '#f97316' if x > 10 else '#22c55e' for x in concentration_pct]
         fig.add_trace(go.Bar(x=strikes, y=concentration_pct, marker_color=risk_colors, showlegend=False), row=3, col=2)
         
+        
+        
         # Linhas de referência
         for row in range(1, 4):
             for col in range(1, 3):
+                # Linha do spot (amarela)
                 fig.add_vline(x=spot_price, line=dict(color='#fbbf24', width=2, dash='dash'), row=row, col=col)
-                if not (row == 2 and col == 1):  # Não adiciona linha zero no gráfico de IV
+                
+                # ADICIONAR: Linha de máximo VEX (roxa)
+                if vol_zones and vol_zones.get('max_vex_strike'):
+                    fig.add_vline(x=vol_zones['max_vex_strike'], line=dict(color='#9333ea', width=2, dash='dot'), row=row, col=col)
+                
+                # ADICIONAR: Linha de máxima IV (laranja) - só no gráfico de IV
+                if vol_zones and vol_zones.get('max_iv_strike') and row == 2 and col == 1:
+                    fig.add_vline(x=vol_zones['max_iv_strike'], line=dict(color='#f97316', width=2, dash='dot'), row=row, col=col)
+                
+                # Linha zero (exceto no gráfico de IV)
+                if not (row == 2 and col == 1):
                     fig.add_hline(y=0, line=dict(color='rgba(255,255,255,0.3)', width=1), row=row, col=col)
         
         fig.update_layout(
@@ -623,13 +637,18 @@ class VEXAnalyzer:
         
         # NOVO: Adicionar estatísticas de contexto
         vol_regime['iv_context'] = self._analyze_iv_context(vex_df)
+
+        # ADICIONAR ESTAS 2 LINHAS:
+        vol_zones = self.find_volatility_zones(vex_df, spot_price)
+
+        plot_json = self.create_6_charts(vex_df, spot_price, symbol, vol_zones, expiration_info)
         
-        plot_json = self.create_6_charts(vex_df, spot_price, symbol, expiration_info)
         
         return {
             'symbol': symbol,
             'spot_price': spot_price,
             'vol_regime': vol_regime,
+            'vol_zones': vol_zones,  # ADICIONAR ESTA LINHA
             'strikes_analyzed': len(vex_df),
             'expiration': expiration_info,
             'plot_json': plot_json,
@@ -658,6 +677,31 @@ class VEXAnalyzer:
             'iv_trend': iv_trend,
             'iv_distortion_pct': float((current_avg - historical_avg) / historical_avg * 100)
         }
+
+    def find_volatility_zones(self, vex_df, spot_price):
+        """Encontra zonas de máxima sensibilidade à volatilidade"""
+        if vex_df.empty:
+            return None
+        
+        # FILTRAR APENAS DADOS REAIS DO FLOQUI (igual fizemos no GEX)
+        vex_real = vex_df[vex_df['has_real_data'] == True].copy()
+        
+        if len(vex_real) < 2:
+            return None
+        
+        # MAIOR VEX DESCOBERTO
+        max_vex_idx = vex_real['total_vex_descoberto'].idxmax()
+        max_vex_strike = float(vex_real.loc[max_vex_idx, 'strike'])
+        
+        # MAIOR IV
+        max_iv_idx = vex_real['implied_volatility'].idxmax()
+        max_iv_strike = float(vex_real.loc[max_iv_idx, 'strike'])
+        
+        return {
+            'max_vex_strike': max_vex_strike,
+            'max_iv_strike': max_iv_strike
+        }
+
 
 class VegaService:
     def __init__(self):

@@ -361,7 +361,7 @@ def get_bandas_pro_blueprint():
         🟡 LINHA CENTRAL ({bands['linha_central']:.2f})
         → Preço equilibrado calculado pelo modelo
 
-        🔴 RESISTÊNCIAS:
+         RESISTÊNCIAS:
         → R2σ: {bands['resistencia_2sigma']:.2f} (Resistência Primária)
         → R4σ: {bands['resistencia_4sigma']:.2f} (Resistência Extrema)
 

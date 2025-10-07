@@ -47,7 +47,7 @@ def get_db_connection():
                 import time
                 time.sleep(1)
             else:
-                print(f"❌ Todas as tentativas falharam: {e}")
+                print(f" Todas as tentativas falharam: {e}")
                 return None
     
     return None
@@ -128,7 +128,7 @@ def detect_table_structure():
         return structure
         
     except Exception as e:
-        print(f"❌ Erro ao detectar estrutura: {e}")
+        print(f" Erro ao detectar estrutura: {e}")
         return None
 
 # ===== SETUP DA TABELA =====
@@ -167,7 +167,7 @@ def setup_coupons_table():
                     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             """)
-            print("✅ Tabela coupons criada")
+            print(" Tabela coupons criada")
         
         # Criar tabela de usos
         cursor.execute("""
@@ -198,11 +198,11 @@ def setup_coupons_table():
         cursor.close()
         conn.close()
         
-        print("✅ Tabela de cupons configurada")
+        print(" Tabela de cupons configurada")
         return True
         
     except Exception as e:
-        print(f"❌ Erro ao configurar tabela: {e}")
+        print(f" Erro ao configurar tabela: {e}")
         return False
 
 # ===== ROTAS =====
@@ -280,7 +280,7 @@ def get_coupons():
         })
         
     except Exception as e:
-        print(f"❌ Erro ao listar cupons: {e}")
+        print(f" Erro ao listar cupons: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @coupons_bp.route('/coupons', methods=['POST'])
@@ -377,7 +377,7 @@ def create_coupon():
         })
         
     except Exception as e:
-        print(f"❌ Erro ao criar cupom: {e}")
+        print(f" Erro ao criar cupom: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @coupons_bp.route('/coupons/<coupon_code>/toggle', methods=['PATCH'])
@@ -437,7 +437,7 @@ def toggle_coupon(coupon_code):
         })
         
     except Exception as e:
-        print(f"❌ Erro ao alterar cupom: {e}")
+        print(f" Erro ao alterar cupom: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @coupons_bp.route('/coupons/<coupon_code>', methods=['DELETE'])
@@ -471,7 +471,7 @@ def delete_coupon(coupon_code):
         })
         
     except Exception as e:
-        print(f"❌ Erro ao deletar cupom: {e}")
+        print(f" Erro ao deletar cupom: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
 # ===== VALIDAÇÃO PARA FRONTEND =====
@@ -575,7 +575,7 @@ def validate_coupon_public(coupon_code):
         })
         
     except Exception as e:
-        print(f"❌ Erro ao validar cupom: {e}")
+        print(f" Erro ao validar cupom: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
 # ===== APLICAR USO DO CUPOM =====
@@ -652,7 +652,7 @@ def use_coupon():
         cursor.close()
         conn.close()
         
-        print(f"✅ Cupom {coupon_code} usado com sucesso por usuário {user_id}")
+        print(f" Cupom {coupon_code} usado com sucesso por usuário {user_id}")
         
         return jsonify({
             'success': True,
@@ -661,7 +661,7 @@ def use_coupon():
         })
         
     except Exception as e:
-        print(f"❌ Erro ao aplicar cupom: {e}")
+        print(f" Erro ao aplicar cupom: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
 # ===== ROTA PARA FRONTEND VALIDAR (COMPATIBILIDADE) =====
@@ -680,7 +680,7 @@ def validate_coupon_frontend():
         return validate_coupon_public(coupon_code)
         
     except Exception as e:
-        print(f"❌ Erro na validação do frontend: {e}")
+        print(f" Erro na validação do frontend: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
 # ===== INICIALIZAÇÃO =====
@@ -689,10 +689,10 @@ def init_coupons_service():
     print("🎫 Inicializando serviço de cupons...")
     
     if setup_coupons_table():
-        print("✅ Serviço de cupons inicializado!")
+        print(" Serviço de cupons inicializado!")
         return True
     else:
-        print("❌ Falha na inicialização")
+        print(" Falha na inicialização")
         return False
 
 # ===== EXPORT =====
@@ -813,7 +813,7 @@ def validate_coupon_main():
         })
         
     except Exception as e:
-        print(f"❌ Erro ao validar cupom: {e}")
+        print(f" Erro ao validar cupom: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
 def get_validate_blueprint():

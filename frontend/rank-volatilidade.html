@@ -306,7 +306,7 @@
                     
                     <!-- Exemplo Venda -->
                     <div>
-                      <h5 class="text-red-400 font-bold mb-3">🔴 Oportunidade de Venda</h5>
+                      <h5 class="text-red-400 font-bold mb-3"> Oportunidade de Venda</h5>
                       <div class="bg-black/30 rounded p-4">
                         <p class="text-white text-sm font-medium mb-2">PETR4</p>
                         <p class="text-gray-400 text-xs">• IV Atual: 65%</p>
@@ -557,10 +557,10 @@
         let allData = null;
         if (apiData.all_stocks) {
           allData = apiData.all_stocks;
-          debug('✅ Usando todos os dados de all_stocks');
+          debug(' Usando todos os dados de all_stocks');
         } else if (apiData.rankings && apiData.rankings.iv_atual) {
           allData = apiData.rankings.iv_atual;
-          debug('✅ Usando dados de rankings.iv_atual');
+          debug(' Usando dados de rankings.iv_atual');
         } else {
           throw new Error('Estrutura de dados não reconhecida');
         }
@@ -574,8 +574,8 @@
         stocksDataHigh = processedData.high;
         stocksDataLow = processedData.low;
         
-        debug(`✅ ${stocksDataHigh.length} ações com IV alta processadas`);
-        debug(`✅ ${stocksDataLow.length} ações com IV baixa processadas`);
+        debug(` ${stocksDataHigh.length} ações com IV alta processadas`);
+        debug(` ${stocksDataLow.length} ações com IV baixa processadas`);
         
         // Renderizar gráficos
         renderAllCharts();
@@ -583,7 +583,7 @@
         updateButtonState(false);
         
       } catch (error) {
-        debug(`❌ Erro: ${error.message}`);
+        debug(` Erro: ${error.message}`);
         showError(error.message);
         updateButtonState(false);
       }
@@ -600,7 +600,7 @@
     
     // Processar dados para alta e baixa volatilidade
     function processAllStocksData(data) {
-      debug('🔧 Processando dados para alta e baixa IV...');
+      debug('Processando dados para alta e baixa IV...');
       
       // Filtrar apenas ações com opções (como Python)
       const filtered = data.filter(stock => {
@@ -676,9 +676,9 @@
         renderChart7(); // Percentil IV 6M - Baixa
         renderChart8(); // IV vs Volume - Baixa
         
-        debug('✅ Todos os gráficos renderizados');
+        debug(' Todos os gráficos renderizados');
       } catch (error) {
-        debug(`❌ Erro na renderização: ${error.message}`);
+        debug(` Erro na renderização: ${error.message}`);
       }
     }
     
@@ -725,10 +725,10 @@
         };
         
         Plotly.newPlot('chart1', [trace], layout, {responsive: true, displayModeBar: false});
-        debug('✅ Chart1 (IV Alta) renderizado');
+        debug(' Chart1 (IV Alta) renderizado');
       } catch (error) {
-        debug(`❌ Erro Chart1: ${error.message}`);
-        document.getElementById('chart1').innerHTML = '<div class="loading" style="color: #ff6b6b;">❌ Erro no gráfico 1</div>';
+        debug(` Erro Chart1: ${error.message}`);
+        document.getElementById('chart1').innerHTML = '<div class="loading" style="color: #ff6b6b;"> Erro no gráfico 1</div>';
       }
     }
     
@@ -786,10 +786,10 @@
         };
         
         Plotly.newPlot('chart2', [trace1, trace2], layout, {responsive: true, displayModeBar: false});
-        debug('✅ Chart2 (IV Alta) renderizado');
+        debug(' Chart2 (IV Alta) renderizado');
       } catch (error) {
-        debug(`❌ Erro Chart2: ${error.message}`);
-        document.getElementById('chart2').innerHTML = '<div class="loading" style="color: #ff6b6b;">❌ Erro no gráfico 2</div>';
+        debug(` Erro Chart2: ${error.message}`);
+        document.getElementById('chart2').innerHTML = '<div class="loading" style="color: #ff6b6b;"> Erro no gráfico 2</div>';
       }
     }
     
@@ -848,10 +848,10 @@
         };
         
         Plotly.newPlot('chart3', [trace], layout, {responsive: true, displayModeBar: false});
-        debug('✅ Chart3 (IV Alta) renderizado');
+        debug(' Chart3 (IV Alta) renderizado');
       } catch (error) {
-        debug(`❌ Erro Chart3: ${error.message}`);
-        document.getElementById('chart3').innerHTML = '<div class="loading" style="color: #ff6b6b;">❌ Erro no gráfico 3</div>';
+        debug(` Erro Chart3: ${error.message}`);
+        document.getElementById('chart3').innerHTML = '<div class="loading" style="color: #ff6b6b;"> Erro no gráfico 3</div>';
       }
     }
     
@@ -900,10 +900,10 @@
         };
         
         Plotly.newPlot('chart4', [trace], layout, {responsive: true, displayModeBar: false});
-        debug('✅ Chart4 (IV Alta) renderizado');
+        debug(' Chart4 (IV Alta) renderizado');
       } catch (error) {
-        debug(`❌ Erro Chart4: ${error.message}`);
-        document.getElementById('chart4').innerHTML = '<div class="loading" style="color: #ff6b6b;">❌ Erro no gráfico 4</div>';
+        debug(` Erro Chart4: ${error.message}`);
+        document.getElementById('chart4').innerHTML = '<div class="loading" style="color: #ff6b6b;"> Erro no gráfico 4</div>';
       }
     }
     
@@ -950,10 +950,10 @@
         };
         
         Plotly.newPlot('chart5', [trace], layout, {responsive: true, displayModeBar: false});
-        debug('✅ Chart5 (IV Baixa) renderizado');
+        debug(' Chart5 (IV Baixa) renderizado');
       } catch (error) {
-        debug(`❌ Erro Chart5: ${error.message}`);
-        document.getElementById('chart5').innerHTML = '<div class="loading" style="color: #ff6b6b;">❌ Erro no gráfico 5</div>';
+        debug(` Erro Chart5: ${error.message}`);
+        document.getElementById('chart5').innerHTML = '<div class="loading" style="color: #ff6b6b;"> Erro no gráfico 5</div>';
       }
     }
     
@@ -1011,10 +1011,10 @@
         };
         
         Plotly.newPlot('chart6', [trace1, trace2], layout, {responsive: true, displayModeBar: false});
-        debug('✅ Chart6 (IV Baixa) renderizado');
+        debug(' Chart6 (IV Baixa) renderizado');
       } catch (error) {
-        debug(`❌ Erro Chart6: ${error.message}`);
-        document.getElementById('chart6').innerHTML = '<div class="loading" style="color: #ff6b6b;">❌ Erro no gráfico 6</div>';
+        debug(` Erro Chart6: ${error.message}`);
+        document.getElementById('chart6').innerHTML = '<div class="loading" style="color: #ff6b6b;"> Erro no gráfico 6</div>';
       }
     }
     
@@ -1073,10 +1073,10 @@
         };
         
         Plotly.newPlot('chart7', [trace], layout, {responsive: true, displayModeBar: false});
-        debug('✅ Chart7 (IV Baixa) renderizado');
+        debug(' Chart7 (IV Baixa) renderizado');
       } catch (error) {
-        debug(`❌ Erro Chart7: ${error.message}`);
-        document.getElementById('chart7').innerHTML = '<div class="loading" style="color: #ff6b6b;">❌ Erro no gráfico 7</div>';
+        debug(` Erro Chart7: ${error.message}`);
+        document.getElementById('chart7').innerHTML = '<div class="loading" style="color: #ff6b6b;"> Erro no gráfico 7</div>';
       }
     }
     
@@ -1125,10 +1125,10 @@
         };
         
         Plotly.newPlot('chart8', [trace], layout, {responsive: true, displayModeBar: false});
-        debug('✅ Chart8 (IV Baixa) renderizado');
+        debug(' Chart8 (IV Baixa) renderizado');
       } catch (error) {
-        debug(`❌ Erro Chart8: ${error.message}`);
-        document.getElementById('chart8').innerHTML = '<div class="loading" style="color: #ff6b6b;">❌ Erro no gráfico 8</div>';
+        debug(` Erro Chart8: ${error.message}`);
+        document.getElementById('chart8').innerHTML = '<div class="loading" style="color: #ff6b6b;"> Erro no gráfico 8</div>';
       }
     }
     
@@ -1154,7 +1154,7 @@
     // Mostrar erro
     function showError(message) {
       ['chart1', 'chart2', 'chart3', 'chart4', 'chart5', 'chart6', 'chart7', 'chart8'].forEach(id => {
-        document.getElementById(id).innerHTML = `<div class="loading" style="color: #ff6b6b;">❌ ${message}</div>`;
+        document.getElementById(id).innerHTML = `<div class="loading" style="color: #ff6b6b;"> ${message}</div>`;
       });
     }
     
@@ -1167,12 +1167,12 @@
         const statusEl = document.getElementById('apiStatus');
         if (data.status === 'OK') {
           statusEl.className = 'w-8 h-8 bg-green-500 bg-opacity-10 border border-green-500 border-opacity-30 rounded-full flex items-center justify-center relative';
-          debug('✅ API funcionando: ' + data.message);
+          debug(' API funcionando: ' + data.message);
         } else {
           statusEl.className = 'w-8 h-8 bg-red-500 bg-opacity-10 border border-red-500 border-opacity-30 rounded-full flex items-center justify-center relative';
         }
       } catch (error) {
-        debug('❌ Erro API: ' + error.message);
+        debug(' Erro API: ' + error.message);
         const statusEl = document.getElementById('apiStatus');
         statusEl.className = 'w-8 h-8 bg-red-500 bg-opacity-10 border border-red-500 border-opacity-30 rounded-full flex items-center justify-center relative';
       }

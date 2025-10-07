@@ -31,16 +31,16 @@ def token_required(f):
                     continue
             
             if not decoded_data:
-                print(f"❌ Token não pôde ser decodificado com nenhuma das chaves: {JWT_KEYS_TO_TRY}")
+                print(f" Token não pôde ser decodificado com nenhuma das chaves: {JWT_KEYS_TO_TRY}")
                 return jsonify({'success': False, 'message': 'Token inválido'}), 401
             
-            print(f"✅ Token decodificado com sucesso usando chave: {successful_key}")
+            print(f" Token decodificado com sucesso usando chave: {successful_key}")
             current_user_id = decoded_data['user_id']
             
         except jwt.ExpiredSignatureError:
             return jsonify({'success': False, 'message': 'Token expirado'}), 401
         except Exception as e:
-            print(f"❌ Erro geral na autenticação: {e}")
+            print(f" Erro geral na autenticação: {e}")
             return jsonify({'success': False, 'message': 'Erro de autenticação'}), 401
         
         return f(current_user_id, *args, **kwargs)
@@ -63,7 +63,7 @@ def hunter_walls_analysis(current_user_id):
         
         print(f" Hunter Walls - Usuário: {current_user_id}, Ticker: {ticker}")
         
-        # ✅ VERIFICAR PLANO DO USUÁRIO - CORRIGIDO
+        #  VERIFICAR PLANO DO USUÁRIO - CORRIGIDO
         conn = get_db_connection()
         if not conn:
             return jsonify({'success': False, 'message': 'Erro de conexão com banco'}), 500
@@ -87,7 +87,7 @@ def hunter_walls_analysis(current_user_id):
         
         print(f"👤 Usuário verificado - Plan ID: {plan_id}, User Type: {user_type}, Plan Name: {plan_name}")
         
-        # ✅ LÓGICA DE ACESSO CORRIGIDA
+        #  LÓGICA DE ACESSO CORRIGIDA
         allowed_plans = [3, 4]  # Free (3) e Community (4)
         allowed_user_types = ['trial', 'paid', 'free', 'admin', 'master']
         
@@ -100,9 +100,9 @@ def hunter_walls_analysis(current_user_id):
         print(f"   - User type válido: {has_valid_user_type} (user_type '{user_type}' in {allowed_user_types})")
         print(f"   - É admin: {is_admin}")
         
-        # ✅ PERMITIR ACESSO SE QUALQUER CONDIÇÃO FOR VERDADEIRA
+        #  PERMITIR ACESSO SE QUALQUER CONDIÇÃO FOR VERDADEIRA
         if not (has_valid_plan or has_valid_user_type or is_admin):
-            print(f"❌ ACESSO NEGADO - Plan ID: {plan_id}, User Type: {user_type}")
+            print(f" ACESSO NEGADO - Plan ID: {plan_id}, User Type: {user_type}")
             return jsonify({
                 'success': False, 
                 'message': 'Recurso disponível apenas para planos Community ou superior',
@@ -115,9 +115,9 @@ def hunter_walls_analysis(current_user_id):
                 }
             }), 403
         
-        print(f"✅ ACESSO LIBERADO para usuário {current_user_id}")
+        print(f" ACESSO LIBERADO para usuário {current_user_id}")
         
-        # ✅ EXECUTAR ANÁLISE
+        #  EXECUTAR ANÁLISE
         try:
             opcoes_service = OpcoesService()
             print(f" Iniciando análise Hunter Walls...")
@@ -125,13 +125,13 @@ def hunter_walls_analysis(current_user_id):
             resultado = opcoes_service.hunter_walls_analysis(ticker, grupos_vencimentos)
             
             if not resultado:
-                print(f"❌ Análise retornou vazio para {ticker}")
+                print(f" Análise retornou vazio para {ticker}")
                 return jsonify({
                     'success': False, 
                     'message': f'Não foi possível obter dados para {ticker}. Verifique se o ticker está correto e tem opções disponíveis.'
                 }), 404
             
-            print(f"✅ Análise concluída com sucesso para {ticker}")
+            print(f" Análise concluída com sucesso para {ticker}")
             
             return jsonify({
                 'success': True,
@@ -144,14 +144,14 @@ def hunter_walls_analysis(current_user_id):
             })
             
         except Exception as analysis_error:
-            print(f"❌ Erro na análise do OpcoesService: {analysis_error}")
+            print(f" Erro na análise do OpcoesService: {analysis_error}")
             return jsonify({
                 'success': False, 
                 'message': f'Erro ao processar análise: {str(analysis_error)}'
             }), 500
         
     except Exception as e:
-        print(f"❌ Erro geral em hunter_walls_analysis: {str(e)}")
+        print(f" Erro geral em hunter_walls_analysis: {str(e)}")
         import traceback
         traceback.print_exc()
         return jsonify({
@@ -176,7 +176,7 @@ def volume_historico_analysis(current_user_id):
         
         print(f" Volume Histórico - Usuário: {current_user_id}, Ticker: {ticker}")
         
-        # ✅ MESMA VERIFICAÇÃO DE ACESSO DO HUNTER WALLS
+        #  MESMA VERIFICAÇÃO DE ACESSO DO HUNTER WALLS
         conn = get_db_connection()
         if not conn:
             return jsonify({'success': False, 'message': 'Erro de conexão com banco'}), 500
@@ -198,7 +198,7 @@ def volume_historico_analysis(current_user_id):
         
         plan_id, user_type, plan_name = user
         
-        # ✅ LÓGICA DE ACESSO IGUAL AO HUNTER WALLS
+        #  LÓGICA DE ACESSO IGUAL AO HUNTER WALLS
         allowed_plans = [3, 4]  # Free (3) e Community (4)
         allowed_user_types = ['trial', 'paid', 'free', 'admin', 'master']
         
@@ -213,7 +213,7 @@ def volume_historico_analysis(current_user_id):
                 'upgrade_required': True
             }), 403
         
-        # ✅ EXECUTAR ANÁLISE HISTÓRICA
+        #  EXECUTAR ANÁLISE HISTÓRICA
         try:
             opcoes_service = OpcoesService()
             resultado = opcoes_service.volume_historico_analysis(ticker)
@@ -230,14 +230,14 @@ def volume_historico_analysis(current_user_id):
             })
             
         except Exception as analysis_error:
-            print(f"❌ Erro na análise histórica: {analysis_error}")
+            print(f" Erro na análise histórica: {analysis_error}")
             return jsonify({
                 'success': False, 
                 'message': f'Erro ao processar análise histórica: {str(analysis_error)}'
             }), 500
         
     except Exception as e:
-        print(f"❌ Erro geral em volume_historico_analysis: {str(e)}")
+        print(f" Erro geral em volume_historico_analysis: {str(e)}")
         return jsonify({
             'success': False, 
             'message': 'Erro interno do servidor'
@@ -308,14 +308,14 @@ def strike_detalhado_analysis(current_user_id):
             })
             
         except Exception as analysis_error:
-            print(f"❌ Erro na análise do strike: {analysis_error}")
+            print(f" Erro na análise do strike: {analysis_error}")
             return jsonify({
                 'success': False, 
                 'message': f'Erro ao analisar strike: {str(analysis_error)}'
             }), 500
         
     except Exception as e:
-        print(f"❌ Erro geral em strike_detalhado_analysis: {str(e)}")
+        print(f" Erro geral em strike_detalhado_analysis: {str(e)}")
         return jsonify({
             'success': False, 
             'message': 'Erro interno do servidor'

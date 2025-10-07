@@ -950,17 +950,17 @@
       };
       
       if (!data.name || data.name.length < 2) {
-        alert('❌ Nome deve ter pelo menos 2 caracteres');
+        alert(' Nome deve ter pelo menos 2 caracteres');
         return;
       }
       
       if (!data.email || !data.email.includes('@')) {
-        alert('❌ E-mail inválido');
+        alert(' E-mail inválido');
         return;
       }
       
       if (!data.source) {
-        alert('❌ Selecione onde nos conheceu');
+        alert(' Selecione onde nos conheceu');
         return;
       }
       
@@ -987,14 +987,14 @@
           }, 1500);
           
         } else {
-          alert(`❌ ${result.error}`);
+          alert(` ${result.error}`);
           submitBtn.innerHTML = originalText;
           submitBtn.disabled = false;
         }
         
       } catch (error) {
         console.error('Erro newsletter:', error);
-        alert('❌ Erro de conexão. Tente novamente.');
+        alert(' Erro de conexão. Tente novamente.');
         submitBtn.innerHTML = originalText;
         submitBtn.disabled = false;
       }

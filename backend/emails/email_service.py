@@ -35,7 +35,7 @@ class EmailService:
         
             # NOVO: Validar campos obrigatórios
             if not to_email or not subject or not html_content:
-                print(f"❌ Email inválido: campos obrigatórios em branco")
+                print(f" Email inválido: campos obrigatórios em branco")
                 return False
                 
             # 🔥 CRIAR MENSAGEM COM HEADERS ANTI-SPAM
@@ -83,24 +83,24 @@ class EmailService:
                 server.login(self.smtp_username, self.smtp_password)
                 server.send_message(msg)
             
-            print(f"✅ Email enviado com sucesso!")
+            print(f" Email enviado com sucesso!")
             return True
             
         except smtplib.SMTPAuthenticationError as e:
-            print(f"❌ Erro de autenticação SMTP: {e}")
+            print(f" Erro de autenticação SMTP: {e}")
             return False
         except smtplib.SMTPRecipientsRefused as e:
-            print(f"❌ Destinatário recusado: {e}")
+            print(f" Destinatário recusado: {e}")
             return False
         except smtplib.SMTPServerDisconnected as e:
-            print(f"❌ Servidor desconectado: {e}")
+            print(f" Servidor desconectado: {e}")
             return False
         except Exception as e:
-            print(f"❌ Erro ao enviar email: {e}")
+            print(f" Erro ao enviar email: {e}")
             return False
 
     def html_to_text(self, html_content):
-        """🔧 Converter HTML para texto simples (anti-spam)"""
+        """Converter HTML para texto simples (anti-spam)"""
         try:
             import re
             
@@ -121,7 +121,7 @@ class EmailService:
             return text
             
         except Exception as e:
-            print(f"❌ Erro ao converter HTML para texto: {e}")
+            print(f" Erro ao converter HTML para texto: {e}")
             return "Versão texto do email não disponível."
 
     def create_professional_email_template(self, content_data):
@@ -552,7 +552,7 @@ class EmailService:
         return html_template.strip()
 
     def setup_tables(self):
-        """🔧 Criar tabelas necessárias"""
+        """Criar tabelas necessárias"""
         try:
             conn = get_db_connection()
             if not conn:
@@ -560,7 +560,7 @@ class EmailService:
                 
             cursor = conn.cursor()
             
-            print("🔧 Configurando tabelas de email...")
+            print("Configurando tabelas de email...")
             
             # 1. Adicionar campos na tabela users
             try:
@@ -569,7 +569,7 @@ class EmailService:
                     ADD COLUMN IF NOT EXISTS email_confirmed BOOLEAN DEFAULT FALSE,
                     ADD COLUMN IF NOT EXISTS email_confirmed_at TIMESTAMP DEFAULT NULL
                 """)
-                print("✅ Campos adicionados na tabela users")
+                print(" Campos adicionados na tabela users")
             except Exception as e:
                 print(f"⚠️ Erro ao adicionar campos users: {e}")
             
@@ -603,7 +603,7 @@ class EmailService:
                         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                     )
                 """)
-                print("✅ Tabela password_reset_tokens criada")
+                print(" Tabela password_reset_tokens criada")
             except Exception as e:
                 print(f"⚠️ Erro ao criar password_reset_tokens: {e}")
             
@@ -615,7 +615,7 @@ class EmailService:
                     WHERE email_confirmed IS NULL AND created_at < NOW() - INTERVAL '1 day'
                 """)
                 updated = cursor.rowcount
-                print(f"✅ {updated} usuários antigos marcados como confirmados")
+                print(f" {updated} usuários antigos marcados como confirmados")
             except Exception as e:
                 print(f"⚠️ Erro ao confirmar usuários: {e}")
             
@@ -624,7 +624,7 @@ class EmailService:
                 cursor.execute("CREATE INDEX IF NOT EXISTS idx_email_confirmations_token ON email_confirmations(token)")
                 cursor.execute("CREATE INDEX IF NOT EXISTS idx_password_reset_token ON password_reset_tokens(token)")
                 cursor.execute("CREATE INDEX IF NOT EXISTS idx_users_email_confirmed ON users(email_confirmed)")
-                print("✅ Índices criados")
+                print(" Índices criados")
             except Exception as e:
                 print(f"⚠️ Erro ao criar índices: {e}")
             
@@ -635,7 +635,7 @@ class EmailService:
             return True
             
         except Exception as e:
-            print(f"❌ Erro na configuração de tabelas: {e}")
+            print(f" Erro na configuração de tabelas: {e}")
             return False
 
     # ===== MÉTODOS DE CONFIRMAÇÃO DE EMAIL =====
@@ -672,7 +672,7 @@ class EmailService:
             return {'success': True, 'token': token}
             
         except Exception as e:
-            print(f"❌ Erro ao gerar token de confirmação: {e}")
+            print(f" Erro ao gerar token de confirmação: {e}")
             return {'success': False, 'error': str(e)}
 
     def send_confirmation_email(self, user_name, email, token):
@@ -685,7 +685,7 @@ class EmailService:
             'main_message': f'Bem-vindo à Geminii Tech! Para ativar sua conta e começar a usar nossa plataforma, confirme seu email clicando no botão abaixo.',
             'user_name': user_name,
             'urgency_color': '#10b981',
-            'button_text': '✅ Confirmar Email',
+            'button_text': ' Confirmar Email',
             'button_url': f"{self.base_url}/auth/confirm-email?token={token}",
             'details': [
                 {'label': 'Email', 'value': email},
@@ -719,7 +719,7 @@ Dúvidas? Entre em contato: contato@geminii.com.br
         return self.send_email(email, "Confirme seu email - Geminii Tech", html_content, text_content)
 
     def confirm_email_token(self, token):
-        """✅ Confirmar email com token"""
+        """ Confirmar email com token"""
         try:
             conn = get_db_connection()
             if not conn:
@@ -781,7 +781,7 @@ Dúvidas? Entre em contato: contato@geminii.com.br
             cursor.close()
             conn.close()
             
-            print(f"✅ Email confirmado: {user_name} ({email})")
+            print(f" Email confirmado: {user_name} ({email})")
             
             return {
                 'success': True,
@@ -791,7 +791,7 @@ Dúvidas? Entre em contato: contato@geminii.com.br
             }
             
         except Exception as e:
-            print(f"❌ Erro ao confirmar email: {e}")
+            print(f" Erro ao confirmar email: {e}")
             return {'success': False, 'error': str(e)}
 
     # ===== MÉTODOS DE RESET DE SENHA =====
@@ -851,7 +851,7 @@ Dúvidas? Entre em contato: contato@geminii.com.br
             }
             
         except Exception as e:
-            print(f"❌ Erro ao gerar token de reset: {e}")
+            print(f" Erro ao gerar token de reset: {e}")
             return {'success': False, 'error': str(e)}
 
     def send_password_reset_email(self, user_name, email, token):
@@ -937,7 +937,7 @@ Dúvidas? Entre em contato: contato@geminii.com.br
             }
             
         except Exception as e:
-            print(f"❌ Erro ao validar token: {e}")
+            print(f" Erro ao validar token: {e}")
             return {'success': False, 'error': str(e)}
 
     def reset_password_with_token(self, token, new_password):
@@ -978,7 +978,7 @@ Dúvidas? Entre em contato: contato@geminii.com.br
             cursor.close()
             conn.close()
             
-            print(f"✅ Senha redefinida para: {user_name}")
+            print(f" Senha redefinida para: {user_name}")
             
             return {
                 'success': True,
@@ -987,7 +987,7 @@ Dúvidas? Entre em contato: contato@geminii.com.br
             }
             
         except Exception as e:
-            print(f"❌ Erro ao redefinir senha: {e}")
+            print(f" Erro ao redefinir senha: {e}")
             return {'success': False, 'error': str(e)}
 
     # ===== EMAILS DE TRIAL COM TEMPLATE ANTI-SPAM =====
@@ -1268,25 +1268,25 @@ Não perca essa oportunidade!
                 print(f"   Confirmado em: {confirmed_at}")
                 print(f"   Criado em: {created_at}")
             else:
-                print(f"❌ Usuário não encontrado: {email}")
+                print(f" Usuário não encontrado: {email}")
             
             cursor.close()
             conn.close()
             
         except Exception as e:
-            print(f"❌ Erro no debug: {e}")
+            print(f" Erro no debug: {e}")
 
 # INSTÂNCIA GLOBAL
 email_service = EmailService()
 
 # FUNÇÃO DE SETUP
 def setup_email_system():
-    print("🔧 Configurando sistema de emails...")
+    print("Configurando sistema de emails...")
     if email_service.setup_tables():
-        print("✅ Sistema de emails configurado com sucesso!")
+        print(" Sistema de emails configurado com sucesso!")
         return True
     else:
-        print("❌ Falha na configuração")
+        print(" Falha na configuração")
         return False
 
 if __name__ == "__main__":

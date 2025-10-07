@@ -741,41 +741,6 @@
         alertContainer.appendChild(alertDiv);
       }
 
-      // Status distribution alert
-      const statusDistribution = iv_context.status_distribution || {};
-      const highIVCount = (statusDistribution['MUITO_ALTA'] || 0) + (statusDistribution['ALTA'] || 0);
-      const lowIVCount = (statusDistribution['MUITO_BAIXA'] || 0) + (statusDistribution['BAIXA'] || 0);
-      const totalStrikes = Object.values(statusDistribution).reduce((a, b) => a + b, 0);
-      
-      if (totalStrikes > 0 && (highIVCount > totalStrikes * 0.6 || lowIVCount > totalStrikes * 0.6)) {
-        const alertDiv = document.createElement('div');
-        alertDiv.className = 'iv-distortion-alert mt-4';
-        
-        if (highIVCount > totalStrikes * 0.6) {
-          alertDiv.innerHTML = `
-            <div class="flex items-center justify-center mb-2">
-              <i class="fas fa-fire text-red-400 mr-2"></i>
-              <strong class="text-red-400">REGIME IV ALTA DOMINANTE</strong>
-            </div>
-            <div class="text-gray-300 text-sm">
-              ${Math.round(highIVCount/totalStrikes*100)}% dos strikes com IV elevada - Ambiente para venda de volatilidade
-            </div>
-          `;
-        } else {
-          alertDiv.innerHTML = `
-            <div class="flex items-center justify-center mb-2">
-              <i class="fas fa-compress text-green-400 mr-2"></i>
-              <strong class="text-green-400">REGIME IV BAIXA DOMINANTE</strong>
-            </div>
-            <div class="text-gray-300 text-sm">
-              ${Math.round(lowIVCount/totalStrikes*100)}% dos strikes com IV comprimida - Ambiente para compra de volatilidade
-            </div>
-          `;
-        }
-        
-        alertContainer.appendChild(alertDiv);
-      }
-
       // Gráfico
       if (data.plot_json) {
         renderChart(data.plot_json);

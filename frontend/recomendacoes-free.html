@@ -400,12 +400,12 @@
       
       userToken = localStorage.getItem('geminii_token');
       if (!userToken) {
-        console.log('❌ Token não encontrado - redirecionando para login');
+        console.log(' Token não encontrado - redirecionando para login');
         window.location.href = '/login.html';
         return;
       }
 
-      console.log('✅ Token encontrado');
+      console.log(' Token encontrado');
       
       try {
         await verifyAuthWithRetry();
@@ -419,9 +419,9 @@
         setInterval(updateTimers, 60000);
         setInterval(checkConnection, 30000);
         
-        console.log('✅ Inicialização concluída com sucesso!');
+        console.log(' Inicialização concluída com sucesso!');
       } catch (error) {
-        console.error('❌ Erro na inicialização:', error);
+        console.error(' Erro na inicialização:', error);
         showGlobalError('Erro na inicialização. Tentando novamente...');
         setTimeout(() => window.location.reload(), 3000);
       }
@@ -456,12 +456,12 @@
         }
 
         currentUser = result.data.user;
-        console.log('✅ Usuário autenticado:', currentUser.name);
+        console.log(' Usuário autenticado:', currentUser.name);
         updateConnectionStatus(true);
         
         return result;
       } catch (error) {
-        console.error(`❌ Erro na verificação (tentativa ${attempt}):`, error);
+        console.error(` Erro na verificação (tentativa ${attempt}):`, error);
         updateConnectionStatus(false);
         
         if (error.message.includes('Token inválido') || error.message.includes('expirado')) {
@@ -501,7 +501,7 @@
         const result = await response.json();
         
         if (result.success) {
-          console.log('✅ Preços atualizados:', result.message);
+          console.log(' Preços atualizados:', result.message);
           
           // Atualizar dados locais
           if (result.recommendations) {
@@ -528,7 +528,7 @@
         }
         
       } catch (error) {
-        console.error('❌ Erro ao atualizar preços:', error);
+        console.error(' Erro ao atualizar preços:', error);
         return { success: false, error: error.message };
       }
     }
@@ -625,7 +625,7 @@
           throw new Error(result.error || 'Erro desconhecido da API');
         }
       } catch (error) {
-        console.error(`❌ Erro ao carregar recomendações (tentativa ${attempt}):`, error);
+        console.error(` Erro ao carregar recomendações (tentativa ${attempt}):`, error);
         updateConnectionStatus(false);
         
         if (attempt < MAX_RETRIES) {
@@ -683,7 +683,7 @@
           btn.innerHTML = '<i class="fas fa-check mr-2"></i>Atualizado!';
           
           if (result.price_update_success) {
-            showToast('✅ Preços e dados atualizados com sucesso!', 'success');
+            showToast(' Preços e dados atualizados com sucesso!', 'success');
           } else {
             showToast('⚠️ Dados recarregados, mas alguns preços podem estar desatualizados', 'warning');
           }
@@ -699,7 +699,7 @@
       } catch (error) {
         console.error('Erro ao atualizar:', error);
         btn.innerHTML = '<i class="fas fa-exclamation-triangle mr-2"></i>Erro';
-        showToast('❌ Erro ao atualizar: ' + error.message, 'error');
+        showToast(' Erro ao atualizar: ' + error.message, 'error');
         
         setTimeout(() => {
           btn.innerHTML = originalText;
@@ -1070,14 +1070,14 @@ function calculateSuccessRate() {
     console.log('Ganhos:', wins.length);
     console.log('Perdas:', losses.length);
     
-    // ✅ CÁLCULO CORRETO DA TAXA DE SUCESSO
+    //  CÁLCULO CORRETO DA TAXA DE SUCESSO
     const successRate = closedRecs.length > 0 ? (wins.length / closedRecs.length * 100) : 0;
     
     const avgGain = wins.length > 0 ? wins.reduce((sum, r) => sum + Math.abs(r.performance || 0), 0) / wins.length : 0;
     const avgLoss = losses.length > 0 ? Math.abs(losses.reduce((sum, r) => sum + (r.performance || 0), 0)) / losses.length : 0;
     const profitFactor = avgLoss > 0 ? (avgGain / avgLoss) : 0;
     
-    // ✅ CALCULAR RETORNO ACUMULADO
+    //  CALCULAR RETORNO ACUMULADO
     const cumulativeReturn = closedRecs.reduce((sum, r) => sum + (r.performance || 0), 0);
     
     console.log('Taxa de sucesso calculada:', successRate.toFixed(1) + '%');
@@ -1090,7 +1090,7 @@ function calculateSuccessRate() {
     document.getElementById('avgLoss').textContent = avgLoss > 0 ? `-${avgLoss.toFixed(2)}%` : '--';
     document.getElementById('profitFactor').textContent = profitFactor > 0 ? profitFactor.toFixed(2) : '--';
     
-    // ✅ MOSTRAR RETORNO ACUMULADO (ADICIONAR ESTE CAMPO NO HTML)
+    //  MOSTRAR RETORNO ACUMULADO (ADICIONAR ESTE CAMPO NO HTML)
     const cumulativeEl = document.getElementById('cumulativeReturn');
     if (cumulativeEl) {
       cumulativeEl.textContent = closedRecs.length > 0 ? 

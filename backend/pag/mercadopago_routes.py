@@ -10,10 +10,10 @@ try:
     import mercadopago
     import pag.mercadopago_service as mercadopago_service
     MP_AVAILABLE = True
-    print("✅ SDK Mercado Pago carregado com sucesso!")
+    print(" SDK Mercado Pago carregado com sucesso!")
 except ImportError as e:
     MP_AVAILABLE = False
-    print(f"❌ SDK Mercado Pago não disponível: {e}")
+    print(f" SDK Mercado Pago não disponível: {e}")
     print("📦 Instale com: pip install mercadopago")
     # Criar service mock para evitar crashes
     class MockService:
@@ -94,11 +94,11 @@ def create_checkout():
         user_id = data.get('user_id')           
         user_email = data.get('user_email')      
         user_name = data.get('user_name')       
-        device_id = data.get('device_id', 'web-browser-local')  # ✅ VALOR PADRÃO
+        device_id = data.get('device_id', 'web-browser-local')  #  VALOR PADRÃO
         discounted_price = data.get('discounted_price')
         coupon_code = data.get('coupon_code')
         
-        # ✅ CORREÇÃO: Tratar device_id undefined/null
+        #  CORREÇÃO: Tratar device_id undefined/null
         if not device_id or device_id == 'undefined' or device_id == 'null':
             device_id = 'web-browser-local'
         
@@ -133,14 +133,14 @@ def create_checkout():
         )
         
         if result['success']:
-            print(f"✅ ROUTE: Checkout criado com sucesso - {result['data']['preference_id']}")
+            print(f" ROUTE: Checkout criado com sucesso - {result['data']['preference_id']}")
             return jsonify(result), 200
         else:
-            print(f"❌ ROUTE: Erro no checkout - {result['error']}")
+            print(f" ROUTE: Erro no checkout - {result['error']}")
             return jsonify(result), 500
             
     except Exception as e:
-        print(f"❌ ROUTE: Erro crítico no checkout - {e}")
+        print(f" ROUTE: Erro crítico no checkout - {e}")
         return jsonify({
             "success": False,
             "error": "Erro interno do servidor",
@@ -168,7 +168,7 @@ def webhook():
     try:
         data = request.get_json()
         if not data:
-            print("❌ Webhook sem dados JSON")
+            print(" Webhook sem dados JSON")
             return jsonify({"error": "No data"}), 400
         
         print(f"📋 Tipo: {data.get('type')}")
@@ -187,7 +187,7 @@ def webhook():
         payment_id = payment_data.get("id")
         
         if not payment_id:
-            print("❌ Payment ID ausente")
+            print(" Payment ID ausente")
             return jsonify({"error": "Payment ID missing"}), 400
         
         print(f"💳 Payment ID: {payment_id}")
@@ -196,7 +196,7 @@ def webhook():
         result = mercadopago_service.process_payment(payment_id)
         
         if result['status'] == 'success':
-            print("✅ WEBHOOK: Processamento bem-sucedido!")
+            print(" WEBHOOK: Processamento bem-sucedido!")
             return jsonify({
                 "success": True,
                 "message": "Pagamento processado e plano ativado!",
@@ -215,7 +215,7 @@ def webhook():
             }), 200
         
         else:
-            print(f"❌ WEBHOOK: Erro no processamento: {result.get('error')}")
+            print(f" WEBHOOK: Erro no processamento: {result.get('error')}")
             return jsonify({
                 "success": False,
                 "error": result.get('error', 'Erro no processamento'),
@@ -223,7 +223,7 @@ def webhook():
             }), 500
         
     except Exception as e:
-        print(f"❌ WEBHOOK: ERRO CRÍTICO - {e}")
+        print(f" WEBHOOK: ERRO CRÍTICO - {e}")
         return jsonify({
             "success": False,
             "error": f"Erro interno: {str(e)}"
@@ -239,7 +239,7 @@ def check_payment_status(payment_id):
         return jsonify(result)
         
     except Exception as e:
-        print(f"❌ Erro ao verificar status: {e}")
+        print(f" Erro ao verificar status: {e}")
         return jsonify({'error': str(e)}), 500
 
 @mercadopago_bp.route('/validate-device', methods=['POST'])
@@ -250,7 +250,7 @@ def validate_device():
         data = request.get_json()
         device_id = data.get('device_id', 'web-browser-local')
         
-        # ✅ SEMPRE ACEITAR DEVICE_ID (mesmo que seja padrão)
+        #  SEMPRE ACEITAR DEVICE_ID (mesmo que seja padrão)
         return jsonify({
             "success": True,
             "data": {

@@ -45,7 +45,7 @@ def subscribe_newsletter():
             }), 400
         
     except Exception as e:
-        print(f"❌ Erro na rota newsletter: {e}")
+        print(f" Erro na rota newsletter: {e}")
         import traceback
         traceback.print_exc()
         return jsonify({'success': False, 'error': 'Erro interno'}), 500

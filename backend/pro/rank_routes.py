@@ -41,7 +41,7 @@ def get_iv_ranking():
         return jsonify(result)
         
     except Exception as e:
-        print(f"❌ Erro no ranking: {e}")
+        print(f" Erro no ranking: {e}")
         traceback.print_exc()
         return jsonify({
             'success': False,
@@ -88,7 +88,7 @@ def get_top_iv():
         })
         
     except Exception as e:
-        print(f"❌ Erro no top IV: {e}")
+        print(f" Erro no top IV: {e}")
         traceback.print_exc()
         return jsonify({
             'success': False,
@@ -131,7 +131,7 @@ def get_iv_vs_volume():
         })
         
     except Exception as e:
-        print(f"❌ Erro no IV vs Volume: {e}")
+        print(f" Erro no IV vs Volume: {e}")
         traceback.print_exc()
         return jsonify({
             'success': False,
@@ -175,7 +175,7 @@ def get_iv_percentil():
         })
         
     except Exception as e:
-        print(f"❌ Erro no percentil: {e}")
+        print(f" Erro no percentil: {e}")
         traceback.print_exc()
         return jsonify({
             'success': False,
@@ -219,7 +219,7 @@ def get_iv_6m_comparison():
         })
         
     except Exception as e:
-        print(f"❌ Erro na comparação 6M: {e}")
+        print(f" Erro na comparação 6M: {e}")
         traceback.print_exc()
         return jsonify({
             'success': False,
@@ -253,7 +253,7 @@ def get_estatisticas():
         })
         
     except Exception as e:
-        print(f"❌ Erro nas estatísticas: {e}")
+        print(f" Erro nas estatísticas: {e}")
         traceback.print_exc()
         return jsonify({
             'success': False,
@@ -292,7 +292,7 @@ def get_analise_completa():
         return jsonify(result)
         
     except Exception as e:
-        print(f"❌ Erro na análise completa: {e}")
+        print(f" Erro na análise completa: {e}")
         traceback.print_exc()
         return jsonify({
             'success': False,

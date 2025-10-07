@@ -73,12 +73,12 @@ def create_historical_blueprint():
             # Executar análise
             result = historical_service.analyze_historical_complete(ticker, vencimento, days_back)
             
-            # ✅ CORREÇÃO: usar 'available_dates' (não 'dates_analyzed')
+            #  CORREÇÃO: usar 'available_dates' (não 'dates_analyzed')
             if result and result.get('available_dates') and len(result['available_dates']) > 0:
                 dates_count = len(result['available_dates'])
-                logging.info(f"✅ Análise concluída: {ticker} - {dates_count} datas disponíveis")
+                logging.info(f" Análise concluída: {ticker} - {dates_count} datas disponíveis")
             else:
-                logging.error(f"❌ Análise retornou vazia: {ticker}")
+                logging.error(f" Análise retornou vazia: {ticker}")
                 return jsonify({
                     'error': 'Nenhuma data histórica encontrada',
                     'success': False

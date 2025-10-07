@@ -363,7 +363,7 @@ def get_rsl_blueprint():
     return rsl_bp
 
 # ===== LOG DE INICIALIZAÇÃO =====
-# print("✅ RSL Routes Blueprint criado com sucesso!")
+# print(" RSL Routes Blueprint criado com sucesso!")
 # print(" Rotas disponíveis:")
 # print("  GET  /api/setores - Lista todos os setores")
 # print("  GET  /api/setor/<nome> - Empresas de um setor")

@@ -277,7 +277,7 @@ if __name__ == "__main__":
     
     if result['success']:
         data = result['data']
-        print(f"✅ Análise de {data['symbol']}:")
+        print(f" Análise de {data['symbol']}:")
         
         for period, analysis in data['periods'].items():
             beta = analysis['beta']
@@ -288,17 +288,17 @@ if __name__ == "__main__":
             print(f"     Retorno Ação: {analysis['stock_return']:.2f}%")
             print(f"     Retorno IBOV: {analysis['market_return']:.2f}%")
     else:
-        print(f"❌ {result['error']}")
+        print(f" {result['error']}")
     
     # Teste 2: Ranking de Betas
     print("\n2️⃣ Testando ranking de Betas:")
     ranking = monitor.get_popular_stocks_beta()
     
     if ranking['success']:
-        print("✅ Top ações por Beta (longo prazo):")
+        print(" Top ações por Beta (longo prazo):")
         for i, stock in enumerate(ranking['data'][:5], 1):
             print(f"  {i}. {stock['symbol']}: {stock['beta']:.3f} ({stock['interpretation']['classification']})")
     else:
-        print("❌ Erro no ranking")
+        print(" Erro no ranking")
     
     print("\n🎉 Testes concluídos!")

@@ -98,7 +98,7 @@ def get_all_opcoes_recommendations_service():
             
         cursor = conn.cursor()
         
-        # ✅ ADICIONAR PERFORMANCE E RESULTADO_FINAL NA QUERY
+        #  ADICIONAR PERFORMANCE E RESULTADO_FINAL NA QUERY
         cursor.execute('''
             SELECT 
                 id, ativo_spot, ticker_opcao, strike, valor_entrada, 
@@ -113,7 +113,7 @@ def get_all_opcoes_recommendations_service():
         
         recommendations = []
         for i, row in enumerate(rows):
-            print(f"📋 Row {i}: {row}")  # ✅ LOG CADA LINHA
+            print(f"📋 Row {i}: {row}")  #  LOG CADA LINHA
             
             recommendations.append({
                 'id': row[0],
@@ -130,8 +130,8 @@ def get_all_opcoes_recommendations_service():
                 'created_at': row[11].isoformat() if row[11] else None,
                 'updated_at': row[12].isoformat() if row[12] else None,
                 'is_active': row[13],
-                'performance': float(row[14]) if row[14] else None,  # ✅ ADICIONAR
-                'resultado_final': float(row[15]) if row[15] else None  # ✅ ADICIONAR
+                'performance': float(row[14]) if row[14] else None,  #  ADICIONAR
+                'resultado_final': float(row[15]) if row[15] else None  #  ADICIONAR
             })
         
         cursor.close()
@@ -143,11 +143,11 @@ def get_all_opcoes_recommendations_service():
         }
         
     except Exception as e:
-        print(f"❌ Erro ao buscar recomendações: {e}")
+        print(f" Erro ao buscar recomendações: {e}")
         return {'success': False, 'error': str(e)}
 
 
-print("✅ Funções corrigidas!")
+print(" Funções corrigidas!")
 
 def update_opcoes_recommendation_service(data):
     """Atualizar recomendação de opção existente"""
@@ -285,19 +285,19 @@ def close_opcoes_recommendation_service(recommendation_id, status, resultado_fin
         
         ativo_spot, ticker_opcao, valor_entrada, stop, gain = recommendation
         
-        # ✅ CORREÇÃO: Converter para float para evitar erro de tipos
+        #  CORREÇÃO: Converter para float para evitar erro de tipos
         valor_entrada_float = float(valor_entrada) if valor_entrada else 0.0
         
         # Calcular performance se resultado_final foi fornecido
         performance = None
         if resultado_final:
             try:
-                # ✅ GARANTIR QUE AMBOS SÃO FLOAT
+                #  GARANTIR QUE AMBOS SÃO FLOAT
                 resultado_final_float = float(resultado_final)
                 performance = ((resultado_final_float - valor_entrada_float) / valor_entrada_float) * 100
                 print(f" Performance calculada: {performance:.2f}%")
             except (ValueError, ZeroDivisionError) as calc_error:
-                print(f"❌ Erro no cálculo da performance: {calc_error}")
+                print(f" Erro no cálculo da performance: {calc_error}")
                 performance = 0.0
         
         # Atualizar status da recomendação
@@ -317,7 +317,7 @@ def close_opcoes_recommendation_service(recommendation_id, status, resultado_fin
         cursor.close()
         conn.close()
         
-        print(f"✅ Recomendação {recommendation_id} fechada com sucesso!")
+        print(f" Recomendação {recommendation_id} fechada com sucesso!")
         
         return {
             'success': True,
@@ -327,7 +327,7 @@ def close_opcoes_recommendation_service(recommendation_id, status, resultado_fin
         }
         
     except Exception as e:
-        print(f"❌ Erro ao fechar recomendação: {e}")
+        print(f" Erro ao fechar recomendação: {e}")
         import traceback
         traceback.print_exc()
         return {'success': False, 'error': f'Erro interno: {str(e)}'}

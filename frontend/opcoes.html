@@ -445,7 +445,7 @@
               <div>
                 <h3 class="text-white font-semibold text-xl flex items-center">
                   <i class="fas fa-history text-purple-400 mr-3"></i>
-                  Volume Histórico (7 dias)  <!-- ✅ CORRIGIDO -->
+                  Volume Histórico (7 dias)  <!--  CORRIGIDO -->
                 </h3>
                 <p class="text-gray-300">Volume atual vs média histórica</p>
               </div>
@@ -657,7 +657,7 @@
     async function initPage() {
       console.log('🚀 Inicializando Hunter Walls...');
       await checkAuth();
-      console.log('✅ Hunter Walls inicializado!');
+      console.log(' Hunter Walls inicializado!');
     }
  
     async function checkAuth() {
@@ -670,7 +670,7 @@
       console.log('   UserData conteúdo:', userData);
  
       if (!token || !userData) {
-        console.log('❌ Token ou userData ausente - redirecionando para login');
+        console.log(' Token ou userData ausente - redirecionando para login');
         window.location.href = '/login.html';
         return;
       }
@@ -702,10 +702,10 @@
           console.log('   User types permitidos:', allowedUserTypes);
           
           const hasValidPlan = allowedPlans.includes(currentUser.plan_id);
-          console.log('✅ Plan válido?', hasValidPlan, '(plan_id:', currentUser.plan_id, ')');
+          console.log(' Plan válido?', hasValidPlan, '(plan_id:', currentUser.plan_id, ')');
           
           const hasValidUserType = allowedUserTypes.includes(currentUser.user_type);
-          console.log('✅ User type válido?', hasValidUserType, '(user_type:', currentUser.user_type, ')');
+          console.log(' User type válido?', hasValidUserType, '(user_type:', currentUser.user_type, ')');
           
           const isAdmin = ['admin', 'master'].includes(currentUser.user_type);
           console.log('👑 É admin?', isAdmin);
@@ -714,7 +714,7 @@
           console.log(' DECISÃO FINAL - Deve ter acesso?', shouldHaveAccess);
           
           if (!shouldHaveAccess) {
-            console.log('❌ ACESSO NEGADO!');
+            console.log(' ACESSO NEGADO!');
             console.log('🚨 FORÇANDO ACESSO PARA DEBUG - REMOVER EM PRODUÇÃO!');
             console.log('🎉 Acesso liberado via DEBUG!');
             return;
@@ -723,13 +723,13 @@
           console.log('🎉 ACESSO LIBERADO!');
           
         } else {
-          console.log('❌ Falha na verificação:', result);
+          console.log(' Falha na verificação:', result);
           localStorage.removeItem('geminii_token');
           localStorage.removeItem('geminii_user');
           window.location.href = '/login.html';
         }
       } catch (error) {
-        console.error('❌ Erro na verificação:', error);
+        console.error(' Erro na verificação:', error);
         window.location.href = '/login.html';
       }
     }
@@ -780,7 +780,7 @@
  
       } catch (error) {
         console.error('Erro ao buscar vencimentos:', error);
-        alert(`❌ Erro: ${error.message}`);
+        alert(` Erro: ${error.message}`);
       } finally {
         btn.innerHTML = originalText;
         btn.disabled = false;
@@ -818,7 +818,7 @@
         }
         
       } catch (error) {
-        console.error('❌ Erro dados históricos:', error);
+        console.error(' Erro dados históricos:', error);
         
         // Mostrar erro no card
         document.getElementById('volumeHistoricoLoading').innerHTML = `
@@ -848,7 +848,7 @@
       status.innerHTML = `<span class="text-${statusInfo.color}-400">${statusInfo.icon} ${statusInfo.level}</span>`;
       multiplierDiv.textContent = `${multiplier}x da média`;
       
-      // ✅ CORREÇÃO PRINCIPAL - usar volume_medio_7d
+      //  CORREÇÃO PRINCIPAL - usar volume_medio_7d
       document.getElementById('volumeAtualDisplay').textContent = data.volume_atual.toLocaleString();
       document.getElementById('volumeMedioDisplay').textContent = data.volume_medio_7d.toLocaleString();
       document.getElementById('diasAnalisados').textContent = data.dias_analisados;
@@ -863,7 +863,7 @@
       // Gráfico histórico
       createVolumeHistoricoChart(data.chart_data);
       
-      console.log('✅ Volume histórico exibido com sucesso');
+      console.log(' Volume histórico exibido com sucesso');
     }
  
     // 🔥 NOVA FUNÇÃO - Criar gráfico de volume histórico
@@ -939,10 +939,10 @@
           displayModeBar: false
         });
         
-        console.log('✅ Gráfico histórico criado');
+        console.log(' Gráfico histórico criado');
         
       } catch (error) {
-        console.error('❌ Erro ao criar gráfico histórico:', error);
+        console.error(' Erro ao criar gráfico histórico:', error);
       }
     }
  
@@ -1133,7 +1133,7 @@
       // Scroll para a área de grupos
       document.getElementById('gruposContainer').scrollIntoView({ behavior: 'smooth' });
       
-      alert(`✅ Sugestão adicionada: ${sugestao}\n\nBaseado no volume concentrado no strike R$ ${currentVolumeData.hot_strike.toFixed(2)}`);
+      alert(` Sugestão adicionada: ${sugestao}\n\nBaseado no volume concentrado no strike R$ ${currentVolumeData.hot_strike.toFixed(2)}`);
     }
  
     // Display ticker info
@@ -1302,7 +1302,7 @@
  
       } catch (error) {
         console.error('Erro na análise:', error);
-        alert(`❌ Erro na análise: ${error.message}`);
+        alert(` Erro na análise: ${error.message}`);
       } finally {
         document.getElementById('loadingSection').classList.add('hidden');
         btn.innerHTML = originalText;

@@ -37,7 +37,7 @@ def require_auth(f):
 @recommendations_free_bp.route('/free/active', methods=['GET'])
 @require_auth
 def get_active_recommendations():
-    """✅ PÚBLICO: Buscar recomendações ativas"""
+    """ PÚBLICO: Buscar recomendações ativas"""
     try:
         # Atualizar preços antes de retornar
         RecommendationsServiceFree.update_current_prices()
@@ -60,7 +60,7 @@ def get_active_recommendations():
 @recommendations_free_bp.route('/free/all', methods=['GET'])
 @require_auth
 def get_all_recommendations_public():
-    """✅ PÚBLICO: Buscar todas as recomendações (ativas + fechadas) COM AUTO-UPDATE"""
+    """ PÚBLICO: Buscar todas as recomendações (ativas + fechadas) COM AUTO-UPDATE"""
     try:
         # 🔥 AUTO-UPDATE: Atualizar preços automaticamente
         try:
@@ -125,7 +125,7 @@ def get_all_recommendations_public():
 @recommendations_free_bp.route('/free/statistics', methods=['GET'])
 @require_auth
 def get_statistics_public():
-    """✅ PÚBLICO: Buscar estatísticas de performance"""
+    """ PÚBLICO: Buscar estatísticas de performance"""
     try:
         stats = RecommendationsServiceFree.get_statistics()
         
@@ -149,7 +149,7 @@ def get_statistics_public():
 @recommendations_free_bp.route('/free/<int:rec_id>/chart-data', methods=['GET'])
 @require_auth
 def get_recommendation_chart_public(rec_id):
-    """✅ PÚBLICO: Buscar dados para gráfico de uma recomendação"""
+    """ PÚBLICO: Buscar dados para gráfico de uma recomendação"""
     try:
         # Buscar ticker da recomendação
         from database import get_db_connection
@@ -191,7 +191,7 @@ def get_recommendation_chart_public(rec_id):
 @recommendations_free_bp.route('/free/performance-history', methods=['GET'])
 @require_auth
 def get_performance_history_public():
-    """✅ PÚBLICO: Buscar histórico de performance"""
+    """ PÚBLICO: Buscar histórico de performance"""
     try:
         history = RecommendationsServiceFree.get_performance_history()
         
@@ -209,7 +209,7 @@ def get_performance_history_public():
 @recommendations_free_bp.route('/free/update-prices', methods=['POST'])
 @require_auth
 def update_prices_public():
-    """✅ PÚBLICO: Atualizar preços atuais via Yahoo Finance"""
+    """ PÚBLICO: Atualizar preços atuais via Yahoo Finance"""
     try:
         print("🔄 Iniciando atualização de preços (endpoint público)...")
         
@@ -220,7 +220,7 @@ def update_prices_public():
             # Buscar recomendações atualizadas
             recommendations = RecommendationsServiceFree.get_active_recommendations()
             
-            print(f"✅ Preços atualizados para {len(recommendations)} recomendações")
+            print(f" Preços atualizados para {len(recommendations)} recomendações")
             
             return jsonify({
                 'success': True,
@@ -236,7 +236,7 @@ def update_prices_public():
             }), 500
             
     except Exception as e:
-        print(f"❌ Erro ao atualizar preços: {e}")
+        print(f" Erro ao atualizar preços: {e}")
         return jsonify({
             'success': False,
             'error': f'Erro ao atualizar preços: {str(e)}'
@@ -245,7 +245,7 @@ def update_prices_public():
 @recommendations_free_bp.route('/free/refresh', methods=['POST'])
 @require_auth
 def refresh_all_data():
-    """✅ PÚBLICO: Refresh completo - atualiza preços e retorna dados atualizados"""
+    """ PÚBLICO: Refresh completo - atualiza preços e retorna dados atualizados"""
     try:
         print("🔄 Refresh completo iniciado...")
         
@@ -294,7 +294,7 @@ def refresh_all_data():
         # 3. Buscar estatísticas atualizadas
         stats = RecommendationsServiceFree.get_statistics()
         
-        print(f"✅ Refresh completo: {len(all_recommendations)} recomendações, preços {'atualizados' if price_update_success else 'com erro'}")
+        print(f" Refresh completo: {len(all_recommendations)} recomendações, preços {'atualizados' if price_update_success else 'com erro'}")
         
         return jsonify({
             'success': True,
@@ -307,7 +307,7 @@ def refresh_all_data():
         })
         
     except Exception as e:
-        print(f"❌ Erro no refresh completo: {e}")
+        print(f" Erro no refresh completo: {e}")
         return jsonify({
             'success': False,
             'error': f'Erro no refresh: {str(e)}'
@@ -450,7 +450,7 @@ def close_recommendation(rec_id):
         
         entry_price, action = rec
         
-        # ✅ CONVERSÃO EXPLÍCITA PARA EVITAR CONFLITO DE TIPOS
+        #  CONVERSÃO EXPLÍCITA PARA EVITAR CONFLITO DE TIPOS
         entry_price_float = float(entry_price)
         final_price_float = float(final_price) if final_price else entry_price_float
         
@@ -476,8 +476,8 @@ def close_recommendation(rec_id):
             WHERE id = %s
         """, (
             status,
-            final_price_float,  # ✅ Usar float convertido
-            round(performance, 2),  # ✅ Arredondar para evitar problemas
+            final_price_float,  #  Usar float convertido
+            round(performance, 2),  #  Arredondar para evitar problemas
             datetime.now(timezone.utc),
             datetime.now(timezone.utc),
             rec_id
@@ -487,7 +487,7 @@ def close_recommendation(rec_id):
         cursor.close()
         conn.close()
         
-        print(f"✅ Recomendação {rec_id} encerrada com sucesso")
+        print(f" Recomendação {rec_id} encerrada com sucesso")
         
         return jsonify({
             'success': True,
@@ -496,7 +496,7 @@ def close_recommendation(rec_id):
         })
         
     except Exception as e:
-        print(f"❌ Erro ao encerrar recomendação {rec_id}: {e}")
+        print(f" Erro ao encerrar recomendação {rec_id}: {e}")
         import traceback
         traceback.print_exc()
         
@@ -641,7 +641,7 @@ def get_all_recommendations():
 @recommendations_free_bp.route('/free/dashboard-stats', methods=['GET'])
 @require_auth
 def get_dashboard_stats():
-    """✅ PÚBLICO: Estatísticas simplificadas para o dashboard"""
+    """ PÚBLICO: Estatísticas simplificadas para o dashboard"""
     try:
         from database import get_db_connection
         conn = get_db_connection()

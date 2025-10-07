@@ -203,7 +203,7 @@
       
       await loadPortfolios();
       
-      console.log('✅ Analytics inicializado!');
+      console.log(' Analytics inicializado!');
     });
 
     // ===== AUTENTICAÇÃO =====
@@ -212,7 +212,7 @@
       const userData = localStorage.getItem('geminii_user');
       
       if (!userToken) {
-        console.log('❌ Token não encontrado');
+        console.log(' Token não encontrado');
         window.location.href = '/login.html';
         return false;
       }
@@ -220,7 +220,7 @@
       if (userData) {
         try {
           currentUser = JSON.parse(userData);
-          console.log('✅ Usuário logado:', currentUser.name);
+          console.log(' Usuário logado:', currentUser.name);
         } catch (error) {
           console.error('Erro ao parsear dados do usuário:', error);
         }
@@ -294,7 +294,7 @@
         }
         
       } catch (error) {
-        console.error('❌ Erro ao carregar carteiras:', error);
+        console.error(' Erro ao carregar carteiras:', error);
         showError(error.message);
       }
     }
@@ -407,7 +407,7 @@
         }
         
       } catch (error) {
-        console.error('❌ Erro ao carregar ativos:', error);
+        console.error(' Erro ao carregar ativos:', error);
         contentDiv.innerHTML = '<p class="text-red-400 text-center py-4">Erro ao carregar ativos</p>';
       }
     }
@@ -435,7 +435,7 @@
         }
         
       } catch (error) {
-        console.error('❌ Erro ao carregar recomendações:', error);
+        console.error(' Erro ao carregar recomendações:', error);
         contentDiv.innerHTML = '<p class="text-red-400 text-center py-4">Erro ao carregar recomendações</p>';
       }
     }
@@ -502,7 +502,7 @@
         }
         
       } catch (error) {
-        console.error('❌ Erro no Analytics:', error);
+        console.error(' Erro no Analytics:', error);
         showModalError(error.message);
       }
     }
@@ -520,7 +520,7 @@
         if (response.ok) {
           const result = await response.json();
           if (result.success && result.data) {
-            console.log('✅ IBOVESPA via API Geminii');
+            console.log(' IBOVESPA via API Geminii');
             return {
               current_price: result.data.current_price,
               change: result.data.change || 0,
@@ -540,7 +540,7 @@
         if (response.ok) {
           const result = await response.json();
           if (result.success && result.data) {
-            console.log('✅ IBOVESPA via YFinance');
+            console.log(' IBOVESPA via YFinance');
             return {
               current_price: result.data.current_price,
               change: result.data.change || 0,
@@ -564,7 +564,7 @@
         };
         
       } catch (error) {
-        console.error('❌ Erro ao buscar IBOVESPA:', error);
+        console.error(' Erro ao buscar IBOVESPA:', error);
         return {
           current_price: 0,
           change: 0,
@@ -625,7 +625,7 @@
         return portfolioData;
         
       } catch (error) {
-        console.error('❌ Erro ao buscar datas:', error);
+        console.error(' Erro ao buscar datas:', error);
         portfolioData.portfolio_creation_date = new Date().toISOString();
         portfolioData.portfolio_age_days = 0;
         return portfolioData;
@@ -1005,7 +1005,7 @@
         const result = await response.json();
         
         if (result.success) {
-          showToast(`✅ ${result.message}`, 'success');
+          showToast(` ${result.message}`, 'success');
           // Reabrir analytics
           await openAnalytics(currentPortfolioId, currentPortfolioName, 'REAL');
         } else {
@@ -1013,8 +1013,8 @@
         }
         
       } catch (error) {
-        console.error('❌ Erro no refresh:', error);
-        showToast(`❌ Erro: ${error.message}`, 'error');
+        console.error(' Erro no refresh:', error);
+        showToast(` Erro: ${error.message}`, 'error');
       } finally {
         refreshBtn.disabled = false;
         refreshBtn.innerHTML = originalText;
@@ -1041,7 +1041,7 @@
         'API_GEMINII': '🟢 API Geminii',
         'YFINANCE': '🟡 Yahoo Finance',
         'REFERENCE': '🔵 Referência',
-        'ERROR': '🔴 Indisponível'
+        'ERROR': ' Indisponível'
       };
       return badges[source] || '❓ Desconhecido';
     }

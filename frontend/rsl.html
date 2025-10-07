@@ -625,14 +625,14 @@
         const data = await response.json();
         
         if (data.success && data.data) {
-          console.log('✅ Dados do radar carregados:', data.data);
+          console.log(' Dados do radar carregados:', data.data);
           return data.data;
         } else {
           throw new Error(data.error || 'Erro na API');
         }
       } catch (error) {
-        console.error('❌ Erro ao buscar dados do radar:', error);
-        showStatus('❌ Erro ao carregar dados RSL', 'error');
+        console.error(' Erro ao buscar dados do radar:', error);
+        showStatus(' Erro ao carregar dados RSL', 'error');
         return null;
       }
     }
@@ -653,14 +653,14 @@
         
         const setoresComDados = radarData.statistics.setores_com_dados;
         
-        showStatus(`✅ ${setoresData.length} setores processados! ${setoresComDados} com RSL real.`, 'success');
+        showStatus(` ${setoresData.length} setores processados! ${setoresComDados} com RSL real.`, 'success');
         console.log(' Dados finais dos setores:', setoresData);
         
         return setoresData;
         
       } catch (error) {
-        console.error('❌ Erro ao processar setores:', error);
-        showStatus('❌ Erro ao processar dados dos setores', 'error');
+        console.error(' Erro ao processar setores:', error);
+        showStatus(' Erro ao processar dados dos setores', 'error');
         return [];
       }
     }
@@ -888,7 +888,7 @@
       const empresasList = document.getElementById(`empresas-list-${setorId}`);
       
       if (!empresasSection || !chevron || !empresasList) {
-        console.error('❌ Elementos não encontrados para setorId:', setorId);
+        console.error(' Elementos não encontrados para setorId:', setorId);
         return;
       }
       
@@ -988,10 +988,10 @@
           }
           
           empresasSection.style.maxHeight = Math.min(empresasSection.scrollHeight, 450) + 'px';
-          showStatus(`✅ Dados carregados para ${setor.setor}`, 'success');
+          showStatus(` Dados carregados para ${setor.setor}`, 'success');
           
         } catch (error) {
-          console.error('❌ Erro ao carregar empresas:', error);
+          console.error(' Erro ao carregar empresas:', error);
           
           empresasList.innerHTML = `
             <div class="flex items-center justify-center py-4 text-red-400">
@@ -1001,7 +1001,7 @@
           `;
           
           empresasSection.style.maxHeight = '60px';
-          showStatus('❌ Erro ao carregar empresas', 'error');
+          showStatus(' Erro ao carregar empresas', 'error');
         }
       }
     }
@@ -1074,7 +1074,7 @@
         </div>
       `).join('');
       
-      console.log('✅ Cards criados para', sortedData.length, 'setores');
+      console.log(' Cards criados para', sortedData.length, 'setores');
     }
     
     // Atualizar dados
@@ -1093,8 +1093,8 @@
         }
         
       } catch (error) {
-        console.error('❌ Erro ao atualizar:', error);
-        showStatus('❌ Erro ao atualizar dados', 'error');
+        console.error(' Erro ao atualizar:', error);
+        showStatus(' Erro ao atualizar dados', 'error');
       } finally {
         atualizarBtn.classList.remove('loading');
         atualizarBtn.innerHTML = '<i class="fas fa-sync-alt mr-2"></i>Atualizar';
@@ -1122,7 +1122,7 @@
     // Função global para expansão
     window.toggleSetorExpansion = toggleSetorExpansion;
     
-    console.log('🔧 Sistema RSL com API integrada inicializado com sucesso!');
+    console.log('Sistema RSL com API integrada inicializado com sucesso!');
   </script>
 </body>
 </html>

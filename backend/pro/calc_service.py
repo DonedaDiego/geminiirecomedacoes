@@ -219,10 +219,10 @@ class OptionsCalculatorService:
         # Usar preço atual se fornecido, senão usar último preço histórico
         if current_price is not None:
             reference_price = current_price
-            print(f"🔧 Usando preço atual como referência: R$ {reference_price:.2f}")
+            print(f"Usando preço atual como referência: R$ {reference_price:.2f}")
         else:
             reference_price = df['Close'].iloc[-1]
-            print(f"🔧 Usando último preço histórico: R$ {reference_price:.2f}")
+            print(f"Usando último preço histórico: R$ {reference_price:.2f}")
         
         # CORREÇÃO: Usar volatilidade mais realista
         # Pegar volatilidade GARCH que é mais estável
@@ -234,14 +234,14 @@ class OptionsCalculatorService:
             print(f"⚠️  Volatilidade GARCH muito baixa ({garch_vol*100:.2f}%), usando {adjusted_vol*100:.1f}%")
         else:
             adjusted_vol = garch_vol
-            print(f"🔧 Volatilidade GARCH: {adjusted_vol:.4f} ({adjusted_vol*100:.2f}%)")
+            print(f"Volatilidade GARCH: {adjusted_vol:.4f} ({adjusted_vol*100:.2f}%)")
         
         # Calcular bandas baseadas no preço atual e volatilidade ajustada
         # Fator de tempo: assumir 30 dias úteis = sqrt(30/252) para ajuste anual
         time_factor = np.sqrt(30/252)  # ~0.344
         vol_ajustada = adjusted_vol * time_factor
         
-        print(f"🔧 Volatilidade ajustada para 30 dias: {vol_ajustada:.4f} ({vol_ajustada*100:.2f}%)")
+        print(f"Volatilidade ajustada para 30 dias: {vol_ajustada:.4f} ({vol_ajustada*100:.2f}%)")
         
         # Criar bandas: 1σ, 2σ (conforme solicitado)
         for d in [1, 2]:
@@ -512,8 +512,8 @@ class OptionsCalculatorService:
             stop_intrinsic = max(0, stop_price - strike)
             stop_loss = premium - stop_intrinsic
             
-            print(f"   ✅ Target 1 (1σ): R$ {target_price_1:.2f} | Intrínseco: R$ {intrinsic_1:.2f} | Ganho: R$ {gain_1:.2f}")
-            print(f"   ✅ Target 2 (2σ): R$ {target_price_2:.2f} | Intrínseco: R$ {intrinsic_2:.2f} | Ganho: R$ {gain_2:.2f}")
+            print(f"    Target 1 (1σ): R$ {target_price_1:.2f} | Intrínseco: R$ {intrinsic_1:.2f} | Ganho: R$ {gain_1:.2f}")
+            print(f"    Target 2 (2σ): R$ {target_price_2:.2f} | Intrínseco: R$ {intrinsic_2:.2f} | Ganho: R$ {gain_2:.2f}")
             print(f"   🛑 Stop (2σ inf): R$ {stop_price:.2f} | Intrínseco restante: R$ {stop_intrinsic:.2f} | Perda: R$ {stop_loss:.2f}")
             
         elif operation == "COMPRA" and option_type == "PUT":

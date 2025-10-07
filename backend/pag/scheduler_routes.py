@@ -308,7 +308,7 @@ def auto_start_scheduler():
         start_payment_scheduler()
         
     except Exception as e:
-        print(f"❌ Erro ao auto-iniciar scheduler: {e}")
+        print(f" Erro ao auto-iniciar scheduler: {e}")
 
 # Iniciar automaticamente quando importado
 auto_start_scheduler()

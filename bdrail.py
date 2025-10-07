@@ -13,7 +13,7 @@ def listar_tabelas_e_colunas():
             password="SWYYPTWLukrNVucLgnyImUfTftHSadyS"
         )
         cur = conn.cursor()
-        print("✅ Conectado ao Railway!")
+        print(" Conectado ao Railway!")
 
         # Buscar todas as tabelas no schema public
         cur.execute("""
@@ -38,10 +38,10 @@ def listar_tabelas_e_colunas():
 
         cur.close()
         conn.close()
-        print("\n✅ Finalizado com sucesso!")
+        print("\n Finalizado com sucesso!")
 
     except Exception as e:
-        print(f"❌ Erro: {e}")
+        print(f" Erro: {e}")
 
 if __name__ == "__main__":
     listar_tabelas_e_colunas()

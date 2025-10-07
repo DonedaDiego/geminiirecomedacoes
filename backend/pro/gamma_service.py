@@ -321,47 +321,109 @@ class GEXAnalyzer:
         
         return result_df
     
+    
     def find_gamma_flip(self, gex_df, spot_price):
-        """Detecta gamma flip usando dados reais"""
+        """Detecta gamma flip usando APENAS strikes com dados reais"""
         if gex_df.empty or len(gex_df) < 2:
             return None
         
-        atm_range = spot_price * 0.08
-        mask1 = gex_df['strike'] >= (spot_price - atm_range)
-        mask2 = gex_df['strike'] <= (spot_price + atm_range)
-        atm_df = gex_df[mask1 & mask2].copy()
+        # FILTRAR APENAS STRIKES COM DADOS REAIS DO FLOQUI
+        gex_real_data = gex_df[gex_df['has_real_data'] == True].copy()
         
-        if len(atm_df) < 2:
-            atm_range = spot_price * 0.12
-            mask1 = gex_df['strike'] >= (spot_price - atm_range)
-            mask2 = gex_df['strike'] <= (spot_price + atm_range)
-            atm_df = gex_df[mask1 & mask2].copy()
+        if len(gex_real_data) < 2:
+            logging.warning("Menos de 2 strikes com dados reais do Floqui")
+            return None
+        
+        logging.info(f"Strikes com dados reais: {len(gex_real_data)} de {len(gex_df)}")
+        
+        # CALCULAR DISTÂNCIA
+        gex_real_data['distance_from_spot'] = abs(gex_real_data['strike'] - spot_price)
+        gex_real_data = gex_real_data.sort_values('distance_from_spot')
+        
+        # PEGAR OS 10 STRIKES MAIS PRÓXIMOS (COM DADOS REAIS)
+        atm_df = gex_real_data.head(10).sort_values('strike').reset_index(drop=True)
         
         if len(atm_df) < 2:
             return None
         
+        # LOG
+        logging.info(f"\n=== GAMMA FLIP DEBUG (DADOS REAIS) ===")
+        logging.info(f"Spot Price: R$ {spot_price:.2f}")
+        logging.info(f"Strikes ATM selecionados ({len(atm_df)}):")
+        for idx, row in atm_df.iterrows():
+            logging.info(f"  Strike {row['strike']:.2f}: GEX Descoberto = {row['total_gex_descoberto']:,.0f} {'' if row['has_real_data'] else '⚠️'}")
+        
+        # Validar mudança de sinal
         descoberto_values = atm_df['total_gex_descoberto'].values
         has_positive = bool((descoberto_values > 0).any())
         has_negative = bool((descoberto_values < 0).any())
         
+        logging.info(f"Has positive GEX: {has_positive}")
+        logging.info(f"Has negative GEX: {has_negative}")
+        
         if not (has_positive and has_negative):
+            logging.warning(" FLIP NÃO ENCONTRADO: Não há mudança de sinal no GEX descoberto")
             return None
         
-        atm_df = atm_df.sort_values('strike').reset_index(drop=True)
-        
+        # Buscar transição
         for i in range(len(atm_df) - 1):
             current = float(atm_df.iloc[i]['total_gex_descoberto'])
             next_gex = float(atm_df.iloc[i+1]['total_gex_descoberto'])
+            strike1 = float(atm_df.iloc[i]['strike'])
+            strike2 = float(atm_df.iloc[i+1]['strike'])
             
             if (current > 0 and next_gex < 0) or (current < 0 and next_gex > 0):
-                strike1 = float(atm_df.iloc[i]['strike'])
-                strike2 = float(atm_df.iloc[i+1]['strike'])
-                
                 if abs(current) + abs(next_gex) > 0:
                     flip = strike1 + (strike2 - strike1) * abs(current) / (abs(current) + abs(next_gex))
+                    logging.info(f" GAMMA FLIP ENCONTRADO: R$ {flip:.2f}")
+                    logging.info(f"   Entre strikes {strike1:.2f} e {strike2:.2f}")
                     return float(flip)
         
+        logging.warning(" FLIP NÃO ENCONTRADO: Nenhuma transição de sinal clara")
         return None
+    
+    
+    # def find_gamma_flip(self, gex_df, spot_price):
+    #     """Detecta gamma flip usando dados reais"""
+    #     if gex_df.empty or len(gex_df) < 2:
+    #         return None
+        
+    #     atm_range = spot_price * 0.03
+    #     mask1 = gex_df['strike'] >= (spot_price - atm_range)
+    #     mask2 = gex_df['strike'] <= (spot_price + atm_range)
+    #     atm_df = gex_df[mask1 & mask2].copy()
+        
+    #     if len(atm_df) < 2:
+    #         atm_range = spot_price * 0.12
+    #         mask1 = gex_df['strike'] >= (spot_price - atm_range)
+    #         mask2 = gex_df['strike'] <= (spot_price + atm_range)
+    #         atm_df = gex_df[mask1 & mask2].copy()
+        
+    #     if len(atm_df) < 2:
+    #         return None
+        
+    #     descoberto_values = atm_df['total_gex_descoberto'].values
+    #     has_positive = bool((descoberto_values > 0).any())
+    #     has_negative = bool((descoberto_values < 0).any())
+        
+    #     if not (has_positive and has_negative):
+    #         return None
+        
+    #     atm_df = atm_df.sort_values('strike').reset_index(drop=True)
+        
+    #     for i in range(len(atm_df) - 1):
+    #         current = float(atm_df.iloc[i]['total_gex_descoberto'])
+    #         next_gex = float(atm_df.iloc[i+1]['total_gex_descoberto'])
+            
+    #         if (current > 0 and next_gex < 0) or (current < 0 and next_gex > 0):
+    #             strike1 = float(atm_df.iloc[i]['strike'])
+    #             strike2 = float(atm_df.iloc[i+1]['strike'])
+                
+    #             if abs(current) + abs(next_gex) > 0:
+    #                 flip = strike1 + (strike2 - strike1) * abs(current) / (abs(current) + abs(next_gex))
+    #                 return float(flip)
+        
+    #     return None
     
     def create_6_charts(self, gex_df, spot_price, symbol, flip_strike=None, expiration_info=None):
         """Cria os 6 gráficos em 3 LINHAS x 2 COLUNAS com títulos atrativos"""

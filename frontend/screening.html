@@ -591,11 +591,11 @@
       
       switch(type) {
         case 'success':
-          icon = '✅';
+          icon = '';
           color = 'text-green-400';
           break;
         case 'error':
-          icon = '❌';
+          icon = '';
           color = 'text-red-400';
           break;
         case 'warning':
@@ -1408,12 +1408,12 @@
         const data = await response.json();
         
         if (data.status === 'OK') {
-          console.log('✅ Serviço de Screening funcionando:', data.message);
+          console.log(' Serviço de Screening funcionando:', data.message);
         } else {
           console.warn('⚠️ Serviço com problemas:', data.message);
         }
       } catch (error) {
-        console.error('❌ Erro ao verificar saúde do serviço:', error);
+        console.error(' Erro ao verificar saúde do serviço:', error);
       }
     }
 

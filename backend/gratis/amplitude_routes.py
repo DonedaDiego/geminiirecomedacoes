@@ -79,14 +79,14 @@ def compare_multiple_stocks():
         # Fazer análise comparativa
         comparison = AmplitudeService.get_multiple_stocks_analysis(clean_tickers)
         
-        # ✅ VERIFICAR SE HOUVE RESULTADOS
+        #  VERIFICAR SE HOUVE RESULTADOS
         if not comparison or len(comparison) == 0:
             return jsonify({
                 'success': False,
                 'error': 'Nenhum ativo pôde ser analisado. Verifique se os códigos estão corretos.'
             }), 404
         
-        # ✅ PEGAR ANALYSIS_DATE DO PRIMEIRO RESULTADO
+        #  PEGAR ANALYSIS_DATE DO PRIMEIRO RESULTADO
         analysis_date = comparison[0].get('analysis_date') if comparison else None
         
         return jsonify({
@@ -95,12 +95,12 @@ def compare_multiple_stocks():
                 'comparison': comparison,
                 'total_analyzed': len(comparison),
                 'requested_tickers': clean_tickers,
-                'analysis_date': analysis_date  # ✅ GARANTIR QUE EXISTE
+                'analysis_date': analysis_date  #  GARANTIR QUE EXISTE
             }
         })
         
     except Exception as e:
-        print(f"❌ Erro na comparação: {str(e)}")  # Debug detalhado
+        print(f" Erro na comparação: {str(e)}")  # Debug detalhado
         import traceback
         traceback.print_exc()  # Print do stack trace completo
         

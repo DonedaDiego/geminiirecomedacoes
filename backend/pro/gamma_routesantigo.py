@@ -479,7 +479,7 @@ def get_gamma_blueprint():
     🟢 SUPORTES GAMMA:
     {chr(10).join([f"→ S{i+1}: {w['strike']:.2f} (Intensidade: {w['intensity']:.1%})" for i, w in enumerate(support_walls[:5])])}
 
-    🔴 RESISTÊNCIAS GAMMA:
+     RESISTÊNCIAS GAMMA:
     {chr(10).join([f"→ R{i+1}: {w['strike']:.2f} (Intensidade: {w['intensity']:.1%})" for i, w in enumerate(resistance_walls[:5])])}
 
     ═══════════════════════════════════════════════════════════════

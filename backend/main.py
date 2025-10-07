@@ -70,12 +70,12 @@ auth_bp = None
 try:
     auth_bp = get_auth_blueprint()
     AUTH_AVAILABLE = True
-    print("✅ Auth blueprint carregado!")
+    print(" Auth blueprint carregado!")
 except ImportError as e:
     print(f"⚠️ Auth routes não disponível: {e}")
     AUTH_AVAILABLE = False
 except Exception as e:
-    print(f"❌ Erro ao carregar auth blueprint: {e}")
+    print(f" Erro ao carregar auth blueprint: {e}")
     AUTH_AVAILABLE = False
 
 # Newsletter Blueprint
@@ -85,12 +85,12 @@ newsletter_bp = None
 try:
     newsletter_bp = get_newsletter_blueprint()
     NEWSLETTER_AVAILABLE = True
-    print("✅ Newsletter blueprint carregado!")
+    print(" Newsletter blueprint carregado!")
 except ImportError as e:
     print(f"⚠️ Newsletter routes não disponível: {e}")
     NEWSLETTER_AVAILABLE = False
 except Exception as e:
-    print(f"❌ Erro ao carregar newsletter blueprint: {e}")
+    print(f" Erro ao carregar newsletter blueprint: {e}")
     NEWSLETTER_AVAILABLE = False
 
 # Admin Blueprint
@@ -101,12 +101,12 @@ try:
     from admin_routes import get_admin_blueprint
     admin_bp = get_admin_blueprint()
     ADMIN_AVAILABLE = True
-    print("✅ Admin blueprint carregado!")
+    print(" Admin blueprint carregado!")
 except ImportError as e:
     print(f"⚠️ Admin routes não disponível: {e}")
     ADMIN_AVAILABLE = False
 except Exception as e:
-    print(f"❌ Erro ao carregar admin blueprint: {e}")
+    print(f" Erro ao carregar admin blueprint: {e}")
     ADMIN_AVAILABLE = False
 
 # ===== REGISTRAR BLUEPRINTS =====
@@ -123,9 +123,9 @@ try:
     
     historical_bp = get_historical_blueprint()
     app.register_blueprint(historical_bp)
-    print("✅ HISTORICAL blueprint registrado!")
+    print(" HISTORICAL blueprint registrado!")
 except Exception as e:
-    print(f"❌ Erro ao registrar HISTORICAL blueprint: {e}")
+    print(f" Erro ao registrar HISTORICAL blueprint: {e}")
 
 
 # TEX
@@ -133,18 +133,18 @@ try:
     
     theta_bp = get_theta_blueprint()
     app.register_blueprint(theta_bp)
-    print("✅ TEX blueprint registrado!")
+    print(" TEX blueprint registrado!")
 except Exception as e:
-    print(f"❌ Erro ao registrar TEX blueprint: {e}")
+    print(f" Erro ao registrar TEX blueprint: {e}")
 
 
 
 try:
     vega_bp = get_vega_blueprint()
     app.register_blueprint(vega_bp)
-    print("✅ VEX blueprint registrado!")
+    print(" VEX blueprint registrado!")
 except Exception as e:
-    print(f"❌ Erro ao registrar VEX blueprint: {e}")
+    print(f" Erro ao registrar VEX blueprint: {e}")
 
 
 # DEX
@@ -152,100 +152,100 @@ try:
     
     delta_bp = get_delta_blueprint()
     app.register_blueprint(delta_bp)
-    print("✅ DEX blueprint registrado!")
+    print(" DEX blueprint registrado!")
 except Exception as e:
-    print(f"❌ Erro ao registrar DEX blueprint: {e}")
+    print(f" Erro ao registrar DEX blueprint: {e}")
 
 
 try:
     rsl_bp = get_rsl_blueprint()
     app.register_blueprint(rsl_bp)
-    print("✅ RSL blueprint registrado!")
+    print(" RSL blueprint registrado!")
 except Exception as e:
-    print(f"❌ Erro ao registrar RSL blueprint: {e}")
+    print(f" Erro ao registrar RSL blueprint: {e}")
 
 
 # Recommendations Free
 try:
     recommendations_free_bp = get_recommendations_free_blueprint()
     app.register_blueprint(recommendations_free_bp)
-    print("✅ Recommendations Free blueprint registrado!")
+    print(" Recommendations Free blueprint registrado!")
 except Exception as e:
-    print(f"❌ Erro ao registrar recommendations free blueprint: {e}")
+    print(f" Erro ao registrar recommendations free blueprint: {e}")
 
 
 # Swing Trade ML
 try:
     app.register_blueprint(get_swing_trade_ml_blueprint())
-    print("✅ Swing Trade ML blueprint registrado!")
+    print(" Swing Trade ML blueprint registrado!")
 except Exception as e:
-    print(f"❌ Erro ao registrar swing trade ML blueprint: {e}")
+    print(f" Erro ao registrar swing trade ML blueprint: {e}")
 
 # Beta Regression
 try:
     app.register_blueprint(beta_regression_bp, url_prefix='/beta_regression')
-    print("✅ Beta Regression blueprint registrado!")
+    print(" Beta Regression blueprint registrado!")
 except Exception as e:
-    print(f"❌ Erro ao registrar beta regression blueprint: {e}")
+    print(f" Erro ao registrar beta regression blueprint: {e}")
 
 # ATSMOM
 try:
     register_atsmom_routes(app)
-    print("✅ ATSMOM routes registradas!")
+    print(" ATSMOM routes registradas!")
 except Exception as e:
-    print(f"❌ Erro ao registrar ATSMOM routes: {e}")
+    print(f" Erro ao registrar ATSMOM routes: {e}")
 
 # Trial
 try:
     trial_bp = get_trial_blueprint()
     app.register_blueprint(trial_bp)
-    print("✅ Trial blueprint registrado!")
+    print(" Trial blueprint registrado!")
 except Exception as e:
-    print(f"❌ Erro ao registrar trial blueprint: {e}")
+    print(f" Erro ao registrar trial blueprint: {e}")
 
 # Vol Regimes
 try:
     app.register_blueprint(vol_regimes_bp)
-    print("✅ Vol Regimes blueprint registrado!")
+    print(" Vol Regimes blueprint registrado!")
 except Exception as e:
-    print(f"❌ Erro ao registrar vol regimes blueprint: {e}")
+    print(f" Erro ao registrar vol regimes blueprint: {e}")
 
 # Amplitude
 try:
     app.register_blueprint(amplitude_bp)
-    print("✅ Amplitude blueprint registrado!")
+    print(" Amplitude blueprint registrado!")
 except Exception as e:
-    print(f"❌ Erro ao registrar amplitude blueprint: {e}")
+    print(f" Erro ao registrar amplitude blueprint: {e}")
 
 # Rank
 try:
     rank_bp = get_rank_blueprint()
     app.register_blueprint(rank_bp)
-    print("✅ Rank blueprint registrado!")
+    print(" Rank blueprint registrado!")
 except Exception as e:
-    print(f"❌ Erro ao registrar rank blueprint: {e}")
+    print(f" Erro ao registrar rank blueprint: {e}")
 
 # Bandas Pro
 try:
     app.register_blueprint(get_bandas_pro_blueprint())
-    print("✅ Bandas Pro blueprint registrado!")
+    print(" Bandas Pro blueprint registrado!")
 except Exception as e:
-    print(f"❌ Erro ao registrar bandas pro blueprint: {e}")
+    print(f" Erro ao registrar bandas pro blueprint: {e}")
 
 # VI
 try:
     vi_bp = get_vi_blueprint()
     app.register_blueprint(vi_bp)
-    print("✅ VI blueprint registrado!")
+    print(" VI blueprint registrado!")
 except Exception as e:
-    print(f"❌ Erro ao registrar VI blueprint: {e}")
+    print(f" Erro ao registrar VI blueprint: {e}")
 
 # Regimes
 try:
     app.register_blueprint(regimes_bp, url_prefix='/api/regimes')
-    print("✅ Regimes blueprint registrado!")
+    print(" Regimes blueprint registrado!")
 except Exception as e:
-    print(f"❌ Erro ao registrar regimes blueprint: {e}")
+    print(f" Erro ao registrar regimes blueprint: {e}")
 
 # ===== REGISTRAR BLUEPRINTS CONDICIONAIS =====
 
@@ -253,42 +253,42 @@ except Exception as e:
 if AUTH_AVAILABLE and auth_bp:
     try:
         app.register_blueprint(auth_bp)
-        print("✅ Auth blueprint registrado - rotas /auth/* disponíveis!")
+        print(" Auth blueprint registrado - rotas /auth/* disponíveis!")
     except Exception as e:
-        print(f"❌ Erro ao registrar auth blueprint: {e}")
+        print(f" Erro ao registrar auth blueprint: {e}")
         AUTH_AVAILABLE = False
 else:
-    print("❌ Auth blueprint não disponível")
+    print(" Auth blueprint não disponível")
 
 # Newsletter
 if NEWSLETTER_AVAILABLE and newsletter_bp:
     try:
         app.register_blueprint(newsletter_bp)
-        print("✅ Newsletter blueprint registrado - rota /api/newsletter disponível!")
+        print(" Newsletter blueprint registrado - rota /api/newsletter disponível!")
     except Exception as e:
-        print(f"❌ Erro ao registrar newsletter blueprint: {e}")
+        print(f" Erro ao registrar newsletter blueprint: {e}")
         NEWSLETTER_AVAILABLE = False
 else:
-    print("❌ Newsletter blueprint não disponível")
+    print(" Newsletter blueprint não disponível")
 
 # Admin
 if ADMIN_AVAILABLE and admin_bp:
     try:
         app.register_blueprint(admin_bp)
-        print("✅ Admin blueprint registrado - rotas /api/admin/* disponíveis!")
+        print(" Admin blueprint registrado - rotas /api/admin/* disponíveis!")
     except Exception as e:
-        print(f"❌ Erro ao registrar admin blueprint: {e}")
+        print(f" Erro ao registrar admin blueprint: {e}")
         ADMIN_AVAILABLE = False
 else:
-    print("❌ Admin blueprint não disponível")
+    print(" Admin blueprint não disponível")
 
 
 try:
     gamma_bp = get_gamma_blueprint()
     app.register_blueprint(gamma_bp)
-    print("✅ Gamma blueprint registrado!")
+    print(" Gamma blueprint registrado!")
 except Exception as e:
-    print(f"❌ Erro ao registrar gamma blueprint: {e}")
+    print(f" Erro ao registrar gamma blueprint: {e}")
 
 
 # ===== CORS =====
@@ -306,7 +306,7 @@ def initialize_database():
         setup_enhanced_database()
         
         if setup_email_system():
-            print("✅ Sistema de email inicializado!")
+            print(" Sistema de email inicializado!")
         else:
             print("⚠️ Falha na inicialização do sistema de email")
         

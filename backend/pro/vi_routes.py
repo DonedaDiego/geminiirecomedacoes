@@ -49,7 +49,7 @@ def analyze_ticker(ticker):
             'timestamp': datetime.now().isoformat()
         }), 400
     except Exception as e:
-        print(f"❌ Erro na análise VI: {e}")
+        print(f" Erro na análise VI: {e}")
         traceback.print_exc()
         return jsonify({
             'success': False,
@@ -95,7 +95,7 @@ def get_signal(ticker):
             'timestamp': datetime.now().isoformat()
         }), 400
     except Exception as e:
-        print(f"❌ Erro ao obter sinal VI: {e}")
+        print(f" Erro ao obter sinal VI: {e}")
         traceback.print_exc()
         return jsonify({
             'success': False,
@@ -141,7 +141,7 @@ def get_chart_data(ticker):
             'timestamp': datetime.now().isoformat()
         }), 400
     except Exception as e:
-        print(f"❌ Erro ao obter dados do gráfico: {e}")
+        print(f" Erro ao obter dados do gráfico: {e}")
         traceback.print_exc()
         return jsonify({
             'success': False,
@@ -196,20 +196,20 @@ def compare_tickers():
                         'vol_hist_mean': result['vol_hist_mean'],
                         'iv_mean': result['iv_mean']
                     })
-                    print(f"✅ {clean_ticker}: Sucesso")
+                    print(f" {clean_ticker}: Sucesso")
                 else:
                     comparison_results.append({
                         'ticker': clean_ticker,
                         'error': result['error']
                     })
-                    print(f"❌ {clean_ticker}: {result['error']}")
+                    print(f" {clean_ticker}: {result['error']}")
                 
             except Exception as e:
                 comparison_results.append({
                     'ticker': ticker,
                     'error': str(e)
                 })
-                print(f"❌ Erro em {ticker}: {e}")
+                print(f" Erro em {ticker}: {e}")
         
         return jsonify({
             'success': True,
@@ -220,7 +220,7 @@ def compare_tickers():
         })
         
     except Exception as e:
-        print(f"❌ Erro na comparação: {e}")
+        print(f" Erro na comparação: {e}")
         traceback.print_exc()
         return jsonify({
             'success': False,
@@ -273,7 +273,7 @@ def get_statistics():
                     stats['total_analyzed'] += 1
                 
             except Exception as e:
-                print(f"❌ Erro em estatística para {ticker}: {e}")
+                print(f" Erro em estatística para {ticker}: {e}")
                 continue
         
         if all_signals:
@@ -294,7 +294,7 @@ def get_statistics():
         })
         
     except Exception as e:
-        print(f"❌ Erro nas estatísticas: {e}")
+        print(f" Erro nas estatísticas: {e}")
         traceback.print_exc()
         return jsonify({
             'success': False,

@@ -37,7 +37,7 @@ def get_portfolio_analytics(portfolio_id):
         current_user_id = verify_user_access(auth_header)
         
         if not current_user_id:
-            logger.error("❌ Usuário não autenticado")
+            logger.error(" Usuário não autenticado")
             return jsonify({
                 'success': False,
                 'error': 'Usuário não autenticado'
@@ -45,7 +45,7 @@ def get_portfolio_analytics(portfolio_id):
 
         # Verificar se usuário tem acesso à carteira
         if not check_user_portfolio_access(current_user_id, portfolio_id):
-            logger.error(f"❌ Usuário {current_user_id} sem acesso à carteira {portfolio_id}")
+            logger.error(f" Usuário {current_user_id} sem acesso à carteira {portfolio_id}")
             return jsonify({
                 'success': False,
                 'error': 'Acesso negado à esta carteira'
@@ -61,7 +61,7 @@ def get_portfolio_analytics(portfolio_id):
         result = chart_service.analyze_portfolio(portfolio_id, force_refresh)
         
         if result['success']:
-            logger.info("✅ Análise concluída com sucesso!")
+            logger.info(" Análise concluída com sucesso!")
             
             return jsonify({
                 'success': True,
@@ -75,14 +75,14 @@ def get_portfolio_analytics(portfolio_id):
                 }
             })
         else:
-            logger.error(f"❌ Erro na análise: {result['error']}")
+            logger.error(f" Erro na análise: {result['error']}")
             return jsonify({
                 'success': False,
                 'error': result['error']
             }), 500
 
     except Exception as e:
-        logger.error(f"❌ Erro interno: {str(e)}")
+        logger.error(f" Erro interno: {str(e)}")
         import traceback
         traceback.print_exc()
         
@@ -132,7 +132,7 @@ def refresh_portfolio_prices(portfolio_id):
             }), 500
 
     except Exception as e:
-        logger.error(f"❌ Erro no refresh: {str(e)}")
+        logger.error(f" Erro no refresh: {str(e)}")
         return jsonify({
             'success': False,
             'error': str(e)
@@ -163,7 +163,7 @@ def get_user_portfolios():
         })
 
     except Exception as e:
-        logger.error(f"❌ Erro ao listar portfolios: {str(e)}")
+        logger.error(f" Erro ao listar portfolios: {str(e)}")
         return jsonify({
             'success': False,
             'error': str(e)
@@ -230,7 +230,7 @@ def check_user_portfolio_access(user_id: int, portfolio_name: str) -> bool:
         return has_access
         
     except Exception as e:
-        logger.error(f"❌ Erro ao verificar acesso: {e}")
+        logger.error(f" Erro ao verificar acesso: {e}")
         return False
 
 def get_user_available_portfolios(user_id: int) -> list:
@@ -267,7 +267,7 @@ def get_user_available_portfolios(user_id: int) -> list:
         return portfolios
         
     except Exception as e:
-        logger.error(f"❌ Erro ao buscar portfolios: {e}")
+        logger.error(f" Erro ao buscar portfolios: {e}")
         return []
 
 # Função para registrar o blueprint

@@ -166,7 +166,7 @@ def register():
                     }), 400
                 
                 # Se passou em todas as validações, permitir o registro
-                print(f"✅ IP {user_ip} aprovado para novo registro")
+                print(f" IP {user_ip} aprovado para novo registro")
         
         # 🔥 CRIAR USUÁRIO COM TRIAL USANDO O TRIAL SERVICE
         print(f"👤 Criando usuário: {name} ({email})")
@@ -182,7 +182,7 @@ def register():
             }), 400
         
         user_id = trial_result['user_id']
-        print(f"✅ Usuário criado com ID: {user_id}")
+        print(f" Usuário criado com ID: {user_id}")
         
         # 🔥 ATUALIZAR PARA NÃO CONFIRMADO (trial service cria confirmado por padrão)
         cursor.execute("""
@@ -213,7 +213,7 @@ def register():
         conn.close()
         
         if email_sent:
-            print(f"✅ Email de confirmação enviado para {email}")
+            print(f" Email de confirmação enviado para {email}")
             return jsonify({
                 'success': True,
                 'message': '🎉 Conta criada com TRIAL de 15 dias! Verifique seu email para ativar.',
@@ -230,7 +230,7 @@ def register():
                 }
             }), 201
         else:
-            print(f"❌ Erro ao enviar email para {email}")
+            print(f" Erro ao enviar email para {email}")
             return jsonify({
                 'success': False, 
                 'error': 'Conta criada, mas erro ao enviar email. Tente fazer login.',
@@ -238,7 +238,7 @@ def register():
             }), 500
         
     except Exception as e:
-        print(f"❌ Erro no registro: {e}")
+        print(f" Erro no registro: {e}")
         import traceback
         traceback.print_exc()
         
@@ -274,7 +274,7 @@ def confirm_email_page():
             <style>body{font-family:Arial;text-align:center;padding:50px;background:#f5f5f5}</style>
         </head>
         <body>
-            <h1>❌ Token não encontrado</h1>
+            <h1> Token não encontrado</h1>
             <p>Link de confirmação inválido.</p>
             <a href="/login">← Voltar ao Login</a>
         </body>
@@ -304,7 +304,7 @@ def confirm_email_page():
         </head>
         <body>
             <div class="container">
-                <div class="success">✅</div>
+                <div class="success"></div>
                 <h1>Email Confirmado!</h1>
                 <p>Olá, <strong>{result['user_name']}</strong>!</p>
                 <p>Seu email foi confirmado com sucesso.</p>
@@ -343,7 +343,7 @@ def confirm_email_page():
         </head>
         <body>
             <div class="container">
-                <div class="error">❌</div>
+                <div class="error"></div>
                 <h1>Erro na Confirmação</h1>
                 <p>{result['error']}</p>
                 
@@ -403,7 +403,7 @@ def resend_confirmation():
             return jsonify({'success': False, 'error': 'Erro ao enviar email'}), 500
         
     except Exception as e:
-        print(f"❌ Erro ao reenviar confirmação: {e}")
+        print(f" Erro ao reenviar confirmação: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
 # ===== FUNÇÃO PARA CONFIRMAR EMAIL E ATIVAR TRIAL =====
@@ -452,7 +452,7 @@ def activate_user_manually(user_id):
             return jsonify({'success': False, 'error': 'Usuário não encontrado'}), 404
         
     except Exception as e:
-        print(f"❌ Erro ao ativar usuário: {e}")
+        print(f" Erro ao ativar usuário: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
 # ===== ROTA TEMPORÁRIA PARA LISTAR USUÁRIOS NÃO CONFIRMADOS =====
@@ -498,7 +498,7 @@ def list_unconfirmed_users():
         }), 200
         
     except Exception as e:
-        print(f"❌ Erro ao listar usuários: {e}")
+        print(f" Erro ao listar usuários: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
 # ===== ROTAS DE LOGIN =====
@@ -525,7 +525,7 @@ def login():
         
         conn = get_db_connection()
         if not conn:
-            print("❌ Erro de conexão com banco")
+            print(" Erro de conexão com banco")
             return jsonify({'success': False, 'error': 'Erro de conexão com banco'}), 500
         
         cursor = conn.cursor()
@@ -548,26 +548,26 @@ def login():
         user = cursor.fetchone()
         
         if not user:
-            print(f"❌ Usuário não encontrado: {email}")
+            print(f" Usuário não encontrado: {email}")
             cursor.close()
             conn.close()
             return jsonify({'success': False, 'error': 'E-mail não encontrado'}), 401
         
         user_id, name, user_email, stored_password, plan_id, plan_name, user_type, email_confirmed, plan_expires_at, subscription_status, created_at, last_login = user
         
-        print(f"✅ Usuário encontrado: {name} (ID: {user_id})")
+        print(f" Usuário encontrado: {name} (ID: {user_id})")
         print(f"📧 Email confirmado: {email_confirmed}")
         print(f" Subscription status: {subscription_status}")
         print(f"🕐 Último login: {last_login}")
         
         # Verificar senha
         if hash_password(password) != stored_password:
-            print("❌ Senha incorreta")
+            print(" Senha incorreta")
             cursor.close()
             conn.close()
             return jsonify({'success': False, 'error': 'Senha incorreta'}), 401
         
-        print("✅ Senha correta")
+        print(" Senha correta")
         
         # Verificar se email foi confirmado
         if not email_confirmed:
@@ -582,7 +582,7 @@ def login():
                 'user_id': user_id  # Para debug temporário
             }), 403
         
-        print("✅ Email confirmado - procedendo com login")
+        print(" Email confirmado - procedendo com login")
         
         # 🔥 ATUALIZAR ÚLTIMO LOGIN ANTES DE VERIFICAR SUBSCRIPTION
         try:
@@ -600,7 +600,7 @@ def login():
             cursor.execute("SELECT last_login FROM users WHERE id = %s", (user_id,))
             updated_login = cursor.fetchone()[0]
             
-            print(f"✅ Último login atualizado - Rows: {affected_rows}, Novo valor: {updated_login}")
+            print(f" Último login atualizado - Rows: {affected_rows}, Novo valor: {updated_login}")
             
         except Exception as e:
             print(f"⚠️ Erro ao atualizar último login: {e}")
@@ -615,7 +615,7 @@ def login():
         
         # 🔥 VERIFICAR SE A FUNÇÃO RETORNOU SUCESSO
         if not subscription_status_result.get('success', False):
-            print("❌ Erro ao verificar status da subscription")
+            print(" Erro ao verificar status da subscription")
             return jsonify({'success': False, 'error': 'Erro ao verificar status da conta'}), 500
         
         # Gerar token JWT
@@ -710,7 +710,7 @@ def login():
         return jsonify(login_response), 200
         
     except Exception as e:
-        print(f"❌ Erro no login: {e}")
+        print(f" Erro no login: {e}")
         import traceback
         traceback.print_exc()
         return jsonify({'success': False, 'error': f'Erro interno: {str(e)}'}), 500
@@ -756,7 +756,7 @@ def forgot_password():
             return jsonify(result), 400
         
     except Exception as e:
-        print(f"❌ Erro no forgot-password: {e}")
+        print(f" Erro no forgot-password: {e}")
         return jsonify({'success': False, 'error': f'Erro interno: {str(e)}'}), 500
 
 @auth_bp.route('/validate-reset-token', methods=['POST'])
@@ -789,7 +789,7 @@ def validate_reset_token():
             return jsonify(result), 400
         
     except Exception as e:
-        print(f"❌ Erro na validação de token: {e}")
+        print(f" Erro na validação de token: {e}")
         return jsonify({'success': False, 'error': f'Erro interno: {str(e)}'}), 500
 
 @auth_bp.route('/reset-password', methods=['POST'])
@@ -824,7 +824,7 @@ def reset_password():
             return jsonify(result), 400
         
     except Exception as e:
-        print(f"❌ Erro no reset de senha: {e}")
+        print(f" Erro no reset de senha: {e}")
         return jsonify({'success': False, 'error': f'Erro interno: {str(e)}'}), 500
 
 # ===== ROTAS DE VERIFICAÇÃO =====

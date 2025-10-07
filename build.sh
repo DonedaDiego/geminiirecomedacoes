@@ -14,7 +14,7 @@ echo "📦 Instalando dependências..."
 pip install -r requirements.txt
 
 # Verificar instalação
-echo "✅ Verificando instalação..."
+echo " Verificando instalação..."
 python -c "import flask; print(f'Flask {flask.__version__} instalado')"
 python -c "import psycopg2; print('PostgreSQL driver OK')"
 python -c "import jwt; print('JWT OK')"

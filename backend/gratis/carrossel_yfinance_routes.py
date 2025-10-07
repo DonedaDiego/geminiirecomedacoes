@@ -79,15 +79,15 @@ def get_carrossel_stocks():
             # Atualizar cache
             update_cache(carrossel_data)
             
-            logger.info(f"✅ Carrossel: {carrossel_data['data']['total_stocks']} ações em {carrossel_data['data']['response_time']}ms")
+            logger.info(f" Carrossel: {carrossel_data['data']['total_stocks']} ações em {carrossel_data['data']['response_time']}ms")
             
             return jsonify(carrossel_data)
         else:
-            logger.error(f"❌ Carrossel: Erro ao buscar dados - {carrossel_data.get('error')}")
+            logger.error(f" Carrossel: Erro ao buscar dados - {carrossel_data.get('error')}")
             return jsonify(carrossel_data), 500
             
     except Exception as e:
-        logger.error(f"❌ Erro no endpoint /stocks: {e}")
+        logger.error(f" Erro no endpoint /stocks: {e}")
         return jsonify({
             'success': False,
             'error': f'Erro interno: {str(e)}',
@@ -143,7 +143,7 @@ def get_single_stock(symbol):
                 'response_time': round((time.time() - start_time) * 1000, 2)
             }
             
-            logger.info(f"✅ {symbol}: R$ {stock_data['price']} ({stock_data['change_percent']:+.2f}%)")
+            logger.info(f" {symbol}: R$ {stock_data['price']} ({stock_data['change_percent']:+.2f}%)")
             return jsonify(response_data)
         else:
             logger.warning(f"⚠️ Ação {symbol} não encontrada")
@@ -154,7 +154,7 @@ def get_single_stock(symbol):
             }), 404
             
     except Exception as e:
-        logger.error(f"❌ Erro ao buscar {symbol}: {e}")
+        logger.error(f" Erro ao buscar {symbol}: {e}")
         return jsonify({
             'success': False,
             'error': f'Erro interno: {str(e)}',
@@ -208,7 +208,7 @@ def get_market_stats():
             }), 500
             
     except Exception as e:
-        logger.error(f"❌ Erro ao buscar estatísticas do mercado: {e}")
+        logger.error(f" Erro ao buscar estatísticas do mercado: {e}")
         return jsonify({
             'success': False,
             'error': f'Erro interno: {str(e)}'

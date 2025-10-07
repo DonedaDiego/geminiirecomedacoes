@@ -307,13 +307,13 @@ class AmplitudeService:
                         'volatility_level': analysis['summary']['volatility_level'],
                         'trend': analysis['summary']['trend'],
                         'success_rate_best_period': analysis['summary']['best_period_success_rate'],
-                        'analysis_date': analysis['analysis_date']  # ✅ ADICIONAR ESTE CAMPO
+                        'analysis_date': analysis['analysis_date']  #  ADICIONAR ESTE CAMPO
                     })
-                    print(f"✅ {ticker} analisado com sucesso")  # Debug
+                    print(f" {ticker} analisado com sucesso")  # Debug
                 else:
-                    print(f"❌ Falha ao analisar {ticker}")  # Debug
+                    print(f" Falha ao analisar {ticker}")  # Debug
             except Exception as e:
-                print(f"❌ Erro ao analisar {ticker}: {e}")  # Debug mais detalhado
+                print(f" Erro ao analisar {ticker}: {e}")  # Debug mais detalhado
                 continue
         
         # Ordenar por volatilidade (amplitude média)
@@ -389,9 +389,9 @@ def create_amplitude_cache_table():
         cursor.close()
         conn.close()
         
-        print("✅ Tabela amplitude_cache criada com sucesso!")
+        print(" Tabela amplitude_cache criada com sucesso!")
         return True
         
     except Exception as e:
-        print(f"❌ Erro ao criar tabela: {e}")
+        print(f" Erro ao criar tabela: {e}")
         return False

@@ -49,7 +49,7 @@ def forgot_password():
             return jsonify(result), 400
         
     except Exception as e:
-        print(f"❌ Erro no forgot-password: {e}")
+        print(f" Erro no forgot-password: {e}")
         return jsonify({'success': False, 'error': f'Erro interno: {str(e)}'}), 500
 
 @email_bp.route('/validate-reset-token', methods=['POST'])
@@ -85,7 +85,7 @@ def validate_reset_token():
             return jsonify(result), 400
         
     except Exception as e:
-        print(f"❌ Erro na validação de token: {e}")
+        print(f" Erro na validação de token: {e}")
         return jsonify({'success': False, 'error': f'Erro interno: {str(e)}'}), 500
 
 @email_bp.route('/reset-password', methods=['POST'])
@@ -123,7 +123,7 @@ def reset_password():
             return jsonify(result), 400
         
     except Exception as e:
-        print(f"❌ Erro no reset de senha: {e}")
+        print(f" Erro no reset de senha: {e}")
         return jsonify({'success': False, 'error': f'Erro interno: {str(e)}'}), 500
 
 # ===== ROTAS DE CONFIRMAÇÃO DE EMAIL =====
@@ -181,12 +181,12 @@ def resend_confirmation():
             return jsonify({'success': False, 'error': 'Erro ao enviar email'}), 500
         
     except Exception as e:
-        print(f"❌ Erro ao reenviar confirmação: {e}")
+        print(f" Erro ao reenviar confirmação: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @email_bp.route('/confirm-email')
 def confirm_email():
-    """✅ Confirmar email com token (página HTML)"""
+    """ Confirmar email com token (página HTML)"""
     from flask import render_template_string
     
     token = request.args.get('token')
@@ -201,14 +201,14 @@ def confirm_email():
             <style>body{font-family:Arial;text-align:center;padding:50px;background:#f5f5f5}</style>
         </head>
         <body>
-            <h1>❌ Token não encontrado</h1>
+            <h1> Token não encontrado</h1>
             <p>Link de confirmação inválido.</p>
             <a href="/login">← Voltar ao Login</a>
         </body>
         </html>
         """), 400
     
-    print(f"✅ Confirmando email com token: {token[:20]}...")
+    print(f" Confirmando email com token: {token[:20]}...")
     
     # Confirmar token
     result = email_service.confirm_email_token(token)
@@ -232,7 +232,7 @@ def confirm_email():
         </head>
         <body>
             <div class="container">
-                <div class="success">✅</div>
+                <div class="success"></div>
                 <h1>Email Confirmado!</h1>
                 <p>Olá, <strong>{result['user_name']}</strong>!</p>
                 <p>Seu email foi confirmado com sucesso. Agora você pode fazer login na plataforma.</p>
@@ -266,7 +266,7 @@ def confirm_email():
         </head>
         <body>
             <div class="container">
-                <div class="error">❌</div>
+                <div class="error"></div>
                 <h1>Erro na Confirmação</h1>
                 <p>{result['error']}</p>
                 

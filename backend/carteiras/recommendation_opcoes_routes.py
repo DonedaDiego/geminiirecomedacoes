@@ -199,7 +199,7 @@ def get_active_opcoes_recommendations():
             
         cursor = conn.cursor()
         
-        # ✅ CORRIGIR: ADICIONAR CAMPO STATUS
+        #  CORRIGIR: ADICIONAR CAMPO STATUS
         cursor.execute('''
             SELECT 
                 ativo_spot, ticker_opcao, strike, valor_entrada, 

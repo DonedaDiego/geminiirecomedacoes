@@ -1088,7 +1088,7 @@
       // APLICAR CONTROLES DE ACESSO (substituir forceUnlockEverything)
       setTimeout(applyAccessControls, 500);
       
-      console.log('✅ Dashboard inicializado!');
+      console.log(' Dashboard inicializado!');
     }
 
     function tryLoadFromLocalStorage() {
@@ -1151,7 +1151,7 @@
       
       // SÓ BLOQUEIA SE FOR REGULAR (user_type = 'regular')
       if (userPlan === 'free') {
-        console.log('❌ BLOQUEANDO ACESSO - USUÁRIO REGULAR');
+        console.log(' BLOQUEANDO ACESSO - USUÁRIO REGULAR');
         
         // Bloquear cards...
         [opcoesCard, mlCard, opcoes4dCard].forEach(card => {
@@ -1180,7 +1180,7 @@
         });
       } else {
         // LIBERA TUDO para admin, paid, trial
-        console.log('✅ LIBERANDO ACESSO TOTAL para user_type:', userPlan);
+        console.log(' LIBERANDO ACESSO TOTAL para user_type:', userPlan);
         
         [opcoesCard, mlCard, opcoes4dCard].forEach(card => {
           if (card) {
@@ -1270,7 +1270,7 @@
       const userData = localStorage.getItem('geminii_user');
     
       if (!token || !userData) {
-        console.log('❌ Redirecionando para login...');
+        console.log(' Redirecionando para login...');
         window.location.href = '/login.html';
         return;
       }

@@ -33,11 +33,11 @@ class RankingService:
         """Busca token do .env ou Railway"""
         token = os.environ.get('OPLAB_TOKEN')
         if token:
-            print("✅ Token OpLab da variável de ambiente")
+            print(" Token OpLab da variável de ambiente")
             return token
         
         # Fallback se não encontrar (não deve acontecer em produção)
-        raise Exception("❌ Token OPLAB_TOKEN não encontrado nas variáveis de ambiente")
+        raise Exception(" Token OPLAB_TOKEN não encontrado nas variáveis de ambiente")
     
     def fetch_data(self, rank_by="iv_current", sort="desc", limit=150):
         """Busca dados do OpLab"""
@@ -58,15 +58,15 @@ class RankingService:
                 
                 # Filtrar apenas ações com opções
                 filtered = [item for item in data if item.get('symbol') in self.options_stocks]
-                print(f"✅ Filtrados: {len(filtered)} ações com opções")
+                print(f" Filtrados: {len(filtered)} ações com opções")
                 
                 return filtered
             else:
-                print(f"❌ Erro API: {response.status_code}")
+                print(f" Erro API: {response.status_code}")
                 return None
                 
         except Exception as e:
-            print(f"❌ Erro na requisição: {e}")
+            print(f" Erro na requisição: {e}")
             return None
     
     def process_data(self, data):
@@ -81,7 +81,7 @@ class RankingService:
             required = ['symbol', 'iv_current']
             missing = [col for col in required if col not in df.columns]
             if missing:
-                print(f"❌ Colunas faltando: {missing}")
+                print(f" Colunas faltando: {missing}")
                 return None
             
             # Limpar dados
@@ -89,11 +89,11 @@ class RankingService:
             df = df.dropna(subset=['iv_current'])
             df = df.sort_values('iv_current', ascending=False)
             
-            print(f"✅ Processados: {len(df)} de {initial_count} registros")
+            print(f" Processados: {len(df)} de {initial_count} registros")
             return df
             
         except Exception as e:
-            print(f"❌ Erro no processamento: {e}")
+            print(f" Erro no processamento: {e}")
             return None
     
     def calculate_statistics(self, df):
@@ -123,7 +123,7 @@ class RankingService:
                     }
             return stats
         except Exception as e:
-            print(f"❌ Erro no cálculo de estatísticas: {e}")
+            print(f" Erro no cálculo de estatísticas: {e}")
             return {
                 'iv_media': 0.0,
                 'iv_mediana': 0.0,
@@ -163,7 +163,7 @@ class RankingService:
                 })
             return ranking
         except Exception as e:
-            print(f"❌ Erro na criação do ranking: {e}")
+            print(f" Erro na criação do ranking: {e}")
             return []
     
     def get_top_iv(self, df, tipo, quantidade):
@@ -188,7 +188,7 @@ class RankingService:
                 })
             return result
         except Exception as e:
-            print(f"❌ Erro no top IV: {e}")
+            print(f" Erro no top IV: {e}")
             return []
     
     def get_scatter_data(self, df, top_n):
@@ -207,7 +207,7 @@ class RankingService:
                 })
             return scatter_data
         except Exception as e:
-            print(f"❌ Erro no scatter data: {e}")
+            print(f" Erro no scatter data: {e}")
             return []
     
     def get_percentil_data(self, df, top_n):
@@ -236,7 +236,7 @@ class RankingService:
             
             return ranking, categorias
         except Exception as e:
-            print(f"❌ Erro no percentil data: {e}")
+            print(f" Erro no percentil data: {e}")
             return [], {}
     
     def _get_percentil_category(self, percentil):
@@ -291,7 +291,7 @@ class RankingService:
             
             return comparison_data, stats
         except Exception as e:
-            print(f"❌ Erro no comparison data: {e}")
+            print(f" Erro no comparison data: {e}")
             return [], {}
     
     def get_full_analysis(self, rank_by="iv_current", top_n=20):
@@ -348,11 +348,11 @@ class RankingService:
             result['top_5']['iv_alta'] = self.get_top_iv(df, 'alta', 5)
             result['top_5']['iv_baixa'] = self.get_top_iv(df, 'baixa', 5)
             
-            print(f"✅ Análise completa criada: {len(df)} ações processadas")
+            print(f" Análise completa criada: {len(df)} ações processadas")
             return result
             
         except Exception as e:
-            print(f"❌ Erro na análise completa: {e}")
+            print(f" Erro na análise completa: {e}")
             return {
                 'success': False,
                 'error': str(e)
@@ -369,7 +369,7 @@ if __name__ == "__main__":
     resultado = get_ranking_data()
     
     if resultado['success']:
-        print(f"✅ Teste executado!")
+        print(f" Teste executado!")
         print(f" {resultado['total_acoes']} ações analisadas")
         
         if resultado['rankings']['iv_atual']:
@@ -377,4 +377,4 @@ if __name__ == "__main__":
             for item in resultado['rankings']['iv_atual'][:5]:
                 print(f"   {item['posicao']}. {item['symbol']} - {item['iv_current']:.2f}%")
     else:
-        print(f"❌ Erro: {resultado['error']}")
+        print(f" Erro: {resultado['error']}")

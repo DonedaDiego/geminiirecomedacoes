@@ -24,7 +24,7 @@ def obter_estatisticas():
         })
         
     except Exception as e:
-        logger.error(f"❌ Erro ao obter estatísticas Golden Cross EUA: {e}")
+        logger.error(f" Erro ao obter estatísticas Golden Cross EUA: {e}")
         return jsonify({
             'sucesso': False,
             'erro': str(e)
@@ -74,19 +74,19 @@ def obter_ranking():
             }
         }
         
-        logger.info(f"✅ Ranking Golden Cross EUA retornado: {len(ranking)} ações")
+        logger.info(f" Ranking Golden Cross EUA retornado: {len(ranking)} ações")
         
         return jsonify(response_data)
         
     except ValueError as e:
-        logger.error(f"❌ Erro de validação: {e}")
+        logger.error(f" Erro de validação: {e}")
         return jsonify({
             'sucesso': False,
             'erro': 'Parâmetros inválidos'
         }), 400
         
     except Exception as e:
-        logger.error(f"❌ Erro ao gerar ranking Golden Cross EUA: {e}")
+        logger.error(f" Erro ao gerar ranking Golden Cross EUA: {e}")
         return jsonify({
             'sucesso': False,
             'erro': str(e)
@@ -143,7 +143,7 @@ def obter_analise_acao(ticker):
         score = golden_cross_eua_service._calcular_score_golden_cross(resultado)
         resultado['score'] = score
         
-        logger.info(f"✅ Análise Golden Cross concluída para {ticker}: {resultado['status_atual']}")
+        logger.info(f" Análise Golden Cross concluída para {ticker}: {resultado['status_atual']}")
         
         return jsonify({
             'sucesso': True,
@@ -151,14 +151,14 @@ def obter_analise_acao(ticker):
         })
         
     except ValueError as e:
-        logger.error(f"❌ Erro de validação para {ticker}: {e}")
+        logger.error(f" Erro de validação para {ticker}: {e}")
         return jsonify({
             'sucesso': False,
             'erro': 'Parâmetros inválidos'
         }), 400
         
     except Exception as e:
-        logger.error(f"❌ Erro na análise de {ticker}: {e}")
+        logger.error(f" Erro na análise de {ticker}: {e}")
         return jsonify({
             'sucesso': False,
             'erro': str(e)
@@ -215,7 +215,7 @@ def obter_ranking_por_setor():
         # Ordenar setores por score médio
         setores_ordenados = sorted(setores.values(), key=lambda x: x['estatisticas']['score_medio'], reverse=True)
         
-        logger.info(f"✅ Ranking por setor retornado: {len(setores_ordenados)} setores")
+        logger.info(f" Ranking por setor retornado: {len(setores_ordenados)} setores")
         
         return jsonify({
             'sucesso': True,
@@ -227,7 +227,7 @@ def obter_ranking_por_setor():
         })
         
     except Exception as e:
-        logger.error(f"❌ Erro ao obter ranking por setor: {e}")
+        logger.error(f" Erro ao obter ranking por setor: {e}")
         return jsonify({
             'sucesso': False,
             'erro': str(e)
@@ -269,7 +269,7 @@ def listar_empresas():
         })
         
     except Exception as e:
-        logger.error(f"❌ Erro ao listar empresas: {e}")
+        logger.error(f" Erro ao listar empresas: {e}")
         return jsonify({
             'sucesso': False,
             'erro': str(e)
@@ -294,7 +294,7 @@ def verificar_status():
         })
         
     except Exception as e:
-        logger.error(f"❌ Erro na verificação de status: {e}")
+        logger.error(f" Erro na verificação de status: {e}")
         return jsonify({
             'sucesso': False,
             'status': 'ERRO',
@@ -310,7 +310,7 @@ def log_request():
 @golden_cross_eua_bp.after_request
 def log_response(response):
     """Log de todas as respostas"""
-    logger.info(f"✅ {request.method} {request.path} - Status: {response.status_code}")
+    logger.info(f" {request.method} {request.path} - Status: {response.status_code}")
     return response
 
 # Handler de erros
@@ -330,7 +330,7 @@ def method_not_allowed(error):
 
 @golden_cross_eua_bp.errorhandler(500)
 def internal_error(error):
-    logger.error(f"❌ Erro interno do servidor: {error}")
+    logger.error(f" Erro interno do servidor: {error}")
     return jsonify({
         'sucesso': False,
         'erro': 'Erro interno do servidor'
