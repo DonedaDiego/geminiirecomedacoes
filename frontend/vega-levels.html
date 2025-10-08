@@ -704,42 +704,7 @@
       const alertContainer = document.getElementById('alertContainer');
       alertContainer.innerHTML = ''; // Limpar alertas anteriores
       
-      const ivDistortion = iv_context.iv_distortion_pct || 0;
-      
-      if (Math.abs(ivDistortion) > 15) {
-        const alertDiv = document.createElement('div');
-        alertDiv.className = 'iv-distortion-alert mt-4';
-        
-        let alertIcon, alertColor, alertMessage, strategyTip;
-        
-        if (ivDistortion > 15) {
-          alertIcon = 'fas fa-exclamation-triangle';
-          alertColor = 'text-red-400';
-          alertMessage = `IV INFLADA: +${ivDistortion.toFixed(1)}% vs média histórica`;
-          strategyTip = vexDescoberto < 0 ? 
-            '💡 Oportunidade: Short Straddles/Iron Condors (MMs querem IV alta)' :
-            '⚠️ Cuidado: IV alta mas MMs vulneráveis - aguardar compressão';
-        } else {
-          alertIcon = 'fas fa-compress-arrows-alt';
-          alertColor = 'text-green-400';
-          alertMessage = `IV COMPRIMIDA: ${ivDistortion.toFixed(1)}% vs média histórica`;
-          strategyTip = vexDescoberto > 0 ? 
-            '💡 Oportunidade: Long Straddles/Calendars (IV baixa + MMs vulneráveis)' :
-            '📊 Neutro: IV baixa mas MMs protegidos - aguardar setup';
-        }
-        
-        alertDiv.innerHTML = `
-          <div class="flex items-center justify-center mb-2">
-            <i class="${alertIcon} ${alertColor} mr-2"></i>
-            <strong class="${alertColor}">${alertMessage}</strong>
-          </div>
-          <div class="text-gray-300 text-sm">
-            ${strategyTip}
-          </div>
-        `;
-        
-        alertContainer.appendChild(alertDiv);
-      }
+      // Removido o alerta de distorção IV conforme pedido
 
       // Gráfico
       if (data.plot_json) {

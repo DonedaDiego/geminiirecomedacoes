@@ -341,7 +341,7 @@ class GEXAnalyzer:
         gex_real_data = gex_real_data.sort_values('distance_from_spot')
         
         # PEGAR OS 10 STRIKES MAIS PRÓXIMOS (COM DADOS REAIS)
-        atm_df = gex_real_data.head(10).sort_values('strike').reset_index(drop=True)
+        atm_df = gex_real_data.head(6).sort_values('strike').reset_index(drop=True)
         
         if len(atm_df) < 2:
             return None
@@ -351,7 +351,7 @@ class GEXAnalyzer:
         logging.info(f"Spot Price: R$ {spot_price:.2f}")
         logging.info(f"Strikes ATM selecionados ({len(atm_df)}):")
         for idx, row in atm_df.iterrows():
-            logging.info(f"  Strike {row['strike']:.2f}: GEX Descoberto = {row['total_gex_descoberto']:,.0f} {'' if row['has_real_data'] else '⚠️'}")
+            logging.info(f"  Strike {row['strike']:.2f}: GEX Descoberto = {row['total_gex_descoberto']:,.0f} {'' if row['has_real_data'] else ''}")
         
         # Validar mudança de sinal
         descoberto_values = atm_df['total_gex_descoberto'].values
