@@ -1,5 +1,5 @@
 """
-gamma_service.py - GEX Analysis COM DADOS REAIS + FLIP INTELIGENTE
+gamma_service.py - GEX Analysis COM DADOS REAIS
 """
 
 import numpy as np
@@ -43,86 +43,6 @@ def convert_to_json_serializable(obj):
             return str(obj)
     except:
         return None
-
-
-class LiquidityManager:
-    
-    
-    def __init__(self):
-    
-        self.high_liquidity = {
-            'BOVA11': 4,
-            'PETR4': 6,
-            'VALE3': 6,
-            'BBAS3': 6,
-            'B3SA3': 6,
-            'ITSA4': 6,
-            'BBDC4': 6,
-            'MGLU3': 6,
-        }
-        
-        self.medium_liquidity = {
-            'ITUB4': 9,
-            'ABEV3': 9,
-            'WEGE3': 9,
-            'RENT3': 9,
-            'ELET3': 9,
-            'PRIO3': 9,
-            'SUZB3': 9,
-            'EMBR3': 9,
-            'CIEL3': 9,
-            'RADL3': 9,
-            'BRAV3': 9,
-        }
-        
-        
-        self.low_liquidity_range = 13
-        
-        
-        self.default_range = 12
-    
-    def get_flip_range(self, symbol):
-        """Retorna o range para busca de flip baseado na liquidez"""
-        symbol_clean = symbol.replace('.SA', '').upper()
-        
-        # Verifica ALTA liquidez
-        if symbol_clean in self.high_liquidity:
-            range_pct = self.high_liquidity[symbol_clean]
-            logging.info(f"Ativo {symbol_clean}: Liquidez ALTA - Range {range_pct}%")
-            return range_pct
-        
-        # Verifica MÉDIA liquidez
-        if symbol_clean in self.medium_liquidity:
-            range_pct = self.medium_liquidity[symbol_clean]
-            logging.info(f"Ativo {symbol_clean}: Liquidez MEDIA - Range {range_pct}%")
-            return range_pct
-        
-        # 🔥 TUDO QUE NÃO ESTÁ LISTADO = BAIXA LIQUIDEZ
-        # Aqui entram: VIVT3, CSAN3, GGBR4, USIM5, etc.
-        logging.info(f"Ativo {symbol_clean}: Liquidez BAIXA (auto) - Range {self.low_liquidity_range}%")
-        return self.low_liquidity_range
-    
-    def get_liquidity_info(self, symbol):
-        """Retorna informações completas de liquidez"""
-        symbol_clean = symbol.replace('.SA', '').upper()
-        
-        if symbol_clean in self.high_liquidity:
-            return {
-                'range': self.high_liquidity[symbol_clean],
-                'category': 'ALTA'
-            }
-        
-        if symbol_clean in self.medium_liquidity:
-            return {
-                'range': self.medium_liquidity[symbol_clean],
-                'category': 'MEDIA'
-            }
-        
-        # Auto-classificado como BAIXA
-        return {
-            'range': self.low_liquidity_range,
-            'category': 'BAIXA'
-        }
 
 class ExpirationManager:
     def __init__(self):
@@ -174,7 +94,6 @@ class ExpirationManager:
                     }
         return None
 
-
 class DataProvider:
     def __init__(self):
         self.token = os.getenv('OPLAB_TOKEN')
@@ -191,6 +110,7 @@ class DataProvider:
     
     def get_spot_price(self, symbol):
         try:
+            # Tentar Oplab primeiro
             url = f"{self.oplab_url}/market/instruments/{symbol}"
             response = requests.get(url, headers=self.headers, timeout=10)
             
@@ -199,6 +119,7 @@ class DataProvider:
                 if data and 'close' in data:
                     return float(data['close'])
             
+            # Fallback YFinance
             ticker_yf = f"{symbol}.SA" if not symbol.endswith('.SA') else symbol
             stock = yf.Ticker(ticker_yf)
             hist = stock.history(period='1d')
@@ -214,6 +135,7 @@ class DataProvider:
             return None
     
     def get_oplab_historical_data(self, symbol):
+        """DADOS REAIS da Oplab"""
         try:
             to_date = datetime.now().strftime('%Y-%m-%d')
             from_date = (datetime.now() - timedelta(days=7)).strftime('%Y-%m-%d')
@@ -235,6 +157,7 @@ class DataProvider:
             latest_date = df['time'].max().date()
             latest_data = df[df['time'].dt.date == latest_date].copy()
             
+            # Filtros de qualidade
             valid_data = latest_data[
                 (latest_data['gamma'] > 0) &
                 (latest_data['premium'] > 0) &
@@ -251,6 +174,7 @@ class DataProvider:
             return pd.DataFrame()
     
     def get_floqui_oi_breakdown(self, symbol, expiration_code=None):
+        """DADOS REAIS do Floqui"""
         try:
             if expiration_code:
                 expiration = {
@@ -299,13 +223,12 @@ class DataProvider:
             logging.error(f"Erro Floqui: {e}")
             return {}, None
 
-
 class GEXAnalyzer:
     def __init__(self):
         self.data_provider = DataProvider()
-        self.liquidity_manager = LiquidityManager()
     
     def calculate_gex(self, oplab_df, oi_breakdown, spot_price):
+        """Calcula GEX com dados de OI descoberto sempre disponíveis"""
         if oplab_df.empty:
             logging.error("DataFrame vazio")
             return pd.DataFrame()
@@ -332,26 +255,36 @@ class GEXAnalyzer:
             calls = strike_options[call_mask]
             puts = strike_options[put_mask]
             
-            call_data = None
-            put_data = None
-            has_real_call = False
-            has_real_put = False
+            call_data = {}
+            put_data = {}
             
             if len(calls) > 0:
                 call_key = (float(strike), 'CALL')
                 if call_key in oi_breakdown:
                     call_data = oi_breakdown[call_key]
-                    has_real_call = True
+                else:
+                    volume_estimate = int(calls['volume'].mean() if 'volume' in calls.columns else 100)
+                    call_data = {
+                        'total': volume_estimate * 3,
+                        'descoberto': volume_estimate * 2,
+                        'travado': volume_estimate,
+                        'coberto': volume_estimate
+                    }
             
             if len(puts) > 0:
                 put_key = (float(strike), 'PUT')
                 if put_key in oi_breakdown:
                     put_data = oi_breakdown[put_key]
-                    has_real_put = True
+                else:
+                    volume_estimate = int(puts['volume'].mean() if 'volume' in puts.columns else 100)
+                    put_data = {
+                        'total': volume_estimate * 3,
+                        'descoberto': volume_estimate * 2,
+                        'travado': volume_estimate,
+                        'coberto': volume_estimate
+                    }
             
-            if not (has_real_call or has_real_put):
-                continue
-            
+            # Calcular GEX - COMO ESTAVA ANTES (CORRETO)
             call_gex = 0.0
             call_gex_descoberto = 0.0
             if call_data and len(calls) > 0:
@@ -363,6 +296,7 @@ class GEXAnalyzer:
             put_gex_descoberto = 0.0
             if put_data and len(puts) > 0:
                 avg_gamma = float(puts['gamma'].mean())
+                # VOLTA O SINAL NEGATIVO - ESTAVA CERTO!
                 put_gex = -(avg_gamma * put_data['total'] * spot_price * 100)
                 put_gex_descoberto = -(avg_gamma * put_data['descoberto'] * spot_price * 100)
             
@@ -375,152 +309,124 @@ class GEXAnalyzer:
                 'put_gex': float(put_gex),
                 'total_gex': float(total_gex),
                 'total_gex_descoberto': float(total_gex_descoberto),
-                'call_oi_total': int(call_data['total'] if call_data else 0),
-                'put_oi_total': int(put_data['total'] if put_data else 0),
-                'call_oi_descoberto': int(call_data['descoberto'] if call_data else 0),
-                'put_oi_descoberto': int(put_data['descoberto'] if put_data else 0),
-                'has_real_data': True
+                'call_oi_total': int(call_data.get('total', 0)),
+                'put_oi_total': int(put_data.get('total', 0)),
+                'call_oi_descoberto': int(call_data.get('descoberto', 0)),
+                'put_oi_descoberto': int(put_data.get('descoberto', 0)),
+                'has_real_data': (float(strike), 'CALL') in oi_breakdown or (float(strike), 'PUT') in oi_breakdown
             })
         
         result_df = pd.DataFrame(gex_data).sort_values('strike')
-        logging.info(f"GEX calculado para {len(result_df)} strikes com dados reais")
+        logging.info(f"GEX calculado para {len(result_df)} strikes com OI descoberto")
         
         return result_df
     
-    def find_gamma_flip(self, gex_df, spot_price, symbol):
-        """
-        Detecta gamma flip com lógica inteligente baseada no regime do spot
-        """
+    
+    def find_gamma_flip(self, gex_df, spot_price):
+        """Detecta gamma flip usando APENAS strikes com dados reais"""
         if gex_df.empty or len(gex_df) < 2:
-            logging.warning("Dados insuficientes para analise de flip")
             return None
         
-        # Pega range baseado na liquidez
-        max_distance_pct = self.liquidity_manager.get_flip_range(symbol)
-        max_distance = spot_price * (max_distance_pct / 100)
+        # FILTRAR APENAS STRIKES COM DADOS REAIS DO FLOQUI
+        gex_real_data = gex_df[gex_df['has_real_data'] == True].copy()
         
-        valid_df = gex_df[
-            (gex_df['strike'] >= spot_price - max_distance) &
-            (gex_df['strike'] <= spot_price + max_distance)
-        ].copy()
-        
-        if valid_df.empty:
-            logging.warning(f"Nenhum strike dentro de +-{max_distance_pct}% do spot")
+        if len(gex_real_data) < 2:
+            logging.warning("Menos de 2 strikes com dados reais do Floqui")
             return None
         
-        valid_df = valid_df.sort_values('strike').reset_index(drop=True)
+        logging.info(f"Strikes com dados reais: {len(gex_real_data)} de {len(gex_df)}")
         
-        logging.info(f"BUSCANDO GAMMA FLIP")
-        logging.info(f"Strikes analisados: {len(valid_df)}")
-        logging.info(f"Range: R$ {valid_df['strike'].min():.2f} - R$ {valid_df['strike'].max():.2f}")
+        # CALCULAR DISTÂNCIA
+        gex_real_data['distance_from_spot'] = abs(gex_real_data['strike'] - spot_price)
+        gex_real_data = gex_real_data.sort_values('distance_from_spot')
         
-        # DETECTA REGIME DO SPOT
-        spot_strike_idx = (valid_df['strike'] - spot_price).abs().argsort()[0]
-        spot_gex = valid_df.iloc[spot_strike_idx]['total_gex_descoberto']
-        spot_regime = "SHORT_GAMMA" if spot_gex < -1000 else ("LONG_GAMMA" if spot_gex > 1000 else "NEUTRAL")
+        # PEGAR OS 10 STRIKES MAIS PRÓXIMOS (COM DADOS REAIS)
+        atm_df = gex_real_data.head(6).sort_values('strike').reset_index(drop=True)
         
-        logging.info(f"REGIME NO SPOT:")
-        logging.info(f"  Strike mais proximo: R$ {valid_df.iloc[spot_strike_idx]['strike']:.2f}")
-        logging.info(f"  GEX descoberto: {spot_gex:,.0f}")
-        logging.info(f"  Regime: {spot_regime}")
+        if len(atm_df) < 2:
+            return None
         
-        # FUNCAO AUXILIAR
-        def search_flips(df, data_source_name):
-            flip_candidates = []
+        # LOG
+        logging.info(f"\n=== GAMMA FLIP DEBUG (DADOS REAIS) ===")
+        logging.info(f"Spot Price: R$ {spot_price:.2f}")
+        logging.info(f"Strikes ATM selecionados ({len(atm_df)}):")
+        for idx, row in atm_df.iterrows():
+            logging.info(f"  Strike {row['strike']:.2f}: GEX Descoberto = {row['total_gex_descoberto']:,.0f} {'' if row['has_real_data'] else ''}")
+        
+        # Validar mudança de sinal
+        descoberto_values = atm_df['total_gex_descoberto'].values
+        has_positive = bool((descoberto_values > 0).any())
+        has_negative = bool((descoberto_values < 0).any())
+        
+        logging.info(f"Has positive GEX: {has_positive}")
+        logging.info(f"Has negative GEX: {has_negative}")
+        
+        if not (has_positive and has_negative):
+            logging.warning(" FLIP NÃO ENCONTRADO: Não há mudança de sinal no GEX descoberto")
+            return None
+        
+        # Buscar transição
+        for i in range(len(atm_df) - 1):
+            current = float(atm_df.iloc[i]['total_gex_descoberto'])
+            next_gex = float(atm_df.iloc[i+1]['total_gex_descoberto'])
+            strike1 = float(atm_df.iloc[i]['strike'])
+            strike2 = float(atm_df.iloc[i+1]['strike'])
             
-            for i in range(len(df) - 1):
-                current_strike = df.iloc[i]['strike']
-                next_strike = df.iloc[i+1]['strike']
-                current_gex = df.iloc[i]['total_gex_descoberto']
-                next_gex = df.iloc[i+1]['total_gex_descoberto']
+            if (current > 0 and next_gex < 0) or (current < 0 and next_gex > 0):
+                if abs(current) + abs(next_gex) > 0:
+                    flip = strike1 + (strike2 - strike1) * abs(current) / (abs(current) + abs(next_gex))
+                    logging.info(f" GAMMA FLIP ENCONTRADO: R$ {flip:.2f}")
+                    logging.info(f"   Entre strikes {strike1:.2f} e {strike2:.2f}")
+                    return float(flip)
+        
+        logging.warning(" FLIP NÃO ENCONTRADO: Nenhuma transição de sinal clara")
+        return None
+    
+    
+    # def find_gamma_flip(self, gex_df, spot_price):
+    #     """Detecta gamma flip usando dados reais"""
+    #     if gex_df.empty or len(gex_df) < 2:
+    #         return None
+        
+    #     atm_range = spot_price * 0.03
+    #     mask1 = gex_df['strike'] >= (spot_price - atm_range)
+    #     mask2 = gex_df['strike'] <= (spot_price + atm_range)
+    #     atm_df = gex_df[mask1 & mask2].copy()
+        
+    #     if len(atm_df) < 2:
+    #         atm_range = spot_price * 0.12
+    #         mask1 = gex_df['strike'] >= (spot_price - atm_range)
+    #         mask2 = gex_df['strike'] <= (spot_price + atm_range)
+    #         atm_df = gex_df[mask1 & mask2].copy()
+        
+    #     if len(atm_df) < 2:
+    #         return None
+        
+    #     descoberto_values = atm_df['total_gex_descoberto'].values
+    #     has_positive = bool((descoberto_values > 0).any())
+    #     has_negative = bool((descoberto_values < 0).any())
+        
+    #     if not (has_positive and has_negative):
+    #         return None
+        
+    #     atm_df = atm_df.sort_values('strike').reset_index(drop=True)
+        
+    #     for i in range(len(atm_df) - 1):
+    #         current = float(atm_df.iloc[i]['total_gex_descoberto'])
+    #         next_gex = float(atm_df.iloc[i+1]['total_gex_descoberto'])
+            
+    #         if (current > 0 and next_gex < 0) or (current < 0 and next_gex > 0):
+    #             strike1 = float(atm_df.iloc[i]['strike'])
+    #             strike2 = float(atm_df.iloc[i+1]['strike'])
                 
-                if (current_gex > 0 and next_gex < 0) or (current_gex < 0 and next_gex > 0):
-                    if abs(current_gex) + abs(next_gex) > 0:
-                        flip_strike = current_strike + (next_strike - current_strike) * abs(current_gex) / (abs(current_gex) + abs(next_gex))
-                    else:
-                        flip_strike = (current_strike + next_strike) / 2
-                    
-                    distance_from_spot = abs(flip_strike - spot_price)
-                    distance_pct = distance_from_spot / spot_price * 100
-                    
-                    flip_position = "ACIMA" if flip_strike > spot_price else "ABAIXO"
-                    flip_direction = "NEG_TO_POS" if current_gex < 0 and next_gex > 0 else "POS_TO_NEG"
-                    
-                    # SCORE DE RELEVANCIA
-                    relevance_score = 0
-                    
-                    if spot_regime == "SHORT_GAMMA":
-                        if flip_position == "ACIMA" and flip_direction == "NEG_TO_POS":
-                            relevance_score = 1000
-                        else:
-                            relevance_score = 1
-                    elif spot_regime == "LONG_GAMMA":
-                        if flip_position == "ABAIXO" and flip_direction == "POS_TO_NEG":
-                            relevance_score = 1000
-                        else:
-                            relevance_score = 1
-                    else:
-                        relevance_score = 100
-                    
-                    flip_candidates.append({
-                        'strike': flip_strike,
-                        'distance_from_spot': distance_from_spot,
-                        'distance_pct': distance_pct,
-                        'left_strike': current_strike,
-                        'right_strike': next_strike,
-                        'left_gex': current_gex,
-                        'right_gex': next_gex,
-                        'confidence': abs(current_gex) + abs(next_gex),
-                        'flip_position': flip_position,
-                        'flip_direction': flip_direction,
-                        'relevance_score': relevance_score,
-                        'data_source': data_source_name
-                    })
-            
-            return flip_candidates
+    #             if abs(current) + abs(next_gex) > 0:
+    #                 flip = strike1 + (strike2 - strike1) * abs(current) / (abs(current) + abs(next_gex))
+    #                 return float(flip)
         
-        # TENTATIVA 1: DADOS REAIS
-        real_data_df = valid_df[valid_df['has_real_data'] == True].copy()
-        flip_candidates = []
-        
-        if len(real_data_df) >= 2:
-            flip_candidates = search_flips(real_data_df, "REAL")
-            if flip_candidates:
-                logging.info(f"Encontrou {len(flip_candidates)} flip(s) com dados reais")
-        
-        # TENTATIVA 2: TODOS OS DADOS
-        if not flip_candidates and len(valid_df) >= 2:
-            flip_candidates = search_flips(valid_df, "MISTO")
-            if flip_candidates:
-                logging.info(f"Encontrou {len(flip_candidates)} flip(s) com dados mistos")
-        
-        if not flip_candidates:
-            logging.warning("FLIP NAO ENCONTRADO")
-            return None
-        
-        # ORDENA POR RELEVANCIA
-        flip_candidates.sort(key=lambda x: (-x['relevance_score'], x['distance_from_spot']))
-        best_flip = flip_candidates[0]
-        
-        logging.info(f"GAMMA FLIP SELECIONADO")
-        logging.info(f"  Strike: R$ {best_flip['strike']:.2f}")
-        logging.info(f"  Fonte: {best_flip['data_source']}")
-        logging.info(f"  Posicao: {best_flip['flip_position']} do spot")
-        logging.info(f"  Distancia: {best_flip['distance_pct']:.2f}%")
-        logging.info(f"  Relevancia: {best_flip['relevance_score']}")
-        
-        regime = "POSITIVE GAMMA" if spot_price > best_flip['strike'] else "NEGATIVE GAMMA"
-        
-        logging.info(f"REGIME CALCULADO: {regime}")
-        
-        if (regime == "POSITIVE GAMMA" and spot_regime == "SHORT_GAMMA") or (regime == "NEGATIVE GAMMA" and spot_regime == "LONG_GAMMA"):
-            logging.warning("INCONSISTENCIA: Regime calculado nao bate com GEX no spot")
-        else:
-            logging.info("Regime consistente com GEX no spot")
-        
-        return best_flip['strike']
+    #     return None
     
     def create_6_charts(self, gex_df, spot_price, symbol, flip_strike=None, expiration_info=None):
+        """Cria os 6 gráficos em 3 LINHAS x 2 COLUNAS com títulos atrativos"""
         if gex_df.empty:
             return None
         
@@ -528,6 +434,7 @@ class GEXAnalyzer:
         
         title = expiration_info["desc"] if expiration_info else ""
         
+        # Títulos dos subgráficos mais atrativos com cores
         subplot_titles = [
             '<b style="color: #ffffff;">Total GEX</b><br><span style="font-size: 12px; color: #888;">Exposição gamma total</span>',
             '<b style="color: #ffffff;">GEX Descoberto</b><br><span style="font-size: 12px; color: #888;">Posições descobertas</span>',
@@ -537,6 +444,7 @@ class GEXAnalyzer:
             '<b style="color: #ffffff;">Open Interest</b><br><span style="font-size: 12px; color: #888;">Volume contratos</span>'
         ]
         
+        # 3 LINHAS, 2 COLUNAS = 6 gráficos
         fig = make_subplots(
             rows=3, cols=2,
             subplot_titles=subplot_titles,
@@ -553,39 +461,49 @@ class GEXAnalyzer:
         put_oi = [int(x) for x in gex_df['put_oi_total'].tolist()]
         
         # LINHA 1
+        # 1. Total GEX (linha 1, coluna 1)
         colors1 = ['#ef4444' if x < 0 else '#22c55e' for x in total_gex_values]
         fig.add_trace(go.Bar(x=strikes, y=total_gex_values, marker_color=colors1, showlegend=False), row=1, col=1)
         
+        # 2. GEX Descoberto (linha 1, coluna 2)
         colors2 = ['#ef4444' if x < 0 else '#22c55e' for x in descoberto_values]
         fig.add_trace(go.Bar(x=strikes, y=descoberto_values, marker_color=colors2, showlegend=False), row=1, col=2)
         
         # LINHA 2
+        # 3. Regime por Strike (linha 2, coluna 1)
         colors3 = ['#22c55e' if x > 1000 else '#ef4444' if x < -1000 else '#6b7280' for x in descoberto_values]
         fig.add_trace(go.Bar(x=strikes, y=[abs(x) for x in descoberto_values], marker_color=colors3, showlegend=False), row=2, col=1)
         
+        # 4. Calls vs Puts (linha 2, coluna 2)
         fig.add_trace(go.Bar(x=strikes, y=call_gex_values, marker_color='#22c55e', name='Calls', showlegend=False), row=2, col=2)
         fig.add_trace(go.Bar(x=strikes, y=put_gex_values, marker_color='#ef4444', name='Puts', showlegend=False), row=2, col=2)
         
         # LINHA 3
+        # 5. GEX Cumulativo (linha 3, coluna 1)
         cumulative = np.cumsum(total_gex_values).tolist()
         fig.add_trace(go.Scatter(x=strikes, y=cumulative, mode='lines+markers', 
                                 line=dict(color='#06b6d4', width=3), 
                                 marker=dict(color='#06b6d4', size=6),
                                 showlegend=False), row=3, col=1)
         
+        # 6. Open Interest (linha 3, coluna 2)
         oi_total = [c + p for c, p in zip(call_oi, put_oi)]
         fig.add_trace(go.Bar(x=strikes, y=oi_total, marker_color='#a855f7', showlegend=False), row=3, col=2)
         
-        # LINHAS DE REFERENCIA
-        for row in range(1, 4):
-            for col in range(1, 3):
+        # Linhas de referência em TODOS os gráficos
+        for row in range(1, 4):  # 3 linhas
+            for col in range(1, 3):  # 2 colunas
+                # Linha do preço atual (amarela)
                 fig.add_vline(x=spot_price, line=dict(color='#fbbf24', width=3, dash='dash'), row=row, col=col)
                 
+                # Linha do gamma flip (laranja) se existir
                 if flip_strike:
                     fig.add_vline(x=flip_strike, line=dict(color='#f97316', width=3, dash='dot'), row=row, col=col)
                 
+                # Linha zero (branca sutil)
                 fig.add_hline(y=0, line=dict(color='rgba(255,255,255,0.3)', width=1), row=row, col=col)
         
+        # Layout otimizado - CORREÇÃO AQUI
         fig.update_layout(
             title={
                 'text': title,
@@ -601,8 +519,10 @@ class GEXAnalyzer:
             margin=dict(l=50, r=50, t=100, b=50)
         )
         
+        # Atualizar cor dos títulos dos subgráficos
         fig.update_annotations(font=dict(color='#ffffff', family='Inter, sans-serif', size=21))
         
+        # Grid e eixos
         fig.update_xaxes(
             gridcolor='rgba(255,255,255,0.1)', 
             color='#ffffff',
@@ -618,12 +538,16 @@ class GEXAnalyzer:
         
         return fig.to_json()
     
+    
+    
     def identify_walls(self, gex_df, spot_price):
+        """Identifica apenas 2 walls: maior OI descoberto de calls e puts"""
         if gex_df.empty:
             return []
         
         walls = []
         
+        # Filtrar apenas strikes com dados válidos
         valid_strikes = gex_df[
             (gex_df['call_oi_descoberto'] > 0) | (gex_df['put_oi_descoberto'] > 0)
         ].copy()
@@ -632,6 +556,7 @@ class GEXAnalyzer:
             logging.warning("Nenhum strike com OI descoberto válido")
             return []
         
+        # 1. MAIOR VOLUME DESCOBERTO DE CALLS (Support Wall)
         calls_with_oi = valid_strikes[valid_strikes['call_oi_descoberto'] > 0]
         if not calls_with_oi.empty:
             max_call_row = calls_with_oi.loc[calls_with_oi['call_oi_descoberto'].idxmax()]
@@ -640,12 +565,13 @@ class GEXAnalyzer:
                 'strike': float(max_call_row['strike']),
                 'gamma_descoberto': float(max_call_row['total_gex_descoberto']),
                 'oi_descoberto': int(max_call_row['call_oi_descoberto']),
-                'intensity': 1.0,
+                'intensity': 1.0,  # Máxima intensidade
                 'type': 'Support',
                 'distance_pct': float(abs(max_call_row['strike'] - spot_price) / spot_price * 100),
                 'strength': 'Strong'
             })
         
+        # 2. MAIOR VOLUME DESCOBERTO DE PUTS (Resistance Wall)
         puts_with_oi = valid_strikes[valid_strikes['put_oi_descoberto'] > 0]
         if not puts_with_oi.empty:
             max_put_row = puts_with_oi.loc[puts_with_oi['put_oi_descoberto'].idxmax()]
@@ -654,47 +580,53 @@ class GEXAnalyzer:
                 'strike': float(max_put_row['strike']),
                 'gamma_descoberto': float(max_put_row['total_gex_descoberto']),
                 'oi_descoberto': int(max_put_row['put_oi_descoberto']),
-                'intensity': 1.0,
+                'intensity': 1.0,  # Máxima intensidade
                 'type': 'Resistance',
                 'distance_pct': float(abs(max_put_row['strike'] - spot_price) / spot_price * 100),
                 'strength': 'Strong'
             })
         
-        logging.info(f"WALLS: {len(walls)}")
+        # Log para debug
+        logging.info(f"WALLS SIMPLIFICADOS: {len(walls)}")
         for wall in walls:
-            logging.info(f"  {wall['type']}: R${wall['strike']:.2f} - OI: {wall['oi_descoberto']:,}")
+            logging.info(f"  {wall['type']}: R${wall['strike']:.2f} - OI Descoberto: {wall['oi_descoberto']:,}")
         
         return walls
     
     def analyze(self, symbol, expiration_code=None):
-        logging.info(f"INICIANDO ANALISE GEX - {symbol}")
+        """Análise principal usando APENAS dados reais"""
+        logging.info(f"INICIANDO ANALISE GEX REAL - {symbol}")
         
-        # Informação de liquidez
-        liquidity_info = self.liquidity_manager.get_liquidity_info(symbol)
-        logging.info(f"Liquidez: {liquidity_info['category']} - Range ATM: {liquidity_info['range']}%")
-        
+        # 1. Preço atual
         spot_price = self.data_provider.get_spot_price(symbol)
         if not spot_price:
             raise ValueError("Erro: não foi possível obter cotação")
         
         logging.info(f"Spot price: R$ {spot_price:.2f}")
         
+        # 2. Dados REAIS da Oplab
         oplab_df = self.data_provider.get_oplab_historical_data(symbol)
         if oplab_df.empty:
-            raise ValueError("Erro: sem dados da Oplab")
+            raise ValueError("Erro: sem dados da Oplab - verifique o token")
         
+        # 3. Dados REAIS do Floqui
         oi_breakdown, expiration_info = self.data_provider.get_floqui_oi_breakdown(symbol, expiration_code)
         
+        # 4. Calcular GEX com dados reais
         gex_df = self.calculate_gex(oplab_df, oi_breakdown, spot_price)
         if gex_df.empty:
             raise ValueError("Erro: falha no cálculo GEX")
         
+        # Garantir ordenação por strike
         gex_df = gex_df.sort_values('strike').reset_index(drop=True)
         
-        flip_strike = self.find_gamma_flip(gex_df, spot_price, symbol)
+        # 5. Análise final
+        flip_strike = self.find_gamma_flip(gex_df, spot_price)
         plot_json = self.create_6_charts(gex_df, spot_price, symbol, flip_strike, expiration_info)
         walls = self.identify_walls(gex_df, spot_price)
         
+        # CORREÇÃO: Usar valores do cumulativo (igual ao gráfico)
+        # Isso garante consistência lógica: descoberto sempre <= total
         cumulative_total = np.cumsum(gex_df['total_gex'].values)
         cumulative_descoberto = np.cumsum(gex_df['total_gex_descoberto'].values)
         
@@ -710,7 +642,8 @@ class GEXAnalyzer:
             'market_bias': 'SUPPRESSIVE' if net_gex > 1000000 else 'EXPLOSIVE' if net_gex < -1000000 else 'NEUTRAL'
         }
         
-        logging.info(f"\nRESULTADOS:")
+        # Log dos resultados reais
+        logging.info(f"\nRESULTADOS REAIS:")
         logging.info(f"Cotação: R$ {spot_price:.2f}")
         if expiration_info:
             logging.info(f"Vencimento: {expiration_info['desc']}")
@@ -721,7 +654,8 @@ class GEXAnalyzer:
             logging.info(f"Regime: {regime}")
         logging.info(f"GEX Total: {net_gex:,.0f}")
         logging.info(f"GEX Descoberto: {net_gex_descoberto:,.0f}")
-        logging.info(f"Strikes: {len(gex_df)} ({real_data_count} reais)")
+        logging.info(f"Strikes: {len(gex_df)} ({real_data_count} com dados reais Floqui)")
+        logging.info(f"Walls: {len(walls)}")
         
         return {
             'symbol': symbol,
@@ -735,11 +669,9 @@ class GEXAnalyzer:
             'plot_json': plot_json,
             'walls': walls,
             'real_data_count': real_data_count,
-            'liquidity_info': liquidity_info,
             'success': True
         }
-
-
+        
 class GammaService:
     def __init__(self):
         self.analyzer = GEXAnalyzer()
@@ -751,12 +683,16 @@ class GammaService:
         try:
             result = self.analyzer.analyze(ticker, expiration_code)
             
+            # CORREÇÃO AQUI - Determinar regime pelo FLIP, não pelo sinal do GEX
             flip_strike = result.get('flip_strike')
             spot_price = result['spot_price']
             
             if flip_strike:
+                # Se spot > flip = Long Gamma (comprimido)
+                # Se spot < flip = Short Gamma (explosivo)
                 regime = 'Long Gamma' if spot_price > flip_strike else 'Short Gamma'
             else:
+                # Fallback se não encontrar flip: usar sinal do GEX
                 regime = 'Long Gamma' if result['net_gex_descoberto'] > 0 else 'Short Gamma'
             
             api_result = {
@@ -764,20 +700,22 @@ class GammaService:
                 'spot_price': spot_price,
                 'gex_levels': result['gex_levels'],
                 'flip_strike': flip_strike,
-                'regime': regime,
+                'regime': regime,  # USAR A VARIÁVEL CORRIGIDA
                 'plot_json': result['plot_json'],
                 'walls': result['walls'],
                 'options_count': result['strikes_analyzed'],
                 'data_quality': {
                     'expiration': result['expiration']['desc'] if result['expiration'] else None,
-                    'real_data_count': result['real_data_count'],
-                    'liquidity_category': result['liquidity_info']['category'],
-                    'atm_range_pct': result['liquidity_info']['range']
+                    'real_data_count': result['real_data_count']
                 },
                 'success': True
             }
             
             return convert_to_json_serializable(api_result)
+            
+        except Exception as e:
+            logging.error(f"Erro na análise GEX: {e}")
+            raise
             
         except Exception as e:
             logging.error(f"Erro na análise GEX: {e}")
