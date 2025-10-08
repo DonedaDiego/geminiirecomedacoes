@@ -1,5 +1,5 @@
 """
-historical_service.py - Análise Histórica GEX com MESMOS 6 GRÁFICOS por data
+historical_service.py - Análise Histórica GEX com INSIGHTS GERENCIAIS
 """
 
 import numpy as np
@@ -18,31 +18,107 @@ warnings.filterwarnings('ignore')
 logging.basicConfig(level=logging.INFO)
 load_dotenv()
 
+
 def convert_to_json_serializable(obj):
-    """Converte tipos numpy/pandas para Python nativo"""
-    try:
-        if obj is None or pd.isna(obj):
-            return None
-        elif isinstance(obj, (bool, np.bool_)):
-            return bool(obj)
-        elif isinstance(obj, (int, np.integer)):
-            return int(obj)
-        elif isinstance(obj, (float, np.floating)):
-            return float(obj)
-        elif isinstance(obj, (datetime, pd.Timestamp)):
-            return obj.isoformat()
-        elif isinstance(obj, dict):
-            return {key: convert_to_json_serializable(value) for key, value in obj.items()}
-        elif isinstance(obj, (list, tuple)):
-            return [convert_to_json_serializable(item) for item in obj]
-        elif hasattr(obj, 'item'):
-            return obj.item()
-        elif hasattr(obj, 'tolist'):
-            return obj.tolist()
-        else:
-            return str(obj)
-    except:
+    """
+    🔥 VERSÃO CORRIGIDA - Converte tipos numpy/pandas para Python nativo
+    SEM esconder erros com try/except genérico
+    """
+    # SE JÁ É TIPO NATIVO DO PYTHON, RETORNA DIRETO (IMPORTANTE!)
+    if isinstance(obj, (str, int, float, bool, type(None))):
+        return obj
+    
+    # LISTA: processa cada item
+    if isinstance(obj, (list, tuple)):
+        return [convert_to_json_serializable(item) for item in obj]
+    
+    # DICT: processa cada valor
+    if isinstance(obj, dict):
+        return {key: convert_to_json_serializable(value) for key, value in obj.items()}
+    
+    # PANDAS/NUMPY
+    if pd.isna(obj):
         return None
+    
+    if isinstance(obj, (np.bool_, bool)):
+        return bool(obj)
+    
+    if isinstance(obj, (np.integer, int)):
+        return int(obj)
+    
+    if isinstance(obj, (np.floating, float)):
+        return float(obj)
+    
+    if isinstance(obj, (datetime, pd.Timestamp)):
+        return obj.isoformat()
+    
+    # Tipos numpy especiais
+    if hasattr(obj, 'item'):
+        return obj.item()
+    
+    if hasattr(obj, 'tolist'):
+        return obj.tolist()
+    
+    # FALLBACK: converter para string (melhor que None!)
+    return str(obj)
+
+
+
+
+
+class LiquidityManager:
+    """
+    Gerencia ranges de ATM baseado na liquidez do ativo
+    """
+    
+    def __init__(self):
+        # 🔥 ALTA LIQUIDEZ - 5-6%
+        self.high_liquidity = {
+            'BOVA11': 5,
+            'PETR4': 6,
+            'VALE3': 6,
+            'BBAS3': 6,
+            'B3SA3': 6,
+            'ITSA4': 6,
+        }
+        
+        # 📈 MÉDIA LIQUIDEZ - 8-10%
+        self.medium_liquidity = {
+            'ITUB4': 9,
+            'BBDC4': 9,
+            'ABEV3': 9,
+            'WEGE3': 9,
+            'RENT3': 9,
+            'ELET3': 9,
+            'PRIO3': 9,
+        }
+        
+        # 📉 BAIXA LIQUIDEZ - Range padrão 13%
+        self.low_liquidity_range = 13
+    
+    def get_flip_range(self, symbol):
+        """Retorna o range para busca de flip baseado na liquidez"""
+        symbol_clean = symbol.replace('.SA', '').upper()
+        
+        if symbol_clean in self.high_liquidity:
+            return self.high_liquidity[symbol_clean]
+        
+        if symbol_clean in self.medium_liquidity:
+            return self.medium_liquidity[symbol_clean]
+        
+        return self.low_liquidity_range
+    
+    def get_liquidity_info(self, symbol):
+        """Retorna informações completas de liquidez"""
+        symbol_clean = symbol.replace('.SA', '').upper()
+        
+        if symbol_clean in self.high_liquidity:
+            return {'range': self.high_liquidity[symbol_clean], 'category': 'ALTA'}
+        
+        if symbol_clean in self.medium_liquidity:
+            return {'range': self.medium_liquidity[symbol_clean], 'category': 'MEDIA'}
+        
+        return {'range': self.low_liquidity_range, 'category': 'BAIXA'}
 
 
 class HistoricalDataProvider:
@@ -215,9 +291,10 @@ class HistoricalDataProvider:
 class HistoricalAnalyzer:
     def __init__(self):
         self.data_provider = HistoricalDataProvider()
+        self.liquidity_manager = LiquidityManager()
     
     def calculate_gex(self, oplab_df, oi_breakdown, spot_price):
-        """MESMA FUNÇÃO do gamma_service.py"""
+        """Calcula GEX com dados reais do Floqui"""
         if oplab_df.empty:
             return pd.DataFrame()
         
@@ -239,34 +316,25 @@ class HistoricalAnalyzer:
             calls = strike_options[strike_options['type'] == 'CALL']
             puts = strike_options[strike_options['type'] == 'PUT']
             
-            call_data = {}
-            put_data = {}
+            call_data = None
+            put_data = None
+            has_real_call = False
+            has_real_put = False
             
             if len(calls) > 0:
                 call_key = (float(strike), 'CALL')
                 if call_key in oi_breakdown:
                     call_data = oi_breakdown[call_key]
-                else:
-                    volume_estimate = int(calls['volume'].mean() if 'volume' in calls.columns else 100)
-                    call_data = {
-                        'total': volume_estimate * 3,
-                        'descoberto': volume_estimate * 2,
-                        'travado': volume_estimate,
-                        'coberto': volume_estimate
-                    }
+                    has_real_call = True
             
             if len(puts) > 0:
                 put_key = (float(strike), 'PUT')
                 if put_key in oi_breakdown:
                     put_data = oi_breakdown[put_key]
-                else:
-                    volume_estimate = int(puts['volume'].mean() if 'volume' in puts.columns else 100)
-                    put_data = {
-                        'total': volume_estimate * 3,
-                        'descoberto': volume_estimate * 2,
-                        'travado': volume_estimate,
-                        'coberto': volume_estimate
-                    }
+                    has_real_put = True
+            
+            if not (has_real_call or has_real_put):
+                continue
             
             # Calcular GEX
             call_gex = 0.0
@@ -292,58 +360,95 @@ class HistoricalAnalyzer:
                 'put_gex': float(put_gex),
                 'total_gex': float(total_gex),
                 'total_gex_descoberto': float(total_gex_descoberto),
-                'call_oi_total': int(call_data.get('total', 0)),
-                'put_oi_total': int(put_data.get('total', 0)),
-                'call_oi_descoberto': int(call_data.get('descoberto', 0)),
-                'put_oi_descoberto': int(put_data.get('descoberto', 0)),
-                'has_real_data': (float(strike), 'CALL') in oi_breakdown or (float(strike), 'PUT') in oi_breakdown
+                'call_oi_total': int(call_data['total'] if call_data else 0),
+                'put_oi_total': int(put_data['total'] if put_data else 0),
+                'call_oi_descoberto': int(call_data['descoberto'] if call_data else 0),
+                'put_oi_descoberto': int(put_data['descoberto'] if put_data else 0),
+                'has_real_data': True
             })
         
         return pd.DataFrame(gex_data).sort_values('strike')
     
-    def find_gamma_flip(self, gex_df, spot_price):
-        """MESMA FUNÇÃO do gamma_service.py"""
+    def find_gamma_flip(self, gex_df, spot_price, symbol):
+        """Detecta gamma flip com lógica inteligente baseada no regime do spot"""
         if gex_df.empty or len(gex_df) < 2:
             return None
         
-        atm_range = spot_price * 0.08
-        atm_df = gex_df[
-            (gex_df['strike'] >= (spot_price - atm_range)) &
-            (gex_df['strike'] <= (spot_price + atm_range))
+        # Pega range baseado na liquidez
+        max_distance_pct = self.liquidity_manager.get_flip_range(symbol)
+        max_distance = spot_price * (max_distance_pct / 100)
+        
+        valid_df = gex_df[
+            (gex_df['strike'] >= spot_price - max_distance) &
+            (gex_df['strike'] <= spot_price + max_distance)
         ].copy()
         
-        if len(atm_df) < 2:
-            atm_range = spot_price * 0.12
-            atm_df = gex_df[
-                (gex_df['strike'] >= (spot_price - atm_range)) &
-                (gex_df['strike'] <= (spot_price + atm_range))
-            ].copy()
-        
-        if len(atm_df) < 2:
+        if valid_df.empty:
             return None
         
-        descoberto_values = atm_df['total_gex_descoberto'].values
-        if not ((descoberto_values > 0).any() and (descoberto_values < 0).any()):
-            return None
+        valid_df = valid_df.sort_values('strike').reset_index(drop=True)
         
-        atm_df = atm_df.sort_values('strike').reset_index(drop=True)
+        # DETECTA REGIME DO SPOT
+        spot_strike_idx = (valid_df['strike'] - spot_price).abs().argsort()[0]
+        spot_gex = valid_df.iloc[spot_strike_idx]['total_gex_descoberto']
+        spot_regime = "SHORT_GAMMA" if spot_gex < -1000 else ("LONG_GAMMA" if spot_gex > 1000 else "NEUTRAL")
         
-        for i in range(len(atm_df) - 1):
-            current = float(atm_df.iloc[i]['total_gex_descoberto'])
-            next_gex = float(atm_df.iloc[i+1]['total_gex_descoberto'])
+        # FUNCAO AUXILIAR
+        def search_flips(df):
+            flip_candidates = []
             
-            if (current > 0 and next_gex < 0) or (current < 0 and next_gex > 0):
-                strike1 = float(atm_df.iloc[i]['strike'])
-                strike2 = float(atm_df.iloc[i+1]['strike'])
+            for i in range(len(df) - 1):
+                current_strike = df.iloc[i]['strike']
+                next_strike = df.iloc[i+1]['strike']
+                current_gex = df.iloc[i]['total_gex_descoberto']
+                next_gex = df.iloc[i+1]['total_gex_descoberto']
                 
-                if abs(current) + abs(next_gex) > 0:
-                    flip = strike1 + (strike2 - strike1) * abs(current) / (abs(current) + abs(next_gex))
-                    return float(flip)
+                if (current_gex > 0 and next_gex < 0) or (current_gex < 0 and next_gex > 0):
+                    if abs(current_gex) + abs(next_gex) > 0:
+                        flip_strike = current_strike + (next_strike - current_strike) * abs(current_gex) / (abs(current_gex) + abs(next_gex))
+                    else:
+                        flip_strike = (current_strike + next_strike) / 2
+                    
+                    distance_from_spot = abs(flip_strike - spot_price)
+                    flip_position = "ACIMA" if flip_strike > spot_price else "ABAIXO"
+                    flip_direction = "NEG_TO_POS" if current_gex < 0 and next_gex > 0 else "POS_TO_NEG"
+                    
+                    # SCORE DE RELEVANCIA
+                    relevance_score = 0
+                    
+                    if spot_regime == "SHORT_GAMMA":
+                        if flip_position == "ACIMA" and flip_direction == "NEG_TO_POS":
+                            relevance_score = 1000
+                        else:
+                            relevance_score = 1
+                    elif spot_regime == "LONG_GAMMA":
+                        if flip_position == "ABAIXO" and flip_direction == "POS_TO_NEG":
+                            relevance_score = 1000
+                        else:
+                            relevance_score = 1
+                    else:
+                        relevance_score = 100
+                    
+                    flip_candidates.append({
+                        'strike': flip_strike,
+                        'distance_from_spot': distance_from_spot,
+                        'relevance_score': relevance_score
+                    })
+            
+            return flip_candidates
         
-        return None
+        # BUSCA FLIPS
+        flip_candidates = search_flips(valid_df)
+        
+        if not flip_candidates:
+            return None
+        
+        # ORDENA POR RELEVANCIA
+        flip_candidates.sort(key=lambda x: (-x['relevance_score'], x['distance_from_spot']))
+        return float(flip_candidates[0]['strike'])
     
     def identify_walls(self, gex_df, spot_price):
-        """MESMA FUNÇÃO do gamma_service.py"""
+        """Identifica support/resistance baseado em OI descoberto"""
         if gex_df.empty:
             return []
         
@@ -392,7 +497,6 @@ class HistoricalAnalyzer:
         
         gex_df = gex_df.sort_values('strike').reset_index(drop=True)
         
-        # Título com data da análise
         title = f"{expiration_desc} - {analysis_date}"
         
         subplot_titles = [
@@ -411,13 +515,13 @@ class HistoricalAnalyzer:
             horizontal_spacing=0.08
         )
         
-        strikes = gex_df['strike'].tolist()
-        total_gex_values = gex_df['total_gex'].tolist()
-        descoberto_values = gex_df['total_gex_descoberto'].tolist()
-        call_gex_values = gex_df['call_gex'].tolist()
-        put_gex_values = gex_df['put_gex'].tolist()
-        call_oi = gex_df['call_oi_total'].tolist()
-        put_oi = gex_df['put_oi_total'].tolist()
+        strikes = [float(x) for x in gex_df['strike'].tolist()]
+        total_gex_values = [float(x) for x in gex_df['total_gex'].tolist()]
+        descoberto_values = [float(x) for x in gex_df['total_gex_descoberto'].tolist()]
+        call_gex_values = [float(x) for x in gex_df['call_gex'].tolist()]
+        put_gex_values = [float(x) for x in gex_df['put_gex'].tolist()]
+        call_oi = [int(x) for x in gex_df['call_oi_total'].tolist()]
+        put_oi = [int(x) for x in gex_df['put_oi_total'].tolist()]
         
         # 1. Total GEX
         colors1 = ['#ef4444' if x < 0 else '#22c55e' for x in total_gex_values]
@@ -475,8 +579,188 @@ class HistoricalAnalyzer:
         
         return fig.to_json()
     
+    def calculate_historical_insights(self, data_by_date, spot_price):
+        """
+        🔥 ANÁLISE GERENCIAL: tendências, strikes impactados, mudanças de regime
+        """
+        if not data_by_date or len(data_by_date) < 2:
+            return {}
+        
+        dates = sorted(data_by_date.keys())
+        
+        # 1. EVOLUÇÃO DO FLIP
+        flip_evolution = []
+        regime_changes = []
+        
+        for i, date in enumerate(dates):
+            data = data_by_date[date]
+            flip_evolution.append({
+                'date': date,
+                'flip_strike': data.get('flip_strike'),
+                'spot_price': spot_price,
+                'regime': data['regime']
+            })
+            
+            # Detectar mudanças de regime
+            if i > 0:
+                prev_regime = data_by_date[dates[i-1]]['regime']
+                if prev_regime != data['regime']:
+                    regime_changes.append({
+                        'date': date,
+                        'from': prev_regime,
+                        'to': data['regime']
+                    })
+        
+        # 2. MOVIMENTO DO FLIP (em %)
+        flip_movement = None
+        valid_flips = [f for f in flip_evolution if f['flip_strike'] is not None]
+        
+        if len(valid_flips) >= 2:
+            first_flip = valid_flips[0]['flip_strike']
+            last_flip = valid_flips[-1]['flip_strike']
+            
+            flip_movement = {
+                'first_date': valid_flips[0]['date'],
+                'last_date': valid_flips[-1]['date'],
+                'first_flip': first_flip,
+                'last_flip': last_flip,
+                'change_pct': ((last_flip - first_flip) / first_flip * 100),
+                'direction': 'UP' if last_flip > first_flip else 'DOWN',
+                'change_abs': last_flip - first_flip
+            }
+        
+        # 3. TENDÊNCIA DE GEX DESCOBERTO
+        gex_trend = []
+        for date in dates:
+            gex_trend.append({
+                'date': date,
+                'net_gex_descoberto': data_by_date[date]['net_gex_descoberto']
+            })
+        
+        # Calcular variação de GEX
+        gex_change = None
+        if len(gex_trend) >= 2:
+            first_gex = gex_trend[0]['net_gex_descoberto']
+            last_gex = gex_trend[-1]['net_gex_descoberto']
+            
+            gex_change = {
+                'first_date': dates[0],
+                'last_date': dates[-1],
+                'first_gex': first_gex,
+                'last_gex': last_gex,
+                'change_abs': last_gex - first_gex,
+                'trend': 'INCREASING_LONG' if last_gex > first_gex and last_gex > 0 else \
+                         'INCREASING_SHORT' if last_gex < first_gex and last_gex < 0 else \
+                         'DECREASING'
+            }
+        
+        # 4. STRIKES MAIS IMPACTADOS
+        most_impacted = self._identify_most_impacted_strikes(data_by_date, spot_price, dates)
+        
+        # 5. RESUMO GERENCIAL
+        summary = {
+            'period': {
+                'start': dates[0],
+                'end': dates[-1],
+                'days': len(dates)
+            },
+            'flip_evolution': flip_evolution,
+            'flip_movement': flip_movement,
+            'regime_changes': regime_changes,
+            'regime_stability': len(regime_changes) == 0,
+            'gex_trend': gex_trend,
+            'gex_change': gex_change,
+            'current_regime': data_by_date[dates[-1]]['regime'],
+            'days_in_current_regime': self._count_consecutive_regime(data_by_date, dates),
+            'most_impacted_strikes': most_impacted
+        }
+        
+        return summary
+    
+    def _count_consecutive_regime(self, data_by_date, dates):
+        """Conta quantos dias consecutivos no regime atual"""
+        if not dates:
+            return 0
+        
+        current_regime = data_by_date[dates[-1]]['regime']
+        count = 1
+        
+        for i in range(len(dates) - 2, -1, -1):
+            if data_by_date[dates[i]]['regime'] == current_regime:
+                count += 1
+            else:
+                break
+        
+        return count
+    
+    def _identify_most_impacted_strikes(self, data_by_date, spot_price, dates):
+        """
+        🎯 Identifica strikes com MAIOR VARIAÇÃO de GEX descoberto
+        """
+        if len(dates) < 2:
+            return []
+        
+        # Estrutura: strike -> [gex por data]
+        strike_gex_history = {}
+        
+        # Coletar histórico de cada strike
+        for date in dates:
+            if 'gex_df_records' not in data_by_date[date]:
+                continue
+            
+            gex_records = data_by_date[date]['gex_df_records']
+            
+            for record in gex_records:
+                strike = float(record['strike'])
+                gex_desc = float(record['total_gex_descoberto'])
+                
+                if strike not in strike_gex_history:
+                    strike_gex_history[strike] = []
+                
+                strike_gex_history[strike].append({
+                    'date': date,
+                    'gex': gex_desc
+                })
+        
+        # Calcular variação para cada strike
+        impacts = []
+        
+        for strike, history in strike_gex_history.items():
+            if len(history) < 2:
+                continue
+            
+            first_gex = history[0]['gex']
+            last_gex = history[-1]['gex']
+            
+            change = last_gex - first_gex
+            change_abs = abs(change)
+            
+            # Ignorar mudanças pequenas
+            if change_abs < 5000:
+                continue
+            
+            impacts.append({
+                'strike': strike,
+                'distance_from_spot_pct': abs(strike - spot_price) / spot_price * 100,
+                'first_gex': first_gex,
+                'last_gex': last_gex,
+                'change': change,
+                'change_abs': change_abs,
+                'direction': 'MORE_LONG' if change > 0 else 'MORE_SHORT',
+                'dates_tracked': len(history)
+            })
+        
+        # Ordenar por maior impacto absoluto
+        impacts.sort(key=lambda x: x['change_abs'], reverse=True)
+        
+        # Retornar top 5
+        return impacts[:5]
+    
     def analyze_historical(self, ticker, vencimento, days_back=5):
-        """Análise histórica SEPARADA por data"""
+        """
+        
+        Gera 6 gráficos por data + insights gerenciais
+        """
         logging.info(f"INICIANDO ANÁLISE HISTÓRICA - {ticker}")
         
         spot_price = self.data_provider.get_spot_price(ticker)
@@ -489,7 +773,7 @@ class HistoricalAnalyzer:
         
         business_dates = self.data_provider.get_business_days(days_back)
         
-        # ESTRUTURA NOVA: dict separado por data
+        # ESTRUTURA: dict separado por data
         data_by_date = {}
         available_dates = []
         
@@ -511,10 +795,11 @@ class HistoricalAnalyzer:
             gex_df = self.calculate_gex(oplab_df, oi_breakdown, spot_price)
             
             if gex_df.empty:
+                logging.warning(f"GEX vazio para {date_str}")
                 continue
             
             # Análise completa
-            flip_strike = self.find_gamma_flip(gex_df, spot_price)
+            flip_strike = self.find_gamma_flip(gex_df, spot_price, ticker)
             walls = self.identify_walls(gex_df, spot_price)
             
             cumulative_total = np.cumsum(gex_df['total_gex'].values)
@@ -535,6 +820,9 @@ class HistoricalAnalyzer:
                 expiration_desc, date_obj.strftime('%d/%m/%Y')
             )
             
+            # 🔥 SALVAR TAMBÉM OS REGISTROS DO GEX_DF (para análise gerencial)
+            gex_df_records = gex_df.to_dict('records')
+            
             # Armazenar dados desta data
             data_by_date[date_str] = {
                 'spot_price': spot_price,
@@ -545,25 +833,60 @@ class HistoricalAnalyzer:
                 'plot_json': plot_json,
                 'walls': walls,
                 'strikes_count': len(gex_df),
-                'real_data_count': int(gex_df['has_real_data'].sum())
+                'real_data_count': int(gex_df['has_real_data'].sum()),
+                'gex_df_records': gex_df_records  # 🔥 NOVO: salvar registros
             }
             
             available_dates.append(date_str)
             
             logging.info(f"{date_str}: {len(gex_df)} strikes, Flip: {flip_strike}, Regime: {regime}")
         
+        # 🔥 LOG ANTES DOS INSIGHTS
+        logging.info(f"📊 DATAS COLETADAS: {len(available_dates)}")
+        logging.info(f"📊 DATAS: {available_dates}")
+        
         if not available_dates:
             raise ValueError("Nenhum dado histórico encontrado")
         
-        return {
+        # 🔥 CALCULAR INSIGHTS COM TRY-CATCH
+        insights = {}
+        try:
+            logging.info(f"📊 CALCULANDO INSIGHTS...")
+            insights = self.calculate_historical_insights(data_by_date, spot_price)
+            logging.info(f"✅ INSIGHTS CALCULADOS")
+        except Exception as e:
+            logging.error(f"❌ ERRO AO CALCULAR INSIGHTS: {e}", exc_info=True)
+            # Não falhar por causa dos insights
+            insights = {
+                'error': str(e),
+                'period': {
+                    'start': available_dates[0] if available_dates else None,
+                    'end': available_dates[-1] if available_dates else None,
+                    'days': len(available_dates)
+                }
+            }
+        
+        # 🔥 LOG ANTES DO RETORNO
+        logging.info(f"📊 PREPARANDO RETORNO...")
+        logging.info(f"   - ticker: {ticker}")
+        logging.info(f"   - available_dates count: {len(available_dates)}")
+        logging.info(f"   - data_by_date count: {len(data_by_date)}")
+        
+        result = {
             'ticker': ticker,
             'vencimento': vencimento,
             'expiration_desc': expiration_desc,
             'spot_price': spot_price,
             'available_dates': available_dates,
             'data_by_date': data_by_date,
+            'insights': insights,
             'success': True
         }
+        
+        # 🔥 LOG FINAL
+        logging.info(f"✅ RETORNO CRIADO - available_dates: {len(result['available_dates'])}")
+        
+        return result
 
 
 class HistoricalService:
@@ -584,6 +907,7 @@ class HistoricalService:
                 'spot_price': result['spot_price'],
                 'available_dates': result['available_dates'],
                 'data_by_date': result['data_by_date'],
+                'insights': result['insights'],  # 🔥 NOVO
                 'success': True
             }
             

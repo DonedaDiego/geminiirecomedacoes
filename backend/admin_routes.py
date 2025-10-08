@@ -295,7 +295,7 @@ def promote_user(admin_id):
 @admin_bp.route('/users/delete', methods=['DELETE'])
 @require_admin()
 def delete_user(admin_id):
-    """Marcar usuário como deletado"""
+    """Deletar usuário PERMANENTEMENTE com todas as relações"""
     try:
         data = request.get_json()
         email = data.get('email')
@@ -314,7 +314,7 @@ def delete_user(admin_id):
         cursor = conn.cursor()
         
         # Buscar usuário
-        cursor.execute("SELECT id, name FROM users WHERE email = %s", (email,))
+        cursor.execute("SELECT id, name, user_type FROM users WHERE email = %s", (email,))
         user = cursor.fetchone()
         
         if not user:
@@ -322,17 +322,29 @@ def delete_user(admin_id):
             conn.close()
             return jsonify({'success': False, 'error': 'Usuário não encontrado'}), 404
         
-        user_id, user_name = user
+        user_id, user_name, user_type = user
         
-        # Marcar como deletado ao invés de deletar fisicamente
-        cursor.execute("""
-            UPDATE users 
-            SET user_type = 'deleted', 
-                plan_id = 1, 
-                plan_name = 'Removido',
-                updated_at = CURRENT_TIMESTAMP
-            WHERE email = %s
-        """, (email,))
+        # Verificar se está tentando deletar um admin
+        cursor.execute("SELECT id FROM users WHERE id = %s", (admin_id,))
+        admin_data = cursor.fetchone()
+        
+        if not admin_data or user_id == admin_id:
+            cursor.close()
+            conn.close()
+            return jsonify({'success': False, 'error': 'Você não pode deletar sua própria conta'}), 400
+        
+        
+        
+        # 1. Deletar user_portfolios
+        cursor.execute("DELETE FROM user_portfolios WHERE user_id = %s", (user_id,))
+        portfolios_deleted = cursor.rowcount
+        
+        # 2. Manter payments (histórico importante) - apenas desvincular
+        cursor.execute("UPDATE payments SET user_id = NULL WHERE user_id = %s", (user_id,))
+        payments_updated = cursor.rowcount
+        
+        # 3. Deletar o usuário PERMANENTEMENTE
+        cursor.execute("DELETE FROM users WHERE id = %s", (user_id,))
         
         conn.commit()
         cursor.close()
@@ -340,10 +352,17 @@ def delete_user(admin_id):
         
         return jsonify({
             'success': True,
-            'message': f'Usuário {user_name} foi marcado como removido'
+            'message': f'Usuário {user_name} deletado permanentemente do banco de dados',
+            'details': {
+                'user_id': user_id,
+                'portfolios_removed': portfolios_deleted,
+                'payments_preserved': payments_updated
+            }
         })
         
     except Exception as e:
+        if conn:
+            conn.rollback()
         return jsonify({'success': False, 'error': str(e)}), 500
 
 

@@ -1,898 +1,894 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Análise Histórica GEX - Levels Pro</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Análise Histórica GEX - Geminii Tech</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            dark: '#000000',
+            light: '#ffffff',
+            subtle: 'rgba(255,255,255,0.1)',
+            geminii: '#ba39af'
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <style>
+    body { 
+      font-family: 'Inter', sans-serif; 
+      background: linear-gradient(135deg, #0c0c0c 0%, #1a1a1a 100%);
+      min-height: 100vh;
+    }
     
-    <!-- Plotly -->
-    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    .gex-card {
+      background: rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 16px;
+      transition: all 0.3s ease;
+    }
     
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-            color: #ffffff;
-            min-height: 100vh;
-            padding: 20px;
-        }
-
-        .container {
-            max-width: 1800px;
-            margin: 0 auto;
-        }
-
-        .header {
-            text-align: center;
-            margin-bottom: 40px;
-        }
-
-        .header h1 {
-            font-size: 2.5rem;
-            font-weight: 700;
-            background: linear-gradient(90deg, #06b6d4, #3b82f6);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin-bottom: 10px;
-        }
-
-        .header p {
-            color: #94a3b8;
-            font-size: 1.1rem;
-        }
-
-        /* Controles */
-        .controls-section {
-            background: rgba(15, 23, 42, 0.6);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 16px;
-            padding: 30px;
-            margin-bottom: 30px;
-        }
-
-        .controls-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            margin-bottom: 20px;
-        }
-
-        .form-group {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .form-group label {
-            font-size: 0.9rem;
-            font-weight: 600;
-            color: #94a3b8;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .form-group input,
-        .form-group select {
-            padding: 12px 16px;
-            background: rgba(30, 41, 59, 0.8);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 8px;
-            color: #ffffff;
-            font-size: 1rem;
-            transition: all 0.3s ease;
-        }
-
-        .form-group input:focus,
-        .form-group select:focus {
-            outline: none;
-            border-color: #06b6d4;
-            box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.1);
-        }
-
-        .btn {
-            padding: 14px 28px;
-            background: linear-gradient(135deg, #06b6d4, #3b82f6);
-            border: none;
-            border-radius: 8px;
-            color: #ffffff;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 16px rgba(6, 182, 212, 0.3);
-        }
-
-        .btn:disabled {
-            background: #475569;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        /* Timeline de Datas */
-        .timeline-section {
-            background: rgba(15, 23, 42, 0.6);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 16px;
-            padding: 30px;
-            margin-bottom: 30px;
-            display: none;
-        }
-
-        .timeline-section.active {
-            display: block;
-        }
-
-        .timeline-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-
-        .timeline-header h3 {
-            font-size: 1.3rem;
-            color: #06b6d4;
-        }
-
-        .current-date-info {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .date-badge {
-            background: rgba(6, 182, 212, 0.2);
-            border: 1px solid #06b6d4;
-            padding: 8px 16px;
-            border-radius: 8px;
-            font-weight: 600;
-        }
-
-        .regime-badge {
-            padding: 8px 16px;
-            border-radius: 8px;
-            font-weight: 600;
-            font-size: 0.9rem;
-        }
-
-        .regime-badge.long-gamma {
-            background: rgba(34, 197, 94, 0.2);
-            border: 1px solid #22c55e;
-            color: #22c55e;
-        }
-
-        .regime-badge.short-gamma {
-            background: rgba(239, 68, 68, 0.2);
-            border: 1px solid #ef4444;
-            color: #ef4444;
-        }
-
-        /* Slider de Datas */
-        .date-slider {
-            position: relative;
-            margin: 30px 0;
-        }
-
-        .slider-track {
-            position: relative;
-            height: 4px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 2px;
-            margin: 20px 0 40px 0;
-        }
-
-        .slider-progress {
-            position: absolute;
-            height: 100%;
-            background: linear-gradient(90deg, #06b6d4, #3b82f6);
-            border-radius: 2px;
-            transition: width 0.3s ease;
-        }
-
-        .slider-dates {
-            display: flex;
-            justify-content: space-between;
-            position: relative;
-        }
-
-        .date-marker {
-            flex: 1;
-            text-align: center;
-            cursor: pointer;
-            padding: 10px;
-            transition: all 0.3s ease;
-            position: relative;
-        }
-
-        .date-marker::before {
-            content: '';
-            position: absolute;
-            top: -34px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 16px;
-            height: 16px;
-            background: rgba(255, 255, 255, 0.3);
-            border: 2px solid rgba(255, 255, 255, 0.5);
-            border-radius: 50%;
-            transition: all 0.3s ease;
-        }
-
-        .date-marker:hover::before {
-            background: rgba(6, 182, 212, 0.5);
-            border-color: #06b6d4;
-            transform: translateX(-50%) scale(1.2);
-        }
-
-        .date-marker.active::before {
-            background: #06b6d4;
-            border-color: #06b6d4;
-            width: 20px;
-            height: 20px;
-            box-shadow: 0 0 12px rgba(6, 182, 212, 0.6);
-        }
-
-        .date-marker.active {
-            color: #06b6d4;
-            font-weight: 700;
-        }
-
-        .date-marker .date-label {
-            font-size: 0.9rem;
-            color: #94a3b8;
-            margin-bottom: 4px;
-        }
-
-        .date-marker.active .date-label {
-            color: #06b6d4;
-        }
-
-        .date-marker .weekday {
-            font-size: 0.75rem;
-            color: #64748b;
-        }
-
-        /* Navegação de Datas */
-        .date-navigation {
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-            margin-top: 20px;
-        }
-
-        .nav-btn {
-            background: rgba(30, 41, 59, 0.8);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            color: #ffffff;
-            padding: 10px 20px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.3s ease;
-        }
-
-        .nav-btn:hover:not(:disabled) {
-            background: rgba(6, 182, 212, 0.2);
-            border-color: #06b6d4;
-        }
-
-        .nav-btn:disabled {
-            opacity: 0.3;
-            cursor: not-allowed;
-        }
-
-        /* Métricas */
-        .metrics-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin: 20px 0;
-        }
-
-        .metric-card {
-            background: rgba(30, 41, 59, 0.6);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 12px;
-            padding: 20px;
-        }
-
-        .metric-card .label {
-            font-size: 0.85rem;
-            color: #94a3b8;
-            margin-bottom: 8px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .metric-card .value {
-            font-size: 1.8rem;
-            font-weight: 700;
-            color: #ffffff;
-        }
-
-        .metric-card .value.positive {
-            color: #22c55e;
-        }
-
-        .metric-card .value.negative {
-            color: #ef4444;
-        }
-
-        /* Gráfico */
-        .chart-section {
-            background: rgba(15, 23, 42, 0.6);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 16px;
-            padding: 30px;
-            margin-bottom: 30px;
-            display: none;
-        }
-
-        .chart-section.active {
-            display: block;
-        }
-
-        #plotly-chart {
-            width: 100%;
-            min-height: 1600px;
-        }
-
-        /* Loading */
-        .loading {
-            text-align: center;
-            padding: 60px 20px;
-        }
-
-        .loading .spinner {
-            width: 60px;
-            height: 60px;
-            border: 4px solid rgba(255, 255, 255, 0.1);
-            border-top-color: #06b6d4;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 20px;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        .loading p {
-            color: #94a3b8;
-            font-size: 1.1rem;
-        }
-
-        /* Mensagens */
-        .message {
-            padding: 16px 20px;
-            border-radius: 8px;
-            margin: 20px 0;
-            font-weight: 500;
-        }
-
-        .message.error {
-            background: rgba(239, 68, 68, 0.1);
-            border: 1px solid #ef4444;
-            color: #ef4444;
-        }
-
-        .message.info {
-            background: rgba(6, 182, 212, 0.1);
-            border: 1px solid #06b6d4;
-            color: #06b6d4;
-        }
-
-        /* Walls Section */
-        .walls-section {
-            margin-top: 20px;
-            padding-top: 20px;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .walls-section h4 {
-            color: #06b6d4;
-            margin-bottom: 15px;
-            font-size: 1.1rem;
-        }
-
-        .walls-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 15px;
-        }
-
-        .wall-card {
-            background: rgba(30, 41, 59, 0.4);
-            border-radius: 10px;
-            padding: 15px;
-            border-left: 4px solid;
-        }
-
-        .wall-card.support {
-            border-left-color: #22c55e;
-        }
-
-        .wall-card.resistance {
-            border-left-color: #ef4444;
-        }
-
-        .wall-card .wall-type {
-            font-size: 0.85rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            margin-bottom: 8px;
-        }
-
-        .wall-card.support .wall-type {
-            color: #22c55e;
-        }
-
-        .wall-card.resistance .wall-type {
-            color: #ef4444;
-        }
-
-        .wall-card .wall-strike {
-            font-size: 1.5rem;
-            font-weight: 700;
-            margin-bottom: 8px;
-        }
-
-        .wall-card .wall-info {
-            font-size: 0.85rem;
-            color: #94a3b8;
-        }
-
-        /* Responsivo */
-        @media (max-width: 768px) {
-            .header h1 {
-                font-size: 1.8rem;
-            }
-
-            .controls-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .date-slider {
-                overflow-x: auto;
-                padding-bottom: 10px;
-            }
-
-            .metrics-grid {
-                grid-template-columns: 1fr;
-            }
-
-            #plotly-chart {
-                min-height: 1200px;
-            }
-        }
-    </style>
+    .gex-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 20px 40px rgba(186, 57, 175, 0.15);
+      border-color: rgba(186, 57, 175, 0.3);
+    }
+    
+    .spinner {
+      border: 2px solid rgba(255, 255, 255, 0.1);
+      border-radius: 50%;
+      border-top: 2px solid #ba39af;
+      width: 20px;
+      height: 20px;
+      animation: spin 1s linear infinite;
+      display: inline-block;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .chart-container {
+      height: 1200px;
+      background: transparent;
+      border-radius: 12px;
+      padding: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .metric-card {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      padding: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      transition: all 0.3s ease;
+    }
+
+    .metric-card:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(186, 57, 175, 0.3);
+    }
+
+    .loading {
+      opacity: 0.6;
+      pointer-events: none;
+    }
+
+    #expirationSelect, #daysBackSelect {
+      background-color: rgba(30, 30, 30, 0.9);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: white;
+      backdrop-filter: blur(10px);
+    }
+    
+    #expirationSelect option, #daysBackSelect option {
+      background-color: #1a1a1a;
+      color: white;
+      padding: 8px;
+    }
+    
+    #expirationSelect:focus, #daysBackSelect:focus {
+      outline: none;
+      border-color: #ba39af;
+      box-shadow: 0 0 0 2px rgba(186, 57, 175, 0.2);
+    }
+
+    .timeline-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      transition: all 0.3s;
+      cursor: pointer;
+    }
+    
+    .timeline-dot:hover {
+      transform: scale(1.2);
+    }
+    
+    .timeline-dot.active {
+      width: 16px;
+      height: 16px;
+      box-shadow: 0 0 20px rgba(59, 130, 246, 0.8);
+    }
+
+    .insight-card {
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
+      border: 1px solid rgba(59, 130, 246, 0.2);
+      transition: all 0.3s;
+      border-radius: 12px;
+    }
+    
+    .insight-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 40px rgba(59, 130, 246, 0.3);
+    }
+
+    .regime-badge {
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-weight: 600;
+      font-size: 14px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    
+    .regime-long {
+      background: rgba(34, 197, 94, 0.2);
+      color: #22c55e;
+      border: 1px solid rgba(34, 197, 94, 0.3);
+    }
+    
+    .regime-short {
+      background: rgba(239, 68, 68, 0.2);
+      color: #ef4444;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    .strike-impact {
+      background: linear-gradient(90deg, transparent 0%, rgba(59, 130, 246, 0.1) 100%);
+      border-left: 3px solid #3b82f6;
+      padding: 12px;
+      margin: 8px 0;
+      border-radius: 8px;
+      transition: all 0.3s;
+    }
+    
+    .strike-impact:hover {
+      background: linear-gradient(90deg, transparent 0%, rgba(59, 130, 246, 0.2) 100%);
+      transform: translateX(4px);
+    }
+
+  </style>
 </head>
-<body>
-    <div class="container">
-        <!-- Header -->
-        <div class="header">
-            <h1>📊 Análise Histórica GEX</h1>
-            <p>Navegue pelo histórico de Gamma Exposure e veja a evolução dos níveis críticos</p>
+
+<body class="text-white">
+  
+  <!-- Navbar -->
+  <nav class="fixed top-6 left-1/2 transform -translate-x-1/2 z-50 bg-opacity-5 border-opacity-10 bg-white border-white border rounded-full px-4 py-3 shadow-xl backdrop-blur-md">
+    <div class="flex items-center justify-between">
+      <div class="flex items-center">
+        <a href="/dashboard.html">
+          <img src="logo.png" alt="Geminii Logo" class="w-6 h-6 cursor-pointer">
+        </a>
+      </div>
+      <div class="hidden md:flex items-center space-x-6 text-xs text-gray-300 ml-8">
+        <a href="gamma-levels.html" class="hover:text-white transition-colors">Gamma Exposure</a>
+        <span class="text-white font-medium">Análise Histórica</span>
+        <a href="delta-levels.html" class="hover:text-white transition-colors">Delta Exposure</a>
+        <a href="vega-levels.html" class="hover:text-white transition-colors">Vega Exposure</a>
+      </div>
+      <div class="flex items-center space-x-3 ml-8">
+        <div class="w-8 h-8 bg-purple-500 bg-opacity-10 border border-purple-500 border-opacity-30 rounded-full flex items-center justify-center relative">
+          <i class="fas fa-history text-purple-500 text-xs"></i>
+          <div class="absolute -top-1 -right-1 w-2 h-2 bg-purple-500 rounded-full animate-pulse"></div>
         </div>
-
-        <!-- Controles -->
-        <div class="controls-section">
-            <div class="controls-grid">
-                <div class="form-group">
-                    <label for="ticker">Ticker</label>
-                    <input type="text" id="ticker" placeholder="Ex: PETR4" value="PETR4">
-                </div>
-
-                <div class="form-group">
-                    <label for="vencimento">Vencimento</label>
-                    <select id="vencimento">
-                        <option value="">Selecione o vencimento</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label for="days-back">Dias Históricos</label>
-                    <select id="days-back">
-                        <option value="3">3 dias úteis</option>
-                        <option value="5" selected>5 dias úteis</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label>&nbsp;</label>
-                    <button class="btn" onclick="loadExpirations()">Buscar Vencimentos</button>
-                </div>
-
-                <div class="form-group">
-                    <label>&nbsp;</label>
-                    <button class="btn" onclick="analyzeHistorical()" id="analyze-btn" disabled>Analisar Histórico</button>
-                </div>
-            </div>
-
-            <div id="message-container"></div>
-        </div>
-
-        <!-- Timeline de Datas -->
-        <div class="timeline-section" id="timeline-section">
-            <div class="timeline-header">
-                <h3>📅 Linha do Tempo</h3>
-                <div class="current-date-info">
-                    <div class="date-badge" id="current-date-display">Selecione uma data</div>
-                    <div class="regime-badge" id="regime-badge"></div>
-                </div>
-            </div>
-
-            <!-- Métricas da Data Atual -->
-            <div class="metrics-grid" id="metrics-container"></div>
-
-            <!-- Slider -->
-            <div class="date-slider">
-                <div class="slider-track">
-                    <div class="slider-progress" id="slider-progress"></div>
-                </div>
-                <div class="slider-dates" id="slider-dates"></div>
-            </div>
-
-            <!-- Navegação -->
-            <div class="date-navigation">
-                <button class="nav-btn" onclick="navigateDate(-1)" id="prev-btn">← Anterior</button>
-                <button class="nav-btn" onclick="navigateDate(1)" id="next-btn">Próximo →</button>
-            </div>
-
-            <!-- Walls -->
-            <div class="walls-section" id="walls-section"></div>
-        </div>
-
-        <!-- Gráfico -->
-        <div class="chart-section" id="chart-section">
-            <div id="plotly-chart"></div>
-        </div>
-
-        <!-- Loading -->
-        <div class="loading" id="loading" style="display: none;">
-            <div class="spinner"></div>
-            <p>Carregando dados históricos...</p>
-        </div>
+      </div>
     </div>
+  </nav>
 
-    <script>
-        // Estado Global
-        let currentData = null;
-        let currentDateIndex = 0;
-        let availableDates = [];
+  <!-- Content -->
+  <div class="pt-32 pb-16">
+    <div class="max-w-7xl mx-auto px-6">
+      
+      <!-- Header -->
+      <div class="text-center mb-12">
+        <h1 class="text-4xl md:text-5xl font-bold mb-4">
+          <span style="color: #ba39af; font-weight: 900;">Análise Histórica</span>
+          <span class="text-white font-light">GEX</span>
+        </h1>
+        <p class="text-neutral-300 text-lg max-w-3xl mx-auto">
+          Análise de Gamma Exposure dos últimos 5 dias úteis com dados reais do Floqui. Identifique tendências, mudanças de regime e strikes mais impactados ao longo do tempo.
+        </p>
+      </div>
 
-        // API Base URL
-        const API_BASE = '/pro/historical';
+      <!-- Controles de Análise -->
+      <div class="gex-card p-6 mb-8">
+        <div class="flex flex-col md:flex-row gap-4 items-center justify-center">
+          <input 
+            id="tickerInput" 
+            type="text" 
+            placeholder="Digite o código da ação (ex: PETR4)" 
+            class="px-4 py-2 bg-white bg-opacity-10 border border-white border-opacity-20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-geminii backdrop-blur-sm uppercase"
+          >
+          <select 
+            id="expirationSelect" 
+            class="px-4 py-2 rounded-lg focus:outline-none focus:border-geminii backdrop-blur-sm"
+          >
+            <option value="">Selecione Vencimento...</option>
+          </select>
+          <select 
+            id="daysBackSelect" 
+            class="px-4 py-2 rounded-lg focus:outline-none focus:border-geminii backdrop-blur-sm"
+          >
+            <option value="2">2 dias úteis</option>
+            <option value="3">3 dias úteis</option>
+            <option value="4">4 dias úteis</option>
+            <option value="5" selected>5 dias úteis</option>
+          </select>
+          <button 
+            id="analyzeBtn" 
+            class="px-6 py-2 bg-gradient-to-r from-geminii to-purple-600 hover:shadow-lg rounded-lg transition-all font-medium"
+          >
+            <i class="fas fa-history mr-2"></i>Analisar Histórico
+          </button>
+        </div>
+      </div>
 
-        // Carregar vencimentos
-        async function loadExpirations() {
-            const ticker = document.getElementById('ticker').value.trim().toUpperCase();
-            
-            if (!ticker) {
-                showMessage('Digite um ticker', 'error');
-                return;
-            }
+      <!-- Status -->
+      <div id="statusMsg" class="mb-6 p-4 rounded-lg hidden backdrop-blur-sm"></div>
 
-            showLoading(true);
-            clearMessage();
+      <!-- Loading State -->
+      <div id="loadingState" class="hidden gex-card p-12 text-center mb-8">
+        <div class="spinner mx-auto mb-4" style="width: 40px; height: 40px; border-width: 3px;"></div>
+        <p class="text-xl font-semibold" style="color: #ba39af;">Processando análise histórica...</p>
+        <p class="text-sm text-gray-400 mt-2">Buscando dados do Floqui e Oplab</p>
+      </div>
 
-            try {
-                const response = await fetch(`${API_BASE}/expirations`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ ticker })
-                });
+      <!-- Insights Gerenciais -->
+      <div id="insightsSection" class="hidden mb-8">
+        <div class="gex-card p-6">
+          <h2 class="text-2xl font-bold mb-6 text-center">
+            <i class="fas fa-chart-bar mr-3" style="color: #ba39af;"></i>
+            Insights Gerenciais
+          </h2>
 
-                const data = await response.json();
+          <!-- Período e Regime Atual -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div class="metric-card text-center">
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-sm text-gray-400">Período Analisado</span>
+                <i class="fas fa-calendar-alt" style="color: #ba39af;"></i>
+              </div>
+              <p class="text-2xl font-bold" id="periodText">-</p>
+              <p class="text-xs text-gray-500 mt-1" id="periodSubtext">-</p>
+            </div>
 
-                if (!data.success) {
-                    throw new Error(data.error || 'Erro ao buscar vencimentos');
-                }
+            <div class="metric-card text-center">
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-sm text-gray-400">Regime Atual</span>
+                <i class="fas fa-wave-square text-green-400"></i>
+              </div>
+              <div id="currentRegimeText" class="text-2xl font-bold">-</div>
+              <p class="text-xs text-gray-500 mt-1" id="regimeStabilityText">-</p>
+            </div>
 
-                populateExpirations(data.expirations);
-                showMessage(`${data.total_available} vencimentos disponíveis para ${ticker}`, 'info');
+            <div class="metric-card text-center">
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-sm text-gray-400">Cotação Atual</span>
+                <i class="fas fa-dollar-sign text-purple-400"></i>
+              </div>
+              <p class="text-2xl font-bold" id="spotPriceText">-</p>
+              <p class="text-xs text-gray-500 mt-1" id="tickerText">-</p>
+            </div>
+          </div>
 
-            } catch (error) {
-                showMessage(`Erro: ${error.message}`, 'error');
-            } finally {
-                showLoading(false);
-            }
-        }
+          <!-- Movimento do Flip -->
+          <div id="flipMovementCard" class="hidden insight-card p-5 mb-6">
+            <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
+              <i class="fas fa-exchange-alt text-orange-400"></i>
+              Movimento do Gamma Flip
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <p class="text-xs text-gray-400 mb-1">Primeiro Flip</p>
+                <p class="text-xl font-bold text-blue-400" id="firstFlipText">-</p>
+                <p class="text-xs text-gray-500" id="firstFlipDate">-</p>
+              </div>
+              <div>
+                <p class="text-xs text-gray-400 mb-1">Último Flip</p>
+                <p class="text-xl font-bold text-purple-400" id="lastFlipText">-</p>
+                <p class="text-xs text-gray-500" id="lastFlipDate">-</p>
+              </div>
+              <div>
+                <p class="text-xs text-gray-400 mb-1">Variação</p>
+                <p class="text-xl font-bold" id="flipChangeText">-</p>
+                <p class="text-xs" id="flipDirectionText">-</p>
+              </div>
+            </div>
+          </div>
 
-        // Popular select de vencimentos
-        function populateExpirations(expirations) {
-            const select = document.getElementById('vencimento');
-            select.innerHTML = '<option value="">Selecione o vencimento</option>';
+          <!-- Tendência de GEX -->
+          <div class="insight-card p-5 mb-6">
+            <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
+              <i class="fas fa-chart-line text-cyan-400"></i>
+              Tendência de GEX Descoberto
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <p class="text-xs text-gray-400 mb-1">GEX Inicial</p>
+                <p class="text-xl font-bold" id="firstGexText">-</p>
+              </div>
+              <div>
+                <p class="text-xs text-gray-400 mb-1">GEX Final</p>
+                <p class="text-xl font-bold" id="lastGexText">-</p>
+              </div>
+              <div>
+                <p class="text-xs text-gray-400 mb-1">Mudança</p>
+                <p class="text-xl font-bold" id="gexChangeText">-</p>
+                <p class="text-xs mt-1" id="gexTrendText">-</p>
+              </div>
+            </div>
+          </div>
 
-            expirations.forEach(exp => {
-                if (exp.available) {
-                    const option = document.createElement('option');
-                    option.value = exp.code;
-                    option.textContent = `${exp.desc} (${exp.data_count} strikes)`;
-                    select.appendChild(option);
-                }
-            });
+          <!-- Strikes Mais Impactados -->
+          <div id="impactedStrikesCard" class="hidden insight-card p-5">
+            <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
+              <i class="fas fa-bullseye text-yellow-400"></i>
+              Top 5 Strikes Mais Impactados
+            </h3>
+            <div id="impactedStrikesList" class="space-y-2">
+              <!-- Preenchido dinamicamente -->
+            </div>
+          </div>
 
-            document.getElementById('analyze-btn').disabled = false;
-        }
+          <!-- Mudanças de Regime -->
+          <div id="regimeChangesCard" class="hidden insight-card p-5 mt-6">
+            <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
+              <i class="fas fa-sync-alt text-red-400"></i>
+              Mudanças de Regime
+            </h3>
+            <div id="regimeChangesList" class="space-y-2">
+              <!-- Preenchido dinamicamente -->
+            </div>
+          </div>
+        </div>
+      </div>
 
-        // Analisar histórico
-        async function analyzeHistorical() {
-            const ticker = document.getElementById('ticker').value.trim().toUpperCase();
-            const vencimento = document.getElementById('vencimento').value;
-            const daysBack = parseInt(document.getElementById('days-back').value);
+      <!-- Timeline de Navegação -->
+      <div id="timelineSection" class="hidden gex-card p-6 mb-8">
+        <h2 class="text-2xl font-bold mb-6 text-center">
+          <i class="fas fa-calendar-week mr-3" style="color: #ba39af;"></i>
+          Linha do Tempo
+        </h2>
+        
+        <div id="timelineContainer" class="relative">
+          <!-- Linha horizontal -->
+          <div class="absolute top-1/2 left-0 right-0 h-0.5 bg-gray-600"></div>
+          
+          <!-- Dots de datas (preenchido dinamicamente) -->
+          <div id="timelineDots" class="relative flex justify-between items-center px-4">
+            <!-- Preenchido pelo JS -->
+          </div>
+        </div>
 
-            if (!ticker || !vencimento) {
-                showMessage('Preencha ticker e vencimento', 'error');
-                return;
-            }
+        <!-- Info da Data Selecionada -->
+        <div id="selectedDateInfo" class="mt-6 p-4 rounded-lg" style="background: rgba(186, 57, 175, 0.1); border: 1px solid rgba(186, 57, 175, 0.3);">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm text-gray-400">Data Selecionada</p>
+              <p class="text-xl font-bold" id="selectedDateText">-</p>
+            </div>
+            <div class="text-right">
+              <p class="text-sm text-gray-400">Regime</p>
+              <div id="selectedDateRegime" class="text-xl font-bold">-</div>
+            </div>
+            <div class="text-right">
+              <p class="text-sm text-gray-400">Gamma Flip</p>
+              <p class="text-xl font-bold text-orange-400" id="selectedDateFlip">-</p>
+            </div>
+          </div>
+        </div>
+      </div>
 
-            showLoading(true);
-            clearMessage();
-            hideTimeline();
-            hideChart();
+      <!-- Gráficos GEX (6 gráficos por data) -->
+      <div id="chartsSection" class="hidden">
+        <div class="gex-card p-6">
+          <h2 class="text-2xl font-bold mb-6 text-center">
+            <i class="fas fa-chart-area mr-3" style="color: #ba39af;"></i>
+            Análise GEX - <span id="chartDateTitle" style="color: #ba39af;">-</span>
+          </h2>
+          
+          <!-- Container do Plotly -->
+          <div class="chart-container">
+            <div id="gexChart" style="width: 100%; height: 100%;"></div>
+          </div>
 
-            try {
-                const response = await fetch(`${API_BASE}/analyze`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ ticker, vencimento, days_back: daysBack })
-                });
+          <!-- Walls da Data -->
+          <div id="wallsSection" class="mt-6 hidden">
+            <h3 class="text-xl font-bold mb-4 flex items-center gap-2">
+              <i class="fas fa-shield-alt text-red-400"></i>
+              Support & Resistance
+            </h3>
+            <div id="wallsList" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <!-- Preenchido dinamicamente -->
+            </div>
+          </div>
+        </div>
+      </div>
 
-                const data = await response.json();
+      <!-- Estado Vazio -->
+      <div id="emptyState" class="gex-card p-12 text-center">
+        <i class="fas fa-history text-6xl mb-4" style="color: rgba(186, 57, 175, 0.5);"></i>
+        <h3 class="text-2xl font-bold mb-2 text-gray-300">Nenhuma análise carregada</h3>
+        <p class="text-gray-400">Digite o ticker e selecione o vencimento para começar</p>
+      </div>
 
-                if (!data.success) {
-                    throw new Error(data.error || 'Erro na análise');
-                }
+    </div>
+  </div>
 
-                currentData = data;
-                availableDates = data.available_dates;
-                currentDateIndex = availableDates.length - 1; // Última data
+  <script>
+    let userToken = localStorage.getItem('geminii_token');
+    
+    if (!userToken) {
+      window.location.href = '/login.html';
+    }
 
-                renderTimeline();
-                selectDate(currentDateIndex);
+    // Estado global
+    let currentAnalysis = null;
+    let selectedDate = null;
+    let availableExpirations = [];
 
-                showMessage(`Análise concluída: ${availableDates.length} datas disponíveis`, 'info');
+    // Elementos DOM
+    const tickerInput = document.getElementById('tickerInput');
+    const expirationSelect = document.getElementById('expirationSelect');
+    const daysBackSelect = document.getElementById('daysBackSelect');
+    const analyzeBtn = document.getElementById('analyzeBtn');
+    const statusMsg = document.getElementById('statusMsg');
+    const loadingState = document.getElementById('loadingState');
+    const emptyState = document.getElementById('emptyState');
+    const insightsSection = document.getElementById('insightsSection');
+    const timelineSection = document.getElementById('timelineSection');
+    const chartsSection = document.getElementById('chartsSection');
 
-            } catch (error) {
-                showMessage(`Erro: ${error.message}`, 'error');
-            } finally {
-                showLoading(false);
-            }
-        }
+    // Funções utilitárias
+    function showStatus(message, type = 'info') {
+      const bgClass = type === 'success' ? 'bg-green-600 bg-opacity-20 border-green-500 border-opacity-30' : 
+                     type === 'error' ? 'bg-red-600 bg-opacity-20 border-red-500 border-opacity-30' : 
+                     'bg-blue-600 bg-opacity-20 border-blue-500 border-opacity-30';
+      
+      statusMsg.className = `mb-6 p-4 rounded-lg border backdrop-blur-sm ${bgClass}`;
+      statusMsg.textContent = message;
+      statusMsg.classList.remove('hidden');
+      
+      setTimeout(() => statusMsg.classList.add('hidden'), 5000);
+    }
 
-        // Renderizar timeline
-        function renderTimeline() {
-            const container = document.getElementById('slider-dates');
-            container.innerHTML = '';
+    function setLoading(isLoading) {
+      if (isLoading) {
+        analyzeBtn.classList.add('loading');
+        analyzeBtn.innerHTML = '<span class="spinner mr-2"></span>Processando...';
+      } else {
+        analyzeBtn.classList.remove('loading');
+        analyzeBtn.innerHTML = '<i class="fas fa-history mr-2"></i>Analisar Histórico';
+      }
+    }
 
-            availableDates.forEach((dateStr, index) => {
-                const date = new Date(dateStr + 'T12:00:00');
-                const marker = document.createElement('div');
-                marker.className = 'date-marker';
-                marker.onclick = () => selectDate(index);
+    // Carregar vencimentos quando ticker é digitado
+    tickerInput.addEventListener('input', async (e) => {
+      const ticker = e.target.value.trim().toUpperCase();
+      
+      if (ticker.length >= 4) {
+        await loadExpirations(ticker);
+      }
+    });
 
-                const day = date.getDate().toString().padStart(2, '0');
-                const month = (date.getMonth() + 1).toString().padStart(2, '0');
-                const weekday = date.toLocaleDateString('pt-BR', { weekday: 'short' });
-
-                marker.innerHTML = `
-                    <div class="date-label">${day}/${month}</div>
-                    <div class="weekday">${weekday}</div>
-                `;
-
-                container.appendChild(marker);
-            });
-
-            showTimeline();
-        }
-
-        // Selecionar data
-        function selectDate(index) {
-            currentDateIndex = index;
-            const dateStr = availableDates[index];
-            const dateData = currentData.data_by_date[dateStr];
-
-            // Atualizar UI
-            updateActiveMarker(index);
-            updateSliderProgress(index);
-            updateDateDisplay(dateStr);
-            updateMetrics(dateData);
-            updateRegimeBadge(dateData.regime);
-            renderWalls(dateData.walls);
-            renderChart(dateData.plot_json);
-
-            // Atualizar botões de navegação
-            document.getElementById('prev-btn').disabled = (index === 0);
-            document.getElementById('next-btn').disabled = (index === availableDates.length - 1);
-        }
-
-        // Navegar entre datas
-        function navigateDate(direction) {
-            const newIndex = currentDateIndex + direction;
-            if (newIndex >= 0 && newIndex < availableDates.length) {
-                selectDate(newIndex);
-            }
-        }
-
-        // Atualizar marcador ativo
-        function updateActiveMarker(index) {
-            document.querySelectorAll('.date-marker').forEach((marker, i) => {
-                marker.classList.toggle('active', i === index);
-            });
-        }
-
-        // Atualizar progresso do slider
-        function updateSliderProgress(index) {
-            const progress = (index / (availableDates.length - 1)) * 100;
-            document.getElementById('slider-progress').style.width = `${progress}%`;
-        }
-
-        // Atualizar display de data
-        function updateDateDisplay(dateStr) {
-            const date = new Date(dateStr + 'T12:00:00');
-            const formatted = date.toLocaleDateString('pt-BR', {
-                day: '2-digit',
-                month: 'short',
-                year: 'numeric'
-            });
-            document.getElementById('current-date-display').textContent = formatted;
-        }
-
-        // Atualizar métricas
-        function updateMetrics(data) {
-            const container = document.getElementById('metrics-container');
-            
-            const metrics = [
-                {
-                    label: 'Spot Price',
-                    value: `R$ ${data.spot_price.toFixed(2)}`
-                },
-                {
-                    label: 'Gamma Flip',
-                    value: data.flip_strike ? `R$ ${data.flip_strike.toFixed(2)}` : 'N/A'
-                },
-                {
-                    label: 'GEX Total',
-                    value: formatNumber(data.net_gex),
-                    colorClass: data.net_gex > 0 ? 'positive' : 'negative'
-                },
-                {
-                    label: 'GEX Descoberto',
-                    value: formatNumber(data.net_gex_descoberto),
-                    colorClass: data.net_gex_descoberto > 0 ? 'positive' : 'negative'
-                },
-                {
-                    label: 'Strikes Analisados',
-                    value: data.strikes_count
-                },
-                {
-                    label: 'Dados Reais',
-                    value: `${data.real_data_count} strikes`
-                }
-            ];
-
-            container.innerHTML = metrics.map(m => `
-                <div class="metric-card">
-                    <div class="label">${m.label}</div>
-                    <div class="value ${m.colorClass || ''}">${m.value}</div>
-                </div>
-            `).join('');
-        }
-
-        // Atualizar badge de regime
-        function updateRegimeBadge(regime) {
-            const badge = document.getElementById('regime-badge');
-            badge.textContent = regime;
-            badge.className = 'regime-badge ' + (regime === 'Long Gamma' ? 'long-gamma' : 'short-gamma');
-        }
-
-        // Renderizar walls
-        function renderWalls(walls) {
-            const section = document.getElementById('walls-section');
-            
-            if (!walls || walls.length === 0) {
-                section.innerHTML = '';
-                return;
-            }
-
-            const html = `
-                <h4>🛡️ Níveis Críticos (Walls)</h4>
-                <div class="walls-grid">
-                    ${walls.map(wall => `
-                        <div class="wall-card ${wall.type.toLowerCase()}">
-                            <div class="wall-type">${wall.type}</div>
-                            <div class="wall-strike">R$ ${wall.strike.toFixed(2)}</div>
-                            <div class="wall-info">
-                                OI Descoberto: ${wall.oi_descoberto.toLocaleString('pt-BR')}<br>
-                                Distância: ${wall.distance_pct.toFixed(2)}%
-                            </div>
-                        </div>
-                    `).join('')}
-                </div>
-            `;
-
-            section.innerHTML = html;
-        }
-
-        // Renderizar gráfico
-        function renderChart(plotJson) {
-            if (!plotJson) return;
-
-            const plotData = JSON.parse(plotJson);
-            Plotly.newPlot('plotly-chart', plotData.data, plotData.layout, {
-                responsive: true,
-                displayModeBar: true,
-                displaylogo: false
-            });
-
-            showChart();
-        }
-
-        // Helpers
-        function formatNumber(num) {
-            if (num >= 1000000) {
-                return (num / 1000000).toFixed(1) + 'M';
-            } else if (num >= 1000) {
-                return (num / 1000).toFixed(1) + 'K';
-            }
-            return num.toFixed(0);
-        }
-
-        function showMessage(msg, type) {
-            const container = document.getElementById('message-container');
-            container.innerHTML = `<div class="message ${type}">${msg}</div>`;
-        }
-
-        function clearMessage() {
-            document.getElementById('message-container').innerHTML = '';
-        }
-
-        function showLoading(show) {
-            document.getElementById('loading').style.display = show ? 'block' : 'none';
-        }
-
-        function showTimeline() {
-            document.getElementById('timeline-section').classList.add('active');
-        }
-
-        function hideTimeline() {
-            document.getElementById('timeline-section').classList.remove('active');
-        }
-
-        function showChart() {
-            document.getElementById('chart-section').classList.add('active');
-        }
-
-        function hideChart() {
-            document.getElementById('chart-section').classList.remove('active');
-        }
-
-        // Atalhos de teclado
-        document.addEventListener('keydown', (e) => {
-            if (!currentData) return;
-
-            if (e.key === 'ArrowLeft') {
-                navigateDate(-1);
-            } else if (e.key === 'ArrowRight') {
-                navigateDate(1);
-            }
+    // Carregar vencimentos
+    async function loadExpirations(ticker) {
+      try {
+        const response = await fetch('/pro/historical/expirations', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${userToken}`
+          },
+          body: JSON.stringify({ ticker })
         });
-    </script>
+
+        const data = await response.json();
+
+        if (data.success) {
+          availableExpirations = data.expirations;
+          
+          expirationSelect.innerHTML = '<option value="">Selecione Vencimento...</option>';
+          
+          data.expirations.forEach(exp => {
+            if (exp.available) {
+              const option = document.createElement('option');
+              option.value = exp.code;
+              option.textContent = exp.desc;
+              expirationSelect.appendChild(option);
+            }
+          });
+
+          if (data.total_available === 0) {
+            showStatus('Nenhum vencimento disponível para este ticker', 'error');
+          }
+        }
+      } catch (error) {
+        console.error('Erro ao carregar vencimentos:', error);
+      }
+    }
+
+    // Análise Histórica
+    async function analyzeHistorical() {
+      const ticker = tickerInput.value.trim().toUpperCase();
+      const vencimento = expirationSelect.value;
+      const days_back = parseInt(daysBackSelect.value);
+
+      // Validações
+      if (!ticker) {
+        showStatus('Digite o ticker', 'error');
+        return;
+      }
+
+      if (!vencimento) {
+        showStatus('Selecione o vencimento', 'error');
+        return;
+      }
+
+      // Mostrar loading
+      emptyState.classList.add('hidden');
+      insightsSection.classList.add('hidden');
+      timelineSection.classList.add('hidden');
+      chartsSection.classList.add('hidden');
+      loadingState.classList.remove('hidden');
+      setLoading(true);
+
+      try {
+        const response = await fetch('/pro/historical/analyze', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${userToken}`
+          },
+          body: JSON.stringify({ ticker, vencimento, days_back })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          currentAnalysis = data;
+          renderAnalysis(data);
+          showStatus('Análise concluída!', 'success');
+        } else {
+          showStatus(data.error || 'Erro na análise', 'error');
+          emptyState.classList.remove('hidden');
+        }
+
+      } catch (error) {
+        console.error('Erro:', error);
+        showStatus('Erro ao processar análise', 'error');
+        emptyState.classList.remove('hidden');
+      } finally {
+        loadingState.classList.add('hidden');
+        setLoading(false);
+      }
+    }
+
+    // Renderizar análise completa
+    function renderAnalysis(data) {
+      renderInsights(data);
+      renderTimeline(data);
+      
+      // Selecionar a última data automaticamente
+      if (data.available_dates && data.available_dates.length > 0) {
+        const lastDate = data.available_dates[data.available_dates.length - 1];
+        selectDate(lastDate);
+      }
+
+      insightsSection.classList.remove('hidden');
+      timelineSection.classList.remove('hidden');
+      chartsSection.classList.remove('hidden');
+    }
+
+    // Renderizar Insights
+    function renderInsights(data) {
+      const insights = data.insights;
+
+      // Período
+      document.getElementById('periodText').textContent = 
+        `${insights.period.days} dias úteis`;
+      document.getElementById('periodSubtext').textContent = 
+        `${formatDate(insights.period.start)} até ${formatDate(insights.period.end)}`;
+
+      // Regime Atual
+      const currentRegime = insights.current_regime;
+      const regimeHtml = currentRegime === 'Long Gamma' 
+        ? '<span class="regime-badge regime-long"><i class="fas fa-arrow-up"></i>Long Gamma</span>'
+        : '<span class="regime-badge regime-short"><i class="fas fa-arrow-down"></i>Short Gamma</span>';
+      document.getElementById('currentRegimeText').innerHTML = regimeHtml;
+      
+      const stability = insights.regime_stability ? 'Regime estável' : `${insights.regime_changes.length} mudanças`;
+      document.getElementById('regimeStabilityText').textContent = 
+        `${stability} • ${insights.days_in_current_regime} dias consecutivos`;
+
+      // Spot Price
+      document.getElementById('spotPriceText').textContent = 
+        `R$ ${data.spot_price.toFixed(2)}`;
+      document.getElementById('tickerText').textContent = data.ticker;
+
+      // Movimento do Flip
+      if (insights.flip_movement) {
+        const fm = insights.flip_movement;
+        document.getElementById('firstFlipText').textContent = `R$ ${fm.first_flip.toFixed(2)}`;
+        document.getElementById('firstFlipDate').textContent = formatDate(fm.first_date);
+        document.getElementById('lastFlipText').textContent = `R$ ${fm.last_flip.toFixed(2)}`;
+        document.getElementById('lastFlipDate').textContent = formatDate(fm.last_date);
+        
+        const changeColor = fm.change_pct > 0 ? 'text-green-400' : 'text-red-400';
+        document.getElementById('flipChangeText').className = `text-xl font-bold ${changeColor}`;
+        document.getElementById('flipChangeText').textContent = 
+          `${fm.change_pct > 0 ? '+' : ''}${fm.change_pct.toFixed(2)}%`;
+        
+        const directionIcon = fm.direction === 'UP' 
+          ? '<i class="fas fa-arrow-up text-green-400"></i>' 
+          : '<i class="fas fa-arrow-down text-red-400"></i>';
+        document.getElementById('flipDirectionText').innerHTML = 
+          `${directionIcon} ${fm.direction}`;
+        
+        document.getElementById('flipMovementCard').classList.remove('hidden');
+      }
+
+      // Tendência GEX
+      if (insights.gex_change) {
+        const gc = insights.gex_change;
+        document.getElementById('firstGexText').textContent = formatNumber(gc.first_gex);
+        document.getElementById('lastGexText').textContent = formatNumber(gc.last_gex);
+        
+        const gexChangeColor = gc.change_abs > 0 ? 'text-green-400' : 'text-red-400';
+        document.getElementById('gexChangeText').className = `text-xl font-bold ${gexChangeColor}`;
+        document.getElementById('gexChangeText').textContent = formatNumber(gc.change_abs);
+        
+        let trendText = '';
+        let trendColor = '';
+        switch(gc.trend) {
+          case 'INCREASING_LONG':
+            trendText = 'Aumentando posição LONG';
+            trendColor = 'text-green-400';
+            break;
+          case 'INCREASING_SHORT':
+            trendText = 'Aumentando posição SHORT';
+            trendColor = 'text-red-400';
+            break;
+          case 'DECREASING':
+            trendText = 'Reduzindo posição';
+            trendColor = 'text-yellow-400';
+            break;
+        }
+        document.getElementById('gexTrendText').className = `text-xs mt-1 ${trendColor}`;
+        document.getElementById('gexTrendText').textContent = trendText;
+      }
+
+      // Strikes Mais Impactados
+      if (insights.most_impacted_strikes && insights.most_impacted_strikes.length > 0) {
+        const list = document.getElementById('impactedStrikesList');
+        list.innerHTML = '';
+        
+        insights.most_impacted_strikes.forEach((strike, index) => {
+          const directionColor = strike.direction === 'MORE_LONG' ? 'text-green-400' : 'text-red-400';
+          const directionIcon = strike.direction === 'MORE_LONG' 
+            ? '<i class="fas fa-arrow-up"></i>' 
+            : '<i class="fas fa-arrow-down"></i>';
+          
+          const html = `
+            <div class="strike-impact">
+              <div class="flex items-center justify-between">
+                <div>
+                  <span class="text-lg font-bold">R$ ${strike.strike.toFixed(2)}</span>
+                  <span class="text-xs text-gray-400 ml-2">${strike.distance_from_spot_pct.toFixed(1)}% do spot</span>
+                </div>
+                <div class="text-right">
+                  <span class="${directionColor} font-bold">${directionIcon} ${formatNumber(strike.change)}</span>
+                  <p class="text-xs text-gray-400">${strike.direction.replace('_', ' ')}</p>
+                </div>
+              </div>
+            </div>
+          `;
+          list.innerHTML += html;
+        });
+        
+        document.getElementById('impactedStrikesCard').classList.remove('hidden');
+      }
+
+      // Mudanças de Regime
+      if (insights.regime_changes && insights.regime_changes.length > 0) {
+        const list = document.getElementById('regimeChangesList');
+        list.innerHTML = '';
+        
+        insights.regime_changes.forEach(change => {
+          const html = `
+            <div class="strike-impact">
+              <div class="flex items-center justify-between">
+                <div>
+                  <span class="font-bold">${formatDate(change.date)}</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="regime-badge ${change.from === 'Long Gamma' ? 'regime-long' : 'regime-short'}">${change.from}</span>
+                  <i class="fas fa-arrow-right text-gray-400"></i>
+                  <span class="regime-badge ${change.to === 'Long Gamma' ? 'regime-long' : 'regime-short'}">${change.to}</span>
+                </div>
+              </div>
+            </div>
+          `;
+          list.innerHTML += html;
+        });
+        
+        document.getElementById('regimeChangesCard').classList.remove('hidden');
+      }
+    }
+
+    // Renderizar Timeline
+    function renderTimeline(data) {
+      const container = document.getElementById('timelineDots');
+      container.innerHTML = '';
+
+      data.available_dates.forEach((date, index) => {
+        const dateData = data.data_by_date[date];
+        const regime = dateData.regime;
+        const dotColor = regime === 'Long Gamma' ? 'bg-green-500' : 'bg-red-500';
+
+        const dateObj = new Date(date + 'T00:00:00');
+        const displayDate = dateObj.toLocaleDateString('pt-BR', { 
+          day: '2-digit', 
+          month: 'short' 
+        });
+
+        const dotHtml = `
+          <div class="flex flex-col items-center cursor-pointer hover:scale-110 transition" 
+               data-date="${date}"
+               onclick="selectDate('${date}')">
+            <div class="timeline-dot ${dotColor} mb-2" data-date="${date}"></div>
+            <span class="text-xs text-gray-400">${displayDate}</span>
+          </div>
+        `;
+
+        container.innerHTML += dotHtml;
+      });
+    }
+
+    // Selecionar Data
+    function selectDate(date) {
+      selectedDate = date;
+      const dateData = currentAnalysis.data_by_date[date];
+
+      // Atualizar timeline
+      document.querySelectorAll('.timeline-dot').forEach(dot => {
+        if (dot.dataset.date === date) {
+          dot.classList.add('active');
+        } else {
+          dot.classList.remove('active');
+        }
+      });
+
+      // Atualizar info da data
+      document.getElementById('selectedDateText').textContent = formatDate(date);
+      
+      const regimeHtml = dateData.regime === 'Long Gamma'
+        ? '<span class="regime-badge regime-long"><i class="fas fa-arrow-up"></i>Long Gamma</span>'
+        : '<span class="regime-badge regime-short"><i class="fas fa-arrow-down"></i>Short Gamma</span>';
+      document.getElementById('selectedDateRegime').innerHTML = regimeHtml;
+      
+      document.getElementById('selectedDateFlip').textContent = 
+        dateData.flip_strike ? `R$ ${dateData.flip_strike.toFixed(2)}` : 'N/A';
+
+      // Renderizar gráficos
+      renderCharts(date, dateData);
+    }
+
+    // Renderizar Gráficos
+    function renderCharts(date, dateData) {
+      document.getElementById('chartDateTitle').textContent = formatDate(date);
+
+      if (dateData.plot_json) {
+        const plotData = JSON.parse(dateData.plot_json);
+        
+        plotData.layout.height = 1200;
+        plotData.layout.margin = { l: 80, r: 80, t: 120, b: 80 };
+        plotData.layout.paper_bgcolor = 'transparent';
+        plotData.layout.plot_bgcolor = 'transparent';
+
+        Plotly.newPlot('gexChart', plotData.data, plotData.layout, {
+          responsive: true,
+          displayModeBar: true,
+          displaylogo: false
+        });
+      }
+
+      // Renderizar Walls
+      if (dateData.walls && dateData.walls.length > 0) {
+        renderWalls(dateData.walls);
+      }
+    }
+
+    // Renderizar Walls
+    function renderWalls(walls) {
+      const container = document.getElementById('wallsList');
+      container.innerHTML = '';
+
+      walls.forEach(wall => {
+        const typeColor = wall.type === 'Support' ? 'border-l-green-500' : 'border-l-red-500';
+        const typeIcon = wall.type === 'Support' ? 'fa-shield-alt' : 'fa-shield-alt';
+        
+        const html = `
+          <div class="metric-card border-l-4 ${typeColor}">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-sm text-gray-400 flex items-center gap-2">
+                <i class="fas ${typeIcon}"></i>
+                ${wall.type}
+              </span>
+              <span class="text-xs text-gray-500">${wall.strength}</span>
+            </div>
+            <p class="text-2xl font-bold">R$ ${wall.strike.toFixed(2)}</p>
+            <div class="flex items-center justify-between mt-2 text-xs text-gray-400">
+              <span>OI: ${wall.oi_descoberto.toLocaleString()}</span>
+              <span>${wall.distance_pct.toFixed(2)}% do spot</span>
+            </div>
+          </div>
+        `;
+
+        container.innerHTML += html;
+      });
+
+      document.getElementById('wallsSection').classList.remove('hidden');
+    }
+
+    // Funções auxiliares
+    function formatDate(dateStr) {
+      const date = new Date(dateStr + 'T00:00:00');
+      return date.toLocaleDateString('pt-BR', { 
+        day: '2-digit', 
+        month: 'long', 
+        year: 'numeric' 
+      });
+    }
+
+    function formatNumber(num) {
+      if (num >= 1000000) {
+        return (num / 1000000).toFixed(1) + 'M';
+      } else if (num >= 1000) {
+        return (num / 1000).toFixed(1) + 'K';
+      }
+      return num.toFixed(0);
+    }
+
+    // Event listeners
+    analyzeBtn.addEventListener('click', analyzeHistorical);
+    
+    tickerInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') analyzeHistorical();
+    });
+
+    // Inicializar
+    document.addEventListener('DOMContentLoaded', function() {
+      showStatus('Sistema de Análise Histórica carregado. Digite um ticker para começar.', 'info');
+    });
+
+  </script>
+
 </body>
 </html>
