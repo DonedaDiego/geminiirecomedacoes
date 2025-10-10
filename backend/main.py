@@ -26,6 +26,7 @@ from pro.vega_routes import get_vega_blueprint
 from pro.theta_routes import get_theta_blueprint
 from pro.mm_temporal_routes import mm_temporal_bp
 
+
 # Premium
 from premium.swing_trade_ml_routes import get_swing_trade_ml_blueprint
 from premium.beta_regression_routes import beta_regression_bp
@@ -163,6 +164,9 @@ try:
     print(" RSL blueprint registrado!")
 except Exception as e:
     print(f" Erro ao registrar RSL blueprint: {e}")
+    
+    
+
 
 
 # Recommendations Free
@@ -456,6 +460,12 @@ def mm_levels():
 @app.route('/historical-levels.html')
 def hisles_levels():
     return send_from_directory('../frontend', 'historical-levels.html')
+
+
+@app.route('/greeks-micro')
+@app.route('/greeks-micro.html')
+def greeks_micro():
+    return send_from_directory('../frontend', 'greeks-micro.html')
 
 
 

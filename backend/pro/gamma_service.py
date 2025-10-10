@@ -51,7 +51,7 @@ class LiquidityManager:
     def __init__(self):
     
         self.high_liquidity = {
-            'BOVA11': 4,
+            'BOVA11': 6,
             'PETR4': 6,
             'VALE3': 6,
             'BBAS3': 6,
@@ -446,22 +446,6 @@ class GEXAnalyzer:
                     flip_position = "ACIMA" if flip_strike > spot_price else "ABAIXO"
                     flip_direction = "NEG_TO_POS" if current_gex < 0 and next_gex > 0 else "POS_TO_NEG"
                     
-                    # SCORE DE RELEVANCIA
-                    relevance_score = 0
-                    
-                    if spot_regime == "SHORT_GAMMA":
-                        if flip_position == "ACIMA" and flip_direction == "NEG_TO_POS":
-                            relevance_score = 1000
-                        else:
-                            relevance_score = 1
-                    elif spot_regime == "LONG_GAMMA":
-                        if flip_position == "ABAIXO" and flip_direction == "POS_TO_NEG":
-                            relevance_score = 1000
-                        else:
-                            relevance_score = 1
-                    else:
-                        relevance_score = 100
-                    
                     flip_candidates.append({
                         'strike': flip_strike,
                         'distance_from_spot': distance_from_spot,
@@ -473,7 +457,6 @@ class GEXAnalyzer:
                         'confidence': abs(current_gex) + abs(next_gex),
                         'flip_position': flip_position,
                         'flip_direction': flip_direction,
-                        'relevance_score': relevance_score,
                         'data_source': data_source_name
                     })
             
@@ -498,8 +481,23 @@ class GEXAnalyzer:
             logging.warning("FLIP NAO ENCONTRADO")
             return None
         
-        # ORDENA POR RELEVANCIA
-        flip_candidates.sort(key=lambda x: (-x['relevance_score'], x['distance_from_spot']))
+        for candidate in flip_candidates:
+            logging.info(f"FLIP CANDIDATO: Strike={candidate['strike']:.2f}, Dist={candidate['distance_from_spot']:.2f}")
+
+        
+        
+        if spot_regime == "SHORT_GAMMA":
+    
+            flip_candidates = [f for f in flip_candidates if f['flip_position'] == "ACIMA"]
+            flip_candidates.sort(key=lambda x: x['distance_from_spot'])
+        elif spot_regime == "LONG_GAMMA":
+            # Pega apenas flips ABAIXO do spot
+            flip_candidates = [f for f in flip_candidates if f['flip_position'] == "ABAIXO"]
+            flip_candidates.sort(key=lambda x: x['distance_from_spot'])
+        else:
+            flip_candidates.sort(key=lambda x: x['distance_from_spot'])
+               
+        
         best_flip = flip_candidates[0]
         
         logging.info(f"GAMMA FLIP SELECIONADO")
@@ -507,7 +505,7 @@ class GEXAnalyzer:
         logging.info(f"  Fonte: {best_flip['data_source']}")
         logging.info(f"  Posicao: {best_flip['flip_position']} do spot")
         logging.info(f"  Distancia: {best_flip['distance_pct']:.2f}%")
-        logging.info(f"  Relevancia: {best_flip['relevance_score']}")
+        
         
         regime = "POSITIVE GAMMA" if spot_price > best_flip['strike'] else "NEGATIVE GAMMA"
         
