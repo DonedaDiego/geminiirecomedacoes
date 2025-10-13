@@ -63,11 +63,13 @@
     }
 
     .chart-container {
+      width: 100%;
       height: 1200px;
       background: transparent;
       border-radius: 12px;
       padding: 20px;
       border: 1px solid rgba(255, 255, 255, 0.1);
+      position: relative;
     }
 
     .metric-card {
@@ -86,25 +88,6 @@
     .loading {
       opacity: 0.6;
       pointer-events: none;
-    }
-
-    #expirationSelect, #daysBackSelect {
-      background-color: rgba(30, 30, 30, 0.9);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      color: white;
-      backdrop-filter: blur(10px);
-    }
-    
-    #expirationSelect option, #daysBackSelect option {
-      background-color: #1a1a1a;
-      color: white;
-      padding: 8px;
-    }
-    
-    #expirationSelect:focus, #daysBackSelect:focus {
-      outline: none;
-      border-color: #ba39af;
-      box-shadow: 0 0 0 2px rgba(186, 57, 175, 0.2);
     }
 
     .timeline-dot {
@@ -191,6 +174,7 @@
         <span class="text-white font-medium">Análise Histórica</span>
         <a href="delta-levels.html" class="hover:text-white transition-colors">Delta Exposure</a>
         <a href="vega-levels.html" class="hover:text-white transition-colors">Vega Exposure</a>
+        <a href="theta-levels.html" class="hover:text-white transition-colors">Theta Exposure</a>
       </div>
       <div class="flex items-center space-x-3 ml-8">
         <div class="w-8 h-8 bg-purple-500 bg-opacity-10 border border-purple-500 border-opacity-30 rounded-full flex items-center justify-center relative">
@@ -208,11 +192,12 @@
       <!-- Header -->
       <div class="text-center mb-12">
         <h1 class="text-4xl md:text-5xl font-bold mb-4">
-          <span style="color: #ba39af; font-weight: 900;">Análise Histórica</span>
-          <span class="text-white font-light">GEX</span>
+          <span style="color: #ba39af; font-weight: 900;">Market Maker</span>
+          <span class="text-white font-light">Histórico GEX</span>
         </h1>
         <p class="text-neutral-300 text-lg max-w-3xl mx-auto">
-          Análise de Gamma Exposure dos últimos 5 dias úteis com dados reais do Floqui. Identifique tendências, mudanças de regime e strikes mais impactados ao longo do tempo.
+          Acompanhe a evolução do Gamma Exposure nos últimos 5 dias úteis, destacando quais strikes vêm ganhando ou perdendo relevância ao longo do tempo.
+         Identifique os pontos de virada e entenda como as posições de mercado estão se ajustando dentro do regime atual.  
         </p>
       </div>
 
@@ -225,21 +210,6 @@
             placeholder="Digite o código da ação (ex: PETR4)" 
             class="px-4 py-2 bg-white bg-opacity-10 border border-white border-opacity-20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-geminii backdrop-blur-sm uppercase"
           >
-          <select 
-            id="expirationSelect" 
-            class="px-4 py-2 rounded-lg focus:outline-none focus:border-geminii backdrop-blur-sm"
-          >
-            <option value="">Selecione Vencimento...</option>
-          </select>
-          <select 
-            id="daysBackSelect" 
-            class="px-4 py-2 rounded-lg focus:outline-none focus:border-geminii backdrop-blur-sm"
-          >
-            <option value="2">2 dias úteis</option>
-            <option value="3">3 dias úteis</option>
-            <option value="4">4 dias úteis</option>
-            <option value="5" selected>5 dias úteis</option>
-          </select>
           <button 
             id="analyzeBtn" 
             class="px-6 py-2 bg-gradient-to-r from-geminii to-purple-600 hover:shadow-lg rounded-lg transition-all font-medium"
@@ -256,7 +226,7 @@
       <div id="loadingState" class="hidden gex-card p-12 text-center mb-8">
         <div class="spinner mx-auto mb-4" style="width: 40px; height: 40px; border-width: 3px;"></div>
         <p class="text-xl font-semibold" style="color: #ba39af;">Processando análise histórica...</p>
-        <p class="text-sm text-gray-400 mt-2">Buscando dados do Floqui e Oplab</p>
+        <p class="text-sm text-gray-400 mt-2">Buscando dados um momento por favor</p>
       </div>
 
       <!-- Insights Gerenciais -->
@@ -417,17 +387,6 @@
           <div class="chart-container">
             <div id="gexChart" style="width: 100%; height: 100%;"></div>
           </div>
-
-          <!-- Walls da Data -->
-          <div id="wallsSection" class="mt-6 hidden">
-            <h3 class="text-xl font-bold mb-4 flex items-center gap-2">
-              <i class="fas fa-shield-alt text-red-400"></i>
-              Support & Resistance
-            </h3>
-            <div id="wallsList" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <!-- Preenchido dinamicamente -->
-            </div>
-          </div>
         </div>
       </div>
 
@@ -435,7 +394,7 @@
       <div id="emptyState" class="gex-card p-12 text-center">
         <i class="fas fa-history text-6xl mb-4" style="color: rgba(186, 57, 175, 0.5);"></i>
         <h3 class="text-2xl font-bold mb-2 text-gray-300">Nenhuma análise carregada</h3>
-        <p class="text-gray-400">Digite o ticker e selecione o vencimento para começar</p>
+        <p class="text-gray-400">Digite o ticker para começar</p>
       </div>
 
     </div>
@@ -451,12 +410,9 @@
     // Estado global
     let currentAnalysis = null;
     let selectedDate = null;
-    let availableExpirations = [];
 
     // Elementos DOM
     const tickerInput = document.getElementById('tickerInput');
-    const expirationSelect = document.getElementById('expirationSelect');
-    const daysBackSelect = document.getElementById('daysBackSelect');
     const analyzeBtn = document.getElementById('analyzeBtn');
     const statusMsg = document.getElementById('statusMsg');
     const loadingState = document.getElementById('loadingState');
@@ -488,70 +444,15 @@
       }
     }
 
-    // Carregar vencimentos quando ticker é digitado
-    tickerInput.addEventListener('input', async (e) => {
-      const ticker = e.target.value.trim().toUpperCase();
-      
-      if (ticker.length >= 4) {
-        await loadExpirations(ticker);
-      }
-    });
-
-    // Carregar vencimentos
-    async function loadExpirations(ticker) {
-      try {
-        const response = await fetch('/pro/historical/expirations', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${userToken}`
-          },
-          body: JSON.stringify({ ticker })
-        });
-
-        const data = await response.json();
-
-        if (data.success) {
-          availableExpirations = data.expirations;
-          
-          expirationSelect.innerHTML = '<option value="">Selecione Vencimento...</option>';
-          
-          data.expirations.forEach(exp => {
-            if (exp.available) {
-              const option = document.createElement('option');
-              option.value = exp.code;
-              option.textContent = exp.desc;
-              expirationSelect.appendChild(option);
-            }
-          });
-
-          if (data.total_available === 0) {
-            showStatus('Nenhum vencimento disponível para este ticker', 'error');
-          }
-        }
-      } catch (error) {
-        console.error('Erro ao carregar vencimentos:', error);
-      }
-    }
-
     // Análise Histórica
     async function analyzeHistorical() {
       const ticker = tickerInput.value.trim().toUpperCase();
-      const vencimento = expirationSelect.value;
-      const days_back = parseInt(daysBackSelect.value);
 
-      // Validações
       if (!ticker) {
         showStatus('Digite o ticker', 'error');
         return;
       }
 
-      if (!vencimento) {
-        showStatus('Selecione o vencimento', 'error');
-        return;
-      }
-
-      // Mostrar loading
       emptyState.classList.add('hidden');
       insightsSection.classList.add('hidden');
       timelineSection.classList.add('hidden');
@@ -560,13 +461,36 @@
       setLoading(true);
 
       try {
+        const expResponse = await fetch('/pro/historical/expirations', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${userToken}`
+          },
+          body: JSON.stringify({ ticker })
+        });
+
+        const expData = await expResponse.json();
+
+        if (!expData.success || expData.total_available === 0) {
+          showStatus('Nenhum vencimento disponível para este ticker', 'error');
+          emptyState.classList.remove('hidden');
+          return;
+        }
+
+        const vencimento = expData.expirations.find(e => e.available).code;
+
         const response = await fetch('/pro/historical/analyze', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${userToken}`
           },
-          body: JSON.stringify({ ticker, vencimento, days_back })
+          body: JSON.stringify({ 
+            ticker, 
+            vencimento, 
+            days_back: 5 
+          })
         });
 
         const data = await response.json();
@@ -574,7 +498,7 @@
         if (data.success) {
           currentAnalysis = data;
           renderAnalysis(data);
-          showStatus('Análise concluída!', 'success');
+          showStatus('Análise concluída com sucesso', 'success');
         } else {
           showStatus(data.error || 'Erro na análise', 'error');
           emptyState.classList.remove('hidden');
@@ -590,12 +514,10 @@
       }
     }
 
-    // Renderizar análise completa
     function renderAnalysis(data) {
       renderInsights(data);
       renderTimeline(data);
       
-      // Selecionar a última data automaticamente
       if (data.available_dates && data.available_dates.length > 0) {
         const lastDate = data.available_dates[data.available_dates.length - 1];
         selectDate(lastDate);
@@ -606,17 +528,12 @@
       chartsSection.classList.remove('hidden');
     }
 
-    // Renderizar Insights
     function renderInsights(data) {
       const insights = data.insights;
 
-      // Período
-      document.getElementById('periodText').textContent = 
-        `${insights.period.days} dias úteis`;
-      document.getElementById('periodSubtext').textContent = 
-        `${formatDate(insights.period.start)} até ${formatDate(insights.period.end)}`;
+      document.getElementById('periodText').textContent = `${insights.period.days} dias úteis`;
+      document.getElementById('periodSubtext').textContent = `${formatDate(insights.period.start)} até ${formatDate(insights.period.end)}`;
 
-      // Regime Atual
       const currentRegime = insights.current_regime;
       const regimeHtml = currentRegime === 'Long Gamma' 
         ? '<span class="regime-badge regime-long"><i class="fas fa-arrow-up"></i>Long Gamma</span>'
@@ -624,15 +541,11 @@
       document.getElementById('currentRegimeText').innerHTML = regimeHtml;
       
       const stability = insights.regime_stability ? 'Regime estável' : `${insights.regime_changes.length} mudanças`;
-      document.getElementById('regimeStabilityText').textContent = 
-        `${stability} • ${insights.days_in_current_regime} dias consecutivos`;
+      document.getElementById('regimeStabilityText').textContent = `${stability} - ${insights.days_in_current_regime} dias consecutivos`;
 
-      // Spot Price
-      document.getElementById('spotPriceText').textContent = 
-        `R$ ${data.spot_price.toFixed(2)}`;
+      document.getElementById('spotPriceText').textContent = `R$ ${data.spot_price.toFixed(2)}`;
       document.getElementById('tickerText').textContent = data.ticker;
 
-      // Movimento do Flip
       if (insights.flip_movement) {
         const fm = insights.flip_movement;
         document.getElementById('firstFlipText').textContent = `R$ ${fm.first_flip.toFixed(2)}`;
@@ -641,28 +554,24 @@
         document.getElementById('lastFlipDate').textContent = formatDate(fm.last_date);
         
         const changeColor = fm.change_pct > 0 ? 'text-green-400' : 'text-red-400';
+        const changeIcon = fm.change_pct > 0 ? 'fa-arrow-up' : 'fa-arrow-down';
         document.getElementById('flipChangeText').className = `text-xl font-bold ${changeColor}`;
-        document.getElementById('flipChangeText').textContent = 
-          `${fm.change_pct > 0 ? '+' : ''}${fm.change_pct.toFixed(2)}%`;
+        document.getElementById('flipChangeText').textContent = `${fm.change_pct > 0 ? '+' : ''}${fm.change_pct.toFixed(2)}%`;
         
-        const directionIcon = fm.direction === 'UP' 
-          ? '<i class="fas fa-arrow-up text-green-400"></i>' 
-          : '<i class="fas fa-arrow-down text-red-400"></i>';
-        document.getElementById('flipDirectionText').innerHTML = 
-          `${directionIcon} ${fm.direction}`;
+        document.getElementById('flipDirectionText').className = `text-xs ${changeColor}`;
+        document.getElementById('flipDirectionText').innerHTML = `<i class="fas ${changeIcon}"></i> ${fm.direction}`;
         
         document.getElementById('flipMovementCard').classList.remove('hidden');
       }
 
-      // Tendência GEX
       if (insights.gex_change) {
         const gc = insights.gex_change;
-        document.getElementById('firstGexText').textContent = formatNumber(gc.first_gex);
-        document.getElementById('lastGexText').textContent = formatNumber(gc.last_gex);
+        document.getElementById('firstGexText').textContent = formatLargeNumber(gc.first_gex);
+        document.getElementById('lastGexText').textContent = formatLargeNumber(gc.last_gex);
         
         const gexChangeColor = gc.change_abs > 0 ? 'text-green-400' : 'text-red-400';
         document.getElementById('gexChangeText').className = `text-xl font-bold ${gexChangeColor}`;
-        document.getElementById('gexChangeText').textContent = formatNumber(gc.change_abs);
+        document.getElementById('gexChangeText').textContent = formatLargeNumber(gc.change_abs);
         
         let trendText = '';
         let trendColor = '';
@@ -684,16 +593,13 @@
         document.getElementById('gexTrendText').textContent = trendText;
       }
 
-      // Strikes Mais Impactados
       if (insights.most_impacted_strikes && insights.most_impacted_strikes.length > 0) {
         const list = document.getElementById('impactedStrikesList');
         list.innerHTML = '';
         
         insights.most_impacted_strikes.forEach((strike, index) => {
           const directionColor = strike.direction === 'MORE_LONG' ? 'text-green-400' : 'text-red-400';
-          const directionIcon = strike.direction === 'MORE_LONG' 
-            ? '<i class="fas fa-arrow-up"></i>' 
-            : '<i class="fas fa-arrow-down"></i>';
+          const directionIcon = strike.direction === 'MORE_LONG' ? 'fa-arrow-up' : 'fa-arrow-down';
           
           const html = `
             <div class="strike-impact">
@@ -703,7 +609,7 @@
                   <span class="text-xs text-gray-400 ml-2">${strike.distance_from_spot_pct.toFixed(1)}% do spot</span>
                 </div>
                 <div class="text-right">
-                  <span class="${directionColor} font-bold">${directionIcon} ${formatNumber(strike.change)}</span>
+                  <span class="${directionColor} font-bold"><i class="fas ${directionIcon}"></i> ${formatLargeNumber(strike.change)}</span>
                   <p class="text-xs text-gray-400">${strike.direction.replace('_', ' ')}</p>
                 </div>
               </div>
@@ -715,7 +621,6 @@
         document.getElementById('impactedStrikesCard').classList.remove('hidden');
       }
 
-      // Mudanças de Regime
       if (insights.regime_changes && insights.regime_changes.length > 0) {
         const list = document.getElementById('regimeChangesList');
         list.innerHTML = '';
@@ -742,7 +647,6 @@
       }
     }
 
-    // Renderizar Timeline
     function renderTimeline(data) {
       const container = document.getElementById('timelineDots');
       container.innerHTML = '';
@@ -771,12 +675,10 @@
       });
     }
 
-    // Selecionar Data
     function selectDate(date) {
       selectedDate = date;
       const dateData = currentAnalysis.data_by_date[date];
 
-      // Atualizar timeline
       document.querySelectorAll('.timeline-dot').forEach(dot => {
         if (dot.dataset.date === date) {
           dot.classList.add('active');
@@ -785,7 +687,6 @@
         }
       });
 
-      // Atualizar info da data
       document.getElementById('selectedDateText').textContent = formatDate(date);
       
       const regimeHtml = dateData.regime === 'Long Gamma'
@@ -796,11 +697,9 @@
       document.getElementById('selectedDateFlip').textContent = 
         dateData.flip_strike ? `R$ ${dateData.flip_strike.toFixed(2)}` : 'N/A';
 
-      // Renderizar gráficos
       renderCharts(date, dateData);
     }
 
-    // Renderizar Gráficos
     function renderCharts(date, dateData) {
       document.getElementById('chartDateTitle').textContent = formatDate(date);
 
@@ -808,56 +707,28 @@
         const plotData = JSON.parse(dateData.plot_json);
         
         plotData.layout.height = 1200;
+        plotData.layout.width = null;
+        plotData.layout.autosize = true;
         plotData.layout.margin = { l: 80, r: 80, t: 120, b: 80 };
         plotData.layout.paper_bgcolor = 'transparent';
         plotData.layout.plot_bgcolor = 'transparent';
 
-        Plotly.newPlot('gexChart', plotData.data, plotData.layout, {
+        const chartDiv = document.getElementById('gexChart');
+        Plotly.purge(chartDiv);
+        
+        Plotly.newPlot(chartDiv, plotData.data, plotData.layout, {
           responsive: true,
           displayModeBar: true,
-          displaylogo: false
+          displaylogo: false,
+          modeBarButtonsToRemove: ['pan2d', 'lasso2d', 'select2d']
         });
-      }
 
-      // Renderizar Walls
-      if (dateData.walls && dateData.walls.length > 0) {
-        renderWalls(dateData.walls);
+        setTimeout(() => {
+          Plotly.Plots.resize(chartDiv);
+        }, 100);
       }
     }
 
-    // Renderizar Walls
-    function renderWalls(walls) {
-      const container = document.getElementById('wallsList');
-      container.innerHTML = '';
-
-      walls.forEach(wall => {
-        const typeColor = wall.type === 'Support' ? 'border-l-green-500' : 'border-l-red-500';
-        const typeIcon = wall.type === 'Support' ? 'fa-shield-alt' : 'fa-shield-alt';
-        
-        const html = `
-          <div class="metric-card border-l-4 ${typeColor}">
-            <div class="flex items-center justify-between mb-2">
-              <span class="text-sm text-gray-400 flex items-center gap-2">
-                <i class="fas ${typeIcon}"></i>
-                ${wall.type}
-              </span>
-              <span class="text-xs text-gray-500">${wall.strength}</span>
-            </div>
-            <p class="text-2xl font-bold">R$ ${wall.strike.toFixed(2)}</p>
-            <div class="flex items-center justify-between mt-2 text-xs text-gray-400">
-              <span>OI: ${wall.oi_descoberto.toLocaleString()}</span>
-              <span>${wall.distance_pct.toFixed(2)}% do spot</span>
-            </div>
-          </div>
-        `;
-
-        container.innerHTML += html;
-      });
-
-      document.getElementById('wallsSection').classList.remove('hidden');
-    }
-
-    // Funções auxiliares
     function formatDate(dateStr) {
       const date = new Date(dateStr + 'T00:00:00');
       return date.toLocaleDateString('pt-BR', { 
@@ -867,23 +738,33 @@
       });
     }
 
-    function formatNumber(num) {
-      if (num >= 1000000) {
-        return (num / 1000000).toFixed(1) + 'M';
-      } else if (num >= 1000) {
-        return (num / 1000).toFixed(1) + 'K';
+    function formatLargeNumber(num) {
+      const absNum = Math.abs(num);
+      const sign = num < 0 ? '-' : '';
+      
+      if (absNum >= 1000000000) {
+        return sign + (absNum / 1000000000).toFixed(2) + 'B';
+      } else if (absNum >= 1000000) {
+        return sign + (absNum / 1000000).toFixed(2) + 'M';
+      } else if (absNum >= 1000) {
+        return sign + (absNum / 1000).toFixed(2) + 'K';
       }
-      return num.toFixed(0);
+      return sign + absNum.toFixed(0);
     }
 
-    // Event listeners
     analyzeBtn.addEventListener('click', analyzeHistorical);
     
     tickerInput.addEventListener('keypress', (e) => {
       if (e.key === 'Enter') analyzeHistorical();
     });
 
-    // Inicializar
+    window.addEventListener('resize', () => {
+      const chartDiv = document.getElementById('gexChart');
+      if (chartDiv && currentAnalysis) {
+        Plotly.Plots.resize(chartDiv);
+      }
+    });
+
     document.addEventListener('DOMContentLoaded', function() {
       showStatus('Sistema de Análise Histórica carregado. Digite um ticker para começar.', 'info');
     });

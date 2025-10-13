@@ -264,6 +264,7 @@ class DataProvider:
                 logging.warning("Nenhum vencimento disponível")
                 return {}, None
             
+            
             url = f"https://floqui.com.br/api/posicoes_em_aberto/{symbol.lower()}/{expiration['code']}"
             response = requests.get(url, timeout=15)
             

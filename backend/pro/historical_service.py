@@ -1,5 +1,6 @@
 """
 historical_service.py - Análise Histórica GEX com INSIGHTS GERENCIAIS
+VERSÃO FINAL: Corrigido filtro de data do Oplab para garantir consistência
 """
 
 import numpy as np
@@ -20,23 +21,16 @@ load_dotenv()
 
 
 def convert_to_json_serializable(obj):
-    """
-    🔥 VERSÃO CORRIGIDA - Converte tipos numpy/pandas para Python nativo
-    SEM esconder erros com try/except genérico
-    """
-    # SE JÁ É TIPO NATIVO DO PYTHON, RETORNA DIRETO (IMPORTANTE!)
+    """Converte tipos numpy/pandas para Python nativo"""
     if isinstance(obj, (str, int, float, bool, type(None))):
         return obj
     
-    # LISTA: processa cada item
     if isinstance(obj, (list, tuple)):
         return [convert_to_json_serializable(item) for item in obj]
     
-    # DICT: processa cada valor
     if isinstance(obj, dict):
         return {key: convert_to_json_serializable(value) for key, value in obj.items()}
     
-    # PANDAS/NUMPY
     if pd.isna(obj):
         return None
     
@@ -52,48 +46,44 @@ def convert_to_json_serializable(obj):
     if isinstance(obj, (datetime, pd.Timestamp)):
         return obj.isoformat()
     
-    # Tipos numpy especiais
     if hasattr(obj, 'item'):
         return obj.item()
     
     if hasattr(obj, 'tolist'):
         return obj.tolist()
     
-    # FALLBACK: converter para string (melhor que None!)
     return str(obj)
 
 
-
-
-
 class LiquidityManager:
-    """
-    Gerencia ranges de ATM baseado na liquidez do ativo
-    """
+    """Gerencia ranges de ATM baseado na liquidez do ativo"""
     
     def __init__(self):
-        # 🔥 ALTA LIQUIDEZ - 5-6%
         self.high_liquidity = {
-            'BOVA11': 5,
+            'BOVA11': 6,
             'PETR4': 6,
             'VALE3': 6,
             'BBAS3': 6,
             'B3SA3': 6,
             'ITSA4': 6,
+            'BBDC4': 6,
+            'MGLU3': 6,
         }
         
-        # 📈 MÉDIA LIQUIDEZ - 8-10%
         self.medium_liquidity = {
             'ITUB4': 9,
-            'BBDC4': 9,
             'ABEV3': 9,
             'WEGE3': 9,
             'RENT3': 9,
             'ELET3': 9,
             'PRIO3': 9,
+            'SUZB3': 9,
+            'EMBR3': 9,
+            'CIEL3': 9,
+            'RADL3': 9,
+            'BRAV3': 9,
         }
         
-        # 📉 BAIXA LIQUIDEZ - Range padrão 13%
         self.low_liquidity_range = 13
     
     def get_flip_range(self, symbol):
@@ -101,11 +91,16 @@ class LiquidityManager:
         symbol_clean = symbol.replace('.SA', '').upper()
         
         if symbol_clean in self.high_liquidity:
-            return self.high_liquidity[symbol_clean]
+            range_pct = self.high_liquidity[symbol_clean]
+            logging.info(f"Ativo {symbol_clean}: Liquidez ALTA - Range {range_pct}%")
+            return range_pct
         
         if symbol_clean in self.medium_liquidity:
-            return self.medium_liquidity[symbol_clean]
+            range_pct = self.medium_liquidity[symbol_clean]
+            logging.info(f"Ativo {symbol_clean}: Liquidez MEDIA - Range {range_pct}%")
+            return range_pct
         
+        logging.info(f"Ativo {symbol_clean}: Liquidez BAIXA (auto) - Range {self.low_liquidity_range}%")
         return self.low_liquidity_range
     
     def get_liquidity_info(self, symbol):
@@ -135,30 +130,38 @@ class HistoricalDataProvider:
         }
     
     def get_last_business_day(self):
-        """Retorna o ÚLTIMO DIA ÚTIL (D-1 útil, não calendário)"""
-        current = datetime.now() - timedelta(days=1)
+        """
+        Retorna o último dia útil COM DADOS CONSOLIDADOS
+        O Floqui consolida dados com atraso, então sempre usa D-2 no mínimo
+        """
+        current = datetime.now()
+        current -= timedelta(days=2)
         
-        while current.weekday() >= 5:  # 5=Sábado, 6=Domingo
+        while current.weekday() >= 5:
             current -= timedelta(days=1)
         
-        logging.info(f"Último dia útil: {current.strftime('%Y-%m-%d')}")
+        logging.info(f"Último dia útil consolidado: {current.strftime('%Y-%m-%d')}")
         return current
     
     def get_business_days(self, days_back=5):
-        """Gera lista de dias ÚTEIS respeitando limite de 7 dias do Floqui"""
+        """
+        Gera lista de dias ÚTEIS com dados consolidados
+        Sempre começa de D-2 (último dia útil consolidado)
+        """
         dates = []
         current_date = self.get_last_business_day()
-        days_calendar_attempted = 0
-        MAX_FLOQUI_DAYS = 7
         
-        while len(dates) < days_back and days_calendar_attempted < MAX_FLOQUI_DAYS:
-            if current_date.weekday() < 5:
-                dates.append(current_date)
-            
+        while len(dates) < days_back:
+            dates.append(current_date)
             current_date -= timedelta(days=1)
-            days_calendar_attempted += 1
+            
+            while current_date.weekday() >= 5:
+                current_date -= timedelta(days=1)
         
-        return dates[::-1]  # Ordem cronológica
+        dates_sorted = sorted(dates)
+        logging.info(f"Dias úteis selecionados: {[d.strftime('%Y-%m-%d') for d in dates_sorted]}")
+        
+        return dates_sorted
     
     def get_spot_price(self, symbol):
         """Busca cotação atual"""
@@ -185,13 +188,23 @@ class HistoricalDataProvider:
             logging.error(f"Erro ao buscar cotação: {e}")
             return None
     
-    def get_oplab_historical_data(self, symbol):
-        """Busca dados de opções da Oplab (gamma real)"""
+    def get_oplab_historical_data(self, symbol, target_date=None):
+        """
+        🔥 CORRIGIDO: Busca dados de opções da Oplab FILTRADO POR DATA ESPECÍFICA
+        
+        Args:
+            symbol: Código do ativo
+            target_date: Data específica para filtrar os dados (datetime object)
+        
+        Returns:
+            DataFrame com dados de opções da data específica
+        """
         try:
             symbol_clean = symbol.replace('.SA', '')
             
+            # Buscar range maior para garantir dados históricos
             to_date = datetime.now().strftime('%Y-%m-%d')
-            from_date = (datetime.now() - timedelta(days=7)).strftime('%Y-%m-%d')
+            from_date = (datetime.now() - timedelta(days=30)).strftime('%Y-%m-%d')
             
             url = f"{self.oplab_url}/market/historical/options/{symbol_clean}/{from_date}/{to_date}"
             response = requests.get(url, headers=self.headers, timeout=15)
@@ -207,15 +220,34 @@ class HistoricalDataProvider:
             df = pd.DataFrame(data)
             df['time'] = pd.to_datetime(df['time'])
             
-            valid_data = df[
-                (df['gamma'] > 0) &
-                (df['premium'] > 0) &
-                (df['strike'] > 0) &
-                (df['days_to_maturity'] > 0) &
-                (df['days_to_maturity'] <= 60)
+            # 🔥 FILTRAR PELA DATA ESPECÍFICA SE FORNECIDA
+            if target_date:
+                target_date_obj = target_date.date() if isinstance(target_date, datetime) else target_date
+                filtered_data = df[df['time'].dt.date == target_date_obj].copy()
+                
+                if filtered_data.empty:
+                    logging.warning(f"⚠️ Nenhum dado Oplab encontrado para {target_date_obj}")
+                    logging.info(f"Datas disponíveis: {sorted(df['time'].dt.date.unique())}")
+                    return pd.DataFrame()
+                
+                logging.info(f"✅ Oplab filtrado para {target_date_obj}: {len(filtered_data)} opções")
+                latest_data = filtered_data
+            else:
+                # Comportamento padrão: usa data mais recente
+                latest_date = df['time'].max().date()
+                latest_data = df[df['time'].dt.date == latest_date].copy()
+                logging.info(f"Oplab data mais recente ({latest_date}): {len(latest_data)} opções")
+            
+            # Validar dados
+            valid_data = latest_data[
+                (latest_data['gamma'] > 0) &
+                (latest_data['premium'] > 0) &
+                (latest_data['strike'] > 0) &
+                (latest_data['days_to_maturity'] > 0) &
+                (latest_data['days_to_maturity'] <= 60)
             ].copy()
             
-            logging.info(f"Dados Oplab: {len(valid_data)} opções")
+            logging.info(f"Dados Oplab válidos: {len(valid_data)} opções")
             return valid_data
             
         except Exception as e:
@@ -223,7 +255,7 @@ class HistoricalDataProvider:
             return pd.DataFrame()
     
     def get_floqui_historical(self, ticker, vencimento, dt_referencia):
-        """Busca OI histórico do Floqui para data específica"""
+        """Busca dados históricos do Floqui para uma data específica"""
         try:
             ticker_clean = ticker.replace('.SA', '')
             date_str = dt_referencia.strftime('%Y%m%d')
@@ -231,11 +263,17 @@ class HistoricalDataProvider:
             
             response = requests.get(url, timeout=15)
             
+            if response.status_code == 404:
+                logging.warning(f"⚠️ Sem dados Floqui para {date_str} (404)")
+                return {}
+            
             if response.status_code != 200:
+                logging.error(f"❌ Erro na API Floqui: {response.status_code}")
                 return {}
             
             data = response.json()
             if not data:
+                logging.warning(f"⚠️ API Floqui retornou vazio para {date_str}")
                 return {}
             
             oi_breakdown = {}
@@ -254,17 +292,19 @@ class HistoricalDataProvider:
                         'coberto': int(item.get('qtd_coberto', 0))
                     }
             
-            logging.info(f"Floqui {date_str}: {len(oi_breakdown)} strikes")
+            logging.info(f"✅ Floqui {date_str}: {len(oi_breakdown)} strikes")
             return oi_breakdown
             
+        except requests.Timeout:
+            logging.error(f"⏱️ Timeout Floqui para {date_str}")
+            return {}
         except Exception as e:
-            logging.error(f"Erro Floqui: {e}")
+            logging.error(f"❌ Erro Floqui ({date_str}): {e}")
             return {}
     
     def get_available_expirations(self, ticker):
         """Lista vencimentos disponíveis"""
         available_expirations = {
-            "20250919": "19 Set 25 - M",
             "20251017": "17 Out 25 - M", 
             "20251121": "21 Nov 25 - M",
             "20251219": "19 Dez 25 - M",
@@ -336,7 +376,6 @@ class HistoricalAnalyzer:
             if not (has_real_call or has_real_put):
                 continue
             
-            # Calcular GEX
             call_gex = 0.0
             call_gex_descoberto = 0.0
             if call_data and len(calls) > 0:
@@ -370,11 +409,14 @@ class HistoricalAnalyzer:
         return pd.DataFrame(gex_data).sort_values('strike')
     
     def find_gamma_flip(self, gex_df, spot_price, symbol):
-        """Detecta gamma flip com lógica inteligente baseada no regime do spot"""
+        """
+        🔥 LÓGICA UNIFICADA COM gamma_service.py
+        Detecta gamma flip com filtro inteligente baseado no regime do spot
+        """
         if gex_df.empty or len(gex_df) < 2:
+            logging.warning("Dados insuficientes para análise de flip")
             return None
         
-        # Pega range baseado na liquidez
         max_distance_pct = self.liquidity_manager.get_flip_range(symbol)
         max_distance = spot_price * (max_distance_pct / 100)
         
@@ -384,17 +426,27 @@ class HistoricalAnalyzer:
         ].copy()
         
         if valid_df.empty:
+            logging.warning(f"Nenhum strike dentro de +-{max_distance_pct}% do spot")
             return None
         
         valid_df = valid_df.sort_values('strike').reset_index(drop=True)
+        
+        logging.info(f"BUSCANDO GAMMA FLIP")
+        logging.info(f"Strikes analisados: {len(valid_df)}")
+        logging.info(f"Range: R$ {valid_df['strike'].min():.2f} - R$ {valid_df['strike'].max():.2f}")
         
         # DETECTA REGIME DO SPOT
         spot_strike_idx = (valid_df['strike'] - spot_price).abs().argsort()[0]
         spot_gex = valid_df.iloc[spot_strike_idx]['total_gex_descoberto']
         spot_regime = "SHORT_GAMMA" if spot_gex < -1000 else ("LONG_GAMMA" if spot_gex > 1000 else "NEUTRAL")
         
-        # FUNCAO AUXILIAR
-        def search_flips(df):
+        logging.info(f"REGIME NO SPOT:")
+        logging.info(f"  Strike mais proximo: R$ {valid_df.iloc[spot_strike_idx]['strike']:.2f}")
+        logging.info(f"  GEX descoberto: {spot_gex:,.0f}")
+        logging.info(f"  Regime: {spot_regime}")
+        
+        def search_flips(df, data_source_name):
+            """Busca mudanças de sinal no GEX descoberto"""
             flip_candidates = []
             
             for i in range(len(df) - 1):
@@ -410,88 +462,132 @@ class HistoricalAnalyzer:
                         flip_strike = (current_strike + next_strike) / 2
                     
                     distance_from_spot = abs(flip_strike - spot_price)
+                    distance_pct = distance_from_spot / spot_price * 100
+                    
                     flip_position = "ACIMA" if flip_strike > spot_price else "ABAIXO"
                     flip_direction = "NEG_TO_POS" if current_gex < 0 and next_gex > 0 else "POS_TO_NEG"
-                    
-                    # SCORE DE RELEVANCIA
-                    relevance_score = 0
-                    
-                    if spot_regime == "SHORT_GAMMA":
-                        if flip_position == "ACIMA" and flip_direction == "NEG_TO_POS":
-                            relevance_score = 1000
-                        else:
-                            relevance_score = 1
-                    elif spot_regime == "LONG_GAMMA":
-                        if flip_position == "ABAIXO" and flip_direction == "POS_TO_NEG":
-                            relevance_score = 1000
-                        else:
-                            relevance_score = 1
-                    else:
-                        relevance_score = 100
                     
                     flip_candidates.append({
                         'strike': flip_strike,
                         'distance_from_spot': distance_from_spot,
-                        'relevance_score': relevance_score
+                        'distance_pct': distance_pct,
+                        'left_strike': current_strike,
+                        'right_strike': next_strike,
+                        'left_gex': current_gex,
+                        'right_gex': next_gex,
+                        'confidence': abs(current_gex) + abs(next_gex),
+                        'flip_position': flip_position,
+                        'flip_direction': flip_direction,
+                        'data_source': data_source_name
                     })
             
             return flip_candidates
         
-        # BUSCA FLIPS
-        flip_candidates = search_flips(valid_df)
+        # TENTATIVA 1: DADOS REAIS
+        real_data_df = valid_df[valid_df['has_real_data'] == True].copy()
+        flip_candidates = []
+        
+        if len(real_data_df) >= 2:
+            flip_candidates = search_flips(real_data_df, "REAL")
+            if flip_candidates:
+                logging.info(f"Encontrou {len(flip_candidates)} flip(s) com dados reais")
+        
+        # TENTATIVA 2: TODOS OS DADOS
+        if not flip_candidates and len(valid_df) >= 2:
+            flip_candidates = search_flips(valid_df, "MISTO")
+            if flip_candidates:
+                logging.info(f"Encontrou {len(flip_candidates)} flip(s) com dados mistos")
         
         if not flip_candidates:
+            logging.warning("FLIP NAO ENCONTRADO")
             return None
         
-        # ORDENA POR RELEVANCIA
-        flip_candidates.sort(key=lambda x: (-x['relevance_score'], x['distance_from_spot']))
-        return float(flip_candidates[0]['strike'])
+        for candidate in flip_candidates:
+            logging.info(f"FLIP CANDIDATO: Strike={candidate['strike']:.2f}, Dist={candidate['distance_from_spot']:.2f}")
+        
+        # 🔥 FILTRO BASEADO NO REGIME (MESMA LÓGICA DO gamma_service.py)
+        if spot_regime == "SHORT_GAMMA":
+            flip_candidates = [f for f in flip_candidates if f['flip_position'] == "ACIMA"]
+            flip_candidates.sort(key=lambda x: x['distance_from_spot'])
+        elif spot_regime == "LONG_GAMMA":
+            flip_candidates = [f for f in flip_candidates if f['flip_position'] == "ABAIXO"]
+            flip_candidates.sort(key=lambda x: x['distance_from_spot'])
+        else:
+            flip_candidates.sort(key=lambda x: x['distance_from_spot'])
+        
+        if not flip_candidates:
+            logging.warning("Nenhum flip encontrado após filtro de regime")
+            return None
+        
+        best_flip = flip_candidates[0]
+        
+        logging.info(f"GAMMA FLIP SELECIONADO")
+        logging.info(f"  Strike: R$ {best_flip['strike']:.2f}")
+        logging.info(f"  Fonte: {best_flip['data_source']}")
+        logging.info(f"  Posicao: {best_flip['flip_position']} do spot")
+        logging.info(f"  Distancia: {best_flip['distance_pct']:.2f}%")
+        
+        regime = "POSITIVE GAMMA" if spot_price > best_flip['strike'] else "NEGATIVE GAMMA"
+        logging.info(f"REGIME CALCULADO: {regime}")
+        
+        if (regime == "POSITIVE GAMMA" and spot_regime == "SHORT_GAMMA") or \
+           (regime == "NEGATIVE GAMMA" and spot_regime == "LONG_GAMMA"):
+            logging.warning("INCONSISTENCIA: Regime calculado nao bate com GEX no spot")
+        else:
+            logging.info("Regime consistente com GEX no spot")
+        
+        return float(best_flip['strike'])
     
     def identify_walls(self, gex_df, spot_price):
-        """Identifica support/resistance baseado em OI descoberto"""
+        """
+        Identifica support/resistance baseado no MAIOR GEX DESCOBERTO
+        - Support: Strike com maior call_gex (positivo)
+        - Resistance: Strike com maior put_gex (negativo, em módulo)
+        """
         if gex_df.empty:
             return []
         
         walls = []
-        valid_strikes = gex_df[
-            (gex_df['call_oi_descoberto'] > 0) | (gex_df['put_oi_descoberto'] > 0)
-        ].copy()
         
-        if valid_strikes.empty:
-            return []
-        
-        # Maior OI descoberto de CALLS (Support)
-        calls_with_oi = valid_strikes[valid_strikes['call_oi_descoberto'] > 0]
-        if not calls_with_oi.empty:
-            max_call_row = calls_with_oi.loc[calls_with_oi['call_oi_descoberto'].idxmax()]
+        # SUPPORT: Strike com MAIOR call_gex (posição comprada descoberta)
+        calls_gex = gex_df[gex_df['call_gex'] > 0].copy()
+        if not calls_gex.empty:
+            max_call_row = calls_gex.loc[calls_gex['call_gex'].idxmax()]
+            
             walls.append({
                 'strike': float(max_call_row['strike']),
-                'gamma_descoberto': float(max_call_row['total_gex_descoberto']),
+                'gamma_descoberto': float(max_call_row['call_gex']),
                 'oi_descoberto': int(max_call_row['call_oi_descoberto']),
                 'intensity': 1.0,
                 'type': 'Support',
                 'distance_pct': float(abs(max_call_row['strike'] - spot_price) / spot_price * 100),
                 'strength': 'Strong'
             })
+            
+            logging.info(f"Support: R$ {max_call_row['strike']:.2f} - Call GEX: {max_call_row['call_gex']:,.0f}")
         
-        # Maior OI descoberto de PUTS (Resistance)
-        puts_with_oi = valid_strikes[valid_strikes['put_oi_descoberto'] > 0]
-        if not puts_with_oi.empty:
-            max_put_row = puts_with_oi.loc[puts_with_oi['put_oi_descoberto'].idxmax()]
+        # RESISTANCE: Strike com MAIOR put_gex (em módulo - mais negativo)
+        puts_gex = gex_df[gex_df['put_gex'] < 0].copy()
+        if not puts_gex.empty:
+            max_put_row = puts_gex.loc[puts_gex['put_gex'].idxmin()]
+            
             walls.append({
                 'strike': float(max_put_row['strike']),
-                'gamma_descoberto': float(max_put_row['total_gex_descoberto']),
+                'gamma_descoberto': float(max_put_row['put_gex']),
                 'oi_descoberto': int(max_put_row['put_oi_descoberto']),
                 'intensity': 1.0,
                 'type': 'Resistance',
                 'distance_pct': float(abs(max_put_row['strike'] - spot_price) / spot_price * 100),
                 'strength': 'Strong'
             })
+            
+            logging.info(f"Resistance: R$ {max_put_row['strike']:.2f} - Put GEX: {max_put_row['put_gex']:,.0f}")
         
+        logging.info(f"WALLS: {len(walls)}")
         return walls
     
     def create_6_charts(self, gex_df, spot_price, symbol, flip_strike, expiration_desc, analysis_date):
-        """MESMOS 6 GRÁFICOS do gamma_service.py"""
+        """Gera os 6 gráficos padrão do GEX"""
         if gex_df.empty:
             return None
         
@@ -541,8 +637,8 @@ class HistoricalAnalyzer:
         
         # 5. GEX Cumulativo
         cumulative = np.cumsum(total_gex_values).tolist()
-        fig.add_trace(go.Scatter(x=strikes, y=cumulative, mode='lines+markers', 
-                                line=dict(color='#06b6d4', width=3), 
+        fig.add_trace(go.Scatter(x=strikes, y=cumulative, mode='lines+markers',
+                                 line=dict(color='#06b6d4', width=3), 
                                 marker=dict(color='#06b6d4', size=6),
                                 showlegend=False), row=3, col=1)
         
@@ -550,7 +646,7 @@ class HistoricalAnalyzer:
         oi_total = [c + p for c, p in zip(call_oi, put_oi)]
         fig.add_trace(go.Bar(x=strikes, y=oi_total, marker_color='#a855f7', showlegend=False), row=3, col=2)
         
-        # Linhas de referência em TODOS os gráficos
+        # Linhas de referência
         for row in range(1, 4):
             for col in range(1, 3):
                 fig.add_vline(x=spot_price, line=dict(color='#fbbf24', width=3, dash='dash'), row=row, col=col)
@@ -700,10 +796,8 @@ class HistoricalAnalyzer:
         if len(dates) < 2:
             return []
         
-        # Estrutura: strike -> [gex por data]
         strike_gex_history = {}
         
-        # Coletar histórico de cada strike
         for date in dates:
             if 'gex_df_records' not in data_by_date[date]:
                 continue
@@ -722,7 +816,6 @@ class HistoricalAnalyzer:
                     'gex': gex_desc
                 })
         
-        # Calcular variação para cada strike
         impacts = []
         
         for strike, history in strike_gex_history.items():
@@ -735,7 +828,6 @@ class HistoricalAnalyzer:
             change = last_gex - first_gex
             change_abs = abs(change)
             
-            # Ignorar mudanças pequenas
             if change_abs < 5000:
                 continue
             
@@ -750,55 +842,58 @@ class HistoricalAnalyzer:
                 'dates_tracked': len(history)
             })
         
-        # Ordenar por maior impacto absoluto
         impacts.sort(key=lambda x: x['change_abs'], reverse=True)
         
-        # Retornar top 5
         return impacts[:5]
     
     def analyze_historical(self, ticker, vencimento, days_back=5):
         """
-        
-        Gera 6 gráficos por data + insights gerenciais
+        🔥 ANÁLISE HISTÓRICA COMPLETA COM OPLAB SINCRONIZADO POR DATA
+        Valida que tem pelo menos 2 dias úteis com dados reais
         """
-        logging.info(f"INICIANDO ANÁLISE HISTÓRICA - {ticker}")
+        logging.info(f"🔍 INICIANDO ANÁLISE HISTÓRICA - {ticker}")
         
         spot_price = self.data_provider.get_spot_price(ticker)
         if not spot_price:
             raise ValueError("Erro: não foi possível obter cotação")
         
-        oplab_df = self.data_provider.get_oplab_historical_data(ticker)
-        if oplab_df.empty:
-            raise ValueError("Erro: sem dados da Oplab")
-        
         business_dates = self.data_provider.get_business_days(days_back)
         
-        # ESTRUTURA: dict separado por data
         data_by_date = {}
         available_dates = []
         
-        # Buscar descrição do vencimento
         expirations = self.data_provider.get_available_expirations(ticker)
         expiration_desc = next((e['desc'] for e in expirations if e['code'] == vencimento), vencimento)
+        
+        logging.info(f"📅 Tentando buscar dados para {len(business_dates)} dias úteis")
         
         for date_obj in business_dates:
             date_str = date_obj.strftime('%Y-%m-%d')
             
-            # Buscar OI histórico
+            logging.info(f"🔄 Processando {date_str}...")
+            
+            # 🔥 BUSCAR OPLAB FILTRADO POR ESTA DATA ESPECÍFICA
+            oplab_df = self.data_provider.get_oplab_historical_data(ticker, target_date=date_obj)
+            
+            if oplab_df.empty:
+                logging.warning(f"⚠️ Oplab vazio para {date_str} - pulando")
+                continue
+            
+            # BUSCAR OI HISTÓRICO DO FLOQUI
             oi_breakdown = self.data_provider.get_floqui_historical(ticker, vencimento, date_obj)
             
             if not oi_breakdown:
-                logging.warning(f"Sem dados para {date_str}")
+                logging.warning(f"⚠️ Floqui vazio para {date_str} - pulando")
                 continue
             
-            # Calcular GEX
+            # CALCULAR GEX
             gex_df = self.calculate_gex(oplab_df, oi_breakdown, spot_price)
             
             if gex_df.empty:
-                logging.warning(f"GEX vazio para {date_str}")
+                logging.warning(f"⚠️ GEX vazio para {date_str} - pulando")
                 continue
             
-            # Análise completa
+            # ANÁLISE COMPLETA
             flip_strike = self.find_gamma_flip(gex_df, spot_price, ticker)
             walls = self.identify_walls(gex_df, spot_price)
             
@@ -808,22 +903,22 @@ class HistoricalAnalyzer:
             net_gex = float(cumulative_total[-1])
             net_gex_descoberto = float(cumulative_descoberto[-1])
             
-            # Determinar regime
+            # DETERMINAR REGIME
             if flip_strike:
                 regime = 'Long Gamma' if spot_price > flip_strike else 'Short Gamma'
             else:
                 regime = 'Long Gamma' if net_gex_descoberto > 0 else 'Short Gamma'
             
-            # Gerar os 6 gráficos para esta data
+            # GERAR OS 6 GRÁFICOS
             plot_json = self.create_6_charts(
                 gex_df, spot_price, ticker, flip_strike, 
                 expiration_desc, date_obj.strftime('%d/%m/%Y')
             )
             
-            # 🔥 SALVAR TAMBÉM OS REGISTROS DO GEX_DF (para análise gerencial)
+            # SALVAR REGISTROS
             gex_df_records = gex_df.to_dict('records')
             
-            # Armazenar dados desta data
+            # ARMAZENAR DADOS DESTA DATA
             data_by_date[date_str] = {
                 'spot_price': spot_price,
                 'flip_strike': flip_strike,
@@ -834,29 +929,27 @@ class HistoricalAnalyzer:
                 'walls': walls,
                 'strikes_count': len(gex_df),
                 'real_data_count': int(gex_df['has_real_data'].sum()),
-                'gex_df_records': gex_df_records  # 🔥 NOVO: salvar registros
+                'gex_df_records': gex_df_records
             }
             
             available_dates.append(date_str)
             
-            logging.info(f"{date_str}: {len(gex_df)} strikes, Flip: {flip_strike}, Regime: {regime}")
+            logging.info(f"✅ {date_str}: {len(gex_df)} strikes, Flip: {flip_strike}, Regime: {regime}")
         
-        # 🔥 LOG ANTES DOS INSIGHTS
-        logging.info(f"📊 DATAS COLETADAS: {len(available_dates)}")
-        logging.info(f"📊 DATAS: {available_dates}")
+        # 🔥 VALIDAÇÃO: Precisa de pelo menos 2 dias com dados
+        if len(available_dates) < 2:
+            raise ValueError(f"Dados insuficientes: apenas {len(available_dates)} dia(s) com dados. Mínimo: 2")
         
-        if not available_dates:
-            raise ValueError("Nenhum dado histórico encontrado")
+        logging.info(f"✅ Dados coletados para {len(available_dates)} dias: {available_dates}")
         
-        # 🔥 CALCULAR INSIGHTS COM TRY-CATCH
+        # CALCULAR INSIGHTS
         insights = {}
         try:
-            logging.info(f"📊 CALCULANDO INSIGHTS...")
+            logging.info(f"📊 Calculando insights...")
             insights = self.calculate_historical_insights(data_by_date, spot_price)
-            logging.info(f"✅ INSIGHTS CALCULADOS")
+            logging.info(f"✅ Insights calculados")
         except Exception as e:
-            logging.error(f"❌ ERRO AO CALCULAR INSIGHTS: {e}", exc_info=True)
-            # Não falhar por causa dos insights
+            logging.error(f"❌ Erro ao calcular insights: {e}", exc_info=True)
             insights = {
                 'error': str(e),
                 'period': {
@@ -865,12 +958,6 @@ class HistoricalAnalyzer:
                     'days': len(available_dates)
                 }
             }
-        
-        # 🔥 LOG ANTES DO RETORNO
-        logging.info(f"📊 PREPARANDO RETORNO...")
-        logging.info(f"   - ticker: {ticker}")
-        logging.info(f"   - available_dates count: {len(available_dates)}")
-        logging.info(f"   - data_by_date count: {len(data_by_date)}")
         
         result = {
             'ticker': ticker,
@@ -883,20 +970,20 @@ class HistoricalAnalyzer:
             'success': True
         }
         
-        # 🔥 LOG FINAL
-        logging.info(f"✅ RETORNO CRIADO - available_dates: {len(result['available_dates'])}")
-        
         return result
 
 
 class HistoricalService:
+
     def __init__(self):
         self.analyzer = HistoricalAnalyzer()
     
     def get_available_expirations(self, ticker):
+        """Lista vencimentos disponíveis para o ticker"""
         return self.analyzer.data_provider.get_available_expirations(ticker)
     
     def analyze_historical_complete(self, ticker, vencimento, days_back=5):
+
         try:
             result = self.analyzer.analyze_historical(ticker, vencimento, days_back)
             
@@ -907,12 +994,19 @@ class HistoricalService:
                 'spot_price': result['spot_price'],
                 'available_dates': result['available_dates'],
                 'data_by_date': result['data_by_date'],
-                'insights': result['insights'],  # 🔥 NOVO
+                'insights': result['insights'],
                 'success': True
             }
             
             return convert_to_json_serializable(api_result)
             
         except Exception as e:
-            logging.error(f"Erro na análise histórica: {e}")
+            logging.error(f" Erro na análise histórica: {e}", exc_info=True)
             raise
+
+
+#  EXEMPLO DE USO
+if __name__ == "__main__":
+    service = HistoricalService()
+    
+   
