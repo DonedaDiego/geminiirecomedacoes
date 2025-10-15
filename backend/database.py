@@ -860,7 +860,7 @@ def get_portfolio_assets(portfolio_name):
  
   
 def setup_enhanced_database():
-    """🔥 Configurar banco SINCRONIZADO com MercadoPago Service"""
+    
     
     
     if test_connection():
