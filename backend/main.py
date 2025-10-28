@@ -24,6 +24,7 @@ from pro.gamma_routes import get_gamma_blueprint
 from pro.delta_routes import get_delta_blueprint
 from pro.vega_routes import get_vega_blueprint
 from pro.theta_routes import get_theta_blueprint
+from pro.visaomacro_routes import get_visaomacro_blueprint
 from pro.mm_temporal_routes import mm_temporal_bp
 
 
@@ -294,6 +295,14 @@ try:
 except Exception as e:
     print(f" Erro ao registrar gamma blueprint: {e}")
 
+# Visão Macro
+try:
+    visaomacro_bp = get_visaomacro_blueprint()
+    app.register_blueprint(visaomacro_bp)
+    print(" Visão Macro blueprint registrado!")
+except Exception as e:
+    print(f" Erro ao registrar visão macro blueprint: {e}")
+
 
 # ===== CORS =====
 CORS(app, 
@@ -466,6 +475,11 @@ def hisles_levels():
 @app.route('/greeks-micro.html')
 def greeks_micro():
     return send_from_directory('../frontend', 'greeks-micro.html')
+
+@app.route('/visaomacro')
+@app.route('/visaomacro.html')
+def visaomacro():
+    return send_from_directory('../frontend', 'visaomacro.html')
 
 
 
