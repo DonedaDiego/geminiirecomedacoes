@@ -24,7 +24,6 @@ from pro.gamma_routes import get_gamma_blueprint
 from pro.delta_routes import get_delta_blueprint
 from pro.vega_routes import get_vega_blueprint
 from pro.theta_routes import get_theta_blueprint
-from pro.visaomacro_routes import get_visaomacro_blueprint
 from pro.mm_temporal_routes import mm_temporal_bp
 
 
@@ -139,15 +138,12 @@ try:
 except Exception as e:
     print(f" Erro ao registrar TEX blueprint: {e}")
 
-
-
 try:
     vega_bp = get_vega_blueprint()
     app.register_blueprint(vega_bp)
     print(" VEX blueprint registrado!")
 except Exception as e:
     print(f" Erro ao registrar VEX blueprint: {e}")
-
 
 # DEX
 try:
@@ -158,7 +154,6 @@ try:
 except Exception as e:
     print(f" Erro ao registrar DEX blueprint: {e}")
 
-
 try:
     rsl_bp = get_rsl_blueprint()
     app.register_blueprint(rsl_bp)
@@ -166,9 +161,6 @@ try:
 except Exception as e:
     print(f" Erro ao registrar RSL blueprint: {e}")
     
-    
-
-
 
 # Recommendations Free
 try:
@@ -294,14 +286,6 @@ try:
     print(" Gamma blueprint registrado!")
 except Exception as e:
     print(f" Erro ao registrar gamma blueprint: {e}")
-
-# Visão Macro
-try:
-    visaomacro_bp = get_visaomacro_blueprint()
-    app.register_blueprint(visaomacro_bp)
-    print(" Visão Macro blueprint registrado!")
-except Exception as e:
-    print(f" Erro ao registrar visão macro blueprint: {e}")
 
 
 # ===== CORS =====

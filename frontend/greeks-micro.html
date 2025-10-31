@@ -23,37 +23,50 @@
       }
     }
   </script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   
   <style>
     body { 
       font-family: 'Inter', sans-serif; 
-      background: linear-gradient(135deg, #0c0c0c 0%, #1a1a1a 100%);
+      background: #0a0a0a;
       min-height: 100vh;
     }
     
     .greeks-card {
-      background: rgba(255, 255, 255, 0.08);
+      background: rgba(30, 30, 30, 0.95);
       backdrop-filter: blur(20px);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      border-radius: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 20px;
       transition: all 0.3s ease;
     }
     
     .greeks-card:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 20px 40px rgba(186, 57, 175, 0.15);
       border-color: rgba(186, 57, 175, 0.3);
+      box-shadow: 0 8px 32px rgba(186, 57, 175, 0.1);
+    }
+    
+    .metric-box {
+      background: rgba(20, 20, 20, 0.8);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 16px;
+      padding: 24px;
+      transition: all 0.3s ease;
+    }
+
+    .metric-box:hover {
+      background: rgba(30, 30, 30, 0.9);
+      border-color: rgba(186, 57, 175, 0.2);
+      transform: translateY(-2px);
     }
     
     .spinner {
-      border: 2px solid rgba(255, 255, 255, 0.1);
+      border: 3px solid rgba(186, 57, 175, 0.1);
       border-radius: 50%;
-      border-top: 2px solid #ba39af;
-      width: 20px;
-      height: 20px;
-      animation: spin 1s linear infinite;
+      border-top: 3px solid #ba39af;
+      width: 24px;
+      height: 24px;
+      animation: spin 0.8s linear infinite;
       display: inline-block;
     }
     
@@ -62,60 +75,176 @@
       100% { transform: rotate(360deg); }
     }
 
+    .chart-wrapper {
+      background: rgba(20, 20, 20, 0.5);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 16px;
+      padding: 24px;
+      height: 500px;
+    }
+
     .chart-container {
       width: 100%;
-      height: 450px;
-      background: transparent;
-      border-radius: 12px;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .chart-container > div {
-      width: 100% !important;
-      height: 100% !important;
-    }
-
-    .metric-card {
-      background: rgba(255, 255, 255, 0.05);
-      border-radius: 12px;
-      padding: 20px;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      transition: all 0.3s ease;
-    }
-
-    .metric-card:hover {
-      background: rgba(255, 255, 255, 0.08);
-      border-color: rgba(186, 57, 175, 0.3);
-    }
-
-    .loading {
-      opacity: 0.6;
-      pointer-events: none;
+      height: 100%;
     }
 
     #expirationSelect {
-      background-color: rgba(30, 30, 30, 0.9);
-      border: 1px solid rgba(255, 255, 255, 0.2);
+      background-color: rgba(30, 30, 30, 0.95);
+      border: 1px solid rgba(255, 255, 255, 0.15);
       color: white;
       backdrop-filter: blur(10px);
+      transition: all 0.3s ease;
     }
 
     #expirationSelect option {
       background-color: #1a1a1a;
       color: white;
-      padding: 8px;
-    }
-
-    #expirationSelect option:disabled {
-      color: #666;
-      background-color: #2a2a2a;
+      padding: 10px;
     }
 
     #expirationSelect:focus {
       outline: none;
       border-color: #ba39af;
-      box-shadow: 0 0 0 2px rgba(186, 57, 175, 0.2);
+      box-shadow: 0 0 0 3px rgba(186, 57, 175, 0.15);
+    }
+
+    .section-title {
+      font-size: 24px;
+      font-weight: 700;
+      color: #ffffff;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .greek-badge {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      padding: 6px 14px;
+      border-radius: 8px;
+      text-transform: uppercase;
+    }
+
+    .badge-gamma {
+      background: rgba(6, 182, 212, 0.15);
+      color: #06b6d4;
+      border: 1px solid rgba(6, 182, 212, 0.3);
+    }
+
+    .badge-delta {
+      background: rgba(168, 85, 247, 0.15);
+      color: #a855f7;
+      border: 1px solid rgba(168, 85, 247, 0.3);
+    }
+
+    .badge-vega {
+      background: rgba(245, 158, 11, 0.15);
+      color: #f59e0b;
+      border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+
+    .badge-theta {
+      background: rgba(220, 38, 38, 0.15);
+      color: #dc2626;
+      border: 1px solid rgba(220, 38, 38, 0.3);
+    }
+
+    .input-field {
+      background: rgba(30, 30, 30, 0.95);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: white;
+      padding: 12px 16px;
+      border-radius: 12px;
+      transition: all 0.3s ease;
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .input-field:focus {
+      outline: none;
+      border-color: #ba39af;
+      box-shadow: 0 0 0 3px rgba(186, 57, 175, 0.15);
+      background: rgba(40, 40, 40, 0.95);
+    }
+
+    .input-field::placeholder {
+      color: rgba(255, 255, 255, 0.4);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #ba39af 0%, #8b2f7d 100%);
+      color: white;
+      padding: 12px 28px;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 14px;
+      transition: all 0.3s ease;
+      border: none;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(186, 57, 175, 0.4);
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .btn-secondary {
+      background: rgba(59, 130, 246, 0.15);
+      color: #3b82f6;
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      padding: 12px 28px;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 14px;
+      transition: all 0.3s ease;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-secondary:hover:not(:disabled) {
+      background: rgba(59, 130, 246, 0.25);
+      border-color: rgba(59, 130, 246, 0.5);
+      transform: translateY(-2px);
+    }
+
+    .status-badge {
+      padding: 8px 16px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .status-success {
+      background: rgba(34, 197, 94, 0.15);
+      color: #22c55e;
+      border: 1px solid rgba(34, 197, 94, 0.3);
+    }
+
+    .status-error {
+      background: rgba(239, 68, 68, 0.15);
+      color: #ef4444;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    .status-info {
+      background: rgba(59, 130, 246, 0.15);
+      color: #3b82f6;
+      border: 1px solid rgba(59, 130, 246, 0.3);
     }
   </style>
 </head>
@@ -134,11 +263,13 @@
         <span class="text-white font-medium">Greeks Micro</span>
         <a href="gamma-levels.html" class="hover:text-white transition-colors">Gamma Full</a>
         <a href="delta-levels.html" class="hover:text-white transition-colors">Delta Full</a>
+        <a href="vega-levels.html" class="hover:text-white transition-colors">Vega Full</a>
+        <a href="theta-levels.html" class="hover:text-white transition-colors">Theta Full</a>
       </div>
       <div class="flex items-center space-x-3 ml-8">
-        <div class="w-8 h-8 bg-green-500 bg-opacity-10 border border-green-500 border-opacity-30 rounded-full flex items-center justify-center relative">
-          <i class="fas fa-chart-line text-green-500 text-xs"></i>
-          <div class="absolute -top-1 -right-1 w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+        <div class="w-8 h-8 bg-purple-500 bg-opacity-10 border border-purple-500 border-opacity-30 rounded-full flex items-center justify-center relative">
+          <i class="fas fa-layer-group text-purple-500 text-xs"></i>
+          <div class="absolute -top-1 -right-1 w-2 h-2 bg-purple-500 rounded-full animate-pulse"></div>
         </div>
       </div>
     </div>
@@ -146,172 +277,235 @@
 
   <!-- Content -->
   <div class="pt-32 pb-16">
-    <div class="max-w-7xl mx-auto px-6">
+    <div class="max-w-[1600px] mx-auto px-8">
       
       <!-- Header -->
-      <div class="text-center mb-12">
-        <h1 class="text-4xl md:text-5xl font-bold mb-4">
-          <span style="color: #ba39af; font-weight: 900;">Greeks</span>
-          <span class="text-white font-light">Micro View</span>
+      <div class="text-center mb-16">
+        <h1 class="text-5xl md:text-6xl font-black mb-4">
+          <span style="color: #ba39af;">Greeks</span>
+          <span class="text-white font-light">Micro</span>
         </h1>
-        <p class="text-neutral-300 text-lg max-w-3xl mx-auto">
-          Visão concentrada nos 8 indicadores mais críticos: GEX, DEX, VEX e TEX. Dados reais de posições dos market makers.
+        <p class="text-neutral-400 text-lg max-w-3xl mx-auto">
+          Análise concentrada dos 4 Greeks em uma única tela. Dados reais de posições dos market makers.
         </p>
       </div>
 
       <!-- Controles -->
-      <div class="greeks-card p-6 mb-8">
+      <div class="greeks-card p-8 mb-10">
         <div class="flex flex-col md:flex-row gap-4 items-center justify-center">
           <input 
             id="tickerInput" 
             type="text" 
-            placeholder="Digite o código da ação (ex: PETR4)" 
-            class="px-4 py-2 bg-white bg-opacity-10 border border-white border-opacity-20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-geminii backdrop-blur-sm"
+            placeholder="Digite o ticker (ex: BOVA11)" 
+            class="input-field w-64"
           >
           <select 
             id="expirationSelect" 
-            class="px-4 py-2 rounded-lg focus:outline-none focus:border-geminii backdrop-blur-sm"
+            class="input-field w-64"
           >
             <option value="">Vencimento Automático</option>
           </select>
           <button 
             id="loadExpirationsBtn" 
-            class="px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:shadow-lg rounded-lg transition-all font-medium"
+            class="btn-secondary"
           >
-            <i class="fas fa-calendar mr-2"></i>Carregar Vencimentos
+            <i class="fas fa-calendar"></i>Carregar Vencimentos
           </button>
           <button 
             id="analyzeBtn" 
-            class="px-6 py-2 bg-gradient-to-r from-geminii to-purple-600 hover:shadow-lg rounded-lg transition-all font-medium"
+            class="btn-primary"
           >
-            <i class="fas fa-bolt mr-2"></i>Executar Análise
+            <i class="fas fa-bolt"></i>Executar Análise
           </button>
         </div>
       </div>
 
       <!-- Status -->
-      <div id="statusMsg" class="mb-6 p-4 rounded-lg hidden backdrop-blur-sm"></div>
+      <div id="statusMsg" class="mb-8 text-center hidden"></div>
 
       <!-- Resultados -->
       <div id="resultsSection" class="hidden">
         
-        <!-- Métricas Principais -->
-        <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
+        <!-- Métricas Principais (Header tipo GEX) -->
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-10">
           
-          <div class="greeks-card p-4 text-center">
-            <div class="text-sm text-gray-400 mb-1">SPOT PRICE</div>
-            <div class="text-2xl font-black text-white" id="spotPrice">--</div>
+          <div class="metric-box text-center">
+            <div class="text-xs text-gray-500 uppercase tracking-wider mb-2 font-semibold">Spot Price</div>
+            <div class="text-3xl font-black text-white" id="spotPrice">--</div>
           </div>
 
-          <div class="greeks-card p-4 text-center">
-            <div class="text-sm text-gray-400 mb-1">GAMMA FLIP</div>
-            <div class="text-2xl font-black text-orange-400" id="flipStrike">--</div>
+          <div class="metric-box text-center">
+            <div class="text-xs text-gray-500 uppercase tracking-wider mb-2 font-semibold">Gamma Flip</div>
+            <div class="text-3xl font-black text-orange-400" id="flipStrike">--</div>
           </div>
 
-          <div class="greeks-card p-4 text-center">
-            <div class="text-sm text-gray-400 mb-1">REGIME</div>
-            <div class="text-xl font-black" id="regimeText">--</div>
+          <div class="metric-box text-center">
+            <div class="text-xs text-gray-500 uppercase tracking-wider mb-2 font-semibold">Regime</div>
+            <div class="text-2xl font-black" id="regimeText">--</div>
           </div>
 
-          <div class="greeks-card p-4 text-center">
-            <div class="text-sm text-gray-400 mb-1">GEX DESCOBERTO</div>
-            <div class="text-2xl font-black text-cyan-400" id="gexDescoberto">--</div>
+          <div class="metric-box text-center">
+            <div class="text-xs text-gray-500 uppercase tracking-wider mb-2 font-semibold">GEX Descoberto</div>
+            <div class="text-3xl font-black text-cyan-400" id="gexDescoberto">--</div>
           </div>
 
-          <div class="greeks-card p-4 text-center">
-            <div class="text-sm text-gray-400 mb-1">DEX DESCOBERTO</div>
-            <div class="text-2xl font-black text-purple-400" id="dexDescoberto">--</div>
+          <div class="metric-box text-center">
+            <div class="text-xs text-gray-500 uppercase tracking-wider mb-2 font-semibold">DEX Descoberto</div>
+            <div class="text-3xl font-black text-purple-400" id="dexDescoberto">--</div>
           </div>
 
         </div>
 
-        <!-- Grid de Gráficos 4x2 = 8 gráficos -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          
-          <!-- LINHA 1: GEX -->
-          <div class="greeks-card p-6">
-            <h3 class="text-xl font-bold mb-4 text-center flex items-center justify-center">
-              <i class="fas fa-crosshairs mr-2" style="color: #06b6d4;"></i>
-              GEX Descoberto
-            </h3>
-            <div class="chart-container">
-              <div id="gexDescChart"></div>
-            </div>
+        <!-- SEÇÃO GAMMA (GEX) -->
+        <div class="greeks-card p-8 mb-10">
+          <div class="section-title">
+            <i class="fas fa-crosshairs" style="color: #06b6d4;"></i>
+            Análise GEX Completa
           </div>
 
-          <div class="greeks-card p-6">
-            <h3 class="text-xl font-bold mb-4 text-center flex items-center justify-center">
-              <i class="fas fa-mountain mr-2" style="color: #06b6d4;"></i>
-              GEX Cumulativo
-            </h3>
-            <div class="chart-container">
-              <div id="gexCumChart"></div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            
+            <div class="chart-wrapper">
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="text-base font-bold text-gray-300">
+                  <i class="fas fa-chart-bar mr-2" style="color: #06b6d4;"></i>
+                  GEX Descoberto
+                </h3>
+                <span class="greek-badge badge-gamma">Gamma</span>
+              </div>
+              <div class="chart-container">
+                <div id="gexDescChart"></div>
+              </div>
             </div>
+
+            <div class="chart-wrapper">
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="text-base font-bold text-gray-300">
+                  <i class="fas fa-mountain mr-2" style="color: #06b6d4;"></i>
+                  GEX Cumulativo
+                </h3>
+                <span class="greek-badge badge-gamma">Gamma</span>
+              </div>
+              <div class="chart-container">
+                <div id="gexCumChart"></div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- SEÇÃO DELTA (DEX) -->
+        <div class="greeks-card p-8 mb-10">
+          <div class="section-title">
+            <i class="fas fa-bullseye" style="color: #a855f7;"></i>
+            Análise DEX Completa
           </div>
 
-          <!-- LINHA 2: DEX -->
-          <div class="greeks-card p-6">
-            <h3 class="text-xl font-bold mb-4 text-center flex items-center justify-center">
-              <i class="fas fa-bullseye mr-2" style="color: #a855f7;"></i>
-              DEX Descoberto
-            </h3>
-            <div class="chart-container">
-              <div id="dexDescChart"></div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            
+            <div class="chart-wrapper">
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="text-base font-bold text-gray-300">
+                  <i class="fas fa-chart-bar mr-2" style="color: #a855f7;"></i>
+                  DEX Descoberto
+                </h3>
+                <span class="greek-badge badge-delta">Delta</span>
+              </div>
+              <div class="chart-container">
+                <div id="dexDescChart"></div>
+              </div>
             </div>
+
+            <div class="chart-wrapper">
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="text-base font-bold text-gray-300">
+                  <i class="fas fa-chart-line mr-2" style="color: #a855f7;"></i>
+                  DEX Cumulativo
+                </h3>
+                <span class="greek-badge badge-delta">Delta</span>
+              </div>
+              <div class="chart-container">
+                <div id="dexCumChart"></div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- SEÇÃO VEGA (VEX) -->
+        <div class="greeks-card p-8 mb-10">
+          <div class="section-title">
+            <i class="fas fa-wave-square" style="color: #f59e0b;"></i>
+            Análise VEX Completa
           </div>
 
-          <div class="greeks-card p-6">
-            <h3 class="text-xl font-bold mb-4 text-center flex items-center justify-center">
-              <i class="fas fa-chart-line mr-2" style="color: #a855f7;"></i>
-              DEX Cumulativo
-            </h3>
-            <div class="chart-container">
-              <div id="dexCumChart"></div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            
+            <div class="chart-wrapper">
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="text-base font-bold text-gray-300">
+                  <i class="fas fa-chart-line mr-2" style="color: #f59e0b;"></i>
+                  Volatilidade Implícita
+                </h3>
+                <span class="greek-badge badge-vega">Vega</span>
+              </div>
+              <div class="chart-container">
+                <div id="vexIVChart"></div>
+              </div>
             </div>
+
+            <div class="chart-wrapper">
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="text-base font-bold text-gray-300">
+                  <i class="fas fa-exclamation-triangle mr-2" style="color: #f59e0b;"></i>
+                  Concentração de Risco
+                </h3>
+                <span class="greek-badge badge-vega">Vega</span>
+              </div>
+              <div class="chart-container">
+                <div id="vexRiskChart"></div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- SEÇÃO THETA (TEX) -->
+        <div class="greeks-card p-8 mb-10">
+          <div class="section-title">
+            <i class="fas fa-tachometer-alt" style="color: #dc2626;"></i>
+            Análise TEX Completa
           </div>
 
-          <!-- LINHA 3: VEX (NOVO) -->
-          <div class="greeks-card p-6">
-            <h3 class="text-xl font-bold mb-4 text-center flex items-center justify-center">
-              <i class="fas fa-wave-square mr-2" style="color: #f59e0b;"></i>
-              Volatilidade Implícita
-            </h3>
-            <div class="chart-container">
-              <div id="vexIVChart"></div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            
+            <div class="chart-wrapper">
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="text-base font-bold text-gray-300">
+                  <i class="fas fa-chart-bar mr-2" style="color: #dc2626;"></i>
+                  Velocidade de Sangramento
+                </h3>
+                <span class="greek-badge badge-theta">Theta</span>
+              </div>
+              <div class="chart-container">
+                <div id="texVelocityChart"></div>
+              </div>
             </div>
-          </div>
 
-          <div class="greeks-card p-6">
-            <h3 class="text-xl font-bold mb-4 text-center flex items-center justify-center">
-              <i class="fas fa-exclamation-triangle mr-2" style="color: #f59e0b;"></i>
-              Concentração de Risco (VEX)
-            </h3>
-            <div class="chart-container">
-              <div id="vexRiskChart"></div>
+            <div class="chart-wrapper">
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="text-base font-bold text-gray-300">
+                  <i class="fas fa-layer-group mr-2" style="color: #dc2626;"></i>
+                  TEX Cumulativo
+                </h3>
+                <span class="greek-badge badge-theta">Theta</span>
+              </div>
+              <div class="chart-container">
+                <div id="texCumChart"></div>
+              </div>
             </div>
-          </div>
 
-          <!-- LINHA 4: TEX (NOVO) -->
-          <div class="greeks-card p-6">
-            <h3 class="text-xl font-bold mb-4 text-center flex items-center justify-center">
-              <i class="fas fa-tachometer-alt mr-2" style="color: #dc2626;"></i>
-              Velocidade Sangramento (TEX)
-            </h3>
-            <div class="chart-container">
-              <div id="texVelocityChart"></div>
-            </div>
           </div>
-
-          <div class="greeks-card p-6">
-            <h3 class="text-xl font-bold mb-4 text-center flex items-center justify-center">
-              <i class="fas fa-layer-group mr-2" style="color: #dc2626;"></i>
-              TEX Cumulativo
-            </h3>
-            <div class="chart-container">
-              <div id="texCumChart"></div>
-            </div>
-          </div>
-
         </div>
 
       </div>
@@ -351,24 +545,32 @@
     }
 
     function showStatus(message, type = 'info') {
-      const bgClass = type === 'success' ? 'bg-green-600 bg-opacity-20 border-green-500 border-opacity-30' : 
-                     type === 'error' ? 'bg-red-600 bg-opacity-20 border-red-500 border-opacity-30' : 
-                     'bg-blue-600 bg-opacity-20 border-blue-500 border-opacity-30';
+      const statusClass = type === 'success' ? 'status-success' : 
+                         type === 'error' ? 'status-error' : 
+                         'status-info';
       
-      statusMsg.className = `mb-6 p-4 rounded-lg border backdrop-blur-sm ${bgClass}`;
-      statusMsg.textContent = message;
+      const icon = type === 'success' ? 'fa-check-circle' :
+                   type === 'error' ? 'fa-exclamation-circle' :
+                   'fa-info-circle';
+      
+      statusMsg.className = `mb-8 text-center status-badge ${statusClass}`;
+      statusMsg.innerHTML = `<i class="fas ${icon}"></i>${message}`;
       statusMsg.classList.remove('hidden');
       
       setTimeout(() => statusMsg.classList.add('hidden'), 5000);
     }
 
-    function setLoading(button, loading, originalText, loadingText) {
+    function setLoading(button, loading) {
+      button.disabled = loading;
       if (loading) {
-        button.classList.add('loading');
-        button.innerHTML = `<span class="spinner mr-2"></span>${loadingText}`;
+        const originalContent = button.innerHTML;
+        button.setAttribute('data-original', originalContent);
+        button.innerHTML = '<span class="spinner mr-2"></span>Processando...';
       } else {
-        button.classList.remove('loading');
-        button.innerHTML = originalText;
+        const originalContent = button.getAttribute('data-original');
+        if (originalContent) {
+          button.innerHTML = originalContent;
+        }
       }
     }
 
@@ -379,7 +581,7 @@
         return;
       }
 
-      setLoading(loadExpirationsBtn, true, '<i class="fas fa-calendar mr-2"></i>Carregar Vencimentos', 'Carregando...');
+      setLoading(loadExpirationsBtn, true);
 
       try {
         const response = await fetch('/pro/gamma/expirations', {
@@ -405,21 +607,15 @@
           expirationSelect.appendChild(option);
         });
         
-        loadExpirationsBtn.innerHTML = '<i class="fas fa-check mr-2"></i>Vencimentos Carregados';
-        loadExpirationsBtn.classList.remove('from-blue-500', 'to-blue-600');
-        loadExpirationsBtn.classList.add('from-green-500', 'to-green-600');
-        
         showStatus(`${data.total_available} vencimentos carregados`, 'success');
 
       } catch (error) {
         showStatus('Erro: ' + error.message, 'error');
-        loadExpirationsBtn.innerHTML = '<i class="fas fa-calendar mr-2"></i>Carregar Vencimentos';
       } finally {
         setLoading(loadExpirationsBtn, false);
       }
     }
 
-    // 🔥 EXECUTAR ANÁLISE COMPLETA - AGORA COM VEGA E THETA
     async function runFullAnalysis() {
       const ticker = tickerInput.value.trim().toUpperCase();
       if (!ticker) {
@@ -427,7 +623,7 @@
         return;
       }
 
-      setLoading(analyzeBtn, true, '<i class="fas fa-bolt mr-2"></i>Executar Análise', 'Processando...');
+      setLoading(analyzeBtn, true);
       showStatus('Executando análise completa dos 4 Greeks...', 'info');
 
       try {
@@ -435,7 +631,6 @@
         const expiration = expirationSelect.value;
         if (expiration) requestBody.expiration_code = expiration;
 
-        // 🔥 CHAMADAS EM PARALELO - AGORA 4 APIs
         const [gammaResponse, deltaResponse, vegaResponse, thetaResponse] = await Promise.all([
           fetch('/pro/gamma/analyze', {
             method: 'POST',
@@ -482,7 +677,7 @@
         if (!thetaResponse.ok) throw new Error(thetaData.error);
 
         displayResults();
-        showStatus(`Análise completa de ${ticker} concluída`, 'success');
+        showStatus(`Análise completa de ${ticker} concluída com sucesso!`, 'success');
 
       } catch (error) {
         showStatus('Erro: ' + error.message, 'error');
@@ -498,7 +693,7 @@
       const regime = gammaData.regime || 'N/A';
       const regimeElement = document.getElementById('regimeText');
       regimeElement.textContent = regime;
-      regimeElement.className = regime === 'Long Gamma' ? 'text-xl font-black text-green-400' : 'text-xl font-black text-red-400';
+      regimeElement.className = regime === 'Long Gamma' ? 'text-2xl font-black text-green-400' : 'text-2xl font-black text-red-400';
       
       const gexDesc = gammaData.gex_levels?.total_gex_descoberto || 0;
       document.getElementById('gexDescoberto').textContent = formatLargeNumber(gexDesc);
@@ -511,7 +706,6 @@
       resultsSection.classList.remove('hidden');
     }
 
-    // 🔥 RENDERIZAR OS 8 GRÁFICOS
     function renderMicroCharts() {
       try {
         const gammaPlot = JSON.parse(gammaData.plot_json);
@@ -519,67 +713,80 @@
         const vegaPlot = JSON.parse(vegaData.plot_json);
         const thetaPlot = JSON.parse(thetaData.plot_json);
 
-        const spotPrice = gammaData.spot_price;
-        const flipStrike = gammaData.flip_strike;
-
-        // === GEX DESCOBERTO (subplot 1,2 = x2/y2) ===
+        // GEX Descoberto
         const gexDescData = gammaPlot.data.filter(trace => trace.xaxis === 'x2' && trace.yaxis === 'y2');
-        if (gexDescData.length > 0) renderBarChart('gexDescChart', gexDescData[0]);
+        if (gexDescData.length > 0) renderChart('gexDescChart', gexDescData);
 
-        // === GEX CUMULATIVO (subplot 3,1 = x5/y5) ===
+        // GEX Cumulativo
         const gexCumData = gammaPlot.data.filter(trace => trace.xaxis === 'x5' && trace.yaxis === 'y5');
-        if (gexCumData.length > 0) renderLineChart('gexCumChart', gexCumData[0]);
+        if (gexCumData.length > 0) renderChart('gexCumChart', gexCumData);
 
-        // === DEX DESCOBERTO (subplot 1,2 = x2/y2) ===
+        // DEX Descoberto
         const dexDescData = deltaPlot.data.filter(trace => trace.xaxis === 'x2' && trace.yaxis === 'y2');
-        if (dexDescData.length > 0) renderBarChart('dexDescChart', dexDescData[0]);
+        if (dexDescData.length > 0) renderChart('dexDescChart', dexDescData);
 
-        // === DEX CUMULATIVO (subplot 3,1 = x5/y5) ===
+        // DEX Cumulativo
         const dexCumData = deltaPlot.data.filter(trace => trace.xaxis === 'x5' && trace.yaxis === 'y5');
-        if (dexCumData.length > 0) renderLineChart('dexCumChart', dexCumData[0]);
+        if (dexCumData.length > 0) renderChart('dexCumChart', dexCumData);
 
-        // 🔥 === VEX IV (subplot 2,1 = x3/y3) - GRÁFICO DE LINHA COM RANGE ===
+        // VEX IV
         const vexIVData = vegaPlot.data.filter(trace => trace.xaxis === 'x3' && trace.yaxis === 'y3');
-        if (vexIVData.length > 0) renderMultiLineChart('vexIVChart', vexIVData);
+        if (vexIVData.length > 0) renderChart('vexIVChart', vexIVData);
 
-        // 🔥 === VEX CONCENTRAÇÃO RISCO (subplot 3,2 = x6/y6) ===
+        // VEX Concentração
         const vexRiskData = vegaPlot.data.filter(trace => trace.xaxis === 'x6' && trace.yaxis === 'y6');
-        if (vexRiskData.length > 0) renderBarChart('vexRiskChart', vexRiskData[0]);
+        if (vexRiskData.length > 0) renderChart('vexRiskChart', vexRiskData);
 
-        // 🔥 === TEX VELOCIDADE (subplot 3,2 = x6/y6) ===
+        // TEX Velocidade
         const texVelocityData = thetaPlot.data.filter(trace => trace.xaxis === 'x6' && trace.yaxis === 'y6');
-        if (texVelocityData.length > 0) renderBarChart('texVelocityChart', texVelocityData[0]);
+        if (texVelocityData.length > 0) renderChart('texVelocityChart', texVelocityData);
 
-        // 🔥 === TEX CUMULATIVO (subplot 3,1 = x5/y5) ===
+        // TEX Cumulativo
         const texCumData = thetaPlot.data.filter(trace => trace.xaxis === 'x5' && trace.yaxis === 'y5');
-        if (texCumData.length > 0) renderLineChart('texCumChart', texCumData[0]);
+        if (texCumData.length > 0) renderChart('texCumChart', texCumData);
 
       } catch (error) {
-        console.error('Erro ao renderizar gráficos micro:', error);
+        console.error('Erro ao renderizar gráficos:', error);
         showStatus('Erro ao carregar gráficos', 'error');
       }
     }
 
-    function renderBarChart(elementId, trace) {
+    function renderChart(elementId, traces) {
+      const normalizedTraces = traces.map(trace => ({
+    ...trace,
+      xaxis: 'x',
+      yaxis: 'y'
+      }));
+
       const layout = {
         paper_bgcolor: 'rgba(0,0,0,0)',
         plot_bgcolor: 'rgba(0,0,0,0)',
-        font: { color: '#ffffff', family: 'Inter, sans-serif', size: 10 },
-        margin: { l: 50, r: 10, t: 10, b: 40 },
+        font: { color: '#888888', family: 'Inter, sans-serif', size: 11 },
+        margin: { l: 60, r: 20, t: 10, b: 50 },
+        height: 450,
+        
         xaxis: {
-          gridcolor: 'rgba(255,255,255,0.05)',
-          color: '#ffffff',
-          showgrid: false,
-          zeroline: false
+          gridcolor: 'rgba(255,255,255,0.08)',
+          gridwidth: 0.5,
+          color: '#666666',
+          showgrid: true,          // ← FORÇAR
+          zeroline: false,
+          tickfont: { size: 10 },
+          showline: false          // ← ADICIONAR
         },
+        
         yaxis: {
-          gridcolor: 'rgba(255,255,255,0.05)',
-          color: '#ffffff',
-          showgrid: false,
+          gridcolor: 'rgba(255,255,255,0.08)',
+          gridwidth: 0.5,
+          color: '#666666',
+          showgrid: true,          // ← FORÇAR
           zeroline: true,
           zerolinecolor: 'rgba(255,255,255,0.2)',
-          zerolinewidth: 1
+          zerolinewidth: 1,
+          tickfont: { size: 10 },
+          showline: false          // ← ADICIONAR
         },
+        
         showlegend: false,
         hovermode: 'x unified',
         autosize: true
@@ -591,99 +798,33 @@
         displaylogo: false
       };
 
-      Plotly.newPlot(elementId, [trace], layout, config);
-    }
-
-    function renderLineChart(elementId, trace) {
-      const layout = {
-        paper_bgcolor: 'rgba(0,0,0,0)',
-        plot_bgcolor: 'rgba(0,0,0,0)',
-        font: { color: '#ffffff', family: 'Inter, sans-serif', size: 10 },
-        margin: { l: 50, r: 10, t: 10, b: 40 },
-        xaxis: {
-          gridcolor: 'rgba(255,255,255,0.05)',
-          color: '#ffffff',
-          showgrid: false,
-          zeroline: false
-        },
-        yaxis: {
-          gridcolor: 'rgba(255,255,255,0.05)',
-          color: '#ffffff',
-          showgrid: false,
-          zeroline: false
-        },
-        showlegend: false,
-        hovermode: 'x unified',
-        autosize: true
-      };
-
-      const config = {
-        responsive: true,
-        displayModeBar: false,
-        displaylogo: false
-      };
-
-      Plotly.newPlot(elementId, [trace], layout, config);
-    }
-
-    // 🔥 NOVA FUNÇÃO PARA GRÁFICOS COM MÚLTIPLAS LINHAS (IV com range histórico)
-    function renderMultiLineChart(elementId, traces) {
-      const layout = {
-        paper_bgcolor: 'rgba(0,0,0,0)',
-        plot_bgcolor: 'rgba(0,0,0,0)',
-        font: { color: '#ffffff', family: 'Inter, sans-serif', size: 10 },
-        margin: { l: 50, r: 10, t: 10, b: 40 },
-        xaxis: {
-          gridcolor: 'rgba(255,255,255,0.05)',
-          color: '#ffffff',
-          showgrid: false,
-          zeroline: false
-        },
-        yaxis: {
-          gridcolor: 'rgba(255,255,255,0.05)',
-          color: '#ffffff',
-          showgrid: false,
-          zeroline: false
-        },
-        showlegend: false,
-        hovermode: 'x unified',
-        autosize: true
-      };
-
-      const config = {
-        responsive: true,
-        displayModeBar: false,
-        displaylogo: false
-      };
-
-      Plotly.newPlot(elementId, traces, layout, config);
+      Plotly.newPlot(elementId, normalizedTraces, layout, config);
     }
 
     loadExpirationsBtn.addEventListener('click', loadExpirations);
     analyzeBtn.addEventListener('click', runFullAnalysis);
     
     tickerInput.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') loadExpirations();
+      if (e.key === 'Enter') runFullAnalysis();
     });
 
+    // Resize handler
     let resizeTimeout;
     window.addEventListener('resize', function() {
       if (resultsSection.classList.contains('hidden')) return;
       
       clearTimeout(resizeTimeout);
       resizeTimeout = setTimeout(() => {
-        try {
-          Plotly.Plots.resize('gexDescChart');
-          Plotly.Plots.resize('gexCumChart');
-          Plotly.Plots.resize('dexDescChart');
-          Plotly.Plots.resize('dexCumChart');
-          Plotly.Plots.resize('vexIVChart');
-          Plotly.Plots.resize('vexRiskChart');
-          Plotly.Plots.resize('texVelocityChart');
-          Plotly.Plots.resize('texCumChart');
-        } catch (e) {
-          console.log('Resize error:', e);
-        }
+        const chartIds = ['gexDescChart', 'gexCumChart', 'dexDescChart', 'dexCumChart', 
+                         'vexIVChart', 'vexRiskChart', 'texVelocityChart', 'texCumChart'];
+        
+        chartIds.forEach(id => {
+          try {
+            Plotly.Plots.resize(id);
+          } catch (e) {
+            console.log('Resize error:', e);
+          }
+        });
       }, 200);
     });
 
