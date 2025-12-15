@@ -130,10 +130,6 @@ class HistoricalDataProvider:
         }
     
     def get_last_business_day(self):
-        """
-        Retorna o último dia útil COM DADOS CONSOLIDADOS
-        O Floqui consolida dados com atraso, então sempre usa D-2 no mínimo
-        """
         current = datetime.now()
         current -= timedelta(days=2)
         
@@ -144,10 +140,6 @@ class HistoricalDataProvider:
         return current
     
     def get_business_days(self, days_back=5):
-        """
-        Gera lista de dias ÚTEIS com dados consolidados
-        Sempre começa de D-2 (último dia útil consolidado)
-        """
         dates = []
         current_date = self.get_last_business_day()
         
@@ -189,16 +181,6 @@ class HistoricalDataProvider:
             return None
     
     def get_oplab_historical_data(self, symbol, target_date=None):
-        """
-        🔥 CORRIGIDO: Busca dados de opções da Oplab FILTRADO POR DATA ESPECÍFICA
-        
-        Args:
-            symbol: Código do ativo
-            target_date: Data específica para filtrar os dados (datetime object)
-        
-        Returns:
-            DataFrame com dados de opções da data específica
-        """
         try:
             symbol_clean = symbol.replace('.SA', '')
             
@@ -261,19 +243,22 @@ class HistoricalDataProvider:
             date_str = dt_referencia.strftime('%Y%m%d')
             url = f"https://floqui.com.br/api/posicoes_em_aberto/{ticker_clean.lower()}/{vencimento}/{date_str}"
             
+            # 🔥 LOG MELHORADO - Mostra VENCIMENTO e DATA
+            logging.info(f"🌐 Buscando Floqui: {ticker_clean} | VENC={vencimento} | DATA={date_str}")
+            
             response = requests.get(url, timeout=15)
             
             if response.status_code == 404:
-                logging.warning(f"⚠️ Sem dados Floqui para {date_str} (404)")
+                logging.warning(f"⚠️ Sem dados Floqui: VENC={vencimento} DATA={date_str} (404)")
                 return {}
             
             if response.status_code != 200:
-                logging.error(f"❌ Erro na API Floqui: {response.status_code}")
+                logging.error(f"❌ Erro na API Floqui: {response.status_code} | VENC={vencimento} DATA={date_str}")
                 return {}
             
             data = response.json()
             if not data:
-                logging.warning(f"⚠️ API Floqui retornou vazio para {date_str}")
+                logging.warning(f"⚠️ API Floqui retornou vazio: VENC={vencimento} DATA={date_str}")
                 return {}
             
             oi_breakdown = {}
@@ -292,23 +277,26 @@ class HistoricalDataProvider:
                         'coberto': int(item.get('qtd_coberto', 0))
                     }
             
-            logging.info(f"✅ Floqui {date_str}: {len(oi_breakdown)} strikes")
+            # 🔥 LOG MELHORADO - Mostra VENCIMENTO e DATA
+            logging.info(f"✅ Floqui VENC={vencimento} DATA={date_str}: {len(oi_breakdown)} strikes")
             return oi_breakdown
             
         except requests.Timeout:
-            logging.error(f"⏱️ Timeout Floqui para {date_str}")
+            logging.error(f"⏱️ Timeout Floqui: VENC={vencimento} DATA={date_str}")
             return {}
         except Exception as e:
-            logging.error(f"❌ Erro Floqui ({date_str}): {e}")
+            logging.error(f"❌ Erro Floqui VENC={vencimento} DATA={date_str}: {e}")
             return {}
     
     def get_available_expirations(self, ticker):
         """Lista vencimentos disponíveis"""
-        available_expirations = {
-            "20251017": "17 Out 25 - M", 
-            "20251121": "21 Nov 25 - M",
+        available_expirations = {         
             "20251219": "19 Dez 25 - M",
             "20260116": "16 Jan 26 - M",
+            "20260220": "20 Fev 26 - M",
+            "20260320": "20 Mar 26 - M",
+            "20260417": "17 Abr 26 - M",           
+
         }
         
         expirations = []
@@ -409,10 +397,6 @@ class HistoricalAnalyzer:
         return pd.DataFrame(gex_data).sort_values('strike')
     
     def find_gamma_flip(self, gex_df, spot_price, symbol):
-        """
-        🔥 LÓGICA UNIFICADA COM gamma_service.py
-        Detecta gamma flip com filtro inteligente baseado no regime do spot
-        """
         if gex_df.empty or len(gex_df) < 2:
             logging.warning("Dados insuficientes para análise de flip")
             return None
@@ -539,11 +523,6 @@ class HistoricalAnalyzer:
         return float(best_flip['strike'])
     
     def identify_walls(self, gex_df, spot_price):
-        """
-        Identifica support/resistance baseado no MAIOR GEX DESCOBERTO
-        - Support: Strike com maior call_gex (positivo)
-        - Resistance: Strike com maior put_gex (negativo, em módulo)
-        """
         if gex_df.empty:
             return []
         

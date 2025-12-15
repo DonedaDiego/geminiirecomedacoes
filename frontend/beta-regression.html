@@ -829,14 +829,12 @@
       setLoading(analyzeBtn, false);
     }
     
-    // Exibir análise individual
+    
     function displayIndividualAnalysis(data) {
       const analysis = data.analysis_data;
       
-      // Sinal atual
       displayCurrentSignal(analysis);
       
-      // Título e timestamp
       document.getElementById('analysisTitle').textContent = `${analysis.symbol} - Análise Beta Regression`;
       document.getElementById('analysisTimestamp').textContent = analysis.timestamp;
       
@@ -852,7 +850,6 @@
       document.getElementById('netReturn').textContent = `${analysis.final_return.toFixed(2)}%`;
       document.getElementById('netReturn').className = `text-xl font-bold ${analysis.final_return >= 0 ? 'text-green-400' : 'text-red-400'}`;
       
-      // Métricas de risco
       document.getElementById('maxDrawdown').textContent = `${analysis.max_drawdown.toFixed(2)}%`;
       document.getElementById('maxDrawdown').className = `font-semibold text-red-400`;
       
@@ -860,7 +857,6 @@
       document.getElementById('sharpeRatio').textContent = analysis.sharpe_ratio.toFixed(2);
       document.getElementById('sharpeRatio').className = `font-semibold ${analysis.sharpe_ratio >= 0 ? 'text-green-400' : 'text-red-400'}`;
       
-      // Resultado das operações
       document.getElementById('winningTrades').textContent = analysis.winning_trades;
       document.getElementById('losingTrades').textContent = analysis.losing_trades;
       document.getElementById('totalFees').textContent = formatCurrency(analysis.total_fees);
@@ -868,10 +864,9 @@
       // Período da análise
       document.getElementById('analysisPeriod').textContent = analysis.periodo;
       
-      // Mostrar seções
       individualAnalysis.classList.remove('hidden');
       
-      // Gráficos
+      
       if (data.chart_data) {
         updateMainChart(data.chart_data);
         updateCharts(data.chart_data);
