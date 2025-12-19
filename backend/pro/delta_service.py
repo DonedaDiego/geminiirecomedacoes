@@ -47,11 +47,19 @@ def convert_to_json_serializable(obj):
 class ExpirationManager:
     def __init__(self):
         self.available_expirations = {
-            "20250919": {"date": datetime(2025, 9, 19), "desc": "19 Set 25 - M"},
-            "20251017": {"date": datetime(2025, 10, 17), "desc": "17 Out 25 - M"},
-            "20251121": {"date": datetime(2025, 11, 21), "desc": "21 Nov 25 - M"},
             "20251219": {"date": datetime(2025, 12, 19), "desc": "19 Dez 25 - M"},
-            "20260116": {"date": datetime(2026, 1, 16), "desc": "16 Jan 26 - M"},
+            "20260116": {"date": datetime(2026, 1, 16),  "desc": "16 Jan 26 - M"},
+            "20260220": {"date": datetime(2026, 2, 20),  "desc": "20 Fev 26 - M"},
+            "20260320": {"date": datetime(2026, 3, 20),  "desc": "20 Mar 26 - M"},
+            "20260417": {"date": datetime(2026, 4, 17),  "desc": "17 Abr 26 - M"},
+            "20260515": {"date": datetime(2026, 5, 15),  "desc": "15 Mai 26 - M"},
+            "20260619": {"date": datetime(2026, 6, 19),  "desc": "19 Jun 26 - M"},
+            "20260717": {"date": datetime(2026, 7, 17),  "desc": "17 Jul 26 - M"},
+            "20260821": {"date": datetime(2026, 8, 21),  "desc": "21 Ago 26 - M"},
+            "20260918": {"date": datetime(2026, 9, 18),  "desc": "18 Set 26 - M"},
+            "20261016": {"date": datetime(2026, 10, 16), "desc": "16 Out 26 - M"},
+            "20261119": {"date": datetime(2026, 11, 19), "desc": "19 Nov 26 - M"},
+            "20261218": {"date": datetime(2026, 12, 18), "desc": "18 Dez 26 - M"},
         }
     
     def test_data_availability(self, symbol, expiration_code):
