@@ -446,7 +446,7 @@ def run_job_manually_admin(admin_id):
         if not job_name:
             return jsonify({'success': False, 'error': 'job_name é obrigatório'}), 400
         
-        # 🔥 LISTA ATUALIZADA COM NOVO JOB
+        #  LISTA ATUALIZADA COM NOVO JOB
         valid_jobs = ['process_expired', 'send_warnings', 'process_expired_trials', 'integrity_check']
         if job_name not in valid_jobs:
             return jsonify({

@@ -550,7 +550,7 @@ Sinal histórico: {'COMPRA' if historical_prediction == 1 else 'VENDA'}
 
     def create_chart(self, df, ticker, prediction_days):
         """KILLER DEBUG - GRÁFICO MAIS BÁSICO POSSÍVEL"""
-        print("🔥 CRIANDO GRÁFICO KILLER DEBUG...")
+        print(" CRIANDO GRÁFICO KILLER DEBUG...")
         
         try:
             # ZERO FRESCURA - SÓ O BÁSICO
@@ -573,20 +573,20 @@ Sinal histórico: {'COMPRA' if historical_prediction == 1 else 'VENDA'}
             )
 
             # SEM NADA DE ESPECIAL
-            print("🔥 HTML básico sendo gerado...")
+            print(" HTML básico sendo gerado...")
             
             html_output = fig.to_html(
                 include_plotlyjs='cdn',
                 config={'responsive': True}
             )
             
-            print(f"🔥 HTML gerado - tamanho: {len(html_output)} chars")
-            print("🔥 KILLER DEBUG - Se ainda tiver linha vermelha, o problema NÃO é no create_chart!")
+            print(f" HTML gerado - tamanho: {len(html_output)} chars")
+            print(" KILLER DEBUG - Se ainda tiver linha vermelha, o problema NÃO é no create_chart!")
             
             return html_output
             
         except Exception as e:
-            print(f"🔥 ERRO KILLER: {e}")
+            print(f" ERRO KILLER: {e}")
             return f"<div style='color:white;'>ERRO KILLER: {str(e)}</div>"
 
     def create_fallback_chart(self, df, ticker):

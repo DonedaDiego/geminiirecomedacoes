@@ -97,8 +97,7 @@ class BetaRegressionService:
             if len(df_clean) < 50:
                 raise Exception("Dados insuficientes para regressão")
             
-            # Define janela de regressão IGUAL ao MetaTrader
-            window = min(252, len(df_clean)//4)
+            window = 30
             period = 20  # Para média móvel
             
             print(f"Executando regressão móvel com janela de {window} períodos")
@@ -115,11 +114,9 @@ class BetaRegressionService:
             df.loc[df_clean.index, "Beta0"] = reg.params["const"]
             
             # Normalização EXATA como no MetaTrader
-            df["Beta0_Norm"] = (
-                df["Beta0"].rolling(20).mean()
-                          .rolling(20)
-                          .apply(lambda x: np.mean(x < x.iloc[-1]) if len(x) > 0 else 0.5)
-            )
+            df["Beta0_Norm"] = (df["Beta0"]
+                .rolling(20).mean()
+                .rolling(20).apply(lambda x: np.mean(x < x.iloc[-1]) if len(x) > 0 else 0.5))
             
             # Beta0_g = valor defasado (como no MetaTrader)
             df["Beta0_g"] = df["Beta0_Norm"].shift(1)
@@ -128,10 +125,16 @@ class BetaRegressionService:
             df["MM"] = df["Adj Close"].rolling(period).mean()
             df["MM_Pos"] = np.where(df["Adj Close"] > df["MM"], 1, 0)
             
-            # Preencher valores iniciais
-            df["Beta0"] = df["Beta0"].fillna(method='bfill')
+            # ===== PREENCHER VALORES INICIAIS (MÉTODO MODERNO) =====
+            df["Beta0"] = df["Beta0"].bfill().ffill()
             df["Beta0_Norm"] = df["Beta0_Norm"].fillna(0.5)
             df["Beta0_g"] = df["Beta0_g"].fillna(0.5)
+            
+            # IMPORTANTE: Preencher MM também
+            df["MM"] = df["MM"].bfill().ffill()
+            
+            # Garantir que MM_Pos não tenha NaN
+            df["MM_Pos"] = df["MM_Pos"].fillna(0)
             
             return df
             
@@ -191,10 +194,17 @@ class BetaRegressionService:
             drawdown_af = (rolling_max_af - df["Acc_Returns_After_Fees"])
             max_drawdown = drawdown_af.max() * 100
             
-            # Métricas adicionais
-            avg_return = df["Trading_After_Fees"].mean() * 100
-            volatility = df["Trading_After_Fees"].std() * 100 * np.sqrt(252)  # anualizada
-            sharpe_ratio = (avg_return / volatility) if volatility != 0 else 0
+            # Métricas adicionais - CORRIGIDO
+            avg_return = df["Trading_After_Fees"].mean()  # Mantém em decimal
+            volatility = df["Trading_After_Fees"].std()    # Mantém em decimal
+            
+            # Sharpe Ratio anualizado (assumindo ~252 dias de trading)
+            sharpe_ratio = (avg_return / volatility * np.sqrt(252)) if volatility != 0 else 0
+            
+            # Converte para % apenas para exibição
+            avg_return_pct = avg_return * 100
+            volatility_pct = volatility * 100 * np.sqrt(252)  # anualizada
+            
             total_fees = df["Trading_Fees"].sum()
             
             # Impacto das taxas
@@ -207,8 +217,8 @@ class BetaRegressionService:
                 'win_rate': win_rate,
                 'final_return': final_return,
                 'max_drawdown': max_drawdown,
-                'avg_return': avg_return,
-                'volatility': volatility,
+                'avg_return': avg_return_pct,
+                'volatility': volatility_pct,
                 'sharpe_ratio': sharpe_ratio,
                 'total_fees': total_fees,
                 'tax_impact': tax_impact,

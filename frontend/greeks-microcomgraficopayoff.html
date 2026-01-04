@@ -209,6 +209,7 @@
     .status-error { background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); }
     .status-info { background: rgba(59, 130, 246, 0.15); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.3); }
 
+    /* Tabela Mestre */
     .master-table {
       width: 100%;
       border-collapse: separate;
@@ -247,6 +248,7 @@
       border-left: 3px solid #ba39af;
     }
 
+    /* Diagnostic Card */
     .diagnostic-card {
       background: linear-gradient(135deg, rgba(30, 30, 30, 0.95) 0%, rgba(20, 20, 20, 0.95) 100%);
       border: 2px solid rgba(186, 57, 175, 0.3);
@@ -266,6 +268,7 @@
       background: linear-gradient(90deg, #ba39af, #06b6d4, #a855f7, #f59e0b);
     }
 
+    /* Structure Card */
     .structure-card {
       background: rgba(25, 25, 25, 0.9);
       border: 1px solid rgba(255, 255, 255, 0.1);
@@ -284,6 +287,7 @@
       background: rgba(34, 197, 94, 0.05);
     }
 
+    /* Alert Item */
     .alert-item {
       background: rgba(25, 25, 25, 0.8);
       border-left: 3px solid;
@@ -297,6 +301,7 @@
     .alert-item.alert-info { border-color: #3b82f6; }
     .alert-item.alert-success { border-color: #22c55e; }
 
+    /* Dimension Indicator */
     .dim-indicator {
       display: inline-flex;
       align-items: center;
@@ -310,37 +315,10 @@
     .dim-positive { background: rgba(34, 197, 94, 0.15); color: #22c55e; }
     .dim-negative { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
     .dim-neutral { background: rgba(156, 163, 175, 0.15); color: #9ca3af; }
-    .dim-high { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
-    .dim-low { background: rgba(34, 197, 94, 0.15); color: #22c55e }
+    .dim-high { background: rgba(245, 158, 11, 0.15); color: #f59e0b; }
+    .dim-low { background: rgba(59, 130, 246, 0.15); color: #3b82f6; }
 
-    .educational-badge {
-      display: inline-block;
-      background: rgba(59, 130, 246, 0.15);
-      color: #3b82f6;
-      border: 1px solid rgba(59, 130, 246, 0.3);
-      padding: 4px 12px;
-      border-radius: 6px;
-      font-size: 11px;
-      font-weight: 600;
-      margin-top: 8px;
-    }
-
-    .reasoning-box {
-      background: rgba(59, 130, 246, 0.05);
-      border-left: 3px solid #3b82f6;
-      padding: 12px;
-      border-radius: 0 8px 8px 0;
-      margin-top: 12px;
-    }
-
-    .conditions-box {
-      background: rgba(245, 158, 11, 0.05);
-      border-left: 3px solid #f59e0b;
-      padding: 12px;
-      border-radius: 0 8px 8px 0;
-      margin-top: 8px;
-    }
-
+    /* Responsividade Mobile */
     @media (max-width: 768px) {
       .chart-wrapper {
         height: 350px;
@@ -372,6 +350,7 @@
         padding: 8px 4px;
       }
 
+      /* Navbar mobile */
       nav {
         top: 4px;
         padding: 8px 12px;
@@ -381,6 +360,7 @@
         display: none !important;
       }
 
+      /* Controles em coluna no mobile */
       .controls-mobile {
         flex-direction: column !important;
         width: 100%;
@@ -397,6 +377,7 @@
       }
     }
 
+    /* Landscape mobile */
     @media (max-width: 896px) and (orientation: landscape) {
       .chart-wrapper {
         height: 300px;
@@ -407,16 +388,184 @@
       }
     }
 
+    /* Tablets */
     @media (min-width: 769px) and (max-width: 1024px) {
       .diagnostic-card {
         padding: 28px;
       }
+    }
+
+    /* Modal Payoff */
+    .payoff-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(10px);
+      z-index: 9999;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .payoff-modal.active {
+      display: flex;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .payoff-content {
+      background: linear-gradient(135deg, rgba(20, 20, 20, 0.98) 0%, rgba(30, 30, 30, 0.98) 100%);
+      border: 2px solid rgba(186, 57, 175, 0.5);
+      border-radius: 24px;
+      max-width: 900px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      position: relative;
+      animation: slideUp 0.3s ease;
+      box-shadow: 0 20px 60px rgba(186, 57, 175, 0.3);
+    }
+
+    @keyframes slideUp {
+      from { 
+        transform: translateY(30px);
+        opacity: 0;
+      }
+      to { 
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    .payoff-header {
+      background: linear-gradient(135deg, #ba39af 0%, #8b2f7d 100%);
+      padding: 24px 32px;
+      border-radius: 22px 22px 0 0;
+      border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .payoff-close {
+      position: absolute;
+      top: 20px;
+      right: 24px;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: white;
+      font-size: 20px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .payoff-close:hover {
+      background: rgba(255, 255, 255, 0.2);
+      transform: rotate(90deg);
+    }
+
+    .payoff-body {
+      padding: 32px;
+    }
+
+    .payoff-chart-container {
+      background: rgba(10, 10, 10, 0.5);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 24px;
+      height: 400px;
+    }
+
+    .payoff-metrics {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .payoff-metric {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      padding: 16px;
+      text-align: center;
+    }
+
+    .payoff-metric-label {
+      font-size: 11px;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 8px;
+    }
+
+    .payoff-metric-value {
+      font-size: 20px;
+      font-weight: 700;
+      color: white;
+    }
+
+    .payoff-legs {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      padding: 20px;
+    }
+
+    .payoff-leg {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .payoff-leg:last-child {
+      border-bottom: none;
+    }
+
+    .view-payoff-btn {
+      background: linear-gradient(135deg, rgba(186, 57, 175, 0.2) 0%, rgba(139, 47, 125, 0.2) 100%);
+      border: 1px solid rgba(186, 57, 175, 0.4);
+      color: #ba39af;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .view-payoff-btn:hover {
+      background: linear-gradient(135deg, rgba(186, 57, 175, 0.3) 0%, rgba(139, 47, 125, 0.3) 100%);
+      border-color: rgba(186, 57, 175, 0.6);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(186, 57, 175, 0.3);
     }
   </style>
 </head>
 
 <body class="text-white">
   
+  <!-- Navbar -->
   <nav class="fixed top-6 left-1/2 transform -translate-x-1/2 z-50 bg-opacity-5 border-opacity-10 bg-white border-white border rounded-full px-4 py-3 shadow-xl backdrop-blur-md">
     <div class="flex items-center justify-between">
       <div class="flex items-center">
@@ -425,12 +574,11 @@
         </a>       
       </div>
       <div class="hidden md:flex items-center space-x-6 text-xs text-gray-300 ml-8">
-        <span class="text-white font-medium">Visao Global</span>
-        <a href="gamma-levels.html" class="hover:text-white transition-colors">Gamma Exposure</a>
-        <a href="delta-levels.html" class="hover:text-white transition-colors">Delta Exposure</a>
-        <a href="vega-levels.html" class="hover:text-white transition-colors">Vega Exposure</a>
-        <a href="theta-levels.html" class="hover:text-white transition-colors">Theta Exposure</a>
-        <a href="historical-levels.html" class="hover:text-white transition-colors">Analise Historica</a>
+        <span class="text-white font-medium">Greeks Micro 4D</span>
+        <a href="gamma-levels.html" class="hover:text-white transition-colors">Gamma Full</a>
+        <a href="delta-levels.html" class="hover:text-white transition-colors">Delta Full</a>
+        <a href="vega-levels.html" class="hover:text-white transition-colors">Vega Full</a>
+        <a href="theta-levels.html" class="hover:text-white transition-colors">Theta Full</a>
       </div>
       <div class="flex items-center space-x-3 ml-8">
         <div class="w-8 h-8 bg-purple-500 bg-opacity-10 border border-purple-500 border-opacity-30 rounded-full flex items-center justify-center relative">
@@ -441,20 +589,22 @@
     </div>
   </nav>
 
+  <!-- Content -->
   <div class="pt-32 pb-16">
     <div class="max-w-[1800px] mx-auto px-6">
       
+      <!-- Header -->
       <div class="text-center mb-12">
         <h1 class="text-4xl md:text-5xl font-black mb-3">
-          <span style="color: #ba39af;">Visao</span>
-          <span class="text-white font-light">Global Micro 4D</span>
+          <span style="color: #ba39af;">Greeks</span>
+          <span class="text-white font-light">Micro 4D</span>
         </h1>
         <p class="text-neutral-400 text-base max-w-2xl mx-auto">
-          Analise integrada GEX + DEX + VEX + TEX com diagnostico automatico de cenario e estruturas educacionais.
+          Analise integrada GEX + DEX + VEX + TEX com diagnostico automatico de cenario e estruturas recomendadas.
         </p>
-     
       </div>
 
+      <!-- Controles -->
       <div class="greeks-card p-6 mb-8">
         <div class="flex flex-col md:flex-row gap-4 items-center justify-center controls-mobile">
           <input 
@@ -475,10 +625,13 @@
         </div>
       </div>
 
+      <!-- Status -->
       <div id="statusMsg" class="mb-6 text-center hidden"></div>
 
+      <!-- Resultados -->
       <div id="resultsSection" class="hidden">
         
+        <!-- Row 1: Metricas Principais -->
         <div class="grid grid-cols-2 md:grid-cols-6 gap-3 mb-8">
           <div class="metric-box text-center">
             <div class="text-xs text-gray-500 uppercase tracking-wider mb-1 font-semibold">Spot Price</div>
@@ -506,20 +659,24 @@
           </div>
         </div>
 
+        <!-- Row 2: Diagnostico 4D + Estruturas -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
           
+          <!-- Diagnostico 4D -->
           <div class="diagnostic-card">
             <div class="section-title mb-6">
               <i class="fas fa-diagnoses" style="color: #ba39af;"></i>
               Diagnostico 4D
             </div>
             
+            <!-- Cenario Identificado -->
             <div class="mb-6">
               <div class="text-xs text-gray-500 uppercase tracking-wider mb-2">Cenario Identificado</div>
               <div class="text-xl font-bold text-white mb-1" id="scenarioName">--</div>
               <div class="text-sm text-gray-400" id="scenarioNumber">Cenario #--</div>
             </div>
 
+            <!-- 4 Dimensoes -->
             <div class="grid grid-cols-2 gap-4 mb-6">
               <div>
                 <div class="text-xs text-gray-500 mb-2">GEX (Gamma)</div>
@@ -539,11 +696,13 @@
               </div>
             </div>
 
+            <!-- Interpretacao -->
             <div class="bg-black/30 rounded-xl p-4 mb-6">
               <div class="text-xs text-gray-500 uppercase tracking-wider mb-2">Interpretacao</div>
               <div class="text-sm text-gray-300 leading-relaxed" id="scenarioInterpretation">--</div>
             </div>
 
+            <!-- Forca do Sinal e Direcao -->
             <div class="flex items-center justify-between">
               <div>
                 <div class="text-xs text-gray-500 uppercase tracking-wider mb-1">Forca do Sinal</div>
@@ -561,43 +720,48 @@
             </div>
           </div>
 
+          <!-- Estruturas Recomendadas -->
           <div class="greeks-card p-6">
             <div class="section-title mb-4">
-              <i class="fas fa-graduation-cap" style="color: #22c55e;"></i>
-              Estrategias Educacionais
+              <i class="fas fa-chess" style="color: #22c55e;"></i>
+              Estruturas Recomendadas
             </div>
-            <div class="mb-4 text-xs text-gray-400 bg-blue-500/10 border border-blue-500/30 rounded-lg p-3">
-              <i class="fas fa-info-circle text-blue-400 mr-2"></i>
-              As estratégias abaixo são conceituais com base na condição das posições em aberto das opçoes. Não incluem strikes específicos.
-            </div>
+            
             <div id="structuresContainer" class="space-y-4">
+              <!-- Preenchido via JS -->
             </div>
           </div>
 
         </div>
 
+        <!-- Row 3: Alertas + O Que Olhar -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
           
+          <!-- Alertas -->
           <div class="greeks-card p-6">
             <div class="section-title mb-4">
               <i class="fas fa-exclamation-triangle" style="color: #f59e0b;"></i>
               Alertas de Mudanca de Cenario
             </div>
             <div id="alertsContainer">
+              <!-- Preenchido via JS -->
             </div>
           </div>
 
+          <!-- O Que Evitar -->
           <div class="greeks-card p-6">
             <div class="section-title mb-4">
               <i class="fas fa-ban" style="color: #ef4444;"></i>
               O Que Evitar
             </div>
             <div id="avoidContainer">
+              <!-- Preenchido via JS -->
             </div>
           </div>
 
         </div>
 
+        <!-- Row 4: Graficos Principais -->
         <div class="greeks-card p-6 mb-8">
           <div class="section-title mb-4">
             <i class="fas fa-chart-area" style="color: #06b6d4;"></i>
@@ -635,6 +799,7 @@
           </div>
         </div>
 
+        <!-- Row 5: Tabela Mestre dos 16 Cenarios -->
         <div class="greeks-card p-6">
           <div class="section-title mb-4">
             <i class="fas fa-table" style="color: #a855f7;"></i>
@@ -655,6 +820,7 @@
                 </tr>
               </thead>
               <tbody id="masterTableBody">
+                <!-- Preenchido via JS -->
               </tbody>
             </table>
           </div>
@@ -665,138 +831,200 @@
     </div>
   </div>
 
+  <!-- Modal Payoff -->
+  <div id="payoffModal" class="payoff-modal">
+    <div class="payoff-content">
+      <div class="payoff-header">
+        <h2 class="text-2xl font-black text-white" id="payoffTitle">Visualizador de Payoff</h2>
+        <p class="text-white/70 text-sm mt-1" id="payoffSubtitle">Análise completa da estrutura</p>
+        <button class="payoff-close" onclick="closePayoffModal()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      
+      <div class="payoff-body">
+        <!-- Gráfico de Payoff -->
+        <div class="payoff-chart-container">
+          <div id="payoffChart" style="width: 100%; height: 100%;"></div>
+        </div>
+
+        <!-- Métricas da Estrutura -->
+        <div class="payoff-metrics" id="payoffMetrics">
+          <!-- Preenchido via JS -->
+        </div>
+
+        <!-- Breakdown das Pernas -->
+        <div class="payoff-legs">
+          <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+            <i class="fas fa-list"></i>
+            Composição da Estrutura
+          </h3>
+          <div id="payoffLegsBreakdown">
+            <!-- Preenchido via JS -->
+          </div>
+        </div>
+
+        <!-- Greeks da Estrutura -->
+        <div class="mt-6 grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div class="metric-box text-center">
+            <div class="text-xs text-gray-500 uppercase tracking-wider mb-1">Delta Total</div>
+            <div class="text-lg font-bold text-purple-400" id="structureDelta">--</div>
+          </div>
+          <div class="metric-box text-center">
+            <div class="text-xs text-gray-500 uppercase tracking-wider mb-1">Gamma Total</div>
+            <div class="text-lg font-bold text-cyan-400" id="structureGamma">--</div>
+          </div>
+          <div class="metric-box text-center">
+            <div class="text-xs text-gray-500 uppercase tracking-wider mb-1">Theta Total</div>
+            <div class="text-lg font-bold text-red-400" id="structureTheta">--</div>
+          </div>
+          <div class="metric-box text-center">
+            <div class="text-xs text-gray-500 uppercase tracking-wider mb-1">Vega Total</div>
+            <div class="text-lg font-bold text-amber-400" id="structureVega">--</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script>
+    // ============================================================
+    // TABELA MESTRE DOS 16 CENARIOS
+    // ============================================================
     const SCENARIOS_TABLE = {
       1: {
         gex: 'SHORT', dex: 'POS', vex: 'ALTO', tex: 'ALTO',
-        name: 'Squeeze Iminente',
-        structures: ['Compra de Call', 'Broken Wing Butterfly', 'Compra de Straddle'],
-        avoid: ['Venda descoberta', 'Posições vendidas'],
-        interpretation: 'MOVIMENTO EXPLOSIVO PARA CIMA IMINENTE! Os market makers estão "short gamma" e serão forçados a comprar o ativo agressivamente conforme o preço sobe, criando um ciclo de alta autoalimentado (quanto mais sobe, mais eles compram → mais sobe ainda). A volatilidade alta amplifica os ganhos e o theta elevado pressiona quem está vendido em opções. É o setup clássico de gamma squeeze – prepare o foguete!',
+        name: 'Squeeze Explosivo Urgente',
+        structures: ['Long Call ATM', 'Call Spread agressivo'],
+        avoid: ['Venda descoberta', 'Short Straddle'],
+        interpretation: 'Movimentos amplificados para CIMA com urgencia temporal. MMs vao comprar junto em rompimentos. Vol alta amplifica ganhos.',
         direction: 'ALTA', intensity: 'EXPLOSIVA', urgency: 'ALTA'
       },
       2: {
         gex: 'SHORT', dex: 'POS', vex: 'ALTO', tex: 'BAIXO',
-        name: 'Squeeze Gradual',
-        structures: ['Compra de Call', 'Compra de Straddle'],
-        avoid: ['Venda de volatilidade'],
-        interpretation: 'Movimento de alta explosivo em formação, mas sem urgência imediata. Dealers short gamma precisarão comprar gradualmente conforme o preço sobe. Há tempo para confirmação antes de entrar.',
+        name: 'Squeeze Explosivo Paciente',
+        structures: ['Call Spread', 'Call Diagonal', 'Ratio 1x2'],
+        avoid: ['Iron Condor', 'Venda de vol'],
+        interpretation: 'Movimentos amplificados para CIMA mas sem urgencia. Tempo para esperar confirmacao. Vol subindo beneficia compras.',
         direction: 'ALTA', intensity: 'EXPLOSIVA', urgency: 'BAIXA'
       },
       3: {
         gex: 'SHORT', dex: 'POS', vex: 'BAIXO', tex: 'ALTO',
-        name: 'Squeeze Rápido',
-        structures: ['Compra de Call'],
-        avoid: ['Compra de volatilidade'],
-        interpretation: 'Movimento técnico rápido de alta. Volatilidade baixa torna as calls relativamente baratas, aumentando a alavancagem em um squeeze de gamma com theta acelerado.',
+        name: 'Squeeze Tecnico Urgente',
+        structures: ['Call Spread curto', 'Ratio Call'],
+        avoid: ['Compra de vol', 'Straddle'],
+        interpretation: 'Movimento tecnico para cima com theta acelerado. Precisa ser rapido. Vol baixa = estruturas baratas.',
         direction: 'ALTA', intensity: 'MODERADA', urgency: 'ALTA'
       },
       4: {
         gex: 'SHORT', dex: 'POS', vex: 'BAIXO', tex: 'BAIXO',
-        name: 'Squeeze Controlado',
-        structures: ['Compra de Call'],
-        avoid: ['Posições de volatilidade'],
-        interpretation: 'Viés de alta presente, mas controlado e sem pressão temporal forte. Dealers short gamma, porém com baixa vega e theta, o movimento tende a ser mais previsível e menos volátil.',
+        name: 'Squeeze Tecnico Paciente',
+        structures: ['Call Calendar', 'PMCC', 'Call Diagonal longa'],
+        avoid: ['Straddle', 'Long vol'],
+        interpretation: 'Setup ideal para estruturas de tempo. Vies de alta sem pressa. Theta controlado.',
         direction: 'ALTA', intensity: 'MODERADA', urgency: 'BAIXA'
       },
       5: {
         gex: 'SHORT', dex: 'NEG', vex: 'ALTO', tex: 'ALTO',
-        name: 'Crash IMINENTE',
-        structures: ['Compra de Put', 'Broken Wing Butterfly', 'Compra de Straddle'],
-        avoid: ['Posições compradas', 'Venda de Put'],
-        interpretation: 'Risco máximo de queda explosiva iminente. Dealers short gamma e delta negativo forçarão vendas agressivas à medida que o preço cai, criando ciclo autodestrutivo amplificado pela alta volatilidade.',
+        name: 'CRASH IMINENTE',
+        structures: ['Long Put', 'Put Spread agressivo'],
+        avoid: ['Qualquer posicao comprada', 'Venda de Put'],
+        interpretation: 'PERIGO MAXIMO. Movimentos amplificados para BAIXO com vol explodindo. Protecao urgente.',
         direction: 'QUEDA', intensity: 'EXPLOSIVA', urgency: 'CRITICA'
       },
       6: {
         gex: 'SHORT', dex: 'NEG', vex: 'ALTO', tex: 'BAIXO',
         name: 'Crash em Formacao',
-        structures: ['Compra de Put', 'Compra de Straddle'],
-        avoid: ['Calls', 'Posições de alta'],
-        interpretation: 'Forte pressão vendedora em desenvolvimento. Short gamma com delta negativo indica potencial para queda violenta, embora o theta baixo dê mais tempo para o movimento se materializar.',
+        structures: ['Put Spread largo', 'Collar', 'Long Put'],
+        avoid: ['Calls', 'Posicoes direcionais de alta'],
+        interpretation: 'Pressao vendedora com vol alta. Queda pode ser violenta mas tem tempo para se posicionar.',
         direction: 'QUEDA', intensity: 'EXPLOSIVA', urgency: 'MODERADA'
       },
       7: {
         gex: 'SHORT', dex: 'NEG', vex: 'BAIXO', tex: 'ALTO',
-        name: 'Correção Técnica',
-        structures: ['Compra de Put'],
-        avoid: ['Posições de alta'],
-        interpretation: 'Correção técnica rápida e limitada. Baixa volatilidade e theta alto favorecem movimento descendente curto, sem potencial para crash amplificado.',
+        name: 'Correcao Tecnica Urgente',
+        structures: ['Put Spread curto', 'Bear Call Spread'],
+        avoid: ['Long stock', 'Calls'],
+        interpretation: 'Correcao tecnica acelerada pelo theta. Movimento limitado mas rapido.',
         direction: 'QUEDA', intensity: 'MODERADA', urgency: 'ALTA'
       },
       8: {
         gex: 'SHORT', dex: 'NEG', vex: 'BAIXO', tex: 'BAIXO',
-        name: 'Correção Gradual',
-        structures: ['Compra de Put'],
-        avoid: ['Posições agressivas'],
-        interpretation: 'Correção lenta e controlada. Ausência de pressão de vega e theta permite ajuste gradual de posições sem risco de aceleração brusca.',
+        name: 'Correcao Tecnica Lenta',
+        structures: ['Bear Put Calendar', 'Put Diagonal'],
+        avoid: ['Posicoes agressivas', 'Long gamma'],
+        interpretation: 'Correcao lenta e controlada. Tempo para ajustar posicoes. Sem urgencia.',
         direction: 'QUEDA', intensity: 'LEVE', urgency: 'BAIXA'
       },
       9: {
         gex: 'LONG', dex: 'POS', vex: 'ALTO', tex: 'ALTO',
-        name: 'Alta Controlada com Volatilidade',
-        structures: ['Box de 3 Pontas', 'Broken Wing Butterfly', 'Venda de Put'],
-        avoid: ['Compra de volatilidade', 'Long Straddles'],
-        interpretation: 'Cenário IDEAL para Box de 3 Pontas e Broken Wing Butterfly! Alta volatilidade oferece prêmios extremamente elevados, enquanto gamma positivo dos dealers limita movimentos bruscos. Vencimento próximo (TEX ALTO) permite montar broken wings com alta probabilidade de ganho. Box de 3 Pontas garante ganho conhecido com risco zero. Venda de puts também favorecida pelos prêmios inflados.',
+        name: 'Rally Controlado + Vol',
+        structures: ['Iron Condor bullish', 'Jade Lizard', 'Venda de Put'],
+        avoid: ['Long Straddle', 'Compra de vol'],
+        interpretation: 'Subida controlada pelos MMs. Vol alta = premios gordos para vender. Theta acelera.',
         direction: 'ALTA', intensity: 'CONTROLADA', urgency: 'MODERADA'
       },
       10: {
         gex: 'LONG', dex: 'POS', vex: 'ALTO', tex: 'BAIXO',
-        name: 'Alta Saudável',
-        structures: ['Box de 3 Pontas', 'Venda de Put', 'Venda Coberta'],
-        avoid: ['Compra de volatilidade'],
-        interpretation: 'Cenário favorável para vendedores de opções. Alta sustentada com gamma positivo dos dealers e volatilidade elevada, oferecendo prêmios atrativos com risco controlado. Box de 3 Pontas aproveita prêmios inflados com ganho garantido.',
+        name: 'Rally Saudavel',
+        structures: ['Covered Call', 'Put Write', 'Iron Condor'],
+        avoid: ['Compra de vol', 'Long Straddle'],
+        interpretation: 'Melhor cenario para vendedores de opcoes. Alta saudavel, vol alta, tempo sobrando.',
         direction: 'ALTA', intensity: 'CONTROLADA', urgency: 'BAIXA'
       },
       11: {
         gex: 'LONG', dex: 'POS', vex: 'BAIXO', tex: 'ALTO',
-        name: 'Subida Gradual Acelerada',
-        structures: ['Venda de Put', 'Collar de Alta'],
+        name: 'Grind Up Acelerado',
+        structures: ['Venda de Put OTM', 'Bull Put Spread'],
         avoid: ['Compra de opcoes caras'],
-        interpretation: 'Subida gradual com decaimento temporal acelerado. Baixa volatilidade e theta alto favorecem estratégias de venda de puts, com gamma positivo contendo variações bruscas.',
+        interpretation: 'Subida lenta com theta acelerado. Ideal para venda de puts.',
         direction: 'ALTA', intensity: 'LEVE', urgency: 'MODERADA'
       },
       12: {
         gex: 'LONG', dex: 'POS', vex: 'BAIXO', tex: 'BAIXO',
-        name: 'Subida Gradual',
-        structures: ['Venda de Put', 'Venda Coberta'],
-        avoid: ['Posições de volatilidade'],
-        interpretation: 'Cenário ideal de estabilidade altista. Gamma positivo, baixa vega e theta controlado indicam tendência de alta suave e sustentável, perfeito para buy and hold ou venda coberta.',
+        name: 'Grind Up Perfeito',
+        structures: ['PMCC', 'Call Diagonal', 'Covered Call longo'],
+        avoid: ['Straddle', 'Posicoes de vol'],
+        interpretation: 'Cenario ideal para buy and hold com opcoes. Tudo estavel e favoravel.',
         direction: 'ALTA', intensity: 'LEVE', urgency: 'BAIXA'
       },
       13: {
         gex: 'LONG', dex: 'NEG', vex: 'ALTO', tex: 'ALTO',
-        name: 'Correção Leve com Volatilidade',
-        structures: ['Broken Wing Butterfly', 'Collar de Baixa', 'Compra de Put'],
-        avoid: ['Posições de alta', 'Calls descobertas'],
-        interpretation: 'Correção controlada com alta volatilidade. Dealers long gamma limitam a queda, enquanto prêmios elevados favorecem broken wing butterfly bearish e proteção com puts. Vencimento próximo aumenta eficiência das estruturas.',
+        name: 'Correcao Suave + Vol',
+        structures: ['Iron Condor bearish', 'Venda de Call OTM'],
+        avoid: ['Long Call', 'Posicoes de alta'],
+        interpretation: 'Correcao controlada com vol alta. Bom para vender calls.',
         direction: 'QUEDA', intensity: 'CONTROLADA', urgency: 'MODERADA'
       },
       14: {
         gex: 'LONG', dex: 'NEG', vex: 'ALTO', tex: 'BAIXO',
-        name: 'Recuo Saudável',
-        structures: ['Collar de Baixa'],
-        avoid: ['Calls'],
-        interpretation: 'Pullback saudável e controlado. Gamma positivo dos dealers contém a queda, oferecendo oportunidade de proteção ou ajuste de posições longas sem pânico.',
+        name: 'Pullback Saudavel',
+        structures: ['Cash-Secured Put', 'Put Diagonal'],
+        avoid: ['Long OTM', 'Calls'],
+        interpretation: 'Pullback controlado. Oportunidade de entrar vendendo puts.',
         direction: 'QUEDA', intensity: 'CONTROLADA', urgency: 'BAIXA'
       },
       15: {
         gex: 'LONG', dex: 'NEG', vex: 'BAIXO', tex: 'ALTO',
-        name: 'Queda Gradual Acelerada',
-        structures: ['Collar de Baixa'],
-        avoid: ['Posições de alta'],
-        interpretation: 'Queda gradual com decaimento temporal forte. Baixa volatilidade e theta alto corroem valor de posições longas em opções, favorecendo estratégias defensivas.',
+        name: 'Grind Down Acelerado',
+        structures: ['Bear Call Spread', 'Venda de Call'],
+        avoid: ['Long stock', 'Calls'],
+        interpretation: 'Queda lenta com theta comendo. Venda de calls funciona.',
         direction: 'QUEDA', intensity: 'LEVE', urgency: 'MODERADA'
       },
       16: {
         gex: 'LONG', dex: 'NEG', vex: 'BAIXO', tex: 'BAIXO',
-        name: 'Queda Gradual Lenta',
-        structures: ['Collar de Baixa'],
-        avoid: ['Posições agressivas'],
-        interpretation: 'Queda muito lenta em mercado de baixa energia. Ausência de pressão de vega e theta indica movimento prolongado e sem aceleração, típico de consolidação bearish.',
+        name: 'Grind Down Lento',
+        structures: ['Put Calendar', 'Bear Put Diagonal'],
+        avoid: ['Posicoes agressivas', 'Long gamma'],
+        interpretation: 'Queda muito lenta. Mercado adormecido para baixo. Paciencia.',
         direction: 'QUEDA', intensity: 'LEVE', urgency: 'BAIXA'
       }
     };
 
+    // ============================================================
+    // VARIAVEIS GLOBAIS
+    // ============================================================
     let userToken = localStorage.getItem('geminii_token');
     if (!userToken) window.location.href = '/login.html';
 
@@ -806,6 +1034,281 @@
     let thetaData = null;
     let currentScenario = null;
 
+    // ============================================================
+    // CALCULADORA DE PAYOFF E BLACK-SCHOLES
+    // ============================================================
+    
+    // Black-Scholes simplificado para estimar greeks
+    function blackScholesGreeks(S, K, T, r, sigma, isCall) {
+      if (T <= 0) T = 0.001;
+      const d1 = (Math.log(S / K) + (r + 0.5 * sigma * sigma) * T) / (sigma * Math.sqrt(T));
+      const d2 = d1 - sigma * Math.sqrt(T);
+      
+      const normCDF = (x) => {
+        const t = 1 / (1 + 0.2316419 * Math.abs(x));
+        const d = 0.3989423 * Math.exp(-x * x / 2);
+        const prob = d * t * (0.3193815 + t * (-0.3565638 + t * (1.781478 + t * (-1.821256 + t * 1.330274))));
+        return x > 0 ? 1 - prob : prob;
+      };
+      
+      const normPDF = (x) => Math.exp(-0.5 * x * x) / Math.sqrt(2 * Math.PI);
+      
+      let delta, gamma, theta, vega;
+      
+      if (isCall) {
+        delta = normCDF(d1);
+        theta = (-S * normPDF(d1) * sigma / (2 * Math.sqrt(T)) - r * K * Math.exp(-r * T) * normCDF(d2)) / 365;
+      } else {
+        delta = normCDF(d1) - 1;
+        theta = (-S * normPDF(d1) * sigma / (2 * Math.sqrt(T)) + r * K * Math.exp(-r * T) * normCDF(-d2)) / 365;
+      }
+      
+      gamma = normPDF(d1) / (S * sigma * Math.sqrt(T));
+      vega = S * normPDF(d1) * Math.sqrt(T) / 100;
+      
+      return { delta, gamma, theta, vega };
+    }
+
+    function calculatePayoff(structure, spotPrice, scenario) {
+      const S = spotPrice;
+      const T = (scenario.raw?.texDays || 30) / 365; // Dias até vencimento
+      const r = 0.1375; // Taxa Selic
+      const sigma = (scenario.raw?.vexRisk === 'HIGH' ? 0.45 : scenario.raw?.vexRisk === 'MODERATE' ? 0.30 : 0.20);
+      
+      // Range de preços para o gráfico (±20% do spot)
+      const minPrice = S * 0.80;
+      const maxPrice = S * 1.20;
+      const priceRange = [];
+      const payoffValues = [];
+      
+      for (let price = minPrice; price <= maxPrice; price += (maxPrice - minPrice) / 100) {
+        priceRange.push(price);
+        
+        let totalPayoff = 0;
+        let totalDelta = 0;
+        let totalGamma = 0;
+        let totalTheta = 0;
+        let totalVega = 0;
+        
+        structure.legs.forEach(leg => {
+          const K = leg.strike;
+          const isCall = leg.type === 'Call';
+          const multiplier = leg.action === 'Compra' ? 1 : -1;
+          
+          // Payoff no vencimento
+          let intrinsic = 0;
+          if (isCall) {
+            intrinsic = Math.max(0, price - K);
+          } else {
+            intrinsic = Math.max(0, K - price);
+          }
+          
+          totalPayoff += intrinsic * multiplier;
+          
+          // Greeks estimados
+          const greeks = blackScholesGreeks(price, K, T, r, sigma, isCall);
+          totalDelta += greeks.delta * multiplier;
+          totalGamma += greeks.gamma * multiplier;
+          totalTheta += greeks.theta * multiplier;
+          totalVega += greeks.vega * multiplier;
+        });
+        
+        payoffValues.push(totalPayoff);
+        
+        // Salvar greeks no spot price atual
+        if (Math.abs(price - S) < (maxPrice - minPrice) / 200) {
+          structure.greeks = {
+            delta: totalDelta,
+            gamma: totalGamma,
+            theta: totalTheta,
+            vega: totalVega
+          };
+        }
+      }
+      
+      // Calcular métricas
+      const maxProfit = Math.max(...payoffValues);
+      const maxLoss = Math.min(...payoffValues);
+      
+      // Breakevens (onde payoff = 0)
+      const breakevens = [];
+      for (let i = 1; i < payoffValues.length; i++) {
+        if ((payoffValues[i-1] < 0 && payoffValues[i] >= 0) || 
+            (payoffValues[i-1] >= 0 && payoffValues[i] < 0)) {
+          breakevens.push(priceRange[i]);
+        }
+      }
+      
+      return {
+        priceRange,
+        payoffValues,
+        metrics: {
+          maxProfit: maxProfit === Infinity ? 'Ilimitado' : `R$ ${maxProfit.toFixed(2)}`,
+          maxLoss: maxLoss === -Infinity ? 'Ilimitado' : `R$ ${Math.abs(maxLoss).toFixed(2)}`,
+          breakevens: breakevens.map(b => `R$ ${b.toFixed(2)}`).join(', ') || 'N/A',
+          riskReward: maxLoss < 0 ? (maxProfit / Math.abs(maxLoss)).toFixed(2) : 'N/A'
+        }
+      };
+    }
+
+    function openPayoffModal(structure, scenario) {
+      const modal = document.getElementById('payoffModal');
+      const spotPrice = gammaData?.spot_price || 0;
+      
+      // Atualizar título
+      document.getElementById('payoffTitle').textContent = structure.name;
+      document.getElementById('payoffSubtitle').textContent = structure.logic;
+      
+      // Calcular payoff
+      const payoffData = calculatePayoff(structure, spotPrice, scenario);
+      
+      // Renderizar gráfico
+      renderPayoffChart(payoffData, spotPrice);
+      
+      // Renderizar métricas
+      renderPayoffMetrics(payoffData.metrics);
+      
+      // Renderizar pernas
+      renderPayoffLegs(structure.legs, spotPrice);
+      
+      // Renderizar greeks
+      if (structure.greeks) {
+        document.getElementById('structureDelta').textContent = structure.greeks.delta.toFixed(3);
+        document.getElementById('structureGamma').textContent = structure.greeks.gamma.toFixed(4);
+        document.getElementById('structureTheta').textContent = structure.greeks.theta.toFixed(2);
+        document.getElementById('structureVega').textContent = structure.greeks.vega.toFixed(2);
+      }
+      
+      modal.classList.add('active');
+    }
+
+    function closePayoffModal() {
+      document.getElementById('payoffModal').classList.remove('active');
+    }
+
+    function renderPayoffChart(payoffData, spotPrice) {
+      const trace = {
+        x: payoffData.priceRange,
+        y: payoffData.payoffValues,
+        type: 'scatter',
+        mode: 'lines',
+        fill: 'tozeroy',
+        line: {
+          color: '#ba39af',
+          width: 3
+        },
+        fillcolor: 'rgba(186, 57, 175, 0.1)',
+        name: 'P&L'
+      };
+      
+      // Linha vertical no spot price
+      const spotLine = {
+        x: [spotPrice, spotPrice],
+        y: [Math.min(...payoffData.payoffValues), Math.max(...payoffData.payoffValues)],
+        type: 'scatter',
+        mode: 'lines',
+        line: {
+          color: '#06b6d4',
+          width: 2,
+          dash: 'dash'
+        },
+        name: 'Spot Atual'
+      };
+      
+      const layout = {
+        paper_bgcolor: 'rgba(0,0,0,0)',
+        plot_bgcolor: 'rgba(0,0,0,0)',
+        font: { color: '#888888', family: 'Inter, sans-serif', size: 11 },
+        margin: { l: 60, r: 20, t: 30, b: 50 },
+        height: 400,
+        xaxis: {
+          title: 'Preço do Ativo',
+          gridcolor: 'rgba(255,255,255,0.08)',
+          color: '#888888',
+          showgrid: true,
+          zeroline: false
+        },
+        yaxis: {
+          title: 'Lucro / Prejuízo (R$)',
+          gridcolor: 'rgba(255,255,255,0.08)',
+          color: '#888888',
+          showgrid: true,
+          zeroline: true,
+          zerolinecolor: 'rgba(255,255,255,0.3)',
+          zerolinewidth: 2
+        },
+        showlegend: true,
+        legend: {
+          font: { color: '#ffffff' },
+          bgcolor: 'rgba(0,0,0,0.5)',
+          bordercolor: 'rgba(255,255,255,0.2)',
+          borderwidth: 1
+        },
+        hovermode: 'x unified',
+        hoverlabel: {
+          bgcolor: 'rgba(20, 20, 20, 0.95)',
+          bordercolor: '#ba39af',
+          font: { family: 'Inter, sans-serif', size: 13, color: '#ffffff' }
+        }
+      };
+      
+      const config = { responsive: true, displayModeBar: false, displaylogo: false };
+      
+      Plotly.newPlot('payoffChart', [trace, spotLine], layout, config);
+    }
+
+    function renderPayoffMetrics(metrics) {
+      const container = document.getElementById('payoffMetrics');
+      container.innerHTML = `
+        <div class="payoff-metric">
+          <div class="payoff-metric-label">Lucro Máximo</div>
+          <div class="payoff-metric-value text-green-400">${metrics.maxProfit}</div>
+        </div>
+        <div class="payoff-metric">
+          <div class="payoff-metric-label">Perda Máxima</div>
+          <div class="payoff-metric-value text-red-400">${metrics.maxLoss}</div>
+        </div>
+        <div class="payoff-metric">
+          <div class="payoff-metric-label">Breakeven(s)</div>
+          <div class="payoff-metric-value text-cyan-400" style="font-size: 14px;">${metrics.breakevens}</div>
+        </div>
+        <div class="payoff-metric">
+          <div class="payoff-metric-label">Risco/Retorno</div>
+          <div class="payoff-metric-value text-amber-400">${metrics.riskReward}</div>
+        </div>
+      `;
+    }
+
+    function renderPayoffLegs(legs, spotPrice) {
+      const container = document.getElementById('payoffLegsBreakdown');
+      container.innerHTML = legs.map(leg => {
+        const moneyness = leg.type === 'Call' 
+          ? (spotPrice < leg.strike ? 'OTM' : spotPrice > leg.strike ? 'ITM' : 'ATM')
+          : (spotPrice > leg.strike ? 'OTM' : spotPrice < leg.strike ? 'ITM' : 'ATM');
+        
+        const moneynessColor = moneyness === 'ITM' ? 'text-green-400' : moneyness === 'OTM' ? 'text-red-400' : 'text-yellow-400';
+        
+        return `
+          <div class="payoff-leg">
+            <div class="flex items-center gap-3">
+              <span class="${leg.action === 'Compra' ? 'text-green-400' : 'text-red-400'} font-bold text-sm">
+                ${leg.action}
+              </span>
+              <span class="text-gray-300 text-sm">${leg.type} R$ ${leg.strike}</span>
+              ${leg.note ? `<span class="text-gray-500 text-xs">(${leg.note})</span>` : ''}
+            </div>
+            <span class="${moneynessColor} text-xs font-semibold">${moneyness}</span>
+          </div>
+        `;
+      }).join('');
+    }
+
+    window.closePayoffModal = closePayoffModal;
+    window.openPayoffModal = openPayoffModal;
+
+    // ============================================================
+    // FUNCOES UTILITARIAS
+    // ============================================================
     function formatLargeNumber(value) {
       if (value === null || value === undefined) return '--';
       const absValue = Math.abs(value);
@@ -836,42 +1339,39 @@
       }
     }
 
+    // ============================================================
+    // CLASSIFICACAO DO CENARIO
+    // ============================================================
     function classifyScenario(gamma, delta, vega, theta) {
-      // ✅ USA O REGIME DA API
-      const gexRegime = gamma?.regime || 'Long Gamma';
-      const gexSign = gexRegime.includes('Short') ? 'SHORT' : 'LONG';
+      // Classificar GEX
+      const gexValue = gamma?.gex_levels?.total_gex_descoberto || 0;
+      const gexSign = gexValue < 0 ? 'SHORT' : 'LONG';
       
+      // Classificar DEX
       const dexValue = delta?.dex_levels?.total_dex_descoberto || 0;
       const dexSign = dexValue > 0 ? 'POS' : 'NEG';
       
+      // Classificar VEX
       const vexRisk = vega?.vol_regime?.volatility_risk || 'LOW';
-      const vexLevel = (vexRisk === 'HIGH') ? 'ALTO' : 'BAIXO';  
+      const vexLevel = (vexRisk === 'HIGH' || vexRisk === 'MODERATE') ? 'ALTO' : 'BAIXO';
       
+      // Classificar TEX
       const texDays = theta?.decay_regime?.weighted_days || 30;
-      const texPressure = theta?.decay_regime?.time_pressure || 'LOW';
-      const texLevel = (texPressure === 'HIGH') ? 'ALTO' : 'BAIXO';
+      const texLevel = texDays < 20 ? 'ALTO' : 'BAIXO';
       
-      // Busca o cenário na tabela
+      // Encontrar cenario correspondente
       for (let i = 1; i <= 16; i++) {
         const s = SCENARIOS_TABLE[i];
         if (s.gex === gexSign && s.dex === dexSign && s.vex === vexLevel && s.tex === texLevel) {
           return {
             number: i,
             ...s,
-            raw: { 
-              gexValue: gamma?.gex_levels?.total_gex_descoberto || 0,
-              dexValue, 
-              vexRisk, 
-              texDays, 
-              gexSign, 
-              dexSign, 
-              vexLevel, 
-              texLevel 
-            }
+            raw: { gexValue, dexValue, vexRisk, texDays, gexSign, dexSign, vexLevel, texLevel }
           };
         }
       }
       
+      // Fallback
       return { number: 0, name: 'Indefinido', raw: { gexSign, dexSign, vexLevel, texLevel } };
     }
 
@@ -879,30 +1379,37 @@
       let alignedFactors = 0;
       let intensityScore = 0;
       
+      // Verificar alinhamento direcional
       const gexValue = gamma?.gex_levels?.total_gex_descoberto || 0;
       const dexValue = delta?.dex_levels?.total_dex_descoberto || 0;
       const direction = scenario.direction;
       
-      if (direction === 'ALTA' && gexValue < 0) alignedFactors++;
-      if (direction === 'QUEDA' && gexValue < 0) alignedFactors++;
-      if (direction === 'ALTA' && gexValue > 0) alignedFactors++;
-      if (direction === 'QUEDA' && gexValue > 0) alignedFactors++;
+      // GEX alinhado com direcao?
+      if (direction === 'ALTA' && gexValue < 0) alignedFactors++; // Short gamma + alta = squeeze
+      if (direction === 'QUEDA' && gexValue < 0) alignedFactors++; // Short gamma + queda = crash
+      if (direction === 'ALTA' && gexValue > 0) alignedFactors++; // Long gamma + alta = controlado
+      if (direction === 'QUEDA' && gexValue > 0) alignedFactors++; // Long gamma + queda = controlado
       
+      // DEX alinhado com direcao?
       if (direction === 'ALTA' && dexValue > 0) alignedFactors++;
       if (direction === 'QUEDA' && dexValue < 0) alignedFactors++;
       
+      // VEX intenso?
       const vexRisk = vega?.vol_regime?.volatility_risk || 'LOW';
       if (vexRisk === 'HIGH' || vexRisk === 'MODERATE') intensityScore++;
       
+      // TEX pressionando?
       const texDays = theta?.decay_regime?.weighted_days || 30;
       if (texDays < 20) intensityScore++;
       
+      // Magnitude dos sinais
       const gexMagnitude = Math.abs(gexValue);
       const dexMagnitude = Math.abs(dexValue);
       
       if (gexMagnitude > 5000000000) intensityScore++;
       if (dexMagnitude > 200000000) intensityScore++;
       
+      // Calcular forca total
       const totalScore = alignedFactors + intensityScore;
       
       if (totalScore >= 5) {
@@ -914,54 +1421,137 @@
       }
     }
 
-    async function calculateStructuresReal(scenario, gamma, delta) {
-      const ticker = document.getElementById('tickerInput').value.trim().toUpperCase();
+    // ============================================================
+    // CALCULAR ESTRUTURAS DINAMICAS
+    // ============================================================
+    function calculateStructures(scenario, gamma, delta) {
+      const spotPrice = gamma?.spot_price || 0;
+      const flipStrike = gamma?.flip_strike || spotPrice;
+      const gexSign = scenario.raw?.gexSign || 'LONG';
+      const vexLevel = scenario.raw?.vexLevel || 'BAIXO';
       
-      try {
-        const response = await fetch('/api/oplab/estruturas-inteligentes', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${userToken}`
-          },
-          body: JSON.stringify({
-            ticker: ticker,
-            spot_price: gamma?.spot_price || 0,
-            flip_strike: gamma?.flip_strike || 0,
-            gex_descoberto: gamma?.gex_levels?.total_gex_descoberto || 0,
-            cenario: {
-              name: scenario.name,
-              direction: scenario.direction,
-              number: scenario.number
-            }
-          })
-        });
+      // Arredondar para strikes validos
+      const roundStrike = (price) => Math.round(price);
+      
+      const structures = [];
+      
+      // LONG GAMMA = Venda de opcoes (mercado controlado)
+      // SHORT GAMMA = Compra de opcoes (mercado explosivo)
+      
+      if (gexSign === 'LONG') {
+        // Mercado controlado - estruturas de VENDA
         
-        const data = await response.json();
-        
-        if (!response.ok || !data.success) {
-          console.error('Erro estruturas reais:', data.error || data.message);
-          return [];
+        if (scenario.direction === 'ALTA') {
+          // Rally controlado - vender puts, covered calls
+          structures.push({
+            name: 'Cash-Secured Put',
+            primary: true,
+            legs: [
+              { action: 'Vende', type: 'Put', strike: roundStrike(spotPrice - 3) }
+            ],
+            logic: `Mercado em long gamma sobe controlado. Vende put OTM e coleta premio. Se exercido, compra mais barato.`
+          });
+          
+          structures.push({
+            name: 'Iron Condor Bullish',
+            primary: false,
+            legs: [
+              { action: 'Vende', type: 'Put', strike: roundStrike(spotPrice - 4) },
+              { action: 'Compra', type: 'Put', strike: roundStrike(spotPrice - 8) },
+              { action: 'Vende', type: 'Call', strike: roundStrike(spotPrice + 6) },
+              { action: 'Compra', type: 'Call', strike: roundStrike(spotPrice + 10) }
+            ],
+            logic: 'Long gamma = baixa vol realizada. Vende asas e coleta theta. Asa de put mais apertada (vies alta).'
+          });
+          
+        } else {
+          // Correcao controlada - vender calls
+          structures.push({
+            name: 'Bear Call Spread',
+            primary: true,
+            legs: [
+              { action: 'Vende', type: 'Call', strike: roundStrike(spotPrice + 2) },
+              { action: 'Compra', type: 'Call', strike: roundStrike(spotPrice + 6) }
+            ],
+            logic: `Mercado em long gamma cai controlado. Vende call spread e coleta premio na queda.`
+          });
+          
+          structures.push({
+            name: 'Iron Condor Bearish',
+            primary: false,
+            legs: [
+              { action: 'Vende', type: 'Put', strike: roundStrike(spotPrice - 6) },
+              { action: 'Compra', type: 'Put', strike: roundStrike(spotPrice - 10) },
+              { action: 'Vende', type: 'Call', strike: roundStrike(spotPrice + 3) },
+              { action: 'Compra', type: 'Call', strike: roundStrike(spotPrice + 7) }
+            ],
+            logic: 'Long gamma = baixa vol realizada. Vende asas e coleta theta. Asa de call mais apertada (vies baixa).'
+          });
         }
         
-        return data.data.estruturas.map(est => ({
-          name: est.name,
-          primary: est.primary || false,
-          tipo_operacao: est.tipo_operacao,
-          legs: est.legs,
-          logic: est.logic,
-          reasoning: est.reasoning,
-          ideal_conditions: est.ideal_conditions,
-          max_profit: est.max_profit,
-          max_loss: est.max_loss
-        }));
+      } else {
+        // SHORT GAMMA = Mercado explosivo - estruturas de COMPRA
         
-      } catch (error) {
-        console.error('Erro requisicao estruturas:', error);
-        return [];
+        if (scenario.direction === 'ALTA') {
+          // Squeeze bullish - comprar calls
+          const callBuy = roundStrike(Math.max(flipStrike, spotPrice - 1));
+          const callSell = roundStrike(callBuy + 6);
+          
+          structures.push({
+            name: 'Call Spread',
+            primary: true,
+            legs: [
+              { action: 'Compra', type: 'Call', strike: callBuy },
+              { action: 'Vende', type: 'Call', strike: callSell }
+            ],
+            logic: `Short gamma = movimento explosivo. Compra call no flip (R$ ${callBuy}), vende acima. Risco limitado.`
+          });
+          
+          if (scenario.urgency !== 'CRITICA') {
+            structures.push({
+              name: 'Call Diagonal',
+              primary: false,
+              legs: [
+                { action: 'Compra', type: 'Call', strike: roundStrike(spotPrice - 2), note: 'venc. longo' },
+                { action: 'Vende', type: 'Call', strike: roundStrike(spotPrice + 4), note: 'venc. curto' }
+              ],
+              logic: 'Theta trabalha a favor. Se subir devagar, ganha nas duas pontas. Se explodir, call longa captura.'
+            });
+          }
+          
+        } else {
+          // Crash - comprar puts
+          const putBuy = roundStrike(spotPrice - 2);
+          const putSell = roundStrike(putBuy - 6);
+          
+          structures.push({
+            name: 'Put Spread',
+            primary: true,
+            legs: [
+              { action: 'Compra', type: 'Put', strike: putBuy },
+              { action: 'Vende', type: 'Put', strike: putSell }
+            ],
+            logic: `Short gamma = queda explosiva. Compra put proximo, vende abaixo. Captura aceleracao.`
+          });
+          
+          structures.push({
+            name: 'Bear Put Spread',
+            primary: false,
+            legs: [
+              { action: 'Compra', type: 'Put', strike: roundStrike(spotPrice) },
+              { action: 'Vende', type: 'Put', strike: roundStrike(spotPrice - 8) }
+            ],
+            logic: 'Spread mais largo para capturar movimento maior. Maior custo, maior ganho potencial.'
+          });
+        }
       }
+      
+      return structures;
     }
 
+    // ============================================================
+    // CALCULAR ALERTAS DINAMICOS
+    // ============================================================
     function calculateAlerts(scenario, gamma, delta, vega, theta) {
       const alerts = [];
       const spotPrice = gamma?.spot_price || 0;
@@ -970,168 +1560,66 @@
       const ivAtual = vega?.vol_regime?.weighted_iv || 0;
       const diasVenc = theta?.decay_regime?.weighted_days || 30;
       
-      // ✅ IDENTIFICAR REGIME ATUAL
-      const currentRegime = gamma?.regime || 'Long Gamma';
-      const isShortGamma = currentRegime.toLowerCase().includes('short');
-      
-      // ✅ CALCULAR BARREIRAS INTELIGENTES
-      const barriers = calculateSmartBarriers(spotPrice, flipStrike, isShortGamma, scenario.direction);
-      
-      // ═══════════════════════════════════════════════════════════
-      // 🎯 ALERTAS BASEADOS NO REGIME ATUAL
-      // ═══════════════════════════════════════════════════════════
-      
-      if (isShortGamma) {
-        // ━━━ SHORT GAMMA: Movimento pode AMPLIFICAR ━━━
-        
-        // Alerta principal do regime
-        alerts.push({
-          type: 'danger',
-          title: `Regime Atual: SHORT GAMMA (${scenario.direction === 'ALTA' ? 'Explosivo' : 'Crash'})`,
-          message: `Dealers vão ${scenario.direction === 'ALTA' ? 'COMPRAR' : 'VENDER'} agressivamente conforme movimento se desenvolve, AMPLIFICANDO a direção. Zona de alta volatilidade.`
-        });
-        
-        // Barreira de aceleração (direção do cenário)
-        if (scenario.direction === 'ALTA') {
-          alerts.push({
-            type: 'warning',
-            title: 'Barreira de Aceleração',
-            message: `Acima de R$ ${barriers.acceleration.toFixed(2)}: Squeeze pode se intensificar. Dealers forçados a comprar mais ações.`
-          });
-        } else {
-          alerts.push({
-            type: 'warning',
-            title: 'Barreira de Aceleração',
-            message: `Abaixo de R$ ${barriers.acceleration.toFixed(2)}: Queda pode acelerar. Dealers forçados a vender mais ações.`
-          });
-        }
-        
-        // Barreira de mudança de regime (flip)
-        alerts.push({
-          type: 'info',
-          title: 'Mudança de Regime',
-          message: `Se ${spotPrice > flipStrike ? 'cair abaixo' : 'romper acima'} de R$ ${barriers.regimeChange.toFixed(2)}, muda para LONG GAMMA. Movimento volta a ser contido pelos dealers.`
-        });
-        
-      } else {
-        // ━━━ LONG GAMMA: Movimento será CONTIDO ━━━
-        
-        // Alerta principal do regime
-        alerts.push({
-          type: 'success',
-          title: `Regime Atual: LONG GAMMA (${scenario.direction === 'ALTA' ? 'Controlado' : 'Amortecido'})`,
-          message: `Dealers vão ${scenario.direction === 'ALTA' ? 'VENDER' : 'COMPRAR'} conforme movimento se desenvolve, CONTENDO extremos. Zona de estabilidade.`
-        });
-        
-        // Barreira de contenção (onde dealers intensificam)
-        if (scenario.direction === 'ALTA') {
-          alerts.push({
-            type: 'info',
-            title: 'Barreira de Contenção',
-            message: `Acima de R$ ${barriers.resistance.toFixed(2)}: Resistência forte. Dealers aumentam vendas para conter alta.`
-          });
-        } else {
-          alerts.push({
-            type: 'info',
-            title: 'Barreira de Suporte',
-            message: `Abaixo de R$ ${barriers.support.toFixed(2)}: Suporte forte. Dealers aumentam compras para conter queda.`
-          });
-        }
-        
-        // Barreira de mudança de regime (flip)
+      // Alerta de Flip
+      const flipDistance = ((spotPrice - flipStrike) / spotPrice * 100).toFixed(2);
+      if (Math.abs(flipDistance) < 2) {
         alerts.push({
           type: 'warning',
-          title: 'Mudança de Regime',
-          message: `Se ${spotPrice > flipStrike ? 'cair abaixo' : 'romper acima'} de R$ ${barriers.regimeChange.toFixed(2)}, muda para SHORT GAMMA. Movimento pode se tornar explosivo.`
+          title: 'Proximo do Gamma Flip',
+          message: `Spot esta a apenas ${Math.abs(flipDistance)}% do flip (R$ ${flipStrike.toFixed(2)}). Rompimento pode mudar regime.`
         });
       }
       
- 
-      // DEX: Pressão direcional
-      if (Math.abs(dexValue) > 200000000) {
+      // Alerta de inversao
+      if (scenario.direction === 'ALTA') {
+        const invalidation = Math.round(flipStrike - 2);
         alerts.push({
-          type: 'info',
-          title: `Pressão ${dexValue > 0 ? 'Compradora' : 'Vendedora'} Forte`,
-          message: `DEX descoberto em ${formatLargeNumber(dexValue)}. ${dexValue > 0 ? 'Viés altista' : 'Viés baixista'} robusto dos MMs.`
+          type: 'danger',
+          title: 'Nivel de Invalidacao',
+          message: `Se perder R$ ${invalidation}, cenario muda para QUEDA. Considere stop ou hedge.`
         });
-      } else if (Math.abs(dexValue) < 50000000) {
+      } else {
+        const invalidation = Math.round(flipStrike + 2);
+        alerts.push({
+          type: 'danger',
+          title: 'Nivel de Invalidacao',
+          message: `Se romper R$ ${invalidation}, cenario muda para ALTA. Revise posicoes vendidas.`
+        });
+      }
+      
+      // Alerta de DEX
+      if (Math.abs(dexValue) < 50000000) {
         alerts.push({
           type: 'info',
           title: 'DEX Fraco',
-          message: 'Pressão direcional fraca. Viés pode mudar facilmente.'
+          message: 'Pressao direcional fraca. Vies pode mudar facilmente.'
         });
       }
       
-      // TEX: Pressão temporal
-      if (diasVenc < 7) {
-        alerts.push({
-          type: 'danger',
-          title: 'Theta CRÍTICO',
-          message: `Apenas ${Math.round(diasVenc)} dias até vencimento! Decay exponencial. Posições compradas sangram rapidamente.`
-        });
-      } else if (diasVenc < 14) {
+      // Alerta de Theta
+      if (diasVenc < 14) {
         alerts.push({
           type: 'warning',
           title: 'Theta Acelerado',
-          message: `${Math.round(diasVenc)} dias até vencimento. Theta começa a acelerar. Atenção em posições long.`
+          message: `Apenas ${diasVenc} dias ate vencimento. Theta comeca a acelerar exponencialmente.`
         });
       }
       
-      // VEX: Volatilidade implícita
+      // Alerta de IV
       if (ivAtual > 50) {
         alerts.push({
           type: 'info',
           title: 'IV Elevada',
-          message: `IV em ${ivAtual.toFixed(1)}%. Opções caras. ${scenario.vex === 'ALTO' ? 'Ideal para vender volatilidade.' : 'Considere estruturas de venda.'}`
-        });
-      } else if (ivAtual < 20) {
-        alerts.push({
-          type: 'info',
-          title: 'IV Comprimida',
-          message: `IV em ${ivAtual.toFixed(1)}%. Opções baratas. Possível explosão de volatilidade à frente.`
+          message: 'Volatilidade implicita alta. Opcoes estao caras. Considere estruturas de venda.'
         });
       }
       
       return alerts;
     }
 
-    function calculateSmartBarriers(spot, flip, isShortGamma, direction) {
-      const barriers = {};
-      
-      if (isShortGamma) {
-        // SHORT GAMMA: Spot está ABAIXO do flip
-        
-        // Barreira de aceleração (próxima barreira na direção do movimento)
-        if (direction === 'ALTA') {
-          // Próximo strike psicológico acima (arredonda para cima)
-          barriers.acceleration = Math.ceil(spot / 0.50) * 0.50 + 0.50;
-        } else {
-          // Próximo strike psicológico abaixo (arredonda para baixo)
-          barriers.acceleration = Math.floor(spot / 0.50) * 0.50 - 0.50;
-        }
-        
-        // Barreira de mudança de regime = Gamma Flip + margem
-        barriers.regimeChange = flip + 0.25;
-        
-      } else {
-        // LONG GAMMA: Spot está ACIMA do flip
-        
-        // Barreiras de contenção (onde dealers atuam mais forte)
-        if (direction === 'ALTA') {
-          // Resistência: próximo strike redondo acima + 2%
-          barriers.resistance = Math.ceil(spot / 1.00) * 1.00 + (spot * 0.02);
-        } else {
-          // Suporte: próximo strike redondo abaixo - 2%
-          barriers.support = Math.floor(spot / 1.00) * 1.00 - (spot * 0.02);
-        }
-        
-        // Barreira de mudança de regime = Gamma Flip - margem
-        barriers.regimeChange = flip - 0.25;
-      }
-      
-      return barriers;
-    }
-    
+    // ============================================================
+    // RENDERIZACAO
+    // ============================================================
     function renderMasterTable(activeScenario) {
       const tbody = document.getElementById('masterTableBody');
       tbody.innerHTML = '';
@@ -1159,9 +1647,11 @@
     }
 
     function renderDiagnostic(scenario, signalStrength) {
+      // Nome e numero
       document.getElementById('scenarioName').textContent = scenario.name || '--';
       document.getElementById('scenarioNumber').textContent = `Cenario #${scenario.number || '--'}`;
       
+      // Indicadores
       const gexInd = document.getElementById('gexIndicator');
       const dexInd = document.getElementById('dexIndicator');
       const vexInd = document.getElementById('vexIndicator');
@@ -1179,17 +1669,21 @@
       texInd.textContent = scenario.raw?.texLevel || '--';
       texInd.className = `dim-indicator ${scenario.raw?.texLevel === 'ALTO' ? 'dim-high' : 'dim-low'}`;
       
+      // Interpretacao
       document.getElementById('scenarioInterpretation').textContent = scenario.interpretation || '--';
       
+      // Forca do Sinal
       const strengthEl = document.getElementById('signalStrength');
       strengthEl.textContent = signalStrength.level;
       strengthEl.className = `text-2xl font-black ${signalStrength.class}`;
       document.getElementById('signalDescription').textContent = signalStrength.description;
       
+      // Direcao
       const dirEl = document.getElementById('probableDirection');
       dirEl.textContent = scenario.direction || '--';
       dirEl.className = `text-2xl font-black ${scenario.direction === 'ALTA' ? 'text-green-400' : 'text-red-400'}`;
       
+      // Intensidade
       document.getElementById('intensityLevel').textContent = scenario.intensity || '--';
     }
 
@@ -1201,57 +1695,25 @@
         const card = document.createElement('div');
         card.className = `structure-card ${struct.primary ? 'primary' : ''}`;
         
-        const legsHtml = struct.legs.map(leg => {
-          return `<div class="text-sm mb-2">
-            <div class="flex items-center gap-2">
-              <span class="${leg.action === 'Compra' ? 'text-green-400' : 'text-red-400'} font-semibold">${leg.action}</span>
-              <span class="text-gray-300">${leg.type}</span>
-              
-            </div>
-            ${leg.note ? `<div class="text-gray-500 text-xs ml-4 mt-1"><i class="fas fa-info-circle mr-1"></i>${leg.note}</div>` : ''}
-          </div>`;
-        }).join('');
-        
-        const reasoningHtml = struct.reasoning ? `
-          <div class="reasoning-box">
-            <div class="text-xs font-semibold text-blue-400 mb-1">
-              <i class="fas fa-lightbulb mr-1"></i>Por que funciona?
-            </div>
-            <div class="text-xs text-gray-300">${struct.reasoning}</div>
-          </div>
-        ` : '';
-
-        const conditionsHtml = struct.ideal_conditions ? `
-          <div class="conditions-box">
-            <div class="text-xs font-semibold text-amber-400 mb-1">
-              <i class="fas fa-check-circle mr-1"></i>Condições ideais
-            </div>
-            <div class="text-xs text-gray-300">${struct.ideal_conditions}</div>
-          </div>
-        ` : '';
-
-        const metricsHtml = `
-          <div class="mt-3 pt-3 border-t border-white/10 text-xs text-gray-500 space-y-1">
-            
-          </div>
-        `;
+        const legsHtml = struct.legs.map(leg => 
+          `<div class="flex items-center gap-2 text-sm">
+            <span class="${leg.action === 'Compra' ? 'text-green-400' : 'text-red-400'} font-semibold">${leg.action}</span>
+            <span class="text-gray-300">${leg.type} R$ ${leg.strike}</span>
+            ${leg.note ? `<span class="text-gray-500 text-xs">(${leg.note})</span>` : ''}
+          </div>`
+        ).join('');
         
         card.innerHTML = `
           <div class="flex items-center justify-between mb-3">
             <h4 class="font-bold text-white">${struct.name}</h4>
-            <div class="flex items-center gap-2">
-              ${struct.primary ? '<span class="text-xs bg-green-500/20 text-green-400 px-2 py-1 rounded">PRINCIPAL</span>' : ''}
-            </div>
+            ${struct.primary ? '<span class="text-xs bg-green-500/20 text-green-400 px-2 py-1 rounded">PRINCIPAL</span>' : ''}
           </div>
           <div class="space-y-1 mb-3">${legsHtml}</div>
-          <div class="text-xs text-gray-400 bg-black/20 p-3 rounded-lg">${struct.logic}</div>
-          ${reasoningHtml}
-          ${conditionsHtml}
-          ${metricsHtml}
-          <div class="educational-badge">
-            <i class="fas fa-graduation-cap mr-1"></i>
-            Material educacional
-          </div>
+          <div class="text-xs text-gray-400 mb-3">${struct.logic}</div>
+          <button class="view-payoff-btn" onclick='openPayoffModal(${JSON.stringify(struct)}, currentScenario)'>
+            <i class="fas fa-chart-line"></i>
+            Ver Gráfico de Payoff
+          </button>
         `;
         
         container.appendChild(card);
@@ -1290,13 +1752,17 @@
       });
     }
 
+    // ============================================================
+    // RENDERIZACAO DE GRAFICOS - PADRAO GEX FULL
+    // ============================================================
     function renderCharts() {
       if (typeof Plotly === 'undefined') {
-        console.error('Plotly nao carregado');
+        console.error('Plotly não carregado');
         return;
       }
 
       try {
+        // Renderizar cada gráfico completo usando o padrão GEX Full
         renderSingleChart('gexDescChart', gammaData.plot_json, 'GEX Descoberto');
         renderSingleChart('dexMomentumChart', deltaData.plot_json, 'DEX Momentum');
         renderSingleChart('vexDescChart', vegaData.plot_json, 'VEX Descoberto');
@@ -1309,19 +1775,21 @@
 
     function renderSingleChart(elementId, plotJson, title) {
       if (!plotJson) {
-        console.warn(`Plot JSON nao encontrado para ${elementId}`);
+        console.warn(`Plot JSON não encontrado para ${elementId}`);
         return;
       }
 
       try {
         const plotData = JSON.parse(plotJson);
         
+        // Configuração do gráfico - IGUAL AO GEX FULL
         const config = {
           responsive: true,
           displayModeBar: false,
           displaylogo: false
         };
 
+        // Layout customizado para gráfico individual - IGUAL AO GEX FULL
         const layout = {
           ...plotData.layout,
           height: 380,
@@ -1352,24 +1820,30 @@
           },
           showlegend: false,
           hovermode: 'x unified',
+          
+          // ============ CORES DO HOVER/TOOLTIP ============
           hoverlabel: {
-            bgcolor: 'rgba(20, 20, 20, 0.95)',
-            bordercolor: '#ba39af',
+            bgcolor: 'rgba(20, 20, 20, 0.95)',     // Fundo do tooltip - MUDA AQUI
+            bordercolor: '#ba39af',                 // Borda do tooltip - MUDA AQUI  
             font: {
               family: 'Inter, sans-serif',
-              size: 13,
-              color: '#ffffff'
+              size: 13,                             // Tamanho da fonte - MUDA AQUI
+              color: '#ffffff'                      // Cor do texto - MUDA AQUI (branco)
             }
           },
+          // ================================================
+          
           title: {
             text: '',
             font: { size: 14, color: '#ffffff' }
           },
-          annotations: []
+          annotations: [] // Remove todos os títulos de subplot
         };
 
+        // Criar o gráfico - IGUAL AO GEX FULL
         Plotly.newPlot(elementId, plotData.data, layout, config);
         
+        // Forçar resize após um pequeno delay - IGUAL AO GEX FULL
         setTimeout(() => {
           try {
             Plotly.Plots.resize(elementId);
@@ -1381,11 +1855,15 @@
       } catch (error) {
         console.error(`Erro ao renderizar ${elementId}:`, error);
         document.getElementById(elementId).innerHTML = 
-          '<div class="text-center text-red-400 text-xs p-4">Erro ao carregar grafico</div>';
+          '<div class="text-center text-red-400 text-xs p-4">Erro ao carregar gráfico</div>';
       }
     }
 
-    async function displayResults() {
+    // ============================================================
+    // DISPLAY PRINCIPAL
+    // ============================================================
+    function displayResults() {
+      // Metricas basicas
       document.getElementById('spotPrice').textContent = `R$ ${gammaData.spot_price?.toFixed(2) || '--'}`;
       document.getElementById('flipStrike').textContent = gammaData.flip_strike ? `R$ ${gammaData.flip_strike.toFixed(2)}` : 'N/A';
       document.getElementById('gexDescoberto').textContent = formatLargeNumber(gammaData.gex_levels?.total_gex_descoberto);
@@ -1393,13 +1871,15 @@
       document.getElementById('ivAtual').textContent = vegaData.vol_regime?.weighted_iv ? `${vegaData.vol_regime.weighted_iv.toFixed(1)}%` : '--';
       document.getElementById('diasVenc').textContent = thetaData.decay_regime?.weighted_days ? `${Math.round(thetaData.decay_regime.weighted_days)}d` : '--';
       
+      // Classificar cenario
       currentScenario = classifyScenario(gammaData, deltaData, vegaData, thetaData);
       const signalStrength = calculateSignalStrength(currentScenario, gammaData, deltaData, vegaData, thetaData);
       
+      // Renderizar componentes
       renderMasterTable(currentScenario.number);
       renderDiagnostic(currentScenario, signalStrength);
       
-      const structures = await calculateStructuresReal(currentScenario, gammaData, deltaData);
+      const structures = calculateStructures(currentScenario, gammaData, deltaData);
       renderStructures(structures);
       
       const alerts = calculateAlerts(currentScenario, gammaData, deltaData, vegaData, thetaData);
@@ -1411,6 +1891,9 @@
       document.getElementById('resultsSection').classList.remove('hidden');
     }
 
+    // ============================================================
+    // API CALLS
+    // ============================================================
     async function loadExpirations() {
       const ticker = document.getElementById('tickerInput').value.trim().toUpperCase();
       if (!ticker) { showStatus('Digite um ticker primeiro', 'error'); return; }
@@ -1478,7 +1961,7 @@
         if (!vegaRes.ok) throw new Error(vegaData.error);
         if (!thetaRes.ok) throw new Error(thetaData.error);
 
-        await displayResults();
+        displayResults();
         showStatus(`Analise 4D de ${ticker} concluida!`, 'success');
 
       } catch (error) {
@@ -1488,10 +1971,14 @@
       }
     }
 
+    // ============================================================
+    // EVENT LISTENERS
+    // ============================================================
     document.getElementById('loadExpirationsBtn').addEventListener('click', loadExpirations);
     document.getElementById('analyzeBtn').addEventListener('click', runFullAnalysis);
     document.getElementById('tickerInput').addEventListener('keypress', (e) => { if (e.key === 'Enter') runFullAnalysis(); });
 
+    // Resize handler - IGUAL AO GEX FULL + Mobile
     let resizeTimeout;
     window.addEventListener('resize', function() {
       if (document.getElementById('resultsSection').classList.contains('hidden')) return;
@@ -1500,6 +1987,7 @@
         ['gexDescChart', 'dexMomentumChart', 'vexDescChart', 'texCumChart'].forEach(id => {
           try { 
             Plotly.Plots.resize(id);
+            // Forçar redraw em mobile
             if (window.innerWidth < 768) {
               const element = document.getElementById(id);
               if (element && element.layout) {
@@ -1514,6 +2002,7 @@
       }, 200);
     });
 
+    // Detectar orientação em mobile
     window.addEventListener('orientationchange', function() {
       setTimeout(() => {
         ['gexDescChart', 'dexMomentumChart', 'vexDescChart', 'texCumChart'].forEach(id => {
@@ -1522,37 +2011,35 @@
       }, 300);
     });
 
+    // Init - IGUAL AO GEX FULL
     document.addEventListener('DOMContentLoaded', function() {
+      // Verificar se Plotly carregou
       if (typeof Plotly === 'undefined') {
-        console.error('Plotly nao carregou - tentando carregar alternativo');
+        console.error('Plotly não carregou - tentando carregar alternativo');
         const script = document.createElement('script');
         script.src = 'https://unpkg.com/plotly.js-dist@2.26.0/plotly.min.js';
         document.head.appendChild(script);
       }
       
-      renderMasterTable(0);
+      renderMasterTable(0); // Renderiza tabela vazia
       showStatus('Sistema Greeks Micro 4D carregado. Digite um ticker para comecar.', 'info');
+      
+      // Fechar modal clicando fora
+      document.getElementById('payoffModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+          closePayoffModal();
+        }
+      });
+      
+      // Fechar modal com ESC
+      document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+          closePayoffModal();
+        }
+      });
     });
 
   </script>
 
-    <!-- DISCLAIMER LEGAL -->
-  
-    <div class="mt-6 max-w-4xl mx-auto bg-red-900/20 border-2 border-red-500/40 rounded-xl p-6">
-        <div class="flex items-start gap-4">
-          <i class="fas fa-exclamation-triangle text-red-400 text-2xl mt-1 flex-shrink-0"></i>
-          <div class="text-left">
-            <h3 class="text-red-400 font-bold text-base mb-3">AVISO LEGAL IMPORTANTE</h3>
-            <p class="text-gray-300 text-xs leading-relaxed mb-3">
-              As informações e sinais fornecidos por esta ferramenta são de caráter educativo e informativo. <strong>Não constituem recomendação de investimento nem garantia de rentabilidade.</strong> Investimentos em valores mobiliários envolvem riscos de perda patrimonial. Rentabilidade passada não garante resultados futuros. Os modelos quantitativos utilizados são baseados em dados históricos e podem não capturar adequadamente mudanças nas condições de mercado. Recomendamos a consulta a profissionais qualificados antes de tomar decisões de investimento. <strong>Operações de swing trade e day trade envolvem alto risco e podem resultar em perdas significativas.</strong> Este tipo de operação requer conhecimento técnico e não é adequado para todos os perfis de investidor.
-            </p>
-            <div class="pt-3 border-t border-gray-700 text-gray-400 text-xs">
-              <p><strong>Geminii Research Ltda</strong> - CNPJ 60.897.331/0001-06 | Analista Responsável: Diego Doneda - CNPI 9668</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  
 </body>
 </html>

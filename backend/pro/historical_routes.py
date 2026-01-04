@@ -46,7 +46,7 @@ def create_historical_blueprint():
     @historical_bp.route('/analyze', methods=['POST'])
     def analyze_historical():
         """
-        🔥 ANÁLISE HISTÓRICA COMPLETA
+         ANÁLISE HISTÓRICA COMPLETA
         Retorna dados separados por data + insights gerenciais
         """
         try:
@@ -81,7 +81,7 @@ def create_historical_blueprint():
                 dates_count = len(result['available_dates'])
                 logging.info(f"✅ Análise concluída: {ticker} - {dates_count} datas disponíveis")
             else:
-                logging.error(f"❌ Análise retornou vazia: {ticker}")
+                logging.error(f" Análise retornou vazia: {ticker}")
                 return jsonify({
                     'error': 'Nenhuma data histórica encontrada',
                     'success': False
@@ -153,7 +153,7 @@ def create_historical_blueprint():
             logging.error(f"Erro ao buscar data específica: {e}")
             return jsonify({'error': str(e), 'success': False}), 500
 
-    # 🔥 NOVA ROTA: INSIGHTS ISOLADOS
+    #  NOVA ROTA: INSIGHTS ISOLADOS
     @historical_bp.route('/insights', methods=['POST'])
     def get_insights():
         """
@@ -245,7 +245,7 @@ def create_historical_blueprint():
     @historical_bp.route('/analyze', methods=['POST'])
     def analyze_historical():
         """
-        🔥 ANÁLISE HISTÓRICA COMPLETA
+         ANÁLISE HISTÓRICA COMPLETA
         Retorna dados separados por data + insights gerenciais
         """
         try:
@@ -276,7 +276,7 @@ def create_historical_blueprint():
             # Executar análise
             result = historical_service.analyze_historical_complete(ticker, vencimento, days_back)
             
-            # 🔥 LOG DETALHADO DO RESULTADO
+            #  LOG DETALHADO DO RESULTADO
             logging.info(f"📊 RESULTADO RECEBIDO:")
             logging.info(f"   - success: {result.get('success')}")
             logging.info(f"   - available_dates: {result.get('available_dates')}")
@@ -284,14 +284,14 @@ def create_historical_blueprint():
             
             # Validação mais robusta
             if not result:
-                logging.error(f"❌ Resultado é None")
+                logging.error(f" Resultado é None")
                 return jsonify({
                     'error': 'Análise retornou resultado vazio',
                     'success': False
                 }), 500
             
             if not result.get('success'):
-                logging.error(f"❌ success=False no resultado")
+                logging.error(f" success=False no resultado")
                 return jsonify({
                     'error': 'Análise não foi bem sucedida',
                     'success': False
@@ -300,7 +300,7 @@ def create_historical_blueprint():
             available_dates = result.get('available_dates', [])
             
             if not available_dates or len(available_dates) == 0:
-                logging.error(f"❌ available_dates vazio ou None: {available_dates}")
+                logging.error(f" available_dates vazio ou None: {available_dates}")
                 return jsonify({
                     'error': 'Nenhuma data histórica encontrada',
                     'details': f'Processamento concluído mas nenhuma data disponível',
@@ -317,7 +317,7 @@ def create_historical_blueprint():
             return jsonify({'error': str(e), 'success': False}), 400
         
         except Exception as e:
-            logging.error(f"❌ Erro na análise histórica: {e}", exc_info=True)
+            logging.error(f" Erro na análise histórica: {e}", exc_info=True)
             return jsonify({
                 'error': 'Erro interno na análise histórica',
                 'details': str(e),

@@ -87,7 +87,7 @@
     <div class="min-h-screen flex items-center justify-center p-4">
         <div class="w-full max-w-md">
             
-            <!-- 🔥 CONTAINER DE REGISTRO -->
+            <!--  CONTAINER DE REGISTRO -->
             <div id="registerContainer">
                 <!-- Header -->
                 <div class="text-center mb-8">
@@ -208,7 +208,7 @@
                 </div>
             </div>
 
-            <!-- 🔥 CONTAINER DE SUCESSO/CONFIRMAÇÃO -->
+            <!--  CONTAINER DE SUCESSO/CONFIRMAÇÃO -->
             <div id="successContainer" class="hidden">
                 <div class="success-container p-8 text-center">
                     <div class="email-icon">
@@ -286,7 +286,7 @@
     <script>
         let registeredUserData = null;
 
-        // 🔥 MOSTRAR CONTAINER DE SUCESSO
+        //  MOSTRAR CONTAINER DE SUCESSO
         function showSuccessContainer(userData) {
             registeredUserData = userData;
             
@@ -304,7 +304,7 @@
             document.getElementById('successContainer').classList.remove('hidden');
         }
 
-        // 🔥 REENVIAR EMAIL DE CONFIRMAÇÃO
+        //  REENVIAR EMAIL DE CONFIRMAÇÃO
         async function resendConfirmationEmail() {
             if (!registeredUserData) return;
 
@@ -346,7 +346,7 @@
             }
         }
 
-        // 🔥 IR PARA LOGIN
+        //  IR PARA LOGIN
         function goToLogin() {
             window.location.href = '/login';
         }
@@ -418,7 +418,7 @@
                 const data = await response.json();
                 
                 if (data.success) {
-                    // 🔥 MOSTRAR TELA DE CONFIRMAÇÃO
+                    //  MOSTRAR TELA DE CONFIRMAÇÃO
                     showSuccessContainer({
                         name: data.data.name,
                         email: data.data.email,

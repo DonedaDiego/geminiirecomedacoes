@@ -774,7 +774,7 @@ class VolatilityRegimesService:
             except Exception as e:
                 current_price = float(data['Close'].iloc[-1])
                 last_update_time = data['Date'].iloc[-1]
-                self.logger.error(f"❌ ERRO ao buscar dados recentes: {e}")
+                self.logger.error(f" ERRO ao buscar dados recentes: {e}")
                 self.logger.info(f"🔄 FALLBACK: R$ {current_price:.4f} (dados históricos)")
             
             # Processar dados através do pipeline

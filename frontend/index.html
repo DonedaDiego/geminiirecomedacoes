@@ -849,7 +849,7 @@
       userToken = null;
     }
 
-    // 🔥 CORREÇÃO DO BADGE DE PLANOS - FUNÇÃO showUserView()
+    //  CORREÇÃO DO BADGE DE PLANOS - FUNÇÃO showUserView()
 
     function showUserView(user) {
       document.getElementById('guestView').classList.add('hidden');
@@ -866,7 +866,7 @@
       const planBadge = document.getElementById('planBadge');
       const planId = user.plan_id || 3;
       
-      // 🔥 LÓGICA CORRIGIDA BASEADA NOS SEUS PLANOS
+      //  LÓGICA CORRIGIDA BASEADA NOS SEUS PLANOS
       if (planId === 3) {
         // Plano Básico/Gratuito
         planBadge.textContent = 'FREE';
@@ -889,7 +889,7 @@
         planBadge.className = 'plan-badge';
       }
       
-      // 🔥 ADICIONAL: Verificar se é trial ativo
+      //  ADICIONAL: Verificar se é trial ativo
       if (user.user_type === 'trial') {
         planBadge.textContent = 'TRIAL';
         planBadge.className = 'plan-badge strategic';

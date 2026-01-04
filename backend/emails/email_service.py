@@ -12,7 +12,7 @@ from database import get_db_connection
 
 class EmailService:
     def __init__(self):
-        # 🔥 SMTP CORPORATIVO CONFIG (Titan)
+        #  SMTP CORPORATIVO CONFIG (Titan)
         self.smtp_server = os.environ.get('SMTP_SERVER', 'smtp.titan.email')
         self.smtp_port = int(os.environ.get('SMTP_PORT', '465'))  # 465 para SSL (Titan)
         self.smtp_username = os.environ.get('EMAIL_USER', 'contato@geminii.com.br')
@@ -38,17 +38,17 @@ class EmailService:
                 print(f" Email inválido: campos obrigatórios em branco")
                 return False
                 
-            # 🔥 CRIAR MENSAGEM COM HEADERS ANTI-SPAM
+            #  CRIAR MENSAGEM COM HEADERS ANTI-SPAM
             msg = MIMEMultipart('alternative')
             
-            # 🔥 HEADERS ANTI-SPAM MELHORADOS
+            #  HEADERS ANTI-SPAM MELHORADOS
             msg['From'] = f"{self.from_name} <{self.from_email}>"
             msg['To'] = to_email
             msg['Subject'] = subject
             msg['Reply-To'] = self.from_email
             msg['Return-Path'] = self.from_email
             
-            # 🔥 HEADERS ADICIONAIS PARA EVITAR SPAM
+            #  HEADERS ADICIONAIS PARA EVITAR SPAM
             msg['Message-ID'] = f"<{secrets.token_urlsafe(16)}@geminii.com.br>"
             msg['Date'] = datetime.now().strftime('%a, %d %b %Y %H:%M:%S %z')
             msg['X-Mailer'] = 'Geminii Tech Notification System'
@@ -56,11 +56,11 @@ class EmailService:
             msg['X-MSMail-Priority'] = 'Normal'
             msg['Importance'] = 'Normal'
             
-            # 🔥 HEADERS ESPECÍFICOS PARA TITAN/HOSTINGER
+            #  HEADERS ESPECÍFICOS PARA TITAN/HOSTINGER
             msg['List-Unsubscribe'] = f'<mailto:{self.from_email}?subject=Unsubscribe>'
             msg['List-Unsubscribe-Post'] = 'List-Unsubscribe=One-Click'
             
-            # 🔥 VERSÃO TEXTO SIMPLES (OBRIGATÓRIA PARA ANTI-SPAM)
+            #  VERSÃO TEXTO SIMPLES (OBRIGATÓRIA PARA ANTI-SPAM)
             if not text_content:
                 # Gerar versão texto a partir do HTML
                 text_content = self.html_to_text(html_content)
@@ -138,7 +138,7 @@ class EmailService:
         warning_message = content_data.get('warning_message', '')
         footer_message = content_data.get('footer_message', '')
         
-        # 🔥 TEMPLATE HTML PROFISSIONAL E ANTI-SPAM
+        #  TEMPLATE HTML PROFISSIONAL E ANTI-SPAM
         html_template = f"""
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="pt-BR">
@@ -157,7 +157,7 @@ class EmailService:
     </noscript>
     <![endif]-->
     <style type="text/css">
-        /* 🔥 CSS ANTI-SPAM OTIMIZADO */
+        /*  CSS ANTI-SPAM OTIMIZADO */
         @media screen and (max-width: 600px) {{
             .container {{ width: 100% !important; }}
             .content {{ padding: 20px !important; }}
@@ -251,7 +251,7 @@ class EmailService:
     </style>
 </head>
 <body>
-    <!-- 🔥 PREHEADER INVISÍVEL PARA PREVIEW -->
+    <!--  PREHEADER INVISÍVEL PARA PREVIEW -->
     <div class="preheader">
         {main_message[:50]}...
     </div>
@@ -678,7 +678,7 @@ class EmailService:
     def send_confirmation_email(self, user_name, email, token):
         """📧 Enviar email de confirmação COM TEMPLATE ANTI-SPAM"""
         
-        # 🔥 USAR NOVO TEMPLATE ANTI-SPAM
+        #  USAR NOVO TEMPLATE ANTI-SPAM
         content_data = {
             'title': 'Confirme seu Email',
             'subtitle': 'Geminii Tech - Trading Automatizado',
@@ -857,7 +857,7 @@ Dúvidas? Entre em contato: contato@geminii.com.br
     def send_password_reset_email(self, user_name, email, token):
         """📧 Enviar email de reset COM TEMPLATE ANTI-SPAM"""
         
-        # 🔥 USAR NOVO TEMPLATE ANTI-SPAM
+        #  USAR NOVO TEMPLATE ANTI-SPAM
         content_data = {
             'title': 'Redefinir Senha',
             'subtitle': 'Geminii Tech - Trading Automatizado',

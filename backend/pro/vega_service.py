@@ -15,7 +15,6 @@ from plotly.subplots import make_subplots
 import plotly.graph_objects as go
 
 warnings.filterwarnings('ignore')
-logging.basicConfig(level=logging.INFO)
 load_dotenv()
 
 def convert_to_json_serializable(obj):
@@ -248,6 +247,7 @@ class DataProvider:
             df = pd.DataFrame(data)
             df['time'] = pd.to_datetime(df['time'])
             
+            
             valid_data = df[
                 (df['volatility'] > 0) &
                 (df['volatility'] < 300) &
@@ -255,8 +255,19 @@ class DataProvider:
                 (df['strike'] > 0)
             ].copy()
             
-            logging.info(f"Contexto IV histórico: {len(valid_data)} registros")
-            return valid_data
+            if valid_data.empty:
+                return pd.DataFrame()
+            
+            
+            valid_data['date'] = valid_data['time'].dt.date
+            
+            daily_avg = valid_data.groupby(['date', 'strike'])['volatility'].mean().reset_index()
+            daily_avg.rename(columns={'volatility': 'iv_daily_avg'}, inplace=True)
+            
+            daily_avg = daily_avg.sort_values('date')
+            
+            logging.info(f"Contexto IV histórico: {len(daily_avg)} registros ({daily_avg['date'].nunique()} dias únicos)")
+            return daily_avg
             
         except Exception as e:
             logging.error(f"Erro contexto IV: {e}")
@@ -382,23 +393,40 @@ class VEXCalculator:
         if historical_df.empty:
             return {}
         
+        #  BUSCAR DADOS HISTÓRICOS DESSE STRIKE (±1)
         strike_data = historical_df[
             (historical_df['strike'] >= strike - 1) &
             (historical_df['strike'] <= strike + 1)
-        ]
+        ].copy()
         
         if strike_data.empty:
             return {}
         
-        iv_values = strike_data['volatility'].values
+        #  PEGAR VALORES DE IV DIÁRIA (CADA LINHA = 1 DIA)
+        if 'iv_daily_avg' in strike_data.columns:
+            iv_values = strike_data['iv_daily_avg'].values
+        else:
+            iv_values = strike_data['volatility'].values
         
-        iv_10d_avg = float(np.mean(iv_values))
+        # Remover outliers
+        iv_values = iv_values[iv_values < 200]
+        
+        if len(iv_values) == 0:
+            return {}
+        
+        #  CALCULAR ESTATÍSTICAS HISTÓRICAS
+        iv_10d_avg = float(np.mean(iv_values))  # Média dos últimos N dias
         iv_10d_min = float(np.min(iv_values))
         iv_10d_max = float(np.max(iv_values))
         
-        current_iv = iv_values[-1] if len(iv_values) > 0 else iv_10d_avg
+        #  IV ATUAL = ÚLTIMO VALOR (MAIS RECENTE)
+        current_iv = float(iv_values[-1])  # Último valor é o mais recente
         iv_percentile = float(np.percentile(iv_values, 50))
         
+        #  LOG PARA DEBUG
+        logging.info(f"Strike {strike:.2f}: IV atual={current_iv:.1f}%, Média 10d={iv_10d_avg:.1f}%, Valores={len(iv_values)} dias")
+        
+        # Classificar status
         if current_iv > iv_10d_avg * 1.3:
             iv_status = 'MUITO_ALTA'
         elif current_iv > iv_10d_avg * 1.1:
@@ -420,42 +448,100 @@ class VEXCalculator:
 
 
 class VolatilityRegimeDetector:
+
     def analyze_volatility_regime(self, vex_df, spot_price):
         """Analisa regime de volatilidade baseado em VEX"""
         if vex_df.empty:
             return None
         
-        total_vex = float(vex_df['total_vex'].sum())
-        total_vex_descoberto = float(vex_df['total_vex_descoberto'].sum())
+        #  PEGANDO IV ATM (STRIKE MAIS PRÓXIMO DO SPOT)
+        vex_df_copy = vex_df.copy()
+        vex_df_copy['distance_from_spot'] = abs(vex_df_copy['strike'] - spot_price)
+        atm_idx = vex_df_copy['distance_from_spot'].idxmin()
         
-        total_oi = (vex_df['call_oi_total'] + vex_df['put_oi_total']).sum()
+        # IV do strike ATM (mais importante)
+        atm_strike = float(vex_df_copy.loc[atm_idx, 'strike'])
+        atm_iv = float(vex_df_copy.loc[atm_idx, 'avg_iv'])
+        atm_iv_10d_avg = float(vex_df_copy.loc[atm_idx, 'iv_10d_avg'])
+        
+        # Log para debug
+        logging.info(f"ATM SELECIONADO: Strike {atm_strike:.2f} (Spot={spot_price:.2f})")
+        logging.info(f"ATM IV: atual={atm_iv:.1f}%, média 10d={atm_iv_10d_avg:.1f}%")
+        
+        # IV ponderada por OI (para contexto geral)
+        total_oi = (vex_df_copy['call_oi_total'] + vex_df_copy['put_oi_total']).sum()
         if total_oi > 0:
-            weighted_iv = float((vex_df['avg_iv'] * (vex_df['call_oi_total'] + vex_df['put_oi_total'])).sum() / total_oi)
+            weighted_iv = float((vex_df_copy['avg_iv'] * (vex_df_copy['call_oi_total'] + vex_df_copy['put_oi_total'])).sum() / total_oi)
         else:
-            weighted_iv = float(vex_df['avg_iv'].mean())
+            weighted_iv = float(vex_df_copy['avg_iv'].mean())
         
-        max_vex_idx = vex_df['total_vex'].idxmax()
-        max_vex_strike = float(vex_df.loc[max_vex_idx, 'strike'])
+        # 🎯 USAR ATM COMO IV ATUAL
+        current_iv = atm_iv if atm_iv > 0 else weighted_iv
         
-        if total_vex_descoberto > 30000:
+        # VEX totais
+        total_vex = float(vex_df_copy['total_vex'].sum())
+        total_vex_descoberto = float(vex_df_copy['total_vex_descoberto'].sum())
+        
+        # Strike de máximo VEX
+        max_vex_idx = vex_df_copy['total_vex'].idxmax()
+        max_vex_strike = float(vex_df_copy.loc[max_vex_idx, 'strike'])
+        
+        iv_diff_pp = current_iv - atm_iv_10d_avg  # Pontos percentuais
+    
+        # Também calcular a variação percentual (para informação)
+        iv_diff_pct = ((current_iv - atm_iv_10d_avg) / atm_iv_10d_avg) * 100 if atm_iv_10d_avg > 0 else 0
+        
+        # Tendência baseada em pontos percentuais
+        if iv_diff_pp > 2:
+            iv_trend = 'ALTA'
+            iv_trend_description = f'IV {iv_diff_pp:+.1f} p.p. acima da média 10D'
+        elif iv_diff_pp < -2:
+            iv_trend = 'BAIXA'
+            iv_trend_description = f'IV {iv_diff_pp:.1f} p.p. abaixo da média 10D'
+        else:
+            iv_trend = 'ESTAVEL'
+            iv_trend_description = 'IV dentro da faixa normal'
+        
+        #  CLASSIFICAÇÃO DE RISCO BASEADA EM PONTOS PERCENTUAIS
+        abs_iv_diff_pp = abs(iv_diff_pp)
+        
+        if abs_iv_diff_pp > 10:
+            # IV está 10+ pontos percentuais fora da média
             volatility_risk = 'HIGH'
-            interpretation = 'Alta sensibilidade à volatilidade'
-        elif total_vex_descoberto > 10000:
+            if iv_diff_pp > 0:
+                interpretation = f'IV muito inflada (+{iv_diff_pp:.1f} p.p.) - Alto risco de compressão'
+            else:
+                interpretation = f'IV muito comprimida ({iv_diff_pp:.1f} p.p.) - Alto risco de explosão'
+        
+        elif abs_iv_diff_pp > 5:
+            # IV está 5-10 pontos percentuais fora da média
             volatility_risk = 'MODERATE'
-            interpretation = 'Sensibilidade moderada à volatilidade'
+            if iv_diff_pp > 0:
+                interpretation = f'IV inflada (+{iv_diff_pp:.1f} p.p.) - Risco moderado de compressão'
+            else:
+                interpretation = f'IV comprimida ({iv_diff_pp:.1f} p.p.) - Risco moderado de ajuste'
+        
         else:
+            # IV está dentro de ±5 pontos percentuais
             volatility_risk = 'LOW'
-            interpretation = 'Baixa sensibilidade à volatilidade'
+            interpretation = 'IV próxima da média histórica - Baixo risco de mudança brusca'
+        
+        logging.info(f"IV Diff: {iv_diff_pp:+.1f} p.p. ({iv_diff_pct:+.1f}%) → Risk: {volatility_risk}")
         
         return {
             'total_vex': total_vex,
             'total_vex_descoberto': total_vex_descoberto,
-            'weighted_iv': weighted_iv,
+            'weighted_iv': current_iv,
+            'atm_strike': atm_strike,
+            'atm_iv': atm_iv,
+            'atm_iv_10d_avg': atm_iv_10d_avg,
+            'iv_diff_pct': float(iv_diff_pct),
+            'iv_trend': iv_trend,
+            'iv_trend_description': iv_trend_description,
             'max_vex_strike': max_vex_strike,
             'volatility_risk': volatility_risk,
             'interpretation': interpretation
         }
-
 
 class VEXAnalyzer:
     def __init__(self):
@@ -624,9 +710,7 @@ class VEXAnalyzer:
         return fig.to_json()
     
     def analyze(self, symbol, expiration_code=None):
-        """Análise principal VEX com contexto histórico"""
-        logging.info(f"INICIANDO ANALISE VEX - {symbol}")
-        
+                        
         spot_price = self.data_provider.get_spot_price(symbol)
         if not spot_price:
             raise ValueError("Erro: não foi possível obter cotação")
@@ -645,7 +729,8 @@ class VEXAnalyzer:
         
         vol_regime = self.vol_detector.analyze_volatility_regime(vex_df, spot_price)
         
-        vol_regime['iv_context'] = self._analyze_iv_context(vex_df)
+        #  REMOVA ESTA LINHA SE EXISTIR:
+        # vol_regime['iv_context'] = self._analyze_iv_context(vex_df, spot_price)
         
         vol_zones = self.find_volatility_zones(vex_df, spot_price)
         
@@ -654,7 +739,7 @@ class VEXAnalyzer:
         return {
             'symbol': symbol,
             'spot_price': spot_price,
-            'vol_regime': vol_regime,
+            'vol_regime': vol_regime,  # 👈 JÁ TEM TUDO AQUI DENTRO
             'vol_zones': vol_zones,
             'strikes_analyzed': len(vex_df),
             'expiration': expiration_info,
@@ -663,26 +748,35 @@ class VEXAnalyzer:
             'success': True
         }
 
-    def _analyze_iv_context(self, vex_df):
+    def _analyze_iv_context(self, vex_df, spot_price):
         """Análise do contexto geral de IV"""
         if vex_df.empty:
             return {}
         
-        status_counts = vex_df['iv_status'].value_counts().to_dict()
         
-        current_avg = vex_df['avg_iv'].mean()
-        historical_avg = vex_df['iv_10d_avg'].mean()
+        vex_df['distance_from_spot'] = abs(vex_df['strike'] - spot_price)
+        atm_idx = vex_df['distance_from_spot'].idxmin()
         
-        iv_trend = 'ALTA' if current_avg > historical_avg * 1.1 else 'BAIXA' if current_avg < historical_avg * 0.9 else 'ESTAVEL'
+        current_avg = float(vex_df.loc[atm_idx, 'avg_iv'])
+        historical_avg = float(vex_df.loc[atm_idx, 'iv_10d_avg'])
+        
+        # Calcular tendência
+        diff_pct = ((current_avg - historical_avg) / historical_avg) * 100
+        
+        if diff_pct > 5:
+            iv_trend = 'ALTA'
+        elif diff_pct < -5:
+            iv_trend = 'BAIXA'
+        else:
+            iv_trend = 'ESTAVEL'
         
         return {
-            'status_distribution': status_counts,
-            'current_avg_iv': float(current_avg),
-            'historical_avg_iv': float(historical_avg),
+            'current_avg_iv': current_avg,
+            'historical_avg_iv': historical_avg,
             'iv_trend': iv_trend,
-            'iv_distortion_pct': float((current_avg - historical_avg) / historical_avg * 100)
+            'iv_distortion_pct': diff_pct
         }
-
+    
     def find_volatility_zones(self, vex_df, spot_price):
         """Encontra zonas de máxima sensibilidade à volatilidade"""
         if vex_df.empty:

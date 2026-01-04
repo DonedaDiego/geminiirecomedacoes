@@ -25,12 +25,15 @@ from pro.delta_routes import get_delta_blueprint
 from pro.vega_routes import get_vega_blueprint
 from pro.theta_routes import get_theta_blueprint
 from pro.mm_temporal_routes import mm_temporal_bp
+from pro.oplab_routes import oplab_bp
+
 
 
 # Premium
 from premium.swing_trade_ml_routes import get_swing_trade_ml_blueprint
 from premium.beta_regression_routes import beta_regression_bp
 from premium.atsmom_routes import register_atsmom_routes
+from premium.longshortroutes import longshort_bp  
 
 
 # Trial
@@ -115,6 +118,7 @@ except Exception as e:
 # Blueprints principais
 app.register_blueprint(beta_bp)
 app.register_blueprint(opcoes_bp)
+app.register_blueprint(oplab_bp)
 
 
 # market maker
@@ -191,6 +195,13 @@ try:
     print(" ATSMOM routes registradas!")
 except Exception as e:
     print(f" Erro ao registrar ATSMOM routes: {e}")
+
+
+try:
+    app.register_blueprint(longshort_bp)
+    print(" Long Short blueprint registrado!")
+except Exception as e:
+    print(f" Erro ao registrar Long Short blueprint: {e}")    
 
 # Trial
 try:
@@ -484,6 +495,11 @@ def beta_regression_page():
 @app.route('/atsmom.html')
 def atsmom_page():
     return send_from_directory('../frontend', 'atsmom.html')
+
+@app.route('/longshort')
+@app.route('/longshort.html')
+def longshort_page():
+    return send_from_directory('../frontend', 'longshort.html')
 
 # ===== ROTAS API =====
 

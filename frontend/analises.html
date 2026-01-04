@@ -340,7 +340,7 @@
                 </h2>
                 <p class="text-gray-400 mb-2">${data.description || 'Carteira de investimentos'}</p>
                 
-                <!-- 🔥 NOVA SEÇÃO: INFORMAÇÕES DE DATA -->
+                <!--  NOVA SEÇÃO: INFORMAÇÕES DE DATA -->
                 <div class="flex items-center space-x-4 mt-3 text-sm">
                   ${data.asset_count ? `<span class="bg-blue-900/30 text-blue-400 px-2 py-1 rounded">${data.asset_count} ativos</span>` : ''}
                   ${data.creation_date ? `<span class="bg-green-900/30 text-green-400 px-2 py-1 rounded">Criada em: ${formatDate(data.creation_date)}</span>` : ''}
@@ -468,7 +468,7 @@
       modal.classList.remove('hidden');
       
       try {
-        // 🔥 BUSCAR DADOS EM PARALELO
+        //  BUSCAR DADOS EM PARALELO
         const [portfolioResponse, ibovResponse] = await Promise.all([
           fetch(`/chart_ativos/portfolio/${portfolioId}/analytics`, {
             headers: {
@@ -488,10 +488,10 @@
         console.log(' IBOVESPA data:', ibovResponse);
         
         if (portfolioResult.success && portfolioResult.data) {
-          // 🔥 ENRIQUECER COM DATAS DE ENTRADA
+          //  ENRIQUECER COM DATAS DE ENTRADA
           const enrichedData = await enrichWithDates(portfolioResult.data, portfolioId);
           
-          // 🔥 EXIBIR ANALYTICS COMPLETO
+          //  EXIBIR ANALYTICS COMPLETO
           displayRealAnalytics(enrichedData, ibovResponse);
           
           // Atualizar subtitle
@@ -640,7 +640,7 @@
       const portfolioAge = data.portfolio_age_days || 0;
       const creationDate = data.portfolio_creation_date;
       
-      // 🔥 NOVA LÓGICA: CALCULAR SOMA SIMPLES EM VEZ DE USAR RETORNO PONDERADO
+      //  NOVA LÓGICA: CALCULAR SOMA SIMPLES EM VEZ DE USAR RETORNO PONDERADO
       let customPortfolioReturn = metrics.total_return; // Valor original (ponderado)
       
       if (metrics.assets_performance) {
@@ -653,7 +653,7 @@
         const assetCount = Object.keys(metrics.assets_performance).length;
         const simpleAverage = assetCount > 0 ? simpleSum / assetCount : 0;
         
-        // 🔥 ESCOLHA QUAL MÉTODO USAR:
+        //  ESCOLHA QUAL MÉTODO USAR:
         customPortfolioReturn = simpleSum;        // Para soma direta (10.39%)
         // customPortfolioReturn = simpleAverage;  // Para média simples (1.73%)
         // customPortfolioReturn = metrics.total_return; // Para manter ponderado (0.70%)
@@ -671,7 +671,7 @@
       modalContent.innerHTML = `
         <div class="space-y-6">
           
-          <!-- 🔥 INFORMAÇÕES DA CARTEIRA E DATAS -->
+          <!--  INFORMAÇÕES DA CARTEIRA E DATAS -->
           <div class="bg-gradient-to-r from-blue-900/30 to-purple-900/30 border border-blue-500/30 rounded-xl p-6">
             <h3 class="text-lg font-bold text-white mb-4 flex items-center">
               <i class="fas fa-calendar-alt text-blue-400 mr-3"></i>
@@ -702,7 +702,7 @@
             </div>
           </div>
           
-          <!-- 🔥 COMPARATIVO CARTEIRA vs IBOVESPA -->
+          <!--  COMPARATIVO CARTEIRA vs IBOVESPA -->
           <div class="bg-gradient-to-r from-purple-900/30 to-blue-900/30 border border-purple-500/30 rounded-xl p-6">
             <h3 class="text-xl font-bold text-white mb-4 flex items-center">
               <i class="fas fa-chart-area text-purple-400 mr-3"></i>
@@ -747,7 +747,7 @@
               </div>
             </div>
             
-            <!-- 🔥 NOVA SEÇÃO: COMPARAÇÃO DE MÉTODOS -->
+            <!--  NOVA SEÇÃO: COMPARAÇÃO DE MÉTODOS -->
             <div class="bg-white/5 rounded-lg p-4 border border-white/10 mb-4">
               <div class="flex items-center gap-3 mb-3">
                 <i class="fas fa-calculator text-blue-400 text-lg"></i>
@@ -906,7 +906,7 @@
             </div>
           `}
           
-          <!-- 🔥 DISTRIBUIÇÃO POR SETORES -->
+          <!--  DISTRIBUIÇÃO POR SETORES -->
           ${metrics.assets_performance ? `
             <div class="bg-gray-800/50 rounded-xl p-6 border border-gray-600">
               <h4 class="text-white font-semibold mb-4 flex items-center">
@@ -919,7 +919,7 @@
             </div>
           ` : ''}
           
-          <!-- 🔥 INFORMAÇÕES TÉCNICAS -->
+          <!--  INFORMAÇÕES TÉCNICAS -->
           <div class="bg-gray-800/30 rounded-xl p-6 border border-gray-600">
             <h4 class="text-white font-semibold mb-4 flex items-center">
               <i class="fas fa-info-circle text-blue-400 mr-2"></i>

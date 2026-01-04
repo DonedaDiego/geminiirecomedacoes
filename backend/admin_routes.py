@@ -63,7 +63,7 @@ def require_admin():
 @admin_bp.route('/stats')
 @require_admin()
 def get_admin_stats(admin_id):
-    """Estatísticas do painel admin - CORRIGIDO"""
+    """Estatísticas do painel admin - VERSÃO CORRIGIDA"""
     try:
         conn = get_db_connection()
         if not conn:
@@ -71,40 +71,64 @@ def get_admin_stats(admin_id):
             
         cursor = conn.cursor()
         
-        # Total de usuários
-        cursor.execute("SELECT COUNT(*) FROM users WHERE user_type != 'deleted'")
+        #  TOTAL DE USUÁRIOS (excluindo deletados)
+        cursor.execute("""
+            SELECT COUNT(*) FROM users 
+            WHERE user_type != 'deleted'
+        """)
         total_users = cursor.fetchone()[0]
         
-        #  CORRIGIDO - Usuários premium (plan_id = 4 Community)
-        cursor.execute("SELECT COUNT(*) FROM users WHERE plan_id = 4 AND user_type != 'deleted'")
+        #  ASSINANTES COMMUNITY (plan_id = 4 OU plan_name = 'community')
+        cursor.execute("""
+            SELECT COUNT(*) FROM users 
+            WHERE (plan_id = 4 OR plan_name = 'community')
+            AND user_type != 'deleted'
+            AND subscription_status IN ('active', 'trial')
+        """)
         premium_users = cursor.fetchone()[0]
         
-        # Cupons ativos
+        #  RECOMENDAÇÕES ATIVAS (se quiser corrigir rápido)
         try:
-            cursor.execute("SELECT COUNT(*) FROM coupons WHERE active = true")
-            active_coupons = cursor.fetchone()[0]
+            cursor.execute("""
+                SELECT COUNT(*) FROM recommendations_free 
+                WHERE status = 'ATIVA'
+            """)
+            active_recommendations = cursor.fetchone()[0]
         except:
-            active_coupons = 0
+            active_recommendations = 0
         
-        #  CORRIGIDO - Receita mensal apenas Community
-        monthly_revenue = premium_users * 79  # Preço do Community
+        #  TAXA DE SUCESSO (só se tiver recomendações finalizadas)
+        try:
+            cursor.execute("""
+                SELECT 
+                    COUNT(*) FILTER (WHERE status = 'FINALIZADA_GANHO') as wins,
+                    COUNT(*) FILTER (WHERE status IN ('FINALIZADA_GANHO', 'FINALIZADA_PERDA')) as total
+                FROM recommendations_free
+            """)
+            result = cursor.fetchone()
+            wins = result[0] or 0
+            total = result[1] or 0
+            success_rate = round((wins / total * 100), 1) if total > 0 else 0
+        except:
+            success_rate = 0
         
         cursor.close()
         conn.close()
+        
         
         return jsonify({
             'success': True,
             'data': {
                 'total_users': total_users,
-                'premium_users': premium_users,
-                'active_coupons': active_coupons,
-                'monthly_revenue': monthly_revenue
+                'premium_users': premium_users,  # Community
+                'active_recommendations': active_recommendations,
+                'success_rate': success_rate
             }
         })
         
     except Exception as e:
+        print(f" Erro em get_admin_stats: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
-
 # ===== GERENCIAMENTO DE USUÁRIOS =====
 
 @admin_bp.route('/list-users')
@@ -365,7 +389,52 @@ def delete_user(admin_id):
             conn.rollback()
         return jsonify({'success': False, 'error': str(e)}), 500
 
-
+@admin_bp.route('/debug-last-login/<user_email>')
+@require_admin()
+def debug_last_login(admin_id, user_email):
+    """Debug - verificar último login de um usuário"""
+    try:
+        conn = get_db_connection()
+        if not conn:
+            return jsonify({'success': False, 'error': 'Erro de conexão'}), 500
+            
+        cursor = conn.cursor()
+        
+        # Buscar dados brutos do banco
+        cursor.execute("""
+            SELECT id, name, email, last_login, updated_at, created_at,
+                   NOW() as server_time
+            FROM users 
+            WHERE email = %s
+        """, (user_email,))
+        
+        user = cursor.fetchone()
+        
+        cursor.close()
+        conn.close()
+        
+        if not user:
+            return jsonify({'success': False, 'error': 'Usuário não encontrado'}), 404
+        
+        user_id, name, email, last_login, updated_at, created_at, server_time = user
+        
+        return jsonify({
+            'success': True,
+            'debug_info': {
+                'user_id': user_id,
+                'name': name,
+                'email': email,
+                'last_login': last_login.isoformat() if last_login else None,
+                'last_login_raw': str(last_login),
+                'updated_at': updated_at.isoformat() if updated_at else None,
+                'created_at': created_at.isoformat() if created_at else None,
+                'server_time': server_time.isoformat() if server_time else None,
+                'last_login_exists': last_login is not None
+            }
+        })
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
 # ===== ADICIONAR ESTA ROTA NO SEU admin_routes.py =====
 
 @admin_bp.route('/user/<user_email>/portfolios', methods=['GET'])
@@ -1015,7 +1084,7 @@ def create_user(admin_id):
 @admin_bp.route('/list-users-enhanced')
 @require_admin()
 def list_users_enhanced(admin_id):
-    """Listar usuários com informações detalhadas incluindo último login"""
+    """Listar usuários com informações detalhadas incluindo último login - SEM CACHE"""
     try:
         conn = get_db_connection()
         if not conn:
@@ -1023,18 +1092,21 @@ def list_users_enhanced(admin_id):
             
         cursor = conn.cursor()
         
-        # Verificar se coluna last_login existe, se não existir, adicionar
+        # Verificar se coluna last_login existe
         try:
             cursor.execute("""
                 ALTER TABLE users ADD COLUMN IF NOT EXISTS last_login TIMESTAMP;
             """)
             conn.commit()
         except:
-            pass  # Coluna já existe
+            pass
         
+        #  QUERY CORRIGIDA - Forçar dados mais recentes
         cursor.execute("""
             SELECT u.id, u.name, u.email, u.plan_id, u.plan_name, u.user_type, 
-                   u.created_at, u.plan_expires_at, u.subscription_status, u.last_login,
+                   u.created_at, u.plan_expires_at, u.subscription_status, 
+                   u.last_login,  --  CAMPO CRÍTICO
+                   u.updated_at,   --  ADICIONAR updated_at também
                    EXTRACT(days FROM (NOW() - u.created_at)) as days_with_us,
                    CASE 
                        WHEN u.plan_expires_at IS NOT NULL AND u.plan_expires_at > NOW() THEN
@@ -1044,7 +1116,8 @@ def list_users_enhanced(admin_id):
                    CASE 
                        WHEN u.plan_expires_at IS NOT NULL AND u.plan_expires_at <= NOW() THEN true
                        ELSE false
-                   END as is_expired
+                   END as is_expired,
+                   NOW() as query_time  --  Debug: hora da query
             FROM users u
             WHERE u.user_type != 'deleted'
             ORDER BY u.created_at DESC
@@ -1053,8 +1126,8 @@ def list_users_enhanced(admin_id):
         
         users = []
         for row in cursor.fetchall():
-            user_id, name, email, plan_id, plan_name, user_type, created_at, plan_expires_at, subscription_status, last_login, days_with_us, days_until_expiry, is_expired = row
-            
+            user_id, name, email, plan_id, plan_name, user_type, created_at, plan_expires_at, subscription_status, last_login, updated_at, days_with_us, days_until_expiry, is_expired, query_time = row
+                        
             users.append({
                 'id': user_id,
                 'name': name,
@@ -1065,24 +1138,38 @@ def list_users_enhanced(admin_id):
                 'subscription_status': subscription_status or 'inactive',
                 'created_at': created_at.isoformat() if created_at else None,
                 'plan_expires_at': plan_expires_at.isoformat() if plan_expires_at else None,
-                'last_login': last_login.isoformat() if last_login else None,
+                'last_login': last_login.isoformat() if last_login else None,  #  ISO format
+                'updated_at': updated_at.isoformat() if updated_at else None,  #  NOVO
                 'formatted_date': created_at.strftime('%d/%m/%Y') if created_at else 'N/A',
                 'formatted_last_login': last_login.strftime('%d/%m/%Y %H:%M') if last_login else 'Nunca logou',
                 'days_with_us': int(days_with_us) if days_with_us else 0,
                 'days_until_expiry': int(days_until_expiry) if days_until_expiry else None,
                 'is_expired': is_expired,
-                'has_trial': plan_expires_at is not None
+                'has_trial': plan_expires_at is not None,
+                'query_time': query_time.isoformat() if query_time else None  #  Debug
             })
         
         cursor.close()
         conn.close()
         
-        return jsonify({
+        #  HEADERS ANTI-CACHE
+        from flask import make_response
+        response = make_response(jsonify({
             'success': True,
-            'users': users
-        })
+            'users': users,
+            'server_time': datetime.now(timezone.utc).isoformat()  #  Tempo do servidor
+        }))
+        
+        response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+        response.headers['Pragma'] = 'no-cache'
+        response.headers['Expires'] = '0'
+        
+        return response
         
     except Exception as e:
+        print(f" Erro em list_users_enhanced: {e}")
+        import traceback
+        traceback.print_exc()
         return jsonify({'success': False, 'error': str(e)}), 500
 
 

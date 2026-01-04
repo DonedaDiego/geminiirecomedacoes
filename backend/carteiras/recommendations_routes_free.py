@@ -62,7 +62,7 @@ def get_active_recommendations():
 def get_all_recommendations_public():
     """ PÚBLICO: Buscar todas as recomendações (ativas + fechadas) COM AUTO-UPDATE"""
     try:
-        # 🔥 AUTO-UPDATE: Atualizar preços automaticamente
+        #  AUTO-UPDATE: Atualizar preços automaticamente
         try:
             
             RecommendationsServiceFree.update_current_prices()

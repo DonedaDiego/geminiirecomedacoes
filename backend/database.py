@@ -77,7 +77,7 @@ def test_connection():
         return False
 
 def create_plans_table():
-    """🔥 Criar tabela de planos SINCRONIZADA com o service"""
+    """ Criar tabela de planos SINCRONIZADA com o service"""
     try:
         conn = get_db_connection()
         if not conn:
@@ -99,7 +99,7 @@ def create_plans_table():
             );
         """)
         
-        # 🔥 NOVA ESTRUTURA DE PLANOS: APENAS BÁSICO E COMUNIDADE
+        #  NOVA ESTRUTURA DE PLANOS: APENAS BÁSICO E COMUNIDADE
         cursor.execute("DELETE FROM plans")
         
         #  CORREÇÃO: Adicionada aspa faltante no 'Free'
@@ -142,17 +142,17 @@ def create_users_table():
                 email VARCHAR(100) UNIQUE NOT NULL,
                 password VARCHAR(255) NOT NULL,
                 
-                -- 🔥 CORREÇÃO: DEFAULT para plano BÁSICO
+                --  CORREÇÃO: DEFAULT para plano BÁSICO
                 plan_id INTEGER DEFAULT 3,
                 plan_name VARCHAR(50) DEFAULT 'Básico',
                 user_type VARCHAR(20) DEFAULT 'regular',
                 
-                -- 🔥 CAMPOS OBRIGATÓRIOS PARA TRIAL
+                --  CAMPOS OBRIGATÓRIOS PARA TRIAL
                 plan_expires_at TIMESTAMP,
                 subscription_status VARCHAR(20) DEFAULT 'inactive',
                 subscription_plan VARCHAR(50),
                 
-                -- 🔥 CAMPOS OBRIGATÓRIOS PARA EMAIL
+                --  CAMPOS OBRIGATÓRIOS PARA EMAIL
                 email_confirmed BOOLEAN DEFAULT FALSE,
                 email_confirmed_at TIMESTAMP,
                 
@@ -181,7 +181,7 @@ def create_users_table():
         return False
 
 def update_users_table_for_service():
-    """🔥 Atualizar tabela users existente para compatibilidade com o service"""
+    """ Atualizar tabela users existente para compatibilidade com o service"""
     try:
         conn = get_db_connection()
         if not conn:
@@ -222,7 +222,7 @@ def update_users_table_for_service():
         return False
 
 def create_payments_table():
-    """🔥 Criar tabela payments EXATAMENTE como o service espera"""
+    """ Criar tabela payments EXATAMENTE como o service espera"""
     try:
         conn = get_db_connection()
         if not conn:
@@ -263,7 +263,7 @@ def create_payments_table():
         return False
 
 def create_payment_history():
-    """🔥 Criar tabela payment_history com CONFLICT handling correto"""
+    """ Criar tabela payment_history com CONFLICT handling correto"""
     try:
         conn = get_db_connection()
         if not conn:
@@ -307,7 +307,7 @@ def create_payment_history():
         return False
 
 def create_coupons_table():
-    """🔥 Criar sistema de cupons SINCRONIZADO com o service"""
+    """ Criar sistema de cupons SINCRONIZADO com o service"""
     try:
         conn = get_db_connection()
         if not conn:
@@ -333,7 +333,7 @@ def create_coupons_table():
             )
         """)
         
-        # 🔥 TABELA coupon_uses (não coupon_usage) - como o service espera
+        #  TABELA coupon_uses (não coupon_usage) - como o service espera
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS coupon_uses (
                 id SERIAL PRIMARY KEY,
@@ -398,7 +398,7 @@ def create_password_reset_table():
         return False
 
 def create_initial_admin():
-    """🔥 Criar admin com dados corretos"""
+    """ Criar admin com dados corretos"""
     try:
         conn = get_db_connection()
         if not conn:
@@ -605,7 +605,7 @@ def cleanup_expired_tokens():
         return False
 
 def create_email_confirmations_table():
-    """🔥 Criar tabela de confirmações de email"""
+    """ Criar tabela de confirmações de email"""
     try:
         conn = get_db_connection()
         if not conn:

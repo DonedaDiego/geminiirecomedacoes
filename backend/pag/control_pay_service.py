@@ -160,7 +160,7 @@ def check_user_subscription_status(user_id):
         cursor.close()
         conn.close()
         
-        # 🔥 LÓGICA UNIFICADA - COMPATÍVEL COM CÓDIGO EXISTENTE
+        #  LÓGICA UNIFICADA - COMPATÍVEL COM CÓDIGO EXISTENTE
         now = datetime.now(timezone.utc)
         subscription_status = 'inactive'
         days_remaining = 0
@@ -177,7 +177,7 @@ def check_user_subscription_status(user_id):
             if now >= plan_expires_at:
                 is_expired = True
             
-            # 🔥 LÓGICA UNIFICADA: Trial e Pagamento
+            #  LÓGICA UNIFICADA: Trial e Pagamento
             if user_type == 'trial':
                 # Usuário em trial
                 if now < plan_expires_at:
@@ -232,7 +232,7 @@ def check_user_subscription_status(user_id):
                 'is_expired': is_expired,
                 'is_expiring_soon': is_expiring_soon,
                 'renewal_urgency': 'high' if days_remaining <= 1 else 'medium' if days_remaining <= 3 else 'low',
-                # 🔥 NOVOS CAMPOS ÚTEIS
+                #  NOVOS CAMPOS ÚTEIS
                 'is_trial': user_type == 'trial',
                 'is_paid': plan_id in [1, 2] and user_type != 'trial'
             },
@@ -251,7 +251,7 @@ def check_user_subscription_status(user_id):
                     'total_spent': float(payment_stats[1]) if payment_stats and payment_stats[1] else 0
                 }
             },
-            # 🔥 NOVO: Permissões de acesso
+            #  NOVO: Permissões de acesso
             'access_permissions': {
                 'can_access_pro': subscription_status in ['trial_active', 'paid_active'],
                 'can_access_premium': subscription_status in ['trial_active', 'paid_active'] and plan_id == 2,
@@ -449,7 +449,7 @@ def send_renewal_warning_email(user_info, days_remaining):
         plan_name = user_info['plan_name']
         expires_at = user_info['expires_at']
         
-        # 🔥 USAR APENAS O NOVO MÉTODO ANTI-SPAM - SEM HTML ANTIGO
+        #  USAR APENAS O NOVO MÉTODO ANTI-SPAM - SEM HTML ANTIGO
         success = email_service.send_payment_reminder_email(
             user_name=user_name,
             email=user_email,
@@ -610,7 +610,7 @@ def fix_payment_expiration(payment_id, cycle):
         else:  # monthly
             expires_at = datetime.now(timezone.utc) + timedelta(days=30)
         
-        print(f"🔥 CONTROL_PAY: Expiração calculada para {cycle}: {expires_at}")
+        print(f" CONTROL_PAY: Expiração calculada para {cycle}: {expires_at}")
         return expires_at
         
     except Exception as e:
@@ -630,7 +630,7 @@ def verify_payments_integrity():
         
         cursor = conn.cursor()
         
-        # 🔥 VERIFICAÇÕES EXISTENTES (Pagamentos)
+        #  VERIFICAÇÕES EXISTENTES (Pagamentos)
         
         # Usuários com planos pagos mas sem data de expiração
         cursor.execute("""
@@ -653,7 +653,7 @@ def verify_payments_integrity():
         """)
         no_payments = cursor.fetchall()
         
-        # 🔥 NOVAS VERIFICAÇÕES (Trials)
+        #  NOVAS VERIFICAÇÕES (Trials)
         
         # Trials sem data de expiração
         cursor.execute("""
@@ -706,7 +706,7 @@ def verify_payments_integrity():
         cursor.close()
         conn.close()
         
-        # 🔥 CALCULAR TOTAIS
+        #  CALCULAR TOTAIS
         total_payment_issues = missing_expiration + len(no_payments)
         total_trial_issues = (trials_missing_expiration + len(trials_with_basic_plan) + 
                              len(old_expired_trials) + len(inconsistent_user_types))

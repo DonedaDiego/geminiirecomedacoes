@@ -74,7 +74,7 @@ def get_plans():
 @mercadopago_bp.route('/checkout/create', methods=['POST'])
 @require_mp_sdk
 def create_checkout():
-    """🔥 Criar checkout com Device ID para aprovação - VERSÃO CORRIGIDA E LIMPA"""
+    """ Criar checkout com Device ID para aprovação - VERSÃO CORRIGIDA E LIMPA"""
     
     if mercadopago_service is None:
         return jsonify({'success': False, 'error': 'Serviço temporariamente indisponível'}), 503
@@ -88,7 +88,7 @@ def create_checkout():
                 "error": "Dados JSON são obrigatórios"
             }), 400
         
-        # 🔥 EXTRAIR DADOS CORRETOS DO FRONTEND
+        #  EXTRAIR DADOS CORRETOS DO FRONTEND
         plan = data.get('plan', 'pro')
         cycle = data.get('cycle', 'monthly')
         user_id = data.get('user_id')           
@@ -105,7 +105,7 @@ def create_checkout():
         # Compatibilidade com versão antiga
         customer_email = data.get('customer_email', user_email)
         
-        print(f"🔥 ROUTE: Criando checkout CORRIGIDO")
+        print(f" ROUTE: Criando checkout CORRIGIDO")
         print(f"   Plan: {plan} | Cycle: {cycle}")
         print(f"   User ID: {user_id}")
         print(f"   User Email: {user_email}")
@@ -119,7 +119,7 @@ def create_checkout():
         else:
             print("ℹ️ Nenhum cupom aplicado")
         
-        # 🔥 CHAMAR SERVIÇO COM PARÂMETROS CORRETOS
+        #  CHAMAR SERVIÇO COM PARÂMETROS CORRETOS
         result = mercadopago_service.create_checkout_service(
             plan=plan, 
             cycle=cycle, 
@@ -150,7 +150,7 @@ def create_checkout():
 @mercadopago_bp.route('/webhook', methods=['POST', 'GET'])
 @require_mp_sdk
 def webhook():
-    """🔥 WEBHOOK OTIMIZADO PARA APROVAÇÃO"""
+    """ WEBHOOK OTIMIZADO PARA APROVAÇÃO"""
     
     if request.method == 'GET':
         return jsonify({

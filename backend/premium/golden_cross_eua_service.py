@@ -23,7 +23,7 @@ class GoldenCrossEUAService:
     def obter_top_50_empresas_eua(self) -> List[Dict]:
         """Obtém lista das 50 maiores empresas americanas por setor"""
         
-        # 🔥 TOP 50 EMPRESAS AMERICANAS POR SETOR
+        #  TOP 50 EMPRESAS AMERICANAS POR SETOR
         empresas_por_setor = {
             'Technology': [
                 {'ticker': 'AAPL', 'nome': 'Apple Inc.'},

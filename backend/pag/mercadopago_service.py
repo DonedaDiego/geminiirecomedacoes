@@ -199,7 +199,7 @@ def create_checkout_service(plan, cycle, customer_email, user_id=None, user_emai
         
         timestamp = int(time.time())
         
-        # 🔥 CORREÇÃO PRINCIPAL: USAR USER_ID EM VEZ DE EMAIL
+        #  CORREÇÃO PRINCIPAL: USAR USER_ID EM VEZ DE EMAIL
         if user_id:
             external_reference = f"geminii_{plan}_{cycle}_user{user_id}_{timestamp}"
             payer_email = user_email or customer_email or "cliente@geminii.com.br"
@@ -242,7 +242,7 @@ def create_checkout_service(plan, cycle, customer_email, user_id=None, user_emai
         }
         
         
-        # 🔥 CORREÇÃO: USAR DADOS REAIS DO USUÁRIO
+        #  CORREÇÃO: USAR DADOS REAIS DO USUÁRIO
         if payer_email and payer_email != 'cliente@geminii.com.br':
             preference_data["payer"] = {
                 "email": payer_email,
@@ -254,13 +254,7 @@ def create_checkout_service(plan, cycle, customer_email, user_id=None, user_emai
             print(f"    Device ID válido adicionado: {device_id[:20]}...")
         elif device_id:
             print(f"   ⚠️ Device ID inválido ignorado: {device_id}")
-        
-        print(f"🔄 Criando checkout otimizado para aprovação...")
-        print(f"💰 Valor: R$ {price} ({cycle_display})")
-        print(f"📧 Email: {payer_email}")
-        print(f"👤 User ID: {user_id}")
-        print(f"🔗 External Ref: {external_reference}")
-        
+          
         preference_response = None
         for attempt in range(3):
             try:
@@ -394,7 +388,7 @@ def extract_payment_data(mp_data):
     external_ref = mp_data.get('external_reference', '')
     payer_email = mp_data.get('payer', {}).get('email', '')
     
-    # 🔥 CORREÇÃO PRINCIPAL: PRIORIZAR USER_ID DO EXTERNAL_REFERENCE
+    #  CORREÇÃO PRINCIPAL: PRIORIZAR USER_ID DO EXTERNAL_REFERENCE
     user_id = extract_user_id_from_reference(external_ref)
     
     # Extrair dados do external_reference
@@ -428,7 +422,7 @@ def extract_payment_data(mp_data):
     
     return {
         'amount': amount,
-        'user_id': user_id,           # 🔥 NOVO: Priorizar user_id
+        'user_id': user_id,           #  NOVO: Priorizar user_id
         'user_email': payer_email,    # Backup por email
         'plan_id': plan_id,
         'plan_name': plan_name,
@@ -448,7 +442,7 @@ def find_or_create_user(cursor, payment_data):
     print(f"   User ID: {user_id}")
     print(f"   Email: {user_email}")
     
-    # 🔥 ESTRATÉGIA 1: BUSCAR POR USER_ID (PRIORIDADE)
+    #  ESTRATÉGIA 1: BUSCAR POR USER_ID (PRIORIDADE)
     if user_id:
         cursor.execute("SELECT id, name, email FROM users WHERE id = %s", (user_id,))
         result = cursor.fetchone()
@@ -459,7 +453,7 @@ def find_or_create_user(cursor, payment_data):
         else:
             print(f" Usuário ID {user_id} não encontrado")
     
-    # 🔥 ESTRATÉGIA 2: BUSCAR POR EMAIL (FALLBACK)
+    #  ESTRATÉGIA 2: BUSCAR POR EMAIL (FALLBACK)
     if user_email:
         cursor.execute("SELECT id, name, email FROM users WHERE LOWER(email) = LOWER(%s)", (user_email,))
         result = cursor.fetchone()
@@ -470,7 +464,7 @@ def find_or_create_user(cursor, payment_data):
         else:
             print(f" Usuário email {user_email} não encontrado")
     
-    # 🔥 ESTRATÉGIA 3: BUSCAR USUÁRIOS RECENTES (ÚLTIMO RECURSO)
+    #  ESTRATÉGIA 3: BUSCAR USUÁRIOS RECENTES (ÚLTIMO RECURSO)
     print("🔍 Tentando encontrar usuário recente...")
     cursor.execute("""
         SELECT id, name, email FROM users 
@@ -493,7 +487,7 @@ def find_or_create_user(cursor, payment_data):
     return None
 
 def calculate_expiration(cycle):
-    """🔥 CORREÇÃO: Calcular data de expiração CORRETA baseada no ciclo"""
+    """ CORREÇÃO: Calcular data de expiração CORRETA baseada no ciclo"""
     now = datetime.now(timezone.utc)
     
     if cycle == 'annual':
@@ -510,7 +504,7 @@ def calculate_expiration(cycle):
 def update_user_plan_with_correct_expiration(cursor, user_id, plan_db_id, plan_name, cycle):
     """Atualizar plano do usuário com data de expiração CORRETA"""
     
-    # 🔥 NOVA VERIFICAÇÃO: Se usuário estava em trial, cancelar trial
+    #  NOVA VERIFICAÇÃO: Se usuário estava em trial, cancelar trial
     cursor.execute("SELECT user_type FROM users WHERE id = %s", (user_id,))
     current_user = cursor.fetchone()
     
@@ -602,7 +596,7 @@ def insert_payment_history(cursor, user_id, payment_data, payment_id):
 
 def process_payment(payment_id):
     """Função principal - processamento com melhorias para aprovação"""
-    print(f"\n🔥 PROCESSANDO PAYMENT ID: {payment_id}")
+    print(f"\n PROCESSANDO PAYMENT ID: {payment_id}")
     
     try:
         # 1. Consultar Mercado Pago

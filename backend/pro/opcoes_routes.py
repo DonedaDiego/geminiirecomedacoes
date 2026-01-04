@@ -166,7 +166,7 @@ def hunter_walls_analysis(current_user_id):
 @opcoes_bp.route('/api/opcoes/volume-historico', methods=['POST'])
 @token_required
 def volume_historico_analysis(current_user_id):
-    """🔥 NOVA ROTA - Análise de volume histórico vs atual"""
+    """ NOVA ROTA - Análise de volume histórico vs atual"""
     try:
         data = request.get_json()
         ticker = data.get('ticker', '').upper()

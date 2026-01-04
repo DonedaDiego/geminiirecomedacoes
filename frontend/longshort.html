@@ -1,0 +1,983 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Long&Short - Geminii Research</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        dark: '#000000',
+                        light: '#ffffff',
+                        subtle: 'rgba(255,255,255,0.1)',
+                        geminii: '#ba39af'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background: linear-gradient(135deg, #0c0c0c 0%, #1a1a1a 100%);
+            min-height: 100vh;
+        }
+        
+        .ls-card {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 16px;
+            transition: all 0.3s ease;
+        }
+        
+        .ls-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 20px 40px rgba(186, 57, 175, 0.15);
+            border-color: rgba(186, 57, 175, 0.3);
+        }
+        
+        .spinner {
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            border-top: 2px solid #ba39af;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .metric-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .metric-card:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(186, 57, 175, 0.3);
+        }
+
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 0.875rem;
+        }
+
+        td {
+            padding: 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            font-size: 0.875rem;
+        }
+
+        tr:hover {
+            background: rgba(186, 57, 175, 0.1);
+            cursor: pointer;
+        }
+
+        .tab {
+            padding: 1rem 1.5rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #9ca3af;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.3s;
+            font-weight: 500;
+            font-size: 0.875rem;
+        }
+
+        .tab.active {
+            background: rgba(186, 57, 175, 0.2);
+            border-color: rgba(186, 57, 175, 0.5);
+            color: #fff;
+        }
+
+        .tab:hover {
+            background: rgba(186, 57, 175, 0.1);
+            border-color: rgba(186, 57, 175, 0.3);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .direction-buy { color: #10b981; font-weight: bold; }
+        .direction-sell { color: #ef4444; font-weight: bold; }
+        .status-favoravel { color: #10b981; font-weight: bold; }
+        .status-cautela { color: #f59e0b; font-weight: bold; }
+        .status-naorecomendado { color: #ef4444; font-weight: bold; }
+
+        .chart-container {
+            background: transparent;
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .detail-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .detail-item {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 1.5rem;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .info-box {
+            background: rgba(59, 130, 246, 0.1);
+            padding: 1.5rem;
+            border-radius: 8px;
+            border-left: 4px solid #3b82f6;
+        }
+
+        .financial-row {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 1.25rem;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 0.75rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s;
+        }
+
+        .financial-row:hover {
+            background: rgba(186, 57, 175, 0.1);
+            border-color: rgba(186, 57, 175, 0.3);
+        }
+
+        input, select {
+            background-color: rgba(30, 30, 30, 0.9) !important;
+            border: 1px solid rgba(255, 255, 255, 0.2) !important;
+            color: white !important;
+            backdrop-filter: blur(10px);
+        }
+
+        input:focus, select:focus {
+            outline: none !important;
+            border-color: #ba39af !important;
+            box-shadow: 0 0 0 2px rgba(186, 57, 175, 0.2) !important;
+        }
+    </style>
+</head>
+
+<body class="text-white">
+  
+  <!-- Navbar -->
+  <nav class="fixed top-6 left-1/2 transform -translate-x-1/2 z-50 bg-opacity-5 border-opacity-10 bg-white border-white border rounded-full px-4 py-3 shadow-xl backdrop-blur-md">
+    <div class="flex items-center justify-between">
+      <div class="flex items-center">
+        <a href="/dashboard.html">
+          <img src="logo.png" alt="Geminii Logo" class="w-6 h-6 cursor-pointer">
+        </a>
+      </div>
+      <div class="hidden md:flex items-center space-x-6 text-xs text-gray-300 ml-8">
+        <span class="text-white font-medium">Long&Short</span>
+      </div>
+      <div class="flex items-center space-x-3 ml-8">
+        <div class="w-8 h-8 bg-green-500 bg-opacity-10 border border-green-500 border-opacity-30 rounded-full flex items-center justify-center relative">
+          <i class="fas fa-chart-line text-green-500 text-xs"></i>
+          <div class="absolute -top-1 -right-1 w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Content -->
+  <div class="pt-32 pb-16">
+    <div class="max-w-7xl mx-auto px-6">
+      
+      <!-- Header -->
+      <div class="text-center mb-12">
+        <h1 class="text-4xl md:text-5xl font-bold mb-4">
+          <span style="color: #ba39af; font-weight: 900;">Long&Short</span>
+          <span class="text-white font-light"> por Cointegração</span>
+        </h1>
+        <p class="text-neutral-300 text-lg max-w-3xl mx-auto">
+          Sistema quantitativo para identificação de pares cointegrados no mercado, explorando desvios estatísticos da relação de equilíbrio entre ativos, com definição automática de entradas, saídas, stops e controle de risco.
+        </p>
+      </div>
+
+      <!-- Controles -->
+      <div class="ls-card p-6 mb-8">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div>
+            <label class="block text-sm text-gray-400 mb-2">
+              <i class="fas fa-dollar-sign mr-2"></i>Investimento (R$)
+            </label>
+            <input 
+              id="investimento" 
+              type="number" 
+              value="10000" 
+              min="1000" 
+              step="1000"
+              class="w-full px-4 py-2 rounded-lg"
+            >
+          </div>
+          <div>
+            <label class="block text-sm text-gray-400 mb-2">
+              <i class="fas fa-calendar mr-2"></i>Dias de Análise
+            </label>
+            <select id="dias" class="w-full px-4 py-2 rounded-lg">
+              <option value="60">60</option>
+              <option value="90">90</option>
+              <option value="120" selected>120</option>
+              <option value="140">140</option>
+              <option value="180">180</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm text-gray-400 mb-2">
+              <i class="fas fa-chart-line mr-2"></i>Janela Beta (dias)
+            </label>
+            <input 
+              id="janelaBeta" 
+              type="number" 
+              value="60" 
+              min="30"
+              class="w-full px-4 py-2 rounded-lg"
+            >
+          </div>
+          <div>
+            <label class="block text-sm text-gray-400 mb-2">
+              <i class="fas fa-signal mr-2"></i>Z-Score Mínimo
+            </label>
+            <input 
+              id="zscoreMinimo" 
+              type="number" 
+              value="2.0" 
+              min="1.0" 
+              max="3.0" 
+              step="0.1"
+              class="w-full px-4 py-2 rounded-lg"
+            >
+          </div>
+        </div>
+        <button 
+          id="analyzeBtn"
+          onclick="analisarPares()" 
+          class="mt-4 w-full px-6 py-3 bg-gradient-to-r from-geminii to-purple-600 hover:shadow-lg rounded-lg transition-all font-medium"
+        >
+          <i class="fas fa-rocket mr-2"></i>Analisar Pares Cointegrados
+        </button>
+      </div>
+
+      <!-- Status -->
+      <div id="statusMsg" class="mb-6 p-4 rounded-lg hidden backdrop-blur-sm"></div>
+
+      <!-- Resultados -->
+      <div id="resultsSection" class="hidden">
+        
+        <!-- Métricas -->
+        <div class="ls-card p-6 mb-8">
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+            <div class="metric-card text-center">
+              <div class="text-3xl font-black text-white mb-2" id="paresTotal">--</div>
+              <div class="text-white font-bold">PARES ANALISADOS</div>
+            </div>
+            <div class="metric-card text-center">
+              <div class="text-3xl font-black text-green-400 mb-2" id="paresEncontrados">--</div>
+              <div class="text-white font-bold">OPORTUNIDADES</div>
+            </div>
+            <div class="metric-card text-center">
+              <div class="text-3xl font-black text-cyan-400 mb-2" id="setoresUnicos">--</div>
+              <div class="text-white font-bold">SETORES ÚNICOS</div>
+            </div>
+            <div class="metric-card text-center">
+              <div class="text-3xl font-black text-orange-400 mb-2" id="zscoreMedio">--</div>
+              <div class="text-white font-bold">Z-SCORE MÉDIO</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tabela de Pares -->
+        <div class="ls-card p-6 mb-8">
+          <h3 class="text-2xl font-bold mb-6">
+            <i class="fas fa-table mr-3" style="color: #ba39af;"></i>
+            Pares Identificados
+          </h3>
+          <div style="overflow-x: auto;">
+            <table id="paresTable">
+              <thead>
+                <tr>
+                  <th>Ação 1</th>
+                  <th>Ação 2</th>
+                  <th>Meia-vida</th>
+                  <th>P-valor Coint</th>
+                  <th>Status Beta</th>
+                  <th>Z-score</th>
+                  <th>Direção 1</th>
+                  <th>Direção 2</th>
+                </tr>
+              </thead>
+              <tbody id="paresTableBody">
+                <tr>
+                  <td colspan="8" class="text-center text-gray-400 py-8">Aguardando análise...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Análise Detalhada -->
+        <div id="detailSection" class="hidden">
+          <div class="ls-card p-6">
+            <h3 class="text-2xl font-bold mb-8">
+              <i class="fas fa-chart-bar mr-3" style="color: #ba39af;"></i>
+              Análise Detalhada do Par
+            </h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+              <div class="info-box">
+                <strong id="acao1Setor" class="text-white"></strong>
+              </div>
+              <div class="info-box">
+                <strong id="acao2Setor" class="text-white"></strong>
+              </div>
+            </div>
+
+            <div class="detail-grid">
+              <div class="detail-item">
+                <strong class="text-gray-400">Detalhes do Par:</strong>
+                <div id="detalhesParInfo" class="text-white mt-2"></div>
+              </div>
+              <div class="detail-item">
+                <strong class="text-gray-400">Testes Estatísticos:</strong>
+                <div id="testesEstatisticos" class="text-white mt-2"></div>
+              </div>
+            </div>
+
+            <h3 id="financialHeader" class="text-xl font-bold text-geminii mb-6"></h3>
+
+            <!-- Tabs -->
+            <div class="flex gap-3 mb-6 flex-wrap">
+              <button class="tab active" onclick="switchTab(0)">Z-score</button>
+              <button class="tab" onclick="switchTab(1)">Resumo Financeiro</button>
+              <button class="tab" onclick="switchTab(2)">Stop/Gain ATR</button>
+              <button class="tab" onclick="switchTab(3)">Beta Rotation</button>
+              <button class="tab" onclick="switchTab(4)">Spread</button>
+              <button class="tab" onclick="switchTab(5)">Margem e Custos</button>
+              <button class="tab" onclick="switchTab(6)">Análise Períodos</button>
+            </div>
+
+            <div class="tab-content active" id="tab0">
+              <div class="chart-container">
+                <div id="zscoreChart" style="height: 500px;"></div>
+              </div>
+            </div>
+
+            <div class="tab-content" id="tab1">
+              <div id="resumoFinanceiro"></div>
+            </div>
+
+            <div class="tab-content" id="tab2">
+              <div id="stopGain"></div>
+            </div>
+
+            <div class="tab-content" id="tab3">
+              <div class="chart-container">
+                <div id="betaChart" style="height: 500px;"></div>
+              </div>
+              <div id="betaAnalise"></div>
+            </div>
+
+            <div class="tab-content" id="tab4">
+              <div class="chart-container">
+                <div id="spreadChart" style="height: 500px;"></div>
+              </div>
+            </div>
+
+            <div class="tab-content" id="tab5">
+              <div id="margemCustos"></div>
+            </div>
+
+            <div class="tab-content" id="tab6">
+              <div id="analiseEstabilidade"></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Disclaimer -->
+      <div class="mt-6 bg-red-900/20 border-2 border-red-500/40 rounded-xl p-6">
+        <div class="flex items-start gap-4">
+          <i class="fas fa-exclamation-triangle text-red-400 text-2xl mt-1 flex-shrink-0"></i>
+          <div class="text-left">
+            <h3 class="text-red-400 font-bold text-base mb-3">AVISO LEGAL IMPORTANTE</h3>
+            <p class="text-gray-300 text-xs leading-relaxed mb-3">
+              As informações fornecidas são de caráter educativo. Não constituem recomendação de investimento. 
+              Long&Short envolve alto risco e pode resultar em perdas significativas.
+            </p>
+            <div class="pt-3 border-t border-gray-700 text-gray-400 text-xs">
+              <p><strong>Geminii Research Ltda</strong> - CNPJ 60.897.331/0001-06 | Analista: Diego Doneda - CNPI 9668</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    const API_URL = 'http://localhost:5000/api/longshort';
+    let paresData = [];
+    let currentPar = null;
+
+    function showStatus(message, type = 'info') {
+      const statusMsg = document.getElementById('statusMsg');
+      const bgClass = type === 'success' ? 'bg-green-600 bg-opacity-20 border-green-500' : 
+                     type === 'error' ? 'bg-red-600 bg-opacity-20 border-red-500' : 
+                     'bg-blue-600 bg-opacity-20 border-blue-500';
+      
+      statusMsg.className = `mb-6 p-4 rounded-lg border backdrop-blur-sm ${bgClass}`;
+      statusMsg.textContent = message;
+      statusMsg.classList.remove('hidden');
+      
+      setTimeout(() => statusMsg.classList.add('hidden'), 5000);
+    }
+
+    function setLoading(button, loading) {
+      if (loading) {
+        button.classList.add('loading');
+        button.innerHTML = '<span class="spinner mr-2"></span>Processando...';
+      } else {
+        button.classList.remove('loading');
+        button.innerHTML = '<i class="fas fa-rocket mr-2"></i>Analisar Pares Cointegrados';
+      }
+    }
+
+    function switchTab(index) {
+      document.querySelectorAll('.tab').forEach((tab, i) => {
+        tab.classList.toggle('active', i === index);
+      });
+      document.querySelectorAll('.tab-content').forEach((content, i) => {
+        content.classList.toggle('active', i === index);
+      });
+    }
+
+    function getStatusClass(status) {
+      if (status === 'Favoravel') return 'status-favoravel';
+      if (status === 'Cautela') return 'status-cautela';
+      return 'status-naorecomendado';
+    }
+
+    async function analisarPares() {
+      const investimento = parseFloat(document.getElementById('investimento').value);
+      const dias = parseInt(document.getElementById('dias').value);
+      const janelaBeta = parseInt(document.getElementById('janelaBeta').value);
+      const zscoreMinimo = parseFloat(document.getElementById('zscoreMinimo').value);
+
+      const analyzeBtn = document.getElementById('analyzeBtn');
+      setLoading(analyzeBtn, true);
+      showStatus('Executando análise de pares cointegrados...', 'info');
+
+      try {
+        const response = await fetch(`${API_URL}/analisar`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ investimento, dias, janelaBeta, zscoreMinimo })
+        });
+
+        const data = await response.json();
+
+        if (data.sucesso) {
+          paresData = data.pares;
+          displayResults(data);
+          showStatus(`Análise concluída: ${data.paresEncontrados} oportunidades encontradas`, 'success');
+        } else {
+          showStatus('Erro: ' + data.erro, 'error');
+        }
+      } catch (error) {
+        showStatus('Erro ao conectar com a API: ' + error.message, 'error');
+      } finally {
+        setLoading(analyzeBtn, false);
+      }
+    }
+
+    function displayResults(data) {
+      document.getElementById('paresTotal').textContent = data.totalParesAnalisados || 0;
+      document.getElementById('paresEncontrados').textContent = data.paresEncontrados || 0;
+      document.getElementById('setoresUnicos').textContent = data.setoresUnicos || 0;
+      
+      const zscoreMedio = data.pares.length > 0 ? 
+        (data.pares.reduce((sum, p) => sum + Math.abs(p.zscoreAtual || 0), 0) / data.pares.length).toFixed(2) : 
+        '--';
+      document.getElementById('zscoreMedio').textContent = zscoreMedio;
+
+      const tbody = document.getElementById('paresTableBody');
+      tbody.innerHTML = '';
+
+      if (data.pares.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" class="text-center text-gray-400 py-8">Nenhum par encontrado com os critérios selecionados</td></tr>';
+        document.getElementById('resultsSection').classList.remove('hidden');
+        return;
+      }
+
+      data.pares.forEach((par) => {
+        const row = tbody.insertRow();
+        row.onclick = () => selecionarPar(par);
+        
+        const statusClass = getStatusClass(par.status);
+        const pvalorCoint = par.pvalorCointegracao || 0;
+        const pvalorClass = pvalorCoint < 0.05 ? 'direction-buy' : 'direction-sell';
+        
+        row.innerHTML = `
+          <td>${par.acao1}</td>
+          <td>${par.acao2}</td>
+          <td>${(par.meiaVida || 0).toFixed(2)}</td>
+          <td class="${pvalorClass}">${pvalorCoint.toFixed(4)}</td>
+          <td class="${statusClass}">${par.status}</td>
+          <td>${(par.zscoreAtual || 0).toFixed(2)}</td>
+          <td class="${par.direcaoAcao1 === 'Compra' ? 'direction-buy' : 'direction-sell'}">${par.direcaoAcao1}</td>
+          <td class="${par.direcaoAcao2 === 'Compra' ? 'direction-buy' : 'direction-sell'}">${par.direcaoAcao2}</td>
+        `;
+      });
+
+      document.getElementById('resultsSection').classList.remove('hidden');
+    }
+
+    async function selecionarPar(par) {
+      currentPar = par;
+      const investimento = parseFloat(document.getElementById('investimento').value);
+      const dias = parseInt(document.getElementById('dias').value);
+      const janelaBeta = parseInt(document.getElementById('janelaBeta').value);
+
+      showStatus('Carregando análise detalhada...', 'info');
+
+      try {
+        const response = await fetch(`${API_URL}/par/${par.acao1}/${par.acao2}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ investimento, dias, janelaBeta })
+        });
+
+        const data = await response.json();
+
+        if (data.sucesso) {
+          document.getElementById('acao1Setor').textContent = `${par.acao1}: ${data.par.setorAcao1}`;
+          document.getElementById('acao2Setor').textContent = `${par.acao2}: ${data.par.setorAcao2}`;
+          
+          displayParDetails(data);
+          loadCharts(data.par, dias, janelaBeta, data);
+          
+          document.getElementById('detailSection').classList.remove('hidden');
+          setTimeout(() => {
+            document.getElementById('detailSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }, 100);
+          
+          showStatus('Análise detalhada carregada', 'success');
+        }
+      } catch (error) {
+        showStatus('Erro ao carregar análise detalhada: ' + error.message, 'error');
+      }
+    }
+
+    function displayParDetails(data) {
+      if (!data || !data.par) {
+        showStatus('Erro: Dados do par não foram recebidos corretamente', 'error');
+        return;
+      }
+      
+      const par = data.par;
+      const qtd = data.quantidades || {};
+      const sg = data.stopGain || {};
+      
+      document.getElementById('detalhesParInfo').innerHTML = `
+        Correlação: ${(par.correlacao ?? 0).toFixed(4)}<br>
+        Beta: ${(par.beta ?? 0).toFixed(4)}<br>
+        Meia-vida: ${(par.meiaVida ?? 0).toFixed(2)} dias<br>
+        R²: ${(par.r2 ?? 0).toFixed(4)}
+      `;
+      
+      const pvalorCoint = par.pvalorCointegracao ?? 1;
+      const pvalorADF = par.pvalorADF ?? 1;
+      const zscore = par.zscoreAtual ?? 0;
+      
+      document.getElementById('testesEstatisticos').innerHTML = `
+        P-valor Cointegração: ${pvalorCoint.toFixed(4)} ${pvalorCoint < 0.05 ? '<span class="direction-buy">(OK)</span>' : '<span class="direction-sell">(FALHOU)</span>'}<br>
+        P-valor ADF: ${pvalorADF.toFixed(4)} ${pvalorADF < 0.05 ? '<span class="direction-buy">(OK)</span>' : '<span class="direction-sell">(FALHOU)</span>'}<br>
+        Z-score atual: ${zscore.toFixed(4)}
+      `;
+
+      const investimento = parseFloat(document.getElementById('investimento').value);
+      document.getElementById('financialHeader').textContent = 
+        `Financeiro a ser Investido R$ ${investimento.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+
+      document.getElementById('resumoFinanceiro').innerHTML = `
+        <div class="financial-row">
+          <span>${par.acao1}</span>
+          <span class="${par.direcaoAcao1 === 'Compra' ? 'direction-buy' : 'direction-sell'}">${par.direcaoAcao1}</span>
+          <span>${qtd.qtd1 ?? 0} ações</span>
+          <span>R$ ${(qtd.ultimoPreco1 ?? 0).toFixed(2)}</span>
+          <span>R$ ${(qtd.valorTotal1 ?? 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</span>
+        </div>
+        <div class="financial-row">
+          <span>${par.acao2}</span>
+          <span class="${par.direcaoAcao2 === 'Compra' ? 'direction-buy' : 'direction-sell'}">${par.direcaoAcao2}</span>
+          <span>${qtd.qtd2 ?? 0} ações</span>
+          <span>R$ ${(qtd.ultimoPreco2 ?? 0).toFixed(2)}</span>
+          <span>R$ ${(qtd.valorTotal2 ?? 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</span>
+        </div>
+        <div class="financial-row" style="background: linear-gradient(90deg, rgba(186,57,175,0.3), rgba(217,70,239,0.3)); font-weight: bold;">
+          <span>Impacto financeiro líquido:</span>
+          <span>R$ ${(qtd.impactoLiquido ?? 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</span>
+        </div>
+      `;
+
+      document.getElementById('stopGain').innerHTML = `
+        <div class="financial-row">
+          <span class="direction-sell">Stop-Loss:</span>
+          <span class="direction-sell">R$ ${(sg.valorStop ?? 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})} (${(sg.percentualStop ?? 0).toFixed(2)}%)</span>
+        </div>
+        <div class="financial-row">
+          <span class="direction-buy">Gain:</span>
+          <span class="direction-buy">R$ ${(sg.valorGain ?? 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})} (${(sg.percentualGain ?? 0).toFixed(2)}%)</span>
+        </div>
+      `;
+    }
+
+    async function loadCharts(par, dias, janelaBeta, parData) {
+      loadZscoreChart(par, dias);
+      loadSpreadChart(par, dias);
+      loadBetaChart(par, dias, janelaBeta);
+      loadEstabilidadeTable(par, dias);
+      loadMargemCustos(parData, par);
+    }
+
+    async function loadZscoreChart(par, dias) {
+      try {
+        const response = await fetch(`${API_URL}/zscore/${par.acao1}/${par.acao2}?dias=${dias}`);
+        const data = await response.json();
+
+        if (data.sucesso) {
+          const trace = {
+            x: data.zscore.datas,
+            y: data.zscore.zscore,
+            type: 'scatter',
+            mode: 'lines',
+            name: 'Z-score',
+            line: { color: '#1DA1F2', width: 2 }
+          };
+
+          const layout = {
+            title: `Z-score: ${par.acao1} vs ${par.acao2}`,
+            xaxis: { title: 'Data', showgrid: false, zeroline: false },
+            yaxis: { title: 'Z-score', showgrid: false, zeroline: false },
+            plot_bgcolor: 'rgba(0,0,0,0)',
+            paper_bgcolor: 'rgba(0,0,0,0)',
+            font: { color: '#fafafa' },
+            height: 500,
+            shapes: [
+              { type: 'line', x0: data.zscore.datas[0], x1: data.zscore.datas[data.zscore.datas.length-1], y0: 0, y1: 0, line: { color: 'white', dash: 'dash' } },
+              { type: 'line', x0: data.zscore.datas[0], x1: data.zscore.datas[data.zscore.datas.length-1], y0: 2, y1: 2, line: { color: '#10b981', dash: 'dash' } },
+              { type: 'line', x0: data.zscore.datas[0], x1: data.zscore.datas[data.zscore.datas.length-1], y0: -2, y1: -2, line: { color: '#10b981', dash: 'dash' } },
+              { type: 'line', x0: data.zscore.datas[0], x1: data.zscore.datas[data.zscore.datas.length-1], y0: 3, y1: 3, line: { color: '#ef4444', dash: 'dash' } },
+              { type: 'line', x0: data.zscore.datas[0], x1: data.zscore.datas[data.zscore.datas.length-1], y0: -3, y1: -3, line: { color: '#ef4444', dash: 'dash' } }
+            ]
+          };
+
+          Plotly.newPlot('zscoreChart', [trace], layout, {responsive: true, displayModeBar: true});
+        }
+      } catch (error) {
+        console.error('Erro ao carregar Z-score:', error);
+      }
+    }
+
+    async function loadBetaChart(par, dias, janela) {
+      try {
+        const response = await fetch(`${API_URL}/beta/${par.acao1}/${par.acao2}?dias=${dias}&janela=${janela}`);
+        const data = await response.json();
+
+        if (data.sucesso) {
+          const beta = data.beta;
+          
+          const trace = {
+            x: beta.datas,
+            y: beta.beta,
+            type: 'scatter',
+            mode: 'lines',
+            name: 'Beta Rotation',
+            line: { color: '#1DA1F2', width: 2 }
+          };
+
+          const layout = {
+            title: `Beta Rotation: ${par.acao1} vs ${par.acao2}`,
+            xaxis: { title: 'Data', showgrid: false, zeroline: false },
+            yaxis: { title: 'Beta', showgrid: false, zeroline: false },
+            plot_bgcolor: 'rgba(0,0,0,0)',
+            paper_bgcolor: 'rgba(0,0,0,0)',
+            font: { color: '#fafafa' },
+            height: 500,
+            shapes: [
+              { type: 'line', x0: beta.datas[0], x1: beta.datas[beta.datas.length-1], y0: beta.mediaBeta, y1: beta.mediaBeta, line: { color: 'white', dash: 'dash', width: 2 } },
+              { type: 'line', x0: beta.datas[0], x1: beta.datas[beta.datas.length-1], y0: beta.limiteSuperior, y1: beta.limiteSuperior, line: { color: '#10b981', dash: 'dot' } },
+              { type: 'line', x0: beta.datas[0], x1: beta.datas[beta.datas.length-1], y0: beta.limiteInferior, y1: beta.limiteInferior, line: { color: '#10b981', dash: 'dot' } }
+            ]
+          };
+
+          Plotly.newPlot('betaChart', [trace], layout, {responsive: true, displayModeBar: true});
+
+          if (data.analise) {
+            const analise = data.analise;
+            const statusClass = getStatusClass(analise.status);
+            document.getElementById('betaAnalise').innerHTML = `
+              <div class="detail-grid" style="margin-top: 1.5rem;">
+                <div class="detail-item">
+                  <strong class="text-gray-400">Status:</strong>
+                  <span class="${statusClass}">${analise.status}</span>
+                </div>
+                <div class="detail-item">
+                  <strong class="text-gray-400">Nível de Risco:</strong>
+                  <span>${analise.nivelRisco}</span>
+                </div>
+              </div>
+              <div class="info-box" style="margin-top: 1rem;">
+                <strong>Interpretação:</strong> ${analise.interpretacao || 'N/A'}
+              </div>
+            `;
+          }
+        }
+      } catch (error) {
+        console.error('Erro ao carregar Beta:', error);
+      }
+    }
+
+    async function loadSpreadChart(par, dias) {
+      try {
+        const response = await fetch(`${API_URL}/spread/${par.acao1}/${par.acao2}?dias=${dias}`);
+        const data = await response.json();
+
+        if (data.sucesso) {
+          const spread = data.spread;
+          const valores = spread.spread;
+          const media = valores.reduce((a, b) => a + b, 0) / valores.length;
+          const variancia = valores.reduce((sum, val) => sum + Math.pow(val - media, 2), 0) / valores.length;
+          const desvio = Math.sqrt(variancia);
+          
+          const trace = {
+            x: spread.datas,
+            y: spread.spread,
+            type: 'scatter',
+            mode: 'lines',
+            name: 'Spread',
+            line: { color: '#ba39af', width: 2 }
+          };
+
+          const layout = {
+            title: `Spread Cointegrado: ${par.acao1} vs ${par.acao2}`,
+            xaxis: { title: 'Data', showgrid: false, zeroline: false },
+            yaxis: { title: 'Spread', showgrid: false, zeroline: false },
+            plot_bgcolor: 'rgba(0,0,0,0)',
+            paper_bgcolor: 'rgba(0,0,0,0)',
+            font: { color: '#fafafa' },
+            height: 500,
+            shapes: [
+              { type: 'line', x0: spread.datas[0], x1: spread.datas[spread.datas.length-1], y0: media, y1: media, line: { color: 'white', dash: 'dash', width: 2 } },
+              { type: 'line', x0: spread.datas[0], x1: spread.datas[spread.datas.length-1], y0: media + 2 * desvio, y1: media + 2 * desvio, line: { color: '#10b981', dash: 'dot' } },
+              { type: 'line', x0: spread.datas[0], x1: spread.datas[spread.datas.length-1], y0: media - 2 * desvio, y1: media - 2 * desvio, line: { color: '#10b981', dash: 'dot' } }
+            ]
+          };
+
+          Plotly.newPlot('spreadChart', [trace], layout, {responsive: true, displayModeBar: true});
+        }
+      } catch (error) {
+        console.error('Erro ao carregar Spread:', error);
+      }
+    }
+
+    async function loadEstabilidadeTable(par, dias) {
+      try {
+        const response = await fetch(`${API_URL}/estabilidade/${par.acao1}/${par.acao2}?dias=${dias}`);
+        const data = await response.json();
+
+        if (data.sucesso) {
+          let html = `
+            <h3 class="text-xl font-bold text-white mb-4">Análise de Estabilidade por Períodos</h3>
+            <div class="detail-grid">
+              <div style="overflow-x: auto;">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Período</th>
+                      <th>P-valor</th>
+                      <th>Meia-vida</th>
+                      <th>R²</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+          `;
+
+          (data.periodos || []).forEach(p => {
+            const statusClass = p.status === 'Cointegrado' ? 'direction-buy' : 'direction-sell';
+            html += `
+              <tr>
+                <td>${p.periodo} dias</td>
+                <td>${p.pvalorCoint.toFixed(4)}</td>
+                <td>${p.meiaVida !== null ? p.meiaVida.toFixed(2) : 'N/A'}</td>
+                <td>${p.r2.toFixed(4)}</td>
+                <td class="${statusClass}">${p.status}</td>
+              </tr>
+            `;
+          });
+
+          html += `
+                  </tbody>
+                </table>
+              </div>
+              <div class="detail-item">
+                <strong class="text-gray-400">Diagnóstico</strong>
+                <p style="margin-top: 0.5rem;">${data.diagnostico?.mensagem || 'N/A'}</p>
+                ${data.diagnostico ? `
+                <p style="margin-top: 1rem;">
+                  Períodos cointegrados: ${data.diagnostico.periodosCointegrados} de ${data.diagnostico.totalPeriodos}<br>
+                  R² médio: ${(data.diagnostico.r2Medio || 0).toFixed(4)}
+                </p>
+                ` : ''}
+              </div>
+            </div>
+          `;
+
+          document.getElementById('analiseEstabilidade').innerHTML = html;
+        }
+      } catch (error) {
+        console.error('Erro ao carregar estabilidade:', error);
+      }
+    }
+
+    function loadMargemCustos(parData, par) {
+      const qtd = parData.quantidades || {};
+      const direcaoAcao1 = par.direcaoAcao1;
+      const valor1 = qtd.valorTotal1 || 0;
+      const valor2 = qtd.valorTotal2 || 0;
+      const valorVendido = direcaoAcao1 === 'Venda' ? valor1 : valor2;
+      const valorComprado = direcaoAcao1 === 'Compra' ? valor1 : valor2;
+
+      document.getElementById('margemCustos').innerHTML = `
+        <h3 class="text-xl font-bold text-white mb-4">Análise de Margem e Custos</h3>
+        <div class="detail-grid">
+          <div class="detail-item">
+            <strong class="text-gray-400">Parâmetros</strong>
+            <label style="display: block; margin-top: 0.5rem; color: #9ca3af;">% Garantia:</label>
+            <input type="number" id="percGarantia" value="25.0" class="w-full px-3 py-2 rounded">
+            <label style="display: block; margin-top: 0.5rem; color: #9ca3af;">Taxa BTC Anual (%):</label>
+            <input type="number" id="taxaBtc" value="2.0" class="w-full px-3 py-2 rounded">
+          </div>
+          <div class="detail-item">
+            <strong class="text-gray-400">Execução</strong>
+            <label style="display: block; margin-top: 0.5rem; color: #9ca3af;">Dias da Operação:</label>
+            <input type="number" id="diasOp" value="10" class="w-full px-3 py-2 rounded">
+            <label style="display: block; margin-top: 0.5rem; color: #9ca3af;">Taxa Corretora BTC (%):</label>
+            <input type="number" id="taxaCorr" value="35.0" class="w-full px-3 py-2 rounded">
+          </div>
+        </div>
+        <button 
+          onclick="calcularMargem(${valorVendido}, ${valorComprado})"
+          class="mt-4 w-full px-6 py-3 bg-gradient-to-r from-geminii to-purple-600 hover:shadow-lg rounded-lg transition-all font-medium"
+        >
+          Calcular Margem e Custos
+        </button>
+        <div id="resultadoMargem" style="margin-top: 1rem;"></div>
+      `;
+    }
+
+    async function calcularMargem(valorVendido, valorComprado) {
+      const percGarantia = parseFloat(document.getElementById('percGarantia').value);
+      const taxaBtc = parseFloat(document.getElementById('taxaBtc').value);
+      const diasOp = parseInt(document.getElementById('diasOp').value);
+      const taxaCorr = parseFloat(document.getElementById('taxaCorr').value);
+
+      try {
+        const response = await fetch(`${API_URL}/margem`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            valorVendido, valorComprado,
+            percentualGarantia: percGarantia,
+            taxaBtcAnual: taxaBtc,
+            diasOperacao: diasOp,
+            taxaCorretoraBtc: taxaCorr
+          })
+        });
+
+        const data = await response.json();
+
+        if (data.sucesso) {
+          const m = data.margem;
+          document.getElementById('resultadoMargem').innerHTML = `
+            <div class="detail-grid">
+              <div class="detail-item">
+                <strong class="text-gray-400">Valores</strong>
+                <div style="margin-top: 0.5rem;">
+                  Vendido: R$ ${m.valorVendido.toLocaleString('pt-BR', {minimumFractionDigits: 2})}<br>
+                  Comprado: R$ ${m.valorComprado.toLocaleString('pt-BR', {minimumFractionDigits: 2})}<br>
+                  Margem: R$ ${m.margemNecessaria.toLocaleString('pt-BR', {minimumFractionDigits: 2})}
+                </div>
+              </div>
+              <div class="detail-item">
+                <strong class="text-gray-400">Custos</strong>
+                <div style="margin-top: 0.5rem;">
+                  Emolumentos: R$ ${m.emolumentos.toLocaleString('pt-BR', {minimumFractionDigits: 2})}<br>
+                  BTC: R$ ${m.custoBTC.toLocaleString('pt-BR', {minimumFractionDigits: 2})}<br>
+                  <strong>Total: R$ ${m.custoTotal.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</strong>
+                </div>
+              </div>
+            </div>
+          `;
+        }
+      } catch (error) {
+        console.error('Erro ao calcular margem:', error);
+      }
+    }
+
+    // Inicialização
+    document.addEventListener('DOMContentLoaded', function() {
+      showStatus('Sistema Long&Short carregado. Configure os parâmetros e clique em "Analisar".', 'info');
+    });
+
+  </script>
+
+</body>
+</html>

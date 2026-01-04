@@ -896,6 +896,28 @@
               </div>
             </div>
           </div>
+          
+          
+          <!-- Card 5: Long&Short -->
+          <div class="relative" id="mlCard">
+            <a 
+              href="/longshort.html"
+              class="tool-card bg-gradient-to-r from-purple-500/10 to-purple-500/5 border border-purple-500/20 rounded-xl p-6 transition-all group hover:border-purple-500/40 hover:shadow-lg hover:shadow-purple-500/20 block"
+            >
+              <div class="flex items-center gap-4 mb-4">
+                <div class="w-14 h-14 bg-purple-500/20 rounded-lg flex items-center justify-center group-hover:bg-purple-500/30 transition-colors">
+                  <i class="fas fa-chart-line text-purple-400 text-xl"></i>
+                </div>
+                <div class="flex-1">
+                  <h3 class="text-lg font-semibold text-white group-hover:text-purple-400 transition-colors">Long&Short</h3>
+                  <p class="text-sm text-gray-300">Módulo Exclusivo Long&Short por Cointegração</p>
+                </div>
+                <i class="fas fa-arrow-right text-purple-400 opacity-0 group-hover:opacity-100 transition-opacity"></i>
+              </div>
+            </a>
+          </div>
+            
+          
 
           <!-- Card 3: Machine Learning -->
           <div class="relative" id="mlCard">
@@ -969,17 +991,18 @@
               <div class="grid grid-cols-1 gap-3">
 
                 <!-- Visão Macro - NOVO -->
-                <!-- <a href="greeks-micro.html" class="flex items-center gap-3 p-3 rounded-lg hover:bg-gradient-to-r hover:from-purple-500/10 hover:to-indigo-500/10 transition-all text-white border border-purple-500/30">
+                <a href="greeks-micro.html" class="flex items-center gap-3 p-3 rounded-lg hover:bg-gradient-to-r hover:from-purple-500/10 hover:to-indigo-500/10 transition-all text-white border border-purple-500/30">
                   <i class="fas fa-layer-group text-purple-500 w-6"></i>
                   <div class="flex-1">
+                    
                     <div class="font-bold flex items-center gap-2">
-                       Visão Macro
+                       Visão Global
                       <span class="px-2 py-0.5 bg-purple-500 text-white text-[9px] font-black rounded-full">NOVO</span>
                     </div>
                     <div class="text-xs text-gray-400">Análise consolidada dos 4 Greeks</div>
                   </div>
                   <i class="fas fa-star text-purple-400 text-xs"></i>
-                </a> -->
+                </a>
 
                 <a href="gamma-levels.html" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white">
                   <i class="fas fa-layer-group text-purple-400 w-6"></i>
@@ -1013,7 +1036,7 @@
                   </div>
                 </a>  
 
-                <a href="historical-levels.html" class="market-maker-btn flex items-center gap-3 p-3 rounded-lg transition-all text-white relative">
+                <a href="historical-levels.html" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white">
                   <i class="fas fa-layer-group text-yellow-400 w-6"></i>
                   <div class="flex-1">
                     <div class="font-bold flex items-center gap-2">
@@ -1025,6 +1048,8 @@
                   <i class="fas fa-sparkles text-yellow-400 text-xs"></i>
                 </a> 
 
+                
+
               </div>
             </div>
           </div>
@@ -1034,73 +1059,7 @@
       </div>
 
       
-      
-<!-- <div class="card rounded-2xl p-8 mb-8">
-  <div class="flex items-center justify-between mb-6">
-    <div>
-      <h2 class="text-2xl font-bold text-white mb-2 flex items-center">
-        <i class="fas fa-rocket text-yellow-400 mr-3"></i>
-        Em Desenvolvimento
-      </h2>
-      <p class="text-gray-300">Próximos indicadores e ferramentas exclusivas</p>
-    </div>
-    <div class="flex items-center gap-2">
-      <span class="bg-gradient-to-r from-yellow-400 to-orange-500 text-black px-3 py-1 rounded-full text-xs font-bold">
-        <i class="fas fa-star mr-1"></i>
-        NOVIDADES
-      </span>
-    </div>
-  </div>
-  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-    <div class="coming-soon-card rounded-xl p-6 transition-all group hover:scale-105">
-      <div class="flex items-center gap-4 mb-4">
-        <div class="w-14 h-14 bg-yellow-500/20 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
-          <i class="fas fa-layer-group text-yellow-400 text-xl"></i>
-        </div>
-        <div class="flex-1">
-          <h3 class="text-lg font-semibold text-white">Gamma Exposure</h3>
-          <p class="text-sm text-gray-300">Níveis de suporte e resistência via Gamma</p>
-        </div>
-      </div>     
-      <span class="coming-soon-badge mb-3">
-        <i class="fas fa-clock"></i>
-        Já disponível
-      </span>
-    </div>
-    <div class="coming-soon-card rounded-xl p-6 transition-all group hover:scale-105">
-      <div class="flex items-center gap-4 mb-4">
-        <div class="w-14 h-14 bg-blue-500/20 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
-          <i class="fas fa-chart-bar text-blue-400 text-xl"></i>
-        </div>
-        <div class="flex-1">
-          <h3 class="text-lg font-semibold text-white">Opções em 4 dimensões</h3>
-          <p class="text-sm text-gray-300">Analise completa das gregas</p>
-        </div>
-      </div>     
-      <span class="coming-soon-badge mb-3">
-        <i class="fas fa-cog"></i>
-        Planejando
-      </span>
-    </div>
-    <div class="coming-soon-card rounded-xl p-6 transition-all group hover:scale-105">
-      <div class="flex items-center gap-4 mb-4">
-        <div class="w-14 h-14 bg-purple-500/20 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
-          <i class="fas fa-arrows-alt-h text-purple-400 text-xl"></i>
-        </div>
-        <div class="flex-1">
-          <h3 class="text-lg font-semibold text-white">Market Maker Analise</h3>
-          <p class="text-sm text-gray-300">Como Market Maker Atual</p>
-        </div>
-      </div>   
-      <span class="coming-soon-badge mb-3">
-        <i class="fas fa-lightbulb"></i>
-        Ideias
-      </span>    
-    </div>
-  </div>
-  
-</div> -->
-      
+            
    
 
     </div>

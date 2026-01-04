@@ -692,7 +692,7 @@
           userToken = token;
           currentUser = result.data.user;
   
-          console.log('🔥 INICIANDO VERIFICAÇÃO DE ACESSO...');
+          console.log(' INICIANDO VERIFICAÇÃO DE ACESSO...');
           
           const allowedPlans = [3, 4];
           const allowedUserTypes = ['trial', 'paid', 'free', 'admin', 'master'];
@@ -760,7 +760,7 @@
           currentTicker = ticker;
           displayTickerInfo(infoResult.data);
           
-          // 🔥 NOVA CHAMADA - Buscar volume histórico
+          //  NOVA CHAMADA - Buscar volume histórico
           await buscarDadosHistoricos();
         }
  
@@ -787,7 +787,7 @@
       }
     }
  
-    // 🔥 NOVA FUNÇÃO - Buscar dados históricos
+    //  NOVA FUNÇÃO - Buscar dados históricos
     async function buscarDadosHistoricos() {
       if (!currentTicker) return;
       
@@ -866,7 +866,7 @@
       console.log(' Volume histórico exibido com sucesso');
     }
  
-    // 🔥 NOVA FUNÇÃO - Criar gráfico de volume histórico
+    //  NOVA FUNÇÃO - Criar gráfico de volume histórico
     function createVolumeHistoricoChart(chartData) {
       try {
         console.log(' Criando gráfico histórico:', chartData);
@@ -946,7 +946,7 @@
       }
     }
  
-    // 🔥 NOVA FUNÇÃO - Analisar hot strike específico
+    //  NOVA FUNÇÃO - Analisar hot strike específico
     function analisarHotStrike() {
       if (!currentVolumeData || !currentVolumeData.hot_strike) {
         alert('⚠️ Nenhum strike ativo identificado');
@@ -1099,7 +1099,7 @@
       document.body.insertAdjacentHTML('beforeend', modalHTML);
     }
  
-    // 🔥 NOVA FUNÇÃO - Fechar modal do hot strike
+    //  NOVA FUNÇÃO - Fechar modal do hot strike
     function closeHotStrikeModal() {
       const modal = document.getElementById('hotStrikeModal');
       if (modal) {
@@ -1107,7 +1107,7 @@
       }
     }
  
-    // 🔥 NOVA FUNÇÃO - Adicionar hot strike ao grupo
+    //  NOVA FUNÇÃO - Adicionar hot strike ao grupo
     function adicionarHotStrikeAoGrupo() {
       if (!currentVolumeData) return;
       

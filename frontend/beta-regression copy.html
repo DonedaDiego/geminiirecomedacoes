@@ -979,7 +979,7 @@
         const labels = chartData.labels || [];
         const mmData = chartData.mm || [];
         
-        // ===== CRIAR SEGMENTOS COLORIDOS (SEM TOOLTIP) =====
+        // Criar segmentos coloridos baseados nos sinais
         const datasets = [];
         
         for (let i = 1; i < prices.length; i++) {
@@ -995,125 +995,59 @@
           }
           
           datasets.push({
-            label: '', // Sem label
+            label: '',
             data: [
               { x: labels[i-1], y: prices[i-1] },
               { x: labels[i], y: prices[i] }
             ],
             borderColor: color,
             backgroundColor: color,
-            borderWidth: 2.5,
+            borderWidth: 2,
             pointRadius: 0,
-            pointHoverRadius: 0, // Desabilita hover nos pontos
             showLine: true,
-            tension: 0.1,
-            parsing: false, // Performance
-            normalized: true, // Performance
-            // ===== CHAVE PRINCIPAL: Esconder do tooltip =====
-            tooltip: {
-              display: false
-            }
+            tension: 0
           });
         }
         
-        // ===== DATASET INVISÍVEL PARA TOOLTIP =====
-        // Este dataset é invisível mas captura o hover e mostra o tooltip
-        datasets.push({
-          label: 'Preço',
-          data: prices.map((price, index) => ({ x: labels[index], y: price })),
-          borderColor: 'rgba(0, 0, 0, 0)', // Invisível
-          backgroundColor: 'rgba(0, 0, 0, 0)', // Invisível
-          borderWidth: 0,
-          pointRadius: 0,
-          pointHoverRadius: 6, // Aparece no hover
-          pointHoverBackgroundColor: '#ba39af',
-          pointHoverBorderColor: '#ffffff',
-          pointHoverBorderWidth: 2,
-          showLine: false,
-          order: -1, // Renderiza por cima
-          tooltip: {
-            callbacks: {
-              title: function(context) {
-                return 'Data: ' + context[0].label;
-              },
-              label: function(context) {
-                const index = context.dataIndex;
-                const signal = signals[index];
-                let signalText = '';
-                
-                if (signal === 1) {
-                  signalText = '📈 COMPRA';
-                } else if (signal === -1) {
-                  signalText = '📉 VENDA';
-                } else {
-                  signalText = '➖ NEUTRO';
-                }
-                
-                return [
-                  'Preço: R$ ' + context.parsed.y.toFixed(2),
-                  'Sinal: ' + signalText
-                ];
-              }
-            }
-          }
-        });
-        
-        // ===== DATASETS PARA LEGENDA (INVISÍVEIS) =====
+        // Datasets para legenda
         datasets.push(
           {
             label: 'Sinal de Compra',
             data: [],
             borderColor: '#00FFAA',
             backgroundColor: '#00FFAA',
-            borderWidth: 2.5,
-            pointRadius: 0
+            borderWidth: 2
           },
           {
             label: 'Sinal de Venda',
             data: [],
             borderColor: '#FF3232',
             backgroundColor: '#FF3232',
-            borderWidth: 2.5,
-            pointRadius: 0
+            borderWidth: 2
           },
           {
             label: 'Neutro',
             data: [],
             borderColor: '#969696',
             backgroundColor: '#969696',
-            borderWidth: 2,
-            pointRadius: 0
+            borderWidth: 2
           }
         );
         
-        // ===== MÉDIA MÓVEL =====
+        // Média móvel
         if (mmData.length > 0) {
-          const mmPoints = mmData.map((value, index) => {
-            if (value !== null && value !== undefined && !isNaN(value)) {
-              return { x: labels[index], y: value };
-            }
-            return { x: labels[index], y: null };
-          });
-          
           datasets.push({
-            label: 'Média Móvel (20)',
-            data: mmPoints,
+            label: 'Média Móvel',
+            data: mmData.map((value, index) => ({ x: labels[index], y: value })),
             borderColor: '#FFA500',
-            backgroundColor: 'rgba(255, 165, 0, 0)',
-            borderWidth: 2.5,
-            borderDash: [8, 4],
+            backgroundColor: 'rgba(255, 165, 0, 0.1)',
+            borderWidth: 2,
             fill: false,
             pointRadius: 0,
-            pointHoverRadius: 5,
-            pointHoverBackgroundColor: '#FFA500',
-            pointHoverBorderColor: '#ffffff',
-            pointHoverBorderWidth: 2,
-            tension: 0.4,
-            spanGaps: true
+            tension: 0.4
           });
         }
         
-        // ===== CRIAR GRÁFICO =====
         priceSignalsChart = new Chart(ctx, {
           type: 'line',
           data: {
@@ -1125,143 +1059,53 @@
             maintainAspectRatio: false,
             interaction: {
               intersect: false,
-              mode: 'index',
-              axis: 'x'
+              mode: 'index'
             },
             plugins: {
               legend: {
-                display: true,
-                position: 'top',
                 labels: {
                   color: '#ffffff',
-                  font: { 
-                    size: 13,
-                    family: 'Inter',
-                    weight: '500'
-                  },
+                  font: { size: 12 },
                   usePointStyle: true,
-                  pointStyle: 'circle',
-                  padding: 15,
-                  boxWidth: 10,
-                  boxHeight: 10,
                   filter: function(item) {
-                    // Mostrar apenas itens com label
-                    return item.text !== '' && item.text !== 'Preço';
+                    return item.text !== '';
                   }
                 }
               },
               tooltip: {
-                enabled: true,
-                backgroundColor: 'rgba(0, 0, 0, 0.95)',
+                backgroundColor: 'rgba(0, 0, 0, 0.8)',
                 titleColor: '#ffffff',
                 bodyColor: '#ffffff',
                 borderColor: '#ba39af',
-                borderWidth: 2,
-                padding: 16,
-                displayColors: false, // Remove quadradinho colorido
-                titleFont: {
-                  size: 14,
-                  weight: 'bold',
-                  family: 'Inter'
-                },
-                bodyFont: {
-                  size: 13,
-                  family: 'Inter'
-                },
-                bodySpacing: 8,
-                cornerRadius: 8,
-                caretSize: 8,
-                caretPadding: 10,
-                // ===== FILTRAR APENAS O DATASET INVISÍVEL =====
-                filter: function(tooltipItem) {
-                  return tooltipItem.dataset.label === 'Preço' || 
-                        tooltipItem.dataset.label === 'Média Móvel (20)';
-                },
+                borderWidth: 1,
                 callbacks: {
-                  title: function(context) {
-                    return 'Data: ' + context[0].label;
-                  },
                   label: function(context) {
-                    if (context.dataset.label === 'Preço') {
-                      const index = context.dataIndex;
-                      const signal = signals[index];
-                      let signalText = '';
-                      let emoji = '';
-                      
-                      if (signal === 1) {
-                        signalText = 'COMPRA';
-                        emoji = '📈';
-                      } else if (signal === -1) {
-                        signalText = 'VENDA';
-                        emoji = '📉';
-                      } else {
-                        signalText = 'NEUTRO';
-                        emoji = '➖';
-                      }
-                      
-                      return [
-                        'Preço: R$ ' + context.parsed.y.toFixed(2),
-                        emoji + ' Sinal: ' + signalText
-                      ];
-                    }
-                    
-                    if (context.dataset.label === 'Média Móvel (20)') {
-                      return 'MM(20): R$ ' + context.parsed.y.toFixed(2);
-                    }
-                    
-                    return null;
+                    return 'R$ ' + context.parsed.y.toFixed(2);
                   }
                 }
               }
             },
             scales: {
               x: {
-                type: 'category',
                 ticks: {
                   color: '#AAB7FF',
-                  maxTicksLimit: 12,
-                  font: {
-                    size: 11,
-                    family: 'Inter'
-                  }
+                  maxTicksLimit: 10
                 },
                 grid: {
-                  color: 'rgba(170, 183, 255, 0.08)',
-                  drawBorder: false
-                },
-                border: {
-                  display: false
+                  color: 'rgba(255, 255, 255, 0.1)'
                 }
               },
               y: {
                 ticks: {
                   color: '#AAB7FF',
-                  font: {
-                    size: 12,
-                    family: 'Inter'
-                  },
                   callback: function(value) {
                     return 'R$ ' + value.toFixed(2);
                   }
                 },
                 grid: {
-                  color: 'rgba(170, 183, 255, 0.08)',
-                  drawBorder: false
-                },
-                border: {
-                  display: false
+                  color: 'rgba(255, 255, 255, 0.1)'
                 }
               }
-            },
-            elements: {
-              point: {
-                radius: 0,
-                hitRadius: 15,
-                hoverRadius: 6
-              }
-            },
-            animation: {
-              duration: 500
             }
           }
         });

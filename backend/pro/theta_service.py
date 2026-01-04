@@ -553,10 +553,22 @@ class ThetaService:
             
             decay_regime = result.get('decay_regime', {})
             
+            # ✅ ADICIONAR TIME_PRESSURE BASEADO EM WEIGHTED_DAYS
+            weighted_days = decay_regime.get('weighted_days', 30)
+            
+            if weighted_days < 10:
+                time_pressure = 'HIGH'       
+            elif weighted_days < 20:
+                time_pressure = 'MODERATE'   
+            else:
+                time_pressure = 'LOW'        
+            
+            decay_regime['time_pressure'] = time_pressure  
+            
             api_result = {
                 'ticker': ticker.replace('.SA', ''),
                 'spot_price': result['spot_price'],
-                'decay_regime': decay_regime,
+                'decay_regime': decay_regime,  # ← Agora inclui time_pressure
                 'plot_json': result['plot_json'],
                 'options_count': result['strikes_analyzed'],
                 'data_quality': {
@@ -566,8 +578,8 @@ class ThetaService:
                 'success': True
             }
             
-            return convert_to_json_serializable(api_result)  # ← ESTA LINHA DEVE ESTAR PRESENTE
+            return convert_to_json_serializable(api_result)
             
         except Exception as e:
             logging.error(f"Erro na análise TEX: {e}")
-            raise  # ← DEVE SER 'raise', não 'return None'
+            raise

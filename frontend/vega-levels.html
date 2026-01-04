@@ -641,7 +641,6 @@
     // Exibir resultados - EXPANDIDO COM CONTEXTO
     function displayResults(data) {
       const vol_regime = data.vol_regime || {};
-      const iv_context = vol_regime.iv_context || {};
       
       // Risk indicator
       const risk = vol_regime.volatility_risk || 'LOW';
@@ -663,18 +662,19 @@
         `inline-block px-8 py-4 rounded-2xl text-2xl font-black ${riskClass}`;
       document.getElementById('riskIndicator').textContent = riskText;
 
-      // Métricas existentes
+      // Métricas básicas
       document.getElementById('spotPrice').textContent = `R$ ${data.spot_price?.toFixed(2)}`;
       
-      const weightedIV = vol_regime.weighted_iv || 0;
-      document.getElementById('weightedIV').textContent = `${weightedIV.toFixed(1)}%`;
+      //  IV ATUAL (weighted_iv = atm_iv agora)
+      const currentIV = vol_regime.weighted_iv || 0;
+      document.getElementById('weightedIV').textContent = `${currentIV.toFixed(1)}%`;
       
-      // NOVAS MÉTRICAS COM CONTEXTO
-      const historicalIV = iv_context.historical_avg_iv || weightedIV;
+      //  IV MÉDIA 10D (agora vem direto do vol_regime)
+      const historicalIV = vol_regime.atm_iv_10d_avg || currentIV;
       document.getElementById('historicalIV').textContent = `${historicalIV.toFixed(1)}%`;
       
-      // Tendência IV com cor dinâmica
-      const ivTrend = iv_context.iv_trend || 'ESTAVEL';
+      //  TENDÊNCIA IV (agora vem direto do vol_regime)
+      const ivTrend = vol_regime.iv_trend || 'ESTAVEL';
       const ivTrendElement = document.getElementById('ivTrend');
       
       let trendColor = '#6b7280'; // cinza padrão
@@ -700,12 +700,6 @@
       
       const vexDescoberto = vol_regime.total_vex_descoberto || 0;
       document.getElementById('vexDescoberto').textContent = formatLargeNumber(vexDescoberto);
-
-      // ALERTAS DINÂMICOS BASEADOS EM DISTORÇÃO IV
-      const alertContainer = document.getElementById('alertContainer');
-      alertContainer.innerHTML = ''; // Limpar alertas anteriores
-      
-      // Removido o alerta de distorção IV conforme pedido
 
       // Gráfico
       if (data.plot_json) {
@@ -787,6 +781,22 @@
     });
 
   </script>
+
+  <div class="mt-6 max-w-4xl mx-auto bg-red-900/20 border-2 border-red-500/40 rounded-xl p-6">
+        <div class="flex items-start gap-4">
+          <i class="fas fa-exclamation-triangle text-red-400 text-2xl mt-1 flex-shrink-0"></i>
+          <div class="text-left">
+            <h3 class="text-red-400 font-bold text-base mb-3">AVISO LEGAL IMPORTANTE</h3>
+            <p class="text-gray-300 text-xs leading-relaxed mb-3">
+              As informações e sinais fornecidos por esta ferramenta são de caráter educativo e informativo. <strong>Não constituem recomendação de investimento nem garantia de rentabilidade.</strong> Investimentos em valores mobiliários envolvem riscos de perda patrimonial. Rentabilidade passada não garante resultados futuros. Os modelos quantitativos utilizados são baseados em dados históricos e podem não capturar adequadamente mudanças nas condições de mercado. Recomendamos a consulta a profissionais qualificados antes de tomar decisões de investimento. <strong>Operações de swing trade e day trade envolvem alto risco e podem resultar em perdas significativas.</strong> Este tipo de operação requer conhecimento técnico e não é adequado para todos os perfis de investidor.
+            </p>
+            <div class="pt-3 border-t border-gray-700 text-gray-400 text-xs">
+              <p><strong>Geminii Research Ltda</strong> - CNPJ 60.897.331/0001-06 | Analista Responsável: Diego Doneda - CNPI 9668</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
 
 </body>
 </html>

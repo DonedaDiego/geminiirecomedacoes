@@ -78,7 +78,7 @@ def create_trial_user(name, email, password, ip_address=None):
         now = datetime.now(timezone.utc)
         trial_expires = now + timedelta(days=15)
         
-        # 🔥 ÚNICO AJUSTE: plan_id=4 para Community trial
+        #  ÚNICO AJUSTE: plan_id=4 para Community trial
         cursor.execute("""
             INSERT INTO users (
                 name, email, password, plan_id, plan_name, user_type,
@@ -88,7 +88,7 @@ def create_trial_user(name, email, password, ip_address=None):
             RETURNING id
         """, (
             name, email, password_hash, 
-            4, 'Community', 'trial',  # 🔥 plan_id=4 Community
+            4, 'Community', 'trial',  #  plan_id=4 Community
             trial_expires, now, now, now,
             True, now, ip_address
         ))
@@ -118,7 +118,7 @@ def create_trial_user(name, email, password, ip_address=None):
 
 def downgrade_user_trial(user_id):
     """
-    🔥 AJUSTE: Fazer downgrade para Free (plan_id=3) ao invés de remover
+     AJUSTE: Fazer downgrade para Free (plan_id=3) ao invés de remover
     """
     try:
         conn = get_db_connection()
@@ -141,7 +141,7 @@ def downgrade_user_trial(user_id):
         
         name, email = user_data
         
-        # 🔥 AJUSTE: Downgrade para Free (plan_id=3) ao invés de deletar
+        #  AJUSTE: Downgrade para Free (plan_id=3) ao invés de deletar
         cursor.execute("""
             UPDATE users 
             SET plan_id = 3, plan_name = 'Free', user_type = 'regular',
@@ -240,7 +240,7 @@ def get_all_trial_users():
         
         cursor = conn.cursor()
         
-        # 🔥 AJUSTE: Buscar apenas plan_id=4 (Community)
+        #  AJUSTE: Buscar apenas plan_id=4 (Community)
         cursor.execute("""
             SELECT id, name, email, plan_id, plan_name, plan_expires_at, created_at,
                    EXTRACT(days FROM (plan_expires_at - NOW())) as days_remaining
@@ -298,7 +298,7 @@ def get_all_trial_users():
 
 def process_expired_trials():
     """
-    🔥 AJUSTE: Fazer downgrade para Free ao invés de remover usuários
+     AJUSTE: Fazer downgrade para Free ao invés de remover usuários
     """
     try:
         conn = get_db_connection()
@@ -307,7 +307,7 @@ def process_expired_trials():
         
         cursor = conn.cursor()
         
-        # 🔥 AJUSTE: Buscar trials Community expirados (plan_id=4)
+        #  AJUSTE: Buscar trials Community expirados (plan_id=4)
         cursor.execute("""
             SELECT id, name, email 
             FROM users 
@@ -320,7 +320,7 @@ def process_expired_trials():
         expired_users = cursor.fetchall()
         
         if expired_users:
-            # 🔥 AJUSTE: Fazer downgrade para Free (plan_id=3)
+            #  AJUSTE: Fazer downgrade para Free (plan_id=3)
             cursor.execute("""
                 UPDATE users 
                 SET plan_id = 3, plan_name = 'Free', user_type = 'regular',
@@ -376,7 +376,7 @@ def get_trial_stats():
         
         cursor = conn.cursor()
         
-        # 🔥 AJUSTE: Total de usuários em trial Community (plan_id=4)
+        #  AJUSTE: Total de usuários em trial Community (plan_id=4)
         cursor.execute("SELECT COUNT(*) FROM users WHERE user_type = 'trial' AND plan_id = 4")
         total_trials = cursor.fetchone()[0]
         
@@ -449,7 +449,7 @@ def get_trial_days_remaining(user_id):
 
 def can_access_premium_features(user_id):
     """
-    🔥 AJUSTE: Community trial (plan_id=4) tem acesso a Premium
+     AJUSTE: Community trial (plan_id=4) tem acesso a Premium
     """
     try:
         print(f"🔍 Verificando acesso Premium para user_id: {user_id}")
@@ -478,12 +478,12 @@ def can_access_premium_features(user_id):
         
         print(f" Dados do usuário: plan_id={plan_id}, user_type={user_type}, plan_name={plan_name}, email={email}")
         
-        # 🔥 REGRA 1: Se é regular com plano Free (3), NEGAR
+        #  REGRA 1: Se é regular com plano Free (3), NEGAR
         if user_type == 'regular' and plan_id == 3:
             print(f" ACESSO NEGADO: Usuário regular com plano Free")
             return False
             
-        # 🔥 REGRA 2: Se é trial Community (4), verificar se não expirou
+        #  REGRA 2: Se é trial Community (4), verificar se não expirou
         if user_type == 'trial' and plan_id == 4:
             if plan_expires_at and plan_expires_at < datetime.now(timezone.utc):
                 print(f" ACESSO NEGADO: Trial expirado em {plan_expires_at}")
@@ -492,13 +492,13 @@ def can_access_premium_features(user_id):
                 print(f" ACESSO LIBERADO: Trial Community válido até {plan_expires_at}")
                 return True
         
-        # 🔥 REGRA 3: Para usuários pagantes, verificar plano
+        #  REGRA 3: Para usuários pagantes, verificar plano
         if user_type in ['regular', 'pro', 'premium']:
             has_access = plan_id == 2  # Apenas Premium
             print(f"{'' if has_access else ''} ACESSO {'LIBERADO' if has_access else 'NEGADO'}: Usuário pagante com plan_id={plan_id}")
             return has_access
             
-        # 🔥 REGRA 4: Admin sempre tem acesso
+        #  REGRA 4: Admin sempre tem acesso
         if user_type in ['admin', 'master']:
             print(f" ACESSO LIBERADO: Usuário admin")
             return True
@@ -514,7 +514,7 @@ def can_access_premium_features(user_id):
 
 def can_access_pro_features(user_id):
     """
-    🔥 AJUSTE: Community trial (plan_id=4) tem acesso a Pro
+     AJUSTE: Community trial (plan_id=4) tem acesso a Pro
     """
     try:
         print(f"🔍 Verificando acesso Pro para user_id: {user_id}")
@@ -543,12 +543,12 @@ def can_access_pro_features(user_id):
         
         print(f" Dados do usuário: plan_id={plan_id}, user_type={user_type}, plan_name={plan_name}, email={email}")
         
-        # 🔥 REGRA 1: Se é regular com plano Free (3), NEGAR
+        #  REGRA 1: Se é regular com plano Free (3), NEGAR
         if user_type == 'regular' and plan_id == 3:
             print(f" ACESSO NEGADO: Usuário regular com plano Free")
             return False
             
-        # 🔥 REGRA 2: Se é trial Community (4), verificar se não expirou
+        #  REGRA 2: Se é trial Community (4), verificar se não expirou
         if user_type == 'trial' and plan_id == 4:
             if plan_expires_at and plan_expires_at < datetime.now(timezone.utc):
                 print(f" ACESSO NEGADO: Trial expirado em {plan_expires_at}")
@@ -557,13 +557,13 @@ def can_access_pro_features(user_id):
                 print(f" ACESSO LIBERADO: Trial Community válido até {plan_expires_at}")
                 return True
         
-        # 🔥 REGRA 3: Para usuários pagantes, verificar plano
+        #  REGRA 3: Para usuários pagantes, verificar plano
         if user_type in ['regular', 'pro', 'premium']:
             has_access = plan_id in [1, 2]  # Pro ou Premium
             print(f"{'' if has_access else ''} ACESSO {'LIBERADO' if has_access else 'NEGADO'}: Usuário pagante com plan_id={plan_id}")
             return has_access
             
-        # 🔥 REGRA 4: Admin sempre tem acesso
+        #  REGRA 4: Admin sempre tem acesso
         if user_type in ['admin', 'master']:
             print(f" ACESSO LIBERADO: Usuário admin")
             return True
@@ -615,7 +615,7 @@ def send_trial_expiring_warnings():
         
         cursor = conn.cursor()
         
-        # 🔥 AJUSTE: Buscar apenas trials Community (plan_id=4)
+        #  AJUSTE: Buscar apenas trials Community (plan_id=4)
         cursor.execute("""
             SELECT id, name, email, plan_name, plan_expires_at,
                    EXTRACT(days FROM (plan_expires_at - NOW())) as days_remaining

@@ -202,7 +202,7 @@ class HistoricalDataProvider:
             df = pd.DataFrame(data)
             df['time'] = pd.to_datetime(df['time'])
             
-            # 🔥 FILTRAR PELA DATA ESPECÍFICA SE FORNECIDA
+            #  FILTRAR PELA DATA ESPECÍFICA SE FORNECIDA
             if target_date:
                 target_date_obj = target_date.date() if isinstance(target_date, datetime) else target_date
                 filtered_data = df[df['time'].dt.date == target_date_obj].copy()
@@ -243,7 +243,7 @@ class HistoricalDataProvider:
             date_str = dt_referencia.strftime('%Y%m%d')
             url = f"https://floqui.com.br/api/posicoes_em_aberto/{ticker_clean.lower()}/{vencimento}/{date_str}"
             
-            # 🔥 LOG MELHORADO - Mostra VENCIMENTO e DATA
+            #  LOG MELHORADO - Mostra VENCIMENTO e DATA
             logging.info(f"🌐 Buscando Floqui: {ticker_clean} | VENC={vencimento} | DATA={date_str}")
             
             response = requests.get(url, timeout=15)
@@ -253,7 +253,7 @@ class HistoricalDataProvider:
                 return {}
             
             if response.status_code != 200:
-                logging.error(f"❌ Erro na API Floqui: {response.status_code} | VENC={vencimento} DATA={date_str}")
+                logging.error(f" Erro na API Floqui: {response.status_code} | VENC={vencimento} DATA={date_str}")
                 return {}
             
             data = response.json()
@@ -277,7 +277,7 @@ class HistoricalDataProvider:
                         'coberto': int(item.get('qtd_coberto', 0))
                     }
             
-            # 🔥 LOG MELHORADO - Mostra VENCIMENTO e DATA
+            #  LOG MELHORADO - Mostra VENCIMENTO e DATA
             logging.info(f"✅ Floqui VENC={vencimento} DATA={date_str}: {len(oi_breakdown)} strikes")
             return oi_breakdown
             
@@ -285,7 +285,7 @@ class HistoricalDataProvider:
             logging.error(f"⏱️ Timeout Floqui: VENC={vencimento} DATA={date_str}")
             return {}
         except Exception as e:
-            logging.error(f"❌ Erro Floqui VENC={vencimento} DATA={date_str}: {e}")
+            logging.error(f" Erro Floqui VENC={vencimento} DATA={date_str}: {e}")
             return {}
     
     def get_available_expirations(self, ticker):
@@ -489,7 +489,7 @@ class HistoricalAnalyzer:
         for candidate in flip_candidates:
             logging.info(f"FLIP CANDIDATO: Strike={candidate['strike']:.2f}, Dist={candidate['distance_from_spot']:.2f}")
         
-        # 🔥 FILTRO BASEADO NO REGIME (MESMA LÓGICA DO gamma_service.py)
+        #  FILTRO BASEADO NO REGIME (MESMA LÓGICA DO gamma_service.py)
         if spot_regime == "SHORT_GAMMA":
             flip_candidates = [f for f in flip_candidates if f['flip_position'] == "ACIMA"]
             flip_candidates.sort(key=lambda x: x['distance_from_spot'])
@@ -656,7 +656,7 @@ class HistoricalAnalyzer:
     
     def calculate_historical_insights(self, data_by_date, spot_price):
         """
-        🔥 ANÁLISE GERENCIAL: tendências, strikes impactados, mudanças de regime
+         ANÁLISE GERENCIAL: tendências, strikes impactados, mudanças de regime
         """
         if not data_by_date or len(data_by_date) < 2:
             return {}
@@ -827,7 +827,7 @@ class HistoricalAnalyzer:
     
     def analyze_historical(self, ticker, vencimento, days_back=5):
         """
-        🔥 ANÁLISE HISTÓRICA COMPLETA COM OPLAB SINCRONIZADO POR DATA
+         ANÁLISE HISTÓRICA COMPLETA COM OPLAB SINCRONIZADO POR DATA
         Valida que tem pelo menos 2 dias úteis com dados reais
         """
         logging.info(f"🔍 INICIANDO ANÁLISE HISTÓRICA - {ticker}")
@@ -851,7 +851,7 @@ class HistoricalAnalyzer:
             
             logging.info(f"🔄 Processando {date_str}...")
             
-            # 🔥 BUSCAR OPLAB FILTRADO POR ESTA DATA ESPECÍFICA
+            #  BUSCAR OPLAB FILTRADO POR ESTA DATA ESPECÍFICA
             oplab_df = self.data_provider.get_oplab_historical_data(ticker, target_date=date_obj)
             
             if oplab_df.empty:
@@ -915,7 +915,7 @@ class HistoricalAnalyzer:
             
             logging.info(f"✅ {date_str}: {len(gex_df)} strikes, Flip: {flip_strike}, Regime: {regime}")
         
-        # 🔥 VALIDAÇÃO: Precisa de pelo menos 2 dias com dados
+        #  VALIDAÇÃO: Precisa de pelo menos 2 dias com dados
         if len(available_dates) < 2:
             raise ValueError(f"Dados insuficientes: apenas {len(available_dates)} dia(s) com dados. Mínimo: 2")
         
@@ -928,7 +928,7 @@ class HistoricalAnalyzer:
             insights = self.calculate_historical_insights(data_by_date, spot_price)
             logging.info(f"✅ Insights calculados")
         except Exception as e:
-            logging.error(f"❌ Erro ao calcular insights: {e}", exc_info=True)
+            logging.error(f" Erro ao calcular insights: {e}", exc_info=True)
             insights = {
                 'error': str(e),
                 'period': {

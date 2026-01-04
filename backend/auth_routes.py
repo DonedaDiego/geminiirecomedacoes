@@ -61,7 +61,7 @@ def register():
 
         cursor = conn.cursor()
         
-        # 🔥 VALIDAÇÃO INTELIGENTE - VERIFICAR EMAIL E IP
+        #  VALIDAÇÃO INTELIGENTE - VERIFICAR EMAIL E IP
         cursor.execute("""
             SELECT id, email_confirmed, email,
                 CASE WHEN email = %s THEN 'email' ELSE 'ip' END as conflict_type
@@ -105,7 +105,7 @@ def register():
                     return jsonify({'success': False, 'error': 'Erro ao reenviar confirmação', 'error_code': 'EMAIL_SEND_ERROR'}), 500
                     
             elif conflict_type == 'ip':
-                # 🔥 VALIDAÇÃO INTELIGENTE POR IP
+                #  VALIDAÇÃO INTELIGENTE POR IP
                 print(f"🌐 Validando IP {user_ip} - usuário existente encontrado")
                 
                 # Verificar quantos usuários confirmados existem neste IP
@@ -168,7 +168,7 @@ def register():
                 # Se passou em todas as validações, permitir o registro
                 print(f" IP {user_ip} aprovado para novo registro")
         
-        # 🔥 CRIAR USUÁRIO COM TRIAL USANDO O TRIAL SERVICE
+        #  CRIAR USUÁRIO COM TRIAL USANDO O TRIAL SERVICE
         print(f"👤 Criando usuário: {name} ({email})")
         trial_result = create_trial_user(name, email, password, user_ip)
         
@@ -184,7 +184,7 @@ def register():
         user_id = trial_result['user_id']
         print(f" Usuário criado com ID: {user_id}")
         
-        # 🔥 ATUALIZAR PARA NÃO CONFIRMADO (trial service cria confirmado por padrão)
+        #  ATUALIZAR PARA NÃO CONFIRMADO (trial service cria confirmado por padrão)
         cursor.execute("""
             UPDATE users 
             SET email_confirmed = FALSE, email_confirmed_at = NULL
@@ -261,7 +261,7 @@ def register():
 
 @auth_bp.route('/confirm-email')
 def confirm_email_page():
-    """🔥 Página de confirmação de email"""
+    """ Página de confirmação de email"""
     token = request.args.get('token')
     
     if not token:
@@ -356,7 +356,7 @@ def confirm_email_page():
 
 @auth_bp.route('/resend-confirmation', methods=['POST'])
 def resend_confirmation():
-    """🔥 Reenviar email de confirmação"""
+    """ Reenviar email de confirmação"""
     try:
         data = request.get_json()
         email = data.get('email', '').strip().lower()
@@ -410,7 +410,7 @@ def resend_confirmation():
 
 @auth_bp.route('/activate-user/<user_id>', methods=['POST'])
 def activate_user_manually(user_id):
-    """🔥 FUNÇÃO TEMPORÁRIA - Ativar usuário manualmente"""
+    """ FUNÇÃO TEMPORÁRIA - Ativar usuário manualmente"""
     try:
         conn = get_db_connection()
         if not conn:
@@ -459,7 +459,7 @@ def activate_user_manually(user_id):
 
 @auth_bp.route('/list-unconfirmed', methods=['GET'])
 def list_unconfirmed_users():
-    """🔥 FUNÇÃO TEMPORÁRIA - Listar usuários não confirmados"""
+    """ FUNÇÃO TEMPORÁRIA - Listar usuários não confirmados"""
     try:
         conn = get_db_connection()
         if not conn:
@@ -530,7 +530,7 @@ def login():
         
         cursor = conn.cursor()
         
-        # 🔥 VERIFICAR SE COLUNA last_login EXISTE
+        #  VERIFICAR SE COLUNA last_login EXISTE
         try:
             cursor.execute("""
                 ALTER TABLE users ADD COLUMN IF NOT EXISTS last_login TIMESTAMP;
@@ -584,7 +584,7 @@ def login():
         
         print(" Email confirmado - procedendo com login")
         
-        # 🔥 ATUALIZAR ÚLTIMO LOGIN ANTES DE VERIFICAR SUBSCRIPTION
+        #  ATUALIZAR ÚLTIMO LOGIN ANTES DE VERIFICAR SUBSCRIPTION
         try:
             cursor.execute("""
                 UPDATE users 
@@ -609,11 +609,11 @@ def login():
         cursor.close()
         conn.close()
         
-        # 🔥 VERIFICAR STATUS DA SUBSCRIPTION/TRIAL
+        #  VERIFICAR STATUS DA SUBSCRIPTION/TRIAL
         subscription_status_result = check_user_subscription_status(user_id)
         print(f" Status da subscription: {subscription_status_result}")
         
-        # 🔥 VERIFICAR SE A FUNÇÃO RETORNOU SUCESSO
+        #  VERIFICAR SE A FUNÇÃO RETORNOU SUCESSO
         if not subscription_status_result.get('success', False):
             print(" Erro ao verificar status da subscription")
             return jsonify({'success': False, 'error': 'Erro ao verificar status da conta'}), 500
@@ -622,13 +622,13 @@ def login():
         from flask import current_app
         token = generate_jwt_token(user_id, email, current_app.config['SECRET_KEY'])
         
-        print(f"🎫 Token JWT gerado: {token[:50]}...")
         
-        # 🔥 EXTRAIR DADOS DA SUBSCRIPTION
+        
+        #  EXTRAIR DADOS DA SUBSCRIPTION
         subscription_data = subscription_status_result.get('subscription', {})
         user_data = subscription_status_result.get('user', {})
         
-        # 🔥 PREPARAR RESPOSTA COM SUBSCRIPTION INFO
+        #  PREPARAR RESPOSTA COM SUBSCRIPTION INFO
         login_response = {
             'success': True,
             'message': 'Login realizado com sucesso!',
@@ -643,13 +643,13 @@ def login():
                     'email_confirmed': email_confirmed,
                     'created_at': created_at.isoformat() if created_at else None,
                     'trial_end_date': plan_expires_at.isoformat() if plan_expires_at else None,
-                    'last_login': datetime.now(timezone.utc).isoformat()  # 🔥 NOVO
+                    'last_login': datetime.now(timezone.utc).isoformat()  #  NOVO
                 },
                 'token': token
             }
         }
         
-        # 🔥 ADICIONAR TRIAL/SUBSCRIPTION INFO (resto do seu código permanece igual)
+        #  ADICIONAR TRIAL/SUBSCRIPTION INFO (resto do seu código permanece igual)
         if subscription_data.get('is_trial', False):
             days_left = subscription_data.get('days_remaining', 0)
             
@@ -720,7 +720,7 @@ def login():
 
 @auth_bp.route('/forgot-password', methods=['POST'])
 def forgot_password():
-    """🔥 Solicitar reset de senha"""
+    """ Solicitar reset de senha"""
     try:
         data = request.get_json()
         
@@ -761,7 +761,7 @@ def forgot_password():
 
 @auth_bp.route('/validate-reset-token', methods=['POST'])
 def validate_reset_token():
-    """🔥 Validar token de reset"""
+    """ Validar token de reset"""
     try:
         data = request.get_json()
         
@@ -794,7 +794,7 @@ def validate_reset_token():
 
 @auth_bp.route('/reset-password', methods=['POST'])
 def reset_password():
-    """🔥 Redefinir senha com token"""
+    """ Redefinir senha com token"""
     try:
         data = request.get_json()
         
@@ -925,7 +925,7 @@ def verify_token():
     
 @auth_bp.route('/logout', methods=['POST'])
 def logout():
-    """🔥 Logout do usuário"""
+    """ Logout do usuário"""
     return jsonify({'success': True, 'message': 'Logout realizado com sucesso!'}), 200
 
 # ===== FUNÇÃO PARA RETORNAR BLUEPRINT =====

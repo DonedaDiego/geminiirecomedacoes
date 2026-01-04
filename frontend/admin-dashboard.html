@@ -1103,20 +1103,30 @@
     }
 
     // Enhanced user loading
+    // VERSÃO CORRIGIDA - SEM CACHE
     async function loadUsersEnhanced() {
       try {
-        const response = await fetch('/api/admin/list-users-enhanced', {
-          headers: { 'Authorization': `Bearer ${adminToken}` }
+        //  Adicionar timestamp para evitar cache
+        const timestamp = new Date().getTime();
+        
+        const response = await fetch(`/api/admin/list-users-enhanced?_t=${timestamp}`, {
+          headers: { 
+            'Authorization': `Bearer ${adminToken}`,
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0'
+          }
         });
-    
+
         if (response.ok) {
           const result = await response.json();
           if (result.success) {
+            console.log('✅ Usuários carregados:', result.users);
             displayUsersEnhanced(result.users);
           }
         }
       } catch (error) {
-        console.error('Error loading enhanced users:', error);
+        console.error(' Erro ao carregar usuários:', error);
         // Fallback para versão básica se enhanced não funcionar
         loadUsers();
       }
