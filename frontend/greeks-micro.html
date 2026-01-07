@@ -493,8 +493,8 @@
             <div class="text-2xl font-black text-cyan-400" id="gexDescoberto">--</div>
           </div>
           <div class="metric-box text-center">
-            <div class="text-xs text-gray-500 uppercase tracking-wider mb-1 font-semibold">DEX Desc.</div>
-            <div class="text-2xl font-black text-purple-400" id="dexDescoberto">--</div>
+            <div class="text-xs text-gray-500 uppercase tracking-wider mb-1 font-semibold">Volume Hedge</div>
+            <div class="text-2xl font-black text-orange-400" id="volumeHedge">--</div>
           </div>
           <div class="metric-box text-center">
             <div class="text-xs text-gray-500 uppercase tracking-wider mb-1 font-semibold">IV Atual</div>
@@ -837,12 +837,14 @@
     }
 
     function classifyScenario(gamma, delta, vega, theta) {
-      // ✅ USA O REGIME DA API
+      // ✅ USA O REGIME DA API (NÃO O SINAL DO VALOR)
       const gexRegime = gamma?.regime || 'Long Gamma';
       const gexSign = gexRegime.includes('Short') ? 'SHORT' : 'LONG';
       
-      const dexValue = delta?.dex_levels?.total_dex_descoberto || 0;
-      const dexSign = dexValue > 0 ? 'POS' : 'NEG';
+      // ✅ USA O MARKET_BIAS DA API (NÃO O SINAL DO total_dex_descoberto)
+      const marketBias = delta?.dex_levels?.market_bias || 'NEUTRAL';
+      const dexSign = (marketBias === 'BULLISH') ? 'POS' : 
+                      (marketBias === 'BEARISH') ? 'NEG' : 'POS';  // ✅ CORREÇÃO AQUI
       
       const vexRisk = vega?.vol_regime?.volatility_risk || 'LOW';
       const vexLevel = (vexRisk === 'HIGH') ? 'ALTO' : 'BAIXO';  
@@ -860,7 +862,7 @@
             ...s,
             raw: { 
               gexValue: gamma?.gex_levels?.total_gex_descoberto || 0,
-              dexValue, 
+              dexValue: delta?.dex_levels?.total_dex_descoberto || 0,  // ✅ Manter valor real
               vexRisk, 
               texDays, 
               gexSign, 
@@ -966,16 +968,14 @@
       const alerts = [];
       const spotPrice = gamma?.spot_price || 0;
       const flipStrike = gamma?.flip_strike || spotPrice;
-      const dexValue = delta?.dex_levels?.total_dex_descoberto || 0;
-      const ivAtual = vega?.vol_regime?.weighted_iv || 0;
-      const diasVenc = theta?.decay_regime?.weighted_days || 30;
       
-      // ✅ IDENTIFICAR REGIME ATUAL
+      // ✅ PEGA OS WALLS REAIS DA API
+      const supportWall = gamma?.walls?.support || null;
+      const resistanceWall = gamma?.walls?.resistance || null;
+      
+      // ✅ REGIME ATUAL
       const currentRegime = gamma?.regime || 'Long Gamma';
       const isShortGamma = currentRegime.toLowerCase().includes('short');
-      
-      // ✅ CALCULAR BARREIRAS INTELIGENTES
-      const barriers = calculateSmartBarriers(spotPrice, flipStrike, isShortGamma, scenario.direction);
       
       // ═══════════════════════════════════════════════════════════
       // 🎯 ALERTAS BASEADOS NO REGIME ATUAL
@@ -984,70 +984,75 @@
       if (isShortGamma) {
         // ━━━ SHORT GAMMA: Movimento pode AMPLIFICAR ━━━
         
-        // Alerta principal do regime
         alerts.push({
           type: 'danger',
           title: `Regime Atual: SHORT GAMMA (${scenario.direction === 'ALTA' ? 'Explosivo' : 'Crash'})`,
           message: `Dealers vão ${scenario.direction === 'ALTA' ? 'COMPRAR' : 'VENDER'} agressivamente conforme movimento se desenvolve, AMPLIFICANDO a direção. Zona de alta volatilidade.`
         });
         
-        // Barreira de aceleração (direção do cenário)
-        if (scenario.direction === 'ALTA') {
+        // ✅ BARREIRA DE ACELERAÇÃO = PRÓXIMO WALL NA DIREÇÃO
+        if (scenario.direction === 'ALTA' && supportWall && supportWall > spotPrice) {
           alerts.push({
             type: 'warning',
             title: 'Barreira de Aceleração',
-            message: `Acima de R$ ${barriers.acceleration.toFixed(2)}: Squeeze pode se intensificar. Dealers forçados a comprar mais ações.`
+            message: `Acima de R$ ${supportWall.toFixed(2)}: Squeeze pode se intensificar. Wall de calls concentradas força dealers a comprar mais ações.`
           });
-        } else {
+        } else if (scenario.direction === 'QUEDA' && resistanceWall && resistanceWall < spotPrice) {
           alerts.push({
             type: 'warning',
             title: 'Barreira de Aceleração',
-            message: `Abaixo de R$ ${barriers.acceleration.toFixed(2)}: Queda pode acelerar. Dealers forçados a vender mais ações.`
+            message: `Abaixo de R$ ${resistanceWall.toFixed(2)}: Queda pode acelerar. Wall de puts concentradas força dealers a vender mais ações.`
           });
         }
         
-        // Barreira de mudança de regime (flip)
+        // Mudança de Regime
         alerts.push({
           type: 'info',
           title: 'Mudança de Regime',
-          message: `Se ${spotPrice > flipStrike ? 'cair abaixo' : 'romper acima'} de R$ ${barriers.regimeChange.toFixed(2)}, muda para LONG GAMMA. Movimento volta a ser contido pelos dealers.`
+          message: `Se romper ${spotPrice < flipStrike ? 'acima' : 'abaixo'} de R$ ${flipStrike.toFixed(2)} (Gamma Flip), muda para LONG GAMMA. Movimento volta a ser contido pelos dealers.`
         });
         
       } else {
         // ━━━ LONG GAMMA: Movimento será CONTIDO ━━━
         
-        // Alerta principal do regime
         alerts.push({
           type: 'success',
           title: `Regime Atual: LONG GAMMA (${scenario.direction === 'ALTA' ? 'Controlado' : 'Amortecido'})`,
           message: `Dealers vão ${scenario.direction === 'ALTA' ? 'VENDER' : 'COMPRAR'} conforme movimento se desenvolve, CONTENDO extremos. Zona de estabilidade.`
         });
         
-        // Barreira de contenção (onde dealers intensificam)
-        if (scenario.direction === 'ALTA') {
+        // ✅ BARREIRA DE CONTENÇÃO = WALL MAIS PRÓXIMO
+        if (scenario.direction === 'ALTA' && supportWall && supportWall > spotPrice) {
           alerts.push({
             type: 'info',
-            title: 'Barreira de Contenção',
-            message: `Acima de R$ ${barriers.resistance.toFixed(2)}: Resistência forte. Dealers aumentam vendas para conter alta.`
+            title: 'Barreira de Contenção (Resistência)',
+            message: `Acima de R$ ${supportWall.toFixed(2)}: Resistência forte. Wall de calls obriga dealers a vender ações, contendo a alta.`
           });
-        } else {
+        } else if (scenario.direction === 'QUEDA' && resistanceWall && resistanceWall < spotPrice) {
           alerts.push({
             type: 'info',
-            title: 'Barreira de Suporte',
-            message: `Abaixo de R$ ${barriers.support.toFixed(2)}: Suporte forte. Dealers aumentam compras para conter queda.`
+            title: 'Barreira de Contenção (Suporte)',
+            message: `Abaixo de R$ ${resistanceWall.toFixed(2)}: Suporte forte. Wall de puts obriga dealers a comprar ações, contendo a queda.`
           });
         }
         
-        // Barreira de mudança de regime (flip)
+        // Mudança de Regime
         alerts.push({
           type: 'warning',
           title: 'Mudança de Regime',
-          message: `Se ${spotPrice > flipStrike ? 'cair abaixo' : 'romper acima'} de R$ ${barriers.regimeChange.toFixed(2)}, muda para SHORT GAMMA. Movimento pode se tornar explosivo.`
+          message: `Se romper ${spotPrice > flipStrike ? 'abaixo' : 'acima'} de R$ ${flipStrike.toFixed(2)} (Gamma Flip), muda para SHORT GAMMA. Movimento pode se tornar explosivo.`
         });
       }
       
- 
-      // DEX: Pressão direcional
+      // ═══════════════════════════════════════════════════════════
+      // 🎯 ALERTAS DE DEX, VEX, TEX
+      // ═══════════════════════════════════════════════════════════
+      
+      const dexValue = delta?.dex_levels?.total_dex_descoberto || 0;
+      const ivAtual = vega?.vol_regime?.weighted_iv || 0;
+      const diasVenc = theta?.decay_regime?.weighted_days || 30;
+      
+      // DEX
       if (Math.abs(dexValue) > 200000000) {
         alerts.push({
           type: 'info',
@@ -1062,7 +1067,7 @@
         });
       }
       
-      // TEX: Pressão temporal
+      // TEX
       if (diasVenc < 7) {
         alerts.push({
           type: 'danger',
@@ -1077,7 +1082,7 @@
         });
       }
       
-      // VEX: Volatilidade implícita
+      // VEX
       if (ivAtual > 50) {
         alerts.push({
           type: 'info',
@@ -1386,13 +1391,33 @@
     }
 
     async function displayResults() {
+      // ========================================
+      // MÉTRICAS PRINCIPAIS - CÓPIA EXATA DO delta-levels.html
+      // ========================================
+      
+      // 1. SPOT PRICE (OK)
       document.getElementById('spotPrice').textContent = `R$ ${gammaData.spot_price?.toFixed(2) || '--'}`;
+      
+      // 2. GAMMA FLIP (OK)
       document.getElementById('flipStrike').textContent = gammaData.flip_strike ? `R$ ${gammaData.flip_strike.toFixed(2)}` : 'N/A';
+      
+      // 3. GEX DESCOBERTO (OK - esse está certo)
       document.getElementById('gexDescoberto').textContent = formatLargeNumber(gammaData.gex_levels?.total_gex_descoberto);
-      document.getElementById('dexDescoberto').textContent = formatLargeNumber(deltaData.dex_levels?.total_dex_descoberto);
+      
+      // 4. ✅ DEX DESCOBERTO (CORREÇÃO)
+      const dex_levels = deltaData.dex_levels || {};
+      const netDexTotal = dex_levels.total_dex || 0;
+      document.getElementById('volumeHedge').textContent = formatLargeNumber(netDexTotal);
+      
+      // 5. IV ATUAL (OK)
       document.getElementById('ivAtual').textContent = vegaData.vol_regime?.weighted_iv ? `${vegaData.vol_regime.weighted_iv.toFixed(1)}%` : '--';
+      
+      // 6. DIAS VENCIMENTO (OK)
       document.getElementById('diasVenc').textContent = thetaData.decay_regime?.weighted_days ? `${Math.round(thetaData.decay_regime.weighted_days)}d` : '--';
       
+      // ========================================
+      // CENÁRIO 4D
+      // ========================================
       currentScenario = classifyScenario(gammaData, deltaData, vegaData, thetaData);
       const signalStrength = calculateSignalStrength(currentScenario, gammaData, deltaData, vegaData, thetaData);
       
@@ -1409,7 +1434,7 @@
       renderCharts();
       
       document.getElementById('resultsSection').classList.remove('hidden');
-    }
+  }
 
     async function loadExpirations() {
       const ticker = document.getElementById('tickerInput').value.trim().toUpperCase();
@@ -1472,6 +1497,19 @@
         deltaData = await deltaRes.json();
         vegaData = await vegaRes.json();
         thetaData = await thetaRes.json();
+
+        // ✅✅✅ COLA AQUI EMBAIXO ✅✅✅
+        console.log('=== DEBUG MICRO 4D ===');
+        console.log('GAMMA DATA:', gammaData);
+        console.log('  - GEX Total:', gammaData.gex_levels?.total_gex);
+        console.log('  - GEX Descoberto:', gammaData.gex_levels?.total_gex_descoberto);
+        console.log('DELTA DATA:', deltaData);
+        console.log('  - DEX Total:', deltaData.dex_levels?.total_dex);
+        console.log('  - DEX Descoberto:', deltaData.dex_levels?.total_dex_descoberto);
+        console.log('  - Market Bias:', deltaData.dex_levels?.market_bias);
+        console.log('=== FIM DEBUG ===');
+        // ✅✅✅ ATÉ AQUI ✅✅✅
+    
         
         if (!gammaRes.ok) throw new Error(gammaData.error);
         if (!deltaRes.ok) throw new Error(deltaData.error);
