@@ -888,14 +888,14 @@ class EmailService:
             self.log_email_attempt(email, False, rate_check['reason'])
             return False
         
-        #  USAR NOVO TEMPLATE ANTI-SPAM
+        # USAR NOVO TEMPLATE ANTI-SPAM
         content_data = {
             'title': 'Confirme seu Email',
             'subtitle': 'Geminii Tech - Trading Automatizado',
             'main_message': f'Bem-vindo à Geminii Tech! Para ativar sua conta e começar a usar nossa plataforma, confirme seu email clicando no botão abaixo.',
             'user_name': user_name,
             'urgency_color': '#10b981',
-            'button_text': ' Confirmar Email',
+            'button_text': '✅ Confirmar Email',
             'button_url': f"{self.base_url}/auth/confirm-email?token={token}",
             'details': [
                 {'label': 'Email', 'value': email},
@@ -909,24 +909,31 @@ class EmailService:
         
         # Versão texto
         text_content = f"""
-                Geminii Tech - Confirme seu Email
+    Geminii Tech - Confirme seu Email
 
-                Olá, {user_name}!
+    Olá, {user_name}!
 
-                Bem-vindo à Geminii Tech! Para ativar sua conta, confirme seu email clicando no link abaixo:
+    Bem-vindo à Geminii Tech! Para ativar sua conta, confirme seu email clicando no link abaixo:
 
-                {self.base_url}/auth/confirm-email?token={token}
+    {self.base_url}/auth/confirm-email?token={token}
 
-                Este link expira em 24 horas por segurança.
+    Este link expira em 24 horas por segurança.
 
-                Se você não criou esta conta, pode ignorar este email.
+    Se você não criou esta conta, pode ignorar este email.
 
-                Dúvidas? Entre em contato: contato@geminii.com.br
+    Dúvidas? Entre em contato: contato@geminii.com.br
 
-                © 2025 Geminii Tech - Trading Automatizado
-                        """
+    © 2025 Geminii Tech - Trading Automatizado
+        """
         
-        return self.send_email(email, "Confirme seu email - Geminii Tech", html_content, text_content)
+        # ✅ ENVIAR E REGISTRAR LOG
+        success = self.send_email(email, "Confirme seu email - Geminii Tech", html_content, text_content)
+        
+        # ✅ REGISTRAR TENTATIVA NO LOG
+        error_msg = None if success else "SMTP timeout/blocked"
+        self.log_email_attempt(email, success, error_msg)
+        
+        return success
 
     def confirm_email_token(self, token):
         """✅ Confirmar email com token"""
