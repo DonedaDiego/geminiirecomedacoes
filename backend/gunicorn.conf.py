@@ -7,8 +7,9 @@ worker_class = "sync"
 worker_connections = 1000
 max_requests = 1000
 max_requests_jitter = 50
-timeout = 120
+timeout = 30  # ✅ 30 segundos (era 120)
 keepalive = 2
+graceful_timeout = 30  # ✅ ADICIONAR ISSO
 
 # Configurações de logging
 loglevel = "info"
@@ -30,10 +31,8 @@ if os.environ.get('FLASK_ENV') == 'development':
     workers = 1
 else:
     reload = False
-    # Calcular workers baseado na CPU (2 * CPU cores + 1)
     try:
         import multiprocessing
-        workers = min(multiprocessing.cpu_count() * 2 + 1, 4)  # Máximo 4 workers
+        workers = min(multiprocessing.cpu_count() * 2 + 1, 4)
     except:
         workers = 2
-
