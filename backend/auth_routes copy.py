@@ -917,7 +917,15 @@ def verify_token():
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
-
+@auth_bp.route('/test-smtp', methods=['GET'])
+def test_smtp():
+    """🧪 Testar conexão SMTP"""
+    result = email_service.test_smtp_connection()
+    
+    return jsonify({
+        'success': result,
+        'message': 'SMTP funcionando!' if result else 'SMTP bloqueado/falhou'
+    }), 200 if result else 500
     
 @auth_bp.route('/logout', methods=['POST'])
 def logout():

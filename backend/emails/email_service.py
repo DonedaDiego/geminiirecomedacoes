@@ -10,7 +10,7 @@ from datetime import datetime, timedelta, timezone
 from database import get_db_connection
 
 class EmailService:
-    def __init__(self):
+    def __init__(self):     
         self.smtp_server = os.environ.get('SMTP_SERVER', 'smtp.titan.email')
         self.smtp_port = int(os.environ.get('SMTP_PORT', '465'))
         self.smtp_username = os.environ.get('EMAIL_USER', 'contato@geminii.com.br')
@@ -19,7 +19,231 @@ class EmailService:
         self.from_name = 'Geminii Tech'
         self.base_url = os.environ.get('BASE_URL', 'http://localhost:5000')
         self.test_mode = False
-        
+
+
+    def test_smtp_connection(self):
+            """🧪 Testar conexão SMTP com logs detalhados"""
+            print(f"\n{'='*60}")
+            print(f"🧪 TESTE DE CONEXÃO SMTP")
+            print(f"{'='*60}")
+            print(f"📧 Servidor: {self.smtp_server}")
+            print(f"🔌 Porta: {self.smtp_port}")
+            print(f"👤 Usuário: {self.smtp_username}")
+            print(f"🔑 Senha: {'*' * len(self.smtp_password)}")
+            print(f"{'='*60}\n")
+            
+            try:
+                import ssl
+                import socket
+                
+                # 1. Testar DNS
+                print("1️⃣ Testando DNS...")
+                try:
+                    ip = socket.gethostbyname(self.smtp_server)
+                    print(f"   ✅ DNS OK - IP: {ip}")
+                except Exception as e:
+                    print(f"   ❌ Erro DNS: {e}")
+                    return False
+                
+                # 2. Testar conexão TCP
+                print("\n2️⃣ Testando conexão TCP na porta 465...")
+                try:
+                    sock = socket.create_connection((self.smtp_server, 465), timeout=5)
+                    sock.close()
+                    print(f"   ✅ Porta 465 acessível!")
+                except Exception as e:
+                    print(f"   ❌ PORTA 465 BLOQUEADA: {e}")
+                    return False
+                
+                # 3. Testar SMTP SSL
+                print("\n3️⃣ Testando SMTP SSL...")
+                try:
+                    context = ssl.create_default_context()
+                    server = smtplib.SMTP_SSL(
+                        self.smtp_server,
+                        465,
+                        timeout=10,
+                        context=context
+                    )
+                    print(f"   ✅ Conexão SSL estabelecida!")
+                    
+                    # 4. Testar autenticação
+                    print("\n4️⃣ Testando autenticação...")
+                    server.login(self.smtp_username, self.smtp_password)
+                    print(f"   ✅ Autenticação OK!")
+                    
+                    server.quit()
+                    
+                    print(f"\n{'='*60}")
+                    print(f"✅ TESTE COMPLETO - SMTP FUNCIONANDO!")
+                    print(f"{'='*60}\n")
+                    return True
+                    
+                except smtplib.SMTPAuthenticationError as e:
+                    print(f"   ❌ Erro de autenticação: {e}")
+                    return False
+                except Exception as e:
+                    print(f"   ❌ Erro SMTP: {e}")
+                    return False
+                
+            except Exception as e:
+                print(f"❌ Erro geral: {e}")
+                import traceback
+                traceback.print_exc()
+                return False
+
+    def check_email_rate_limit(self, email, ip_address):
+        """🚨 Verificar rate limit de emails"""
+        try:
+            conn = get_db_connection()
+            if not conn:
+                return {'allowed': True}  # Se falhar, permitir
+            
+            cursor = conn.cursor()
+            
+            # Criar tabela de rate limit se não existir
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS email_rate_limit (
+                    id SERIAL PRIMARY KEY,
+                    email VARCHAR(255),
+                    ip_address VARCHAR(50),
+                    attempt_count INTEGER DEFAULT 1,
+                    last_attempt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    blocked_until TIMESTAMP NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+            
+            # Verificar tentativas nas últimas 24h
+            cursor.execute("""
+                SELECT id, attempt_count, blocked_until, last_attempt
+                FROM email_rate_limit
+                WHERE (email = %s OR ip_address = %s)
+                AND last_attempt > NOW() - INTERVAL '24 hours'
+                ORDER BY last_attempt DESC
+                LIMIT 1
+            """, (email, ip_address))
+            
+            result = cursor.fetchone()
+            
+            now = datetime.now(timezone.utc)
+            
+            if result:
+                record_id, attempt_count, blocked_until, last_attempt = result
+                
+                # Se estiver bloqueado
+                if blocked_until and now < blocked_until.replace(tzinfo=timezone.utc):
+                    remaining = (blocked_until.replace(tzinfo=timezone.utc) - now).total_seconds() / 60
+                    cursor.close()
+                    conn.close()
+                    return {
+                        'allowed': False,
+                        'reason': f'Bloqueado por spam. Aguarde {int(remaining)} minutos.',
+                        'blocked_until': blocked_until.isoformat()
+                    }
+                
+                # Verificar se passou tempo suficiente desde última tentativa
+                time_since_last = (now - last_attempt.replace(tzinfo=timezone.utc)).total_seconds()
+                
+                # Regras:
+                # - Máximo 3 tentativas em 1 hora
+                # - Máximo 5 tentativas em 24 horas
+                if attempt_count >= 5:
+                    # Bloquear por 24 horas
+                    blocked_until = now + timedelta(hours=24)
+                    cursor.execute("""
+                        UPDATE email_rate_limit
+                        SET blocked_until = %s, attempt_count = attempt_count + 1
+                        WHERE id = %s
+                    """, (blocked_until, record_id))
+                    conn.commit()
+                    cursor.close()
+                    conn.close()
+                    return {
+                        'allowed': False,
+                        'reason': 'Limite de 5 emails em 24h excedido. Bloqueado por 24h.',
+                        'blocked_until': blocked_until.isoformat()
+                    }
+                
+                elif attempt_count >= 3 and time_since_last < 3600:  # 3 em menos de 1h
+                    # Bloquear por 1 hora
+                    blocked_until = now + timedelta(hours=1)
+                    cursor.execute("""
+                        UPDATE email_rate_limit
+                        SET blocked_until = %s, attempt_count = attempt_count + 1
+                        WHERE id = %s
+                    """, (blocked_until, record_id))
+                    conn.commit()
+                    cursor.close()
+                    conn.close()
+                    return {
+                        'allowed': False,
+                        'reason': 'Muitas tentativas. Bloqueado por 1 hora.',
+                        'blocked_until': blocked_until.isoformat()
+                    }
+                
+                # Incrementar contador
+                cursor.execute("""
+                    UPDATE email_rate_limit
+                    SET attempt_count = attempt_count + 1, last_attempt = CURRENT_TIMESTAMP
+                    WHERE id = %s
+                """, (record_id,))
+            else:
+                # Primeira tentativa
+                cursor.execute("""
+                    INSERT INTO email_rate_limit (email, ip_address, attempt_count)
+                    VALUES (%s, %s, 1)
+                """, (email, ip_address))
+            
+            conn.commit()
+            cursor.close()
+            conn.close()
+            
+            return {'allowed': True}
+            
+        except Exception as e:
+            print(f"⚠️ Erro no rate limit: {e}")
+            return {'allowed': True}  # Se falhar, permitir
+
+    def log_email_attempt(self, email, success, error_message=None):
+        """📝 Registrar tentativa de envio"""
+        try:
+            conn = get_db_connection()
+            if not conn:
+                return
+            
+            cursor = conn.cursor()
+            
+            # Criar tabela de logs se não existir
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS email_logs (
+                    id SERIAL PRIMARY KEY,
+                    email VARCHAR(255) NOT NULL,
+                    success BOOLEAN NOT NULL,
+                    error_message TEXT NULL,
+                    smtp_server VARCHAR(255),
+                    smtp_port INTEGER,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+            
+            cursor.execute("""
+                INSERT INTO email_logs (email, success, error_message, smtp_server, smtp_port)
+                VALUES (%s, %s, %s, %s, %s)
+            """, (email, success, error_message, self.smtp_server, self.smtp_port))
+            
+            conn.commit()
+            cursor.close()
+            conn.close()
+            
+            if success:
+                print(f"✅ Log: Email enviado para {email}")
+            else:
+                print(f"❌ Log: Falha no envio para {email} - {error_message}")
+            
+        except Exception as e:
+            print(f"⚠️ Erro ao registrar log: {e}")
+
 
     def send_email(self, to_email, subject, html_content, text_content=None):
         try:
@@ -654,7 +878,15 @@ class EmailService:
             return {'success': False, 'error': str(e)}
 
     def send_confirmation_email(self, user_name, email, token):
-        """📧 Enviar email de confirmação COM TEMPLATE ANTI-SPAM"""
+        """📧 Enviar email de confirmação COM RATE LIMIT"""
+        
+        # Verificar rate limit (assumindo IP do sistema)
+        rate_check = self.check_email_rate_limit(email, 'system')
+        
+        if not rate_check['allowed']:
+            print(f"🚨 BLOQUEADO: {rate_check['reason']}")
+            self.log_email_attempt(email, False, rate_check['reason'])
+            return False
         
         #  USAR NOVO TEMPLATE ANTI-SPAM
         content_data = {
@@ -677,22 +909,22 @@ class EmailService:
         
         # Versão texto
         text_content = f"""
-Geminii Tech - Confirme seu Email
+                Geminii Tech - Confirme seu Email
 
-Olá, {user_name}!
+                Olá, {user_name}!
 
-Bem-vindo à Geminii Tech! Para ativar sua conta, confirme seu email clicando no link abaixo:
+                Bem-vindo à Geminii Tech! Para ativar sua conta, confirme seu email clicando no link abaixo:
 
-{self.base_url}/auth/confirm-email?token={token}
+                {self.base_url}/auth/confirm-email?token={token}
 
-Este link expira em 24 horas por segurança.
+                Este link expira em 24 horas por segurança.
 
-Se você não criou esta conta, pode ignorar este email.
+                Se você não criou esta conta, pode ignorar este email.
 
-Dúvidas? Entre em contato: contato@geminii.com.br
+                Dúvidas? Entre em contato: contato@geminii.com.br
 
-© 2025 Geminii Tech - Trading Automatizado
-        """
+                © 2025 Geminii Tech - Trading Automatizado
+                        """
         
         return self.send_email(email, "Confirme seu email - Geminii Tech", html_content, text_content)
 
@@ -1602,3 +1834,5 @@ def setup_email_system():
 
 if __name__ == "__main__":
     setup_email_system()
+
+    
