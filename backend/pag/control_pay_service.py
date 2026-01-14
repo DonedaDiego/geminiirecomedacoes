@@ -12,7 +12,7 @@ import os
 SMTP_SERVER = "smtp.titan.email"
 SMTP_PORT = 465
 SMTP_USER = os.environ.get('EMAIL_USER', 'contato@geminii.com.br')
-SMTP_PASSWORD = os.environ.get('EMAIL_PASSWORD', '#Geminii20')
+SMTP_PASSWORD = os.environ.get('EMAIL_PASSWORD', '#Geminii20##')
 
 # ===== CONTROLE DE RATE LIMITING =====
 email_rate_limit_cache = {}

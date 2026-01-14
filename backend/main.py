@@ -1,3 +1,4 @@
+#main.py
 from flask import Flask, jsonify, send_from_directory, request
 import jwt
 from flask_cors import CORS
@@ -63,7 +64,7 @@ app.config['MAIL_SERVER'] = 'smtp.titan.email'
 app.config['MAIL_PORT'] = 465
 app.config['MAIL_USE_SSL'] = True
 app.config['MAIL_USERNAME'] = os.environ.get('EMAIL_USER', 'contato@geminii.com.br')
-app.config['MAIL_PASSWORD'] = os.environ.get('EMAIL_PASSWORD', '#Geminii20')
+app.config['MAIL_PASSWORD'] = os.environ.get('EMAIL_PASSWORD', '#Geminii20##')
 
 # ===== CONFIGURAÇÃO DE BLUEPRINTS =====
 

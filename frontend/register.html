@@ -350,7 +350,7 @@
         function goToLogin() {
             window.location.href = '/login';
         }
-
+        
         // Registro form handler
         document.getElementById('registerForm').addEventListener('submit', async function(e) {
             e.preventDefault();
@@ -403,7 +403,13 @@
             loadingOverlay.classList.remove('hidden');
             
             try {
-                const response = await fetch('/auth/register', {
+                // ✅ URL RELATIVA - Funciona local E Railway
+                const API_URL = window.location.origin;
+                console.log('🌐 API Base URL:', API_URL);
+                console.log('🔄 Enviando registro para:', `${API_URL}/auth/register`);
+                console.log('📦 Dados:', { name, email, password: '***' });
+                
+                const response = await fetch('/auth/register', {  // ✅ URL RELATIVA
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -415,48 +421,74 @@
                     })
                 });
                 
+                console.log('📡 Status:', response.status, response.statusText);
+                
+                // Verificar se a resposta é JSON
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    const responseText = await response.text();
+                    console.error('❌ Resposta não-JSON:', responseText);
+                    throw new Error(`Servidor retornou ${response.status}: ${responseText.substring(0, 100)}`);
+                }
+                
                 const data = await response.json();
+                console.log('📥 Resposta:', data);
                 
                 if (data.success) {
-                    //  MOSTRAR TELA DE CONFIRMAÇÃO
+                    console.log('✅ Registro bem-sucedido!');
                     showSuccessContainer({
-                        name: data.data.name,
-                        email: data.data.email,
-                        user_id: data.data.user_id
+                        name: data.data?.name || name,
+                        email: data.data?.email || email,
+                        user_id: data.data?.user_id
                     });
                 } else {
                     // Verificar se é reenvio de confirmação
                     if (data.requires_confirmation) {
+                        console.log('📧 Conta já existe - mostrando tela de confirmação');
                         showSuccessContainer({
                             name: name,
                             email: email
                         });
                     } else {
-                        alert('Erro ao criar conta: ' + data.error);
+                        console.error('❌ Erro:', data.error);
+                        
+                        // Mensagens de erro mais amigáveis
+                        let errorMsg = data.error;
+                        if (data.error_code === 'EMAIL_EXISTS') {
+                            errorMsg = 'Este email já está cadastrado. Tente fazer login.';
+                        } else if (data.error_code === 'IP_RATE_LIMIT') {
+                            errorMsg = 'Muitas tentativas de registro. Aguarde 1 hora.';
+                        } else if (data.error_code === 'EMAIL_SEND_ERROR') {
+                            errorMsg = 'Conta criada, mas houve erro ao enviar o email. Entre em contato conosco.';
+                        }
+                        
+                        alert('Erro: ' + errorMsg);
                     }
                 }
                 
             } catch (error) {
-                console.error('Erro:', error);
-                alert('Erro de conexão. Tente novamente.');
+                console.error('❌ Erro completo:', error);
+                
+                // Mensagem de erro específica
+                let errorMessage = 'Erro ao criar conta. ';
+                
+                if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+                    errorMessage += 'Verifique sua conexão com a internet.';
+                } else if (error.message.includes('500')) {
+                    errorMessage += 'Erro interno do servidor. Tente novamente em alguns minutos.';
+                } else if (error.message.includes('404')) {
+                    errorMessage += 'Serviço temporariamente indisponível.';
+                } else {
+                    errorMessage += error.message;
+                }
+                
+                alert(errorMessage);
             } finally {
                 // Esconder loading
                 submitBtn.disabled = false;
                 submitText.classList.remove('hidden');
                 submitLoading.classList.add('hidden');
                 loadingOverlay.classList.add('hidden');
-            }
-        });
-
-        // Validação em tempo real das senhas
-        document.getElementById('confirmPassword').addEventListener('input', function() {
-            const password = document.getElementById('password').value;
-            const confirmPassword = this.value;
-            
-            if (confirmPassword && password !== confirmPassword) {
-                this.style.borderColor = '#ef4444';
-            } else {
-                this.style.borderColor = '#d946ef';
             }
         });
 

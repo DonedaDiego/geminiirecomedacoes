@@ -1,4 +1,4 @@
-
+#auth_routes
 from flask import Blueprint, request, jsonify, render_template_string, redirect, url_for
 import jwt
 import hashlib
@@ -501,9 +501,6 @@ def list_unconfirmed_users():
         print(f" Erro ao listar usuários: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
-# ===== ROTAS DE LOGIN =====
-
-
 # Substitua sua função login() por esta versão corrigida:
 
 @auth_bp.route('/login', methods=['POST'])
@@ -919,7 +916,6 @@ def verify_token():
         
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
-
 
 
     

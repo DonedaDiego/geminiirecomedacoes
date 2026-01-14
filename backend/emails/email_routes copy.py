@@ -1,4 +1,4 @@
-# email_routes.py - Blueprint para todas as rotas de email
+# email_routes.py 
 
 from flask import Blueprint, request, jsonify
 from emails.email_service import email_service

@@ -1,5 +1,4 @@
-# admin_routes.py - VERSÃO COMPLETA SEM CONFLITOS
-
+# admin_routes.py
 from flask import Blueprint, request, jsonify
 import os
 import jwt
