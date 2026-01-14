@@ -917,22 +917,27 @@ def verify_token():
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
-@auth_bp.route('/test-smtp', methods=['GET'])
-def test_smtp():
-    """🧪 Testar conexão SMTP"""
-    result = email_service.test_smtp_connection()
-    
-    return jsonify({
-        'success': result,
-        'message': 'SMTP funcionando!' if result else 'SMTP bloqueado/falhou'
-    }), 200 if result else 500
-    
 @auth_bp.route('/logout', methods=['POST'])
 def logout():
     """ Logout do usuário"""
     return jsonify({'success': True, 'message': 'Logout realizado com sucesso!'}), 200
 
-# ===== FUNÇÃO PARA RETORNAR BLUEPRINT =====
+
+@auth_bp.route('/test-smtp', methods=['GET'])
+def test_smtp():
+    """🧪 Testar conexão SMTP"""
+    print("\n🧪 Iniciando teste SMTP via rota...")
+    result = email_service.test_smtp_connection()
+    
+    return jsonify({
+        'success': result,
+        'message': 'SMTP funcionando!' if result else 'SMTP bloqueado/com erro',
+        'tip': 'Veja os logs detalhados no console do Railway'
+    }), 200 if result else 500
+
+def get_auth_blueprint():
+    return auth_bp
+
 
 def get_auth_blueprint():
     """Retornar blueprint para registrar no Flask"""
