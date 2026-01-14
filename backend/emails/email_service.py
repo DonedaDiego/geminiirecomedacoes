@@ -1,15 +1,4 @@
 #email_service
-import os
-import secrets
-import hashlib
-import smtplib
-import json
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
-from email.mime.base import MIMEBase
-from email import encoders
-from datetime import datetime, timedelta, timezone
-from database import get_db_connection
 
 import os
 import secrets
@@ -58,51 +47,34 @@ class EmailService:
             msg.attach(text_part)
             msg.attach(html_part)
             
-            print(f"\n📧 Enviando email para: {to_email}")
-            print(f"🔧 Servidor: {self.smtp_server}:{self.smtp_port}")
+            print(f"\n📧 Tentando enviar email para: {to_email}")
             
-            # ✅ USAR PORTA 587 (STARTTLS) OU 465 (SSL)
-            if self.smtp_port == 587:
-                # PORTA 587 - STARTTLS
-                server = smtplib.SMTP(self.smtp_server, self.smtp_port, timeout=10)
-                server.set_debuglevel(1)
-                server.ehlo()
-                server.starttls()
-                server.ehlo()
-                server.login(self.smtp_username, self.smtp_password)
-            else:
-                # PORTA 465 - SSL DIRETO
-                import ssl
-                context = ssl.create_default_context()
+            # ✅ SEMPRE PORTA 465 SSL
+            import ssl
+            context = ssl.create_default_context()
+            
+            try:
                 server = smtplib.SMTP_SSL(
                     self.smtp_server, 
-                    self.smtp_port, 
-                    timeout=10,
+                    465,  # ✅ FIXO
+                    timeout=5,  # ⚠️ TIMEOUT CURTO
                     context=context
                 )
-                server.set_debuglevel(1)
+                server.set_debuglevel(0)  # ✅ SEM DEBUG
                 server.login(self.smtp_username, self.smtp_password)
-            
-            server.send_message(msg)
-            server.quit()
-            
-            print(f"✅ Email enviado com sucesso para {to_email}!")
-            return True
-            
-        except smtplib.SMTPAuthenticationError as e:
-            print(f"\n❌ ERRO DE AUTENTICAÇÃO SMTP: {e}")
-            print(f"   - Usuário: {self.smtp_username}")
-            print(f"   - Servidor: {self.smtp_server}:{self.smtp_port}")
-            return False
-            
-        except smtplib.SMTPException as e:
-            print(f"❌ ERRO SMTP: {e}")
-            return False
+                server.send_message(msg)
+                server.quit()
+                
+                print(f"✅ Email enviado para {to_email}!")
+                return True
+                
+            except Exception as smtp_error:
+                print(f"❌ Erro SMTP: {smtp_error}")
+                # ⚠️ NÃO QUEBRAR - Railway bloqueia SMTP
+                return False
             
         except Exception as e:
-            print(f"❌ Erro ao enviar email: {e}")
-            import traceback
-            traceback.print_exc()
+            print(f"❌ Erro geral: {e}")
             return False
 
     def html_to_text(self, html_content):

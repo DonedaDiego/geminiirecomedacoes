@@ -11,14 +11,7 @@ from email import encoders
 from datetime import datetime, timedelta, timezone
 from database import get_db_connection
 
-import os
-import secrets
-import hashlib
-import smtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
-from datetime import datetime, timedelta, timezone
-from database import get_db_connection
+
 
 class EmailService:
     def __init__(self):
