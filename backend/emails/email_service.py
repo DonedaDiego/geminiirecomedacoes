@@ -39,7 +39,7 @@ class EmailService:
                 return True
         
             if not to_email or not subject or not html_content:
-                print(f"❌ Email invalido: campos em branco")
+                print(f"❌ Email inválido: campos em branco")
                 return False
                 
             msg = MIMEMultipart('alternative')
@@ -58,19 +58,31 @@ class EmailService:
             msg.attach(text_part)
             msg.attach(html_part)
             
+            print(f"\n📧 Enviando email para: {to_email}")
+            print(f"🔧 Servidor: {self.smtp_server}:{self.smtp_port}")
             
-            import ssl
-            context = ssl.create_default_context()
+            # ✅ USAR PORTA 587 (STARTTLS) OU 465 (SSL)
+            if self.smtp_port == 587:
+                # PORTA 587 - STARTTLS
+                server = smtplib.SMTP(self.smtp_server, self.smtp_port, timeout=10)
+                server.set_debuglevel(1)
+                server.ehlo()
+                server.starttls()
+                server.ehlo()
+                server.login(self.smtp_username, self.smtp_password)
+            else:
+                # PORTA 465 - SSL DIRETO
+                import ssl
+                context = ssl.create_default_context()
+                server = smtplib.SMTP_SSL(
+                    self.smtp_server, 
+                    self.smtp_port, 
+                    timeout=10,
+                    context=context
+                )
+                server.set_debuglevel(1)
+                server.login(self.smtp_username, self.smtp_password)
             
-            server = smtplib.SMTP_SSL(
-                self.smtp_server, 
-                self.smtp_port, 
-                timeout=30,
-                context=context
-            )
-            
-            server.set_debuglevel(1)  # Debug detalhado
-            server.login(self.smtp_username, self.smtp_password)
             server.send_message(msg)
             server.quit()
             

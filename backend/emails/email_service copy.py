@@ -30,6 +30,7 @@ class EmailService:
         self.from_name = 'Geminii Tech'
         self.base_url = os.environ.get('BASE_URL', 'http://localhost:5000')
         self.test_mode = False
+        
 
     def send_email(self, to_email, subject, html_content, text_content=None):
         try:
@@ -38,7 +39,7 @@ class EmailService:
                 return True
         
             if not to_email or not subject or not html_content:
-                print(f"Email invalido: campos em branco")
+                print(f"❌ Email invalido: campos em branco")
                 return False
                 
             msg = MIMEMultipart('alternative')
@@ -57,27 +58,37 @@ class EmailService:
             msg.attach(text_part)
             msg.attach(html_part)
             
-            print(f"\nEnviando email para: {to_email}")
-            print(f"Servidor: {self.smtp_server}:{self.smtp_port}")
             
-            server = smtplib.SMTP(self.smtp_server, self.smtp_port, timeout=10)
-            server.set_debuglevel(1)
-            server.ehlo()
-            server.starttls()
-            server.ehlo()
+            import ssl
+            context = ssl.create_default_context()
+            
+            server = smtplib.SMTP_SSL(
+                self.smtp_server, 
+                self.smtp_port, 
+                timeout=30,
+                context=context
+            )
+            
+            server.set_debuglevel(1)  # Debug detalhado
             server.login(self.smtp_username, self.smtp_password)
             server.send_message(msg)
             server.quit()
             
-            print(f"Email enviado com sucesso!")
+            print(f"✅ Email enviado com sucesso para {to_email}!")
             return True
             
         except smtplib.SMTPAuthenticationError as e:
-            print(f"\nERRO DE AUTENTICACAO: {e}")
+            print(f"\n❌ ERRO DE AUTENTICAÇÃO SMTP: {e}")
+            print(f"   - Usuário: {self.smtp_username}")
+            print(f"   - Servidor: {self.smtp_server}:{self.smtp_port}")
+            return False
+            
+        except smtplib.SMTPException as e:
+            print(f"❌ ERRO SMTP: {e}")
             return False
             
         except Exception as e:
-            print(f"Erro ao enviar email: {e}")
+            print(f"❌ Erro ao enviar email: {e}")
             import traceback
             traceback.print_exc()
             return False
@@ -702,7 +713,7 @@ Dúvidas? Entre em contato: contato@geminii.com.br
         return self.send_email(email, "Confirme seu email - Geminii Tech", html_content, text_content)
 
     def confirm_email_token(self, token):
-        """ Confirmar email com token"""
+        """✅ Confirmar email com token"""
         try:
             conn = get_db_connection()
             if not conn:
@@ -764,7 +775,20 @@ Dúvidas? Entre em contato: contato@geminii.com.br
             cursor.close()
             conn.close()
             
-            print(f" Email confirmado: {user_name} ({email})")
+            print(f"✅ Email confirmado: {user_name} ({email})")
+            
+            # ✅ ENVIAR EMAIL DE BOAS-VINDAS (ESTA LINHA ESTAVA FALTANDO!)
+            try:
+                print(f"📧 Enviando email de boas-vindas para {email}...")
+                welcome_sent = self.send_trial_welcome_community_email(user_name, email)
+                
+                if welcome_sent:
+                    print(f"✅ Email de boas-vindas enviado com sucesso!")
+                else:
+                    print(f"⚠️ Falha ao enviar email de boas-vindas (mas confirmação OK)")
+            except Exception as e:
+                print(f"⚠️ Erro ao enviar email de boas-vindas: {e}")
+                # Não falhar a confirmação se o email de boas-vindas falhar
             
             return {
                 'success': True,
@@ -774,10 +798,9 @@ Dúvidas? Entre em contato: contato@geminii.com.br
             }
             
         except Exception as e:
-            print(f" Erro ao confirmar email: {e}")
+            print(f"❌ Erro ao confirmar email: {e}")
             return {'success': False, 'error': str(e)}
-
-    # ===== MÉTODOS DE RESET DE SENHA =====
+    
 
     def generate_password_reset_token(self, email):
         """🔑 Gerar token de reset de senha"""
@@ -806,17 +829,34 @@ Dúvidas? Entre em contato: contato@geminii.com.br
                 WHERE user_id = %s AND used = FALSE
             """, (user_id,))
             
-            # Gerar novo token
+            # ✅ CORREÇÃO - Gerar token com UTC explícito
             token = secrets.token_urlsafe(32)
-            expires_at = datetime.now(timezone.utc) + timedelta(hours=1)
+            now_utc = datetime.now(timezone.utc)
+            expires_at_utc = now_utc + timedelta(hours=1)
             
-            # Salvar no banco
+            print(f"\n🔑 Gerando token de reset:")
+            print(f"   Usuário: {user_name} ({email})")
+            print(f"   Agora (UTC): {now_utc}")
+            print(f"   Expira em (UTC): {expires_at_utc}")
+            print(f"   Token: {token[:20]}...")
+            
+            # ✅ IMPORTANTE - Salvar com timezone
             cursor.execute("""
                 INSERT INTO password_reset_tokens (user_id, token, expires_at)
-                VALUES (%s, %s, %s)
-            """, (user_id, token, expires_at))
+                VALUES (%s, %s, %s AT TIME ZONE 'UTC')
+            """, (user_id, token, expires_at_utc))
             
             conn.commit()
+            
+            # ✅ VERIFICAR SE SALVOU CORRETAMENTE
+            cursor.execute("""
+                SELECT expires_at FROM password_reset_tokens 
+                WHERE token = %s
+            """, (token,))
+            
+            saved_expires = cursor.fetchone()[0]
+            print(f"   ✅ Salvo no banco como: {saved_expires}")
+            
             cursor.close()
             conn.close()
             
@@ -824,7 +864,7 @@ Dúvidas? Entre em contato: contato@geminii.com.br
             link = f"{self.base_url}/reset-password?token={token}"
             print(f"\n🔑 [LINK DE RESET]:")
             print(f"   {link}")
-            print(f"   ⏰ Expira em: 1 hora")
+            print(f"   ⏰ Expira em: 1 hora\n")
             
             return {
                 'success': True,
@@ -834,7 +874,9 @@ Dúvidas? Entre em contato: contato@geminii.com.br
             }
             
         except Exception as e:
-            print(f" Erro ao gerar token de reset: {e}")
+            print(f"❌ Erro ao gerar token de reset: {e}")
+            import traceback
+            traceback.print_exc()
             return {'success': False, 'error': str(e)}
 
     def send_password_reset_email(self, user_name, email, token):
@@ -882,8 +924,14 @@ Dúvidas? Entre em contato: contato@geminii.com.br
         return self.send_email(email, "Redefinir senha - Geminii Tech", html_content, text_content)
 
     def validate_password_reset_token(self, token):
-        """🔍 Validar token de reset"""
+        
         try:
+            print(f"\n{'='*60}")
+            print(f"🔍 VALIDANDO TOKEN DE RESET:")
+            print(f"{'='*60}")
+            print(f"   Token recebido: {token}")
+            print(f"   Tamanho: {len(token)} chars")
+            
             conn = get_db_connection()
             if not conn:
                 return {'success': False, 'error': 'Erro de conexão'}
@@ -892,35 +940,78 @@ Dúvidas? Entre em contato: contato@geminii.com.br
             
             # Buscar token válido
             cursor.execute("""
-                SELECT prt.user_id, u.email, u.name, prt.expires_at
+                SELECT prt.user_id, u.email, u.name, prt.expires_at, prt.token
                 FROM password_reset_tokens prt
                 JOIN users u ON u.id = prt.user_id
                 WHERE prt.token = %s AND prt.used = FALSE
             """, (token,))
             
             result = cursor.fetchone()
-            cursor.close()
-            conn.close()
             
             if not result:
+                # 🔍 DEBUG - Mostrar tokens recentes
+                print(f"\n❌ Token não encontrado no banco!")
+                print(f"🔍 Buscando tokens recentes...")
+                
+                cursor.execute("""
+                    SELECT token, expires_at, used, created_at
+                    FROM password_reset_tokens 
+                    ORDER BY created_at DESC 
+                    LIMIT 5
+                """)
+                
+                recent = cursor.fetchall()
+                print(f"\n📋 Últimos 5 tokens:")
+                for idx, (db_token, exp, used, created) in enumerate(recent, 1):
+                    print(f"   {idx}. Token: {db_token[:20]}...")
+                    print(f"      Expiração: {exp}")
+                    print(f"      Usado: {used}")
+                    print(f"      Criado em: {created}")
+                    print(f"      Match com recebido? {db_token == token}")
+                
+                cursor.close()
+                conn.close()
                 return {'success': False, 'error': 'Token inválido ou já usado'}
             
-            user_id, email, name, expires_at = result
+            user_id, email, name, expires_at, db_token = result
+            
+            print(f"\n✅ Token encontrado!")
+            print(f"   Usuário: {name} ({email})")
+            print(f"   Expira em: {expires_at}")
+            
+            # ✅ CORREÇÃO - Usar UTC consistente
+            now_utc = datetime.now(timezone.utc)
+            expires_utc = expires_at.replace(tzinfo=timezone.utc) if expires_at.tzinfo is None else expires_at
+            
+            print(f"   Agora (UTC): {now_utc}")
+            print(f"   Expiração (UTC): {expires_utc}")
+            print(f"   Tempo restante: {expires_utc - now_utc}")
             
             # Verificar expiração
-            if datetime.now(timezone.utc) > expires_at.replace(tzinfo=timezone.utc):
+            if now_utc > expires_utc:
+                print(f"❌ Token expirado!")
+                cursor.close()
+                conn.close()
                 return {'success': False, 'error': 'Token expirado'}
+            
+            print(f"✅ Token válido!")
+            print(f"{'='*60}\n")
+            
+            cursor.close()
+            conn.close()
             
             return {
                 'success': True,
                 'user_id': user_id,
                 'email': email,
                 'user_name': name,
-                'expires_at': expires_at.isoformat()
+                'expires_at': expires_utc.isoformat()
             }
             
         except Exception as e:
-            print(f" Erro ao validar token: {e}")
+            print(f"❌ Erro ao validar token: {e}")
+            import traceback
+            traceback.print_exc()
             return {'success': False, 'error': str(e)}
 
     def reset_password_with_token(self, token, new_password):
@@ -1127,104 +1218,357 @@ Continue sua jornada conosco!
     # ===== NOVOS EMAILS DA COMUNIDADE =====
 
     def send_trial_welcome_community_email(self, user_name, email):
-        """🎉 Email de boas-vindas ao trial - VERSÃO COMUNIDADE"""
+        """🎉 Email de boas-vindas ao trial - VERSÃO MELHORADA"""
         
-        content_data = {
-            'title': 'Bem-vindo à Geminii Tech!',
-            'subtitle': '15 dias de acesso completo - Trial ativado',
-            'main_message': f'Olá {user_name}! Seu trial de 15 dias foi ativado com sucesso. Aproveite todos os recursos da nossa plataforma de análise automatizada.',
-            'user_name': user_name,
-            'urgency_color': '#10b981',
-            'button_text': 'Acessar Plataforma',
-            'button_url': f"{self.base_url}/dashboard",
-            'details': [
-                {'label': 'Trial ativo por', 'value': '15 dias'},
-                {'label': 'Acesso completo', 'value': 'Todas as ferramentas'},
-                {'label': 'Suporte', 'value': 'Email e WhatsApp'}
-            ],
-            'warning_message': 'Seu trial expira em 15 dias. Aproveite ao máximo!',
-            'footer_message': 'Explore todas as funcionalidades durante seu período de teste.'
-        }
-        
-        html_content = self.create_professional_email_template(content_data)
-        
-        text_content = f"""
-Geminii Tech - Bem-vindo!
-
-Olá, {user_name}!
-
-Seu trial de 15 dias foi ativado com sucesso!
-
-Durante o trial você pode:
-- Acessar todas as ferramentas de análise
-- Usar estratégias automatizadas
-- Gerar relatórios completos
-- Receber suporte completo
-
-Acesse agora: {self.base_url}/dashboard
-
-Aproveite seus 15 dias de acesso completo!
-
-Dúvidas? contato@geminii.com.br
-
-© 2025 Geminii Tech - Análise Automatizada
+        # Template HTML customizado e rico
+        html_content = f"""
+    <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+    <html xmlns="http://www.w3.org/1999/xhtml" lang="pt-BR">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta name="x-apple-disable-message-reformatting" />
+        <title>Bem-vindo à Geminii Tech!</title>
+        <style type="text/css">
+            @media screen and (max-width: 600px) {{
+                .container {{ width: 100% !important; }}
+                .content {{ padding: 20px !important; }}
+                .benefits-grid {{ grid-template-columns: 1fr !important; }}
+            }}
+            
+            body {{ 
+                margin: 0; 
+                padding: 0; 
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, Arial, sans-serif; 
+                background-color: #0a0a0a;
+                line-height: 1.6;
+            }}
+            
+            .container {{ 
+                max-width: 600px; 
+                margin: 0 auto; 
+                background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+                border-radius: 16px;
+                overflow: hidden;
+                border: 1px solid rgba(186, 57, 175, 0.3);
+            }}
+            
+            .header {{ 
+                background: linear-gradient(135deg, #ba39af, #d946ef); 
+                padding: 40px 30px; 
+                text-align: center; 
+                position: relative;
+            }}
+            
+            .header::before {{
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120"><path d="M0,0 L1200,0 L1200,100 Q600,120 0,100 Z" fill="rgba(255,255,255,0.1)"/></svg>');
+                background-size: cover;
+                opacity: 0.3;
+            }}
+            
+            .header h1 {{
+                margin: 0;
+                font-size: 32px;
+                font-weight: 700;
+                color: #ffffff;
+                text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+                position: relative;
+                z-index: 1;
+            }}
+            
+            .header p {{
+                margin: 12px 0 0 0;
+                color: #ffffff;
+                opacity: 0.95;
+                font-size: 16px;
+                position: relative;
+                z-index: 1;
+            }}
+            
+            .content {{ 
+                padding: 40px 30px; 
+                background: #1a1a1a;
+                color: #e5e5e5;
+            }}
+            
+            .welcome-badge {{
+                background: linear-gradient(135deg, #10b981, #059669);
+                color: white;
+                padding: 8px 16px;
+                border-radius: 20px;
+                display: inline-block;
+                font-size: 14px;
+                font-weight: 600;
+                margin-bottom: 20px;
+            }}
+            
+            .button {{ 
+                display: inline-block; 
+                background: linear-gradient(135deg, #ba39af, #d946ef); 
+                color: #ffffff !important; 
+                padding: 16px 32px; 
+                text-decoration: none; 
+                border-radius: 10px; 
+                font-weight: 600; 
+                margin: 20px 0;
+                font-size: 18px;
+                border: none;
+                box-shadow: 0 4px 15px rgba(186, 57, 175, 0.4);
+                transition: all 0.3s ease;
+            }}
+            
+            .benefits-grid {{
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 15px;
+                margin: 30px 0;
+            }}
+            
+            .benefit-item {{
+                background: rgba(186, 57, 175, 0.1);
+                padding: 20px;
+                border-radius: 12px;
+                border-left: 4px solid #ba39af;
+                text-align: center;
+                transition: all 0.3s ease;
+            }}
+            
+            .benefit-icon {{
+                font-size: 32px;
+                margin-bottom: 10px;
+            }}
+            
+            .benefit-title {{
+                font-weight: 600;
+                color: #ba39af;
+                margin-bottom: 8px;
+                font-size: 16px;
+            }}
+            
+            .benefit-desc {{
+                color: #a0a0a0;
+                font-size: 13px;
+                line-height: 1.5;
+            }}
+            
+            .social-links {{
+                display: flex;
+                justify-content: center;
+                gap: 15px;
+                margin: 30px 0;
+                flex-wrap: wrap;
+            }}
+            
+            .social-link {{
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+                background: rgba(186, 57, 175, 0.15);
+                padding: 10px 16px;
+                border-radius: 8px;
+                color: #ba39af !important;
+                text-decoration: none;
+                font-size: 14px;
+                font-weight: 500;
+                border: 1px solid rgba(186, 57, 175, 0.3);
+                transition: all 0.3s ease;
+            }}
+            
+            .whatsapp-btn {{
+                background: linear-gradient(135deg, #25D366, #128C7E);
+                color: white !important;
+                padding: 14px 24px;
+                border-radius: 10px;
+                text-decoration: none;
+                font-weight: 600;
+                display: inline-block;
+                margin: 20px 0;
+                box-shadow: 0 4px 15px rgba(37, 211, 102, 0.3);
+            }}
+            
+            .footer {{ 
+                background: #0a0a0a; 
+                padding: 30px 20px; 
+                text-align: center; 
+                font-size: 13px; 
+                color: #666;
+                border-top: 1px solid rgba(186, 57, 175, 0.2);
+            }}
+            
+            .warning-box {{
+                background: rgba(186, 57, 175, 0.1);
+                border: 1px solid #ba39af;
+                padding: 16px;
+                border-radius: 10px;
+                margin: 20px 0;
+                color: #e5e5e5;
+                text-align: center;
+            }}
+        </style>
+    </head>
+    <body>
+        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #0a0a0a; padding: 20px;">
+            <tr>
+                <td align="center">
+                    <div class="container">
+                        <!-- Header -->
+                        <div class="header">
+                            <h1>🚀 Bem-vindo à Geminii Tech!</h1>
+                            <p>Sua jornada começa agora</p>
+                        </div>
+                        
+                        <!-- Content -->
+                        <div class="content">
+                            <div style="text-align: center;">
+                                <span class="welcome-badge">✨ Trial de 15 dias ativado</span>
+                            </div>
+                            
+                            <h2 style="color: #ba39af; margin-bottom: 16px; font-size: 24px; text-align: center;">
+                                Olá, {user_name}! 👋
+                            </h2>
+                            
+                            <p style="color: #e5e5e5; margin-bottom: 20px; font-size: 16px; text-align: center;">
+                                Parabéns! Seu trial de 15 dias foi ativado com sucesso. 
+                                Aproveite <strong>acesso completo</strong> a todas as ferramentas da nossa plataforma.
+                            </p>
+                            
+                            <h3 style="color: #ba39af; margin: 30px 0 20px 0; font-size: 20px; text-align: center;">
+                                🎯 O que você pode fazer:
+                            </h3>
+                            
+                            <div class="benefits-grid">
+                                <div class="benefit-item">
+                                    <div class="benefit-icon">📊</div>
+                                    <div class="benefit-title">Análise Avançada</div>
+                                    <div class="benefit-desc">Ferramentas completas de trading automatizado</div>
+                                </div>
+                                
+                                <div class="benefit-item">
+                                    <div class="benefit-icon">📈</div>
+                                    <div class="benefit-title">Estratégias</div>
+                                    <div class="benefit-desc">Acesso a todas as estratégias quantitativas</div>
+                                </div>
+                                
+                                <div class="benefit-item">
+                                    <div class="benefit-icon">📱</div>
+                                    <div class="benefit-title">Relatórios</div>
+                                    <div class="benefit-desc">Gere relatórios profissionais em PDF</div>
+                                </div>
+                                
+                                <div class="benefit-item">
+                                    <div class="benefit-icon">💬</div>
+                                    <div class="benefit-title">Suporte</div>
+                                    <div class="benefit-desc">Email e WhatsApp prioritário</div>
+                                </div>
+                            </div>
+                            
+                            <div style="text-align: center; margin: 30px 0;">
+                                <a href="{self.base_url}/dashboard" class="button">
+                                    🚀 Acessar Plataforma
+                                </a>
+                            </div>
+                            
+                            <div class="warning-box">
+                                <strong>⏰ Importante:</strong> Seu trial expira em 15 dias. Aproveite ao máximo!
+                            </div>
+                            
+                            <!-- WhatsApp -->
+                            <div style="text-align: center; margin: 30px 0;">
+                                <p style="color: #a0a0a0; margin-bottom: 10px;">💬 Precisa de ajuda? Fale conosco:</p>
+                                <a href="https://wa.me/5541995432873?text=Olá!%20Acabei%20de%20ativar%20meu%20trial%20na%20Geminii%20Tech" class="whatsapp-btn">
+                                    📱 WhatsApp: (41) 99543-2873
+                                </a>
+                            </div>
+                            
+                            <!-- Redes Sociais -->
+                            <div style="border-top: 1px solid rgba(186, 57, 175, 0.2); padding-top: 25px; margin-top: 25px;">
+                                <p style="color: #ba39af; text-align: center; margin-bottom: 15px; font-weight: 600;">
+                                    🌐 Siga nossas redes sociais:
+                                </p>
+                                <div class="social-links">
+                                    <a href="https://discord.gg/kmsfECUT" class="social-link">
+                                        💬 Discord
+                                    </a>
+                                    <a href="https://instagram.com/geminiiresearch" class="social-link">
+                                        📸 Instagram
+                                    </a>
+                                    <a href="https://linkedin.com/company/geminii-research" class="social-link">
+                                        💼 LinkedIn
+                                    </a>
+                                    <a href="https://t.me/geminiireserach" class="social-link">
+                                        ✈️ Telegram
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Footer -->
+                        <div class="footer">
+                            <p style="margin: 0; color: #ba39af; font-weight: 600;">© 2025 Geminii Tech</p>
+                            <p style="margin: 8px 0 0 0;">Trading Automatizado & Análise Quantitativa</p>
+                            <p style="margin: 15px 0 0 0;">
+                                <a href="mailto:contato@geminii.com.br" style="color: #ba39af; text-decoration: none;">
+                                    ✉️ contato@geminii.com.br
+                                </a>
+                            </p>
+                        </div>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </body>
+    </html>
         """
         
-        return self.send_email(email, "Bem-vindo à Geminii Tech - Trial ativado", html_content, text_content)
-
-    def send_trial_ending_community_email(self, user_name, email):
-        """⏰ Email de trial acabando - FOCO NA COMUNIDADE"""
-        
-        content_data = {
-            'title': 'Seu Trial está Terminando',
-            'subtitle': 'Continue aproveitando todas as funcionalidades',
-            'main_message': 'Seu trial de 15 dias está chegando ao fim. Para continuar usufruindo de todas as funcionalidades da ferramenta e também das novas atualizações, entre para nossa Comunidade de Opções Estruturadas.',
-            'user_name': user_name,
-            'urgency_color': '#ba39af',
-            'button_text': 'Entrar na Comunidade',
-            'button_url': f"{self.base_url}/planos",
-        }
-        
-        # Template customizado com benefícios da comunidade
-        html_content = self.create_community_email_template(content_data, user_name)
-        
+        # Versão texto
         text_content = f"""
-Geminii Tech - Trial Terminando
+    🚀 BEM-VINDO À GEMINII TECH!
 
-Olá, {user_name}!
+    Olá, {user_name}!
 
-Seu trial de 15 dias está chegando ao fim.
+    ✨ Seu trial de 15 dias foi ativado com sucesso!
 
-Para continuar usufruindo de todas as funcionalidades da ferramenta e também das novas atualizações, entre para nossa Comunidade de Opções Estruturadas.
+    🎯 O QUE VOCÊ PODE FAZER:
 
-BENEFÍCIOS DA COMUNIDADE:
+    📊 Análise Avançada
+    Ferramentas completas de trading automatizado
 
-AULAS ONLINE
-- 2x por semana com conteúdo prático e aplicação real no mercado
+    📈 Estratégias
+    Acesso a todas as estratégias quantitativas
 
-AULAS GRAVADAS  
-- Nivelamento do básico ao avançado, direto ao ponto
+    📱 Relatórios
+    Gere relatórios profissionais em PDF
 
-GRUPO WHATSAPP
-- Fechado para trocas de experiências e discussões
+    💬 Suporte
+    Email e WhatsApp prioritário
 
-REUNIÕES GRAVADAS
-- Rever e tirar dúvidas sobre operações quando quiser
+    🚀 ACESSE AGORA: {self.base_url}/dashboard
 
-ESTRATÉGIAS
-- Acompanhamento direto das estratégias do dia a dia
+    ⏰ IMPORTANTE: Seu trial expira em 15 dias. Aproveite ao máximo!
 
-INSIGHTS
-- Análises e insights exclusivos do mercado
+    💬 PRECISA DE AJUDA?
+    WhatsApp: (41) 99543-2873
+    https://wa.me/5541995432873
 
-Entre na comunidade: {self.base_url}/planos
+    🌐 REDES SOCIAIS:
+    Discord: https://discord.gg/kmsfECUT
+    Instagram: https://instagram.com/geminiiresearch
+    LinkedIn: https://linkedin.com/company/geminii-research
+    Telegram: https://t.me/geminiireserach
 
-Não perca essa oportunidade!
+    Dúvidas? contato@geminii.com.br
 
-© 2025 Geminii Tech - Opções Estruturadas
+    © 2025 Geminii Tech - Trading Automatizado
         """
         
-        return self.send_email(email, "Trial terminando - Entre na Comunidade", html_content, text_content)
+        return self.send_email(email, "🚀 Bem-vindo à Geminii Tech - Trial ativado!", html_content, text_content)
+
 
     def debug_user(self, email):
         """🔍 Debug de usuário"""
