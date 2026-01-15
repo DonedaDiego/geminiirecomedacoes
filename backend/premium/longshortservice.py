@@ -527,7 +527,7 @@ def ajustar_quantidade(qtd):
     return round(qtd)
 
 
-def calcular_quantidades_operacao(dados, acao1, acao2, beta, direcao_acao1, direcao_acao2, investimento):
+def calcular_quantidades_operacao(dados, acao1, acao2, beta, direcao_acao1, direcao_acao2, investimento):    
     ultimo_preco1 = dados['Close'][acao1].iloc[-1]
     ultimo_preco2 = dados['Close'][acao2].iloc[-1]
 

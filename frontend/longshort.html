@@ -504,7 +504,8 @@
     }
 
     async function analisarPares() {
-      const investimento = parseFloat(document.getElementById('investimento').value);
+      const investimentoStr = document.getElementById('investimento').value.replace(/\D/g, '');
+      const investimento = parseFloat(investimentoStr);
       const dias = parseInt(document.getElementById('dias').value);
       const janelaBeta = parseInt(document.getElementById('janelaBeta').value);
       const zscoreMinimo = parseFloat(document.getElementById('zscoreMinimo').value);
@@ -580,10 +581,12 @@
 
     async function selecionarPar(par) {
       currentPar = par;
-      const investimento = parseFloat(document.getElementById('investimento').value);
+      const investimentoStr = document.getElementById('investimento').value.replace(/\D/g, '');
+      const investimento = parseFloat(investimentoStr);
       const dias = parseInt(document.getElementById('dias').value);
       const janelaBeta = parseInt(document.getElementById('janelaBeta').value);
 
+      
       showStatus('Carregando análise detalhada...', 'info');
 
       try {
@@ -972,10 +975,45 @@
       }
     }
 
+
+
+
+    
+
+    const investimentoInput = document.getElementById('investimento');
+
+    investimentoInput.addEventListener('input', function(e) {
+        let valor = e.target.value.replace(/\D/g, ''); // Remove tudo que não é número
+        
+        if (valor === '') {
+            e.target.value = '';
+            return;
+        }
+        
+        // Formata com pontos (25000 -> 25.000)
+        e.target.value = parseInt(valor).toLocaleString('pt-BR', {
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0
+        }).replace(/,/g, '.');  // Troca vírgula por ponto
+    });
+
+    investimentoInput.addEventListener('blur', function(e) {
+        let valor = e.target.value.replace(/\D/g, '');
+        if (valor !== '') {
+            e.target.value = parseInt(valor).toLocaleString('pt-BR', {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
+            }).replace(/,/g, '.');  // Troca vírgula por ponto
+        }
+    });
+
     // Inicialização
     document.addEventListener('DOMContentLoaded', function() {
       showStatus('Sistema Long&Short carregado. Configure os parâmetros e clique em "Analisar".', 'info');
     });
+
+
+
 
   </script>
 

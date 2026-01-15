@@ -78,7 +78,7 @@ def analisar_pares():
 @longshort_bp.route('/par/<acao1>/<acao2>', methods=['POST'])
 def analisar_par_detalhado(acao1, acao2):
     try:
-        data = request.json
+        data = request.json        
         investimento = data.get('investimento', 10000.0)
         dias = data.get('dias', 240)
         janela_beta = data.get('janelaBeta', 60)
