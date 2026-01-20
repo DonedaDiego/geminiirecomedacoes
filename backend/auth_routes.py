@@ -34,14 +34,16 @@ def register():
             return jsonify({'success': False, 'error': 'Dados necessários'}), 400
         
         name = data.get('name', '').strip()
+        phone = data.get('phone', '').strip()  
+        source = data.get('source', '').strip()  
         email = data.get('email', '').strip().lower()
         password = data.get('password', '')
         user_ip = request.remote_addr
         
-        print(f"🔐 Registro: {email}")
+        print(f"🔐 Registro: {email} | Tel: {phone} | Origem: {source}")
         
         # Validações
-        if not name or not email or not password:
+        if not name or not phone or not source or not email or not password:
             return jsonify({'success': False, 'error': 'Campos obrigatórios'}), 400
         
         if len(password) < 6:
@@ -83,19 +85,19 @@ def register():
         
         cursor.execute("""
             INSERT INTO users (
-                name, email, password, ip_address,
+                name, phone, source, email, password, ip_address,
                 plan_id, plan_name, user_type,
                 email_confirmed, email_confirmed_at,
                 plan_expires_at, subscription_status,
                 created_at, updated_at
             ) VALUES (
-                %s, %s, %s, %s,
+                %s, %s, %s, %s, %s, %s,
                 4, 'Community', 'trial',
                 FALSE, NULL,
                 %s, 'trial',
                 %s, %s
             ) RETURNING id
-        """, (name, email, hashed_password, user_ip, trial_end, now, now))
+        """, (name, phone, source, email, hashed_password, user_ip, trial_end, now, now))
         
         user_id = cursor.fetchone()[0]
         conn.commit()

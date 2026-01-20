@@ -576,6 +576,161 @@ def manage_user_portfolios(admin_id):
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500    
 
+# Rota de exporta excel e tbem mostrar dados
+@admin_bp.route('/export-users', methods=['GET'])
+@require_admin()
+def export_users(admin_id):
+    """Exportar base de usuários para CSV"""
+    try:
+        conn = get_db_connection()
+        if not conn:
+            return jsonify({'success': False, 'error': 'Erro de conexão'}), 500
+            
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            SELECT name, email, phone, source, plan_name, subscription_status, 
+                   email_confirmed, created_at
+            FROM users 
+            WHERE user_type != 'deleted'
+            ORDER BY created_at DESC
+        """)
+        
+        users = cursor.fetchall()
+        cursor.close()
+        conn.close()
+        
+        import csv
+        from io import StringIO
+        from flask import Response
+        
+        output = StringIO()
+        writer = csv.writer(output, delimiter=';')
+        
+        writer.writerow(['Nome', 'Email', 'Telefone', 'Origem', 'Plano', 'Status', 'Email Confirmado', 'Data Cadastro'])
+        
+        for user in users:
+            name, email, phone, source, plan_name, status, confirmed, created = user
+            writer.writerow([
+                name,
+                email,
+                phone or 'Não informado',
+                source or 'Não informado',
+                plan_name,
+                status,
+                'Sim' if confirmed else 'Não',
+                created.strftime('%d/%m/%Y %H:%M') if created else ''
+            ])
+        
+        output.seek(0)
+        
+        return Response(
+            output.getvalue(),
+            mimetype='text/csv',
+            headers={'Content-Disposition': 'attachment; filename=usuarios.csv'}
+        )
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@admin_bp.route('/get-user/<int:user_id>', methods=['GET'])
+@require_admin()
+def get_user_details(admin_id, user_id):
+    """Buscar detalhes completos do usuário"""
+    try:
+        conn = get_db_connection()
+        if not conn:
+            return jsonify({'success': False, 'error': 'Erro de conexão'}), 500
+            
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            SELECT id, name, email, phone, source, plan_id, plan_name, user_type,
+                   subscription_status, email_confirmed, created_at, plan_expires_at
+            FROM users 
+            WHERE id = %s
+        """, (user_id,))
+        
+        user = cursor.fetchone()
+        
+        if not user:
+            cursor.close()
+            conn.close()
+            return jsonify({'success': False, 'error': 'Usuário não encontrado'}), 404
+        
+        uid, name, email, phone, source, plan_id, plan_name, user_type, status, confirmed, created, expires = user
+        
+        cursor.close()
+        conn.close()
+        
+        return jsonify({
+            'success': True,
+            'user': {
+                'id': uid,
+                'name': name,
+                'email': email,
+                'phone': phone or 'Não informado',
+                'source': source or 'Não informado',
+                'plan_id': plan_id,
+                'plan_name': plan_name,
+                'user_type': user_type,
+                'subscription_status': status,
+                'email_confirmed': confirmed,
+                'created_at': created.isoformat() if created else None,
+                'plan_expires_at': expires.isoformat() if expires else None
+            }
+        }), 200
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@admin_bp.route('/get-user-by-email', methods=['POST'])
+@require_admin()
+def get_user_by_email(admin_id):
+    try:
+        data = request.get_json()
+        email = data.get('email')
+        
+        if not email:
+            return jsonify({'success': False, 'error': 'Email obrigatório'}), 400
+        
+        conn = get_db_connection()
+        if not conn:
+            return jsonify({'success': False, 'error': 'Erro de conexão'}), 500
+            
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            SELECT id, name, email, phone, source, plan_id, plan_name
+            FROM users 
+            WHERE email = %s
+        """, (email,))
+        
+        user = cursor.fetchone()
+        
+        cursor.close()
+        conn.close()
+        
+        if not user:
+            return jsonify({'success': False, 'error': 'Usuário não encontrado'}), 404
+        
+        uid, name, email, phone, source, plan_id, plan_name = user
+        
+        return jsonify({
+            'success': True,
+            'user': {
+                'id': uid,
+                'name': name,
+                'email': email,
+                'phone': phone or 'Não informado',
+                'source': source or 'Não informado',
+                'plan_id': plan_id,
+                'plan_name': plan_name
+            }
+        }), 200
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 
 # ===== ADICIONAR ESTAS ROTAS NO FINAL DO admin_routes.py =====
@@ -989,10 +1144,6 @@ def get_recent_activity(admin_id):
         print(f"Erro na atividade recente: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
-
-#funções novas admin dashboard
-
-## Adicione estas funções no seu admin_routes.py
 
 @admin_bp.route('/create-user', methods=['POST'])
 @require_admin()

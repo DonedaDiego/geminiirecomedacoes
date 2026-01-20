@@ -140,6 +140,8 @@ def create_users_table():
                 id SERIAL PRIMARY KEY,
                 name VARCHAR(100) NOT NULL,
                 email VARCHAR(100) UNIQUE NOT NULL,
+                phone VARCHAR(20),
+                source VARCHAR(50),          
                 password VARCHAR(255) NOT NULL,
                 
                 --  CORREÇÃO: DEFAULT para plano BÁSICO
@@ -169,6 +171,8 @@ def create_users_table():
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_users_subscription ON users(subscription_status);")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_users_plan_expires ON users(plan_expires_at);")
         cursor.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS ip_address VARCHAR(45)")
+        cursor.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS phone VARCHAR(20)")
+        cursor.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS source VARCHAR(50)")
         
         conn.commit()
         cursor.close()
@@ -197,7 +201,8 @@ def update_users_table_for_service():
         cursor.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS registration_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
         cursor.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS email_confirmed BOOLEAN DEFAULT TRUE")
         cursor.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS ip_address VARCHAR(45)")
-
+        cursor.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS phone VARCHAR(20)")
+        cursor.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS source VARCHAR(50)")
         
         # Atualizar dados existentes
         cursor.execute("""
