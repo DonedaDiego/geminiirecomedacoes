@@ -304,7 +304,7 @@ def get_scheduler_blueprint():
 def auto_start_scheduler():
     """Iniciar scheduler automaticamente quando o módulo for importado"""
     try:
-        print("🚀 Auto-iniciando Payment Scheduler...")
+        print(" Auto-iniciando Payment Scheduler...")
         start_payment_scheduler()
         
     except Exception as e:

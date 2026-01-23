@@ -764,12 +764,12 @@ class VolatilityRegimesService:
                         self.logger.info("✅ DADOS ATUALIZADOS - Usando fechamento recente")
                         last_update_time = last_date
                     else:
-                        self.logger.warning(f"⚠️ DADOS ANTIGOS - Último: {last_date.date()}, Hoje: {now_sp.date()}")
+                        self.logger.warning(f" DADOS ANTIGOS - Último: {last_date.date()}, Hoje: {now_sp.date()}")
                         last_update_time = last_date
                 else:
                     current_price = float(data['Close'].iloc[-1])
                     last_update_time = data['Date'].iloc[-1]
-                    self.logger.warning(f"⚠️ USANDO DADOS HISTÓRICOS: R$ {current_price:.4f}")
+                    self.logger.warning(f" USANDO DADOS HISTÓRICOS: R$ {current_price:.4f}")
                 
             except Exception as e:
                 current_price = float(data['Close'].iloc[-1])

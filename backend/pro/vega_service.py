@@ -475,7 +475,7 @@ class VolatilityRegimeDetector:
         else:
             weighted_iv = float(vex_df_copy['avg_iv'].mean())
         
-        # 🎯 USAR ATM COMO IV ATUAL
+        # USAR ATM COMO IV ATUAL
         current_iv = atm_iv if atm_iv > 0 else weighted_iv
         
         # VEX totais

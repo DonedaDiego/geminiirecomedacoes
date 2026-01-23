@@ -146,7 +146,7 @@ def get_single_stock(symbol):
             logger.info(f" {symbol}: R$ {stock_data['price']} ({stock_data['change_percent']:+.2f}%)")
             return jsonify(response_data)
         else:
-            logger.warning(f"⚠️ Ação {symbol} não encontrada")
+            logger.warning(f" Ação {symbol} não encontrada")
             return jsonify({
                 'success': False,
                 'error': f'Dados da ação {symbol} não encontrados',

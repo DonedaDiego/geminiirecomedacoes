@@ -238,4 +238,4 @@ if __name__ == "__main__":
     else:
         print(f" {result['error']}")
     
-    print("\n🎉 Testes concluídos!")
+    print("\n Testes concluídos!")

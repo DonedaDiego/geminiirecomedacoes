@@ -280,7 +280,7 @@ class EmailService:
                         
                         {f'''
                         <div class="warning-box">
-                            <strong>⚠️ Importante:</strong> {warning_message}
+                            <strong> Importante:</strong> {warning_message}
                         </div>
                         ''' if warning_message else ''}
                         
@@ -481,7 +481,7 @@ class EmailService:
                             </div>
                             
                             <div class="benefit-item">
-                                <div class="benefit-icon">💬</div>
+                                <div class="benefit-icon"></div>
                                 <div class="benefit-title">Grupo WhatsApp</div>
                                 <div class="benefit-desc">Fechado para trocas de experiências e discussões</div>
                             </div>
@@ -499,7 +499,7 @@ class EmailService:
                             </div>
                             
                             <div class="benefit-item">
-                                <div class="benefit-icon">💡</div>
+                                <div class="benefit-icon"></div>
                                 <div class="benefit-title">Insights</div>
                                 <div class="benefit-desc">Análises e insights exclusivos do mercado</div>
                             </div>
@@ -558,7 +558,7 @@ class EmailService:
                 """)
                 print(" Campos adicionados na tabela users")
             except Exception as e:
-                print(f"⚠️ Erro ao adicionar campos users: {e}")
+                print(f" Erro ao adicionar campos users: {e}")
             
             # 2. Criar tabela email_confirmations
             try:
@@ -576,7 +576,7 @@ class EmailService:
                 """)
                 
             except Exception as e:
-                print(f"⚠️ Erro ao criar email_confirmations: {e}")
+                print(f" Erro ao criar email_confirmations: {e}")
             
             # 3. Criar tabela password_reset_tokens
             try:
@@ -592,7 +592,7 @@ class EmailService:
                 """)
                 print(" Tabela password_reset_tokens criada")
             except Exception as e:
-                print(f"⚠️ Erro ao criar password_reset_tokens: {e}")
+                print(f" Erro ao criar password_reset_tokens: {e}")
             
             # 4. IMPORTANTE: Confirmar usuários EXISTENTES (admin, etc)
             try:
@@ -604,7 +604,7 @@ class EmailService:
                 updated = cursor.rowcount
                 print(f" {updated} usuários antigos marcados como confirmados")
             except Exception as e:
-                print(f"⚠️ Erro ao confirmar usuários: {e}")
+                print(f" Erro ao confirmar usuários: {e}")
             
             # 5. Criar índices
             try:
@@ -613,7 +613,7 @@ class EmailService:
                 cursor.execute("CREATE INDEX IF NOT EXISTS idx_users_email_confirmed ON users(email_confirmed)")
                 print(" Índices criados")
             except Exception as e:
-                print(f"⚠️ Erro ao criar índices: {e}")
+                print(f" Erro ao criar índices: {e}")
             
             conn.commit()
             cursor.close()
@@ -654,7 +654,7 @@ class EmailService:
             link = f"{self.base_url}/auth/confirm-email?token={token}"
             print(f"\n🔗 [LINK DE CONFIRMAÇÃO]:")
             print(f"   {link}")
-            print(f"   ⏰ Expira em: 24 horas")
+            print(f"    Expira em: 24 horas")
             
             return {'success': True, 'token': token}
             
@@ -778,9 +778,9 @@ Dúvidas? Entre em contato: contato@geminii.com.br
                 if welcome_sent:
                     print(f"✅ Email de boas-vindas enviado com sucesso!")
                 else:
-                    print(f"⚠️ Falha ao enviar email de boas-vindas (mas confirmação OK)")
+                    print(f" Falha ao enviar email de boas-vindas (mas confirmação OK)")
             except Exception as e:
-                print(f"⚠️ Erro ao enviar email de boas-vindas: {e}")
+                print(f" Erro ao enviar email de boas-vindas: {e}")
                 # Não falhar a confirmação se o email de boas-vindas falhar
             
             return {
@@ -857,7 +857,7 @@ Dúvidas? Entre em contato: contato@geminii.com.br
             link = f"{self.base_url}/reset-password?token={token}"
             print(f"\n🔑 [LINK DE RESET]:")
             print(f"   {link}")
-            print(f"   ⏰ Expira em: 1 hora\n")
+            print(f"    Expira em: 1 hora\n")
             
             return {
                 'success': True,
@@ -1008,7 +1008,7 @@ Dúvidas? Entre em contato: contato@geminii.com.br
             return {'success': False, 'error': str(e)}
 
     def reset_password_with_token(self, token, new_password):
-        """🔐 Redefinir senha com token"""
+        """ Redefinir senha com token"""
         try:
             # Validar token
             token_data = self.validate_password_reset_token(token)
@@ -1060,7 +1060,7 @@ Dúvidas? Entre em contato: contato@geminii.com.br
     # ===== EMAILS DE TRIAL COM TEMPLATE ANTI-SPAM =====
 
     def send_trial_welcome_email(self, user_name, email):
-        """🎉 Enviar email de boas-vindas ao trial COM TEMPLATE ANTI-SPAM"""
+        """ Enviar email de boas-vindas ao trial COM TEMPLATE ANTI-SPAM"""
         
         content_data = {
             'title': 'Trial Premium Ativado!',
@@ -1068,7 +1068,7 @@ Dúvidas? Entre em contato: contato@geminii.com.br
             'main_message': 'Parabéns! Você ganhou 15 dias de acesso Premium GRATUITO! Aproveite ao máximo todos os recursos disponíveis.',
             'user_name': user_name,
             'urgency_color': '#10b981',
-            'button_text': '🚀 Acessar Dashboard',
+            'button_text': ' Acessar Dashboard',
             'button_url': f"{self.base_url}/dashboard",
             'details': [
                 {'label': 'Tipo', 'value': 'Trial Premium'},
@@ -1102,10 +1102,10 @@ Aproveite ao máximo seus 15 dias de trial!
 © 2025 Geminii Tech - Trading Automatizado
         """
         
-        return self.send_email(email, "🎉 Trial Premium Ativado - Geminii Tech", html_content, text_content)
+        return self.send_email(email, " Trial Premium Ativado - Geminii Tech", html_content, text_content)
 
     def send_trial_reminder_email(self, user_name, email, days_remaining):
-        """⏰ Enviar lembrete de trial COM TEMPLATE ANTI-SPAM"""
+        """ Enviar lembrete de trial COM TEMPLATE ANTI-SPAM"""
         
         if days_remaining <= 1:
             urgency_color = "#ef4444"
@@ -1156,11 +1156,11 @@ Continue aproveitando todos os recursos Premium!
 © 2025 Geminii Tech - Trading Automatizado
         """
         
-        subject = f"⏰ {urgency_text} do seu Trial Premium - Geminii Tech"
+        subject = f" {urgency_text} do seu Trial Premium - Geminii Tech"
         return self.send_email(email, subject, html_content, text_content)
     
     def send_trial_expired_email(self, user_name, email):
-        """💡 Enviar email de trial expirado COM TEMPLATE ANTI-SPAM"""
+        """ Enviar email de trial expirado COM TEMPLATE ANTI-SPAM"""
         
         content_data = {
             'title': 'Trial Expirado',
@@ -1206,12 +1206,12 @@ Continue sua jornada conosco!
 © 2025 Geminii Tech - Trading Automatizado
         """
         
-        return self.send_email(email, "💡 Trial expirado - Geminii Tech", html_content, text_content)
+        return self.send_email(email, " Trial expirado - Geminii Tech", html_content, text_content)
 
     # ===== NOVOS EMAILS DA COMUNIDADE =====
 
     def send_trial_welcome_community_email(self, user_name, email):
-        """🎉 Email de boas-vindas ao trial - VERSÃO MELHORADA"""
+        """ Email de boas-vindas ao trial - VERSÃO MELHORADA"""
         
         # Template HTML customizado e rico
         html_content = f"""
@@ -1412,7 +1412,7 @@ Continue sua jornada conosco!
                     <div class="container">
                         <!-- Header -->
                         <div class="header">
-                            <h1>🚀 Bem-vindo à Geminii Tech!</h1>
+                            <h1> Bem-vindo à Geminii Tech!</h1>
                             <p>Sua jornada começa agora</p>
                         </div>
                         
@@ -1423,7 +1423,7 @@ Continue sua jornada conosco!
                             </div>
                             
                             <h2 style="color: #ba39af; margin-bottom: 16px; font-size: 24px; text-align: center;">
-                                Olá, {user_name}! 👋
+                                Olá, {user_name}! 
                             </h2>
                             
                             <p style="color: #e5e5e5; margin-bottom: 20px; font-size: 16px; text-align: center;">
@@ -1432,30 +1432,30 @@ Continue sua jornada conosco!
                             </p>
                             
                             <h3 style="color: #ba39af; margin: 30px 0 20px 0; font-size: 20px; text-align: center;">
-                                🎯 O que você pode fazer:
+                                O que você pode fazer:
                             </h3>
                             
                             <div class="benefits-grid">
                                 <div class="benefit-item">
-                                    <div class="benefit-icon">📊</div>
+                                    <div class="benefit-icon"></div>
                                     <div class="benefit-title">Análise Avançada</div>
                                     <div class="benefit-desc">Ferramentas completas de trading automatizado</div>
                                 </div>
                                 
                                 <div class="benefit-item">
-                                    <div class="benefit-icon">📈</div>
+                                    <div class="benefit-icon"></div>
                                     <div class="benefit-title">Estratégias</div>
                                     <div class="benefit-desc">Acesso a todas as estratégias quantitativas</div>
                                 </div>
                                 
                                 <div class="benefit-item">
-                                    <div class="benefit-icon">📱</div>
+                                    <div class="benefit-icon"></div>
                                     <div class="benefit-title">Relatórios</div>
                                     <div class="benefit-desc">Gere relatórios profissionais em PDF</div>
                                 </div>
                                 
                                 <div class="benefit-item">
-                                    <div class="benefit-icon">💬</div>
+                                    <div class="benefit-icon"></div>
                                     <div class="benefit-title">Suporte</div>
                                     <div class="benefit-desc">Email e WhatsApp prioritário</div>
                                 </div>
@@ -1463,19 +1463,19 @@ Continue sua jornada conosco!
                             
                             <div style="text-align: center; margin: 30px 0;">
                                 <a href="{self.base_url}/dashboard" class="button">
-                                    🚀 Acessar Plataforma
+                                     Acessar Plataforma
                                 </a>
                             </div>
                             
                             <div class="warning-box">
-                                <strong>⏰ Importante:</strong> Seu trial expira em 15 dias. Aproveite ao máximo!
+                                <strong> Importante:</strong> Seu trial expira em 15 dias. Aproveite ao máximo!
                             </div>
                             
                             <!-- WhatsApp -->
                             <div style="text-align: center; margin: 30px 0;">
-                                <p style="color: #a0a0a0; margin-bottom: 10px;">💬 Precisa de ajuda? Fale conosco:</p>
+                                <p style="color: #a0a0a0; margin-bottom: 10px;"> Precisa de ajuda? Fale conosco:</p>
                                 <a href="https://wa.me/5541995432873?text=Olá!%20Acabei%20de%20ativar%20meu%20trial%20na%20Geminii%20Tech" class="whatsapp-btn">
-                                    📱 WhatsApp: (41) 99543-2873
+                                     WhatsApp: (41) 99543-2873
                                 </a>
                             </div>
                             
@@ -1486,7 +1486,7 @@ Continue sua jornada conosco!
                                 </p>
                                 <div class="social-links">
                                     <a href="https://discord.gg/kmsfECUT" class="social-link">
-                                        💬 Discord
+                                         Discord
                                     </a>
                                     <a href="https://instagram.com/geminiiresearch" class="social-link">
                                         📸 Instagram
@@ -1521,31 +1521,31 @@ Continue sua jornada conosco!
         
         # Versão texto
         text_content = f"""
-    🚀 BEM-VINDO À GEMINII TECH!
+     BEM-VINDO À GEMINII TECH!
 
     Olá, {user_name}!
 
     ✨ Seu trial de 15 dias foi ativado com sucesso!
 
-    🎯 O QUE VOCÊ PODE FAZER:
+    O QUE VOCÊ PODE FAZER:
 
-    📊 Análise Avançada
+     Análise Avançada
     Ferramentas completas de trading automatizado
 
-    📈 Estratégias
+     Estratégias
     Acesso a todas as estratégias quantitativas
 
-    📱 Relatórios
+     Relatórios
     Gere relatórios profissionais em PDF
 
-    💬 Suporte
+     Suporte
     Email e WhatsApp prioritário
 
-    🚀 ACESSE AGORA: {self.base_url}/dashboard
+     ACESSE AGORA: {self.base_url}/dashboard
 
-    ⏰ IMPORTANTE: Seu trial expira em 15 dias. Aproveite ao máximo!
+     IMPORTANTE: Seu trial expira em 15 dias. Aproveite ao máximo!
 
-    💬 PRECISA DE AJUDA?
+     PRECISA DE AJUDA?
     WhatsApp: (41) 99543-2873
     https://wa.me/5541995432873
 
@@ -1560,7 +1560,7 @@ Continue sua jornada conosco!
     © 2025 Geminii Tech - Trading Automatizado
         """
         
-        return self.send_email(email, "🚀 Bem-vindo à Geminii Tech - Trial ativado!", html_content, text_content)
+        return self.send_email(email, " Bem-vindo à Geminii Tech - Trial ativado!", html_content, text_content)
 
 
     def debug_user(self, email):

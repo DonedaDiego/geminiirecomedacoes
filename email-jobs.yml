@@ -26,4 +26,4 @@ jobs:
           
       - name:  Jobs Concluídos
         run: |
-          echo "🎉 Verificações de email concluídas!"
+          echo " Verificações de email concluídas!"

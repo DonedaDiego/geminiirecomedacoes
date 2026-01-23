@@ -185,7 +185,7 @@ class OpcoesService:
                 calls_grupo, puts_grupo = self.filtrar_opcoes_por_letras(options_data, grupo)
                 
                 if not calls_grupo and not puts_grupo:
-                    print(f"⚠️ {nome_grupo}: sem opções")
+                    print(f" {nome_grupo}: sem opções")
                     continue
                 
                 # Agrupar por strike
@@ -199,7 +199,7 @@ class OpcoesService:
                 }
                 
                 if not strikes_filtrados:
-                    print(f"⚠️ {nome_grupo}: sem strikes significativos")
+                    print(f" {nome_grupo}: sem strikes significativos")
                     continue
                 
                 # Top strikes
@@ -406,10 +406,10 @@ class OpcoesService:
                             # Sem dados para esta data (normal)
                             continue
                         else:
-                            print(f"⚠️ HTTP {response.status_code} para lote {batch_idx}")
+                            print(f" HTTP {response.status_code} para lote {batch_idx}")
                     
                     except Exception as batch_error:
-                        print(f"⚠️ Erro lote {batch_idx}: {batch_error}")
+                        print(f" Erro lote {batch_idx}: {batch_error}")
                         continue
                 
                 # Salvar dados do dia se houve volume
@@ -526,7 +526,7 @@ class OpcoesService:
             
             # Se não há dados históricos, criar resposta básica
             if not historico or len(historico) == 0:
-                print("⚠️ Sem dados históricos suficientes")
+                print(" Sem dados históricos suficientes")
                 return {
                     'volume_atual': volume_atual,
                     'volume_medio_7d': max(volume_atual // 2, 100),  # Atualizado para 7d
@@ -708,11 +708,11 @@ class OpcoesService:
             if response.status_code == 200:
                 return response.json()
             else:
-                print(f"⚠️ Dados detalhados não disponíveis para {symbol}")
+                print(f" Dados detalhados não disponíveis para {symbol}")
                 return {}
                 
         except Exception as e:
-            print(f"⚠️ Erro buscar dados detalhados {symbol}: {e}")
+            print(f" Erro buscar dados detalhados {symbol}: {e}")
             return {}
 
     def classify_moneyness(self, moneyness: float) -> str:

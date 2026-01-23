@@ -90,7 +90,7 @@ def validate_reset_token():
 
 @email_bp.route('/reset-password', methods=['POST'])
 def reset_password():
-    """🔐 Redefinir senha com token válido"""
+    """ Redefinir senha com token válido"""
     try:
         data = request.get_json()
         
@@ -106,7 +106,7 @@ def reset_password():
         if len(new_password) < 6:
             return jsonify({'success': False, 'error': 'Nova senha deve ter pelo menos 6 caracteres'}), 400
         
-        print(f"🔐 Redefinindo senha com token: {token[:20]}...")
+        print(f" Redefinindo senha com token: {token[:20]}...")
         
         # Redefinir senha
         result = email_service.reset_password_with_token(token, new_password)
@@ -237,7 +237,7 @@ def confirm_email():
                 <p>Olá, <strong>{result['user_name']}</strong>!</p>
                 <p>Seu email foi confirmado com sucesso. Agora você pode fazer login na plataforma.</p>
                 
-                <a href="/login" class="btn">🔐 Fazer Login</a>
+                <a href="/login" class="btn"> Fazer Login</a>
                 <a href="/dashboard" class="btn"> Ir ao Dashboard</a>
             </div>
             

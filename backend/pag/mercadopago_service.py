@@ -253,7 +253,7 @@ def create_checkout_service(plan, cycle, customer_email, user_id=None, user_emai
             preference_data["additional_info"] = {"device_id": device_id}
             print(f"    Device ID válido adicionado: {device_id[:20]}...")
         elif device_id:
-            print(f"   ⚠️ Device ID inválido ignorado: {device_id}")
+            print(f"    Device ID inválido ignorado: {device_id}")
           
         preference_response = None
         for attempt in range(3):
@@ -592,7 +592,7 @@ def insert_payment_history(cursor, user_id, payment_data, payment_id):
         ))
         print("    Histórico registrado")
     except Exception as e:
-        print(f"   ⚠️ Erro no histórico (não crítico): {e}")
+        print(f"    Erro no histórico (não crítico): {e}")
 
 def process_payment(payment_id):
     """Função principal - processamento com melhorias para aprovação"""

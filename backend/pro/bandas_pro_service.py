@@ -67,7 +67,7 @@ class VolatilityValidator:
                 details.append(f"🟡 IV Rank Médio ({iv_rank_1y:.1%}) - Neutro")
             elif iv_rank_1y < 0.8:
                 score -= 10
-                details.append(f"⚠️ IV Rank Alto ({iv_rank_1y:.1%}) - Cuidado")
+                details.append(f" IV Rank Alto ({iv_rank_1y:.1%}) - Cuidado")
             else:
                 score -= 25
                 details.append(f" IV Rank Muito Alto ({iv_rank_1y:.1%}) - Movimento suspeito")
@@ -87,7 +87,7 @@ class VolatilityValidator:
                 details.append(f"🟡 IV vs EWMA Neutro ({iv_spread:.1%})")
             elif iv_spread < 0.3:
                 score -= 10
-                details.append(f"⚠️ IV Superestimada ({iv_spread:.1%})")
+                details.append(f" IV Superestimada ({iv_spread:.1%})")
             else:
                 score -= 20
                 details.append(f" IV Muito Superestimada ({iv_spread:.1%}) - Movimento exagerado")
@@ -1487,7 +1487,7 @@ class BandasProService:
             if iv_score >= 70:
                 if ('BULLISH' in flow_sentiment and 'Superior' in bands_position) or \
                    ('BEARISH' in flow_sentiment and 'Inferior' in bands_position):
-                    recommendation = "🚀 SINAL FORTE: Rompimento confiável confirmado pelo flow"
+                    recommendation = " SINAL FORTE: Rompimento confiável confirmado pelo flow"
                 else:
                     recommendation = " MOVIMENTO CONFIÁVEL: IV confirma rompimento genuíno"
             elif iv_score < 40:
@@ -1495,7 +1495,7 @@ class BandasProService:
                    ('BULLISH' in flow_sentiment and 'Inferior' in bands_position):
                     recommendation = " SINAL REVERSAL: IV suspeita + flow contrário"
                 else:
-                    recommendation = "⚠️ MOVIMENTO SUSPEITO: IV indica falso rompimento"
+                    recommendation = " MOVIMENTO SUSPEITO: IV indica falso rompimento"
             else:
                 recommendation = "🟡 SINAL NEUTRO: Sinais mistos, aguarde confirmação"
         else:

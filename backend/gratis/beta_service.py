@@ -301,4 +301,4 @@ if __name__ == "__main__":
     else:
         print(" Erro no ranking")
     
-    print("\n🎉 Testes concluídos!")
+    print("\n Testes concluídos!")

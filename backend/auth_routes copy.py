@@ -42,7 +42,7 @@ def register():
         password = data.get('password', '')
         user_ip = request.remote_addr
         
-        print(f"🔐 Tentativa de registro - Email: {email}, IP: {user_ip}")
+        print(f" Tentativa de registro - Email: {email}, IP: {user_ip}")
         
         # Validações básicas
         if not name or not email or not password:
@@ -216,7 +216,7 @@ def register():
             print(f" Email de confirmação enviado para {email}")
             return jsonify({
                 'success': True,
-                'message': '🎉 Conta criada com TRIAL de 15 dias! Verifique seu email para ativar.',
+                'message': ' Conta criada com TRIAL de 15 dias! Verifique seu email para ativar.',
                 'requires_confirmation': True,
                 'trial_info': {
                     'message': 'Você ganhou 15 dias de acesso GRATUITO!',
@@ -310,11 +310,11 @@ def confirm_email_page():
                 <p>Seu email foi confirmado com sucesso.</p>
                 
                 <div class="trial-info">
-                    <h3>🎉 Trial de 15 dias ATIVADO!</h3>
+                    <h3> Trial de 15 dias ATIVADO!</h3>
                     <p>Você tem acesso completo às ferramentas da Comunidade por 15 dias!</p>
                 </div>
                 
-                <a href="/login" class="btn">🔐 Fazer Login</a>
+                <a href="/login" class="btn"> Fazer Login</a>
                 <a href="/dashboard" class="btn"> Ir ao Dashboard</a>
             </div>
             
@@ -568,7 +568,7 @@ def login():
         
         # Verificar se email foi confirmado
         if not email_confirmed:
-            print("⚠️ Email não confirmado")
+            print(" Email não confirmado")
             cursor.close()
             conn.close()
             return jsonify({
@@ -600,7 +600,7 @@ def login():
             print(f" Último login atualizado - Rows: {affected_rows}, Novo valor: {updated_login}")
             
         except Exception as e:
-            print(f"⚠️ Erro ao atualizar último login: {e}")
+            print(f" Erro ao atualizar último login: {e}")
         
         
         cursor.close()
@@ -660,13 +660,13 @@ def login():
             
             # Mensagem personalizada baseada no tempo restante
             if days_left <= 1:
-                login_response['message'] = '⚠️ Seu trial expira hoje! Não perca o acesso total.'
+                login_response['message'] = ' Seu trial expira hoje! Não perca o acesso total.'
             elif days_left <= 3:
-                login_response['message'] = f'⏰ Apenas {days_left} dias restantes do seu trial!'
+                login_response['message'] = f' Apenas {days_left} dias restantes do seu trial!'
             elif days_left <= 7:
-                login_response['message'] = f'🚀 Você tem {days_left} dias de trial restantes!'
+                login_response['message'] = f' Você tem {days_left} dias de trial restantes!'
             else:
-                login_response['message'] = f'🎉 Bem-vindo! {days_left} dias de trial restantes!'
+                login_response['message'] = f' Bem-vindo! {days_left} dias de trial restantes!'
         
         elif subscription_data.get('status') == 'trial_expired':
             login_response['trial_info'] = {
@@ -674,7 +674,7 @@ def login():
                 'trial_expired': True,
                 'message': 'Seu trial expirou. Que tal fazer upgrade?'
             }
-            login_response['message'] = '💡 Seu trial expirou, mas você ainda pode acessar os recursos básicos!'
+            login_response['message'] = ' Seu trial expirou, mas você ainda pode acessar os recursos básicos!'
         
         elif subscription_data.get('status') == 'active':
             # Subscription paga ativa
@@ -689,11 +689,11 @@ def login():
             }
             
             if days_until_renewal <= 3:
-                login_response['message'] = f'⚠️ Sua assinatura {user_data.get("plan_name", plan_name)} vence em {days_until_renewal} dias!'
+                login_response['message'] = f' Sua assinatura {user_data.get("plan_name", plan_name)} vence em {days_until_renewal} dias!'
             elif days_until_renewal <= 7:
                 login_response['message'] = f'📅 Sua assinatura {user_data.get("plan_name", plan_name)} vence em {days_until_renewal} dias.'
             else:
-                login_response['message'] = f'🎉 Bem-vindo! Assinatura {user_data.get("plan_name", plan_name)} ativa!'
+                login_response['message'] = f' Bem-vindo! Assinatura {user_data.get("plan_name", plan_name)} ativa!'
         
         elif subscription_data.get('status') == 'expired':
             login_response['subscription_info'] = {
@@ -701,9 +701,9 @@ def login():
                 'status': 'expired',
                 'message': 'Sua assinatura expirou. Renove para continuar com acesso Premium!'
             }
-            login_response['message'] = '💡 Sua assinatura expirou, mas você ainda pode acessar os recursos básicos!'
+            login_response['message'] = ' Sua assinatura expirou, mas você ainda pode acessar os recursos básicos!'
         
-        print(f"🎉 Login bem-sucedido para: {name}")
+        print(f" Login bem-sucedido para: {name}")
         return jsonify(login_response), 200
         
     except Exception as e:

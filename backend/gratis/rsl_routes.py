@@ -146,7 +146,7 @@ def get_rsl_todos_setores():
         # Parâmetros opcionais
         period = request.args.get('period', '1y')
         
-        print(f"🚀 Calculando RSL para todos os setores (período: {period})")
+        print(f" Calculando RSL para todos os setores (período: {period})")
         
         service = YFinanceRSLService()
         all_rsl_data = service.get_all_sectors_rsl(period)

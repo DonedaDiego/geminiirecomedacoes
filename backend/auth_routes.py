@@ -40,7 +40,7 @@ def register():
         password = data.get('password', '')
         user_ip = request.remote_addr
         
-        print(f"🔐 Registro: {email} | Tel: {phone} | Origem: {source}")
+        print(f" Registro: {email} | Tel: {phone} | Origem: {source}")
         
         # Validações
         if not name or not phone or not source or not email or not password:
@@ -116,7 +116,7 @@ def register():
         try:
             email_service.send_confirmation_email(name, email, token_result['token'])
         except Exception as e:
-            print(f"⚠️ Erro ao enviar email: {e}")
+            print(f" Erro ao enviar email: {e}")
         
         cursor.close()
         conn.close()
@@ -289,7 +289,7 @@ def confirm_email_page():
         <body style="font-family:Arial;text-align:center;padding:50px;background:#ba39af;color:white">
             <h1>✅ Email Confirmado!</h1>
             <p>Olá, {result['user_name']}!</p>
-            <p>🎉 Trial de 15 dias ativado!</p>
+            <p> Trial de 15 dias ativado!</p>
             <a href="/login" style="background:white;color:#ba39af;padding:15px 30px;text-decoration:none;border-radius:10px;display:inline-block;margin-top:20px">Fazer Login</a>
         </body></html>
         """), 200

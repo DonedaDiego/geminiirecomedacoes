@@ -40,7 +40,7 @@ class VolatilityImpliedService:
                         print(f" Token OpLab carregado de {config_path}")
                         return token
             except Exception as e:
-                print(f"⚠️ Erro ao ler {config_path}: {e}")
+                print(f" Erro ao ler {config_path}: {e}")
                 continue
         
         default_token = "7gMd+LaFRJ6u6bmjgv9gxeGd5fAc6EHtpM4UoQ41tLivobEa4YTd5dA9xi00s/yd--NJ1uhr4hX+m6KeMsjdVfog==--ZTMyNzIyMjM3OGIxYThmN2YzNzdmZmYzOTZjY2RhYzc="
@@ -113,7 +113,7 @@ class VolatilityImpliedService:
                     df = pd.concat([df.drop('spot', axis=1), spot_expanded], axis=1)
                     print(f"Spot expandido: {spot_expanded.columns.tolist()}")
                 except Exception as e:
-                    print(f"⚠️ Erro ao expandir spot: {e}")
+                    print(f" Erro ao expandir spot: {e}")
                     df = df.drop('spot', axis=1)
         
         initial_count = len(df)
@@ -231,7 +231,7 @@ class VolatilityImpliedService:
             iv_values = daily_metrics['iv_avg'].dropna()
             
             if len(iv_values) < 10:  # Mínimo de dados para calcular quartis
-                print("⚠️ Dados insuficientes para calcular quartis")
+                print(" Dados insuficientes para calcular quartis")
                 daily_metrics['options_signal'] = 0
                 return daily_metrics
             

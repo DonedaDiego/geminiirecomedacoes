@@ -37,7 +37,7 @@ def check_email_rate_limit(user_email, email_type='renewal'):
         if cache_key in email_rate_limit_cache:
             current_count = email_rate_limit_cache[cache_key]['count']
             if current_count >= MAX_EMAILS_PER_USER_PER_DAY:
-                print(f"⚠️ RATE LIMIT: {user_email} já recebeu {current_count} emails hoje")
+                print(f" RATE LIMIT: {user_email} já recebeu {current_count} emails hoje")
                 return False
         
         return True
@@ -200,7 +200,7 @@ def check_user_subscription_status(user_id):
         else:
             # Sem data de expiração
             if plan_id in [1, 2]:
-                print(f"⚠️ INCONSISTÊNCIA: Usuário {user_id} tem plano pago sem data de expiração")
+                print(f" INCONSISTÊNCIA: Usuário {user_id} tem plano pago sem data de expiração")
                 subscription_status = 'data_inconsistency'
             else:
                 subscription_status = 'basic'

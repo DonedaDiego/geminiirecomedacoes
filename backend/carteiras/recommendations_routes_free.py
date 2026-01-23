@@ -68,7 +68,7 @@ def get_all_recommendations_public():
             RecommendationsServiceFree.update_current_prices()
             
         except Exception as update_error:
-            print(f"⚠️ Erro no auto-update (continuando): {update_error}")
+            print(f" Erro no auto-update (continuando): {update_error}")
         
         # Buscar recomendações
         from database import get_db_connection

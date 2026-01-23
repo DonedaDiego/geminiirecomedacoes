@@ -555,7 +555,7 @@ def verify_service_compatibility():
         coupon_tables = [row[0] for row in cursor.fetchall()]
         print(f"\n🎫 Tabelas de cupons:")
         print(f"   {'' if 'coupon_uses' in coupon_tables else ''} coupon_uses (necessária)")
-        print(f"   {'⚠️' if 'coupon_usage' in coupon_tables else ''} coupon_usage (desnecessária)")
+        print(f"   {'' if 'coupon_usage' in coupon_tables else ''} coupon_usage (desnecessária)")
         
         # 5. Verificar usuários de teste
         cursor.execute("SELECT COUNT(*) FROM users")

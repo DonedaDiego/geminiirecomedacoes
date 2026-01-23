@@ -177,7 +177,7 @@ def webhook():
         webhook_type = data.get("type")
         
         if webhook_type != "payment":
-            print(f"⚠️ Webhook ignorado: {webhook_type}")
+            print(f" Webhook ignorado: {webhook_type}")
             return jsonify({
                 "success": True, 
                 "message": f"Webhook '{webhook_type}' ignorado"
@@ -207,7 +207,7 @@ def webhook():
             }), 200
         
         elif result['status'] == 'already_processed':
-            print("⚠️ WEBHOOK: Pagamento já processado")
+            print(" WEBHOOK: Pagamento já processado")
             return jsonify({
                 "success": True,
                 "message": "Pagamento já processado",

@@ -255,7 +255,7 @@ if __name__ == "__main__":
         data = carrossel_data['data']
         print(f" {data['total_stocks']} ações carregadas")
         print(f" Mercado: {data['market_stats']['positive']} ↗️  {data['market_stats']['negative']} ↘️")
-        print(f"⏰ Última atualização: {data['last_update']}")
+        print(f" Última atualização: {data['last_update']}")
         
         # Mostrar primeiras 3 ações
         print("\n Primeiras ações:")
@@ -265,4 +265,4 @@ if __name__ == "__main__":
     else:
         print(f" Erro: {carrossel_data['error']}")
     
-    print("\n🎉 Testes concluídos!")
+    print("\n Testes concluídos!")

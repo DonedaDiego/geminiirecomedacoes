@@ -171,7 +171,7 @@ class PaymentScheduler:
                     # Log usuários problemáticos (limitado a 5)
                     users_without_payments = payment_issues.get('users_without_payments', [])[:5]
                     for user in users_without_payments:
-                        print(f"     ⚠️ {user['name']} ({user['email']}) - Plano: {user['plan']}")
+                        print(f"      {user['name']} ({user['email']}) - Plano: {user['plan']}")
                 
             else:
                 print(f" Verificação falhou: {result['error']}")
@@ -182,7 +182,7 @@ class PaymentScheduler:
     def stop(self):
         """Parar o scheduler"""
         if not self.running:
-            print("⚠️ Scheduler já está parado")
+            print(" Scheduler já está parado")
             return
         
         print("🛑 Parando Payment Scheduler...")
@@ -224,7 +224,7 @@ class PaymentScheduler:
             }
         
         try:
-            print(f"🚀 EXECUÇÃO MANUAL: {job_name}")
+            print(f" EXECUÇÃO MANUAL: {job_name}")
             jobs[job_name]()
             return {'success': True, 'message': f'Job {job_name} executado com sucesso'}
             

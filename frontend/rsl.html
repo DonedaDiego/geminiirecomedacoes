@@ -272,7 +272,7 @@
                       <strong>Retorno ajustado ao risco</strong> - quanto o setor rende considerando sua volatilidade.
                     </p>
                     <div class="bg-white/5 rounded p-3">
-                      <p class="text-white text-xs font-medium">💡 Exemplo:</p>
+                      <p class="text-white text-xs font-medium"> Exemplo:</p>
                       <p class="text-gray-400 text-xs">
                         RSL +8% = setor rende 8% acima<br>
                         do risco assumido
@@ -290,7 +290,7 @@
                       <strong>Oscilação média do setor</strong> - quanto as ações do setor variam diariamente.
                     </p>
                     <div class="bg-white/5 rounded p-3">
-                      <p class="text-white text-xs font-medium">💡 Interpretação:</p>
+                      <p class="text-white text-xs font-medium"> Interpretação:</p>
                       <p class="text-gray-400 text-xs">
                         25% = linha de referência<br>
                         >25% = mais arriscado
@@ -308,7 +308,7 @@
                       <strong>Eficiência normalizada</strong> - RSL dividido pela volatilidade (x100).
                     </p>
                     <div class="bg-white/5 rounded p-3">
-                      <p class="text-white text-xs font-medium">💡 Como usar:</p>
+                      <p class="text-white text-xs font-medium"> Como usar:</p>
                       <p class="text-gray-400 text-xs">
                         Score >50 = eficiente<br>
                         Score 0 = ineficiente
@@ -502,7 +502,7 @@
                     
                     <div class="bg-geminii/10 border border-geminii/30 rounded-lg p-4">
                       <p class="text-geminii font-medium text-sm">
-                        💡 <strong>Dica Avançada:</strong> Setores que migram do quadrante RISCO para AGRESSIVO ou IDEAL 
+                         <strong>Dica Avançada:</strong> Setores que migram do quadrante RISCO para AGRESSIVO ou IDEAL 
                         podem sinalizar <strong>oportunidades de entrada</strong>. Monitore essas transições!
                       </p>
                     </div>
@@ -753,13 +753,13 @@
           ctx.fillText('💎 IDEAL', chartArea.right - 60, chartArea.top + 25);
           
           // AGRESSIVO (inferior direito) 
-          ctx.fillText('🚀 AGRESSIVO', chartArea.right - 60, chartArea.bottom - 15);
+          ctx.fillText(' AGRESSIVO', chartArea.right - 60, chartArea.bottom - 15);
           
           // DEFENSIVO (superior esquerdo)
           ctx.fillText('🛡️ DEFENSIVO', chartArea.left + 60, chartArea.top + 25);
           
           // RISCO (inferior esquerdo)
-          ctx.fillText('⚠️ RISCO', chartArea.left + 60, chartArea.bottom - 15);
+          ctx.fillText(' RISCO', chartArea.left + 60, chartArea.bottom - 15);
           
           // Restaurar estado do contexto
           ctx.restore();
@@ -1111,7 +1111,7 @@
     
     // Inicializar
     document.addEventListener('DOMContentLoaded', function() {
-      console.log('🚀 Inicializando Radar de Setores com API RSL...');
+      console.log(' Inicializando Radar de Setores com API RSL...');
       showStatus('Conectando com API RSL...', 'info');
       atualizarDados();
     });

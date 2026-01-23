@@ -876,7 +876,7 @@
         return;
       }
       
-      if (!confirm(`⚠️ ATENÇÃO: Remover usuário ${email}?\n\nEsta ação marcará o usuário como removido.\nDeseja continuar?`)) {
+      if (!confirm(` ATENÇÃO: Remover usuário ${email}?\n\nEsta ação marcará o usuário como removido.\nDeseja continuar?`)) {
         return;
       }
       
@@ -1582,7 +1582,7 @@ function displayUsersEnhanced(users) {
 
     // Delete recommendation
     async function deleteRecommendationFree(recId) {
-      if (!confirm('⚠️ Remover esta recomendação permanentemente?')) return;
+      if (!confirm(' Remover esta recomendação permanentemente?')) return;
 
       try {
         const response = await fetch(`/api/recommendations/admin/delete/${recId}`, {
@@ -1689,7 +1689,7 @@ function displayUsersEnhanced(users) {
 
     // Initialize admin dashboard
     async function initAdminDashboard() {
-      console.log('🔐 Inicializando Admin Dashboard...');
+      console.log(' Inicializando Admin Dashboard...');
       
       await checkAdminAuth();
       await loadDashboardStats();

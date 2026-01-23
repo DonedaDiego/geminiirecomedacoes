@@ -655,7 +655,7 @@
  
     // Initialize page
     async function initPage() {
-      console.log('🚀 Inicializando Hunter Walls...');
+      console.log(' Inicializando Hunter Walls...');
       await checkAuth();
       console.log(' Hunter Walls inicializado!');
     }
@@ -716,11 +716,11 @@
           if (!shouldHaveAccess) {
             console.log(' ACESSO NEGADO!');
             console.log('🚨 FORÇANDO ACESSO PARA DEBUG - REMOVER EM PRODUÇÃO!');
-            console.log('🎉 Acesso liberado via DEBUG!');
+            console.log(' Acesso liberado via DEBUG!');
             return;
           }
           
-          console.log('🎉 ACESSO LIBERADO!');
+          console.log(' ACESSO LIBERADO!');
           
         } else {
           console.log(' Falha na verificação:', result);
@@ -739,7 +739,7 @@
       const ticker = document.getElementById('tickerInput').value.trim().toUpperCase();
       
       if (!ticker) {
-        alert('⚠️ Digite um ticker válido');
+        alert(' Digite um ticker válido');
         return;
       }
  
@@ -949,7 +949,7 @@
     //  NOVA FUNÇÃO - Analisar hot strike específico
     function analisarHotStrike() {
       if (!currentVolumeData || !currentVolumeData.hot_strike) {
-        alert('⚠️ Nenhum strike ativo identificado');
+        alert(' Nenhum strike ativo identificado');
         return;
       }
       
@@ -1047,7 +1047,7 @@
     
               <!-- Insight -->
               <div class="bg-yellow-500/10 rounded-lg p-4 border border-yellow-500/20">
-                <h4 class="text-yellow-400 font-semibold mb-2">⚠️ Insight Estratégico</h4>
+                <h4 class="text-yellow-400 font-semibold mb-2"> Insight Estratégico</h4>
                 <p class="text-gray-300 text-sm">
                   Strike R$ ${data.strike.toFixed(2)} concentra <strong>${data.total_volume.toLocaleString()}</strong> contratos.
                   Dominância: <strong>${data.calls_volume > data.puts_volume ? 'CALLS' : 'PUTS'}</strong>
@@ -1247,7 +1247,7 @@
     // Executar análise
     async function executarAnalise() {
       if (!currentTicker) {
-        alert('⚠️ Primeiro busque um ticker válido');
+        alert(' Primeiro busque um ticker válido');
         return;
       }
  
@@ -1265,11 +1265,11 @@
       });
  
       if (grupos.length === 0) {
-        alert('⚠️ Configure pelo menos um grupo de vencimentos');
+        alert(' Configure pelo menos um grupo de vencimentos');
         return;
       }
  
-      console.log('🚀 Executando análise:', currentTicker, grupos);
+      console.log(' Executando análise:', currentTicker, grupos);
  
       document.getElementById('loadingSection').classList.remove('hidden');
       document.getElementById('resultsSection').classList.add('hidden');

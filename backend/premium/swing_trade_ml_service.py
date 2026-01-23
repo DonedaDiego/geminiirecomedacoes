@@ -769,7 +769,7 @@ Sinal histórico: {'COMPRA' if historical_prediction == 1 else 'VENDA'}
             
             # Verificar se o HTML foi gerado
             if not chart_html or len(chart_html) < 100:
-                print("⚠️ HTML do gráfico muito pequeno, tentando versão alternativa...")
+                print(" HTML do gráfico muito pequeno, tentando versão alternativa...")
                 chart_html = self.create_simple_chart(df, ticker_symbol)
             
             # Obter dados para análise

@@ -1073,7 +1073,7 @@
 
     // Initialize dashboard
     async function initDashboard() {
-      console.log('🚀 Inicializando Dashboard Geminii...');
+      console.log(' Inicializando Dashboard Geminii...');
       
       tryLoadFromLocalStorage();
       await checkAuth();
@@ -1098,7 +1098,7 @@
           }
         }
       } catch (error) {
-        console.log('⚠️ Erro no localStorage:', error);
+        console.log(' Erro no localStorage:', error);
       }
     }
 
@@ -1120,7 +1120,7 @@
       }
       
       if (user.user_type === 'trial') {
-        console.log('⏰ TRIAL DETECTADO - ACESSO TOTAL');
+        console.log(' TRIAL DETECTADO - ACESSO TOTAL');
         userPlan = 'trial';
         return 'trial';
       }
@@ -1133,7 +1133,7 @@
       }
       
       // Fallback para free
-      console.log('⚠️ USER_TYPE NÃO IDENTIFICADO - DEFAULTING PARA FREE');
+      console.log(' USER_TYPE NÃO IDENTIFICADO - DEFAULTING PARA FREE');
       userPlan = 'free';
       return 'free';
     }
@@ -1413,7 +1413,7 @@
     }
 
     function toggleGratisDropdown() {
-      console.log('📱 Abrindo Gratis Dropdown');
+      console.log(' Abrindo Gratis Dropdown');
       const dropdown = document.getElementById('gratisDropdown');
       const chevron = document.getElementById('gratisChevron');
       
@@ -1670,7 +1670,7 @@
         return;
       }
       
-      console.log('📊 Abrindo Opcoes4d Dropdown - user_type:', userPlan);
+      console.log(' Abrindo Opcoes4d Dropdown - user_type:', userPlan);
       
       const dropdown = document.getElementById('opcoes4dDropdown');
       const chevron = document.getElementById('opcoes4dChevron');

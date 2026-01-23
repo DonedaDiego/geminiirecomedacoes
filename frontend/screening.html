@@ -636,7 +636,7 @@
       currentStatus.textContent = 'Screening concluído!';
       progressBar.style.width = '100%';
       
-      addProgressLog(`🎉 Screening concluído! ${totalOpportunities} oportunidades encontradas`, 'success');
+      addProgressLog(` Screening concluído! ${totalOpportunities} oportunidades encontradas`, 'success');
       
       // Hide progress after 2 seconds
       setTimeout(() => {
@@ -1410,7 +1410,7 @@
         if (data.status === 'OK') {
           console.log(' Serviço de Screening funcionando:', data.message);
         } else {
-          console.warn('⚠️ Serviço com problemas:', data.message);
+          console.warn(' Serviço com problemas:', data.message);
         }
       } catch (error) {
         console.error(' Erro ao verificar saúde do serviço:', error);

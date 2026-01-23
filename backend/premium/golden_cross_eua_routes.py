@@ -49,7 +49,7 @@ def obter_ranking():
         ranking = golden_cross_eua_service.obter_ranking_golden_cross(limite)
         
         if not ranking:
-            logger.warning("⚠️ Nenhum dado encontrado para o ranking")
+            logger.warning(" Nenhum dado encontrado para o ranking")
             return jsonify({
                 'sucesso': False,
                 'erro': 'Nenhum dado disponível para ranking'
@@ -133,7 +133,7 @@ def obter_analise_acao(ticker):
         )
         
         if not resultado['success']:
-            logger.warning(f"⚠️ Falha na análise de {ticker}: {resultado.get('error')}")
+            logger.warning(f" Falha na análise de {ticker}: {resultado.get('error')}")
             return jsonify({
                 'sucesso': False,
                 'erro': resultado.get('error', 'Erro na análise')

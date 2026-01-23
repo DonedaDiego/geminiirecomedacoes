@@ -20,4 +20,4 @@ python -c "import psycopg2; print('PostgreSQL driver OK')"
 python -c "import jwt; print('JWT OK')"
 python -c "import gunicorn; print('Gunicorn OK')"
 
-echo "🎉 Build concluído com sucesso!"
+echo " Build concluído com sucesso!"

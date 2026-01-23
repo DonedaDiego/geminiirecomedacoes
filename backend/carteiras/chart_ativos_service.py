@@ -60,7 +60,7 @@ class ChartAtivosService:
                         break
             
             if not needs_update:
-                logger.info("⏰ Preços ainda atuais (< 5 min)")
+                logger.info(" Preços ainda atuais (< 5 min)")
                 cursor.close()
                 conn.close()
                 return {'success': True, 'message': 'Preços atuais', 'updated': False}
@@ -72,7 +72,7 @@ class ChartAtivosService:
             new_prices = self.fetch_current_prices(tickers)
             
             if not new_prices:
-                logger.warning("⚠️ Nenhum preço obtido da API")
+                logger.warning(" Nenhum preço obtido da API")
                 cursor.close()
                 conn.close()
                 return {'success': False, 'error': 'Falha ao obter preços'}
@@ -145,7 +145,7 @@ class ChartAtivosService:
                                     if not close_data.empty and not pd.isna(close_data.iloc[-1]):
                                         prices[ticker] = round(float(close_data.iloc[-1]), 2)
                             except Exception as e:
-                                logger.warning(f"⚠️ Erro ao processar {ticker}: {e}")
+                                logger.warning(f" Erro ao processar {ticker}: {e}")
                     else:
                         # Apenas um ticker
                         if 'Close' in data.columns and not data['Close'].empty:
@@ -197,7 +197,7 @@ class ChartAtivosService:
             return None
             
         except Exception as e:
-            logger.warning(f"⚠️ Erro individual {ticker}: {e}")
+            logger.warning(f" Erro individual {ticker}: {e}")
             return None
 
     def get_portfolio_data_from_db(self, portfolio_name: str) -> Dict:
@@ -338,7 +338,7 @@ class ChartAtivosService:
         Análise completa da carteira com auto-atualização
         """
         try:
-            logger.info(f"🚀 Iniciando análise da carteira: {portfolio_name}")
+            logger.info(f" Iniciando análise da carteira: {portfolio_name}")
             
             # ETAPA 1: Atualizar preços automaticamente
             update_result = self.update_portfolio_prices(portfolio_name, force_refresh)

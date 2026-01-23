@@ -104,7 +104,7 @@ def create_historical_blueprint():
     @historical_bp.route('/analyze/<date>', methods=['POST'])
     def get_specific_date(date):
         """
-        🎯 DADOS DE DATA ESPECÍFICA
+        DADOS DE DATA ESPECÍFICA
         Otimização: retorna apenas os dados de uma data
         """
         try:
@@ -157,7 +157,7 @@ def create_historical_blueprint():
     @historical_bp.route('/insights', methods=['POST'])
     def get_insights():
         """
-        📊 INSIGHTS GERENCIAIS ISOLADOS
+         INSIGHTS GERENCIAIS ISOLADOS
         Retorna apenas os insights sem os dados brutos
         """
         try:
@@ -277,7 +277,7 @@ def create_historical_blueprint():
             result = historical_service.analyze_historical_complete(ticker, vencimento, days_back)
             
             #  LOG DETALHADO DO RESULTADO
-            logging.info(f"📊 RESULTADO RECEBIDO:")
+            logging.info(f" RESULTADO RECEBIDO:")
             logging.info(f"   - success: {result.get('success')}")
             logging.info(f"   - available_dates: {result.get('available_dates')}")
             logging.info(f"   - data_by_date keys: {list(result.get('data_by_date', {}).keys())}")
@@ -313,7 +313,7 @@ def create_historical_blueprint():
             return jsonify(result)
         
         except ValueError as e:
-            logging.warning(f"⚠️ Erro de validação: {e}")
+            logging.warning(f" Erro de validação: {e}")
             return jsonify({'error': str(e), 'success': False}), 400
         
         except Exception as e:

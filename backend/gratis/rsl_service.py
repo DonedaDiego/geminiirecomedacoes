@@ -196,7 +196,7 @@ class YFinanceRSLService:
             data = stock.history(period=period)
             
             if data.empty:
-                print(f"⚠️ Nenhum dado histórico para {symbol}")
+                print(f" Nenhum dado histórico para {symbol}")
                 return None
             
             return data['Close']
@@ -315,7 +315,7 @@ class YFinanceRSLService:
             tickers_do_setor = cls.get_tickers_by_setor(setor_nome)
             
             if not tickers_do_setor:
-                print(f"⚠️ Setor '{setor_nome}' não encontrado na base de dados")
+                print(f" Setor '{setor_nome}' não encontrado na base de dados")
                 return None
             
             print(f"📋 Tickers encontrados: {tickers_do_setor}")
@@ -336,7 +336,7 @@ class YFinanceRSLService:
                     print(f"     {ticker}: Sem dados RSL")
             
             if not resultados_individuais:
-                print(f"  ⚠️ Nenhum ticker válido para RSL em {setor_nome}")
+                print(f"   Nenhum ticker válido para RSL em {setor_nome}")
                 return None
             
             #  CALCULAR MÉDIAS COMO NO METATRADER
@@ -368,7 +368,7 @@ class YFinanceRSLService:
     @classmethod
     def get_all_sectors_rsl(cls, period: str = '1y') -> Dict[str, Dict]:
         """Calcula RSL para todos os setores da nossa base"""
-        print("🚀 Calculando RSL para todos os setores...")
+        print(" Calculando RSL para todos os setores...")
         
         setores = cls.get_all_setores()
         resultados = {}
@@ -394,7 +394,7 @@ class YFinanceRSLService:
         
         # Verificar se o ticker existe na nossa base
         if ticker not in cls.TICKERS_SETORES:
-            print(f"⚠️ Ticker {ticker} não encontrado na base de dados")
+            print(f" Ticker {ticker} não encontrado na base de dados")
             return None
         
         return cls.get_rsl_data_cached(ticker, period)

@@ -231,7 +231,7 @@ class OptionsCalculatorService:
         # Se volatilidade for muito baixa, usar mínimo de 15%
         if garch_vol < 0.15:
             adjusted_vol = 0.20  # 20% mínimo para opções
-            print(f"⚠️  Volatilidade GARCH muito baixa ({garch_vol*100:.2f}%), usando {adjusted_vol*100:.1f}%")
+            print(f"  Volatilidade GARCH muito baixa ({garch_vol*100:.2f}%), usando {adjusted_vol*100:.1f}%")
         else:
             adjusted_vol = garch_vol
             print(f"Volatilidade GARCH: {adjusted_vol:.4f} ({adjusted_vol*100:.2f}%)")

@@ -13,7 +13,7 @@ try:
     GAMMA_SERVICE_AVAILABLE = True
 except ImportError:
     GAMMA_SERVICE_AVAILABLE = False
-    print("⚠️ gamma_service.py não encontrado - modo standalone")
+    print(" gamma_service.py não encontrado - modo standalone")
 
 class OplabService:
     """
@@ -31,7 +31,7 @@ class OplabService:
             print("✅ GammaService integrado - dados reais de GEX disponíveis")
         else:
             self.gamma_service = None
-            print("⚠️ GammaService não disponível - modo standalone")
+            print(" GammaService não disponível - modo standalone")
     
     def _criar_sessao_http(self):
         """Cria sessão HTTP com retry para OpLab"""
@@ -71,7 +71,7 @@ class OplabService:
             dados_opcoes = response.json()
             
             if not dados_opcoes:
-                print(f"⚠️ OpLab retornou vazio para {ticker}")
+                print(f" OpLab retornou vazio para {ticker}")
                 return None
             
             # Filtrar opções com liquidez
@@ -125,7 +125,7 @@ class OplabService:
         ]
         
         strikes_validos.sort()
-        print(f"📊 {len(strikes_validos)} strikes com liquidez >= {min_liquidez}")
+        print(f" {len(strikes_validos)} strikes com liquidez >= {min_liquidez}")
         
         return strikes_validos
     
@@ -568,7 +568,7 @@ class OplabService:
         - Liquidez REAL das opções
         """
         print(f"\n{'='*60}")
-        print(f"🚀 ESTRUTURAS AUTOMÁTICAS - {ticker}")
+        print(f" ESTRUTURAS AUTOMÁTICAS - {ticker}")
         print(f"{'='*60}")
         
         # 1. Buscar dados GEX REAIS

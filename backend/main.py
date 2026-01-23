@@ -77,7 +77,7 @@ try:
     AUTH_AVAILABLE = True
     print(" Auth blueprint carregado!")
 except ImportError as e:
-    print(f"⚠️ Auth routes não disponível: {e}")
+    print(f" Auth routes não disponível: {e}")
     AUTH_AVAILABLE = False
 except Exception as e:
     print(f" Erro ao carregar auth blueprint: {e}")
@@ -92,7 +92,7 @@ try:
     NEWSLETTER_AVAILABLE = True
     print(" Newsletter blueprint carregado!")
 except ImportError as e:
-    print(f"⚠️ Newsletter routes não disponível: {e}")
+    print(f" Newsletter routes não disponível: {e}")
     NEWSLETTER_AVAILABLE = False
 except Exception as e:
     print(f" Erro ao carregar newsletter blueprint: {e}")
@@ -108,7 +108,7 @@ try:
     ADMIN_AVAILABLE = True
     print(" Admin blueprint carregado!")
 except ImportError as e:
-    print(f"⚠️ Admin routes não disponível: {e}")
+    print(f" Admin routes não disponível: {e}")
     ADMIN_AVAILABLE = False
 except Exception as e:
     print(f" Erro ao carregar admin blueprint: {e}")
@@ -317,10 +317,10 @@ def initialize_database():
         if setup_email_system():
             print(" Sistema de email inicializado!")
         else:
-            print("⚠️ Falha na inicialização do sistema de email")
+            print(" Falha na inicialização do sistema de email")
         
     except Exception as e:
-        print(f"⚠️ Erro ao verificar banco: {e}")
+        print(f" Erro ao verificar banco: {e}")
 
 # ===== ROTAS HTML =====
 

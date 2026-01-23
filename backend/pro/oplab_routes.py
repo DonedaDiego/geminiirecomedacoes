@@ -140,7 +140,7 @@ def strikes_liquidos(current_user_id):
                 'message': 'Ticker é obrigatório'
             }), 400
         
-        print(f"📊 Strikes líquidos - User: {current_user_id}, Ticker: {ticker}")
+        print(f" Strikes líquidos - User: {current_user_id}, Ticker: {ticker}")
         
         # Buscar opções
         oplab_service = OplabService()
@@ -213,7 +213,7 @@ def opcoes_por_strike(current_user_id):
                 'message': 'Ticker e strike são obrigatórios'
             }), 400
         
-        print(f"🎯 Opções por strike - User: {current_user_id}, {ticker} R$ {strike}")
+        print(f"Opções por strike - User: {current_user_id}, {ticker} R$ {strike}")
         
         # Buscar opções
         oplab_service = OplabService()

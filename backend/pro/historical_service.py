@@ -208,7 +208,7 @@ class HistoricalDataProvider:
                 filtered_data = df[df['time'].dt.date == target_date_obj].copy()
                 
                 if filtered_data.empty:
-                    logging.warning(f"⚠️ Nenhum dado Oplab encontrado para {target_date_obj}")
+                    logging.warning(f" Nenhum dado Oplab encontrado para {target_date_obj}")
                     logging.info(f"Datas disponíveis: {sorted(df['time'].dt.date.unique())}")
                     return pd.DataFrame()
                 
@@ -249,7 +249,7 @@ class HistoricalDataProvider:
             response = requests.get(url, timeout=15)
             
             if response.status_code == 404:
-                logging.warning(f"⚠️ Sem dados Floqui: VENC={vencimento} DATA={date_str} (404)")
+                logging.warning(f" Sem dados Floqui: VENC={vencimento} DATA={date_str} (404)")
                 return {}
             
             if response.status_code != 200:
@@ -258,7 +258,7 @@ class HistoricalDataProvider:
             
             data = response.json()
             if not data:
-                logging.warning(f"⚠️ API Floqui retornou vazio: VENC={vencimento} DATA={date_str}")
+                logging.warning(f" API Floqui retornou vazio: VENC={vencimento} DATA={date_str}")
                 return {}
             
             oi_breakdown = {}
@@ -770,7 +770,7 @@ class HistoricalAnalyzer:
     
     def _identify_most_impacted_strikes(self, data_by_date, spot_price, dates):
         """
-        🎯 Identifica strikes com MAIOR VARIAÇÃO de GEX descoberto
+        Identifica strikes com MAIOR VARIAÇÃO de GEX descoberto
         """
         if len(dates) < 2:
             return []
@@ -855,21 +855,21 @@ class HistoricalAnalyzer:
             oplab_df = self.data_provider.get_oplab_historical_data(ticker, target_date=date_obj)
             
             if oplab_df.empty:
-                logging.warning(f"⚠️ Oplab vazio para {date_str} - pulando")
+                logging.warning(f" Oplab vazio para {date_str} - pulando")
                 continue
             
             # BUSCAR OI HISTÓRICO DO FLOQUI
             oi_breakdown = self.data_provider.get_floqui_historical(ticker, vencimento, date_obj)
             
             if not oi_breakdown:
-                logging.warning(f"⚠️ Floqui vazio para {date_str} - pulando")
+                logging.warning(f" Floqui vazio para {date_str} - pulando")
                 continue
             
             # CALCULAR GEX
             gex_df = self.calculate_gex(oplab_df, oi_breakdown, spot_price)
             
             if gex_df.empty:
-                logging.warning(f"⚠️ GEX vazio para {date_str} - pulando")
+                logging.warning(f" GEX vazio para {date_str} - pulando")
                 continue
             
             # ANÁLISE COMPLETA
@@ -924,7 +924,7 @@ class HistoricalAnalyzer:
         # CALCULAR INSIGHTS
         insights = {}
         try:
-            logging.info(f"📊 Calculando insights...")
+            logging.info(f" Calculando insights...")
             insights = self.calculate_historical_insights(data_by_date, spot_price)
             logging.info(f"✅ Insights calculados")
         except Exception as e:

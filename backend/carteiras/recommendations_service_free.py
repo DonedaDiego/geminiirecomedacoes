@@ -104,7 +104,7 @@ class RecommendationsServiceFree:
         
         score = 0
         
-        # 🚀 CRUZAMENTO DE MÉDIAS (15 pontos - PESO MAIOR!)
+        #  CRUZAMENTO DE MÉDIAS (15 pontos - PESO MAIOR!)
         if last_row['Signal_Cross'] == 1:  # Golden Cross
             score += 10  # Sinal forte de compra
             
@@ -352,7 +352,7 @@ class RecommendationsServiceFree:
                     hist = stock.history(period='1d')
                     
                     if hist.empty:
-                        print(f"⚠️ Nenhum dado encontrado para {ticker}")
+                        print(f" Nenhum dado encontrado para {ticker}")
                         continue
                         
                     current_price = float(hist['Close'].iloc[-1])

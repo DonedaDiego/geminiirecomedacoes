@@ -81,7 +81,7 @@ class NewsletterService:
                 return {'success': False, 'error': 'Erro de autenticação'}
                 
             else:
-                print(f"⚠️ Status inesperado: {response.status_code}")
+                print(f" Status inesperado: {response.status_code}")
                 return {'success': False, 'error': 'Erro temporário. Tente novamente.'}
                 
         except requests.exceptions.Timeout:
@@ -111,7 +111,7 @@ class NewsletterService:
                 print(" Adicionado ao grupo com sucesso!")
                 return True
             else:
-                print(f"⚠️ Erro ao adicionar ao grupo: {response.text}")
+                print(f" Erro ao adicionar ao grupo: {response.text}")
                 return False
                 
         except Exception as e:

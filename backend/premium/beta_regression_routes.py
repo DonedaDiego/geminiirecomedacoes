@@ -335,7 +335,7 @@ def format_signal(value):
 def format_proximity_status(value):
     """Formatar status de proximidade"""
     status_map = {
-        'NOVA COMPRA': '🚀 NOVA COMPRA',
+        'NOVA COMPRA': ' NOVA COMPRA',
         'PREPARANDO COMPRA': '🟡 PREPARANDO COMPRA',
         'IMINENTE VENDA': ' IMINENTE VENDA',
         'PREPARANDO VENDA': '🟠 PREPARANDO VENDA',

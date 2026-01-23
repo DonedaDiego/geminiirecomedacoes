@@ -258,10 +258,10 @@ def get_all_trial_users():
                 days_remaining = int(days_remaining)
                 if days_remaining < 0:
                     status = 'expired'
-                    status_text = '⚠️ Será movido para Free no próximo processamento'
+                    status_text = ' Será movido para Free no próximo processamento'
                 elif days_remaining <= 3:
                     status = 'ending_soon'
-                    status_text = f'⏰ {days_remaining} dias restantes'
+                    status_text = f' {days_remaining} dias restantes'
                 else:
                     status = 'active'
                     status_text = f' {days_remaining} dias restantes'
