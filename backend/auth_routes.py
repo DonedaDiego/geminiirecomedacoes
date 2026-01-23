@@ -444,9 +444,45 @@ def reset_password():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
+@auth_bp.route('/validate-reset-token', methods=['POST'])
+def validate_reset_token():
+    """Validar token de reset"""
+    try:
+        data = request.get_json()
+        
+        if not data:
+            return jsonify({'success': False, 'error': 'Dados necessários'}), 400
+        
+        token = data.get('token', '').strip()
+        
+        if not token:
+            return jsonify({'success': False, 'error': 'Token obrigatório'}), 400
+        
+        result = email_service.validate_password_reset_token(token)
+        
+        if result['success']:
+            return jsonify({
+                'success': True,
+                'message': 'Token válido!',
+                'data': {
+                    'user_name': result['user_name'],
+                    'email': result['email']
+                }
+            }), 200
+        else:
+            return jsonify(result), 400
+        
+    except Exception as e:
+        print(f"❌ Erro validate-reset-token: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
 @auth_bp.route('/logout', methods=['POST'])
 def logout():
     return jsonify({'success': True, 'message': 'Logout realizado'}), 200
+
+
+
 
 def get_auth_blueprint():
     return auth_bp
