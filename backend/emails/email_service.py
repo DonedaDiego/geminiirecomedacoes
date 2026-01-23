@@ -10,12 +10,10 @@ from datetime import datetime, timedelta, timezone
 from database import get_db_connection
 
 class EmailService:
-    def __init__(self):     
-        self.smtp_server = os.environ.get('SMTP_SERVER', 'smtp.titan.email')
-        self.smtp_port = int(os.environ.get('SMTP_PORT', '465'))
-        self.smtp_username = os.environ.get('EMAIL_USER', 'contato@geminii.com.br')
-        self.smtp_password = os.environ.get('EMAIL_PASSWORD', '#Geminii20##')
-        self.from_email = os.environ.get('FROM_EMAIL', 'contato@geminii.com.br')
+    def __init__(self):                     
+        self.mailgun_api_key = os.environ.get('MAILGUN_API_KEY', '')
+        self.mailgun_domain = os.environ.get('MAILGUN_DOMAIN', 'mg.geminii.com.br')
+        self.from_email = os.environ.get('FROM_EMAIL', 'contato@mg.geminii.com.br')
         self.from_name = 'Geminii Tech'
         self.base_url = os.environ.get('BASE_URL', 'http://localhost:5000')
         self.test_mode = False
@@ -254,51 +252,36 @@ class EmailService:
             if not to_email or not subject or not html_content:
                 print(f"❌ Email inválido: campos em branco")
                 return False
-                
-            msg = MIMEMultipart('alternative')
-            msg['From'] = f"{self.from_name} <{self.from_email}>"
-            msg['To'] = to_email
-            msg['Subject'] = subject
-            msg['Reply-To'] = self.from_email
-            msg['Message-ID'] = f"<{secrets.token_urlsafe(16)}@geminii.com.br>"
-            msg['Date'] = datetime.now().strftime('%a, %d %b %Y %H:%M:%S +0000')
             
             if not text_content:
                 text_content = self.html_to_text(html_content)
             
-            text_part = MIMEText(text_content, 'plain', 'utf-8')
-            html_part = MIMEText(html_content, 'html', 'utf-8')
-            msg.attach(text_part)
-            msg.attach(html_part)
+            print(f"\n📧 Enviando email via Mailgun para: {to_email}")
             
-            print(f"\n📧 Tentando enviar email para: {to_email}")
+            import requests
             
-            # ✅ SEMPRE PORTA 465 SSL
-            import ssl
-            context = ssl.create_default_context()
+            response = requests.post(
+                f"https://api.mailgun.net/v3/{self.mailgun_domain}/messages",
+                auth=("api", self.mailgun_api_key),
+                data={
+                    "from": f"{self.from_name} <{self.from_email}>",
+                    "to": to_email,
+                    "subject": subject,
+                    "text": text_content,
+                    "html": html_content
+                },
+                timeout=10
+            )
             
-            try:
-                server = smtplib.SMTP_SSL(
-                    self.smtp_server, 
-                    465,  # ✅ FIXO
-                    timeout=5,  #  TIMEOUT CURTO
-                    context=context
-                )
-                server.set_debuglevel(0)  # ✅ SEM DEBUG
-                server.login(self.smtp_username, self.smtp_password)
-                server.send_message(msg)
-                server.quit()
-                
+            if response.status_code == 200:
                 print(f"✅ Email enviado para {to_email}!")
                 return True
-                
-            except Exception as smtp_error:
-                print(f"❌ Erro SMTP: {smtp_error}")
-                #  NÃO QUEBRAR - Railway bloqueia SMTP
+            else:
+                print(f"❌ Erro Mailgun: {response.status_code} - {response.text}")
                 return False
-            
+                
         except Exception as e:
-            print(f"❌ Erro geral: {e}")
+            print(f"❌ Erro ao enviar email: {e}")
             return False
 
     def html_to_text(self, html_content):
