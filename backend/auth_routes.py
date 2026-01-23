@@ -367,6 +367,83 @@ def verify_token():
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
+
+# ===== ROTAS DE RESET DE SENHA =====
+
+@auth_bp.route('/forgot-password', methods=['POST'])
+def forgot_password():
+    """Solicitar reset de senha"""
+    try:
+        data = request.get_json()
+        
+        if not data:
+            return jsonify({'success': False, 'error': 'Dados necessários'}), 400
+        
+        email = data.get('email', '').strip().lower()
+        
+        if not email or '@' not in email:
+            return jsonify({'success': False, 'error': 'Email obrigatório'}), 400
+        
+        result = email_service.generate_password_reset_token(email)
+        
+        if result['success']:
+            email_sent = email_service.send_password_reset_email(
+                result['user_name'], 
+                result['user_email'], 
+                result['token']
+            )
+            
+            if email_sent:
+                return jsonify({
+                    'success': True,
+                    'message': 'Email de recuperação enviado!'
+                }), 200
+            else:
+                return jsonify({
+                    'success': False,
+                    'error': 'Erro ao enviar email'
+                }), 500
+        else:
+            return jsonify(result), 400
+        
+    except Exception as e:
+        print(f"❌ Erro forgot-password: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@auth_bp.route('/reset-password', methods=['POST'])
+def reset_password():
+    """Redefinir senha com token"""
+    try:
+        data = request.get_json()
+        
+        if not data:
+            return jsonify({'success': False, 'error': 'Dados necessários'}), 400
+        
+        token = data.get('token', '').strip()
+        new_password = data.get('new_password', '')
+        
+        if not token or not new_password:
+            return jsonify({'success': False, 'error': 'Token e senha obrigatórios'}), 400
+        
+        if len(new_password) < 6:
+            return jsonify({'success': False, 'error': 'Senha mínimo 6 caracteres'}), 400
+        
+        result = email_service.reset_password_with_token(token, new_password)
+        
+        if result['success']:
+            return jsonify({
+                'success': True,
+                'message': 'Senha redefinida com sucesso!'
+            }), 200
+        else:
+            return jsonify(result), 400
+        
+    except Exception as e:
+        print(f"❌ Erro reset-password: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
 @auth_bp.route('/logout', methods=['POST'])
 def logout():
     return jsonify({'success': True, 'message': 'Logout realizado'}), 200
