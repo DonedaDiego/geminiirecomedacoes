@@ -286,11 +286,11 @@ def confirm_email_page():
         return render_template_string(f"""
         <!DOCTYPE html>
         <html><head><meta charset="UTF-8"><title>Email Confirmado</title></head>
-        <body style="font-family:Arial;text-align:center;padding:50px;background:#ba39af;color:white">
+        <body style="font-family:Arial;text-align:center;padding:50px;background:#fb1ebb;color:white">
             <h1>✅ Email Confirmado!</h1>
             <p>Olá, {result['user_name']}!</p>
             <p> Trial de 15 dias ativado!</p>
-            <a href="/login" style="background:white;color:#ba39af;padding:15px 30px;text-decoration:none;border-radius:10px;display:inline-block;margin-top:20px">Fazer Login</a>
+            <a href="/login" style="background:white;color:#fb1ebb;padding:15px 30px;text-decoration:none;border-radius:10px;display:inline-block;margin-top:20px">Fazer Login</a>
         </body></html>
         """), 200
     else:

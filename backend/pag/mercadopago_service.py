@@ -717,7 +717,7 @@ def send_reset_email(user_email, user_name, reset_token):
         
         html_body = f"""
         <div style="font-family: Inter, sans-serif; max-width: 600px; margin: 0 auto;">
-            <div style="background: linear-gradient(135deg, #ba39af, #d946ef); padding: 30px; text-align: center;">
+            <div style="background: linear-gradient(135deg, #fb1ebb, #fb1ebb); padding: 30px; text-align: center;">
                 <h1 style="color: white; margin: 0;">Geminii Tech</h1>
                 <p style="color: white; margin: 10px 0 0 0;">Trading Automatizado</p>
             </div>
@@ -728,7 +728,7 @@ def send_reset_email(user_email, user_name, reset_token):
                 </p>
                 <div style="text-align: center; margin: 30px 0;">
                     <a href="{reset_url}" 
-                       style="background: linear-gradient(135deg, #ba39af, #d946ef); 
+                       style="background: linear-gradient(135deg, #fb1ebb, #fb1ebb); 
                               color: white; padding: 15px 30px; text-decoration: none; 
                               border-radius: 8px; display: inline-block; font-weight: bold;">
                         Redefinir Senha

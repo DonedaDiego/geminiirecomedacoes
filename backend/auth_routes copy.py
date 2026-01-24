@@ -270,7 +270,7 @@ def confirm_email_page():
         <html lang="pt-BR">
         <head>
             <meta charset="UTF-8">
-            <title>Erro - Geminii Tech</title>
+            <title>Erro - Geminii Technology</title>
             <style>body{font-family:Arial;text-align:center;padding:50px;background:#f5f5f5}</style>
         </head>
         <body>
@@ -291,13 +291,13 @@ def confirm_email_page():
         <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Email Confirmado - Geminii Tech</title>
+            <title>Email Confirmado - Geminii Technology</title>
             <style>
-                body {{ font-family: Arial, sans-serif; text-align: center; padding: 50px; background: linear-gradient(135deg, #ba39af, #d946ef); color: white; }}
+                body {{ font-family: Arial, sans-serif; text-align: center; padding: 50px; background: linear-gradient(135deg, #fb1ebb, #fb1ebb); color: white; }}
                 .container {{ background: rgba(255,255,255,0.1); padding: 40px; border-radius: 20px; max-width: 500px; margin: 0 auto; }}
                 .success {{ font-size: 60px; margin-bottom: 20px; }}
                 h1 {{ margin-bottom: 20px; }}
-                .btn {{ display: inline-block; background: white; color: #ba39af; padding: 15px 30px; text-decoration: none; border-radius: 10px; font-weight: bold; margin: 20px 10px; }}
+                .btn {{ display: inline-block; background: white; color: #fb1ebb; padding: 15px 30px; text-decoration: none; border-radius: 10px; font-weight: bold; margin: 20px 10px; }}
                 .btn:hover {{ background: #f0f0f0; }}
                 .trial-info {{ background: rgba(255,255,255,0.1); padding: 20px; border-radius: 10px; margin: 20px 0; }}
             </style>
@@ -333,12 +333,12 @@ def confirm_email_page():
         <html lang="pt-BR">
         <head>
             <meta charset="UTF-8">
-            <title>Erro na Confirmação - Geminii Tech</title>
+            <title>Erro na Confirmação - Geminii Technology</title>
             <style>
                 body {{ font-family: Arial, sans-serif; text-align: center; padding: 50px; background: #f5f5f5; }}
                 .container {{ background: white; padding: 40px; border-radius: 20px; max-width: 500px; margin: 0 auto; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }}
                 .error {{ font-size: 60px; margin-bottom: 20px; }}
-                .btn {{ display: inline-block; background: #ba39af; color: white; padding: 15px 30px; text-decoration: none; border-radius: 10px; font-weight: bold; margin: 20px 10px; }}
+                .btn {{ display: inline-block; background: #fb1ebb; color: white; padding: 15px 30px; text-decoration: none; border-radius: 10px; font-weight: bold; margin: 20px 10px; }}
             </style>
         </head>
         <body>

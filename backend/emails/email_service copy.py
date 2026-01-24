@@ -118,7 +118,7 @@ class EmailService:
         subtitle = content_data.get('subtitle', 'Trading Automatizado')
         main_message = content_data.get('main_message', '')
         user_name = content_data.get('user_name', '')
-        urgency_color = content_data.get('urgency_color', '#ba39af')
+        urgency_color = content_data.get('urgency_color', '#fb1ebb')
         button_text = content_data.get('button_text', 'Acessar')
         button_url = content_data.get('button_url', self.base_url)
         details = content_data.get('details', [])
@@ -318,7 +318,7 @@ class EmailService:
         title = content_data.get('title', 'Geminii Tech')
         subtitle = content_data.get('subtitle', '')
         main_message = content_data.get('main_message', '')
-        urgency_color = content_data.get('urgency_color', '#ba39af')
+        urgency_color = content_data.get('urgency_color', '#fb1ebb')
         button_text = content_data.get('button_text', 'Acessar')
         button_url = content_data.get('button_url', self.base_url)
         
@@ -1114,7 +1114,7 @@ Aproveite ao máximo seus 15 dias de trial!
             urgency_color = "#f59e0b"
             urgency_text = f"Apenas {days_remaining} dias"
         else:
-            urgency_color = "#ba39af"
+            urgency_color = "#fb1ebb"
             urgency_text = f"{days_remaining} dias restantes"
         
         content_data = {
@@ -1247,7 +1247,7 @@ Continue sua jornada conosco!
             }}
             
             .header {{ 
-                background: linear-gradient(135deg, #ba39af, #d946ef); 
+                background: linear-gradient(135deg, #fb1ebb, #fb1ebb); 
                 padding: 40px 30px; 
                 text-align: center; 
                 position: relative;
@@ -1303,7 +1303,7 @@ Continue sua jornada conosco!
             
             .button {{ 
                 display: inline-block; 
-                background: linear-gradient(135deg, #ba39af, #d946ef); 
+                background: linear-gradient(135deg, #fb1ebb, #fb1ebb); 
                 color: #ffffff !important; 
                 padding: 16px 32px; 
                 text-decoration: none; 
@@ -1327,7 +1327,7 @@ Continue sua jornada conosco!
                 background: rgba(186, 57, 175, 0.1);
                 padding: 20px;
                 border-radius: 12px;
-                border-left: 4px solid #ba39af;
+                border-left: 4px solid #fb1ebb;
                 text-align: center;
                 transition: all 0.3s ease;
             }}
@@ -1339,7 +1339,7 @@ Continue sua jornada conosco!
             
             .benefit-title {{
                 font-weight: 600;
-                color: #ba39af;
+                color: #fb1ebb;
                 margin-bottom: 8px;
                 font-size: 16px;
             }}
@@ -1365,7 +1365,7 @@ Continue sua jornada conosco!
                 background: rgba(186, 57, 175, 0.15);
                 padding: 10px 16px;
                 border-radius: 8px;
-                color: #ba39af !important;
+                color: #fb1ebb !important;
                 text-decoration: none;
                 font-size: 14px;
                 font-weight: 500;
@@ -1396,7 +1396,7 @@ Continue sua jornada conosco!
             
             .warning-box {{
                 background: rgba(186, 57, 175, 0.1);
-                border: 1px solid #ba39af;
+                border: 1px solid #fb1ebb;
                 padding: 16px;
                 border-radius: 10px;
                 margin: 20px 0;
@@ -1422,7 +1422,7 @@ Continue sua jornada conosco!
                                 <span class="welcome-badge">✨ Trial de 15 dias ativado</span>
                             </div>
                             
-                            <h2 style="color: #ba39af; margin-bottom: 16px; font-size: 24px; text-align: center;">
+                            <h2 style="color: #fb1ebb; margin-bottom: 16px; font-size: 24px; text-align: center;">
                                 Olá, {user_name}! 
                             </h2>
                             
@@ -1431,7 +1431,7 @@ Continue sua jornada conosco!
                                 Aproveite <strong>acesso completo</strong> a todas as ferramentas da nossa plataforma.
                             </p>
                             
-                            <h3 style="color: #ba39af; margin: 30px 0 20px 0; font-size: 20px; text-align: center;">
+                            <h3 style="color: #fb1ebb; margin: 30px 0 20px 0; font-size: 20px; text-align: center;">
                                 O que você pode fazer:
                             </h3>
                             
@@ -1481,7 +1481,7 @@ Continue sua jornada conosco!
                             
                             <!-- Redes Sociais -->
                             <div style="border-top: 1px solid rgba(186, 57, 175, 0.2); padding-top: 25px; margin-top: 25px;">
-                                <p style="color: #ba39af; text-align: center; margin-bottom: 15px; font-weight: 600;">
+                                <p style="color: #fb1ebb; text-align: center; margin-bottom: 15px; font-weight: 600;">
                                     🌐 Siga nossas redes sociais:
                                 </p>
                                 <div class="social-links">
@@ -1503,10 +1503,10 @@ Continue sua jornada conosco!
                         
                         <!-- Footer -->
                         <div class="footer">
-                            <p style="margin: 0; color: #ba39af; font-weight: 600;">© 2025 Geminii Tech</p>
+                            <p style="margin: 0; color: #fb1ebb; font-weight: 600;">© 2025 Geminii Tech</p>
                             <p style="margin: 8px 0 0 0;">Trading Automatizado & Análise Quantitativa</p>
                             <p style="margin: 15px 0 0 0;">
-                                <a href="mailto:contato@geminii.com.br" style="color: #ba39af; text-decoration: none;">
+                                <a href="mailto:contato@geminii.com.br" style="color: #fb1ebb; text-decoration: none;">
                                     ✉️ contato@geminii.com.br
                                 </a>
                             </p>
