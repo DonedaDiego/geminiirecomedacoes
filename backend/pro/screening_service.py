@@ -1,7 +1,8 @@
 """
-screening_service.py - Screening de Gamma Flip COM CACHE
+screening_service.py - Screening de Gamma Flip COM CACHE E OTIMIZAÇÃO DE MEMÓRIA
 """
 
+import gc
 import logging
 import pandas as pd
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -30,7 +31,7 @@ OFFICIAL_TICKERS = [
 class ScreeningService:
     def __init__(self):
         self.gamma_service = GammaService()
-        self.max_workers = 5
+        self.max_workers = 2  # ✅ REDUZIDO PARA 2 (Railway OOM)
         self.cache_max_age_hours = 24
     
     def analyze_single_ticker(self, ticker, use_cache=True):
@@ -40,10 +41,10 @@ class ScreeningService:
             if use_cache:
                 cached_data = get_screening_cache(ticker, self.cache_max_age_hours)
                 if cached_data:
-                    # ✅ NOVO: Se tem erro no cache E não passou 7 dias, pula
+                    # ✅ Se tem erro no cache, pula
                     if not cached_data.get('success'):
                         logging.info(f"{ticker}: Pulando (erro em cache)")
-                        return cached_data  # Retorna o erro do cache
+                        return cached_data
                     
                     logging.info(f"{ticker}: Usando dados do cache")
                     return cached_data
@@ -54,7 +55,7 @@ class ScreeningService:
             result = self.gamma_service.analyze_gamma_complete(ticker)
             
             if not result.get('success'):
-                # ✅ CORREÇÃO: Salvar erro no cache com TTL mais longo
+                # ✅ Salvar erro no cache
                 error_data = {
                     'ticker': ticker.replace('.SA', ''),
                     'error': result.get('error', 'Sem dados disponíveis'),
@@ -65,7 +66,48 @@ class ScreeningService:
                 logging.warning(f"{ticker}: Erro salvo no cache - {error_data['error']}")
                 return error_data
             
-            # ... resto do código continua igual ...
+            spot_price = result['spot_price']
+            flip_strike = result.get('flip_strike')
+            
+            # Calcula distância do flip
+            if flip_strike and flip_strike != spot_price:
+                distance_pct = ((flip_strike - spot_price) / spot_price) * 100
+                distance_abs = flip_strike - spot_price
+            else:
+                distance_pct = 0.0
+                distance_abs = 0.0
+            
+            # Determina regime
+            regime = result.get('regime', 'Neutral')
+            
+            # Extrai dados de qualidade
+            data_quality = result.get('data_quality', {})
+            
+            screening_data = {
+                'ticker': ticker.replace('.SA', ''),
+                'spot_price': spot_price,
+                'flip_strike': flip_strike,
+                'distance_abs': distance_abs,
+                'distance_pct': distance_pct,
+                'regime': regime,
+                'net_gex': result.get('gex_levels', {}).get('total_gex', 0),
+                'net_gex_descoberto': result.get('gex_levels', {}).get('total_gex_descoberto', 0),
+                'market_bias': result.get('gex_levels', {}).get('market_bias', 'NEUTRAL'),
+                'expiration': data_quality.get('expiration'),
+                'liquidity_category': data_quality.get('liquidity_category'),
+                'atm_range_pct': data_quality.get('atm_range_pct'),
+                'real_data_count': data_quality.get('real_data_count', 0),
+                'options_count': result.get('options_count', 0),
+                'volume_financeiro': data_quality.get('volume_financeiro', 0),  # ✅ ADICIONADO
+                'timestamp': datetime.now().isoformat(),
+                'success': True
+            }
+            
+            # Salvar no cache
+            save_screening_cache(ticker, screening_data)
+            
+            logging.info(f"{ticker}: Flip R$ {flip_strike:.2f} ({distance_pct:+.2f}%) - {regime}")
+            return screening_data
             
         except Exception as e:
             logging.error(f"Erro ao analisar {ticker}: {e}")
@@ -77,20 +119,20 @@ class ScreeningService:
                 'timestamp': datetime.now().isoformat()
             }
             
-            # ✅ SALVAR ERRO NO CACHE
+            # ✅ Salvar erro no cache
             save_screening_cache(ticker, error_data)
             
             return error_data
     
     def screen_multiple_tickers(self, tickers_list=None, use_cache=True, force_refresh=False):
         """
-        Executa screening INTELIGENTE ticker por ticker
+        Executa screening INTELIGENTE ticker por ticker COM OTIMIZAÇÃO DE MEMÓRIA
         """
         try:
-            # ✅ CORREÇÃO: Se não forneceu lista, USA OFFICIAL_TICKERS
-            if tickers_list is None or len(tickers_list) == 0:
-                tickers_list = OFFICIAL_TICKERS
-                logging.info(f"Usando lista oficial com {len(tickers_list)} tickers")
+            # ✅ LIMITAR LISTA INICIAL PARA EVITAR OOM
+            if not tickers_list or len(tickers_list) == 0:
+                tickers_list = OFFICIAL_TICKERS[:30]  # ✅ SÓ 30 PRIMEIROS
+                logging.info(f"[RAILWAY] Limitando a 30 tickers para evitar OOM")
             
             # Se force_refresh, ignora cache
             if force_refresh:
@@ -109,8 +151,13 @@ class ScreeningService:
                     cached_data = get_screening_cache(ticker, self.cache_max_age_hours)
                     
                     if cached_data:
-                        logging.info(f"{ticker}: Usando cache")
-                        results.append(cached_data)
+                        # ✅ Verifica se é erro salvo no cache
+                        if not cached_data.get('success'):
+                            logging.info(f"{ticker}: Erro no cache - pulando")
+                            errors.append(cached_data)
+                        else:
+                            logging.info(f"{ticker}: Usando cache")
+                            results.append(cached_data)
                     else:
                         logging.info(f"{ticker}: Precisa analisar")
                         tickers_to_analyze.append(ticker)
@@ -145,8 +192,12 @@ class ScreeningService:
                                 'error': str(e),
                                 'success': False
                             })
+                
+                # ✅ LIMPAR MEMÓRIA APÓS ANÁLISE
+                gc.collect()
+                logging.info(f"[MEMORY] Garbage collection executado - {len(results)} sucessos")
             
-            # Ordena resultados por distância absoluta do flip
+            # Ordena resultados por distância absoluta do flip (tratando None)
             results.sort(key=lambda x: abs(x.get('distance_pct') or 999))
             
             # Estatísticas do screening
