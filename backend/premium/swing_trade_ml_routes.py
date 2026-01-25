@@ -159,7 +159,7 @@ def get_available_tickers():
             {'symbol': 'GGBR4', 'name': 'Gerdau PN'},
             {'symbol': 'BBAS3', 'name': 'Banco do Brasil ON'},
             {'symbol': 'VIVT3', 'name': 'Vivo ON'},
-            {'symbol': 'EMBR3', 'name': 'Embraer ON'},
+            {'symbol': 'EMBJ3', 'name': 'Embraer ON'},
             {'symbol': 'RADL3', 'name': 'Raia Drogasil ON'}
         ]
         

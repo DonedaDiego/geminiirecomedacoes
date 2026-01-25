@@ -13,7 +13,7 @@ class RecommendationsServiceFree:
     STOCKS_POOL = [
         'PETR4', 'VALE3', 'ITUB4', 'BBDC4', 'ABEV3', 'WEGE3', 'RENT3', 
         'MGLU3', 'B3SA3', 'LREN3', 'GGBR4', 'SUZB3', 'RAIL3', 'USIM5',
-        'CSNA3', 'CSAN3', 'VIVT3', 'ELET3', 'CMIG4', 'BBAS3'
+        'CSNA3', 'CSAN3', 'VIVT3', 'AXIA3', 'CMIG4', 'BBAS3'
     ]
     
     @staticmethod

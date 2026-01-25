@@ -77,12 +77,6 @@
       border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     }
     
-    /* .gradient-text {
-      background: linear-gradient(135deg, #6366f1, #8b5cf6);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    } */
-    
     .btn-primary {
       background: linear-gradient(135deg, #6366f1, #8b5cf6);
       border: none;
@@ -987,80 +981,114 @@
               <span class="absolute top-4 right-4 bg-indigo-600 text-white text-xs px-3 py-1 rounded-full font-bold">COMUNIDADE</span>
             </div>
             
-            <div id="opcoes4dDropdown" class="dropdown">
+              <div id="opcoes4dDropdown" class="dropdown">
+                <div class="grid grid-cols-1 gap-3">                  
+                  <a href="gamma-levels.html" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white">
+                    <i class="fas fa-layer-group text-purple-400 w-6"></i>
+                    <div>
+                      <div class="font-medium">GEX - Gamma Exposure</div>
+                      <div class="text-xs text-gray-400">Como os dealers influenciam os preços via opções</div>
+                    </div>
+                  </a>  
+
+                  <a href="delta-levels.html" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white">
+                    <i class="fas fa-layer-group text-purple-400 w-6"></i>
+                    <div>
+                      <div class="font-medium">Dex - Delta Exposure</div>
+                      <div class="text-xs text-gray-400">Força direcional vinda das posições em opções</div>
+                    </div>
+                  </a>  
+
+                  <a href="vega-levels.html" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white">
+                    <i class="fas fa-layer-group text-purple-400 w-6"></i>
+                    <div>
+                      <div class="font-medium">Vex - Vega Exposure</div>
+                      <div class="text-xs text-gray-400">Sensibilidade do mercado às mudanças de volatilidade</div>
+                    </div>
+                  </a>  
+
+                  <a href="theta-levels.html" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white">
+                    <i class="fas fa-layer-group text-purple-400 w-6"></i>
+                    <div>
+                      <div class="font-medium">Tex - Theta Exposure</div>
+                      <div class="text-xs text-gray-400">Como o tempo corrói prêmios e posições</div>
+                    </div>
+                  </a>  
+
+                  <a href="historical-levels.html" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white">
+                    <i class="fas fa-layer-group text-purple-400 w-6"></i>
+                    <div class="flex-1">
+                      <div class="font-bold flex items-center gap-2">
+                        Análise Histórica
+                        <span class="px-2 py-0.5 text-purple-400 text-black text-[9px] font-black rounded-full"></span>
+                      </div>
+                      <div class="text-xs text-gray-400">Gex Market Maker</div>
+                    </div>
+                    <i class="fas fa-sparkles text-purple-400 text-xs"></i>
+                  </a>                                               
+                </div>
+              </div>          
+
+          </div>
+
+          <!-- Card 6: Rastreamento Inteligente -->
+          <div class="relative">
+            <div 
+              onclick="toggleRastreamentoDropdown()"
+              class="tool-card bg-gradient-to-r from-cyan-500/10 to-cyan-500/5 hover:from-cyan-500/20 hover:to-cyan-500/10 border border-cyan-500/20 rounded-xl p-6 transition-all group cursor-pointer relative"
+            >
+              <div class="flex items-center gap-4 mb-4">
+                <div class="w-14 h-14 bg-cyan-500/20 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <i class="fas fa-search-plus text-cyan-400 text-xl"></i>
+                </div>
+                <div class="flex-1">
+                  <h3 class="text-lg font-semibold text-white">Rastreamento Inteligente</h3>
+                  <p class="text-sm text-gray-300">Monitoramento Avançado</p>
+                </div>
+                <i class="fas fa-chevron-down text-gray-400 transition-transform duration-300" id="rastreamentoChevron"></i>
+              </div>
+              <span class="absolute top-4 right-4 bg-cyan-600 text-white text-xs px-3 py-1 rounded-full font-bold">COMUNIDADE</span>
+            </div>
+            
+            <div id="rastreamentoDropdown" class="dropdown">
               <div class="grid grid-cols-1 gap-3">
 
-                <!-- Visão Macro - NOVO -->
+
                 <a href="greeks-micro.html" class="flex items-center gap-3 p-3 rounded-lg hover:bg-gradient-to-r hover:from-purple-500/10 hover:to-indigo-500/10 transition-all text-white border border-purple-500/30">
-                  <i class="fas fa-layer-group text-purple-500 w-6"></i>
-                  <div class="flex-1">
-                    
+                  <i class="fas fa-layer-group text-cyan-400 w-6"></i>
+                  <div class="flex-1">                    
                     <div class="font-bold flex items-center gap-2">
-                       Visão Global
-                      <span class="px-2 py-0.5 bg-purple-500 text-white text-[9px] font-black rounded-full">NOVO</span>
+                       Visão Global                      
                     </div>
                     <div class="text-xs text-gray-400">Análise consolidada dos 4 Greeks</div>
                   </div>
-                  <i class="fas fa-star text-purple-400 text-xs"></i>
+                  
                 </a>
-
-                <a href="gamma-levels.html" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white">
-                  <i class="fas fa-layer-group text-purple-400 w-6"></i>
-                  <div>
-                    <div class="font-medium">GEX - Gamma Exposure</div>
-                    <div class="text-xs text-gray-400">Como os dealers influenciam os preços via opções</div>
-                  </div>
-                </a>  
-
-                <a href="delta-levels.html" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white">
-                  <i class="fas fa-layer-group text-purple-400 w-6"></i>
-                  <div>
-                    <div class="font-medium">Dex - Delta Exposure</div>
-                    <div class="text-xs text-gray-400">Força direcional vinda das posições em opções</div>
-                  </div>
-                </a>  
-
-                <a href="vega-levels.html" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white">
-                  <i class="fas fa-layer-group text-purple-400 w-6"></i>
-                  <div>
-                    <div class="font-medium">Vex - Vega Exposure</div>
-                    <div class="text-xs text-gray-400">Sensibilidade do mercado às mudanças de volatilidade</div>
-                  </div>
-                </a>  
-
-                <a href="theta-levels.html" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white">
-                  <i class="fas fa-layer-group text-purple-400 w-6"></i>
-                  <div>
-                    <div class="font-medium">Tex - Theta Exposure</div>
-                    <div class="text-xs text-gray-400">Como o tempo corrói prêmios e posições</div>
-                  </div>
-                </a>  
-
-                <a href="historical-levels.html" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white">
-                  <i class="fas fa-layer-group text-yellow-400 w-6"></i>
-                  <div class="flex-1">
-                    <div class="font-bold flex items-center gap-2">
-                      Análise Histórica
-                      <span class="px-2 py-0.5 bg-yellow-500 text-black text-[9px] font-black rounded-full"></span>
-                    </div>
-                    <div class="text-xs text-gray-400">Gex Market Maker</div>
-                  </div>
-                  <i class="fas fa-sparkles text-yellow-400 text-xs"></i>
-                </a> 
-
                 
-
+                <a href="screening.html" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white">
+                  <i class="fas fa-search text-cyan-400 w-6"></i>
+                  <div>
+                    <div class="font-medium">Gamma Flip Screening</div>
+                    <div class="text-xs text-gray-400">Rastreamento multi-ativo do flip</div>
+                  </div>
+                </a>                                
+                
+                <!-- <a href="teste3.html" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white">
+                  <i class="fas fa-flask text-cyan-400 w-6"></i>
+                  <div>
+                    <div class="font-medium">Teste 3</div>
+                    <div class="text-xs text-gray-400">Em desenvolvimento</div>
+                  </div>
+                </a> -->
+                
               </div>
             </div>
           </div>
-
+        
 
         </div>
-      </div>
-
-      
-            
-   
+      </div>    
+               
 
     </div>
   </main>
@@ -1396,8 +1424,8 @@
     }
 
     function closeOtherDropdowns(except) {
-      const allDropdowns = ['mlDropdown', 'opcoesDropdown', 'gratisDropdown', 'opcoes4dDropdown'];
-      const allChevrons = ['mlChevron', 'opcoesChevron', 'gratisChevron', 'opcoes4dChevron'];
+      const allDropdowns = ['mlDropdown', 'opcoesDropdown', 'gratisDropdown', 'opcoes4dDropdown', 'rastreamentoDropdown']; // <- ADICIONE AQUI
+      const allChevrons = ['mlChevron', 'opcoesChevron', 'gratisChevron', 'opcoes4dChevron', 'rastreamentoChevron']; // <- ADICIONE AQUI
       
       allDropdowns.forEach((dropdownId, index) => {
         if (!except.includes(dropdownId)) {
@@ -1737,6 +1765,33 @@
         }
       }
     }
+
+    function toggleRastreamentoDropdown() {
+      if (userPlan === 'free') {
+        alert('🔒 Este recurso está disponível apenas para assinantes da Comunidade!\n\nFaça upgrade para acessar todas as ferramentas.');
+        return;
+      }
+      
+      console.log('📡 Abrindo Rastreamento Dropdown - user_type:', userPlan);
+      
+      const dropdown = document.getElementById('rastreamentoDropdown');
+      const chevron = document.getElementById('rastreamentoChevron');
+      
+      closeOtherDropdowns(['rastreamentoDropdown']);
+      
+      if (dropdown && chevron) {
+        if (dropdown.classList.contains('show')) {
+          dropdown.classList.remove('show');
+          chevron.style.transform = 'rotate(0deg)';
+        } else {
+          dropdown.classList.add('show');
+          chevron.style.transform = 'rotate(180deg)';
+        }
+      }
+    }
+
+    // Adicionar no window global
+    window.toggleRastreamentoDropdown = toggleRastreamentoDropdown;
 
     // Make functions global
     window.logout = logout;

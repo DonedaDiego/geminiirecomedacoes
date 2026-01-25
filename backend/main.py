@@ -27,6 +27,7 @@ from pro.vega_routes import get_vega_blueprint
 from pro.theta_routes import get_theta_blueprint
 from pro.mm_temporal_routes import mm_temporal_bp
 from pro.oplab_routes import oplab_bp
+from pro.screening_routes import get_screening_blueprint
 
 
 
@@ -256,6 +257,15 @@ try:
 except Exception as e:
     print(f" Erro ao registrar regimes blueprint: {e}")
 
+#Screening
+
+try:
+    screening_bp = get_screening_blueprint()
+    app.register_blueprint(screening_bp)
+    print("✓ Screening blueprint registrado!")
+except Exception as e:
+    print(f"✗ Erro ao registrar screening blueprint: {e}")    
+
 # ===== REGISTRAR BLUEPRINTS CONDICIONAIS =====
 
 # Auth
@@ -478,6 +488,10 @@ def visaomacro():
     return send_from_directory('../frontend', 'visaomacro.html')
 
 
+@app.route('/screening')
+@app.route('/screening.html')
+def screening_page():
+    return send_from_directory('../frontend', 'screening.html')
 
 #historical-levels
 

@@ -75,11 +75,10 @@ class LiquidityManager:
             'ABEV3': 9,
             'WEGE3': 9,
             'RENT3': 9,
-            'ELET3': 9,
+            'AXIA3': 9,
             'PRIO3': 9,
             'SUZB3': 9,
-            'EMBR3': 9,
-            'CIEL3': 9,
+            'EMBJ3': 9,            
             'RADL3': 9,
             'BRAV3': 9,
         }

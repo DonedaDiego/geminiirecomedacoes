@@ -861,9 +861,257 @@ def get_portfolio_assets(portfolio_name):
     except Exception as e:
         print(f" Erro em get_portfolio_assets: {e}")
         return []
-  
- 
-  
+
+#cache banco de dados screening
+def create_screening_cache_table():
+    """Criar tabela de cache para screening de gamma flip"""
+    try:
+        conn = get_db_connection()
+        if not conn:
+            return False
+            
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS screening_cache (
+                id SERIAL PRIMARY KEY,
+                ticker VARCHAR(10) UNIQUE NOT NULL,
+                spot_price DECIMAL(10,2),
+                flip_strike DECIMAL(10,2),
+                distance_abs DECIMAL(10,2),
+                distance_pct DECIMAL(10,4),
+                regime VARCHAR(20),
+                net_gex DECIMAL(15,2),
+                net_gex_descoberto DECIMAL(15,2),
+                market_bias VARCHAR(20),
+                expiration VARCHAR(50),
+                liquidity_category VARCHAR(10),
+                atm_range_pct INTEGER,
+                real_data_count INTEGER,
+                options_count INTEGER,
+                last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                update_count INTEGER DEFAULT 1,
+                success BOOLEAN DEFAULT true,
+                error_message TEXT
+            );
+        """)
+        
+        # Índices para performance
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_screening_cache_ticker ON screening_cache(ticker)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_screening_cache_regime ON screening_cache(regime)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_screening_cache_updated ON screening_cache(last_updated)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_screening_cache_success ON screening_cache(success)")
+        
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        print("✓ Tabela screening_cache criada com sucesso!")
+        return True
+        
+    except Exception as e:
+        print(f"✗ Erro ao criar tabela screening_cache: {e}")
+        return False
+
+def get_screening_cache(ticker=None, max_age_hours=24):
+    """
+    Buscar dados do cache (sucesso E erros)
+    - Se ticker especificado: retorna apenas aquele ticker
+    - Se ticker = None: retorna todos os tickers válidos
+    - max_age_hours: idade máxima do cache em horas (padrão 24h)
+    """
+    try:
+        conn = get_db_connection()
+        if not conn:
+            return None
+            
+        cursor = conn.cursor()
+        
+        # Query base
+        interval_str = f"{max_age_hours} hours"
+        
+        base_query = f"""
+            SELECT ticker, spot_price, flip_strike, distance_abs, distance_pct,
+                   regime, net_gex, net_gex_descoberto, market_bias, expiration,
+                   liquidity_category, atm_range_pct, real_data_count, options_count,
+                   last_updated, success, error_message
+            FROM screening_cache
+            WHERE last_updated > NOW() - INTERVAL '{interval_str}'
+        """
+        
+        if ticker:
+            cursor.execute(base_query + " AND ticker = %s", (ticker.upper(),))
+            row = cursor.fetchone()
+            
+            if row:
+                result = {
+                    'ticker': row[0],
+                    'spot_price': float(row[1]) if row[1] else None,
+                    'flip_strike': float(row[2]) if row[2] else None,
+                    'distance_abs': float(row[3]) if row[3] else None,
+                    'distance_pct': float(row[4]) if row[4] else None,
+                    'regime': row[5],
+                    'net_gex': float(row[6]) if row[6] else None,
+                    'net_gex_descoberto': float(row[7]) if row[7] else None,
+                    'market_bias': row[8],
+                    'expiration': row[9],
+                    'liquidity_category': row[10],
+                    'atm_range_pct': row[11],
+                    'real_data_count': row[12],
+                    'options_count': row[13],
+                    'timestamp': row[14].isoformat() if row[14] else None,
+                    'success': row[15],
+                    'error': row[16] if not row[15] else None
+                }
+            else:
+                result = None
+        else:
+            cursor.execute(base_query + " AND success = true ORDER BY ABS(distance_pct) ASC")
+            rows = cursor.fetchall()
+            
+            result = []
+            for row in rows:
+                result.append({
+                    'ticker': row[0],
+                    'spot_price': float(row[1]) if row[1] else None,
+                    'flip_strike': float(row[2]) if row[2] else None,
+                    'distance_abs': float(row[3]) if row[3] else None,
+                    'distance_pct': float(row[4]) if row[4] else None,
+                    'regime': row[5],
+                    'net_gex': float(row[6]) if row[6] else None,
+                    'net_gex_descoberto': float(row[7]) if row[7] else None,
+                    'market_bias': row[8],
+                    'expiration': row[9],
+                    'liquidity_category': row[10],
+                    'atm_range_pct': row[11],
+                    'real_data_count': row[12],
+                    'options_count': row[13],
+                    'timestamp': row[14].isoformat() if row[14] else None,
+                    'success': True
+                })
+        
+        cursor.close()
+        conn.close()
+        
+        return result
+        
+    except Exception as e:
+        print(f"✗ Erro ao buscar cache: {e}")
+        import traceback
+        traceback.print_exc()
+        return None
+
+def save_screening_cache(ticker, data):
+    """
+    Salvar resultado do screening no cache
+    Usa UPSERT (INSERT ... ON CONFLICT UPDATE)
+    """
+    try:
+        conn = get_db_connection()
+        if not conn:
+            return False
+            
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            INSERT INTO screening_cache (
+                ticker, spot_price, flip_strike, distance_abs, distance_pct,
+                regime, net_gex, net_gex_descoberto, market_bias, expiration,
+                liquidity_category, atm_range_pct, real_data_count, options_count,
+                success, error_message, last_updated, update_count
+            ) VALUES (
+                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
+                %s, %s, %s, %s, %s, %s, NOW(), 1
+            )
+            ON CONFLICT (ticker) DO UPDATE SET
+                spot_price = EXCLUDED.spot_price,
+                flip_strike = EXCLUDED.flip_strike,
+                distance_abs = EXCLUDED.distance_abs,
+                distance_pct = EXCLUDED.distance_pct,
+                regime = EXCLUDED.regime,
+                net_gex = EXCLUDED.net_gex,
+                net_gex_descoberto = EXCLUDED.net_gex_descoberto,
+                market_bias = EXCLUDED.market_bias,
+                expiration = EXCLUDED.expiration,
+                liquidity_category = EXCLUDED.liquidity_category,
+                atm_range_pct = EXCLUDED.atm_range_pct,
+                real_data_count = EXCLUDED.real_data_count,
+                options_count = EXCLUDED.options_count,
+                success = EXCLUDED.success,
+                error_message = EXCLUDED.error_message,
+                last_updated = NOW(),
+                update_count = screening_cache.update_count + 1
+        """, (
+            ticker.upper(),
+            data.get('spot_price'),
+            data.get('flip_strike'),
+            data.get('distance_abs'),
+            data.get('distance_pct'),
+            data.get('regime'),
+            data.get('net_gex'),
+            data.get('net_gex_descoberto'),
+            data.get('market_bias'),
+            data.get('expiration'),
+            data.get('liquidity_category'),
+            data.get('atm_range_pct'),
+            data.get('real_data_count'),
+            data.get('options_count'),
+            data.get('success', True),
+            data.get('error')
+        ))
+        
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        return True
+        
+    except Exception as e:
+        print(f"✗ Erro ao salvar cache para {ticker}: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
+
+def get_cache_status():
+    """Retorna estatísticas do cache"""
+    try:
+        conn = get_db_connection()
+        if not conn:
+            return None
+            
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            SELECT 
+                COUNT(*) as total,
+                COUNT(*) FILTER (WHERE success = true) as successful,
+                COUNT(*) FILTER (WHERE last_updated > NOW() - INTERVAL '24 hours') as fresh,
+                MAX(last_updated) as last_update,
+                MIN(last_updated) as oldest_update
+            FROM screening_cache
+        """)
+        
+        row = cursor.fetchone()
+        
+        cursor.close()
+        conn.close()
+        
+        if row:
+            return {
+                'total_tickers': row[0],
+                'successful': row[1],
+                'fresh_24h': row[2],
+                'last_update': row[3].isoformat() if row[3] else None,
+                'oldest_update': row[4].isoformat() if row[4] else None
+            }
+        
+        return None
+        
+    except Exception as e:
+        print(f"✗ Erro ao buscar status do cache: {e}")
+        return None
+
+    
 def setup_enhanced_database():
     
     
@@ -871,16 +1119,15 @@ def setup_enhanced_database():
     if test_connection():
         #create_plans_table()
         create_users_table()
-        update_users_table_for_service()
-        
+        update_users_table_for_service()        
         create_payments_table()
         create_payment_history()
         create_password_reset_table()
-        create_coupons_table()
-        
+        create_coupons_table()        
         create_portfolio_tables()  
         create_email_confirmations_table() 
         create_opcoes_recommendations_table()
+        create_screening_cache_table()
         create_initial_admin()
             
         

@@ -344,7 +344,7 @@ class ATSMOMService:
             'PETR4', 'VALE3', 'ITUB4', 'BBDC4', 'ABEV3',
             'MGLU3', 'WEGE3', 'RENT3', 'LREN3', 'JBSS3',
             'B3SA3', 'SUZB3', 'RAIL3', 'USIM5', 'CSNA3',
-            'GOAU4', 'EMBR3', 'CIEL3', 'JHSF3', 'TOTS3'
+            'GOAU4', 'EMBJ3', 'CIEL3', 'JHSF3', 'TOTS3'
         ]
 
 # Serviço pronto para uso com Flask

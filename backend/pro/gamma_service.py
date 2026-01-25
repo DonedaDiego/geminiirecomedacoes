@@ -69,8 +69,8 @@ class LiquidityManager:
             'AXIA3': 9,
             'PRIO3': 9,
             'SUZB3': 9,
-            'EMBR3': 9,
-            'CIEL3': 9,
+            'EMJR3': 9,
+            
             'RADL3': 9,
             'BRAV3': 9,
             'BPAC11':9,

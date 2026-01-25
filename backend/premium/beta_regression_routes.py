@@ -26,9 +26,9 @@ beta_regression_bp = Blueprint('beta_regression', __name__)
 
 # Lista de ativos padrão (ações brasileiras mais negociadas)
 DEFAULT_TICKERS = [
-    "ABEV3", "ASAI3", "B3SA3", "BBDC4", "BBAS3", "BBSE3", "BPAC11", "BRFS3",
+    "ABEV3", "ASAI3", "B3SA3", "BBDC4", "BBAS3", "BBSE3", "BPAC11", "MBRF",
     "BRKM5", "CMIG4", "CPLE6", "CRFB3", "CSAN3", "CSNA3", "CYRE3", "EGIE3",
-    "EMBR3", "ENGI11", "EQTL3", "GFSA3", "GGBR4", "GOAU4", "GUAR3", "HAPV3",
+    "EMBJ3", "ENGI11", "EQTL3", "GFSA3", "GGBR4", "GOAU4", "GUAR3", "HAPV3",
     "ITUB4", "JBSS3", "LREN3", "MGLU3", "MOVI3", "MRFG3", "MRVE3", "NTCO3",
     "PETR4", "PETZ3", "POMO4", "PRIO3", "RAIL3", "RDOR3", "RENT3", "RRRP3",
     "SANB11", "SBSP3", "SMTO3", "SUZB3", "TIMS3", "TOTS3", "UGPA3", "UNIP3",

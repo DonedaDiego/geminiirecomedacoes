@@ -44,7 +44,7 @@ SETORES = {
    "CYRE3": "Construção Civil",
    "AXIA3": "Energia Elétrica",
    "AXIA6": "Energia Elétrica",
-   "ELET6": "Energia Elétrica",
+   "AXIA6": "Energia Elétrica",
    "EGIE3": "Energia Elétrica",
    "EMBJ3": "Material de Transporte",
    "MBRF3": "Processadora de Alimentos",
