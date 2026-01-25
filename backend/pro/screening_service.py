@@ -131,8 +131,8 @@ class ScreeningService:
         try:
             # ✅ LIMITAR LISTA INICIAL PARA EVITAR OOM
             if not tickers_list or len(tickers_list) == 0:
-                tickers_list = OFFICIAL_TICKERS[:30]  
-                logging.info(f"[RAILWAY] Limitando a 30 tickers para evitar OOM")
+                tickers_list = OFFICIAL_TICKERS[:50]  
+                logging.info(f"[RAILWAY] Limitando a 50 tickers para evitar OOM")
             
             # Se force_refresh, ignora cache
             if force_refresh:

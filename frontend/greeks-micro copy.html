@@ -1498,17 +1498,17 @@
         vegaData = await vegaRes.json();
         thetaData = await thetaRes.json();
 
-        
-        // console.log('=== DEBUG MICRO 4D ===');
-        // console.log('GAMMA DATA:', gammaData);
-        // console.log('  - GEX Total:', gammaData.gex_levels?.total_gex);
-        // console.log('  - GEX Descoberto:', gammaData.gex_levels?.total_gex_descoberto);
-        // console.log('DELTA DATA:', deltaData);
-        // console.log('  - DEX Total:', deltaData.dex_levels?.total_dex);
-        // console.log('  - DEX Descoberto:', deltaData.dex_levels?.total_dex_descoberto);
-        // console.log('  - Market Bias:', deltaData.dex_levels?.market_bias);
-        // console.log('=== FIM DEBUG ===');
-        // // ✅✅✅ ATÉ AQUI ✅✅✅
+        // ✅✅✅ COLA AQUI EMBAIXO ✅✅✅
+        console.log('=== DEBUG MICRO 4D ===');
+        console.log('GAMMA DATA:', gammaData);
+        console.log('  - GEX Total:', gammaData.gex_levels?.total_gex);
+        console.log('  - GEX Descoberto:', gammaData.gex_levels?.total_gex_descoberto);
+        console.log('DELTA DATA:', deltaData);
+        console.log('  - DEX Total:', deltaData.dex_levels?.total_dex);
+        console.log('  - DEX Descoberto:', deltaData.dex_levels?.total_dex_descoberto);
+        console.log('  - Market Bias:', deltaData.dex_levels?.market_bias);
+        console.log('=== FIM DEBUG ===');
+        // ✅✅✅ ATÉ AQUI ✅✅✅
     
         
         if (!gammaRes.ok) throw new Error(gammaData.error);
@@ -1571,26 +1571,6 @@
       renderMasterTable(0);
       showStatus('Sistema Greeks Micro 4D carregado. Digite um ticker para comecar.', 'info');
     });
-
-    function autoLoadFromURL() {
-      const urlParams = new URLSearchParams(window.location.search);
-      const tickerFromUrl = urlParams.get('ticker');
-      
-      if (tickerFromUrl) {
-        const tickerInput = document.getElementById('tickerInput');
-        tickerInput.value = tickerFromUrl.toUpperCase();
-        
-        console.log(`[AUTO-LOAD] Ticker detectado na URL: ${tickerFromUrl}`);
-        
-        // Aguardar 500ms para garantir que página carregou
-        setTimeout(() => {
-          runFullAnalysis();
-        }, 500);
-      }
-    }
-
-    // Chamar quando página carregar
-    window.addEventListener('load', autoLoadFromURL);
 
   </script>
 
