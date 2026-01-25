@@ -31,7 +31,7 @@ OFFICIAL_TICKERS = [
 class ScreeningService:
     def __init__(self):
         self.gamma_service = GammaService()
-        self.max_workers = 2  # ✅ REDUZIDO PARA 2 (Railway OOM)
+        self.max_workers = 1  
         self.cache_max_age_hours = 24
     
     def analyze_single_ticker(self, ticker, use_cache=True):
@@ -98,7 +98,7 @@ class ScreeningService:
                 'atm_range_pct': data_quality.get('atm_range_pct'),
                 'real_data_count': data_quality.get('real_data_count', 0),
                 'options_count': result.get('options_count', 0),
-                'volume_financeiro': data_quality.get('volume_financeiro', 0),  # ✅ ADICIONADO
+                'volume_financeiro': data_quality.get('volume_financeiro', 0),  
                 'timestamp': datetime.now().isoformat(),
                 'success': True
             }
@@ -131,8 +131,8 @@ class ScreeningService:
         try:
             # ✅ LIMITAR LISTA INICIAL PARA EVITAR OOM
             if not tickers_list or len(tickers_list) == 0:
-                tickers_list = OFFICIAL_TICKERS[:30]  # ✅ SÓ 30 PRIMEIROS
-                logging.info(f"[RAILWAY] Limitando a 30 tickers para evitar OOM")
+                tickers_list = OFFICIAL_TICKERS[:15]  
+                logging.info(f"[RAILWAY] Limitando a 15 tickers para evitar OOM")
             
             # Se force_refresh, ignora cache
             if force_refresh:
@@ -166,36 +166,42 @@ class ScreeningService:
             else:
                 tickers_to_analyze = tickers_list
             
-            # FASE 2: ANALISAR APENAS OS QUE FALTAM
+            # FASE 2: ANALISAR APENAS OS QUE FALTAM EM BATCHES
             if tickers_to_analyze:
-                logging.info(f"Iniciando análise de {len(tickers_to_analyze)} ativos")
+                logging.info(f"Iniciando análise de {len(tickers_to_analyze)} ativos em batches")
                 
-                with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
-                    future_to_ticker = {
-                        executor.submit(self.analyze_single_ticker, ticker, False): ticker 
-                        for ticker in tickers_to_analyze
-                    }
+                # ✅ PROCESSAR EM BATCHES DE 5
+                batch_size = 5
+                for i in range(0, len(tickers_to_analyze), batch_size):
+                    batch = tickers_to_analyze[i:i+batch_size]
+                    logging.info(f"[BATCH] Processando {len(batch)} tickers: {', '.join(batch)}")
                     
-                    for future in as_completed(future_to_ticker):
-                        ticker = future_to_ticker[future]
-                        try:
-                            data = future.result()
-                            if data:
-                                if data.get('success'):
-                                    results.append(data)
-                                else:
-                                    errors.append(data)
-                        except Exception as e:
-                            logging.error(f"Erro no future de {ticker}: {e}")
-                            errors.append({
-                                'ticker': ticker.replace('.SA', ''),
-                                'error': str(e),
-                                'success': False
-                            })
-                
-                # ✅ LIMPAR MEMÓRIA APÓS ANÁLISE
-                gc.collect()
-                logging.info(f"[MEMORY] Garbage collection executado - {len(results)} sucessos")
+                    with ThreadPoolExecutor(max_workers=1) as executor:
+                        future_to_ticker = {
+                            executor.submit(self.analyze_single_ticker, ticker, False): ticker 
+                            for ticker in batch
+                        }
+                        
+                        for future in as_completed(future_to_ticker):
+                            ticker = future_to_ticker[future]
+                            try:
+                                data = future.result()
+                                if data:
+                                    if data.get('success'):
+                                        results.append(data)
+                                    else:
+                                        errors.append(data)
+                            except Exception as e:
+                                logging.error(f"Erro no future de {ticker}: {e}")
+                                errors.append({
+                                    'ticker': ticker.replace('.SA', ''),
+                                    'error': str(e),
+                                    'success': False
+                                })
+                    
+                    # ✅ LIMPAR MEMÓRIA APÓS CADA BATCH
+                    gc.collect()
+                    logging.info(f"[BATCH] Concluído - {len(results)} sucessos até agora")
             
             # Ordena resultados por distância absoluta do flip (tratando None)
             results.sort(key=lambda x: abs(x.get('distance_pct') or 999))
