@@ -14,17 +14,17 @@ logging.basicConfig(level=logging.INFO)
 
 # Lista oficial de tickers com opções
 OFFICIAL_TICKERS = [
-    'PETR4', 'VALE3', 'ITUB4', 'BBAS3', 'PRIO3', 'ABEV3', 'BBDC4', 'B3SA3',
-    'AXIA3', 'PETR3', 'ITSA4', 'SBSP3', 'SUZB3', 'WEGE3', 'EMBJ3',
+    'BOVA11', 'SMAL11','PETR4', 'VALE3', 'ITUB4', 'BBAS3', 'PRIO3', 'ABEV3', 'BBDC4', 'B3SA3',
+    'AXIA3', 'ITSA4', 'SBSP3', 'SUZB3', 'WEGE3', 'EMBJ3',
     'GGBR4', 'ENEV3', 'EQTL3', 'RENT3', 'VBBR3', 'RADL3', 'CSMG3',
     'RDOR3', 'BBSE3', 'CPLE3', 'LREN3', 'VIVT3', 'MGLU3', 'RAIL3',
     'CYRE3', 'TIMS3', 'COGN3', 'CPFE3', 'MBRF3', 'CSAN3', 'UGPA3',
     'CURY3', 'CMIG4', 'CEAB3', 'MOTV3', 'VIVA3', 'ALOS3', 'BRAV3', 
-    'SMFT3', 'TOTS3', 'HAPV3', 'BBDC3', 'CSNA3', 'ASAI3', 'MULT3', 'USIM5',
+    'SMFT3', 'TOTS3', 'HAPV3', 'CSNA3', 'MULT3', 'USIM5',
     'POMO4', 'AURE3', 'CXSE3', 'GOAU4', 'AXIA6', 'BEEF3', 'PSSA3',
     'IRBR3', 'MRVE3', 'VAMO3', 'AZZA3', 'DIRR3', 'EGIE3', 'NATU3', 'ISAE4',
     'BRAP4', 'YDUQ3', 'PCAR3', 'BRKM5', 'HYPE3', 'RECV3', 'CMIN3',
-    'FLRY3', 'SLCE3', 'RAIZ4', 'CYRE4'
+    'RAIZ4', 
 ]
 
 
@@ -131,8 +131,8 @@ class ScreeningService:
         try:
             # ✅ LIMITAR LISTA INICIAL PARA EVITAR OOM
             if not tickers_list or len(tickers_list) == 0:
-                tickers_list = OFFICIAL_TICKERS[:50]  
-                logging.info(f"[RAILWAY] Limitando a 50 tickers para evitar OOM")
+                tickers_list = OFFICIAL_TICKERS[:35]  
+                logging.info(f"[RAILWAY] Limitando a 35 tickers para evitar OOM")
             
             # Se force_refresh, ignora cache
             if force_refresh:
