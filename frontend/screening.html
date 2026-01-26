@@ -265,46 +265,22 @@
       0%, 100% { opacity: 1; }
       50% { opacity: 0.7; }
     }
-
-    .cache-indicator {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 6px 12px;
-      background: rgba(34, 197, 94, 0.15);
-      border: 1px solid rgba(34, 197, 94, 0.3);
-      border-radius: 20px;
-      font-size: 11px;
-      font-weight: 600;
-      color: #22c55e;
-    }
-
-    .cache-indicator i {
-      animation: pulse 2s ease-in-out infinite;
-    }
-
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.5; }
-    }
   </style>
 </head>
 <body class="text-white">
   
+  <!-- Navbar -->
   <nav class="fixed top-6 left-1/2 transform -translate-x-1/2 z-50 bg-opacity-5 border-opacity-10 bg-white border-white border rounded-full px-4 py-3 shadow-xl backdrop-blur-md">
     <div class="flex items-center justify-between">
       <div class="flex items-center">
-        <a href="/dashboard.html">
-          <img src="logo.png" alt="Geminii Logo" class="w-6 h-6 cursor-pointer">
-        </a>       
+        <img src="logo.png" alt="Geminii Logo" class="w-6 h-6 cursor-pointer" onclick="window.location.href='/'">
       </div>
       <div class="hidden md:flex items-center space-x-6 text-xs text-gray-300 ml-8">
-        <span class="text-white font-medium">Gamma Flip Screening</span>
-        <a href="gamma-levels.html" class="hover:text-white transition-colors">Gamma Exposure</a>
-        <a href="delta-levels.html" class="hover:text-white transition-colors">Delta Exposure</a>
-        <a href="vega-levels.html" class="hover:text-white transition-colors">Vega Exposure</a>
-        <a href="theta-levels.html" class="hover:text-white transition-colors">Theta Exposure</a>
-        <a href="historical-levels.html" class="hover:text-white transition-colors">Analise Historica</a>
+        <a href="/dashboard" class="hover:text-white transition-colors">Dashboard</a>
+        <a href="opcoes.html" class="hover:text-white transition-colors">Hunter Walls</a>
+        <a href="vi-pro.html" class="hover:text-white transition-colors">Implícita Sigma</a>
+        <a href="gamma-levels.html" class="hover:text-white transition-colors">Gamma Levels</a>
+        <span class="text-white font-medium">Flip Screening</span>
       </div>
       <div class="flex items-center space-x-3 ml-8">
         <div id="apiStatus" class="w-8 h-8 bg-green-500 bg-opacity-10 border border-green-500 border-opacity-30 rounded-full flex items-center justify-center relative">
@@ -340,6 +316,7 @@
             <div class="screening-card p-8 text-left">
               <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
                 
+                <!-- O que é -->
                 <div class="space-y-4">
                   <div class="flex items-center mb-4">
                     <div class="w-4 h-4 rounded-full bg-geminii mr-3"></div>
@@ -350,6 +327,7 @@
                   </p>
                 </div>
                 
+                <!-- Para que serve -->
                 <div class="space-y-4">
                   <div class="flex items-center mb-4">
                     <div class="w-4 h-4 rounded-full bg-purple-500 mr-3"></div>
@@ -360,18 +338,20 @@
                   </p>
                 </div>
                 
+                <!-- Como usar -->
                 <div class="space-y-4">
                   <div class="flex items-center mb-4">
                     <div class="w-4 h-4 rounded-full bg-blue-500 mr-3"></div>
                     <h3 class="text-xl font-bold text-white">Como usar</h3>
                   </div>
                   <p class="text-gray-300 text-sm leading-relaxed">
-                    O sistema carrega automaticamente <strong>todos os ativos com opções</strong> na abertura. Use presets para filtrar por categoria ou busque tickers específicos.
+                    Escolha um <strong>preset de ativos</strong> ou crie sua lista personalizada. O sistema analisa todos em paralelo e ordena por <strong>proximidade ao flip</strong>.
                   </p>
                 </div>
                 
               </div>
               
+              <!-- Interpretação -->
               <div class="mt-8 pt-6 border-t border-white/10">
                 <h4 class="text-geminii font-bold text-lg mb-4">Interpretação dos Resultados</h4>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -405,12 +385,9 @@
           <!-- Linha 1: Presets -->
           <div>
             <label class="text-sm font-semibold text-gray-300 mb-3 block">
-              <i class="fas fa-list mr-2"></i>Filtrar por Categoria
+              <i class="fas fa-list mr-2"></i>Listas Pré-definidas
             </label>
             <div class="flex flex-wrap gap-3">
-              <button class="preset-btn" data-preset="all" onclick="loadAllResults()">
-                <i class="fas fa-globe mr-1"></i>Todos os Ativos
-              </button>
               <button class="preset-btn" data-preset="ibovespa_liquidos">
                 <i class="fas fa-chart-line mr-1"></i>Ibovespa Líquidos
               </button>
@@ -432,20 +409,20 @@
             </div>
           </div>
 
-          <!-- Linha 2: Busca customizada -->
+          <!-- Linha 2: Input customizado -->
           <div>
             <label class="text-sm font-semibold text-gray-300 mb-3 block">
-              <i class="fas fa-search mr-2"></i>Busca Rápida
+              <i class="fas fa-edit mr-2"></i>Lista Personalizada
             </label>
             <div class="flex gap-3">
               <input 
-                id="searchInput" 
+                id="customTickers" 
                 type="text" 
-                placeholder="Digite um ticker para buscar (ex: PETR4)" 
+                placeholder="Digite os tickers separados por vírgula (ex: PETR4, VALE3, BBAS3)" 
                 class="custom-input flex-1"
               >
-              <button id="searchBtn" class="px-6 py-2 bg-gradient-to-r from-blue-500 to-cyan-600 hover:shadow-lg rounded-lg transition-all font-medium whitespace-nowrap">
-                <i class="fas fa-search mr-2"></i>Buscar
+              <button id="screenBtn" class="px-6 py-2 bg-gradient-to-r from-pink-500 to-purple-600 hover:shadow-lg rounded-lg transition-all font-medium whitespace-nowrap">
+                <i class="fas fa-search mr-2"></i>Iniciar Screening
               </button>
             </div>
           </div>
@@ -453,20 +430,12 @@
           <!-- Progress Bar -->
           <div id="progressContainer" class="hidden">
             <div class="flex justify-between text-xs text-gray-400 mb-2">
-              <span id="progressText">Carregando...</span>
+              <span id="progressText">Analisando...</span>
               <span id="progressPercent">0%</span>
             </div>
             <div class="progress-bar">
               <div id="progressFill" class="progress-bar-fill" style="width: 0%"></div>
             </div>
-          </div>
-
-          <!-- Cache Indicator -->
-          <div id="cacheIndicator" class="hidden text-center">
-            <span class="cache-indicator">
-              <i class="fas fa-database"></i>
-              <span id="cacheText">Carregado do cache</span>
-            </span>
           </div>
 
         </div>
@@ -510,6 +479,9 @@
             <h3 class="text-xl font-bold flex items-center">
               <i class="fas fa-table text-geminii mr-3"></i>Resultados do Screening
             </h3>
+            <button id="exportBtn" class="px-4 py-2 bg-white bg-opacity-10 hover:bg-opacity-20 rounded-lg text-sm font-medium transition-all">
+              <i class="fas fa-download mr-2"></i>Exportar CSV
+            </button>
           </div>
           
           <div class="overflow-x-auto">
@@ -522,7 +494,7 @@
                   <th>Distância</th>
                   <th>Dist. %</th>
                   <th>Regime</th>
-                  <th>Liquidez Dia</th>
+                  <th>Liquidez</th>
                   <th>Vencimento</th>
                   <th>Ações</th>
                 </tr>
@@ -543,8 +515,8 @@
     const API_BASE = window.location.origin + '/pro/screening';
     
     // Elementos DOM
-    const searchInput = document.getElementById('searchInput');
-    const searchBtn = document.getElementById('searchBtn');
+    const customTickers = document.getElementById('customTickers');
+    const screenBtn = document.getElementById('screenBtn');
     const statusMsg = document.getElementById('statusMsg');
     const summarySection = document.getElementById('summarySection');
     const resultsSection = document.getElementById('resultsSection');
@@ -553,11 +525,10 @@
     const progressText = document.getElementById('progressText');
     const progressPercent = document.getElementById('progressPercent');
     const progressFill = document.getElementById('progressFill');
-    const cacheIndicator = document.getElementById('cacheIndicator');
-    const cacheText = document.getElementById('cacheText');
+    const exportBtn = document.getElementById('exportBtn');
     
     // State
-    let allResults = [];
+    let currentResults = [];
     let presets = {};
     
     // Função do expander
@@ -585,16 +556,10 @@
     function showStatus(message, type = 'info') {
       const bgClass = type === 'success' ? 'bg-green-600 bg-opacity-20 border-green-500 border-opacity-30' : 
                      type === 'error' ? 'bg-red-600 bg-opacity-20 border-red-500 border-opacity-30' : 
-                     type === 'warning' ? 'bg-yellow-600 bg-opacity-20 border-yellow-500 border-opacity-30' :
                      'bg-blue-600 bg-opacity-20 border-blue-500 border-opacity-30';
       
-      const iconClass = type === 'success' ? 'fa-check-circle' : 
-                       type === 'error' ? 'fa-exclamation-circle' : 
-                       type === 'warning' ? 'fa-exclamation-triangle' :
-                       'fa-info-circle';
-      
       statusMsg.className = `mb-6 p-4 rounded-lg border backdrop-blur-sm ${bgClass}`;
-      statusMsg.innerHTML = `<i class="fas ${iconClass} mr-2"></i>${message}`;
+      statusMsg.innerHTML = `<i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'} mr-2"></i>${message}`;
       statusMsg.classList.remove('hidden');
       
       if (type === 'success') {
@@ -609,10 +574,20 @@
       }).format(value);
     }
     
+    function setLoading(button, loading) {
+      if (loading) {
+        button.classList.add('loading');
+        button.innerHTML = '<span class="spinner mr-2"></span>Screening em andamento...';
+      } else {
+        button.classList.remove('loading');
+        button.innerHTML = '<i class="fas fa-search mr-2"></i>Iniciar Screening';
+      }
+    }
+    
     function showProgress(current, total) {
       progressContainer.classList.remove('hidden');
-      const percent = total > 0 ? Math.round((current / total) * 100) : 0;
-      progressText.textContent = `Carregando ${current} de ${total} ativos...`;
+      const percent = Math.round((current / total) * 100);
+      progressText.textContent = `Analisando ${current} de ${total} ativos...`;
       progressPercent.textContent = `${percent}%`;
       progressFill.style.width = `${percent}%`;
     }
@@ -622,48 +597,20 @@
       progressFill.style.width = '0%';
     }
     
-    function formatCacheTime(cacheStatus) {
-      if (!cacheStatus || !cacheStatus.last_update) {
-        return 'agora';
-      }
-      
-      const lastUpdate = new Date(cacheStatus.last_update);
-      const now = new Date();
-      const diffMs = now - lastUpdate;
-      const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-      const diffMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-      
-      if (diffHours > 0) {
-        return `há ${diffHours}h${diffMins > 0 ? ` ${diffMins}min` : ''}`;
-      } else if (diffMins > 0) {
-        return `há ${diffMins} minutos`;
-      } else {
-        return 'agora mesmo';
-      }
-    }
-    
-    function showCacheIndicator(cacheStatus) {
-      if (cacheStatus) {
-        cacheText.textContent = `Dados do cache (atualizado ${formatCacheTime(cacheStatus)})`;
-        cacheIndicator.classList.remove('hidden');
-      } else {
-        cacheIndicator.classList.add('hidden');
-      }
-    }
-    
-    
     // Testar conectividade da API
     async function testAPI() {
       try {
         const response = await fetch(`${API_BASE}/health`);
+        const data = await response.json();
         
         if (response.ok) {
+          document.getElementById('apiStatus').className = 'w-8 h-8 bg-green-500 bg-opacity-10 border border-green-500 border-opacity-30 rounded-full flex items-center justify-center relative';
           return true;
         } else {
           throw new Error('API retornou erro');
         }
       } catch (error) {
-        console.error('Erro ao testar API:', error);
+        document.getElementById('apiStatus').className = 'w-8 h-8 bg-red-500 bg-opacity-10 border border-red-500 border-opacity-30 rounded-full flex items-center justify-center relative';
         return false;
       }
     }
@@ -683,35 +630,75 @@
       }
     }
     
-    // Auto-load screening completo
-    async function autoLoadScreening() {
-      try {
-        showStatus('Carregando screening completo...', 'info');
-        showProgress(0, 85);
+    // Event listeners para presets
+    document.querySelectorAll('.preset-btn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        // Remove active de todos
+        document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
         
+        // Adiciona active no clicado
+        this.classList.add('active');
+        
+        const presetName = this.dataset.preset;
+        const tickers = presets[presetName];
+        
+        if (tickers) {
+          customTickers.value = tickers.join(', ');
+          showStatus(`Lista "${presetName}" carregada com ${tickers.length} ativos`, 'info');
+        }
+      });
+    });
+    
+    // Executar screening
+    async function runScreening() {
+      let tickersInput = customTickers.value.trim();
+      
+      if (!tickersInput) {
+        showStatus('Digite os tickers ou selecione um preset', 'error');
+        return;
+      }
+      
+      // Parse tickers
+      const tickers = tickersInput
+        .split(',')
+        .map(t => t.trim().toUpperCase().replace('.SA', ''))
+        .filter(t => t.length > 0);
+      
+      if (tickers.length === 0) {
+        showStatus('Nenhum ticker válido encontrado', 'error');
+        return;
+      }
+      
+      setLoading(screenBtn, true);
+      showProgress(0, tickers.length);
+      showStatus(`Iniciando screening de ${tickers.length} ativos...`, 'info');
+      
+      // Limpar resultados anteriores
+      summarySection.classList.add('hidden');
+      resultsSection.classList.add('hidden');
+      currentResults = [];
+      
+      try {
         const response = await fetch(`${API_BASE}/flip`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({})
+          body: JSON.stringify({
+            tickers: tickers,
+            max_workers: 5
+          })
         });
         
         const data = await response.json();
         
         if (response.ok && data.success) {
-          allResults = data.results || [];
+          currentResults = data.results || [];
           
           displaySummary(data.summary);
-          displayResults(allResults);
+          displayResults(currentResults);
           
-          if (data.from_cache) {
-            showStatus(`✓ Screening carregado: ${data.successful_analysis} ativos`, 'success');
-            showCacheIndicator(data.cache_status);
-          } else {
-            showStatus(`✓ Screening concluído: ${data.successful_analysis} ativos analisados`, 'success');
-            showCacheIndicator(null);
-          }
+          showStatus(`Screening concluído: ${data.successful_analysis}/${data.total_tickers} ativos analisados`, 'success');
           
           if (data.errors && data.errors.length > 0) {
             console.warn('Erros no screening:', data.errors);
@@ -721,111 +708,12 @@
           showStatus(errorMsg, 'error');
         }
       } catch (error) {
-        showStatus('Erro ao carregar screening automático', 'error');
+        showStatus('Erro ao conectar com o servidor', 'error');
         console.error(error);
       }
       
       hideProgress();
-    }
-    
-    // Carregar todos os resultados
-    function loadAllResults() {
-      if (allResults.length === 0) {
-        showStatus('Nenhum dado disponível. Aguarde o carregamento inicial.', 'warning');
-        return;
-      }
-      
-      document.querySelectorAll('.preset-btn').forEach(btn => btn.classList.remove('active'));
-      document.querySelector('[data-preset="all"]').classList.add('active');
-      
-      displayResults(allResults);
-      displaySummary(generateSummary(allResults));
-      showStatus(`✓ Mostrando todos os ${allResults.length} ativos`, 'success');
-    }
-    
-    // Event listeners para presets
-    document.querySelectorAll('.preset-btn').forEach(btn => {
-      if (btn.dataset.preset !== 'all') {
-        btn.addEventListener('click', function() {
-          document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
-          this.classList.add('active');
-          
-          const presetName = this.dataset.preset;
-          const presetTickers = presets[presetName];
-          
-          if (presetTickers && allResults.length > 0) {
-            const filtered = allResults.filter(r => presetTickers.includes(r.ticker));
-            displayResults(filtered);
-            displaySummary(generateSummary(filtered));
-            showStatus(`✓ Filtrado: ${filtered.length} ativos da categoria "${presetName}"`, 'success');
-          }
-        });
-      }
-    });
-    
-    // Busca rápida
-    async function quickSearch() {
-      const ticker = searchInput.value.trim().toUpperCase();
-      
-      if (!ticker) {
-        showStatus('Digite um ticker para buscar', 'warning');
-        return;
-      }
-      
-      // Buscar nos resultados carregados primeiro
-      const found = allResults.find(r => r.ticker === ticker);
-      
-      if (found) {
-        displayResults([found]);
-        displaySummary(generateSummary([found]));
-        showStatus(`✓ Encontrado: ${ticker}`, 'success');
-      } else {
-        showStatus(`⏳ Buscando ${ticker}...`, 'info');
-        
-        // Buscar via API
-        try {
-          const response = await fetch(`${API_BASE}/flip/single`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ ticker })
-          });
-          
-          const data = await response.json();
-          
-          if (response.ok && data.success && data.result) {
-            displayResults([data.result]);
-            displaySummary(generateSummary([data.result]));
-            showStatus(`✓ ${ticker} analisado com sucesso`, 'success');
-          } else {
-            showStatus(`❌ ${ticker} não encontrado ou sem dados`, 'error');
-          }
-        } catch (error) {
-          showStatus('❌ Erro na busca', 'error');
-          console.error(error);
-        }
-      }
-    }
-    
-    // Gerar summary dos dados filtrados
-    function generateSummary(results) {
-      if (!results || results.length === 0) return {};
-      
-      const longCount = results.filter(r => r.regime === 'Long Gamma').length;
-      const shortCount = results.filter(r => r.regime === 'Short Gamma').length;
-      const avgDist = results.reduce((sum, r) => sum + Math.abs(r.distance_pct || 0), 0) / results.length;
-      
-      return {
-        total_analyzed: results.length,
-        regime_distribution: {
-          'Long Gamma': longCount,
-          'Short Gamma': shortCount
-        },
-        distance_statistics: {
-          mean: avgDist
-        }
-      };
+      setLoading(screenBtn, false);
     }
     
     // Exibir resumo
@@ -856,7 +744,6 @@
             </td>
           </tr>
         `;
-        resultsSection.classList.remove('hidden');
         return;
       }
       
@@ -865,6 +752,7 @@
       results.forEach(result => {
         const row = document.createElement('tr');
         
+        // Regime badge
         let regimeBadge = `<span class="regime-neutral">Neutral</span>`;
         if (result.regime === 'Long Gamma') {
           regimeBadge = `<span class="regime-long"><i class="fas fa-arrow-up mr-1"></i>Long</span>`;
@@ -872,6 +760,7 @@
           regimeBadge = `<span class="regime-short"><i class="fas fa-arrow-down mr-1"></i>Short</span>`;
         }
         
+        // Liquidez badge
         let liquidityBadge = `<span class="liquidity-badge liquidity-media">Média</span>`;
         if (result.liquidity_category === 'ALTA') {
           liquidityBadge = `<span class="liquidity-badge liquidity-alta">Alta</span>`;
@@ -879,6 +768,7 @@
           liquidityBadge = `<span class="liquidity-badge liquidity-baixa">Baixa</span>`;
         }
         
+        // Distância formatada
         const distAbs = result.distance_abs || 0;
         const distPct = result.distance_pct || 0;
         const distClass = distPct > 0 ? 'distance-positive' : 'distance-negative';
@@ -912,19 +802,57 @@
       
       resultsSection.classList.remove('hidden');
     }
-        
-    // Navegar para Greeks Micro (Visão Global)
+    
+    // Navegar para Gamma Levels
     function goToGammaLevels(ticker) {
       window.location.href = `greeks-micro.html?ticker=${ticker}`;
     }
     window.goToGammaLevels = goToGammaLevels;
-    window.loadAllResults = loadAllResults;
+    
+    
+    // Exportar CSV
+    function exportToCSV() {
+      if (currentResults.length === 0) {
+        showStatus('Nenhum resultado para exportar', 'error');
+        return;
+      }
+      
+      const headers = ['Ticker', 'Preço', 'Flip Strike', 'Distância Abs', 'Distância %', 'Regime', 'Liquidez', 'Vencimento'];
+      const rows = currentResults.map(r => [
+        r.ticker,
+        r.spot_price?.toFixed(2) || '',
+        r.flip_strike?.toFixed(2) || '',
+        r.distance_abs?.toFixed(2) || '',
+        r.distance_pct?.toFixed(2) || '',
+        r.regime || '',
+        r.liquidity_category || '',
+        r.expiration || ''
+      ]);
+      
+      let csvContent = headers.join(',') + '\n';
+      csvContent += rows.map(row => row.join(',')).join('\n');  // <- CORREÇÃO AQUI
+      
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      
+      link.setAttribute('href', url);
+      link.setAttribute('download', `screening_gamma_flip_${new Date().toISOString().slice(0,10)}.csv`);
+      link.style.visibility = 'hidden';
+      
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      showStatus('CSV exportado com sucesso!', 'success');
+    }
     
     // Event Listeners
-    searchBtn.addEventListener('click', quickSearch);
+    screenBtn.addEventListener('click', runScreening);
+    exportBtn.addEventListener('click', exportToCSV);
     
-    searchInput.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') quickSearch();
+    customTickers.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') runScreening();
     });
     
     // Inicialização
@@ -932,14 +860,14 @@
       const apiConnected = await testAPI();
       
       if (apiConnected) {
-        showStatus('Sistema de Screening carregado!', 'info');
+        showStatus('Sistema de Screening carregado! Selecione um preset ou digite os tickers.', 'info');
         await loadPresets();
-        await autoLoadScreening();
       } else {
         showStatus('Aviso: Erro na conectividade da API. Verifique se o servidor está rodando.', 'error');
       }
     }
     
+    // Inicializar quando a página carregar
     initialize();
   </script>
 </body>

@@ -1,70 +1,31 @@
 """
-screening_service.py - Screening de Gamma Flip COM CACHE E OTIMIZAÇÃO DE MEMÓRIA
+screening_service.py - Screening de Gamma Flip para múltiplos ativos
 """
 
-import gc
 import logging
 import pandas as pd
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 from .gamma_service import GammaService, convert_to_json_serializable
-from database import get_screening_cache, save_screening_cache, get_cache_status
 
 logging.basicConfig(level=logging.INFO)
-
-# Lista oficial de tickers com opções
-OFFICIAL_TICKERS = [
-    'BOVA11', 'SMAL11','PETR4', 'VALE3', 'ITUB4', 'BBAS3', 'PRIO3', 'ABEV3', 'BBDC4', 'B3SA3',
-    'AXIA3', 'ITSA4', 'SBSP3', 'SUZB3', 'WEGE3', 'EMBJ3',
-    'GGBR4', 'ENEV3', 'EQTL3', 'RENT3', 'VBBR3', 'RADL3', 'CSMG3',
-    'RDOR3', 'BBSE3', 'CPLE3', 'LREN3', 'VIVT3', 'MGLU3', 'RAIL3',
-    'CYRE3', 'TIMS3', 'COGN3', 'CPFE3', 'MBRF3', 'CSAN3', 'UGPA3',
-    'CURY3', 'CMIG4', 'CEAB3', 'MOTV3', 'VIVA3', 'ALOS3', 'BRAV3', 
-    'SMFT3', 'TOTS3', 'HAPV3', 'CSNA3', 'MULT3', 'USIM5',
-    'POMO4', 'AURE3', 'CXSE3', 'GOAU4', 'AXIA6', 'BEEF3', 'PSSA3',
-    'IRBR3', 'MRVE3', 'VAMO3', 'AZZA3', 'DIRR3', 'EGIE3', 'NATU3', 'ISAE4',
-    'BRAP4', 'YDUQ3', 'PCAR3', 'BRKM5', 'HYPE3', 'RECV3', 'CMIN3',
-    'RAIZ4', 
-]
 
 
 class ScreeningService:
     def __init__(self):
         self.gamma_service = GammaService()
-        self.max_workers = 1  
-        self.cache_max_age_hours = 24
+        self.max_workers = 5  # Limite de threads paralelas
     
-    def analyze_single_ticker(self, ticker, use_cache=True):
-        """Analisa um único ticker com suporte a cache"""
+    def analyze_single_ticker(self, ticker):
+        """Analisa um único ticker e retorna dados resumidos"""
         try:
-            # Tentar buscar do cache primeiro
-            if use_cache:
-                cached_data = get_screening_cache(ticker, self.cache_max_age_hours)
-                if cached_data:
-                    # ✅ Se tem erro no cache, pula
-                    if not cached_data.get('success'):
-                        logging.info(f"{ticker}: Pulando (erro em cache)")
-                        return cached_data
-                    
-                    logging.info(f"{ticker}: Usando dados do cache")
-                    return cached_data
-            
-            logging.info(f"Screening: Analisando {ticker} (nova consulta)")
+            logging.info(f"Screening: Analisando {ticker}")
             
             # Executa análise completa do GEX
             result = self.gamma_service.analyze_gamma_complete(ticker)
             
             if not result.get('success'):
-                # ✅ Salvar erro no cache
-                error_data = {
-                    'ticker': ticker.replace('.SA', ''),
-                    'error': result.get('error', 'Sem dados disponíveis'),
-                    'success': False,
-                    'timestamp': datetime.now().isoformat()
-                }
-                save_screening_cache(ticker, error_data)
-                logging.warning(f"{ticker}: Erro salvo no cache - {error_data['error']}")
-                return error_data
+                return None
             
             spot_price = result['spot_price']
             flip_strike = result.get('flip_strike')
@@ -98,120 +59,64 @@ class ScreeningService:
                 'atm_range_pct': data_quality.get('atm_range_pct'),
                 'real_data_count': data_quality.get('real_data_count', 0),
                 'options_count': result.get('options_count', 0),
-                'volume_financeiro': data_quality.get('volume_financeiro', 0),  
                 'timestamp': datetime.now().isoformat(),
                 'success': True
             }
-            
-            # Salvar no cache
-            save_screening_cache(ticker, screening_data)
             
             logging.info(f"{ticker}: Flip R$ {flip_strike:.2f} ({distance_pct:+.2f}%) - {regime}")
             return screening_data
             
         except Exception as e:
             logging.error(f"Erro ao analisar {ticker}: {e}")
-            
-            error_data = {
+            return {
                 'ticker': ticker.replace('.SA', ''),
                 'error': str(e),
                 'success': False,
                 'timestamp': datetime.now().isoformat()
             }
-            
-            # ✅ Salvar erro no cache
-            save_screening_cache(ticker, error_data)
-            
-            return error_data
     
-    def screen_multiple_tickers(self, tickers_list=None, use_cache=True, force_refresh=False):
-        """
-        Executa screening INTELIGENTE ticker por ticker COM OTIMIZAÇÃO DE MEMÓRIA
-        """
+    def screen_multiple_tickers(self, tickers_list):
+        """Executa screening em paralelo para múltiplos tickers"""
         try:
-            # ✅ LIMITAR LISTA INICIAL PARA EVITAR OOM
-            if not tickers_list or len(tickers_list) == 0:
-                tickers_list = OFFICIAL_TICKERS[:20]  
-                logging.info(f"[RAILWAY] Limitando a 35 tickers para evitar OOM")
-            
-            # Se force_refresh, ignora cache
-            if force_refresh:
-                use_cache = False
-                logging.info("Force refresh ativado - ignorando cache")
+            logging.info(f"Iniciando screening de {len(tickers_list)} ativos")
             
             results = []
             errors = []
-            tickers_to_analyze = []
             
-            # FASE 1: VERIFICAR CACHE TICKER POR TICKER
-            if use_cache and not force_refresh:
-                logging.info("Verificando cache para cada ticker...")
+            # Execução paralela com ThreadPoolExecutor
+            with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
+                future_to_ticker = {
+                    executor.submit(self.analyze_single_ticker, ticker): ticker 
+                    for ticker in tickers_list
+                }
                 
-                for ticker in tickers_list:
-                    cached_data = get_screening_cache(ticker, self.cache_max_age_hours)
-                    
-                    if cached_data:
-                        # ✅ Verifica se é erro salvo no cache
-                        if not cached_data.get('success'):
-                            logging.info(f"{ticker}: Erro no cache - pulando")
-                            errors.append(cached_data)
-                        else:
-                            logging.info(f"{ticker}: Usando cache")
-                            results.append(cached_data)
-                    else:
-                        logging.info(f"{ticker}: Precisa analisar")
-                        tickers_to_analyze.append(ticker)
-                
-                logging.info(f"Cache: {len(results)} hits, {len(tickers_to_analyze)} misses")
-            else:
-                tickers_to_analyze = tickers_list
+                for future in as_completed(future_to_ticker):
+                    ticker = future_to_ticker[future]
+                    try:
+                        data = future.result()
+                        if data:
+                            if data.get('success'):
+                                results.append(data)
+                            else:
+                                errors.append(data)
+                    except Exception as e:
+                        logging.error(f"Erro no future de {ticker}: {e}")
+                        errors.append({
+                            'ticker': ticker.replace('.SA', ''),
+                            'error': str(e),
+                            'success': False
+                        })
             
-            # FASE 2: ANALISAR APENAS OS QUE FALTAM EM BATCHES
-            if tickers_to_analyze:
-                logging.info(f"Iniciando análise de {len(tickers_to_analyze)} ativos em batches")
-                
-                # ✅ PROCESSAR EM BATCHES DE 5
-                batch_size = 5
-                for i in range(0, len(tickers_to_analyze), batch_size):
-                    batch = tickers_to_analyze[i:i+batch_size]
-                    logging.info(f"[BATCH] Processando {len(batch)} tickers: {', '.join(batch)}")
-                    
-                    with ThreadPoolExecutor(max_workers=1) as executor:
-                        future_to_ticker = {
-                            executor.submit(self.analyze_single_ticker, ticker, False): ticker 
-                            for ticker in batch
-                        }
-                        
-                        for future in as_completed(future_to_ticker):
-                            ticker = future_to_ticker[future]
-                            try:
-                                data = future.result()
-                                if data:
-                                    if data.get('success'):
-                                        results.append(data)
-                                    else:
-                                        errors.append(data)
-                            except Exception as e:
-                                logging.error(f"Erro no future de {ticker}: {e}")
-                                errors.append({
-                                    'ticker': ticker.replace('.SA', ''),
-                                    'error': str(e),
-                                    'success': False
-                                })
-                    
-                    # ✅ LIMPAR MEMÓRIA APÓS CADA BATCH
-                    gc.collect()
-                    logging.info(f"[BATCH] Concluído - {len(results)} sucessos até agora")
+            # Ordena resultados por distância absoluta do flip (mais próximos primeiro)
+            results.sort(key=lambda x: abs(x.get('distance_pct', 999)))
             
-            # Ordena resultados por distância absoluta do flip (tratando None)
-            results.sort(key=lambda x: abs(x.get('distance_pct') or 999))
+            # Cria DataFrame para análise
+            df_results = pd.DataFrame(results) if results else pd.DataFrame()
             
             # Estatísticas do screening
             summary = self._generate_summary(results)
             
-            from_cache = len(tickers_to_analyze) == 0
-            
-            logging.info(f"✓ Screening concluído: {len(results)} sucessos, {len(errors)} erros")
+            logging.info(f"Screening concluído: {len(results)} sucessos, {len(errors)} erros")
             
             return {
                 'success': True,
@@ -222,17 +127,11 @@ class ScreeningService:
                 'results': results,
                 'errors': errors,
                 'summary': summary,
-                'dataframe': results,
-                'from_cache': from_cache,
-                'cache_hits': len(results) - len(tickers_to_analyze),
-                'new_analysis': len(tickers_to_analyze),
-                'cache_status': get_cache_status()
+                'dataframe': df_results.to_dict('records') if not df_results.empty else []
             }
             
         except Exception as e:
             logging.error(f"Erro no screening múltiplo: {e}")
-            import traceback
-            traceback.print_exc()
             return {
                 'success': False,
                 'error': str(e),
