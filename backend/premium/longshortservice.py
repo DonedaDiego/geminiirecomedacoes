@@ -257,16 +257,25 @@ def analisar_pares(dados, max_meia_vida=30, min_meia_vida=1, max_pvalor_adf=0.05
     n = dados['Close'].shape[1]
     total_pares = 0
     
+    print(f"[DEBUG] Colunas no Close: {n}")
+    print(f"[DEBUG] Shape dos dados: {dados['Close'].shape}")
+    print(f"[DEBUG] Primeiras colunas: {list(dados['Close'].columns[:5])}")
+    print(f"[DEBUG] Últimas datas: {dados['Close'].index[-3:]}")
+    
     correlacoes = dados['Close'].corr()
     
-    resultados = []
+    # Conta quantos passam no filtro de correlação
+    pares_correlacao = 0
+    
+    args_list = []
     for i in range(n):
         for j in range(i+1, n):
             total_pares += 1
             correlacao = correlacoes.iloc[i, j]
             
             if correlacao >= min_correlacao:
-                args = (
+                pares_correlacao += 1
+                args_list.append((
                     dados['Close'],
                     i,
                     j,
@@ -275,10 +284,20 @@ def analisar_pares(dados, max_meia_vida=30, min_meia_vida=1, max_pvalor_adf=0.05
                     max_pvalor_adf,
                     max_pvalor_coint,
                     correlacao
-                )
-                resultado = processar_par(args)
-                if resultado is not None:
-                    resultados.append(resultado)
+                ))
+    
+    print(f"[DEBUG] Total pares: {total_pares}")
+    print(f"[DEBUG] Pares com correlação >= {min_correlacao}: {pares_correlacao}")
+    
+    num_processes = max(1, cpu_count() - 1)
+    print(f"[DEBUG] Usando {num_processes} processos")
+    
+    with Pool(processes=num_processes) as pool:
+        resultados_raw = pool.map(processar_par, args_list)
+    
+    resultados = [r for r in resultados_raw if r is not None]
+    
+    print(f"[DEBUG] Pares cointegrados encontrados: {len(resultados)}")
     
     return pd.DataFrame(resultados), total_pares
 
@@ -310,6 +329,7 @@ def filtrar_pares_por_zscore(dados, df_resultados, zscore_minimo=2):
         zscore_atual = calcular_zscore(spread).iloc[-1]
 
         if abs(zscore_atual) >= zscore_minimo:
+            print(f"[DEBUG] Par válido: {acao1}/{acao2} zscore={zscore_atual:.2f}")
             direcao_acao1 = "Venda" if zscore_atual > 0 else "Compra"
             direcao_acao2 = "Compra" if zscore_atual > 0 else "Venda"
             
@@ -326,7 +346,7 @@ def filtrar_pares_por_zscore(dados, df_resultados, zscore_minimo=2):
                 'DirecaoAcao1': direcao_acao1,
                 'DirecaoAcao2': direcao_acao2
             })
-            
+    print(f"[DEBUG] Pares após filtro zscore: {len(pares_validos)}")        
     return pd.DataFrame(pares_validos)
 
 
