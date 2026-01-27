@@ -259,14 +259,14 @@ def analisar_pares(dados, max_meia_vida=30, min_meia_vida=1, max_pvalor_adf=0.05
     
     correlacoes = dados['Close'].corr()
     
-    args_list = []
+    resultados = []
     for i in range(n):
         for j in range(i+1, n):
             total_pares += 1
             correlacao = correlacoes.iloc[i, j]
             
             if correlacao >= min_correlacao:
-                args_list.append((
+                args = (
                     dados['Close'],
                     i,
                     j,
@@ -275,14 +275,10 @@ def analisar_pares(dados, max_meia_vida=30, min_meia_vida=1, max_pvalor_adf=0.05
                     max_pvalor_adf,
                     max_pvalor_coint,
                     correlacao
-                ))
-    
-    num_processes = max(1, cpu_count() - 1)
-    
-    with Pool(processes=num_processes) as pool:
-        resultados_raw = pool.map(processar_par, args_list)
-    
-    resultados = [r for r in resultados_raw if r is not None]
+                )
+                resultado = processar_par(args)
+                if resultado is not None:
+                    resultados.append(resultado)
     
     return pd.DataFrame(resultados), total_pares
 
