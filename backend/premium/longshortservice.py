@@ -257,22 +257,16 @@ def analisar_pares(dados, max_meia_vida=30, min_meia_vida=1, max_pvalor_adf=0.05
     n = dados['Close'].shape[1]
     total_pares = 0
     
-    print(f"[DEBUG] Colunas no Close: {n}")
-    print(f"[DEBUG] Shape dos dados: {dados['Close'].shape}")
-    
     correlacoes = dados['Close'].corr()
     
-    resultados = []
-    pares_testados = 0
-    
+    args_list = []
     for i in range(n):
         for j in range(i+1, n):
             total_pares += 1
             correlacao = correlacoes.iloc[i, j]
             
             if correlacao >= min_correlacao:
-                pares_testados += 1
-                resultado = processar_par((
+                args_list.append((
                     dados['Close'],
                     i,
                     j,
@@ -282,12 +276,13 @@ def analisar_pares(dados, max_meia_vida=30, min_meia_vida=1, max_pvalor_adf=0.05
                     max_pvalor_coint,
                     correlacao
                 ))
-                if resultado is not None:
-                    resultados.append(resultado)
     
-    print(f"[DEBUG] Total pares: {total_pares}")
-    print(f"[DEBUG] Pares testados (correlação ok): {pares_testados}")
-    print(f"[DEBUG] Pares cointegrados encontrados: {len(resultados)}")
+    num_processes = max(1, cpu_count() - 1)
+    
+    with Pool(processes=num_processes) as pool:
+        resultados_raw = pool.map(processar_par, args_list)
+    
+    resultados = [r for r in resultados_raw if r is not None]
     
     return pd.DataFrame(resultados), total_pares
 
