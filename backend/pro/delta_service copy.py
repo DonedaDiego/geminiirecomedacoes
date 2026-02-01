@@ -1,5 +1,5 @@
 """
-delta_service.py - DEX Analysis COM DADOS DO BANCO POSTGRESQL
+delta_service.py - DEX Analysis COMPLETO
 """
 
 import numpy as np
@@ -13,7 +13,6 @@ import os
 from dotenv import load_dotenv
 from plotly.subplots import make_subplots
 import plotly.graph_objects as go
-from sqlalchemy import create_engine, text
 
 warnings.filterwarnings('ignore')
 logging.basicConfig(level=logging.INFO)
@@ -45,10 +44,8 @@ def convert_to_json_serializable(obj):
     except:
         return None
 
-
 class ExpirationManager:
-    def __init__(self, db_engine):
-        self.db_engine = db_engine
+    def __init__(self):
         self.available_expirations = {
             "20251219": {"date": datetime(2025, 12, 19), "desc": "19 Dez 25 - M"},
             "20260116": {"date": datetime(2026, 1, 16),  "desc": "16 Jan 26 - M"},
@@ -66,30 +63,14 @@ class ExpirationManager:
         }
     
     def test_data_availability(self, symbol, expiration_code):
-        """Testa disponibilidade no BANCO DE DADOS"""
         try:
-            exp_date = datetime.strptime(expiration_code, '%Y%m%d')
-            
-            query = text("""
-                SELECT COUNT(*) as total
-                FROM opcoes_b3
-                WHERE ticker = :symbol
-                AND vencimento = :vencimento
-                AND data_referencia = (SELECT MAX(data_referencia) FROM opcoes_b3)
-            """)
-            
-            with self.db_engine.connect() as conn:
-                result = conn.execute(query, {
-                    'symbol': symbol,
-                    'vencimento': exp_date
-                })
-                row = result.fetchone()
-                count = row[0] if row else 0
-            
-            return count
-            
-        except Exception as e:
-            logging.error(f"Erro ao testar disponibilidade: {e}")
+            url = f"https://floqui.com.br/api/posicoes_em_aberto/{symbol.lower()}/{expiration_code}"
+            response = requests.get(url, timeout=10)
+            if response.status_code == 200:
+                data = response.json()
+                return len(data) if data else 0
+            return 0
+        except:
             return 0
     
     def get_available_expirations_list(self, symbol):
@@ -121,7 +102,6 @@ class ExpirationManager:
                     }
         return None
 
-
 class DataProvider:
     def __init__(self):
         self.token = os.getenv('OPLAB_TOKEN')
@@ -134,42 +114,7 @@ class DataProvider:
             'Access-Token': self.token,
             'Content-Type': 'application/json'
         }
-        
-        # ✅ CONEXÃO COM BANCO DE DADOS - RAILWAY POSTGRESQL
-        DATABASE_URL = os.getenv('DATABASE_URL')
-        
-        if not DATABASE_URL:
-            DB_HOST = os.getenv('PGHOST') or os.getenv('DB_HOST', 'localhost')
-            DB_NAME = os.getenv('PGDATABASE') or os.getenv('DB_NAME', 'railway')
-            DB_USER = os.getenv('PGUSER') or os.getenv('DB_USER', 'postgres')
-            DB_PASSWORD = os.getenv('PGPASSWORD') or os.getenv('DB_PASSWORD', '')
-            DB_PORT = os.getenv('PGPORT') or os.getenv('DB_PORT', '5432')
-            
-            # Valida que a porta é um número
-            try:
-                DB_PORT = str(int(DB_PORT))
-            except (ValueError, TypeError):
-                logging.error(f"❌ DB_PORT inválido: '{DB_PORT}' - usando 5432")
-                DB_PORT = '5432'
-            
-            DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
-        
-        logging.info(f"🔌 Conectando ao banco PostgreSQL (DEX)...")
-        
-        try:
-            self.db_engine = create_engine(DATABASE_URL)
-            
-            # TESTA CONEXÃO
-            with self.db_engine.connect() as conn:
-                result = conn.execute(text("SELECT COUNT(*) FROM opcoes_b3"))
-                count = result.fetchone()[0]
-                logging.info(f"✅ Conexão OK (DEX) - {count:,} registros na opcoes_b3")
-                
-        except Exception as e:
-            logging.error(f"❌ Erro ao conectar (DEX): {e}")
-            raise
-        
-        self.expiration_manager = ExpirationManager(self.db_engine)
+        self.expiration_manager = ExpirationManager()
     
     def get_spot_price(self, symbol):
         try:
@@ -232,7 +177,6 @@ class DataProvider:
             return pd.DataFrame()
     
     def get_floqui_oi_breakdown(self, symbol, expiration_code=None):
-        """BUSCA DO BANCO DE DADOS POSTGRESQL - Mantém nome da função"""
         try:
             if expiration_code:
                 expiration = {
@@ -246,54 +190,34 @@ class DataProvider:
                 logging.warning("Nenhum vencimento disponível")
                 return {}, None
             
-            exp_date = datetime.strptime(expiration['code'], '%Y%m%d')
+            url = f"https://floqui.com.br/api/posicoes_em_aberto/{symbol.lower()}/{expiration['code']}"
+            response = requests.get(url, timeout=15)
             
-            query = text("""
-                SELECT 
-                    preco_exercicio,
-                    tipo_opcao,
-                    qtd_total,
-                    qtd_descoberto,
-                    qtd_trava,
-                    qtd_coberto
-                FROM opcoes_b3
-                WHERE ticker = :symbol
-                AND vencimento = :vencimento
-                AND data_referencia = (
-                    SELECT MAX(data_referencia) 
-                    FROM opcoes_b3 
-                    WHERE ticker = :symbol
-                )
-                ORDER BY preco_exercicio
-            """)
-            
-            df = pd.read_sql(query, self.db_engine, params={
-                'symbol': symbol,
-                'vencimento': exp_date
-            })
-            
-            if df.empty:
-                logging.warning(f"Nenhum dado encontrado no banco para {symbol}")
+            if response.status_code != 200:
+                logging.error(f"Erro na API Floqui: {response.status_code}")
                 return {}, expiration
             
-            # ✅ NOVA ESTRUTURA - USA STRING COMO CHAVE
+            data = response.json()
+            if not data:
+                logging.warning("Nenhum dado retornado do Floqui")
+                return {}, expiration
+            
             oi_breakdown = {}
-            for _, row in df.iterrows():
-                strike = float(row['preco_exercicio'])
-                option_type = str(row['tipo_opcao']).upper()
-                oi_total = int(row['qtd_total'])
-                oi_descoberto = int(row['qtd_descoberto'])
+            for item in data:
+                strike = float(item.get('preco_exercicio', 0))
+                option_type = item.get('tipo_opcao', '').upper()
+                oi_total = int(item.get('qtd_total', 0))
+                oi_descoberto = int(item.get('qtd_descoberto', 0))
+                oi_travado = int(item.get('qtd_trava', 0))
+                oi_coberto = int(item.get('qtd_coberto', 0))
                 
                 if strike > 0 and oi_total > 0:
-                    # ✅ CHAVE COMO STRING: "7.25_CALL"
-                    key = f"{strike}_{option_type}"
+                    key = (strike, 'CALL' if option_type == 'CALL' else 'PUT')
                     oi_breakdown[key] = {
-                        'strike': strike,
-                        'type': option_type,
                         'total': oi_total,
                         'descoberto': oi_descoberto,
-                        'travado': int(row['qtd_trava']),
-                        'coberto': int(row['qtd_coberto'])
+                        'travado': oi_travado,
+                        'coberto': oi_coberto
                     }
             
             logging.info(f"OI breakdown DEX: {len(oi_breakdown)} strikes")
@@ -302,7 +226,6 @@ class DataProvider:
         except Exception as e:
             logging.error(f"Erro Floqui: {e}")
             return {}, None
-
 
 class DEXCalculator:
     
@@ -328,43 +251,79 @@ class DEXCalculator:
             calls = strike_options[strike_options['type'] == 'CALL']
             puts = strike_options[strike_options['type'] == 'PUT']
             
-            call_data = None
-            put_data = None
-            has_real_call = False
-            has_real_put = False
+            # PRINT AQUI - Strike sendo processado
+            if strike >= 150 and strike <= 155:  # Foco no strike problemático
+                print(f"\n=== STRIKE {strike} ===")
+                print(f"Calls encontradas: {len(calls)}")
+                print(f"Puts encontradas: {len(puts)}")
             
-            # ✅ BUSCA COM CHAVE STRING
-            if len(calls) > 0:
-                call_key = f"{float(strike)}_CALL"
+            call_data = {}
+            put_data = {}
+            
+            if not calls.empty:
+                call_key = (float(strike), 'CALL')
                 if call_key in oi_breakdown:
                     call_data = oi_breakdown[call_key]
-                    has_real_call = True
+                else:
+                    volume_estimate = len(calls) * 100
+                    call_data = {
+                        'total': volume_estimate * 3,
+                        'descoberto': volume_estimate * 2,
+                        'travado': volume_estimate,
+                        'coberto': volume_estimate
+                    }
             
-            if len(puts) > 0:
-                put_key = f"{float(strike)}_PUT"
+            if not puts.empty:
+                put_key = (float(strike), 'PUT')
                 if put_key in oi_breakdown:
                     put_data = oi_breakdown[put_key]
-                    has_real_put = True
+                else:
+                    volume_estimate = len(puts) * 100
+                    put_data = {
+                        'total': volume_estimate * 3,
+                        'descoberto': volume_estimate * 2,
+                        'travado': volume_estimate,
+                        'coberto': volume_estimate
+                    }
             
-            if not (has_real_call or has_real_put):
-                continue
-            
-            call_dex = 0.0
-            call_dex_descoberto = 0.0
-            if call_data and len(calls) > 0:
+            call_dex = 0
+            call_dex_descoberto = 0
+            if call_data and not calls.empty:
                 avg_delta = float(calls['delta'].mean())
                 call_dex = avg_delta * call_data['total'] * 100
                 call_dex_descoberto = avg_delta * call_data['descoberto'] * 100
+                
+                # PRINT DETALHADO CALLS
+                if strike >= 150 and strike <= 155:
+                    print(f"CALLS - Delta médio: {avg_delta:.4f}")
+                    print(f"CALLS - OI total: {call_data['total']}")
+                    print(f"CALLS - OI descoberto: {call_data['descoberto']}")
+                    print(f"CALLS - DEX total: {call_dex:,.0f}")
+                    print(f"CALLS - DEX descoberto: {call_dex_descoberto:,.0f}")
             
-            put_dex = 0.0
-            put_dex_descoberto = 0.0
-            if put_data and len(puts) > 0:
+            put_dex = 0
+            put_dex_descoberto = 0
+            if put_data and not puts.empty:
                 avg_delta = float(puts['delta'].mean())
                 put_dex = avg_delta * put_data['total'] * 100
                 put_dex_descoberto = avg_delta * put_data['descoberto'] * 100
+                
+                # PRINT DETALHADO PUTS
+                if strike >= 150 and strike <= 155:
+                    print(f"PUTS - Delta médio: {avg_delta:.4f}")
+                    print(f"PUTS - OI total: {put_data['total']}")
+                    print(f"PUTS - OI descoberto: {put_data['descoberto']}")
+                    print(f"PUTS - DEX total: {put_dex:,.0f}")
+                    print(f"PUTS - DEX descoberto: {put_dex_descoberto:,.0f}")
             
             total_dex = call_dex + put_dex
             total_dex_descoberto = call_dex_descoberto + put_dex_descoberto
+            
+            # PRINT RESULTADO FINAL
+            if strike >= 150 and strike <= 155:
+                print(f"TOTAL DEX: {total_dex:,.0f}")
+                print(f"TOTAL DEX DESCOBERTO: {total_dex_descoberto:,.0f}")
+                print(f"=== FIM STRIKE {strike} ===\n")
             
             dex_data.append({
                 'strike': float(strike),
@@ -374,18 +333,17 @@ class DEXCalculator:
                 'call_dex_descoberto': float(call_dex_descoberto),
                 'put_dex_descoberto': float(put_dex_descoberto),
                 'total_dex_descoberto': float(total_dex_descoberto),
-                'call_oi_total': int(call_data['total'] if call_data else 0),
-                'put_oi_total': int(put_data['total'] if put_data else 0),
-                'call_oi_descoberto': int(call_data['descoberto'] if call_data else 0),
-                'put_oi_descoberto': int(put_data['descoberto'] if put_data else 0),
-                'has_real_data': has_real_call or has_real_put
+                'call_oi_total': int(call_data.get('total', 0)),
+                'put_oi_total': int(put_data.get('total', 0)),
+                'call_oi_descoberto': int(call_data.get('descoberto', 0)),
+                'put_oi_descoberto': int(put_data.get('descoberto', 0)),
+                'has_real_data': (float(strike), 'CALL') in oi_breakdown or (float(strike), 'PUT') in oi_breakdown
             })
         
         result_df = pd.DataFrame(dex_data).sort_values('strike')
-        logging.info(f"DEX calculado para {len(result_df)} strikes com dados reais")
+        logging.info(f"DEX calculado para {len(result_df)} strikes")
         
         return result_df
-
 
 class DirectionalPressureDetector:
     """Detector de pressão direcional baseada em DEX"""
@@ -427,7 +385,6 @@ class DirectionalPressureDetector:
             'market_bias': 'BULLISH' if net_pressure > 1000 else 'BEARISH' if net_pressure < -1000 else 'NEUTRAL'
         }
 
-
 class DEXAnalyzer:
     def __init__(self):
         self.data_provider = DataProvider()
@@ -438,11 +395,11 @@ class DEXAnalyzer:
         if dex_df.empty:
             return None, None
         
-        # FILTRAR APENAS DADOS REAIS
+        # FILTRAR APENAS DADOS REAIS (IGUAL AO GEX)
         dex_real_data = dex_df[dex_df['has_real_data'] == True].copy()
         
         if len(dex_real_data) < 2:
-            logging.warning("Menos de 2 strikes com dados reais do banco (DEX)")
+            logging.warning("Menos de 2 strikes com dados reais do Floqui (DEX)")
             return None, None
         
         logging.info(f"DEX Targets: {len(dex_real_data)} strikes com dados reais de {len(dex_df)}")
@@ -510,15 +467,15 @@ class DEXAnalyzer:
         fig.add_trace(go.Bar(x=strikes, y=call_dex_values, marker_color='#22c55e', showlegend=False), row=2, col=2)
         fig.add_trace(go.Bar(x=strikes, y=put_dex_values, marker_color='#ef4444', showlegend=False), row=2, col=2)
         
-        # 5. DEX Cumulativo - COM PREENCHIMENTO
+        # 5. DEX Cumulativo - COM PREENCHIMENTO IGUAL À IMAGEM
         cumulative = np.cumsum(total_dex_values).tolist()
         fig.add_trace(go.Scatter(
             x=strikes, 
             y=cumulative, 
             mode='lines', 
             line=dict(color='#a855f7', width=4),
-            fill='tozeroy',
-            fillcolor='rgba(168, 85, 247, 0.3)',
+            fill='tozeroy',  # Preenchimento até o zero
+            fillcolor='rgba(168, 85, 247, 0.3)',  # Cor roxa com transparência
             showlegend=False
         ), row=3, col=1)
         
@@ -538,6 +495,13 @@ class DEXAnalyzer:
         for row in range(1, 4):
             for col in range(1, 3):
                 fig.add_vline(x=spot_price, line=dict(color='#fbbf24', width=2, dash='dash'), row=row, col=col)
+                
+                # Linhas das maiores concentrações
+                # if max_calls_strike:
+                #     fig.add_vline(x=max_calls_strike, line=dict(color='#22c55e', width=2, dash='dot'), row=row, col=col)
+                # if max_puts_strike:
+                #     fig.add_vline(x=max_puts_strike, line=dict(color='#ef4444', width=2, dash='dot'), row=row, col=col)
+                
                 fig.add_hline(y=0, line=dict(color='rgba(255,255,255,0.3)', width=1), row=row, col=col)
         
         fig.update_layout(
@@ -582,8 +546,10 @@ class DEXAnalyzer:
         pressure_detector = DirectionalPressureDetector()
         pressure_levels = pressure_detector.find_max_pressure_levels(dex_df, spot_price)
         
+        # CORREÇÃO AQUI - Buscar os targets primeiro
         max_calls_strike, max_puts_strike = self.find_targets(dex_df, spot_price)
         
+        # Agora chamar com parâmetros corretos
         plot_json = self.create_6_charts(
             dex_df, 
             spot_price, 
@@ -611,7 +577,6 @@ class DEXAnalyzer:
             'success': True
         }
 
-
 class DeltaService:
     def __init__(self):
         self.analyzer = DEXAnalyzer()
@@ -626,27 +591,51 @@ class DeltaService:
             pressure_levels = result.get('pressure_levels', {})
             net_dex_descoberto = result['net_dex_descoberto']
             
-            # Calcular pressão restante
-            dex_df = result.get('dex_df', None)
+            # Calcular pressão restante automaticamente
+            dex_df = result.get('dex_df', None)  # Precisa vir do analyzer
             spot_price = result['spot_price']
+            
+            print(f"=== DEBUG PRESSÃO RESTANTE ===")
+            print(f"dex_df existe: {dex_df is not None}")
+            print(f"spot_price: {spot_price}")
             
             remaining_pressure = 0
             if dex_df is not None and len(dex_df) > 0:
-                if 'total_dex' in dex_df.columns:
+                print(f"dex_df length: {len(dex_df)}")
+                print(f"colunas dex_df: {list(dex_df.columns)}")
+                
+                if 'total_dex_descoberto' in dex_df.columns:
                     cumulative_values = np.cumsum(dex_df['total_dex'].values)
+                    print(f"cumulative_values: {cumulative_values[:5]}...")  
+                    print(f"max_cumulative: {max(cumulative_values) if len(cumulative_values) > 0 else 0}")
+                    
+                    current_spot_idx = None
                     max_cumulative = max(cumulative_values) if len(cumulative_values) > 0 else 0
                     
                     # Encontrar índice mais próximo do spot price
-                    current_spot_idx = None
                     for i, strike in enumerate(dex_df['strike'].values):
                         if current_spot_idx is None or abs(strike - spot_price) < abs(dex_df['strike'].iloc[current_spot_idx] - spot_price):
                             current_spot_idx = i
                     
+                    print(f"current_spot_idx: {current_spot_idx}")
+                    
+                    # Calcular pressão restante
                     if current_spot_idx is not None:
                         current_cumulative = cumulative_values[current_spot_idx]
                         remaining_pressure = max_cumulative - current_cumulative
+                        print(f"current_cumulative: {current_cumulative}")
+                        print(f"remaining_pressure: {remaining_pressure}")
+                    else:
+                        print("current_spot_idx é None")
+                else:
+                    print("Coluna 'total_dex_descoberto' não encontrada")
+            else:
+                print("dex_df é None ou vazio")
             
-            # ESTRUTURA IGUAL AO GEX
+            print(f"remaining_pressure final: {remaining_pressure}")
+            print(f"=== FIM DEBUG ===")
+            
+            # FAZER IGUAL O GEX - COLOCAR TUDO DENTRO DE UM OBJETO
             dex_levels = {
                 'total_dex': result['net_dex'],
                 'total_dex_descoberto': net_dex_descoberto,
@@ -658,7 +647,7 @@ class DeltaService:
             api_result = {
                 'ticker': ticker.replace('.SA', ''),
                 'spot_price': result['spot_price'],
-                'dex_levels': dex_levels,
+                'dex_levels': dex_levels,  # TUDO JUNTO COMO NO GEX
                 'plot_json': result['plot_json'],
                 'options_count': result['strikes_analyzed'],
                 'data_quality': {

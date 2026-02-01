@@ -1,5 +1,5 @@
 """
-vega_service.py - VEX Analysis COMPLETO
+vega_service.py - VEX Analysis COM DADOS DO BANCO POSTGRESQL
 """
 
 import numpy as np
@@ -13,8 +13,10 @@ import os
 from dotenv import load_dotenv
 from plotly.subplots import make_subplots
 import plotly.graph_objects as go
+from sqlalchemy import create_engine, text
 
 warnings.filterwarnings('ignore')
+logging.basicConfig(level=logging.INFO)
 load_dotenv()
 
 def convert_to_json_serializable(obj):
@@ -43,8 +45,10 @@ def convert_to_json_serializable(obj):
     except:
         return None
 
+
 class ExpirationManager:
-    def __init__(self):
+    def __init__(self, db_engine):
+        self.db_engine = db_engine
         self.available_expirations = {
             "20251219": {"date": datetime(2025, 12, 19), "desc": "19 Dez 25 - M"},
             "20260116": {"date": datetime(2026, 1, 16),  "desc": "16 Jan 26 - M"},
@@ -62,14 +66,30 @@ class ExpirationManager:
         }
     
     def test_data_availability(self, symbol, expiration_code):
+        """Testa disponibilidade no BANCO DE DADOS"""
         try:
-            url = f"https://floqui.com.br/api/posicoes_em_aberto/{symbol.lower()}/{expiration_code}"
-            response = requests.get(url, timeout=10)
-            if response.status_code == 200:
-                data = response.json()
-                return len(data) if data else 0
-            return 0
-        except:
+            exp_date = datetime.strptime(expiration_code, '%Y%m%d')
+            
+            query = text("""
+                SELECT COUNT(*) as total
+                FROM opcoes_b3
+                WHERE ticker = :symbol
+                AND vencimento = :vencimento
+                AND data_referencia = (SELECT MAX(data_referencia) FROM opcoes_b3)
+            """)
+            
+            with self.db_engine.connect() as conn:
+                result = conn.execute(query, {
+                    'symbol': symbol,
+                    'vencimento': exp_date
+                })
+                row = result.fetchone()
+                count = row[0] if row else 0
+            
+            return count
+            
+        except Exception as e:
+            logging.error(f"Erro ao testar disponibilidade: {e}")
             return 0
     
     def get_available_expirations_list(self, symbol):
@@ -101,6 +121,7 @@ class ExpirationManager:
                     }
         return None
 
+
 class DataProvider:
     def __init__(self):
         self.token = os.getenv('OPLAB_TOKEN')
@@ -113,7 +134,42 @@ class DataProvider:
             'Access-Token': self.token,
             'Content-Type': 'application/json'
         }
-        self.expiration_manager = ExpirationManager()
+        
+        # ✅ CONEXÃO COM BANCO DE DADOS - RAILWAY POSTGRESQL
+        DATABASE_URL = os.getenv('DATABASE_URL')
+        
+        if not DATABASE_URL:
+            DB_HOST = os.getenv('PGHOST') or os.getenv('DB_HOST', 'localhost')
+            DB_NAME = os.getenv('PGDATABASE') or os.getenv('DB_NAME', 'railway')
+            DB_USER = os.getenv('PGUSER') or os.getenv('DB_USER', 'postgres')
+            DB_PASSWORD = os.getenv('PGPASSWORD') or os.getenv('DB_PASSWORD', '')
+            DB_PORT = os.getenv('PGPORT') or os.getenv('DB_PORT', '5432')
+            
+            # Valida que a porta é um número
+            try:
+                DB_PORT = str(int(DB_PORT))
+            except (ValueError, TypeError):
+                logging.error(f"❌ DB_PORT inválido: '{DB_PORT}' - usando 5432")
+                DB_PORT = '5432'
+            
+            DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+        
+        logging.info(f"🔌 Conectando ao banco PostgreSQL (VEX)...")
+        
+        try:
+            self.db_engine = create_engine(DATABASE_URL)
+            
+            # TESTA CONEXÃO
+            with self.db_engine.connect() as conn:
+                result = conn.execute(text("SELECT COUNT(*) FROM opcoes_b3"))
+                count = result.fetchone()[0]
+                logging.info(f"✅ Conexão OK (VEX) - {count:,} registros na opcoes_b3")
+                
+        except Exception as e:
+            logging.error(f"❌ Erro ao conectar (VEX): {e}")
+            raise
+        
+        self.expiration_manager = ExpirationManager(self.db_engine)
     
     def get_spot_price(self, symbol):
         try:
@@ -177,6 +233,7 @@ class DataProvider:
             return pd.DataFrame()
     
     def get_floqui_oi_breakdown(self, symbol, expiration_code=None):
+        """BUSCA DO BANCO DE DADOS POSTGRESQL - Mantém nome da função"""
         try:
             if expiration_code:
                 expiration = {
@@ -190,34 +247,54 @@ class DataProvider:
                 logging.warning("Nenhum vencimento disponível")
                 return {}, None
             
-            url = f"https://floqui.com.br/api/posicoes_em_aberto/{symbol.lower()}/{expiration['code']}"
-            response = requests.get(url, timeout=15)
+            exp_date = datetime.strptime(expiration['code'], '%Y%m%d')
             
-            if response.status_code != 200:
-                logging.error(f"Erro na API Floqui: {response.status_code}")
+            query = text("""
+                SELECT 
+                    preco_exercicio,
+                    tipo_opcao,
+                    qtd_total,
+                    qtd_descoberto,
+                    qtd_trava,
+                    qtd_coberto
+                FROM opcoes_b3
+                WHERE ticker = :symbol
+                AND vencimento = :vencimento
+                AND data_referencia = (
+                    SELECT MAX(data_referencia) 
+                    FROM opcoes_b3 
+                    WHERE ticker = :symbol
+                )
+                ORDER BY preco_exercicio
+            """)
+            
+            df = pd.read_sql(query, self.db_engine, params={
+                'symbol': symbol,
+                'vencimento': exp_date
+            })
+            
+            if df.empty:
+                logging.warning(f"Nenhum dado encontrado no banco para {symbol}")
                 return {}, expiration
             
-            data = response.json()
-            if not data:
-                logging.warning("Nenhum dado retornado do Floqui")
-                return {}, expiration
-            
+            # ✅ NOVA ESTRUTURA - USA STRING COMO CHAVE
             oi_breakdown = {}
-            for item in data:
-                strike = float(item.get('preco_exercicio', 0))
-                option_type = item.get('tipo_opcao', '').upper()
-                oi_total = int(item.get('qtd_total', 0))
-                oi_descoberto = int(item.get('qtd_descoberto', 0))
-                oi_travado = int(item.get('qtd_trava', 0))
-                oi_coberto = int(item.get('qtd_coberto', 0))
+            for _, row in df.iterrows():
+                strike = float(row['preco_exercicio'])
+                option_type = str(row['tipo_opcao']).upper()
+                oi_total = int(row['qtd_total'])
+                oi_descoberto = int(row['qtd_descoberto'])
                 
                 if strike > 0 and oi_total > 0:
-                    key = (strike, 'CALL' if option_type == 'CALL' else 'PUT')
+                    # ✅ CHAVE COMO STRING: "7.25_CALL"
+                    key = f"{strike}_{option_type}"
                     oi_breakdown[key] = {
+                        'strike': strike,
+                        'type': option_type,
                         'total': oi_total,
                         'descoberto': oi_descoberto,
-                        'travado': oi_travado,
-                        'coberto': oi_coberto
+                        'travado': int(row['qtd_trava']),
+                        'coberto': int(row['qtd_coberto'])
                     }
             
             logging.info(f"OI breakdown VEX: {len(oi_breakdown)} strikes")
@@ -247,7 +324,6 @@ class DataProvider:
             df = pd.DataFrame(data)
             df['time'] = pd.to_datetime(df['time'])
             
-            
             valid_data = df[
                 (df['volatility'] > 0) &
                 (df['volatility'] < 300) &
@@ -257,7 +333,6 @@ class DataProvider:
             
             if valid_data.empty:
                 return pd.DataFrame()
-            
             
             valid_data['date'] = valid_data['time'].dt.date
             
@@ -300,49 +375,41 @@ class VEXCalculator:
             
             iv_context = self._calculate_iv_context(strike, historical_df) if historical_df is not None else {}
             
-            call_data = {}
-            put_data = {}
+            call_data = None
+            put_data = None
+            has_real_call = False
+            has_real_put = False
             
-            if not calls.empty:
-                call_key = (float(strike), 'CALL')
+            # ✅ BUSCA COM CHAVE STRING
+            if len(calls) > 0:
+                call_key = f"{float(strike)}_CALL"
                 if call_key in oi_breakdown:
                     call_data = oi_breakdown[call_key]
-                else:
-                    volume_estimate = len(calls) * 100
-                    call_data = {
-                        'total': volume_estimate * 3,
-                        'descoberto': volume_estimate * 2,
-                        'travado': volume_estimate,
-                        'coberto': volume_estimate
-                    }
+                    has_real_call = True
             
-            if not puts.empty:
-                put_key = (float(strike), 'PUT')
+            if len(puts) > 0:
+                put_key = f"{float(strike)}_PUT"
                 if put_key in oi_breakdown:
                     put_data = oi_breakdown[put_key]
-                else:
-                    volume_estimate = len(puts) * 100
-                    put_data = {
-                        'total': volume_estimate * 3,
-                        'descoberto': volume_estimate * 2,
-                        'travado': volume_estimate,
-                        'coberto': volume_estimate
-                    }
+                    has_real_put = True
             
-            call_vex = 0
-            call_vex_descoberto = 0
-            call_iv = 0
-            if call_data and not calls.empty:
+            if not (has_real_call or has_real_put):
+                continue
+            
+            call_vex = 0.0
+            call_vex_descoberto = 0.0
+            call_iv = 0.0
+            if call_data and len(calls) > 0:
                 avg_vega = float(calls['vega'].mean())
                 avg_iv = float(calls['volatility'].mean())
                 call_vex = avg_vega * call_data['total'] * 100
                 call_vex_descoberto = avg_vega * call_data['descoberto'] * 100
                 call_iv = avg_iv
             
-            put_vex = 0
-            put_vex_descoberto = 0
-            put_iv = 0
-            if put_data and not puts.empty:
+            put_vex = 0.0
+            put_vex_descoberto = 0.0
+            put_iv = 0.0
+            if put_data and len(puts) > 0:
                 avg_vega = float(puts['vega'].mean())
                 avg_iv = float(puts['volatility'].mean())
                 put_vex = avg_vega * put_data['total'] * 100
@@ -352,7 +419,7 @@ class VEXCalculator:
             total_vex = call_vex + put_vex
             total_vex_descoberto = call_vex_descoberto + put_vex_descoberto
             
-            avg_iv = 0
+            avg_iv = 0.0
             if call_iv > 0 and put_iv > 0:
                 avg_iv = (call_iv + put_iv) / 2
             elif call_iv > 0:
@@ -368,10 +435,10 @@ class VEXCalculator:
                 'call_vex_descoberto': float(call_vex_descoberto),
                 'put_vex_descoberto': float(put_vex_descoberto),
                 'total_vex_descoberto': float(total_vex_descoberto),
-                'call_oi_total': int(call_data.get('total', 0)),
-                'put_oi_total': int(put_data.get('total', 0)),
-                'call_oi_descoberto': int(call_data.get('descoberto', 0)),
-                'put_oi_descoberto': int(put_data.get('descoberto', 0)),
+                'call_oi_total': int(call_data['total'] if call_data else 0),
+                'put_oi_total': int(put_data['total'] if put_data else 0),
+                'call_oi_descoberto': int(call_data['descoberto'] if call_data else 0),
+                'put_oi_descoberto': int(put_data['descoberto'] if put_data else 0),
                 'call_iv': float(call_iv),
                 'put_iv': float(put_iv),
                 'avg_iv': float(avg_iv),
@@ -380,7 +447,7 @@ class VEXCalculator:
                 'iv_10d_max': float(iv_context.get('iv_10d_max', avg_iv * 1.2)),
                 'iv_percentile': float(iv_context.get('iv_percentile', 50)),
                 'iv_status': iv_context.get('iv_status', 'NEUTRAL'),
-                'has_real_data': (float(strike), 'CALL') in oi_breakdown or (float(strike), 'PUT') in oi_breakdown
+                'has_real_data': has_real_call or has_real_put
             })
         
         result_df = pd.DataFrame(vex_data).sort_values('strike')
@@ -393,7 +460,6 @@ class VEXCalculator:
         if historical_df.empty:
             return {}
         
-        #  BUSCAR DADOS HISTÓRICOS DESSE STRIKE (±1)
         strike_data = historical_df[
             (historical_df['strike'] >= strike - 1) &
             (historical_df['strike'] <= strike + 1)
@@ -402,31 +468,25 @@ class VEXCalculator:
         if strike_data.empty:
             return {}
         
-        #  PEGAR VALORES DE IV DIÁRIA (CADA LINHA = 1 DIA)
         if 'iv_daily_avg' in strike_data.columns:
             iv_values = strike_data['iv_daily_avg'].values
         else:
             iv_values = strike_data['volatility'].values
         
-        # Remover outliers
         iv_values = iv_values[iv_values < 200]
         
         if len(iv_values) == 0:
             return {}
         
-        #  CALCULAR ESTATÍSTICAS HISTÓRICAS
-        iv_10d_avg = float(np.mean(iv_values))  # Média dos últimos N dias
+        iv_10d_avg = float(np.mean(iv_values))
         iv_10d_min = float(np.min(iv_values))
         iv_10d_max = float(np.max(iv_values))
         
-        #  IV ATUAL = ÚLTIMO VALOR (MAIS RECENTE)
-        current_iv = float(iv_values[-1])  # Último valor é o mais recente
+        current_iv = float(iv_values[-1])
         iv_percentile = float(np.percentile(iv_values, 50))
         
-        #  LOG PARA DEBUG
         logging.info(f"Strike {strike:.2f}: IV atual={current_iv:.1f}%, Média 10d={iv_10d_avg:.1f}%, Valores={len(iv_values)} dias")
         
-        # Classificar status
         if current_iv > iv_10d_avg * 1.3:
             iv_status = 'MUITO_ALTA'
         elif current_iv > iv_10d_avg * 1.1:
@@ -454,44 +514,34 @@ class VolatilityRegimeDetector:
         if vex_df.empty:
             return None
         
-        #  PEGANDO IV ATM (STRIKE MAIS PRÓXIMO DO SPOT)
         vex_df_copy = vex_df.copy()
         vex_df_copy['distance_from_spot'] = abs(vex_df_copy['strike'] - spot_price)
         atm_idx = vex_df_copy['distance_from_spot'].idxmin()
         
-        # IV do strike ATM (mais importante)
         atm_strike = float(vex_df_copy.loc[atm_idx, 'strike'])
         atm_iv = float(vex_df_copy.loc[atm_idx, 'avg_iv'])
         atm_iv_10d_avg = float(vex_df_copy.loc[atm_idx, 'iv_10d_avg'])
         
-        # Log para debug
         logging.info(f"ATM SELECIONADO: Strike {atm_strike:.2f} (Spot={spot_price:.2f})")
         logging.info(f"ATM IV: atual={atm_iv:.1f}%, média 10d={atm_iv_10d_avg:.1f}%")
         
-        # IV ponderada por OI (para contexto geral)
         total_oi = (vex_df_copy['call_oi_total'] + vex_df_copy['put_oi_total']).sum()
         if total_oi > 0:
             weighted_iv = float((vex_df_copy['avg_iv'] * (vex_df_copy['call_oi_total'] + vex_df_copy['put_oi_total'])).sum() / total_oi)
         else:
             weighted_iv = float(vex_df_copy['avg_iv'].mean())
         
-        # USAR ATM COMO IV ATUAL
         current_iv = atm_iv if atm_iv > 0 else weighted_iv
         
-        # VEX totais
         total_vex = float(vex_df_copy['total_vex'].sum())
         total_vex_descoberto = float(vex_df_copy['total_vex_descoberto'].sum())
         
-        # Strike de máximo VEX
         max_vex_idx = vex_df_copy['total_vex'].idxmax()
         max_vex_strike = float(vex_df_copy.loc[max_vex_idx, 'strike'])
         
-        iv_diff_pp = current_iv - atm_iv_10d_avg  # Pontos percentuais
-    
-        # Também calcular a variação percentual (para informação)
+        iv_diff_pp = current_iv - atm_iv_10d_avg
         iv_diff_pct = ((current_iv - atm_iv_10d_avg) / atm_iv_10d_avg) * 100 if atm_iv_10d_avg > 0 else 0
         
-        # Tendência baseada em pontos percentuais
         if iv_diff_pp > 2:
             iv_trend = 'ALTA'
             iv_trend_description = f'IV {iv_diff_pp:+.1f} p.p. acima da média 10D'
@@ -502,11 +552,9 @@ class VolatilityRegimeDetector:
             iv_trend = 'ESTAVEL'
             iv_trend_description = 'IV dentro da faixa normal'
         
-        #  CLASSIFICAÇÃO DE RISCO BASEADA EM PONTOS PERCENTUAIS
         abs_iv_diff_pp = abs(iv_diff_pp)
         
         if abs_iv_diff_pp > 10:
-            # IV está 10+ pontos percentuais fora da média
             volatility_risk = 'HIGH'
             if iv_diff_pp > 0:
                 interpretation = f'IV muito inflada (+{iv_diff_pp:.1f} p.p.) - Alto risco de compressão'
@@ -514,7 +562,6 @@ class VolatilityRegimeDetector:
                 interpretation = f'IV muito comprimida ({iv_diff_pp:.1f} p.p.) - Alto risco de explosão'
         
         elif abs_iv_diff_pp > 5:
-            # IV está 5-10 pontos percentuais fora da média
             volatility_risk = 'MODERATE'
             if iv_diff_pp > 0:
                 interpretation = f'IV inflada (+{iv_diff_pp:.1f} p.p.) - Risco moderado de compressão'
@@ -522,7 +569,6 @@ class VolatilityRegimeDetector:
                 interpretation = f'IV comprimida ({iv_diff_pp:.1f} p.p.) - Risco moderado de ajuste'
         
         else:
-            # IV está dentro de ±5 pontos percentuais
             volatility_risk = 'LOW'
             interpretation = 'IV próxima da média histórica - Baixo risco de mudança brusca'
         
@@ -542,6 +588,7 @@ class VolatilityRegimeDetector:
             'volatility_risk': volatility_risk,
             'interpretation': interpretation
         }
+
 
 class VEXAnalyzer:
     def __init__(self):
@@ -710,6 +757,8 @@ class VEXAnalyzer:
         return fig.to_json()
     
     def analyze(self, symbol, expiration_code=None):
+        """Análise principal VEX"""
+        logging.info(f"INICIANDO ANALISE VEX - {symbol}")
                         
         spot_price = self.data_provider.get_spot_price(symbol)
         if not spot_price:
@@ -729,9 +778,6 @@ class VEXAnalyzer:
         
         vol_regime = self.vol_detector.analyze_volatility_regime(vex_df, spot_price)
         
-        #  REMOVA ESTA LINHA SE EXISTIR:
-        # vol_regime['iv_context'] = self._analyze_iv_context(vex_df, spot_price)
-        
         vol_zones = self.find_volatility_zones(vex_df, spot_price)
         
         plot_json = self.create_6_charts(vex_df, spot_price, symbol, vol_zones, expiration_info)
@@ -739,42 +785,13 @@ class VEXAnalyzer:
         return {
             'symbol': symbol,
             'spot_price': spot_price,
-            'vol_regime': vol_regime,  # 👈 JÁ TEM TUDO AQUI DENTRO
+            'vol_regime': vol_regime,
             'vol_zones': vol_zones,
             'strikes_analyzed': len(vex_df),
             'expiration': expiration_info,
             'plot_json': plot_json,
             'real_data_count': int(vex_df['has_real_data'].sum()),
             'success': True
-        }
-
-    def _analyze_iv_context(self, vex_df, spot_price):
-        """Análise do contexto geral de IV"""
-        if vex_df.empty:
-            return {}
-        
-        
-        vex_df['distance_from_spot'] = abs(vex_df['strike'] - spot_price)
-        atm_idx = vex_df['distance_from_spot'].idxmin()
-        
-        current_avg = float(vex_df.loc[atm_idx, 'avg_iv'])
-        historical_avg = float(vex_df.loc[atm_idx, 'iv_10d_avg'])
-        
-        # Calcular tendência
-        diff_pct = ((current_avg - historical_avg) / historical_avg) * 100
-        
-        if diff_pct > 5:
-            iv_trend = 'ALTA'
-        elif diff_pct < -5:
-            iv_trend = 'BAIXA'
-        else:
-            iv_trend = 'ESTAVEL'
-        
-        return {
-            'current_avg_iv': current_avg,
-            'historical_avg_iv': historical_avg,
-            'iv_trend': iv_trend,
-            'iv_distortion_pct': diff_pct
         }
     
     def find_volatility_zones(self, vex_df, spot_price):
