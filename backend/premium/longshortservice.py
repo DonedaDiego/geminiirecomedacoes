@@ -79,7 +79,7 @@ SETORES = {
    "RENT3": "Diversos",
    "SANB11": "Intermediários Financeiros",
    "SANB4": "Intermediários Financeiros",
-   "SBSP3": "Água e Saneamento",
+   "3": "Água e Saneamento",
    "SUZB3": "Madeira e Papel",
    "VBBR3": "Petróleo, Gás e Biocombustíveis",
    "VALE3": "Mineração",
@@ -96,7 +96,7 @@ def obter_top_50_acoes_brasileiras():
       "CPFE3",  "CPLE5", "CSAN3", "CSMG3", "CSNA3", "CXSE3", "CYRE3",  "AXIA3", "AXIA6", 
       "EGIE3", "EMBJ3", "ENEV3", "ENGI11", "ENGI3", "ENGI4", "EQTL3", "GGBR3", "GGBR4", "GOAU4", "HAPV3", "HYPE3", 
       "ITSA3", "ITSA4", "ITUB3", "ITUB4", "KLBN11", "KLBN3", "KLBN4", "LREN3", "MDIA3",  "NEOE3","MBRF3",
-      "NATU3", "PETR3", "PETR4", "PRIO3", "PSSA3", "RAIL3", "RAIZ4", "RDOR3", "RENT3", "SANB11", "SANB4", "SBSP3", "SUZB3", 
+      "NATU3", "PETR3", "PETR4", "PRIO3", "PSSA3", "RAIL3", "RAIZ4", "RDOR3", "RENT3", "SANB11", "SANB4", "3", "SUZB3", 
       "VBBR3", "VALE3", "VIVT3", "WEGE3", "UGPA3"
     ]
 

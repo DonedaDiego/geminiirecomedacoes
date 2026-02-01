@@ -1,5 +1,5 @@
 """
-theta_service.py - TEX Analysis COMPLETO
+theta_service.py - TEX Analysis COM DADOS DO BANCO POSTGRESQL
 """
 
 import numpy as np
@@ -13,6 +13,7 @@ import os
 from dotenv import load_dotenv
 from plotly.subplots import make_subplots
 import plotly.graph_objects as go
+from sqlalchemy import create_engine, text
 
 warnings.filterwarnings('ignore')
 logging.basicConfig(level=logging.INFO)
@@ -44,8 +45,10 @@ def convert_to_json_serializable(obj):
     except:
         return None
 
+
 class ExpirationManager:
-    def __init__(self):
+    def __init__(self, db_engine):
+        self.db_engine = db_engine
         self.available_expirations = {
             "20251219": {"date": datetime(2025, 12, 19), "desc": "19 Dez 25 - M"},
             "20260116": {"date": datetime(2026, 1, 16),  "desc": "16 Jan 26 - M"},
@@ -63,14 +66,30 @@ class ExpirationManager:
         }
     
     def test_data_availability(self, symbol, expiration_code):
+        """Testa disponibilidade no BANCO DE DADOS"""
         try:
-            url = f"https://floqui.com.br/api/posicoes_em_aberto/{symbol.lower()}/{expiration_code}"
-            response = requests.get(url, timeout=10)
-            if response.status_code == 200:
-                data = response.json()
-                return len(data) if data else 0
-            return 0
-        except:
+            exp_date = datetime.strptime(expiration_code, '%Y%m%d')
+            
+            query = text("""
+                SELECT COUNT(*) as total
+                FROM opcoes_b3
+                WHERE ticker = :symbol
+                AND vencimento = :vencimento
+                AND data_referencia = (SELECT MAX(data_referencia) FROM opcoes_b3)
+            """)
+            
+            with self.db_engine.connect() as conn:
+                result = conn.execute(query, {
+                    'symbol': symbol,
+                    'vencimento': exp_date
+                })
+                row = result.fetchone()
+                count = row[0] if row else 0
+            
+            return count
+            
+        except Exception as e:
+            logging.error(f"Erro ao testar disponibilidade: {e}")
             return 0
     
     def get_available_expirations_list(self, symbol):
@@ -104,6 +123,7 @@ class ExpirationManager:
                     }
         return None
 
+
 class DataProvider:
     def __init__(self):
         self.token = os.getenv('OPLAB_TOKEN')
@@ -116,7 +136,42 @@ class DataProvider:
             'Access-Token': self.token,
             'Content-Type': 'application/json'
         }
-        self.expiration_manager = ExpirationManager()
+        
+        # ✅ CONEXÃO COM BANCO DE DADOS - RAILWAY POSTGRESQL
+        DATABASE_URL = os.getenv('DATABASE_URL')
+        
+        if not DATABASE_URL:
+            DB_HOST = os.getenv('PGHOST') or os.getenv('DB_HOST', 'localhost')
+            DB_NAME = os.getenv('PGDATABASE') or os.getenv('DB_NAME', 'railway')
+            DB_USER = os.getenv('PGUSER') or os.getenv('DB_USER', 'postgres')
+            DB_PASSWORD = os.getenv('PGPASSWORD') or os.getenv('DB_PASSWORD', '')
+            DB_PORT = os.getenv('PGPORT') or os.getenv('DB_PORT', '5432')
+            
+            # Valida que a porta é um número
+            try:
+                DB_PORT = str(int(DB_PORT))
+            except (ValueError, TypeError):
+                logging.error(f"❌ DB_PORT inválido: '{DB_PORT}' - usando 5432")
+                DB_PORT = '5432'
+            
+            DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+        
+        logging.info(f"🔌 Conectando ao banco PostgreSQL (TEX)...")
+        
+        try:
+            self.db_engine = create_engine(DATABASE_URL)
+            
+            # TESTA CONEXÃO
+            with self.db_engine.connect() as conn:
+                result = conn.execute(text("SELECT COUNT(*) FROM opcoes_b3"))
+                count = result.fetchone()[0]
+                logging.info(f"✅ Conexão OK (TEX) - {count:,} registros na opcoes_b3")
+                
+        except Exception as e:
+            logging.error(f"❌ Erro ao conectar (TEX): {e}")
+            raise
+        
+        self.expiration_manager = ExpirationManager(self.db_engine)
     
     def get_spot_price(self, symbol):
         try:
@@ -179,6 +234,7 @@ class DataProvider:
             return pd.DataFrame()
     
     def get_floqui_oi_breakdown(self, symbol, expiration_code=None):
+        """BUSCA DO BANCO DE DADOS POSTGRESQL - Mantém nome da função"""
         try:
             if expiration_code:
                 expiration = {
@@ -194,34 +250,54 @@ class DataProvider:
                 logging.warning("Nenhum vencimento disponível")
                 return {}, None
             
-            url = f"https://floqui.com.br/api/posicoes_em_aberto/{symbol.lower()}/{expiration['code']}"
-            response = requests.get(url, timeout=15)
+            exp_date = datetime.strptime(expiration['code'], '%Y%m%d')
             
-            if response.status_code != 200:
-                logging.error(f"Erro na API Floqui: {response.status_code}")
+            query = text("""
+                SELECT 
+                    preco_exercicio,
+                    tipo_opcao,
+                    qtd_total,
+                    qtd_descoberto,
+                    qtd_trava,
+                    qtd_coberto
+                FROM opcoes_b3
+                WHERE ticker = :symbol
+                AND vencimento = :vencimento
+                AND data_referencia = (
+                    SELECT MAX(data_referencia) 
+                    FROM opcoes_b3 
+                    WHERE ticker = :symbol
+                )
+                ORDER BY preco_exercicio
+            """)
+            
+            df = pd.read_sql(query, self.db_engine, params={
+                'symbol': symbol,
+                'vencimento': exp_date
+            })
+            
+            if df.empty:
+                logging.warning(f"Nenhum dado encontrado no banco para {symbol}")
                 return {}, expiration
             
-            data = response.json()
-            if not data:
-                logging.warning("Nenhum dado retornado do Floqui")
-                return {}, expiration
-            
+            # ✅ NOVA ESTRUTURA - USA STRING COMO CHAVE
             oi_breakdown = {}
-            for item in data:
-                strike = float(item.get('preco_exercicio', 0))
-                option_type = item.get('tipo_opcao', '').upper()
-                oi_total = int(item.get('qtd_total', 0))
-                oi_descoberto = int(item.get('qtd_descoberto', 0))
-                oi_travado = int(item.get('qtd_trava', 0))
-                oi_coberto = int(item.get('qtd_coberto', 0))
+            for _, row in df.iterrows():
+                strike = float(row['preco_exercicio'])
+                option_type = str(row['tipo_opcao']).upper()
+                oi_total = int(row['qtd_total'])
+                oi_descoberto = int(row['qtd_descoberto'])
                 
                 if strike > 0 and oi_total > 0:
-                    key = (strike, 'CALL' if option_type == 'CALL' else 'PUT')
+                    # ✅ CHAVE COMO STRING: "7.25_CALL"
+                    key = f"{strike}_{option_type}"
                     oi_breakdown[key] = {
+                        'strike': strike,
+                        'type': option_type,
                         'total': oi_total,
                         'descoberto': oi_descoberto,
-                        'travado': oi_travado,
-                        'coberto': oi_coberto
+                        'travado': int(row['qtd_trava']),
+                        'coberto': int(row['qtd_coberto'])
                     }
             
             logging.info(f"OI breakdown TEX: {len(oi_breakdown)} strikes")
@@ -230,6 +306,7 @@ class DataProvider:
         except Exception as e:
             logging.error(f"Erro Floqui: {e}")
             return {}, None
+
 
 class TEXCalculator:
     def calculate_tex(self, oplab_df, oi_breakdown, spot_price):
@@ -254,49 +331,41 @@ class TEXCalculator:
             calls = strike_options[strike_options['type'] == 'CALL']
             puts = strike_options[strike_options['type'] == 'PUT']
             
-            call_data = {}
-            put_data = {}
+            call_data = None
+            put_data = None
+            has_real_call = False
+            has_real_put = False
             
-            if not calls.empty:
-                call_key = (float(strike), 'CALL')
+            # ✅ BUSCA COM CHAVE STRING
+            if len(calls) > 0:
+                call_key = f"{float(strike)}_CALL"
                 if call_key in oi_breakdown:
                     call_data = oi_breakdown[call_key]
-                else:
-                    volume_estimate = len(calls) * 100
-                    call_data = {
-                        'total': volume_estimate * 3,
-                        'descoberto': volume_estimate * 2,
-                        'travado': volume_estimate,
-                        'coberto': volume_estimate
-                    }
+                    has_real_call = True
             
-            if not puts.empty:
-                put_key = (float(strike), 'PUT')
+            if len(puts) > 0:
+                put_key = f"{float(strike)}_PUT"
                 if put_key in oi_breakdown:
                     put_data = oi_breakdown[put_key]
-                else:
-                    volume_estimate = len(puts) * 100
-                    put_data = {
-                        'total': volume_estimate * 3,
-                        'descoberto': volume_estimate * 2,
-                        'travado': volume_estimate,
-                        'coberto': volume_estimate
-                    }
+                    has_real_put = True
             
-            call_tex = 0
-            call_tex_descoberto = 0
-            call_days = 0
-            if call_data and not calls.empty:
+            if not (has_real_call or has_real_put):
+                continue
+            
+            call_tex = 0.0
+            call_tex_descoberto = 0.0
+            call_days = 0.0
+            if call_data and len(calls) > 0:
                 avg_theta = float(calls['theta'].mean())
                 avg_days = float(calls['days_to_maturity'].mean())
                 call_tex = avg_theta * call_data['total'] * 100
                 call_tex_descoberto = avg_theta * call_data['descoberto'] * 100
                 call_days = avg_days
             
-            put_tex = 0
-            put_tex_descoberto = 0
-            put_days = 0
-            if put_data and not puts.empty:
+            put_tex = 0.0
+            put_tex_descoberto = 0.0
+            put_days = 0.0
+            if put_data and len(puts) > 0:
                 avg_theta = float(puts['theta'].mean())
                 avg_days = float(puts['days_to_maturity'].mean())
                 put_tex = avg_theta * put_data['total'] * 100
@@ -307,7 +376,7 @@ class TEXCalculator:
             total_tex_descoberto = call_tex_descoberto + put_tex_descoberto
             
             # Dias até vencimento médio ponderado
-            weighted_days = 0
+            weighted_days = 0.0
             if call_data and put_data:
                 total_oi = call_data['total'] + put_data['total']
                 if total_oi > 0:
@@ -328,19 +397,20 @@ class TEXCalculator:
                 'call_tex_descoberto': float(call_tex_descoberto),
                 'put_tex_descoberto': float(put_tex_descoberto),
                 'total_tex_descoberto': float(total_tex_descoberto),
-                'call_oi_total': int(call_data.get('total', 0)),
-                'put_oi_total': int(put_data.get('total', 0)),
-                'call_oi_descoberto': int(call_data.get('descoberto', 0)),
-                'put_oi_descoberto': int(put_data.get('descoberto', 0)),
+                'call_oi_total': int(call_data['total'] if call_data else 0),
+                'put_oi_total': int(put_data['total'] if put_data else 0),
+                'call_oi_descoberto': int(call_data['descoberto'] if call_data else 0),
+                'put_oi_descoberto': int(put_data['descoberto'] if put_data else 0),
                 'days_to_expiration': float(weighted_days),
                 'time_decay_acceleration': float(time_decay_acceleration),
-                'has_real_data': (float(strike), 'CALL') in oi_breakdown or (float(strike), 'PUT') in oi_breakdown
+                'has_real_data': has_real_call or has_real_put
             })
         
         result_df = pd.DataFrame(tex_data).sort_values('strike')
         logging.info(f"TEX calculado para {len(result_df)} strikes")
         
         return result_df
+
 
 class TimeDecayRegimeDetector:
     def analyze_time_decay_regime(self, tex_df, spot_price):
@@ -394,6 +464,7 @@ class TimeDecayRegimeDetector:
             'market_interpretation': market_interpretation,
             'theta_regime': theta_regime
         }
+
 
 class TEXAnalyzer:
     def __init__(self):
@@ -522,10 +593,10 @@ class TEXAnalyzer:
         
         decay_regime = self.decay_detector.analyze_time_decay_regime(tex_df, spot_price)
         
-        # CORRIGIR OS DIAS AQUI - ADICIONAR ESTAS LINHAS:
+        # CORRIGIR OS DIAS - ADICIONAR ESTAS LINHAS:
         if expiration_info and 'days' in expiration_info:
             decay_regime['weighted_days'] = float(expiration_info['days'])
-            print(f"CORREÇÃO: Usando dias reais: {expiration_info['days']}")
+            logging.info(f"CORREÇÃO: Usando dias reais: {expiration_info['days']}")
         
         plot_json = self.create_6_charts(tex_df, spot_price, symbol, expiration_info)
         
@@ -539,6 +610,7 @@ class TEXAnalyzer:
             'real_data_count': int(tex_df['has_real_data'].sum()),
             'success': True
         }
+
 
 class ThetaService:
     def __init__(self):
@@ -568,7 +640,7 @@ class ThetaService:
             api_result = {
                 'ticker': ticker.replace('.SA', ''),
                 'spot_price': result['spot_price'],
-                'decay_regime': decay_regime,  # ← Agora inclui time_pressure
+                'decay_regime': decay_regime,
                 'plot_json': result['plot_json'],
                 'options_count': result['strikes_analyzed'],
                 'data_quality': {

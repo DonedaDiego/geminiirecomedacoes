@@ -180,11 +180,11 @@ class SwingTradeMachineLearningService:
                 nan_count = df[col].isna().sum()
                 if nan_count > 0:
                     print(f"Preenchendo {nan_count} NaN em {col}")
-                    df[col] = df[col].fillna(method='ffill').fillna(method='bfill')
+                    df[col] = df[col].ffill()
                     
                 # Se ainda há NaN, usar mediana
                 if df[col].isna().any():
-                    df[col] = df[col].fillna(df[col].median())
+                    df[col] = df[col].ffill()
 
         print("Indicadores calculados com sucesso")
         return df
@@ -380,7 +380,7 @@ class SwingTradeMachineLearningService:
         X_pred = X_pred.replace([np.inf, -np.inf], np.nan)
         
         # Para predição, vamos usar forward fill para NaN
-        X_pred = X_pred.fillna(method='ffill').fillna(method='bfill')
+        X_pred = X_pred.ffill().bfill()
         
         # Verificar se ainda há problemas
         for feature in features:

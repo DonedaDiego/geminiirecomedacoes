@@ -272,14 +272,13 @@ class HybridVolatilityBands:
        df['vol_regime'] = np.where(df['garch_vol'] > df['garch_vol'].rolling(60, min_periods=1).mean(), 1, 0)
        df['vol_percentile'] = df['garch_vol'].rolling(252, min_periods=20).rank(pct=True)
        
-       # Preencher NaNs com métodos apropriados
-       numeric_columns = df.select_dtypes(include=[np.number]).columns
+       numeric_columns = df.select_dtypes(include=[np.number]).columns       
        for col in numeric_columns:
-           if col in df.columns:
-               df[col].fillna(method='ffill', inplace=True)
-               df[col].fillna(method='bfill', inplace=True)
-               df[col].fillna(0, inplace=True)
-       
+             if col in df.columns:
+                df[col] = df[col].ffill()                              
+                df[col] = df[col].bfill()                                
+                df[col] = df[col].fillna(0)
+
        return self
    
    def train_xgboost(self):
@@ -533,11 +532,11 @@ class HybridVolatilityBands:
             df_temp['period_vol'] = df_temp['month_vol_previous']
         
         # Preencher valores ausentes (fallback)
-        df_temp['period_vol'].fillna(method='ffill', inplace=True)
-        df_temp['reference_price'].fillna(method='ffill', inplace=True)
-        df_temp['period_vol'].fillna(self.df['hybrid_vol'].mean(), inplace=True)
-        df_temp['reference_price'].fillna(self.df['Close'], inplace=True)
-        
+            df_temp['period_vol'] = df_temp['period_vol'].ffill()
+            df_temp['reference_price'] = df_temp['reference_price'].ffill()
+            df_temp['period_vol'] = df_temp['period_vol'].fillna(self.df['hybrid_vol'].mean())
+            df_temp['reference_price'] = df_temp['reference_price'].fillna(self.df['Close'])
+                
         # Multiplicadores para diferenciação visual das bandas
         regime_multiplier = {
             'D': 0.5,    # Bandas mais estreitas (muda todo dia)
@@ -567,8 +566,8 @@ class HybridVolatilityBands:
         
         for col in band_columns:
             if col in self.df.columns:
-                self.df[col].fillna(method='ffill', inplace=True)
-                self.df[col].fillna(method='bfill', inplace=True)
+                self.df[col] = self.df[col].ffill()
+                self.df[col] = self.df[col].bfill()
                 if self.df[col].isna().any():
                     vol_fallback = 0.02
                     multiplier_calc = 2 if '2sigma' in col else 4 if '4sigma' in col else 1

@@ -326,11 +326,12 @@ class VolatilityRegimesService:
             numeric_columns = df.select_dtypes(include=[np.number]).columns
             for col in numeric_columns:
                 if col in df.columns:
-                    df[col].fillna(method='ffill', inplace=True)
-                    df[col].fillna(method='bfill', inplace=True)
-                    df[col].fillna(0, inplace=True)
-            
+                    df[col] = df[col].ffill()                              
+                    df[col] = df[col].bfill()                                
+                    df[col] = df[col].fillna(0)
+
             return df
+        
         except Exception as e:
             self.logger.error(f"Erro na engenharia de features: {e}")
             return data
@@ -497,8 +498,8 @@ class VolatilityRegimesService:
                 how='left'
             )
             
-            df_temp['week_price_ref'].fillna(method='ffill', inplace=True)
-            df_temp['week_vol_ref'].fillna(method='ffill', inplace=True)
+            df_temp['week_price_ref'] = df_temp['week_price_ref'].ffill()
+            df_temp['week_vol_ref'] = df_temp['week_vol_ref'].ffill()
             
             df_temp['reference_price'] = df_temp['week_price_ref']
             df_temp['period_vol'] = df_temp['week_vol_ref']
@@ -523,10 +524,10 @@ class VolatilityRegimesService:
             df_temp['reference_price'] = df_temp['month_price_ref']
             df_temp['period_vol'] = df_temp['month_vol_ref']
         
-        df_temp['period_vol'].fillna(method='ffill', inplace=True)
-        df_temp['reference_price'].fillna(method='ffill', inplace=True)
-        df_temp['period_vol'].fillna(data['hybrid_vol'].mean(), inplace=True)
-        df_temp['reference_price'].fillna(data['Close'], inplace=True)
+        df_temp['period_vol'] = df_temp['period_vol'].ffill()
+        df_temp['reference_price'] = df_temp['reference_price'].ffill()
+        df_temp['period_vol'] = df_temp['period_vol'].fillna(data['hybrid_vol'].mean())
+        df_temp['reference_price'] = df_temp['reference_price'].fillna(data['Close'])
         
         # CORRIGIDO: Usar multiplier do config
         multiplier = self.config['multiplier']
@@ -546,8 +547,8 @@ class VolatilityRegimesService:
         
         for col in band_columns:
             if col in data.columns:
-                data[col].fillna(method='ffill', inplace=True)
-                data[col].fillna(method='bfill', inplace=True)
+                data[col] = data[col].ffill()
+                data[col] = data[col].bfill()
                 if data[col].isna().any():
                     vol_fallback = 0.02
                     multiplier_calc = 2 if '2sigma' in col else 4 if '4sigma' in col else 1

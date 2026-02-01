@@ -105,7 +105,7 @@ def get_screening_blueprint():
         presets = {
             'ibovespa_liquidos': [
                 'PETR4', 'VALE3', 'ITUB4', 'BBDC4', 'BBAS3', 'ABEV3',
-                'B3SA3', 'WEGE3', 'RENT3', 'ITSA4', 'SUZB3', 'EMBR3'
+                'B3SA3', 'WEGE3', 'RENT3', 'ITSA4', 'SUZB3', 'EMBJ3'
             ],
             'alta_liquidez': [
                 'BOVA11', 'PETR4', 'VALE3', 'BBAS3', 'B3SA3', 
@@ -113,7 +113,7 @@ def get_screening_blueprint():
             ],
             'media_liquidez': [
                 'ITUB4', 'ABEV3', 'WEGE3', 'RENT3', 'AXIA3', 
-                'PRIO3', 'SUZB3', 'EMBR3', 'CIEL3', 'RADL3'
+                'PRIO3', 'SUZB3', 'EMBJ3', 'CIEL3', 'RADL3'
             ],
             'small_caps': [
                 'VIVT3', 'CSAN3', 'GGBR4', 'USIM5', 'BRAV3', 'BPAC11'

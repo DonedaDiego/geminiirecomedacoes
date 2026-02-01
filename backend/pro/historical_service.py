@@ -1,6 +1,6 @@
 """
-historical_service.py - Análise Histórica GEX com INSIGHTS GERENCIAIS
-VERSÃO FINAL: Corrigido filtro de data do Oplab para garantir consistência
+historical_service.py - Análise Histórica GEX COM DADOS DO BANCO POSTGRESQL
+VERSÃO COM BANCO: Usa PostgreSQL em vez de API Floqui
 """
 
 import numpy as np
@@ -14,6 +14,7 @@ import os
 from dotenv import load_dotenv
 from plotly.subplots import make_subplots
 import plotly.graph_objects as go
+from sqlalchemy import create_engine, text
 
 warnings.filterwarnings('ignore')
 logging.basicConfig(level=logging.INFO)
@@ -127,32 +128,101 @@ class HistoricalDataProvider:
             'Access-Token': self.token,
             'Content-Type': 'application/json'
         }
+        
+        # ✅ CONEXÃO COM BANCO DE DADOS - RAILWAY POSTGRESQL
+        DATABASE_URL = os.getenv('DATABASE_URL')
+        
+        if not DATABASE_URL:
+            DB_HOST = os.getenv('PGHOST') or os.getenv('DB_HOST', 'localhost')
+            DB_NAME = os.getenv('PGDATABASE') or os.getenv('DB_NAME', 'railway')
+            DB_USER = os.getenv('PGUSER') or os.getenv('DB_USER', 'postgres')
+            DB_PASSWORD = os.getenv('PGPASSWORD') or os.getenv('DB_PASSWORD', '')
+            DB_PORT = os.getenv('PGPORT') or os.getenv('DB_PORT', '5432')
+            
+            try:
+                DB_PORT = str(int(DB_PORT))
+            except (ValueError, TypeError):
+                logging.error(f"❌ DB_PORT inválido: '{DB_PORT}' - usando 5432")
+                DB_PORT = '5432'
+            
+            DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+        
+        logging.info(f"🔌 Conectando ao banco PostgreSQL (Historical)...")
+        
+        try:
+            self.db_engine = create_engine(DATABASE_URL)
+            
+            with self.db_engine.connect() as conn:
+                result = conn.execute(text("SELECT COUNT(*) FROM opcoes_b3"))
+                count = result.fetchone()[0]
+                logging.info(f"✅ Conexão OK (Historical) - {count:,} registros")
+                
+        except Exception as e:
+            logging.error(f"❌ Erro ao conectar (Historical): {e}")
+            raise
     
     def get_last_business_day(self):
-        current = datetime.now()
-        current -= timedelta(days=2)
-        
-        while current.weekday() >= 5:
-            current -= timedelta(days=1)
-        
-        logging.info(f"Último dia útil consolidado: {current.strftime('%Y-%m-%d')}")
-        return current
+        """Busca a última data_referencia disponível NO BANCO"""
+        try:
+            query = text("""
+                SELECT MAX(data_referencia) as ultima_data
+                FROM opcoes_b3
+            """)
+            
+            with self.db_engine.connect() as conn:
+                result = conn.execute(query)
+                row = result.fetchone()
+                ultima_data = row[0] if row and row[0] else None
+            
+            if not ultima_data:
+                logging.error("Nenhuma data_referencia encontrada no banco")
+                return datetime.now().date()
+            
+            logging.info(f"✅ Última data_referencia no banco: {ultima_data}")
+            return ultima_data if isinstance(ultima_data, datetime) else datetime.combine(ultima_data, datetime.min.time())
+            
+        except Exception as e:
+            logging.error(f"Erro ao buscar última data do banco: {e}")
+            return datetime.now().date()
     
     def get_business_days(self, days_back=5):
-        dates = []
-        current_date = self.get_last_business_day()
-        
-        while len(dates) < days_back:
-            dates.append(current_date)
-            current_date -= timedelta(days=1)
+        """Busca as últimas N datas_referencia REAIS do banco"""
+        try:
+            query = text("""
+                SELECT DISTINCT data_referencia
+                FROM opcoes_b3
+                ORDER BY data_referencia DESC
+                LIMIT :limit
+            """)
             
-            while current_date.weekday() >= 5:
-                current_date -= timedelta(days=1)
-        
-        dates_sorted = sorted(dates)
-        logging.info(f"Dias úteis selecionados: {[d.strftime('%Y-%m-%d') for d in dates_sorted]}")
-        
-        return dates_sorted
+            with self.db_engine.connect() as conn:
+                result = conn.execute(query, {'limit': days_back})
+                rows = result.fetchall()
+            
+            if not rows:
+                logging.error("Nenhuma data_referencia encontrada no banco")
+                return []
+            
+            # Converter para datetime e ordenar (mais antiga primeiro)
+            dates = []
+            for row in rows:
+                data_ref = row[0]
+                if isinstance(data_ref, datetime):
+                    dates.append(data_ref)
+                else:
+                    dates.append(datetime.combine(data_ref, datetime.min.time()))
+            
+            dates_sorted = sorted(dates)
+            
+            logging.info(f"✅ Últimas {len(dates_sorted)} datas_referencia do banco:")
+            for d in dates_sorted:
+                logging.info(f"   📅 {d.strftime('%Y-%m-%d')}")
+            
+            return dates_sorted
+            
+        except Exception as e:
+            logging.error(f"Erro ao buscar datas do banco: {e}")
+            return []
     
     def get_spot_price(self, symbol):
         """Busca cotação atual"""
@@ -183,7 +253,6 @@ class HistoricalDataProvider:
         try:
             symbol_clean = symbol.replace('.SA', '')
             
-            # Buscar range maior para garantir dados históricos
             to_date = datetime.now().strftime('%Y-%m-%d')
             from_date = (datetime.now() - timedelta(days=30)).strftime('%Y-%m-%d')
             
@@ -201,25 +270,22 @@ class HistoricalDataProvider:
             df = pd.DataFrame(data)
             df['time'] = pd.to_datetime(df['time'])
             
-            #  FILTRAR PELA DATA ESPECÍFICA SE FORNECIDA
             if target_date:
                 target_date_obj = target_date.date() if isinstance(target_date, datetime) else target_date
                 filtered_data = df[df['time'].dt.date == target_date_obj].copy()
                 
                 if filtered_data.empty:
-                    logging.warning(f" Nenhum dado Oplab encontrado para {target_date_obj}")
+                    logging.warning(f"Nenhum dado Oplab encontrado para {target_date_obj}")
                     logging.info(f"Datas disponíveis: {sorted(df['time'].dt.date.unique())}")
                     return pd.DataFrame()
                 
                 logging.info(f"✅ Oplab filtrado para {target_date_obj}: {len(filtered_data)} opções")
                 latest_data = filtered_data
             else:
-                # Comportamento padrão: usa data mais recente
                 latest_date = df['time'].max().date()
                 latest_data = df[df['time'].dt.date == latest_date].copy()
                 logging.info(f"Oplab data mais recente ({latest_date}): {len(latest_data)} opções")
             
-            # Validar dados
             valid_data = latest_data[
                 (latest_data['gamma'] > 0) &
                 (latest_data['premium'] > 0) &
@@ -236,80 +302,112 @@ class HistoricalDataProvider:
             return pd.DataFrame()
     
     def get_floqui_historical(self, ticker, vencimento, dt_referencia):
-        """Busca dados históricos do Floqui para uma data específica"""
+        """BUSCA DO BANCO DE DADOS POSTGRESQL - histórico"""
         try:
             ticker_clean = ticker.replace('.SA', '')
-            date_str = dt_referencia.strftime('%Y%m%d')
-            url = f"https://floqui.com.br/api/posicoes_em_aberto/{ticker_clean.lower()}/{vencimento}/{date_str}"
             
-            #  LOG MELHORADO - Mostra VENCIMENTO e DATA
-            logging.info(f"🌐 Buscando Floqui: {ticker_clean} | VENC={vencimento} | DATA={date_str}")
+            # Converter vencimento string para datetime
+            exp_date = datetime.strptime(vencimento, '%Y%m%d')
             
-            response = requests.get(url, timeout=15)
+            query = text("""
+                SELECT 
+                    preco_exercicio,
+                    tipo_opcao,
+                    qtd_total,
+                    qtd_descoberto,
+                    qtd_trava,
+                    qtd_coberto
+                FROM opcoes_b3
+                WHERE ticker = :symbol
+                AND vencimento = :vencimento
+                AND data_referencia = :data_ref
+                ORDER BY preco_exercicio
+            """)
             
-            if response.status_code == 404:
-                logging.warning(f" Sem dados Floqui: VENC={vencimento} DATA={date_str} (404)")
+            with self.db_engine.connect() as conn:
+                result = conn.execute(query, {
+                    'symbol': ticker_clean,
+                    'vencimento': exp_date,
+                    'data_ref': dt_referencia
+                })
+                
+                rows = result.fetchall()
+            
+            if not rows:
+                logging.warning(f"Sem dados banco: VENC={vencimento} DATA={dt_referencia.strftime('%Y-%m-%d')}")
                 return {}
             
-            if response.status_code != 200:
-                logging.error(f" Erro na API Floqui: {response.status_code} | VENC={vencimento} DATA={date_str}")
-                return {}
-            
-            data = response.json()
-            if not data:
-                logging.warning(f" API Floqui retornou vazio: VENC={vencimento} DATA={date_str}")
-                return {}
-            
+            # ✅ NOVA ESTRUTURA - USA STRING COMO CHAVE
             oi_breakdown = {}
-            for item in data:
-                strike = float(item.get('preco_exercicio', 0))
-                option_type = item.get('tipo_opcao', '').upper()
-                oi_total = int(item.get('qtd_total', 0))
-                oi_descoberto = int(item.get('qtd_descoberto', 0))
+            for row in rows:
+                strike = float(row[0])
+                option_type = str(row[1]).upper()
+                oi_total = int(row[2])
+                oi_descoberto = int(row[3])
                 
                 if strike > 0 and oi_total > 0:
-                    key = (strike, 'CALL' if option_type == 'CALL' else 'PUT')
+                    key = f"{strike}_{option_type}"
                     oi_breakdown[key] = {
+                        'strike': strike,
+                        'type': option_type,
                         'total': oi_total,
                         'descoberto': oi_descoberto,
-                        'travado': int(item.get('qtd_trava', 0)),
-                        'coberto': int(item.get('qtd_coberto', 0))
+                        'travado': int(row[4]),
+                        'coberto': int(row[5])
                     }
             
-            #  LOG MELHORADO - Mostra VENCIMENTO e DATA
-            logging.info(f"✅ Floqui VENC={vencimento} DATA={date_str}: {len(oi_breakdown)} strikes")
+            logging.info(f"✅ Banco VENC={vencimento} DATA={dt_referencia.strftime('%Y-%m-%d')}: {len(oi_breakdown)} strikes")
             return oi_breakdown
             
-        except requests.Timeout:
-            logging.error(f"⏱️ Timeout Floqui: VENC={vencimento} DATA={date_str}")
-            return {}
         except Exception as e:
-            logging.error(f" Erro Floqui VENC={vencimento} DATA={date_str}: {e}")
+            logging.error(f"Erro banco VENC={vencimento} DATA={dt_referencia.strftime('%Y-%m-%d')}: {e}")
             return {}
     
     def get_available_expirations(self, ticker):
-        """Lista vencimentos disponíveis"""
+        """Lista vencimentos disponíveis NO BANCO para a última data_referencia"""
         available_expirations = {                     
             "20260116": "16 Jan 26 - M",
             "20260220": "20 Fev 26 - M",
             "20260320": "20 Mar 26 - M",
             "20260417": "17 Abr 26 - M",           
-
         }
         
         expirations = []
-        test_date = self.get_last_business_day()
         
-        for code, desc in available_expirations.items():
-            oi_data = self.get_floqui_historical(ticker, code, test_date)
-            data_count = len(oi_data)
+        # ✅ Busca última data_referencia do banco
+        try:
+            query = text("""
+                SELECT MAX(data_referencia) as ultima_data
+                FROM opcoes_b3
+                WHERE ticker = :ticker
+            """)
             
-            expirations.append({
-                'code': code,
-                'desc': desc,
-                'data_count': data_count,
-                'available': data_count > 0
-            })
+            ticker_clean = ticker.replace('.SA', '')
+            
+            with self.db_engine.connect() as conn:
+                result = conn.execute(query, {'ticker': ticker_clean})
+                row = result.fetchone()
+                ultima_data = row[0] if row and row[0] else None
+            
+            if not ultima_data:
+                logging.warning(f"Nenhuma data_referencia para {ticker_clean}")
+                # Retorna lista vazia em vez de tentar buscar
+                return expirations
+            
+            # ✅ Testa cada vencimento na última data disponível
+            for code, desc in available_expirations.items():
+                oi_data = self.get_floqui_historical(ticker_clean, code, ultima_data)
+                data_count = len(oi_data)
+                
+                expirations.append({
+                    'code': code,
+                    'desc': desc,
+                    'data_count': data_count,
+                    'available': data_count > 0
+                })
+            
+        except Exception as e:
+            logging.error(f"Erro ao buscar vencimentos: {e}")
         
         return expirations
 
@@ -320,7 +418,7 @@ class HistoricalAnalyzer:
         self.liquidity_manager = LiquidityManager()
     
     def calculate_gex(self, oplab_df, oi_breakdown, spot_price):
-        """Calcula GEX com dados reais do Floqui"""
+        """Calcula GEX com dados reais"""
         if oplab_df.empty:
             return pd.DataFrame()
         
@@ -347,14 +445,15 @@ class HistoricalAnalyzer:
             has_real_call = False
             has_real_put = False
             
+            # ✅ BUSCA COM CHAVE STRING
             if len(calls) > 0:
-                call_key = (float(strike), 'CALL')
+                call_key = f"{float(strike)}_CALL"
                 if call_key in oi_breakdown:
                     call_data = oi_breakdown[call_key]
                     has_real_call = True
             
             if len(puts) > 0:
-                put_key = (float(strike), 'PUT')
+                put_key = f"{float(strike)}_PUT"
                 if put_key in oi_breakdown:
                     put_data = oi_breakdown[put_key]
                     has_real_put = True
@@ -413,22 +512,11 @@ class HistoricalAnalyzer:
         
         valid_df = valid_df.sort_values('strike').reset_index(drop=True)
         
-        logging.info(f"BUSCANDO GAMMA FLIP")
-        logging.info(f"Strikes analisados: {len(valid_df)}")
-        logging.info(f"Range: R$ {valid_df['strike'].min():.2f} - R$ {valid_df['strike'].max():.2f}")
-        
-        # DETECTA REGIME DO SPOT
         spot_strike_idx = (valid_df['strike'] - spot_price).abs().argsort()[0]
         spot_gex = valid_df.iloc[spot_strike_idx]['total_gex_descoberto']
         spot_regime = "SHORT_GAMMA" if spot_gex < -1000 else ("LONG_GAMMA" if spot_gex > 1000 else "NEUTRAL")
         
-        logging.info(f"REGIME NO SPOT:")
-        logging.info(f"  Strike mais proximo: R$ {valid_df.iloc[spot_strike_idx]['strike']:.2f}")
-        logging.info(f"  GEX descoberto: {spot_gex:,.0f}")
-        logging.info(f"  Regime: {spot_regime}")
-        
         def search_flips(df, data_source_name):
-            """Busca mudanças de sinal no GEX descoberto"""
             flip_candidates = []
             
             for i in range(len(df) - 1):
@@ -465,29 +553,18 @@ class HistoricalAnalyzer:
             
             return flip_candidates
         
-        # TENTATIVA 1: DADOS REAIS
         real_data_df = valid_df[valid_df['has_real_data'] == True].copy()
         flip_candidates = []
         
         if len(real_data_df) >= 2:
             flip_candidates = search_flips(real_data_df, "REAL")
-            if flip_candidates:
-                logging.info(f"Encontrou {len(flip_candidates)} flip(s) com dados reais")
         
-        # TENTATIVA 2: TODOS OS DADOS
         if not flip_candidates and len(valid_df) >= 2:
             flip_candidates = search_flips(valid_df, "MISTO")
-            if flip_candidates:
-                logging.info(f"Encontrou {len(flip_candidates)} flip(s) com dados mistos")
         
         if not flip_candidates:
-            logging.warning("FLIP NAO ENCONTRADO")
             return None
         
-        for candidate in flip_candidates:
-            logging.info(f"FLIP CANDIDATO: Strike={candidate['strike']:.2f}, Dist={candidate['distance_from_spot']:.2f}")
-        
-        #  FILTRO BASEADO NO REGIME (MESMA LÓGICA DO gamma_service.py)
         if spot_regime == "SHORT_GAMMA":
             flip_candidates = [f for f in flip_candidates if f['flip_position'] == "ACIMA"]
             flip_candidates.sort(key=lambda x: x['distance_from_spot'])
@@ -498,26 +575,9 @@ class HistoricalAnalyzer:
             flip_candidates.sort(key=lambda x: x['distance_from_spot'])
         
         if not flip_candidates:
-            logging.warning("Nenhum flip encontrado após filtro de regime")
             return None
         
         best_flip = flip_candidates[0]
-        
-        logging.info(f"GAMMA FLIP SELECIONADO")
-        logging.info(f"  Strike: R$ {best_flip['strike']:.2f}")
-        logging.info(f"  Fonte: {best_flip['data_source']}")
-        logging.info(f"  Posicao: {best_flip['flip_position']} do spot")
-        logging.info(f"  Distancia: {best_flip['distance_pct']:.2f}%")
-        
-        regime = "POSITIVE GAMMA" if spot_price > best_flip['strike'] else "NEGATIVE GAMMA"
-        logging.info(f"REGIME CALCULADO: {regime}")
-        
-        if (regime == "POSITIVE GAMMA" and spot_regime == "SHORT_GAMMA") or \
-           (regime == "NEGATIVE GAMMA" and spot_regime == "LONG_GAMMA"):
-            logging.warning("INCONSISTENCIA: Regime calculado nao bate com GEX no spot")
-        else:
-            logging.info("Regime consistente com GEX no spot")
-        
         return float(best_flip['strike'])
     
     def identify_walls(self, gex_df, spot_price):
@@ -526,7 +586,6 @@ class HistoricalAnalyzer:
         
         walls = []
         
-        # SUPPORT: Strike com MAIOR call_gex (posição comprada descoberta)
         calls_gex = gex_df[gex_df['call_gex'] > 0].copy()
         if not calls_gex.empty:
             max_call_row = calls_gex.loc[calls_gex['call_gex'].idxmax()]
@@ -540,10 +599,7 @@ class HistoricalAnalyzer:
                 'distance_pct': float(abs(max_call_row['strike'] - spot_price) / spot_price * 100),
                 'strength': 'Strong'
             })
-            
-            logging.info(f"Support: R$ {max_call_row['strike']:.2f} - Call GEX: {max_call_row['call_gex']:,.0f}")
         
-        # RESISTANCE: Strike com MAIOR put_gex (em módulo - mais negativo)
         puts_gex = gex_df[gex_df['put_gex'] < 0].copy()
         if not puts_gex.empty:
             max_put_row = puts_gex.loc[puts_gex['put_gex'].idxmin()]
@@ -557,10 +613,7 @@ class HistoricalAnalyzer:
                 'distance_pct': float(abs(max_put_row['strike'] - spot_price) / spot_price * 100),
                 'strength': 'Strong'
             })
-            
-            logging.info(f"Resistance: R$ {max_put_row['strike']:.2f} - Put GEX: {max_put_row['put_gex']:,.0f}")
         
-        logging.info(f"WALLS: {len(walls)}")
         return walls
     
     def create_6_charts(self, gex_df, spot_price, symbol, flip_strike, expiration_desc, analysis_date):
@@ -653,9 +706,7 @@ class HistoricalAnalyzer:
         return fig.to_json()
     
     def calculate_historical_insights(self, data_by_date, spot_price):
-        """
-         ANÁLISE GERENCIAL: tendências, strikes impactados, mudanças de regime
-        """
+        """ANÁLISE GERENCIAL: tendências, strikes impactados, mudanças de regime"""
         if not data_by_date or len(data_by_date) < 2:
             return {}
         
@@ -674,7 +725,6 @@ class HistoricalAnalyzer:
                 'regime': data['regime']
             })
             
-            # Detectar mudanças de regime
             if i > 0:
                 prev_regime = data_by_date[dates[i-1]]['regime']
                 if prev_regime != data['regime']:
@@ -710,7 +760,6 @@ class HistoricalAnalyzer:
                 'net_gex_descoberto': data_by_date[date]['net_gex_descoberto']
             })
         
-        # Calcular variação de GEX
         gex_change = None
         if len(gex_trend) >= 2:
             first_gex = gex_trend[0]['net_gex_descoberto']
@@ -751,7 +800,6 @@ class HistoricalAnalyzer:
         return summary
     
     def _count_consecutive_regime(self, data_by_date, dates):
-        """Conta quantos dias consecutivos no regime atual"""
         if not dates:
             return 0
         
@@ -767,9 +815,6 @@ class HistoricalAnalyzer:
         return count
     
     def _identify_most_impacted_strikes(self, data_by_date, spot_price, dates):
-        """
-        Identifica strikes com MAIOR VARIAÇÃO de GEX descoberto
-        """
         if len(dates) < 2:
             return []
         
@@ -824,10 +869,7 @@ class HistoricalAnalyzer:
         return impacts[:5]
     
     def analyze_historical(self, ticker, vencimento, days_back=5):
-        """
-         ANÁLISE HISTÓRICA COMPLETA COM OPLAB SINCRONIZADO POR DATA
-        Valida que tem pelo menos 2 dias úteis com dados reais
-        """
+        """ANÁLISE HISTÓRICA COMPLETA COM BANCO POSTGRESQL"""
         logging.info(f"🔍 INICIANDO ANÁLISE HISTÓRICA - {ticker}")
         
         spot_price = self.data_provider.get_spot_price(ticker)
@@ -849,28 +891,24 @@ class HistoricalAnalyzer:
             
             logging.info(f"🔄 Processando {date_str}...")
             
-            #  BUSCAR OPLAB FILTRADO POR ESTA DATA ESPECÍFICA
             oplab_df = self.data_provider.get_oplab_historical_data(ticker, target_date=date_obj)
             
             if oplab_df.empty:
-                logging.warning(f" Oplab vazio para {date_str} - pulando")
+                logging.warning(f"Oplab vazio para {date_str} - pulando")
                 continue
             
-            # BUSCAR OI HISTÓRICO DO FLOQUI
             oi_breakdown = self.data_provider.get_floqui_historical(ticker, vencimento, date_obj)
             
             if not oi_breakdown:
-                logging.warning(f" Floqui vazio para {date_str} - pulando")
+                logging.warning(f"Banco vazio para {date_str} - pulando")
                 continue
             
-            # CALCULAR GEX
             gex_df = self.calculate_gex(oplab_df, oi_breakdown, spot_price)
             
             if gex_df.empty:
-                logging.warning(f" GEX vazio para {date_str} - pulando")
+                logging.warning(f"GEX vazio para {date_str} - pulando")
                 continue
             
-            # ANÁLISE COMPLETA
             flip_strike = self.find_gamma_flip(gex_df, spot_price, ticker)
             walls = self.identify_walls(gex_df, spot_price)
             
@@ -880,22 +918,18 @@ class HistoricalAnalyzer:
             net_gex = float(cumulative_total[-1])
             net_gex_descoberto = float(cumulative_descoberto[-1])
             
-            # DETERMINAR REGIME
             if flip_strike:
                 regime = 'Long Gamma' if spot_price > flip_strike else 'Short Gamma'
             else:
                 regime = 'Long Gamma' if net_gex_descoberto > 0 else 'Short Gamma'
             
-            # GERAR OS 6 GRÁFICOS
             plot_json = self.create_6_charts(
                 gex_df, spot_price, ticker, flip_strike, 
                 expiration_desc, date_obj.strftime('%d/%m/%Y')
             )
             
-            # SALVAR REGISTROS
             gex_df_records = gex_df.to_dict('records')
             
-            # ARMAZENAR DADOS DESTA DATA
             data_by_date[date_str] = {
                 'spot_price': spot_price,
                 'flip_strike': flip_strike,
@@ -913,20 +947,18 @@ class HistoricalAnalyzer:
             
             logging.info(f"✅ {date_str}: {len(gex_df)} strikes, Flip: {flip_strike}, Regime: {regime}")
         
-        #  VALIDAÇÃO: Precisa de pelo menos 2 dias com dados
         if len(available_dates) < 2:
             raise ValueError(f"Dados insuficientes: apenas {len(available_dates)} dia(s) com dados. Mínimo: 2")
         
         logging.info(f"✅ Dados coletados para {len(available_dates)} dias: {available_dates}")
         
-        # CALCULAR INSIGHTS
         insights = {}
         try:
-            logging.info(f" Calculando insights...")
+            logging.info(f"Calculando insights...")
             insights = self.calculate_historical_insights(data_by_date, spot_price)
             logging.info(f"✅ Insights calculados")
         except Exception as e:
-            logging.error(f" Erro ao calcular insights: {e}", exc_info=True)
+            logging.error(f"Erro ao calcular insights: {e}", exc_info=True)
             insights = {
                 'error': str(e),
                 'period': {
@@ -951,16 +983,13 @@ class HistoricalAnalyzer:
 
 
 class HistoricalService:
-
     def __init__(self):
         self.analyzer = HistoricalAnalyzer()
     
     def get_available_expirations(self, ticker):
-        """Lista vencimentos disponíveis para o ticker"""
         return self.analyzer.data_provider.get_available_expirations(ticker)
     
     def analyze_historical_complete(self, ticker, vencimento, days_back=5):
-
         try:
             result = self.analyzer.analyze_historical(ticker, vencimento, days_back)
             
@@ -978,12 +1007,5 @@ class HistoricalService:
             return convert_to_json_serializable(api_result)
             
         except Exception as e:
-            logging.error(f" Erro na análise histórica: {e}", exc_info=True)
+            logging.error(f"Erro na análise histórica: {e}", exc_info=True)
             raise
-
-
-#  EXEMPLO DE USO
-if __name__ == "__main__":
-    service = HistoricalService()
-    
-   
