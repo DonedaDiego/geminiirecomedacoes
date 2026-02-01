@@ -205,14 +205,20 @@ class DataProvider:
             'Content-Type': 'application/json'
         }
         
-        # CONEXÃO COM BANCO DE DADOS
-        DB_HOST = os.getenv('DB_HOST')
-        DB_NAME = 'postgres'
-        DB_USER = os.getenv('DB_USER')
-        DB_PASSWORD = os.getenv('DB_PASSWORD')
-        DB_PORT = os.getenv('DB_PORT')
+        # ✅ CONEXÃO COM BANCO - RAILWAY COMPATIBLE
+        DATABASE_URL = os.getenv('DATABASE_URL')
         
-        DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+        if not DATABASE_URL:
+            # Fallback para variáveis individuais
+            DB_HOST = os.getenv('PGHOST') or os.getenv('DB_HOST', 'localhost')
+            DB_NAME = os.getenv('PGDATABASE') or os.getenv('DB_NAME', 'postgres')
+            DB_USER = os.getenv('PGUSER') or os.getenv('DB_USER', 'postgres')
+            DB_PASSWORD = os.getenv('PGPASSWORD') or os.getenv('DB_PASSWORD', '')
+            DB_PORT = os.getenv('PGPORT') or os.getenv('DB_PORT', '5432')
+            
+            DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+        
+        logging.info(f"Conectando ao banco: {DATABASE_URL.split('@')[1] if '@' in DATABASE_URL else 'local'}")
         self.db_engine = create_engine(DATABASE_URL)
         
         self.expiration_manager = ExpirationManager(self.db_engine)
@@ -279,7 +285,7 @@ class DataProvider:
             return pd.DataFrame()
     
     def get_floqui_oi_breakdown(self, symbol, expiration_code=None):
-        """BUSCA DO BANCO DE DADOS POSTGRESQL - Mantém nome da função"""
+        """BUSCA DO BANCO DE DADOS POSTGRESQL"""
         try:
             if expiration_code:
                 expiration = {
@@ -323,6 +329,7 @@ class DataProvider:
                 logging.warning(f"Nenhum dado encontrado no banco para {symbol}")
                 return {}, expiration
             
+            # ✅ NOVA ESTRUTURA - USA STRING COMO CHAVE
             oi_breakdown = {}
             for _, row in df.iterrows():
                 strike = float(row['preco_exercicio'])
@@ -331,8 +338,11 @@ class DataProvider:
                 oi_descoberto = int(row['qtd_descoberto'])
                 
                 if strike > 0 and oi_total > 0:
-                    key = (strike, 'CALL' if option_type == 'CALL' else 'PUT')
+                    # ✅ CHAVE COMO STRING: "7.25_CALL"
+                    key = f"{strike}_{option_type}"
                     oi_breakdown[key] = {
+                        'strike': strike,
+                        'type': option_type,
                         'total': oi_total,
                         'descoberto': oi_descoberto,
                         'travado': int(row['qtd_trava']),
@@ -384,14 +394,15 @@ class GEXAnalyzer:
             has_real_call = False
             has_real_put = False
             
+            # ✅ BUSCA COM CHAVE STRING
             if len(calls) > 0:
-                call_key = (float(strike), 'CALL')
+                call_key = f"{float(strike)}_CALL"
                 if call_key in oi_breakdown:
                     call_data = oi_breakdown[call_key]
                     has_real_call = True
             
             if len(puts) > 0:
-                put_key = (float(strike), 'PUT')
+                put_key = f"{float(strike)}_PUT"
                 if put_key in oi_breakdown:
                     put_data = oi_breakdown[put_key]
                     has_real_put = True
