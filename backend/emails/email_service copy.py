@@ -1485,8 +1485,8 @@ Continue sua jornada conosco!
                                     🌐 Siga nossas redes sociais:
                                 </p>
                                 <div class="social-links">
-                                    <a href="https://discord.gg/kmsfECUT" class="social-link">
-                                         Discord
+                                    <a href="https://https://https://discord.gg/zMmcg4Ja.gg/zMmcg4Jad.gg/kmsfECUT" class="social-link">
+                                         https://https://discord.gg/zMmcg4Ja.gg/zMmcg4Jad
                                     </a>
                                     <a href="https://instagram.com/geminiiresearch" class="social-link">
                                         📸 Instagram
@@ -1550,7 +1550,7 @@ Continue sua jornada conosco!
     https://wa.me/5541995432873
 
     🌐 REDES SOCIAIS:
-    Discord: https://discord.gg/kmsfECUT
+    https://https://discord.gg/zMmcg4Ja.gg/zMmcg4Jad: https://https://https://discord.gg/zMmcg4Ja.gg/zMmcg4Jad.gg/kmsfECUT
     Instagram: https://instagram.com/geminiiresearch
     LinkedIn: https://linkedin.com/company/geminii-research
     Telegram: https://t.me/geminiireserach
