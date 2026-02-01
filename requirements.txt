@@ -7,6 +7,7 @@ gunicorn
 
 # Database
 psycopg2-binary
+sqlalchemy
 
 # Data Analysis & Finance
 pandas

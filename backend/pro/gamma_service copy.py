@@ -1,5 +1,5 @@
 """
-gamma_service.py - GEX Analysis COM DADOS DO BANCO POSTGRESQL
+gamma_service.py - GEX Analysis COM DADOS REAIS + FLIP INTELIGENTE
 """
 
 import numpy as np
@@ -13,7 +13,6 @@ import os
 from dotenv import load_dotenv
 from plotly.subplots import make_subplots
 import plotly.graph_objects as go
-from sqlalchemy import create_engine, text
 
 warnings.filterwarnings('ignore')
 logging.basicConfig(level=logging.INFO)
@@ -48,7 +47,9 @@ def convert_to_json_serializable(obj):
 
 class LiquidityManager:
     
+    
     def __init__(self):
+    
         self.high_liquidity = {
             'BOVA11': 6,
             'PETR4': 6,
@@ -69,28 +70,36 @@ class LiquidityManager:
             'PRIO3': 9,
             'SUZB3': 9,
             'EMJR3': 9,
+            
             'RADL3': 9,
             'BRAV3': 9,
             'BPAC11':9,
         }
         
+        
         self.low_liquidity_range = 13
+        
+        
         self.default_range = 12
     
     def get_flip_range(self, symbol):
         """Retorna o range para busca de flip baseado na liquidez"""
         symbol_clean = symbol.replace('.SA', '').upper()
         
+        # Verifica ALTA liquidez
         if symbol_clean in self.high_liquidity:
             range_pct = self.high_liquidity[symbol_clean]
             logging.info(f"Ativo {symbol_clean}: Liquidez ALTA - Range {range_pct}%")
             return range_pct
         
+        # Verifica MÉDIA liquidez
         if symbol_clean in self.medium_liquidity:
             range_pct = self.medium_liquidity[symbol_clean]
             logging.info(f"Ativo {symbol_clean}: Liquidez MEDIA - Range {range_pct}%")
             return range_pct
         
+        #  TUDO QUE NÃO ESTÁ LISTADO = BAIXA LIQUIDEZ
+        # Aqui entram: VIVT3, CSAN3, GGBR4, USIM5, etc.
         logging.info(f"Ativo {symbol_clean}: Liquidez BAIXA (auto) - Range {self.low_liquidity_range}%")
         return self.low_liquidity_range
     
@@ -110,15 +119,14 @@ class LiquidityManager:
                 'category': 'MEDIA'
             }
         
+        # Auto-classificado como BAIXA
         return {
             'range': self.low_liquidity_range,
             'category': 'BAIXA'
         }
 
-
 class ExpirationManager:
-    def __init__(self, db_engine):
-        self.db_engine = db_engine
+    def __init__(self):
         self.available_expirations = {            
             "20251219": {"date": datetime(2025, 12, 19), "desc": "19 Dez 25 - M"},
             "20260116": {"date": datetime(2026, 1, 16),  "desc": "16 Jan 26 - M"},
@@ -136,30 +144,14 @@ class ExpirationManager:
         }
     
     def test_data_availability(self, symbol, expiration_code):
-        """Testa disponibilidade no BANCO DE DADOS"""
         try:
-            exp_date = datetime.strptime(expiration_code, '%Y%m%d')
-            
-            query = text("""
-                SELECT COUNT(*) as total
-                FROM opcoes_b3
-                WHERE ticker = :symbol
-                AND vencimento = :vencimento
-                AND data_referencia = (SELECT MAX(data_referencia) FROM opcoes_b3)
-            """)
-            
-            with self.db_engine.connect() as conn:
-                result = conn.execute(query, {
-                    'symbol': symbol,
-                    'vencimento': exp_date
-                })
-                row = result.fetchone()
-                count = row[0] if row else 0
-            
-            return count
-            
-        except Exception as e:
-            logging.error(f"Erro ao testar disponibilidade: {e}")
+            url = f"https://floqui.com.br/api/posicoes_em_aberto/{symbol.lower()}/{expiration_code}"
+            response = requests.get(url, timeout=10)
+            if response.status_code == 200:
+                data = response.json()
+                return len(data) if data else 0
+            return 0
+        except:
             return 0
     
     def get_available_expirations_list(self, symbol):
@@ -204,18 +196,7 @@ class DataProvider:
             'Access-Token': self.token,
             'Content-Type': 'application/json'
         }
-        
-        # CONEXÃO COM BANCO DE DADOS
-        DB_HOST = os.getenv('DB_HOST')
-        DB_NAME = 'postgres'
-        DB_USER = os.getenv('DB_USER')
-        DB_PASSWORD = os.getenv('DB_PASSWORD')
-        DB_PORT = os.getenv('DB_PORT')
-        
-        DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
-        self.db_engine = create_engine(DATABASE_URL)
-        
-        self.expiration_manager = ExpirationManager(self.db_engine)
+        self.expiration_manager = ExpirationManager()
     
     def get_spot_price(self, symbol):
         try:
@@ -279,7 +260,6 @@ class DataProvider:
             return pd.DataFrame()
     
     def get_floqui_oi_breakdown(self, symbol, expiration_code=None):
-        """BUSCA DO BANCO DE DADOS POSTGRESQL - Mantém nome da função"""
         try:
             if expiration_code:
                 expiration = {
@@ -293,50 +273,33 @@ class DataProvider:
                 logging.warning("Nenhum vencimento disponível")
                 return {}, None
             
-            exp_date = datetime.strptime(expiration['code'], '%Y%m%d')
             
-            query = text("""
-                SELECT 
-                    preco_exercicio,
-                    tipo_opcao,
-                    qtd_total,
-                    qtd_descoberto,
-                    qtd_trava,
-                    qtd_coberto
-                FROM opcoes_b3
-                WHERE ticker = :symbol
-                AND vencimento = :vencimento
-                AND data_referencia = (
-                    SELECT MAX(data_referencia) 
-                    FROM opcoes_b3 
-                    WHERE ticker = :symbol
-                )
-                ORDER BY preco_exercicio
-            """)
+            url = f"https://floqui.com.br/api/posicoes_em_aberto/{symbol.lower()}/{expiration['code']}"
+            response = requests.get(url, timeout=15)
             
-            df = pd.read_sql(query, self.db_engine, params={
-                'symbol': symbol,
-                'vencimento': exp_date
-            })
+            if response.status_code != 200:
+                logging.error(f"Erro na API Floqui: {response.status_code}")
+                return {}, expiration
             
-            if df.empty:
-                logging.warning(f"Nenhum dado encontrado no banco para {symbol}")
+            data = response.json()
+            if not data:
+                logging.warning("Nenhum dado retornado do Floqui")
                 return {}, expiration
             
             oi_breakdown = {}
-            for _, row in df.iterrows():
-                strike = float(row['preco_exercicio'])
-                option_type = str(row['tipo_opcao']).upper()
-                oi_total = int(row['qtd_total'])
-                oi_descoberto = int(row['qtd_descoberto'])
+            for item in data:
+                strike = float(item.get('preco_exercicio', 0))
+                option_type = item.get('tipo_opcao', '').upper()
+                oi_total = int(item.get('qtd_total', 0))
+                oi_descoberto = int(item.get('qtd_descoberto', 0))
                 
                 if strike > 0 and oi_total > 0:
                     key = (strike, 'CALL' if option_type == 'CALL' else 'PUT')
                     oi_breakdown[key] = {
                         'total': oi_total,
                         'descoberto': oi_descoberto,
-                        'travado': int(row['qtd_trava']),
-                        'coberto': int(row['qtd_coberto'])
+                        'travado': int(item.get('qtd_trava', 0)),
+                        'coberto': int(item.get('qtd_coberto', 0))
                     }
             
             logging.info(f"Floqui OI breakdown: {len(oi_breakdown)} strikes")
@@ -556,6 +519,100 @@ class GEXAnalyzer:
             logging.info("Regime consistente com GEX no spot")
         
         return best_flip['strike']
+        
+        # FUNCAO AUXILIAR
+        def search_flips(df, data_source_name):
+            flip_candidates = []
+            
+            for i in range(len(df) - 1):
+                current_strike = df.iloc[i]['strike']
+                next_strike = df.iloc[i+1]['strike']
+                current_gex = df.iloc[i]['total_gex_descoberto']
+                next_gex = df.iloc[i+1]['total_gex_descoberto']
+                
+                if (current_gex > 0 and next_gex < 0) or (current_gex < 0 and next_gex > 0):
+                    if abs(current_gex) + abs(next_gex) > 0:
+                        flip_strike = current_strike + (next_strike - current_strike) * abs(current_gex) / (abs(current_gex) + abs(next_gex))
+                    else:
+                        flip_strike = (current_strike + next_strike) / 2
+                    
+                    distance_from_spot = abs(flip_strike - spot_price)
+                    distance_pct = distance_from_spot / spot_price * 100
+                    
+                    flip_position = "ACIMA" if flip_strike > spot_price else "ABAIXO"
+                    flip_direction = "NEG_TO_POS" if current_gex < 0 and next_gex > 0 else "POS_TO_NEG"
+                    
+                    flip_candidates.append({
+                        'strike': flip_strike,
+                        'distance_from_spot': distance_from_spot,
+                        'distance_pct': distance_pct,
+                        'left_strike': current_strike,
+                        'right_strike': next_strike,
+                        'left_gex': current_gex,
+                        'right_gex': next_gex,
+                        'confidence': abs(current_gex) + abs(next_gex),
+                        'flip_position': flip_position,
+                        'flip_direction': flip_direction,
+                        'data_source': data_source_name
+                    })
+            
+            return flip_candidates
+        
+        # TENTATIVA 1: DADOS REAIS
+        real_data_df = valid_df[valid_df['has_real_data'] == True].copy()
+        flip_candidates = []
+        
+        if len(real_data_df) >= 2:
+            flip_candidates = search_flips(real_data_df, "REAL")
+            if flip_candidates:
+                logging.info(f"Encontrou {len(flip_candidates)} flip(s) com dados reais")
+        
+        # TENTATIVA 2: TODOS OS DADOS
+        if not flip_candidates and len(valid_df) >= 2:
+            flip_candidates = search_flips(valid_df, "MISTO")
+            if flip_candidates:
+                logging.info(f"Encontrou {len(flip_candidates)} flip(s) com dados mistos")
+        
+        if not flip_candidates:
+            logging.warning("FLIP NAO ENCONTRADO")
+            return None
+        
+        for candidate in flip_candidates:
+            logging.info(f"FLIP CANDIDATO: Strike={candidate['strike']:.2f}, Dist={candidate['distance_from_spot']:.2f}")
+
+        
+        
+        if spot_regime == "SHORT_GAMMA":
+    
+            flip_candidates = [f for f in flip_candidates if f['flip_position'] == "ACIMA"]
+            flip_candidates.sort(key=lambda x: x['distance_from_spot'])
+        elif spot_regime == "LONG_GAMMA":
+            # Pega apenas flips ABAIXO do spot
+            flip_candidates = [f for f in flip_candidates if f['flip_position'] == "ABAIXO"]
+            flip_candidates.sort(key=lambda x: x['distance_from_spot'])
+        else:
+            flip_candidates.sort(key=lambda x: x['distance_from_spot'])
+               
+        
+        best_flip = flip_candidates[0]
+        
+        logging.info(f"GAMMA FLIP SELECIONADO")
+        logging.info(f"  Strike: R$ {best_flip['strike']:.2f}")
+        logging.info(f"  Fonte: {best_flip['data_source']}")
+        logging.info(f"  Posicao: {best_flip['flip_position']} do spot")
+        logging.info(f"  Distancia: {best_flip['distance_pct']:.2f}%")
+        
+        
+        regime = "POSITIVE GAMMA" if spot_price > best_flip['strike'] else "NEGATIVE GAMMA"
+        
+        logging.info(f"REGIME CALCULADO: {regime}")
+        
+        if (regime == "POSITIVE GAMMA" and spot_regime == "SHORT_GAMMA") or (regime == "NEGATIVE GAMMA" and spot_regime == "LONG_GAMMA"):
+            logging.warning("INCONSISTENCIA: Regime calculado nao bate com GEX no spot")
+        else:
+            logging.info("Regime consistente com GEX no spot")
+        
+        return best_flip['strike']
     
     def create_6_charts(self, gex_df, spot_price, symbol, flip_strike=None, expiration_info=None):
         if gex_df.empty:
@@ -589,18 +646,21 @@ class GEXAnalyzer:
         call_oi = [int(x) for x in gex_df['call_oi_total'].tolist()]
         put_oi = [int(x) for x in gex_df['put_oi_total'].tolist()]
         
+        # LINHA 1
         colors1 = ['#ef4444' if x < 0 else '#22c55e' for x in total_gex_values]
         fig.add_trace(go.Bar(x=strikes, y=total_gex_values, marker_color=colors1, showlegend=False), row=1, col=1)
         
         colors2 = ['#ef4444' if x < 0 else '#22c55e' for x in descoberto_values]
         fig.add_trace(go.Bar(x=strikes, y=descoberto_values, marker_color=colors2, showlegend=False), row=1, col=2)
         
+        # LINHA 2
         colors3 = ['#22c55e' if x > 1000 else '#ef4444' if x < -1000 else '#6b7280' for x in descoberto_values]
         fig.add_trace(go.Bar(x=strikes, y=[abs(x) for x in descoberto_values], marker_color=colors3, showlegend=False), row=2, col=1)
         
         fig.add_trace(go.Bar(x=strikes, y=call_gex_values, marker_color='#22c55e', name='Calls', showlegend=False), row=2, col=2)
         fig.add_trace(go.Bar(x=strikes, y=put_gex_values, marker_color='#ef4444', name='Puts', showlegend=False), row=2, col=2)
         
+        # LINHA 3
         cumulative = np.cumsum(total_gex_values).tolist()
         fig.add_trace(go.Scatter(x=strikes, y=cumulative, mode='lines+markers', 
                                 line=dict(color='#06b6d4', width=3), 
@@ -610,6 +670,7 @@ class GEXAnalyzer:
         oi_total = [c + p for c, p in zip(call_oi, put_oi)]
         fig.add_trace(go.Bar(x=strikes, y=oi_total, marker_color='#a855f7', showlegend=False), row=3, col=2)
         
+        # LINHAS DE REFERENCIA
         for row in range(1, 4):
             for col in range(1, 3):
                 fig.add_vline(x=spot_price, line=dict(color='#fbbf24', width=3, dash='dash'), row=row, col=col)
@@ -702,6 +763,7 @@ class GEXAnalyzer:
     def analyze(self, symbol, expiration_code=None):
         logging.info(f"INICIANDO ANALISE GEX - {symbol}")
         
+        # Informação de liquidez
         liquidity_info = self.liquidity_manager.get_liquidity_info(symbol)
         logging.info(f"Liquidez: {liquidity_info['category']} - Range ATM: {liquidity_info['range']}%")
         
