@@ -28,6 +28,7 @@ from pro.theta_routes import get_theta_blueprint
 from pro.mm_temporal_routes import mm_temporal_bp
 from pro.oplab_routes import oplab_bp
 from pro.screening_routes import get_screening_blueprint
+from pro.railway_sync_routes import railway_bp
 
 
 
@@ -121,6 +122,7 @@ except Exception as e:
 app.register_blueprint(beta_bp)
 app.register_blueprint(opcoes_bp)
 app.register_blueprint(oplab_bp)
+app.register_blueprint(railway_bp)
 
 
 # market maker
