@@ -1,111 +1,83 @@
-# database.py - VERSÃO OTIMIZADA SEM MUDAR NOMES OU REMOVER FUNÇÕES
+# database.py - VERSÃO CORRIGIDA E SINCRONIZADA
 # ==================================================
 
 import os
 import psycopg2
 from psycopg2.extras import RealDictCursor
-from psycopg2 import pool
 from datetime import datetime, timezone
-import warnings
-
-# ✅ SUPRIMIR WARNING DE COLLATION
-warnings.filterwarnings('ignore', message='.*collation version.*')
-
-# ✅ CONNECTION POOL GLOBAL
-_connection_pool = None
-
-def get_connection_pool():
-    """Criar connection pool uma única vez"""
-    global _connection_pool
-    
-    if _connection_pool is None:
-        database_url = os.environ.get("DATABASE_URL")
-        
-        if database_url:
-            if database_url.startswith("postgres://"):
-                database_url = database_url.replace("postgres://", "postgresql://", 1)
-            
-            _connection_pool = pool.SimpleConnectionPool(
-                1,  # minconn
-                10,  # maxconn
-                database_url,
-                sslmode='require',
-                connect_timeout=10
-            )
-        else:
-            _connection_pool = pool.SimpleConnectionPool(
-                1,
-                10,
-                host=os.environ.get("DB_HOST", "localhost"),
-                database=os.environ.get("DB_NAME", "postgres"),
-                user=os.environ.get("DB_USER", "postgres"),
-                password=os.environ.get("DB_PASSWORD", "#geminii"),
-                port=os.environ.get("DB_PORT", "5432"),
-                connect_timeout=10
-            )
-    
-    return _connection_pool
 
 def get_db_connection():
-    """Conectar com PostgreSQL usando pool"""
-    try:
-        pool_instance = get_connection_pool()
-        conn = pool_instance.getconn()
-        return conn
-    except Exception as e:
-        # Fallback para conexão direta se pool falhar
-        database_url = os.environ.get("DATABASE_URL")
-        
-        if database_url:
-            if database_url.startswith("postgres://"):
-                database_url = database_url.replace("postgres://", "postgresql://", 1)
+    """Conectar com PostgreSQL (local ou Railway) - VERSÃO CORRIGIDA"""
+    max_retries = 3
+    retry_delay = 1
+    
+    for attempt in range(max_retries):
+        try:
+            database_url = os.environ.get("DATABASE_URL")
             
-            conn = psycopg2.connect(
-                database_url, 
-                sslmode='require',
-                connect_timeout=10
-            )
-        else:
-            conn = psycopg2.connect(
-                host=os.environ.get("DB_HOST", "localhost"),
-                database=os.environ.get("DB_NAME", "postgres"),
-                user=os.environ.get("DB_USER", "postgres"),
-                password=os.environ.get("DB_PASSWORD", "#geminii"),
-                port=os.environ.get("DB_PORT", "5432"),
-                connect_timeout=10
-            )
-        
-        return conn
-
-def return_db_connection(conn):
-    """Devolver conexão ao pool"""
-    try:
-        pool_instance = get_connection_pool()
-        pool_instance.putconn(conn)
-    except:
-        # Se não tiver pool, apenas fecha
-        if conn:
-            conn.close()
+            if database_url:
+                # Corrigir URL do Railway/Heroku se necessário
+                if database_url.startswith("postgres://"):
+                    database_url = database_url.replace("postgres://", "postgresql://", 1)
+                
+                conn = psycopg2.connect(
+                    database_url, 
+                    sslmode='require',
+                    connect_timeout=10
+                )
+                
+            else:
+                conn = psycopg2.connect(
+                    host=os.environ.get("DB_HOST", "localhost"),
+                    database=os.environ.get("DB_NAME", "postgres"),
+                    user=os.environ.get("DB_USER", "postgres"),
+                    password=os.environ.get("DB_PASSWORD", "#geminii"),
+                    port=os.environ.get("DB_PORT", "5432"),
+                    connect_timeout=10
+                )
+                
+            
+            # Testar conexão
+            cursor = conn.cursor()
+            cursor.execute("SELECT 1")
+            cursor.fetchone()
+            cursor.close()
+            
+            return conn
+            
+        except Exception as e:
+            print(f" Tentativa {attempt + 1} falhou: {e}")
+            
+            if attempt < max_retries - 1:
+                print(f"⏳ Tentando novamente em {retry_delay}s...")
+                import time
+                time.sleep(retry_delay)
+                retry_delay *= 2
+            else:
+                print(" Todas as tentativas falharam")
+                return None
+    
+    return None
 
 def test_connection():
     try:
         conn = get_db_connection()
         if conn:
             cursor = conn.cursor()
-            cursor.execute("SELECT 1")
-            cursor.fetchone()
+            cursor.execute("SELECT version();")
+            version = cursor.fetchone()
             cursor.close()
-            return_db_connection(conn)
+            conn.close()
             return True
         else:
-            print("❌ Falha na conexão")
+            print(" Falha na conexão")
             return False
     except Exception as e:
-        print(f"❌ Erro no teste: {e}")
+        print(f" Erro no teste: {e}")
         return False
 
 def create_plans_table():
-    """Criar tabela de planos SINCRONIZADA com o service"""
+    """ Criar tabela de planos SINCRONIZADA com o service"""
     try:
         conn = get_db_connection()
         if not conn:
@@ -127,8 +99,10 @@ def create_plans_table():
             );
         """)
         
+        #  NOVA ESTRUTURA DE PLANOS: APENAS BÁSICO E COMUNIDADE
         cursor.execute("DELETE FROM plans")
         
+        #  CORREÇÃO: Adicionada aspa faltante no 'Free'
         cursor.execute("""
             INSERT INTO plans (id, name, display_name, price_monthly, price_annual, description, features) VALUES
             (3, 'Free', 'Free', 0.00, 0.00, 'Acesso básico ao sistema', 
@@ -138,22 +112,22 @@ def create_plans_table():
             ARRAY['Monitor de Opções completo', 'Machine Learning avançado', 'Todas as ferramentas de análise', 'Suporte prioritário', 'Recomendações exclusivas'])
         """)
         
+        # Resetar sequence
         cursor.execute("SELECT setval('plans_id_seq', 4, true)")
         
         conn.commit()
         cursor.close()
-        return_db_connection(conn)
+        conn.close()
         
-        print("✅ Planos criados com sucesso!")
+        print(" Planos criados com sucesso!")
         return True
         
     except Exception as e:
-        print(f"❌ Erro ao criar planos: {e}")
-        if conn:
-            return_db_connection(conn)
+        print(f" Erro ao criar planos: {e}")
         return False
 
 def create_users_table():
+    
     try:
         conn = get_db_connection()
         if not conn:
@@ -170,17 +144,21 @@ def create_users_table():
                 source VARCHAR(50),          
                 password VARCHAR(255) NOT NULL,
                 
+                --  CORREÇÃO: DEFAULT para plano BÁSICO
                 plan_id INTEGER DEFAULT 3,
                 plan_name VARCHAR(50) DEFAULT 'Básico',
                 user_type VARCHAR(20) DEFAULT 'regular',
                 
+                --  CAMPOS OBRIGATÓRIOS PARA TRIAL
                 plan_expires_at TIMESTAMP,
                 subscription_status VARCHAR(20) DEFAULT 'inactive',
                 subscription_plan VARCHAR(50),
                 
+                --  CAMPOS OBRIGATÓRIOS PARA EMAIL
                 email_confirmed BOOLEAN DEFAULT FALSE,
                 email_confirmed_at TIMESTAMP,
                 
+                -- DATAS
                 registration_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -188,122 +166,68 @@ def create_users_table():
             );
         """)
         
-        # ✅ BATCH DE ÍNDICES
-        cursor.execute("""
-            DO $$ 
-            BEGIN
-                IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_users_email') THEN
-                    CREATE INDEX idx_users_email ON users(email);
-                END IF;
-                IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_users_type') THEN
-                    CREATE INDEX idx_users_type ON users(user_type);
-                END IF;
-                IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_users_subscription') THEN
-                    CREATE INDEX idx_users_subscription ON users(subscription_status);
-                END IF;
-                IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_users_plan_expires') THEN
-                    CREATE INDEX idx_users_plan_expires ON users(plan_expires_at);
-                END IF;
-            END $$;
-        """)
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_users_type ON users(user_type);")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_users_subscription ON users(subscription_status);")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_users_plan_expires ON users(plan_expires_at);")
+        cursor.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS ip_address VARCHAR(45)")
+        cursor.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS phone VARCHAR(20)")
+        cursor.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS source VARCHAR(50)")
         
         conn.commit()
         cursor.close()
-        return_db_connection(conn)
+        conn.close()
         
         return True
         
     except Exception as e:
-        print(f"❌ Erro ao criar tabela users: {e}")
-        if conn:
-            return_db_connection(conn)
+        print(f" Erro ao criar tabela users: {e}")
         return False
 
 def update_users_table_for_service():
-    """Atualizar tabela users existente para compatibilidade com o service"""
+    """ Atualizar tabela users existente para compatibilidade com o service"""
     try:
         conn = get_db_connection()
         if not conn:
             return False
             
         cursor = conn.cursor()
+               
+        # Adicionar campos necessários para o service
+        cursor.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS subscription_status VARCHAR(20) DEFAULT 'inactive'")
+        cursor.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS subscription_plan VARCHAR(50)")
+        cursor.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS plan_expires_at TIMESTAMP")
+        cursor.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS user_type VARCHAR(20) DEFAULT 'regular'")
+        cursor.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS registration_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+        cursor.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS email_confirmed BOOLEAN DEFAULT TRUE")
+        cursor.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS ip_address VARCHAR(45)")
+        cursor.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS phone VARCHAR(20)")
+        cursor.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS source VARCHAR(50)")
         
-        # ✅ BATCH DE ALTER TABLE
-        cursor.execute("""
-            DO $$ 
-            BEGIN
-                BEGIN
-                    ALTER TABLE users ADD COLUMN IF NOT EXISTS subscription_status VARCHAR(20) DEFAULT 'inactive';
-                EXCEPTION WHEN duplicate_column THEN NULL;
-                END;
-                BEGIN
-                    ALTER TABLE users ADD COLUMN IF NOT EXISTS subscription_plan VARCHAR(50);
-                EXCEPTION WHEN duplicate_column THEN NULL;
-                END;
-                BEGIN
-                    ALTER TABLE users ADD COLUMN IF NOT EXISTS plan_expires_at TIMESTAMP;
-                EXCEPTION WHEN duplicate_column THEN NULL;
-                END;
-                BEGIN
-                    ALTER TABLE users ADD COLUMN IF NOT EXISTS user_type VARCHAR(20) DEFAULT 'regular';
-                EXCEPTION WHEN duplicate_column THEN NULL;
-                END;
-                BEGIN
-                    ALTER TABLE users ADD COLUMN IF NOT EXISTS registration_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
-                EXCEPTION WHEN duplicate_column THEN NULL;
-                END;
-                BEGIN
-                    ALTER TABLE users ADD COLUMN IF NOT EXISTS email_confirmed BOOLEAN DEFAULT TRUE;
-                EXCEPTION WHEN duplicate_column THEN NULL;
-                END;
-                BEGIN
-                    ALTER TABLE users ADD COLUMN IF NOT EXISTS ip_address VARCHAR(45);
-                EXCEPTION WHEN duplicate_column THEN NULL;
-                END;
-                BEGIN
-                    ALTER TABLE users ADD COLUMN IF NOT EXISTS phone VARCHAR(20);
-                EXCEPTION WHEN duplicate_column THEN NULL;
-                END;
-                BEGIN
-                    ALTER TABLE users ADD COLUMN IF NOT EXISTS source VARCHAR(50);
-                EXCEPTION WHEN duplicate_column THEN NULL;
-                END;
-            END $$;
-        """)
-        
+        # Atualizar dados existentes
         cursor.execute("""
             UPDATE users 
             SET email_confirmed = TRUE, email_confirmed_at = CURRENT_TIMESTAMP
             WHERE email_confirmed IS NULL
         """)
         
-        # ✅ ÍNDICES EM BATCH
-        cursor.execute("""
-            DO $$ 
-            BEGIN
-                IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_users_subscription') THEN
-                    CREATE INDEX idx_users_subscription ON users(subscription_status);
-                END IF;
-                IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_users_type') THEN
-                    CREATE INDEX idx_users_type ON users(user_type);
-                END IF;
-            END $$;
-        """)
+        # Criar índices
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_users_subscription ON users(subscription_status)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_users_type ON users(user_type)")
         
         conn.commit()
         cursor.close()
-        return_db_connection(conn)
+        conn.close()
+        
         
         return True
         
     except Exception as e:
-        print(f"❌ Erro ao atualizar tabela users: {e}")
-        if conn:
-            return_db_connection(conn)
+        print(f" Erro ao atualizar tabela users: {e}")
         return False
 
 def create_payments_table():
-    """Criar tabela payments EXATAMENTE como o service espera"""
+    """ Criar tabela payments EXATAMENTE como o service espera"""
     try:
         conn = get_db_connection()
         if not conn:
@@ -328,36 +252,23 @@ def create_payments_table():
             )
         """)
         
-        # ✅ ÍNDICES EM BATCH
-        cursor.execute("""
-            DO $$ 
-            BEGIN
-                IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_payments_user_id') THEN
-                    CREATE INDEX idx_payments_user_id ON payments(user_id);
-                END IF;
-                IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_payments_payment_id') THEN
-                    CREATE INDEX idx_payments_payment_id ON payments(payment_id);
-                END IF;
-                IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_payments_status') THEN
-                    CREATE INDEX idx_payments_status ON payments(status);
-                END IF;
-            END $$;
-        """)
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_payments_user_id ON payments(user_id)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_payments_payment_id ON payments(payment_id)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_payments_status ON payments(status)")
         
         conn.commit()
         cursor.close()
-        return_db_connection(conn)
+        conn.close()
+        
         
         return True
         
     except Exception as e:
-        print(f"❌ Erro ao criar tabela payments: {e}")
-        if conn:
-            return_db_connection(conn)
+        print(f" Erro ao criar tabela payments: {e}")
         return False
 
 def create_payment_history():
-    """Criar tabela payment_history com CONFLICT handling correto"""
+    """ Criar tabela payment_history com CONFLICT handling correto"""
     try:
         conn = get_db_connection()
         if not conn:
@@ -385,36 +296,23 @@ def create_payment_history():
             )
         """)
         
-        # ✅ ÍNDICES EM BATCH
-        cursor.execute("""
-            DO $$ 
-            BEGIN
-                IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_payment_user') THEN
-                    CREATE INDEX idx_payment_user ON payment_history(user_id);
-                END IF;
-                IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_payment_status') THEN
-                    CREATE INDEX idx_payment_status ON payment_history(status);
-                END IF;
-                IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_payment_payment_id') THEN
-                    CREATE INDEX idx_payment_payment_id ON payment_history(payment_id);
-                END IF;
-            END $$;
-        """)
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_payment_user ON payment_history(user_id)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_payment_status ON payment_history(status)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_payment_payment_id ON payment_history(payment_id)")
         
         conn.commit()
         cursor.close()
-        return_db_connection(conn)
+        conn.close()
+        
         
         return True
         
     except Exception as e:
-        print(f"❌ Erro ao criar payment_history: {e}")
-        if conn:
-            return_db_connection(conn)
+        print(f" Erro ao criar payment_history: {e}")
         return False
 
 def create_coupons_table():
-    """Criar sistema de cupons SINCRONIZADO com o service"""
+    """ Criar sistema de cupons SINCRONIZADO com o service"""
     try:
         conn = get_db_connection()
         if not conn:
@@ -422,6 +320,7 @@ def create_coupons_table():
             
         cursor = conn.cursor()
         
+        # Tabela de cupons
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS coupons (
                 id SERIAL PRIMARY KEY,
@@ -439,6 +338,7 @@ def create_coupons_table():
             )
         """)
         
+        #  TABELA coupon_uses (não coupon_usage) - como o service espera
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS coupon_uses (
                 id SERIAL PRIMARY KEY,
@@ -454,32 +354,18 @@ def create_coupons_table():
             )
         """)
         
-        # ✅ ÍNDICES EM BATCH
-        cursor.execute("""
-            DO $$ 
-            BEGIN
-                IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_coupons_code') THEN
-                    CREATE INDEX idx_coupons_code ON coupons(code);
-                END IF;
-                IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_coupons_active') THEN
-                    CREATE INDEX idx_coupons_active ON coupons(active);
-                END IF;
-                IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_coupon_uses_user') THEN
-                    CREATE INDEX idx_coupon_uses_user ON coupon_uses(user_id);
-                END IF;
-            END $$;
-        """)
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_coupons_code ON coupons(code)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_coupons_active ON coupons(active)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_coupon_uses_user ON coupon_uses(user_id)")
         
         conn.commit()
         cursor.close()
-        return_db_connection(conn)
+        conn.close()
         
         return True
         
     except Exception as e:
-        print(f"❌ Erro ao criar sistema de cupons: {e}")
-        if conn:
-            return_db_connection(conn)
+        print(f" Erro ao criar sistema de cupons: {e}")
         return False
 
 def create_password_reset_table():
@@ -502,33 +388,22 @@ def create_password_reset_table():
             );
         """)
         
-        # ✅ ÍNDICES EM BATCH
-        cursor.execute("""
-            DO $$ 
-            BEGIN
-                IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_reset_tokens_token') THEN
-                    CREATE INDEX idx_reset_tokens_token ON password_reset_tokens(token);
-                END IF;
-                IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_reset_tokens_expires') THEN
-                    CREATE INDEX idx_reset_tokens_expires ON password_reset_tokens(expires_at);
-                END IF;
-            END $$;
-        """)
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_reset_tokens_token ON password_reset_tokens(token)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_reset_tokens_expires ON password_reset_tokens(expires_at)")
         
         conn.commit()
         cursor.close()
-        return_db_connection(conn)
+        conn.close()
+        
         
         return True
         
     except Exception as e:
-        print(f"❌ Erro ao criar tabela de reset: {e}")
-        if conn:
-            return_db_connection(conn)
+        print(f" Erro ao criar tabela de reset: {e}")
         return False
 
 def create_initial_admin():
-    """Criar admin com dados corretos"""
+    """ Criar admin com dados corretos"""
     try:
         conn = get_db_connection()
         if not conn:
@@ -553,31 +428,29 @@ def create_initial_admin():
                 updated_at = EXCLUDED.updated_at
             RETURNING id
         """, (
-            "Diego Doneda - Admin",
-            admin_email,
-            admin_password,
-            4,
-            "community",
-            "admin",
-            "active",
-            True,
-            now,
-            now,
-            now
+            "Diego Doneda - Admin",    # name
+            admin_email,               # email
+            admin_password,            # password
+            4,                         
+            "community",               
+            "admin",                   
+            "active",                  
+            True,                      # email_confirmed
+            now,                       # email_confirmed_at
+            now,                       # created_at
+            now                        # updated_at
         ))
         
         admin_id = cursor.fetchone()[0]
         
         conn.commit()
         cursor.close()
-        return_db_connection(conn)
-        
+        conn.close()
+           
         return True
         
     except Exception as e:
-        print(f"❌ Erro ao criar admin: {e}")
-        if conn:
-            return_db_connection(conn)
+        print(f" Erro ao criar admin: {e}")
         return False
 
 def create_opcoes_recommendations_table():
@@ -611,46 +484,27 @@ def create_opcoes_recommendations_table():
             );
         """)
         
-        # ✅ ÍNDICES EM BATCH
-        cursor.execute("""
-            DO $$ 
-            BEGIN
-                IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_opcoes_recommendations_ativo') THEN
-                    CREATE INDEX idx_opcoes_recommendations_ativo ON opcoes_recommendations(ativo_spot);
-                END IF;
-                IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_opcoes_recommendations_ticker') THEN
-                    CREATE INDEX idx_opcoes_recommendations_ticker ON opcoes_recommendations(ticker_opcao);
-                END IF;
-                IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_opcoes_recommendations_status') THEN
-                    CREATE INDEX idx_opcoes_recommendations_status ON opcoes_recommendations(status);
-                END IF;
-                IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_opcoes_recommendations_vencimento') THEN
-                    CREATE INDEX idx_opcoes_recommendations_vencimento ON opcoes_recommendations(vencimento);
-                END IF;
-                IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_opcoes_recommendations_data_rec') THEN
-                    CREATE INDEX idx_opcoes_recommendations_data_rec ON opcoes_recommendations(data_recomendacao);
-                END IF;
-                IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_opcoes_recommendations_active') THEN
-                    CREATE INDEX idx_opcoes_recommendations_active ON opcoes_recommendations(is_active);
-                END IF;
-            END $$;
-        """)
+        # Criar índices
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_opcoes_recommendations_ativo ON opcoes_recommendations(ativo_spot)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_opcoes_recommendations_ticker ON opcoes_recommendations(ticker_opcao)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_opcoes_recommendations_status ON opcoes_recommendations(status)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_opcoes_recommendations_vencimento ON opcoes_recommendations(vencimento)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_opcoes_recommendations_data_rec ON opcoes_recommendations(data_recomendacao)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_opcoes_recommendations_active ON opcoes_recommendations(is_active)")
         
         conn.commit()
         cursor.close()
-        return_db_connection(conn)
+        conn.close()
         
-        print("✅ Tabela opcoes_recommendations criada com sucesso!")
+        print(" Tabela opcoes_recommendations criada com sucesso!")
         return True
         
     except Exception as e:
-        print(f"❌ Erro ao criar tabela opcoes_recommendations: {e}")
-        if conn:
-            return_db_connection(conn)
+        print(f" Erro ao criar tabela opcoes_recommendations: {e}")
         return False
 
 def verify_service_compatibility():
-    """🔍 Verificar se o banco está compatível com o service - VERSÃO RÁPIDA"""
+    """🔍 Verificar se o banco está compatível com o service"""
     try:
         conn = get_db_connection()
         if not conn:
@@ -660,42 +514,71 @@ def verify_service_compatibility():
         
         print("🔍 VERIFICANDO COMPATIBILIDADE COM MERCADOPAGO SERVICE...")
         
-        # ✅ QUERY ÚNICA OTIMIZADA
+        # 1. Verificar planos
+        cursor.execute("SELECT id, name FROM plans ORDER BY id")
+        plans = cursor.fetchall()
+        print(f"\n📋 Planos encontrados:")
+        for plan in plans:
+            print(f"   - ID {plan[0]}: {plan[1]}")
+        
+        # 2. Verificar campos da tabela users
         cursor.execute("""
-            SELECT 
-                (SELECT COUNT(*) FROM plans) as plan_count,
-                (SELECT COUNT(*) FROM information_schema.columns 
-                 WHERE table_name = 'users' 
-                 AND column_name IN ('subscription_status', 'subscription_plan', 'plan_expires_at')) as user_fields,
-                (SELECT COUNT(*) FROM information_schema.columns 
-                 WHERE table_name = 'payments' AND column_name = 'device_id') as has_device_id,
-                (SELECT COUNT(*) FROM information_schema.tables 
-                 WHERE table_name = 'coupon_uses') as has_coupon_uses,
-                (SELECT COUNT(*) FROM users) as user_count
+            SELECT column_name 
+            FROM information_schema.columns 
+            WHERE table_name = 'users' 
+            AND column_name IN ('subscription_status', 'subscription_plan', 'plan_expires_at')
         """)
+        user_fields = [row[0] for row in cursor.fetchall()]
+        print(f"\n👤 Campos necessários na tabela users:")
+        required_fields = ['subscription_status', 'subscription_plan', 'plan_expires_at']
+        for field in required_fields:
+            status = "" if field in user_fields else ""
+            print(f"   {status} {field}")
         
-        row = cursor.fetchone()
-        plan_count, user_fields, has_device_id, has_coupon_uses, user_count = row
+        # 3. Verificar tabela payments
+        cursor.execute("""
+            SELECT column_name 
+            FROM information_schema.columns 
+            WHERE table_name = 'payments'
+            AND column_name = 'device_id'
+        """)
+        has_device_id = cursor.fetchone() is not None
+        print(f"\n💳 Tabela payments:")
+        print(f"   {'' if has_device_id else ''} device_id")
         
-        print(f"\n📋 Planos: {plan_count}")
-        print(f"👤 Campos users: {user_fields}/3")
-        print(f"💳 device_id: {'✅' if has_device_id else '❌'}")
-        print(f"🎫 coupon_uses: {'✅' if has_coupon_uses else '❌'}")
-        print(f"👥 Total usuários: {user_count}")
+        # 4. Verificar tabela coupon_uses (não coupon_usage)
+        cursor.execute("""
+            SELECT table_name 
+            FROM information_schema.tables 
+            WHERE table_name IN ('coupon_uses', 'coupon_usage')
+        """)
+        coupon_tables = [row[0] for row in cursor.fetchall()]
+        print(f"\n🎫 Tabelas de cupons:")
+        print(f"   {'' if 'coupon_uses' in coupon_tables else ''} coupon_uses (necessária)")
+        print(f"   {'' if 'coupon_usage' in coupon_tables else ''} coupon_usage (desnecessária)")
+        
+        # 5. Verificar usuários de teste
+        cursor.execute("SELECT COUNT(*) FROM users")
+        user_count = cursor.fetchone()[0]
+        print(f"\n👥 Total de usuários: {user_count}")
         
         cursor.close()
-        return_db_connection(conn)
+        conn.close()
         
-        all_good = (plan_count >= 2 and user_fields == 3 and has_device_id and has_coupon_uses)
+        # Resultado final
+        all_good = (
+            len(plans) >= 2 and 
+            len(user_fields) == 3 and 
+            has_device_id and 
+            'coupon_uses' in coupon_tables
+        )
         
-        print(f"\n✅ STATUS GERAL: {'✅ COMPATÍVEL' if all_good else '❌ NECESSITA CORREÇÕES'}")
+        print(f"\n STATUS GERAL: {' COMPATÍVEL' if all_good else ' NECESSITA CORREÇÕES'}")
         
         return all_good
         
     except Exception as e:
-        print(f"❌ Erro na verificação: {e}")
-        if conn:
-            return_db_connection(conn)
+        print(f" Erro na verificação: {e}")
         return False
 
 def cleanup_expired_tokens():
@@ -715,21 +598,19 @@ def cleanup_expired_tokens():
         deleted_count = cursor.rowcount
         conn.commit()
         cursor.close()
-        return_db_connection(conn)
+        conn.close()
         
         if deleted_count > 0:
-            print(f"🗑️ {deleted_count} tokens expirados removidos!")
+            print(f" {deleted_count} tokens expirados removidos!")
         
         return True
         
     except Exception as e:
-        print(f"❌ Erro ao limpar tokens: {e}")
-        if conn:
-            return_db_connection(conn)
+        print(f" Erro ao limpar tokens: {e}")
         return False
 
 def create_email_confirmations_table():
-    """Criar tabela de confirmações de email"""
+    """ Criar tabela de confirmações de email"""
     try:
         conn = get_db_connection()
         if not conn:
@@ -750,33 +631,21 @@ def create_email_confirmations_table():
             );
         """)
         
-        # ✅ ÍNDICES EM BATCH
-        cursor.execute("""
-            DO $$ 
-            BEGIN
-                IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_email_confirmations_token') THEN
-                    CREATE INDEX idx_email_confirmations_token ON email_confirmations(token);
-                END IF;
-                IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_email_confirmations_user') THEN
-                    CREATE INDEX idx_email_confirmations_user ON email_confirmations(user_id);
-                END IF;
-            END $$;
-        """)
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_email_confirmations_token ON email_confirmations(token)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_email_confirmations_user ON email_confirmations(user_id)")
         
         conn.commit()
         cursor.close()
-        return_db_connection(conn)
+        conn.close()
         
         return True
         
     except Exception as e:
-        print(f"❌ Erro ao criar tabela email_confirmations: {e}")
-        if conn:
-            return_db_connection(conn)
+        print(f" Erro ao criar tabela email_confirmations: {e}")
         return False
 
 def validate_coupon(code, plan_name, user_id):
-    """Validar cupom usando os campos exatos do Railway - VERSÃO OTIMIZADA"""
+    """Validar cupom usando os campos exatos do Railway"""
     try:
         conn = get_db_connection()
         if not conn:
@@ -784,35 +653,50 @@ def validate_coupon(code, plan_name, user_id):
         
         cursor = conn.cursor()
         
-        # ✅ QUERY ÚNICA COM JOIN
+        # Buscar cupom com os campos que existem no Railway
         cursor.execute("""
-            SELECT 
-                c.id, c.discount_percent, c.discount_type, c.max_uses, 
-                c.used_count, c.valid_until, c.applicable_plans,
-                (SELECT COUNT(*) FROM coupon_uses WHERE coupon_id = c.id AND user_id = %s) as user_used
-            FROM coupons c
-            WHERE c.code = %s AND (c.active = TRUE OR c.is_active = TRUE)
-        """, (user_id, code.upper()))
+            SELECT id, discount_percent, discount_type, max_uses, used_count, 
+                   valid_until, applicable_plans
+            FROM coupons 
+            WHERE code = %s AND (active = TRUE OR is_active = TRUE)
+        """, (code.upper(),))
         
         coupon = cursor.fetchone()
         
-        cursor.close()
-        return_db_connection(conn)
-        
         if not coupon:
+            cursor.close()
+            conn.close()
             return {'valid': False, 'error': 'Cupom não encontrado ou inativo'}
         
-        coupon_id, discount_percent, discount_type, max_uses, used_count, valid_until, applicable_plans, user_used = coupon
+        coupon_id, discount_percent, discount_type, max_uses, used_count, valid_until, applicable_plans = coupon
         
+        # Verificar se expirou
         if valid_until and datetime.now(timezone.utc) > valid_until.replace(tzinfo=timezone.utc):
+            cursor.close()
+            conn.close()
             return {'valid': False, 'error': 'Cupom expirado'}
         
+        # Verificar limite de usos
         if max_uses and used_count and used_count >= max_uses:
+            cursor.close()
+            conn.close()
             return {'valid': False, 'error': 'Cupom esgotado'}
         
-        if user_used > 0:
+        # Verificar se usuário já usou
+        cursor.execute("""
+            SELECT id FROM coupon_uses 
+            WHERE coupon_id = %s AND user_id = %s
+        """, (coupon_id, user_id))
+        
+        if cursor.fetchone():
+            cursor.close()
+            conn.close()
             return {'valid': False, 'error': 'Cupom já utilizado'}
         
+        cursor.close()
+        conn.close()
+        
+        # Processar applicable_plans (é ARRAY no Railway)
         plans_list = []
         if applicable_plans:
             if isinstance(applicable_plans, list):
@@ -840,6 +724,7 @@ def create_portfolio_tables():
             
         cursor = conn.cursor()
         
+        # 1. Tabela portfolios
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS portfolios (
                 id SERIAL PRIMARY KEY,
@@ -852,6 +737,7 @@ def create_portfolio_tables():
             );
         """)
         
+        # 2. Inserir portfolios padrão
         cursor.execute("""
             INSERT INTO portfolios (name, display_name, description, is_active)
             VALUES 
@@ -862,6 +748,7 @@ def create_portfolio_tables():
             ON CONFLICT (name) DO NOTHING
         """)
         
+        # 3. Tabela portfolio_assets (SEM FOREIGN KEY)
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS portfolio_assets (
                 id SERIAL PRIMARY KEY,
@@ -880,6 +767,7 @@ def create_portfolio_tables():
             );
         """)
         
+        # 4. Tabela portfolio_recommendations
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS portfolio_recommendations (
                 id SERIAL PRIMARY KEY,
@@ -900,6 +788,7 @@ def create_portfolio_tables():
             );
         """)
         
+        # 5. Tabela user_portfolios
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS user_portfolios (
                 id SERIAL PRIMARY KEY,
@@ -912,32 +801,20 @@ def create_portfolio_tables():
             );
         """)
         
-        # ✅ ÍNDICES EM BATCH
-        cursor.execute("""
-            DO $$ 
-            BEGIN
-                IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_portfolio_assets_portfolio') THEN
-                    CREATE INDEX idx_portfolio_assets_portfolio ON portfolio_assets(portfolio_name);
-                END IF;
-                IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_portfolio_recommendations_portfolio') THEN
-                    CREATE INDEX idx_portfolio_recommendations_portfolio ON portfolio_recommendations(portfolio_name);
-                END IF;
-                IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_user_portfolios_user') THEN
-                    CREATE INDEX idx_user_portfolios_user ON user_portfolios(user_id);
-                END IF;
-            END $$;
-        """)
+        # 6. Criar índices
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_portfolio_assets_portfolio ON portfolio_assets(portfolio_name)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_portfolio_recommendations_portfolio ON portfolio_recommendations(portfolio_name)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_user_portfolios_user ON user_portfolios(user_id)")
         
         conn.commit()
         cursor.close()
-        return_db_connection(conn)
+        conn.close()
+        
         
         return True
         
     except Exception as e:
-        print(f"❌ Erro ao criar tabelas de portfolio: {e}")
-        if conn:
-            return_db_connection(conn)
+        print(f" Erro ao criar tabelas de portfolio: {e}")
         return False
 
 def get_portfolio_assets(portfolio_name):
@@ -977,14 +854,14 @@ def get_portfolio_assets(portfolio_name):
             })
         
         cursor.close()
-        return_db_connection(conn)
+        conn.close()
         
         return assets
         
     except Exception as e:
-        print(f"❌ Erro em get_portfolio_assets: {e}")
+        print(f" Erro em get_portfolio_assets: {e}")
         return []
-
+    
 def setup_enhanced_database():           
     if test_connection():
         #create_plans_table()
@@ -998,12 +875,13 @@ def setup_enhanced_database():
         create_email_confirmations_table() 
         create_opcoes_recommendations_table()        
         create_initial_admin()
+            
         
         return True
     else:
-        print("❌ Falha na configuração do banco")
+        print(" Falha na configuração do banco")
         return False
-
+    
 if __name__ == "__main__":
     print("=" * 60)
     
@@ -1012,3 +890,5 @@ if __name__ == "__main__":
     verify_service_compatibility()
     
     cleanup_expired_tokens()
+    
+    

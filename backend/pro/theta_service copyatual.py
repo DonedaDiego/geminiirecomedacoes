@@ -1,5 +1,5 @@
 """
-theta_service.py - TEX Analysis COM DADOS DO BANCO POSTGRESQL - VERSÃO CORRIGIDA
+theta_service.py - TEX Analysis COM DADOS DO BANCO POSTGRESQL
 """
 
 import numpy as np
@@ -137,6 +137,7 @@ class DataProvider:
             'Content-Type': 'application/json'
         }
         
+        # ✅ CONEXÃO COM BANCO DE DADOS - RAILWAY POSTGRESQL
         DATABASE_URL = os.getenv('DATABASE_URL')
         
         if not DATABASE_URL:
@@ -146,6 +147,7 @@ class DataProvider:
             DB_PASSWORD = os.getenv('PGPASSWORD') or os.getenv('DB_PASSWORD', '')
             DB_PORT = os.getenv('PGPORT') or os.getenv('DB_PORT', '5432')
             
+            # Valida que a porta é um número
             try:
                 DB_PORT = str(int(DB_PORT))
             except (ValueError, TypeError):
@@ -159,6 +161,7 @@ class DataProvider:
         try:
             self.db_engine = create_engine(DATABASE_URL)
             
+            # TESTA CONEXÃO
             with self.db_engine.connect() as conn:
                 result = conn.execute(text("SELECT COUNT(*) FROM opcoes_b3"))
                 count = result.fetchone()[0]
@@ -231,7 +234,7 @@ class DataProvider:
             return pd.DataFrame()
     
     def get_floqui_oi_breakdown(self, symbol, expiration_code=None):
-        """✅ VERSÃO CORRIGIDA - Filtra strikes realistas"""
+        """BUSCA DO BANCO DE DADOS POSTGRESQL - Mantém nome da função"""
         try:
             if expiration_code:
                 expiration = {
@@ -249,18 +252,6 @@ class DataProvider:
             
             exp_date = datetime.strptime(expiration['code'], '%Y%m%d')
             
-            # ✅ BUSCAR SPOT ATUAL
-            spot_price = self.get_spot_price(symbol)
-            if not spot_price:
-                logging.error(f"Não conseguiu spot para {symbol}")
-                spot_price = 100
-            
-            # ✅ FILTRO: ±50% do spot
-            min_strike = spot_price * 0.5
-            max_strike = spot_price * 1.5
-            
-            logging.info(f"🔍 TEX: Filtrando strikes {min_strike:.2f} - {max_strike:.2f} (spot={spot_price:.2f})")
-            
             query = text("""
                 SELECT 
                     preco_exercicio,
@@ -272,7 +263,6 @@ class DataProvider:
                 FROM opcoes_b3
                 WHERE ticker = :symbol
                 AND vencimento = :vencimento
-                AND preco_exercicio BETWEEN :min_strike AND :max_strike
                 AND data_referencia = (
                     SELECT MAX(data_referencia) 
                     FROM opcoes_b3 
@@ -283,17 +273,14 @@ class DataProvider:
             
             df = pd.read_sql(query, self.db_engine, params={
                 'symbol': symbol,
-                'vencimento': exp_date,
-                'min_strike': min_strike,
-                'max_strike': max_strike
+                'vencimento': exp_date
             })
             
             if df.empty:
-                logging.warning(f"❌ TEX: Sem dados para {symbol}")
+                logging.warning(f"Nenhum dado encontrado no banco para {symbol}")
                 return {}, expiration
             
-            logging.info(f"✅ TEX: {len(df)} registros, strikes {df['preco_exercicio'].min():.2f} - {df['preco_exercicio'].max():.2f}")
-            
+            # ✅ NOVA ESTRUTURA - USA STRING COMO CHAVE
             oi_breakdown = {}
             for _, row in df.iterrows():
                 strike = float(row['preco_exercicio'])
@@ -302,6 +289,7 @@ class DataProvider:
                 oi_descoberto = int(row['qtd_descoberto'])
                 
                 if strike > 0 and oi_total > 0:
+                    # ✅ CHAVE COMO STRING: "7.25_CALL"
                     key = f"{strike}_{option_type}"
                     oi_breakdown[key] = {
                         'strike': strike,
@@ -312,42 +300,18 @@ class DataProvider:
                         'coberto': int(row['qtd_coberto'])
                     }
             
-            logging.info(f"✅ TEX: {len(oi_breakdown)} chaves no dicionário")
-            
+            logging.info(f"OI breakdown TEX: {len(oi_breakdown)} strikes")
             return oi_breakdown, expiration
             
         except Exception as e:
-            logging.error(f"❌ Erro TEX Floqui: {e}")
-            import traceback
-            logging.error(traceback.format_exc())
+            logging.error(f"Erro Floqui: {e}")
             return {}, None
 
 
 class TEXCalculator:
     def calculate_tex(self, oplab_df, oi_breakdown, spot_price):
-        """✅ VERSÃO COM DEBUG - Calcula TEX"""
+        """Calcula TEX = Theta × Open Interest × 100"""
         if oplab_df.empty:
-            logging.error("❌ TEX: oplab_df vazio!")
-            return pd.DataFrame()
-        
-        # ✅ DEBUG
-        oplab_strikes = sorted(oplab_df['strike'].unique())
-        
-        db_strikes = set()
-        for key in oi_breakdown.keys():
-            parts = key.rsplit('_', 1)
-            if len(parts) == 2:
-                db_strikes.add(float(parts[0]))
-        db_strikes_sorted = sorted(db_strikes)
-        
-        logging.info(f"")
-        logging.info(f"🔍 DEBUG TEX:")
-        logging.info(f"   Spot: R$ {spot_price:.2f}")
-        logging.info(f"   Oplab: {len(oplab_strikes)} strikes ({min(oplab_strikes):.2f} - {max(oplab_strikes):.2f})")
-        if db_strikes_sorted:
-            logging.info(f"   Banco: {len(db_strikes_sorted)} strikes ({min(db_strikes_sorted):.2f} - {max(db_strikes_sorted):.2f})")
-        else:
-            logging.error(f"   ❌ Banco vazio!")
             return pd.DataFrame()
         
         price_range = spot_price * 0.25
@@ -356,15 +320,10 @@ class TEXCalculator:
             (oplab_df['strike'] <= spot_price + price_range)
         ].copy()
         
-        logging.info(f"   Após filtro ±25%: {len(valid_options)} opções")
-        
         if valid_options.empty:
-            logging.error("❌ TEX: valid_options vazio!")
             return pd.DataFrame()
         
         tex_data = []
-        matches = 0
-        no_matches = 0
         
         for strike in valid_options['strike'].unique():
             strike_options = valid_options[valid_options['strike'] == strike]
@@ -374,27 +333,28 @@ class TEXCalculator:
             
             call_data = None
             put_data = None
+            has_real_call = False
+            has_real_put = False
             
+            # ✅ BUSCA COM CHAVE STRING
             if len(calls) > 0:
                 call_key = f"{float(strike)}_CALL"
                 if call_key in oi_breakdown:
                     call_data = oi_breakdown[call_key]
-                    matches += 1
-                else:
-                    no_matches += 1
+                    has_real_call = True
             
             if len(puts) > 0:
                 put_key = f"{float(strike)}_PUT"
                 if put_key in oi_breakdown:
                     put_data = oi_breakdown[put_key]
-                    matches += 1
-                else:
-                    no_matches += 1
+                    has_real_put = True
             
-            if not (call_data or put_data):
+            if not (has_real_call or has_real_put):
                 continue
             
-            call_tex = call_tex_descoberto = call_days = 0.0
+            call_tex = 0.0
+            call_tex_descoberto = 0.0
+            call_days = 0.0
             if call_data and len(calls) > 0:
                 avg_theta = float(calls['theta'].mean())
                 avg_days = float(calls['days_to_maturity'].mean())
@@ -402,7 +362,9 @@ class TEXCalculator:
                 call_tex_descoberto = avg_theta * call_data['descoberto'] * 100
                 call_days = avg_days
             
-            put_tex = put_tex_descoberto = put_days = 0.0
+            put_tex = 0.0
+            put_tex_descoberto = 0.0
+            put_days = 0.0
             if put_data and len(puts) > 0:
                 avg_theta = float(puts['theta'].mean())
                 avg_days = float(puts['days_to_maturity'].mean())
@@ -413,6 +375,7 @@ class TEXCalculator:
             total_tex = call_tex + put_tex
             total_tex_descoberto = call_tex_descoberto + put_tex_descoberto
             
+            # Dias até vencimento médio ponderado
             weighted_days = 0.0
             if call_data and put_data:
                 total_oi = call_data['total'] + put_data['total']
@@ -423,6 +386,7 @@ class TEXCalculator:
             elif put_data:
                 weighted_days = put_days
             
+            # Aceleração do decaimento
             time_decay_acceleration = max(0, (30 - weighted_days) / 30) if weighted_days > 0 else 0
             
             tex_data.append({
@@ -439,13 +403,13 @@ class TEXCalculator:
                 'put_oi_descoberto': int(put_data['descoberto'] if put_data else 0),
                 'days_to_expiration': float(weighted_days),
                 'time_decay_acceleration': float(time_decay_acceleration),
-                'has_real_data': bool(call_data or put_data)
+                'has_real_data': has_real_call or has_real_put
             })
         
-        logging.info(f"   ✅ Matches: {matches} | ❌ No match: {no_matches}")
-        logging.info(f"   📊 TEX: {len(tex_data)} strikes")
+        result_df = pd.DataFrame(tex_data).sort_values('strike')
+        logging.info(f"TEX calculado para {len(result_df)} strikes")
         
-        return pd.DataFrame(tex_data).sort_values('strike')
+        return result_df
 
 
 class TimeDecayRegimeDetector:
@@ -457,15 +421,18 @@ class TimeDecayRegimeDetector:
         total_tex = float(tex_df['total_tex'].sum())
         total_tex_descoberto = float(tex_df['total_tex_descoberto'].sum())
         
+        # Dias médios até vencimento ponderado por OI
         total_oi = (tex_df['call_oi_total'] + tex_df['put_oi_total']).sum()
         if total_oi > 0:
             weighted_days = float((tex_df['days_to_expiration'] * (tex_df['call_oi_total'] + tex_df['put_oi_total'])).sum() / total_oi)
         else:
             weighted_days = float(tex_df['days_to_expiration'].mean())
         
-        max_bleed_idx = tex_df['total_tex'].idxmin()
+        # Strike de máximo sangramento
+        max_bleed_idx = tex_df['total_tex'].idxmin()  # Theta é negativo
         max_bleed_strike = float(tex_df.loc[max_bleed_idx, 'strike'])
         
+        # Classificação da pressão temporal
         if weighted_days < 15:
             time_pressure = 'HIGH'
             pressure_interpretation = 'Alto decaimento diário'
@@ -476,7 +443,8 @@ class TimeDecayRegimeDetector:
             time_pressure = 'LOW'
             pressure_interpretation = 'Baixo decaimento temporal'
         
-        if total_tex < -30000:
+        # Análise para vendedores/compradores
+        if total_tex < -30000:  # Theta negativo alto
             market_interpretation = 'Bom para vendedores de opções'
             theta_regime = 'Theta positivo dominante'
         elif total_tex < -10000:
@@ -533,12 +501,15 @@ class TEXAnalyzer:
         call_tex_values = [float(x) for x in tex_df['call_tex'].tolist()]
         put_tex_values = [float(x) for x in tex_df['put_tex'].tolist()]
         
+        # 1. Total TEX (sangramento)
         colors1 = ['#7c2d12' if x < 0 else '#22c55e' for x in total_tex_values]
         fig.add_trace(go.Bar(x=strikes, y=total_tex_values, marker_color=colors1, showlegend=False), row=1, col=1)
         
+        # 2. TEX Descoberto
         colors2 = ['#dc2626' if x < 0 else '#22c55e' for x in descoberto_values]
         fig.add_trace(go.Bar(x=strikes, y=descoberto_values, marker_color=colors2, showlegend=False), row=1, col=2)
         
+        # 3. Pressão Temporal (concentração %)
         total_tex_abs = sum([abs(x) for x in total_tex_values])
         if total_tex_abs > 0:
             concentration_pct = [(abs(x) / total_tex_abs) * 100 for x in total_tex_values]
@@ -548,9 +519,11 @@ class TEXAnalyzer:
         risk_colors = ['#ef4444' if x > 20 else '#f97316' if x > 10 else '#22c55e' for x in concentration_pct]
         fig.add_trace(go.Bar(x=strikes, y=concentration_pct, marker_color=risk_colors, showlegend=False), row=2, col=1)
         
+        # 4. Calls vs Puts
         fig.add_trace(go.Bar(x=strikes, y=call_tex_values, marker_color='#22c55e', showlegend=False), row=2, col=2)
         fig.add_trace(go.Bar(x=strikes, y=put_tex_values, marker_color='#ef4444', showlegend=False), row=2, col=2)
         
+        # 5. TEX Cumulativo
         cumulative = np.cumsum(total_tex_values).tolist()
         fig.add_trace(go.Scatter(x=strikes, y=cumulative, mode='lines', 
                                 line=dict(color='#06b6d4', width=4),
@@ -558,6 +531,7 @@ class TEXAnalyzer:
                                 fillcolor='rgba(6, 182, 212, 0.3)',
                                 showlegend=False), row=3, col=1)
         
+        # 6. Velocidade de sangramento (R$/dia)
         bleeding_velocity = []
         days_remaining = expiration_info.get('days', 30) if expiration_info else 30
         
@@ -571,14 +545,20 @@ class TEXAnalyzer:
         velocity_colors = ['#ef4444' if x > 10000000 else '#f97316' if x > 5000000 else '#eab308' for x in bleeding_velocity]
         fig.add_trace(go.Bar(x=strikes, y=bleeding_velocity, marker_color=velocity_colors, showlegend=False), row=3, col=2)
         
+        # Linhas de referência
         for row in range(1, 4):
             for col in range(1, 3):
                 fig.add_vline(x=spot_price, line=dict(color='#fbbf24', width=2, dash='dash'), row=row, col=col)
-                if not (row == 2 and col == 1):
+                if not (row == 2 and col == 1):  # Não adiciona linha zero no gráfico de %
                     fig.add_hline(y=0, line=dict(color='rgba(255,255,255,0.3)', width=1), row=row, col=col)
         
         fig.update_layout(
-            title={'text': title, 'x': 0.5, 'xanchor': 'center', 'font': {'size': 20, 'color': '#ffffff', 'family': 'Inter, sans-serif'}},
+            title={
+                'text': title,
+                'x': 0.5,
+                'xanchor': 'center',
+                'font': {'size': 20, 'color': '#ffffff', 'family': 'Inter, sans-serif'}
+            },
             paper_bgcolor='rgba(0,0,0,0)',
             plot_bgcolor='rgba(0,0,0,0)',
             font=dict(color='#ffffff', family='Inter, sans-serif'),
@@ -613,6 +593,7 @@ class TEXAnalyzer:
         
         decay_regime = self.decay_detector.analyze_time_decay_regime(tex_df, spot_price)
         
+        # CORRIGIR OS DIAS - ADICIONAR ESTAS LINHAS:
         if expiration_info and 'days' in expiration_info:
             decay_regime['weighted_days'] = float(expiration_info['days'])
             logging.info(f"CORREÇÃO: Usando dias reais: {expiration_info['days']}")
@@ -643,16 +624,18 @@ class ThetaService:
             result = self.analyzer.analyze(ticker, expiration_code)
             
             decay_regime = result.get('decay_regime', {})
+            
+            # ✅ ADICIONAR TIME_PRESSURE BASEADO EM WEIGHTED_DAYS
             weighted_days = decay_regime.get('weighted_days', 30)
             
             if weighted_days < 10:
-                time_pressure = 'HIGH'
+                time_pressure = 'HIGH'       
             elif weighted_days < 20:
-                time_pressure = 'MODERATE'
+                time_pressure = 'MODERATE'   
             else:
-                time_pressure = 'LOW'
+                time_pressure = 'LOW'        
             
-            decay_regime['time_pressure'] = time_pressure
+            decay_regime['time_pressure'] = time_pressure  
             
             api_result = {
                 'ticker': ticker.replace('.SA', ''),

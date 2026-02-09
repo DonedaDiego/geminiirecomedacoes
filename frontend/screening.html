@@ -388,6 +388,10 @@
               <i class="fas fa-list mr-2"></i>Listas Pré-definidas
             </label>
             <div class="flex flex-wrap gap-3">
+              <button class="preset-btn" data-preset="Todos">
+                <i class="fas fa-chart-line mr-1"></i>Todos
+              </button>
+              
               <button class="preset-btn" data-preset="ibovespa_liquidos">
                 <i class="fas fa-chart-line mr-1"></i>Ibovespa Líquidos
               </button>
@@ -479,8 +483,8 @@
             <h3 class="text-xl font-bold flex items-center">
               <i class="fas fa-table text-geminii mr-3"></i>Resultados do Screening
             </h3>
-            <button id="exportBtn" class="px-4 py-2 bg-white bg-opacity-10 hover:bg-opacity-20 rounded-lg text-sm font-medium transition-all">
-              <i class="fas fa-download mr-2"></i>Exportar CSV
+            <button id="exportNTSLBtn" class="px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 rounded-lg text-sm font-medium transition-all shadow-lg">
+              <i class="fas fa-code mr-2"></i>Copiar Código NTSL
             </button>
           </div>
           
@@ -810,46 +814,49 @@
     window.goToGammaLevels = goToGammaLevels;
     
     
-    // Exportar CSV
-    function exportToCSV() {
+    
+    // Exportar para NTSL
+    async function exportToNTSL() {
       if (currentResults.length === 0) {
         showStatus('Nenhum resultado para exportar', 'error');
         return;
       }
       
-      const headers = ['Ticker', 'Preço', 'Flip Strike', 'Distância Abs', 'Distância %', 'Regime', 'Liquidez', 'Vencimento'];
-      const rows = currentResults.map(r => [
-        r.ticker,
-        r.spot_price?.toFixed(2) || '',
-        r.flip_strike?.toFixed(2) || '',
-        r.distance_abs?.toFixed(2) || '',
-        r.distance_pct?.toFixed(2) || '',
-        r.regime || '',
-        r.liquidity_category || '',
-        r.expiration || ''
-      ]);
-      
-      let csvContent = headers.join(',') + '\n';
-      csvContent += rows.map(row => row.join(',')).join('\n');  // <- CORREÇÃO AQUI
-      
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement('a');
-      const url = URL.createObjectURL(blob);
-      
-      link.setAttribute('href', url);
-      link.setAttribute('download', `screening_gamma_flip_${new Date().toISOString().slice(0,10)}.csv`);
-      link.style.visibility = 'hidden';
-      
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      
-      showStatus('CSV exportado com sucesso!', 'success');
+      try {
+        showStatus('Gerando código NTSL...', 'info');
+        
+        const response = await fetch(`${API_BASE}/export-ntsl-batch`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            results: currentResults
+          })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok && data.success) {
+          // Copiar para clipboard
+          await navigator.clipboard.writeText(data.ntsl_code);
+          
+          showStatus(`✅ Código NTSL copiado! ${data.total_tickers} ativos prontos para colar no Profit.`, 'success');
+          
+        } else {
+          showStatus(data.error || 'Erro ao gerar código NTSL', 'error');
+        }
+        
+      } catch (error) {
+        console.error('Erro ao exportar NTSL:', error);
+        showStatus('Erro ao conectar com servidor', 'error');
+      }
     }
     
     // Event Listeners
     screenBtn.addEventListener('click', runScreening);
-    exportBtn.addEventListener('click', exportToCSV);
+    const exportNTSLBtn = document.getElementById('exportNTSLBtn');
+    exportNTSLBtn.addEventListener('click', exportToNTSL);
     
     customTickers.addEventListener('keypress', (e) => {
       if (e.key === 'Enter') runScreening();
