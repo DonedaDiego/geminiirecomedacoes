@@ -1475,41 +1475,69 @@
 
     async function runFullAnalysis() {
       const ticker = document.getElementById('tickerInput').value.trim().toUpperCase();
-      if (!ticker) { showStatus('Digite um ticker', 'error'); return; }
+      if (!ticker) { 
+        showStatus('Digite um ticker', 'error'); 
+        return; 
+      }
 
       const btn = document.getElementById('analyzeBtn');
       setLoading(btn, true);
-      showStatus('Executando analise completa 4D...', 'info');
 
       try {
-        const requestBody = { ticker, days_back: 60 };
-        const expiration = document.getElementById('expirationSelect').value;
-        if (expiration) requestBody.expiration_code = expiration;
-
+        const expirationSelect = document.getElementById('expirationSelect');
+        const selectedExpiration = expirationSelect.value;
+        
+        const baseRequestBody = { 
+          ticker, 
+          days_back: 60 
+        };
+        
+        if (selectedExpiration && selectedExpiration !== '') {
+          baseRequestBody.expiration_code = selectedExpiration;
+          showStatus(`Analisando ${ticker} - Vencimento: ${expirationSelect.options[expirationSelect.selectedIndex].text}`, 'info');
+        } else {
+          showStatus(`Analisando ${ticker} - Vencimento automático (próximo disponível)`, 'info');
+        }
+        
         const [gammaRes, deltaRes, vegaRes, thetaRes] = await Promise.all([
-          fetch('/pro/gamma/analyze', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${userToken}` }, body: JSON.stringify(requestBody) }),
-          fetch('/pro/delta/analyze', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${userToken}` }, body: JSON.stringify(requestBody) }),
-          fetch('/pro/vega/analyze', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${userToken}` }, body: JSON.stringify(requestBody) }),
-          fetch('/pro/theta/analyze', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${userToken}` }, body: JSON.stringify(requestBody) })
+          fetch('/pro/gamma/analyze', { 
+            method: 'POST', 
+            headers: { 
+              'Content-Type': 'application/json', 
+              'Authorization': `Bearer ${userToken}` 
+            }, 
+            body: JSON.stringify(baseRequestBody)
+          }),
+          fetch('/pro/delta/analyze', { 
+            method: 'POST', 
+            headers: { 
+              'Content-Type': 'application/json', 
+              'Authorization': `Bearer ${userToken}` 
+            }, 
+            body: JSON.stringify(baseRequestBody)
+          }),
+          fetch('/pro/vega/analyze', { 
+            method: 'POST', 
+            headers: { 
+              'Content-Type': 'application/json', 
+              'Authorization': `Bearer ${userToken}` 
+            }, 
+            body: JSON.stringify(baseRequestBody)
+          }),
+          fetch('/pro/theta/analyze', { 
+            method: 'POST', 
+            headers: { 
+              'Content-Type': 'application/json', 
+              'Authorization': `Bearer ${userToken}` 
+            }, 
+            body: JSON.stringify(baseRequestBody)
+          })
         ]);
 
         gammaData = await gammaRes.json();
         deltaData = await deltaRes.json();
         vegaData = await vegaRes.json();
         thetaData = await thetaRes.json();
-
-        
-        // console.log('=== DEBUG MICRO 4D ===');
-        // console.log('GAMMA DATA:', gammaData);
-        // console.log('  - GEX Total:', gammaData.gex_levels?.total_gex);
-        // console.log('  - GEX Descoberto:', gammaData.gex_levels?.total_gex_descoberto);
-        // console.log('DELTA DATA:', deltaData);
-        // console.log('  - DEX Total:', deltaData.dex_levels?.total_dex);
-        // console.log('  - DEX Descoberto:', deltaData.dex_levels?.total_dex_descoberto);
-        // console.log('  - Market Bias:', deltaData.dex_levels?.market_bias);
-        // console.log('=== FIM DEBUG ===');
-        // // ✅✅✅ ATÉ AQUI ✅✅✅
-    
         
         if (!gammaRes.ok) throw new Error(gammaData.error);
         if (!deltaRes.ok) throw new Error(deltaData.error);
@@ -1517,7 +1545,9 @@
         if (!thetaRes.ok) throw new Error(thetaData.error);
 
         await displayResults();
-        showStatus(`Analise 4D de ${ticker} concluida!`, 'success');
+        
+        const vencimentoUsado = gammaData.data_quality?.expiration || 'Automático';
+        showStatus(`✅ Análise 4D de ${ticker} concluída! Vencimento: ${vencimentoUsado}`, 'success');
 
       } catch (error) {
         showStatus('Erro: ' + error.message, 'error');
@@ -1525,7 +1555,8 @@
         setLoading(btn, false);
       }
     }
-
+   
+   
     document.getElementById('loadExpirationsBtn').addEventListener('click', loadExpirations);
     document.getElementById('analyzeBtn').addEventListener('click', runFullAnalysis);
     document.getElementById('tickerInput').addEventListener('keypress', (e) => { if (e.key === 'Enter') runFullAnalysis(); });
