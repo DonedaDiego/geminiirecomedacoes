@@ -1,6 +1,5 @@
 """
 vega_service.py - VEX Analysis COM DADOS DO BANCO POSTGRESQL
-ATUALIZADO: VI Refinada focada em ATM ± 2 strikes
 """
 
 import numpy as np
@@ -51,39 +50,19 @@ class ExpirationManager:
     def __init__(self, db_engine):
         self.db_engine = db_engine
         self.available_expirations = {
-            "20260213": {"date": datetime(2026, 2, 13), "desc": "13 Fev 26 - W2"},
-            "20260220": {"date": datetime(2026, 2, 20), "desc": "20 Fev 26 - M"},
-            "20260227": {"date": datetime(2026, 2, 27), "desc": "27 Fev 26 - W4"},
-            "20260306": {"date": datetime(2026, 3, 6), "desc": "06 Mar 26 - W1"},
-            "20260313": {"date": datetime(2026, 3, 13), "desc": "13 Mar 26 - W2"},
-            "20260320": {"date": datetime(2026, 3, 20), "desc": "20 Mar 26 - M"},
-            "20260327": {"date": datetime(2026, 3, 27), "desc": "27 Mar 26 - W4"},
-            "20260402": {"date": datetime(2026, 4, 2), "desc": "02 Abr 26 - W1"},
-            "20260410": {"date": datetime(2026, 4, 10), "desc": "10 Abr 26 - W2"},
-            "20260417": {"date": datetime(2026, 4, 17), "desc": "17 Abr 26 - M"},
-            "20260424": {"date": datetime(2026, 4, 24), "desc": "24 Abr 26 - W4"},
-            "20260515": {"date": datetime(2026, 5, 15), "desc": "15 Mai 26 - M"},
-            "20260619": {"date": datetime(2026, 6, 19), "desc": "19 Jun 26 - M"},
-            "20260717": {"date": datetime(2026, 7, 17), "desc": "17 Jul 26 - M"},
-            "20260821": {"date": datetime(2026, 8, 21), "desc": "21 Ago 26 - M"},
-            "20260918": {"date": datetime(2026, 9, 18), "desc": "18 Set 26 - M"},
+            "20251219": {"date": datetime(2025, 12, 19), "desc": "19 Dez 25 - M"},
+            "20260116": {"date": datetime(2026, 1, 16),  "desc": "16 Jan 26 - M"},
+            "20260220": {"date": datetime(2026, 2, 20),  "desc": "20 Fev 26 - M"},
+            "20260320": {"date": datetime(2026, 3, 20),  "desc": "20 Mar 26 - M"},
+            "20260417": {"date": datetime(2026, 4, 17),  "desc": "17 Abr 26 - M"},
+            "20260515": {"date": datetime(2026, 5, 15),  "desc": "15 Mai 26 - M"},
+            "20260619": {"date": datetime(2026, 6, 19),  "desc": "19 Jun 26 - M"},
+            "20260717": {"date": datetime(2026, 7, 17),  "desc": "17 Jul 26 - M"},
+            "20260821": {"date": datetime(2026, 8, 21),  "desc": "21 Ago 26 - M"},
+            "20260918": {"date": datetime(2026, 9, 18),  "desc": "18 Set 26 - M"},
             "20261016": {"date": datetime(2026, 10, 16), "desc": "16 Out 26 - M"},
             "20261119": {"date": datetime(2026, 11, 19), "desc": "19 Nov 26 - M"},
             "20261218": {"date": datetime(2026, 12, 18), "desc": "18 Dez 26 - M"},
-            "20270115": {"date": datetime(2027, 1, 15), "desc": "15 Jan 27 - M"},
-            "20270219": {"date": datetime(2027, 2, 19), "desc": "19 Fev 27 - M"},
-            "20270319": {"date": datetime(2027, 3, 19), "desc": "19 Mar 27 - M"},
-            "20270416": {"date": datetime(2027, 4, 16), "desc": "16 Abr 27 - M"},
-            "20270521": {"date": datetime(2027, 5, 21), "desc": "21 Mai 27 - M"},
-            "20270618": {"date": datetime(2027, 6, 18), "desc": "18 Jun 27 - M"},
-            "20270716": {"date": datetime(2027, 7, 16), "desc": "16 Jul 27 - M"},
-            "20270820": {"date": datetime(2027, 8, 20), "desc": "20 Ago 27 - M"},
-            "20270917": {"date": datetime(2027, 9, 17), "desc": "17 Set 27 - M"},
-            "20271015": {"date": datetime(2027, 10, 15), "desc": "15 Out 27 - M"},
-            "20271119": {"date": datetime(2027, 11, 19), "desc": "19 Nov 27 - M"},
-            "20271217": {"date": datetime(2027, 12, 17), "desc": "17 Dez 27 - M"},
-            "20280121": {"date": datetime(2028, 1, 21), "desc": "21 Jan 28 - M"},
-            "20280218": {"date": datetime(2028, 2, 18), "desc": "18 Fev 28 - M"},
         }
     
     def test_data_availability(self, symbol, expiration_code):
@@ -156,6 +135,7 @@ class DataProvider:
             'Content-Type': 'application/json'
         }
         
+        # ✅ CONEXÃO COM BANCO DE DADOS - RAILWAY POSTGRESQL
         DATABASE_URL = os.getenv('DATABASE_URL')
         
         if not DATABASE_URL:
@@ -165,19 +145,25 @@ class DataProvider:
             DB_PASSWORD = os.getenv('PGPASSWORD') or os.getenv('DB_PASSWORD', '')
             DB_PORT = os.getenv('PGPORT') or os.getenv('DB_PORT', '5432')
             
+            # Valida que a porta é um número
             try:
                 DB_PORT = str(int(DB_PORT))
             except (ValueError, TypeError):
                 logging.error(f"❌ DB_PORT inválido: '{DB_PORT}' - usando 5432")
                 DB_PORT = '5432'
             
-            DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"                       
+            DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+        
+        logging.info(f"🔌 Conectando ao banco PostgreSQL (VEX)...")
+        
         try:
             self.db_engine = create_engine(DATABASE_URL)
             
+            # TESTA CONEXÃO
             with self.db_engine.connect() as conn:
                 result = conn.execute(text("SELECT COUNT(*) FROM opcoes_b3"))
-                count = result.fetchone()[0]                
+                count = result.fetchone()[0]
+                logging.info(f"✅ Conexão OK (VEX) - {count:,} registros na opcoes_b3")
                 
         except Exception as e:
             logging.error(f"❌ Erro ao conectar (VEX): {e}")
@@ -239,7 +225,7 @@ class DataProvider:
                 (latest_data['days_to_maturity'] <= 60)
             ].copy()
             
-            
+            logging.info(f"Dados Vega Oplab: {len(valid_data)} opções")
             return valid_data
             
         except Exception as e:
@@ -247,7 +233,7 @@ class DataProvider:
             return pd.DataFrame()
     
     def get_floqui_oi_breakdown(self, symbol, expiration_code=None):
-        """BUSCA DO BANCO DE DADOS POSTGRESQL"""
+        """BUSCA DO BANCO DE DADOS POSTGRESQL - Mantém nome da função"""
         try:
             if expiration_code:
                 expiration = {
@@ -291,6 +277,7 @@ class DataProvider:
                 logging.warning(f"Nenhum dado encontrado no banco para {symbol}")
                 return {}, expiration
             
+            # ✅ NOVA ESTRUTURA - USA STRING COMO CHAVE
             oi_breakdown = {}
             for _, row in df.iterrows():
                 strike = float(row['preco_exercicio'])
@@ -299,6 +286,7 @@ class DataProvider:
                 oi_descoberto = int(row['qtd_descoberto'])
                 
                 if strike > 0 and oi_total > 0:
+                    # ✅ CHAVE COMO STRING: "7.25_CALL"
                     key = f"{strike}_{option_type}"
                     oi_breakdown[key] = {
                         'strike': strike,
@@ -309,7 +297,7 @@ class DataProvider:
                         'coberto': int(row['qtd_coberto'])
                     }
             
-            
+            logging.info(f"OI breakdown VEX: {len(oi_breakdown)} strikes")
             return oi_breakdown, expiration
             
         except Exception as e:
@@ -353,7 +341,7 @@ class DataProvider:
             
             daily_avg = daily_avg.sort_values('date')
             
-            
+            logging.info(f"Contexto IV histórico: {len(daily_avg)} registros ({daily_avg['date'].nunique()} dias únicos)")
             return daily_avg
             
         except Exception as e:
@@ -364,14 +352,10 @@ class DataProvider:
 class VEXCalculator:
     
     def calculate_vex_with_context(self, oplab_df, oi_breakdown, spot_price, historical_df=None):
-        """
-        Calcula VEX = Vega × Open Interest × 100
-        ATUALIZADO: VI refinada focada em ATM ± 2 strikes POR STRIKE
-        """
+        """Calcula VEX = Vega × Open Interest × 100"""
         if oplab_df.empty:
             return pd.DataFrame()
         
-        # Range amplo para VEX (exposição geral)
         price_range = spot_price * 0.25
         valid_options = oplab_df[
             (oplab_df['strike'] >= spot_price - price_range) &
@@ -381,56 +365,7 @@ class VEXCalculator:
         if valid_options.empty:
             return pd.DataFrame()
         
-        # Identificar strikes ATM para referência
-        valid_options['distance_from_spot'] = abs(valid_options['strike'] - spot_price)
-        valid_options_sorted = valid_options.sort_values('distance_from_spot').copy()
-        
-        # Pegar ATM + 2 strikes (5 strikes mais próximos)
-        atm_focused_strikes = valid_options_sorted['strike'].unique()[:5]
-        atm_focused = valid_options[valid_options['strike'].isin(atm_focused_strikes)].copy()
-              
-        
-        # ✅ CALCULAR IV MÉDIA GLOBAL (para weighted_iv no regime)
-        atm_calls = atm_focused[atm_focused['type'] == 'CALL']
-        atm_puts = atm_focused[atm_focused['type'] == 'PUT']
-        
-        global_call_iv = float(atm_calls['volatility'].mean()) if len(atm_calls) > 0 else 0
-        global_put_iv = float(atm_puts['volatility'].mean()) if len(atm_puts) > 0 else 0
-        
-        if global_call_iv > 0 and global_put_iv > 0:
-            call_oi_sum = sum([oi_breakdown.get(f"{s}_CALL", {}).get('total', 0) for s in atm_focused_strikes])
-            put_oi_sum = sum([oi_breakdown.get(f"{s}_PUT", {}).get('total', 0) for s in atm_focused_strikes])
-            total_oi = call_oi_sum + put_oi_sum
-            
-            if total_oi > 0:
-                global_avg_iv = (global_call_iv * call_oi_sum + global_put_iv * put_oi_sum) / total_oi
-            else:
-                global_avg_iv = (global_call_iv + global_put_iv) / 2
-        elif global_call_iv > 0:
-            global_avg_iv = global_call_iv
-        elif global_put_iv > 0:
-            global_avg_iv = global_put_iv
-        else:
-            global_avg_iv = 0
-                       
-        # ✅ CALCULAR IV GLOBAL HISTÓRICA DOS ATM±2
-        global_historical_iv = global_avg_iv  # fallback
-        
-        if historical_df is not None and not historical_df.empty:
-            atm_historical = historical_df[historical_df['strike'].isin(atm_focused_strikes)].copy()
-            
-            if not atm_historical.empty:
-                if 'iv_daily_avg' in atm_historical.columns:
-                    iv_values = atm_historical['iv_daily_avg'].values
-                else:
-                    iv_values = atm_historical['volatility'].values
-                
-                iv_values = iv_values[(iv_values > 0) & (iv_values < 200)]
-                
-                if len(iv_values) > 0:
-                    global_historical_iv = float(np.mean(iv_values))                  
-                        
-        vex_data = []        
+        vex_data = []
         
         for strike in valid_options['strike'].unique():
             strike_options = valid_options[valid_options['strike'] == strike]
@@ -445,6 +380,7 @@ class VEXCalculator:
             has_real_call = False
             has_real_put = False
             
+            # ✅ BUSCA COM CHAVE STRING
             if len(calls) > 0:
                 call_key = f"{float(strike)}_CALL"
                 if call_key in oi_breakdown:
@@ -483,25 +419,13 @@ class VEXCalculator:
             total_vex = call_vex + put_vex
             total_vex_descoberto = call_vex_descoberto + put_vex_descoberto
             
-            # ✅ IV POR STRIKE (não global)
-            avg_iv_strike = 0.0
+            avg_iv = 0.0
             if call_iv > 0 and put_iv > 0:
-                avg_iv_strike = (call_iv + put_iv) / 2
+                avg_iv = (call_iv + put_iv) / 2
             elif call_iv > 0:
-                avg_iv_strike = call_iv
+                avg_iv = call_iv
             elif put_iv > 0:
-                avg_iv_strike = put_iv
-            
-            # ✅ IV REFINADA POR STRIKE (se estiver nos ATM±2, usa valor específico; senão usa global)
-            if strike in atm_focused_strikes:
-                refined_call_iv_strike = call_iv if call_iv > 0 else global_call_iv
-                refined_put_iv_strike = put_iv if put_iv > 0 else global_put_iv
-                refined_avg_iv_strike = avg_iv_strike if avg_iv_strike > 0 else global_avg_iv
-            else:
-                # Fora do ATM±2: usa valores do próprio strike (não força global)
-                refined_call_iv_strike = call_iv
-                refined_put_iv_strike = put_iv
-                refined_avg_iv_strike = avg_iv_strike
+                avg_iv = put_iv
             
             vex_data.append({
                 'strike': float(strike),
@@ -517,27 +441,20 @@ class VEXCalculator:
                 'put_oi_descoberto': int(put_data['descoberto'] if put_data else 0),
                 'call_iv': float(call_iv),
                 'put_iv': float(put_iv),
-                'avg_iv': float(avg_iv_strike),
-                # ✅ IV REFINADA POR STRIKE
-                'refined_call_iv': float(refined_call_iv_strike),
-                'refined_put_iv': float(refined_put_iv_strike),
-                'refined_avg_iv': float(refined_avg_iv_strike),
-                # Contexto histórico
-                'iv_10d_avg': float(iv_context.get('iv_10d_avg', avg_iv_strike)),
-                'iv_10d_min': float(iv_context.get('iv_10d_min', avg_iv_strike * 0.8)),
-                'iv_10d_max': float(iv_context.get('iv_10d_max', avg_iv_strike * 1.2)),
+                'avg_iv': float(avg_iv),
+                'iv_10d_avg': float(iv_context.get('iv_10d_avg', avg_iv)),
+                'iv_10d_min': float(iv_context.get('iv_10d_min', avg_iv * 0.8)),
+                'iv_10d_max': float(iv_context.get('iv_10d_max', avg_iv * 1.2)),
                 'iv_percentile': float(iv_context.get('iv_percentile', 50)),
                 'iv_status': iv_context.get('iv_status', 'NEUTRAL'),
-                'has_real_data': has_real_call or has_real_put,                
-                'global_avg_iv': float(global_avg_iv),
-                'global_historical_iv': float(global_historical_iv)            
+                'has_real_data': has_real_call or has_real_put
             })
         
-        result_df = pd.DataFrame(vex_data).sort_values('strike')      
+        result_df = pd.DataFrame(vex_data).sort_values('strike')
+        logging.info(f"VEX com contexto calculado para {len(result_df)} strikes")
         
         return result_df
-
-
+    
     def _calculate_iv_context(self, strike, historical_df):
         """Calcula contexto histórico para um strike específico"""
         if historical_df.empty:
@@ -567,6 +484,8 @@ class VEXCalculator:
         
         current_iv = float(iv_values[-1])
         iv_percentile = float(np.percentile(iv_values, 50))
+        
+        logging.info(f"Strike {strike:.2f}: IV atual={current_iv:.1f}%, Média 10d={iv_10d_avg:.1f}%, Valores={len(iv_values)} dias")
         
         if current_iv > iv_10d_avg * 1.3:
             iv_status = 'MUITO_ALTA'
@@ -600,33 +519,33 @@ class VolatilityRegimeDetector:
         atm_idx = vex_df_copy['distance_from_spot'].idxmin()
         
         atm_strike = float(vex_df_copy.loc[atm_idx, 'strike'])
+        atm_iv = float(vex_df_copy.loc[atm_idx, 'avg_iv'])
+        atm_iv_10d_avg = float(vex_df_copy.loc[atm_idx, 'iv_10d_avg'])
         
-        # ✅ USA IV GLOBAL ATUAL (média ATM±2 hoje)
-        current_iv = float(vex_df_copy.loc[atm_idx, 'global_avg_iv'])
+        logging.info(f"ATM SELECIONADO: Strike {atm_strike:.2f} (Spot={spot_price:.2f})")
+        logging.info(f"ATM IV: atual={atm_iv:.1f}%, média 10d={atm_iv_10d_avg:.1f}%")
         
-        
-        atm_strikes_sorted = vex_df_copy.sort_values('distance_from_spot').head(5)
-        historical_iv_values = atm_strikes_sorted['iv_10d_avg'].values
-        historical_iv_values = historical_iv_values[historical_iv_values > 0]
-        
-        if len(historical_iv_values) > 0:
-            historical_iv = float(np.mean(historical_iv_values))
+        total_oi = (vex_df_copy['call_oi_total'] + vex_df_copy['put_oi_total']).sum()
+        if total_oi > 0:
+            weighted_iv = float((vex_df_copy['avg_iv'] * (vex_df_copy['call_oi_total'] + vex_df_copy['put_oi_total'])).sum() / total_oi)
         else:
-            historical_iv = current_iv
-   
+            weighted_iv = float(vex_df_copy['avg_iv'].mean())
+        
+        current_iv = atm_iv if atm_iv > 0 else weighted_iv
+        
         total_vex = float(vex_df_copy['total_vex'].sum())
         total_vex_descoberto = float(vex_df_copy['total_vex_descoberto'].sum())
         
         max_vex_idx = vex_df_copy['total_vex'].idxmax()
-        max_vex_strike = float(vex_df_copy.loc[max_vex_idx, 'strike'])        
+        max_vex_strike = float(vex_df_copy.loc[max_vex_idx, 'strike'])
         
-        iv_diff_pp = current_iv - historical_iv
-        iv_diff_pct = ((current_iv - historical_iv) / historical_iv) * 100 if historical_iv > 0 else 0
+        iv_diff_pp = current_iv - atm_iv_10d_avg
+        iv_diff_pct = ((current_iv - atm_iv_10d_avg) / atm_iv_10d_avg) * 100 if atm_iv_10d_avg > 0 else 0
         
-        if iv_diff_pp > 0.5:
+        if iv_diff_pp > 2:
             iv_trend = 'ALTA'
             iv_trend_description = f'IV {iv_diff_pp:+.1f} p.p. acima da média 10D'
-        elif iv_diff_pp < -0.5:
+        elif iv_diff_pp < -2:
             iv_trend = 'BAIXA'
             iv_trend_description = f'IV {iv_diff_pp:.1f} p.p. abaixo da média 10D'
         else:
@@ -635,24 +554,33 @@ class VolatilityRegimeDetector:
         
         abs_iv_diff_pp = abs(iv_diff_pp)
         
-        # ✅ RISCO SIMPLIFICADO: > 2 p.p. = ALTO, <= 2 p.p. = BAIXO
-        if abs_iv_diff_pp > 2:
+        if abs_iv_diff_pp > 10:
             volatility_risk = 'HIGH'
             if iv_diff_pp > 0:
-                interpretation = f'IV inflada (+{iv_diff_pp:.1f} p.p.) - Alto risco de compressão'
+                interpretation = f'IV muito inflada (+{iv_diff_pp:.1f} p.p.) - Alto risco de compressão'
             else:
-                interpretation = f'IV comprimida ({iv_diff_pp:.1f} p.p.) - Alto risco de explosão'
+                interpretation = f'IV muito comprimida ({iv_diff_pp:.1f} p.p.) - Alto risco de explosão'
+        
+        elif abs_iv_diff_pp > 5:
+            volatility_risk = 'MODERATE'
+            if iv_diff_pp > 0:
+                interpretation = f'IV inflada (+{iv_diff_pp:.1f} p.p.) - Risco moderado de compressão'
+            else:
+                interpretation = f'IV comprimida ({iv_diff_pp:.1f} p.p.) - Risco moderado de ajuste'
+        
         else:
             volatility_risk = 'LOW'
-            interpretation = 'IV próxima da média histórica - Baixo risco de mudança brusca'               
+            interpretation = 'IV próxima da média histórica - Baixo risco de mudança brusca'
+        
+        logging.info(f"IV Diff: {iv_diff_pp:+.1f} p.p. ({iv_diff_pct:+.1f}%) → Risk: {volatility_risk}")
         
         return {
             'total_vex': total_vex,
             'total_vex_descoberto': total_vex_descoberto,
             'weighted_iv': current_iv,
             'atm_strike': atm_strike,
-            'atm_iv': current_iv,
-            'atm_iv_10d_avg': historical_iv,
+            'atm_iv': atm_iv,
+            'atm_iv_10d_avg': atm_iv_10d_avg,
             'iv_diff_pct': float(iv_diff_pct),
             'iv_trend': iv_trend,
             'iv_trend_description': iv_trend_description,
@@ -661,18 +589,15 @@ class VolatilityRegimeDetector:
             'interpretation': interpretation
         }
 
+
 class VEXAnalyzer:
     def __init__(self):
         self.data_provider = DataProvider()
         self.vex_calculator = VEXCalculator()
         self.vol_detector = VolatilityRegimeDetector()
     
-    
     def create_6_charts(self, vex_df, spot_price, symbol, vol_zones=None, expiration_info=None):
-        """
-        Cria os 6 gráficos VEX com contexto histórico
-        ATUALIZADO: Gráfico de VI usa dados refinados (ATM±2)
-        """
+        """Cria os 6 gráficos VEX com contexto histórico"""
         if vex_df.empty:
             return None
         
@@ -681,7 +606,7 @@ class VEXAnalyzer:
         subplot_titles = [
             '<b style="color: #ffffff;">Total VEX</b><br><span style="font-size: 12px; color: #888;">Sensibilidade total vega</span>',
             '<b style="color: #ffffff;">VEX Descoberto</b><br><span style="font-size: 12px; color: #888;">Risco real volatilidade</span>',
-            '<b style="color: #ffffff;">Volatilidade Implícita</b><br><span style="font-size: 12px; color: #888;">IV refinada focada</span>',
+            '<b style="color: #ffffff;">Volatilidade Implícita</b><br><span style="font-size: 12px; color: #888;">IV por strike</span>',
             '<b style="color: #ffffff;">Calls vs Puts</b><br><span style="font-size: 12px; color: #888;">VEX por tipo</span>',
             '<b style="color: #ffffff;">VEX / IV</b><br><span style="font-size: 12px; color: #888;">Eficiência risco vol</span>',
             '<b style="color: #ffffff;">Concentração Risco</b><br><span style="font-size: 12px; color: #888;">% risco por strike</span>'
@@ -694,131 +619,86 @@ class VEXAnalyzer:
             horizontal_spacing=0.08
         )
         
-        # ✅ EXTRAIR TODAS AS VARIÁVEIS NECESSÁRIAS
         strikes = [float(x) for x in vex_df['strike'].tolist()]
         call_iv = [float(x) for x in vex_df['call_iv'].tolist()]
         put_iv = [float(x) for x in vex_df['put_iv'].tolist()]
         avg_iv = [float(x) for x in vex_df['avg_iv'].tolist()]
-        
-        # Variáveis refinadas
-        refined_call_iv = [float(x) for x in vex_df['refined_call_iv'].tolist()]
-        refined_put_iv = [float(x) for x in vex_df['refined_put_iv'].tolist()]
-        refined_avg_iv = [float(x) for x in vex_df['refined_avg_iv'].tolist()]
-        
-        # Variáveis históricas
         iv_10d_avg = [float(x) for x in vex_df['iv_10d_avg'].tolist()]
         iv_10d_min = [float(x) for x in vex_df['iv_10d_min'].tolist()]
         iv_10d_max = [float(x) for x in vex_df['iv_10d_max'].tolist()]
-        
-        # Variáveis VEX
         total_vex_values = [float(x) for x in vex_df['total_vex'].tolist()]
         descoberto_values = [float(x) for x in vex_df['total_vex_descoberto'].tolist()]
         call_vex_values = [float(x) for x in vex_df['call_vex'].tolist()]
         put_vex_values = [float(x) for x in vex_df['put_vex'].tolist()]
         
         # 1. Total VEX
-        fig.add_trace(go.Bar(
-            x=strikes, 
-            y=total_vex_values, 
-            marker_color='#9333ea', 
-            showlegend=False
-        ), row=1, col=1)
+        fig.add_trace(go.Bar(x=strikes, y=total_vex_values, marker_color='#9333ea', showlegend=False), row=1, col=1)
         
         # 2. VEX Descoberto
-        fig.add_trace(go.Bar(
-            x=strikes, 
-            y=descoberto_values, 
-            marker_color='#dc2626', 
-            showlegend=False
-        ), row=1, col=2)
+        fig.add_trace(go.Bar(x=strikes, y=descoberto_values, marker_color='#dc2626', showlegend=False), row=1, col=2)
         
-        # 3. VOLATILIDADE IMPLÍCITA - REFINADA (ATM±2) - SEM BOLINHAS
-        # Banda histórica (fundo cinza)
+        # 3. Volatilidade Implícita
         fig.add_trace(go.Scatter(
             x=strikes, 
             y=iv_10d_max, 
             fill=None, 
             mode='lines', 
             line=dict(color='rgba(0,0,0,0)'), 
-            name='Máxima 10d',
-            showlegend=False,
-            hoverinfo='skip'
+            showlegend=False
         ), row=2, col=1)
         
         fig.add_trace(go.Scatter(
             x=strikes, 
             y=iv_10d_min, 
             fill='tonexty', 
-            fillcolor='rgba(100,100,100,0.15)', 
+            fillcolor='rgba(100,100,100,0.2)', 
             mode='lines', 
             line=dict(color='rgba(0,0,0,0)'), 
-            name='Mínima 10d',
-            showlegend=False,
-            hoverinfo='skip'
+            showlegend=False
         ), row=2, col=1)
         
-        # Linhas refinadas - SEM MARKERS
-        fig.add_trace(go.Scatter(
-            x=strikes, 
-            y=refined_call_iv, 
-            mode='lines',
-            line=dict(color='#22c55e', width=2),
-            name='IV Calls',
-            showlegend=False,
-            hovertemplate='Strike: %{x:.2f}<br>IV Calls: %{y:.1f}%<extra></extra>'
-        ), row=2, col=1)
-        
-        fig.add_trace(go.Scatter(
-            x=strikes, 
-            y=refined_put_iv, 
-            mode='lines',
-            line=dict(color='#ef4444', width=2),
-            name='IV Puts',
-            showlegend=False,
-            hovertemplate='Strike: %{x:.2f}<br>IV Puts: %{y:.1f}%<extra></extra>'
-        ), row=2, col=1)
-        
-        fig.add_trace(go.Scatter(
-            x=strikes, 
-            y=refined_avg_iv, 
-            mode='lines',
-            line=dict(color='#f97316', width=3),
-            name='IV Média ATM±2',
-            showlegend=False,
-            hovertemplate='Strike: %{x:.2f}<br>IV Média: %{y:.1f}%<extra></extra>'
-        ), row=2, col=1)
-        
-        # Média 10d (referência)
         fig.add_trace(go.Scatter(
             x=strikes, 
             y=iv_10d_avg, 
             mode='lines', 
-            line=dict(color='#06b6d4', width=2, dash='dot'), 
-            name='Média 10d',
-            showlegend=False,
-            hovertemplate='Strike: %{x:.2f}<br>Média 10d: %{y:.1f}%<extra></extra>'
+            line=dict(color='#06b6d4', width=2, dash='dash'), 
+            showlegend=False
+        ), row=2, col=1)
+        
+        fig.add_trace(go.Scatter(
+            x=strikes, 
+            y=call_iv, 
+            mode='lines', 
+            line=dict(color='#22c55e', width=2), 
+            showlegend=False
+        ), row=2, col=1)
+        
+        fig.add_trace(go.Scatter(
+            x=strikes, 
+            y=put_iv, 
+            mode='lines', 
+            line=dict(color='#ef4444', width=2), 
+            showlegend=False
+        ), row=2, col=1)
+        
+        fig.add_trace(go.Scatter(
+            x=strikes, 
+            y=avg_iv, 
+            mode='lines+markers', 
+            line=dict(color='#f97316', width=3), 
+            marker=dict(color='#f97316', size=6),
+            showlegend=False
         ), row=2, col=1)
         
         # 4. Calls vs Puts
-        fig.add_trace(go.Bar(
-            x=strikes, 
-            y=call_vex_values, 
-            marker_color='#22c55e', 
-            showlegend=False
-        ), row=2, col=2)
-        
-        fig.add_trace(go.Bar(
-            x=strikes, 
-            y=put_vex_values, 
-            marker_color='#ef4444', 
-            showlegend=False
-        ), row=2, col=2)
+        fig.add_trace(go.Bar(x=strikes, y=call_vex_values, marker_color='#22c55e', showlegend=False), row=2, col=2)
+        fig.add_trace(go.Bar(x=strikes, y=put_vex_values, marker_color='#ef4444', showlegend=False), row=2, col=2)
         
         # 5. VEX / IV
         vex_per_iv = []
         for i in range(len(total_vex_values)):
-            if refined_avg_iv[i] > 0:
-                vex_per_iv.append(total_vex_values[i] / refined_avg_iv[i])
+            if avg_iv[i] > 0:
+                vex_per_iv.append(total_vex_values[i] / avg_iv[i])
             else:
                 vex_per_iv.append(0)
         
@@ -839,14 +719,9 @@ class VEXAnalyzer:
             concentration_pct = [0] * len(total_vex_values)
         
         risk_colors = ['#ef4444' if x > 20 else '#f97316' if x > 10 else '#22c55e' for x in concentration_pct]
-        fig.add_trace(go.Bar(
-            x=strikes, 
-            y=concentration_pct, 
-            marker_color=risk_colors, 
-            showlegend=False
-        ), row=3, col=2)
+        fig.add_trace(go.Bar(x=strikes, y=concentration_pct, marker_color=risk_colors, showlegend=False), row=3, col=2)
         
-        # Linhas de referência (spot, max_vex, etc)
+        # Linhas de referência
         for row in range(1, 4):
             for col in range(1, 3):
                 fig.add_vline(x=spot_price, line=dict(color='#fbbf24', width=2, dash='dash'), row=row, col=col)
@@ -880,9 +755,11 @@ class VEXAnalyzer:
         fig.update_yaxes(gridcolor='rgba(255,255,255,0.1)', color='#ffffff', showgrid=True, zeroline=False)
         
         return fig.to_json()
-
-
-    def analyze(self, symbol, expiration_code=None):        
+    
+    def analyze(self, symbol, expiration_code=None):
+        """Análise principal VEX"""
+        logging.info(f"INICIANDO ANALISE VEX - {symbol}")
+                        
         spot_price = self.data_provider.get_spot_price(symbol)
         if not spot_price:
             raise ValueError("Erro: não foi possível obter cotação")
@@ -930,8 +807,7 @@ class VEXAnalyzer:
         max_vex_idx = vex_real['total_vex_descoberto'].idxmax()
         max_vex_strike = float(vex_real.loc[max_vex_idx, 'strike'])
         
-        # ✅ USA IV REFINADA
-        max_iv_idx = vex_real['refined_avg_iv'].idxmax()
+        max_iv_idx = vex_real['avg_iv'].idxmax()
         max_iv_strike = float(vex_real.loc[max_iv_idx, 'strike'])
         
         return {
@@ -969,5 +845,5 @@ class VegaService:
             return convert_to_json_serializable(api_result)
             
         except Exception as e:
-            logging.error(f"❌ Erro na análise VEX: {e}")
+            logging.error(f"Erro na análise VEX: {e}")
             raise

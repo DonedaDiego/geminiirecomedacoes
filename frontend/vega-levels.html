@@ -494,7 +494,6 @@
       window.location.href = '/login.html';
     }
 
-    // Elementos DOM
     const tickerInput = document.getElementById('tickerInput');
     const expirationSelect = document.getElementById('expirationSelect');
     const loadExpirationsBtn = document.getElementById('loadExpirationsBtn');
@@ -502,7 +501,6 @@
     const statusMsg = document.getElementById('statusMsg');
     const resultsSection = document.getElementById('resultsSection');
 
-    // Funções utilitárias
     function formatLargeNumber(value) {
       const absValue = Math.abs(value);
       if (absValue >= 1000000000) {
@@ -551,7 +549,6 @@
     }
     window.toggleInfo = toggleInfo;
 
-    // Carregar vencimentos
     async function loadExpirations() {
       const ticker = tickerInput.value.trim().toUpperCase();
       if (!ticker) {
@@ -599,7 +596,6 @@
       }
     }
 
-    // Executar análise VEX
     async function runVEXAnalysis() {
       const ticker = tickerInput.value.trim().toUpperCase();
       if (!ticker) {
@@ -608,7 +604,7 @@
       }
 
       setLoading(analyzeBtn, true, '<i class="fas fa-rocket mr-2"></i>Executar VEX', 'Processando VEX...');
-      showStatus('Executando análise VEX completa com contexto histórico...', 'info');
+      showStatus('Executando análise VEX completa...', 'info');
 
       try {
         const requestBody = { ticker, days_back: 60 };
@@ -629,7 +625,7 @@
         if (!response.ok) throw new Error(data.error);
 
         displayResults(data);
-        showStatus(`Análise VEX de ${ticker} concluída com contexto histórico`, 'success');
+        showStatus(`Análise VEX de ${ticker} concluída`, 'success');
 
       } catch (error) {
         showStatus('Erro: ' + error.message, 'error');
@@ -638,18 +634,17 @@
       }
     }
 
-    // Exibir resultados - EXPANDIDO COM CONTEXTO
     function displayResults(data) {
       const vol_regime = data.vol_regime || {};
       
       // Risk indicator
       const risk = vol_regime.volatility_risk || 'LOW';
       let riskClass = 'bg-gradient-to-r ';
-      let riskText = risk;
+      let riskText = '';
       
       if (risk === 'HIGH') {
         riskClass += 'from-red-400 to-red-600';
-        riskText = 'Alto Risco Volatilidade';
+        riskText = 'Alto Risco';
       } else if (risk === 'MODERATE') {
         riskClass += 'from-yellow-400 to-yellow-600';
         riskText = 'Risco Moderado';
@@ -662,44 +657,47 @@
         `inline-block px-8 py-4 rounded-2xl text-2xl font-black ${riskClass}`;
       document.getElementById('riskIndicator').textContent = riskText;
 
-      // Métricas básicas
+      // Spot price
       document.getElementById('spotPrice').textContent = `R$ ${data.spot_price?.toFixed(2)}`;
       
-      //  IV ATUAL (weighted_iv = atm_iv agora)
+      // IV Atual
       const currentIV = vol_regime.weighted_iv || 0;
       document.getElementById('weightedIV').textContent = `${currentIV.toFixed(1)}%`;
       
-      //  IV MÉDIA 10D (agora vem direto do vol_regime)
+      // IV Média 10D
       const historicalIV = vol_regime.atm_iv_10d_avg || currentIV;
       document.getElementById('historicalIV').textContent = `${historicalIV.toFixed(1)}%`;
       
-      //  TENDÊNCIA IV (agora vem direto do vol_regime)
-      const ivTrend = vol_regime.iv_trend || 'ESTAVEL';
+      // Tendência IV (só número com seta)
+      const ivDiffPct = vol_regime.iv_diff_pct || 0;
       const ivTrendElement = document.getElementById('ivTrend');
       
-      let trendColor = '#6b7280'; // cinza padrão
-      let trendText = ivTrend;
+      let trendColor = '#6b7280';
+      let trendIcon = '→';
       
-      if (ivTrend === 'ALTA') {
+      if (ivDiffPct > 2) {
         trendColor = '#ef4444';
-        trendText = '↑ ALTA';
-      } else if (ivTrend === 'BAIXA') {
+        trendIcon = '↑';
+      } else if (ivDiffPct < -2) {
         trendColor = '#22c55e';
-        trendText = '↓ BAIXA';
+        trendIcon = '↓';
       } else {
         trendColor = '#06b6d4';
-        trendText = '→ ESTÁVEL';
+        trendIcon = '→';
       }
       
       ivTrendElement.style.color = trendColor;
-      ivTrendElement.textContent = trendText;
+      ivTrendElement.textContent = `${trendIcon} ${ivDiffPct > 0 ? '+' : ''}${ivDiffPct.toFixed(1)}%`;
       
-      // Métricas restantes
+      // Max Sensibilidade
       const maxStrike = vol_regime.max_vex_strike || 0;
       document.getElementById('maxStrike').textContent = `R$ ${maxStrike.toFixed(2)}`;
       
+      // VEX Descoberto
       const vexDescoberto = vol_regime.total_vex_descoberto || 0;
       document.getElementById('vexDescoberto').textContent = formatLargeNumber(vexDescoberto);
+
+      // ❌ REMOVIDO: createDynamicAlerts() - não criar card de situação
 
       // Gráfico
       if (data.plot_json) {
@@ -709,7 +707,6 @@
       resultsSection.classList.remove('hidden');
     }
 
-    // Renderizar gráfico
     function renderChart(plotJson) {
       try {
         const plotData = JSON.parse(plotJson);
@@ -730,7 +727,6 @@
             });
           }
           
-          // Filtrar valores infinitos
           if (trace.x) trace.x = trace.x.filter(val => isFinite(val));
           if (trace.y) trace.y = trace.y.filter(val => isFinite(val));
         });
@@ -753,21 +749,18 @@
 
       } catch (error) {
         console.error('Erro no gráfico:', error);
-        console.error('plotJson recebido:', plotJson);
         document.getElementById('vexChart').innerHTML = 
-          '<div class="text-center text-red-400 p-8">Erro ao carregar gráfico: ' + error.message + '</div>';
+          '<div class="text-center text-red-400 p-8">Erro ao carregar gráfico</div>';
       }
     }
 
-    // Event listeners
     loadExpirationsBtn.addEventListener('click', loadExpirations);
     analyzeBtn.addEventListener('click', runVEXAnalysis);
     
     tickerInput.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') loadExpirations();
+      if (e.key === 'Enter') runVEXAnalysis();
     });
 
-    // Resize handler
     window.addEventListener('resize', function() {
       const chartElement = document.getElementById('vexChart');
       if (chartElement && chartElement.children.length > 0) {
@@ -775,9 +768,8 @@
       }
     });
 
-    // Inicializar
     document.addEventListener('DOMContentLoaded', function() {
-      showStatus('Sistema VEX com contexto histórico carregado. Digite um ticker para começar.', 'info');
+      showStatus('Sistema VEX carregado. Digite um ticker para começar.', 'info');
     });
 
   </script>
