@@ -259,11 +259,11 @@
 
             <div class="metric-card text-center">
               <div class="flex items-center justify-between mb-2">
-                <span class="text-sm text-gray-400">Cotação Atual</span>
-                <i class="fas fa-dollar-sign text-purple-400"></i>
+                <span class="text-sm text-gray-400">Variação no Período</span>
+                <i class="fas fa-chart-line text-cyan-400"></i>
               </div>
-              <p class="text-2xl font-bold" id="spotPriceText">-</p>
-              <p class="text-xs text-gray-500 mt-1" id="tickerText">-</p>
+              <p class="text-2xl font-bold" id="periodVariationText">-</p>
+              <p class="text-xs text-gray-500 mt-1" id="periodVariationSubtext">-</p>
             </div>
           </div>
 
@@ -543,8 +543,24 @@
       const stability = insights.regime_stability ? 'Regime estável' : `${insights.regime_changes.length} mudanças`;
       document.getElementById('regimeStabilityText').textContent = `${stability} - ${insights.days_in_current_regime} dias consecutivos`;
 
-      document.getElementById('spotPriceText').textContent = `R$ ${data.spot_price.toFixed(2)}`;
-      document.getElementById('tickerText').textContent = data.ticker;
+      if (data.spot_prices_by_date) {
+        const dates = Object.keys(data.spot_prices_by_date).sort();
+        if (dates.length >= 2) {
+          const firstPrice = data.spot_prices_by_date[dates[0]];
+          const lastPrice = data.spot_prices_by_date[dates[dates.length - 1]];
+          const variation = ((lastPrice - firstPrice) / firstPrice * 100);
+          const variationAbs = lastPrice - firstPrice;
+          
+          const variationColor = variation >= 0 ? 'text-green-400' : 'text-red-400';
+          const variationIcon = variation >= 0 ? 'fa-arrow-up' : 'fa-arrow-down';
+          
+          document.getElementById('periodVariationText').className = `text-2xl font-bold ${variationColor}`;
+          document.getElementById('periodVariationText').innerHTML = `<i class="fas ${variationIcon}"></i> ${variation >= 0 ? '+' : ''}${variation.toFixed(2)}%`;
+          
+          document.getElementById('periodVariationSubtext').textContent = 
+            `R$ ${firstPrice.toFixed(2)} → R$ ${lastPrice.toFixed(2)} (${variation >= 0 ? '+' : ''}R$ ${variationAbs.toFixed(2)})`;
+        }
+      }
 
       if (insights.flip_movement) {
         const fm = insights.flip_movement;
@@ -645,13 +661,23 @@
         
         document.getElementById('regimeChangesCard').classList.remove('hidden');
       }
-    }
+    } 
 
     function renderTimeline(data) {
       const container = document.getElementById('timelineDots');
       container.innerHTML = '';
 
-      data.available_dates.forEach((date, index) => {
+      const validDates = data.available_dates.filter(date => {
+        const dateData = data.data_by_date[date];
+        return dateData && dateData.plot_json;
+      });
+
+      if (validDates.length === 0) {
+        container.innerHTML = '<p class="text-gray-400 text-center">Nenhuma data com dados completos</p>';
+        return;
+      }
+
+      validDates.forEach((date, index) => {
         const dateData = data.data_by_date[date];
         const regime = dateData.regime;
         const dotColor = regime === 'Long Gamma' ? 'bg-green-500' : 'bg-red-500';
@@ -664,8 +690,8 @@
 
         const dotHtml = `
           <div class="flex flex-col items-center cursor-pointer hover:scale-110 transition" 
-               data-date="${date}"
-               onclick="selectDate('${date}')">
+              data-date="${date}"
+              onclick="selectDate('${date}')">
             <div class="timeline-dot ${dotColor} mb-2" data-date="${date}"></div>
             <span class="text-xs text-gray-400">${displayDate}</span>
           </div>
@@ -673,7 +699,15 @@
 
         container.innerHTML += dotHtml;
       });
-    }
+      
+      // ✅ Atualizar texto do período
+      const firstDate = validDates[0];
+      const lastDate = validDates[validDates.length - 1];
+      
+      document.getElementById('periodText').textContent = `${validDates.length} dias úteis`;
+      document.getElementById('periodSubtext').textContent = 
+        `${formatDate(firstDate)} até ${formatDate(lastDate)}`;
+    }    
 
     function selectDate(date) {
       selectedDate = date;

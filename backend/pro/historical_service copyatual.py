@@ -1,6 +1,6 @@
 """
 historical_service.py - Análise Histórica GEX COM DADOS DO BANCO POSTGRESQL
-VERSÃO COM BANCO: Usa PostgreSQL em vez de API Floqui
+VERSÃO CORRIGIDA: Usa spot_price histórico de cada dia específico
 """
 
 import numpy as np
@@ -225,7 +225,7 @@ class HistoricalDataProvider:
             return []
     
     def get_spot_price(self, symbol):
-        """Busca cotação atual"""
+        """Busca cotação atual (tempo real)"""
         try:
             url = f"{self.oplab_url}/market/instruments/{symbol}"
             response = requests.get(url, headers=self.headers, timeout=10)
@@ -247,6 +247,51 @@ class HistoricalDataProvider:
             
         except Exception as e:
             logging.error(f"Erro ao buscar cotação: {e}")
+            return None
+    
+    def get_historical_spot_price(self, symbol, target_date):
+        """✅ NOVO: Busca cotação HISTÓRICA de uma data específica"""
+        try:
+            ticker_yf = f"{symbol}.SA" if not symbol.endswith('.SA') else symbol
+            stock = yf.Ticker(ticker_yf)
+            
+            # Busca dados do dia específico + margem de segurança
+            date_str = target_date.strftime('%Y-%m-%d')
+            next_day = (target_date + timedelta(days=3)).strftime('%Y-%m-%d')
+            
+            hist = stock.history(start=date_str, end=next_day)
+            
+            if not hist.empty:
+                # Pega o fechamento mais próximo da data alvo
+                hist_filtered = hist[hist.index.date >= target_date.date()]
+                if not hist_filtered.empty:
+                    price = float(hist_filtered['Close'].iloc[0])
+                    logging.info(f"✅ Spot histórico {date_str}: R$ {price:.2f}")
+                    return price
+            
+            logging.warning(f"⚠️ Sem dados históricos para {date_str}, tentando Oplab...")
+            
+            # Fallback: tentar Oplab histórico
+            symbol_clean = symbol.replace('.SA', '')
+            to_date = (target_date + timedelta(days=1)).strftime('%Y-%m-%d')
+            from_date = (target_date - timedelta(days=1)).strftime('%Y-%m-%d')
+            
+            url = f"{self.oplab_url}/market/historical/{symbol_clean}/{from_date}/{to_date}"
+            response = requests.get(url, headers=self.headers, timeout=10)
+            
+            if response.status_code == 200:
+                data = response.json()
+                if data and len(data) > 0:
+                    price = float(data[-1].get('close', 0))
+                    if price > 0:
+                        logging.info(f"✅ Spot histórico Oplab {date_str}: R$ {price:.2f}")
+                        return price
+            
+            logging.error(f"❌ Não foi possível obter spot histórico para {date_str}")
+            return None
+            
+        except Exception as e:
+            logging.error(f"Erro ao buscar spot histórico {target_date}: {e}")
             return None
     
     def get_oplab_historical_data(self, symbol, target_date=None):
@@ -337,7 +382,7 @@ class HistoricalDataProvider:
                 logging.warning(f"Sem dados banco: VENC={vencimento} DATA={dt_referencia.strftime('%Y-%m-%d')}")
                 return {}
             
-            # ✅ NOVA ESTRUTURA - USA STRING COMO CHAVE
+            # ✅ ESTRUTURA COM STRING COMO CHAVE
             oi_breakdown = {}
             for row in rows:
                 strike = float(row[0])
@@ -374,7 +419,6 @@ class HistoricalDataProvider:
         
         expirations = []
         
-        # ✅ Busca última data_referencia do banco
         try:
             query = text("""
                 SELECT MAX(data_referencia) as ultima_data
@@ -391,10 +435,8 @@ class HistoricalDataProvider:
             
             if not ultima_data:
                 logging.warning(f"Nenhuma data_referencia para {ticker_clean}")
-                # Retorna lista vazia em vez de tentar buscar
                 return expirations
             
-            # ✅ Testa cada vencimento na última data disponível
             for code, desc in available_expirations.items():
                 oi_data = self.get_floqui_historical(ticker_clean, code, ultima_data)
                 data_count = len(oi_data)
@@ -705,8 +747,8 @@ class HistoricalAnalyzer:
         
         return fig.to_json()
     
-    def calculate_historical_insights(self, data_by_date, spot_price):
-        """ANÁLISE GERENCIAL: tendências, strikes impactados, mudanças de regime"""
+    def calculate_historical_insights(self, data_by_date, spot_prices_by_date):
+        """✅ CORRIGIDO: Usa spot_price de cada dia específico"""
         if not data_by_date or len(data_by_date) < 2:
             return {}
         
@@ -718,10 +760,12 @@ class HistoricalAnalyzer:
         
         for i, date in enumerate(dates):
             data = data_by_date[date]
+            spot_price = spot_prices_by_date.get(date)  # ✅ Spot correto do dia
+            
             flip_evolution.append({
                 'date': date,
                 'flip_strike': data.get('flip_strike'),
-                'spot_price': spot_price,
+                'spot_price': spot_price,  # ✅ Spot histórico
                 'regime': data['regime']
             })
             
@@ -777,7 +821,7 @@ class HistoricalAnalyzer:
             }
         
         # 4. STRIKES MAIS IMPACTADOS
-        most_impacted = self._identify_most_impacted_strikes(data_by_date, spot_price, dates)
+        most_impacted = self._identify_most_impacted_strikes(data_by_date, spot_prices_by_date, dates)
         
         # 5. RESUMO GERENCIAL
         summary = {
@@ -814,9 +858,13 @@ class HistoricalAnalyzer:
         
         return count
     
-    def _identify_most_impacted_strikes(self, data_by_date, spot_price, dates):
+    def _identify_most_impacted_strikes(self, data_by_date, spot_prices_by_date, dates):
+        """✅ CORRIGIDO: Usa spot_price médio do período"""
         if len(dates) < 2:
             return []
+        
+        # Calcula spot médio do período
+        avg_spot = sum(spot_prices_by_date.values()) / len(spot_prices_by_date)
         
         strike_gex_history = {}
         
@@ -855,7 +903,7 @@ class HistoricalAnalyzer:
             
             impacts.append({
                 'strike': strike,
-                'distance_from_spot_pct': abs(strike - spot_price) / spot_price * 100,
+                'distance_from_spot_pct': abs(strike - avg_spot) / avg_spot * 100,
                 'first_gex': first_gex,
                 'last_gex': last_gex,
                 'change': change,
@@ -868,17 +916,14 @@ class HistoricalAnalyzer:
         
         return impacts[:5]
     
-    def analyze_historical(self, ticker, vencimento, days_back=5):
-        """ANÁLISE HISTÓRICA COMPLETA COM BANCO POSTGRESQL"""
+    def analyze_historical(self, ticker, vencimento, days_back=6):
+        """✅ ANÁLISE HISTÓRICA CORRIGIDA - USA SPOT_PRICE DE CADA DIA"""
         logging.info(f"🔍 INICIANDO ANÁLISE HISTÓRICA - {ticker}")
-        
-        spot_price = self.data_provider.get_spot_price(ticker)
-        if not spot_price:
-            raise ValueError("Erro: não foi possível obter cotação")
         
         business_dates = self.data_provider.get_business_days(days_back)
         
         data_by_date = {}
+        spot_prices_by_date = {}  # ✅ NOVO: Armazena spot de cada dia
         available_dates = []
         
         expirations = self.data_provider.get_available_expirations(ticker)
@@ -891,24 +936,37 @@ class HistoricalAnalyzer:
             
             logging.info(f"🔄 Processando {date_str}...")
             
+            # ✅ 1. BUSCAR SPOT HISTÓRICO DO DIA ESPECÍFICO
+            spot_price = self.data_provider.get_historical_spot_price(ticker, date_obj)
+            
+            if not spot_price:
+                logging.warning(f"❌ Sem spot_price para {date_str} - pulando dia")
+                continue
+            
+            spot_prices_by_date[date_str] = spot_price  
+            
+            # 2. BUSCAR DADOS OPLAB
             oplab_df = self.data_provider.get_oplab_historical_data(ticker, target_date=date_obj)
             
             if oplab_df.empty:
                 logging.warning(f"Oplab vazio para {date_str} - pulando")
                 continue
             
+            # 3. BUSCAR DADOS BANCO
             oi_breakdown = self.data_provider.get_floqui_historical(ticker, vencimento, date_obj)
             
             if not oi_breakdown:
                 logging.warning(f"Banco vazio para {date_str} - pulando")
                 continue
             
+            # 4. CALCULAR GEX COM SPOT CORRETO DO DIA
             gex_df = self.calculate_gex(oplab_df, oi_breakdown, spot_price)
             
             if gex_df.empty:
                 logging.warning(f"GEX vazio para {date_str} - pulando")
                 continue
             
+            # 5. ANÁLISES COM SPOT CORRETO
             flip_strike = self.find_gamma_flip(gex_df, spot_price, ticker)
             walls = self.identify_walls(gex_df, spot_price)
             
@@ -923,6 +981,7 @@ class HistoricalAnalyzer:
             else:
                 regime = 'Long Gamma' if net_gex_descoberto > 0 else 'Short Gamma'
             
+            # 6. GERAR GRÁFICOS
             plot_json = self.create_6_charts(
                 gex_df, spot_price, ticker, flip_strike, 
                 expiration_desc, date_obj.strftime('%d/%m/%Y')
@@ -930,8 +989,9 @@ class HistoricalAnalyzer:
             
             gex_df_records = gex_df.to_dict('records')
             
+            # 7. ARMAZENAR RESULTADO
             data_by_date[date_str] = {
-                'spot_price': spot_price,
+                'spot_price': spot_price,  
                 'flip_strike': flip_strike,
                 'net_gex': net_gex,
                 'net_gex_descoberto': net_gex_descoberto,
@@ -945,17 +1005,18 @@ class HistoricalAnalyzer:
             
             available_dates.append(date_str)
             
-            logging.info(f"✅ {date_str}: {len(gex_df)} strikes, Flip: {flip_strike}, Regime: {regime}")
+            logging.info(f"✅ {date_str}: Spot={spot_price:.2f}, {len(gex_df)} strikes, Flip={flip_strike}, {regime}")
         
         if len(available_dates) < 2:
             raise ValueError(f"Dados insuficientes: apenas {len(available_dates)} dia(s) com dados. Mínimo: 2")
         
         logging.info(f"✅ Dados coletados para {len(available_dates)} dias: {available_dates}")
         
+        # 8. CALCULAR INSIGHTS COM SPOTS CORRETOS
         insights = {}
         try:
             logging.info(f"Calculando insights...")
-            insights = self.calculate_historical_insights(data_by_date, spot_price)
+            insights = self.calculate_historical_insights(data_by_date, spot_prices_by_date)
             logging.info(f"✅ Insights calculados")
         except Exception as e:
             logging.error(f"Erro ao calcular insights: {e}", exc_info=True)
@@ -968,13 +1029,17 @@ class HistoricalAnalyzer:
                 }
             }
         
+        # ✅ Pega último spot para referência
+        current_spot = spot_prices_by_date[available_dates[-1]]
+        
         result = {
             'ticker': ticker,
             'vencimento': vencimento,
             'expiration_desc': expiration_desc,
-            'spot_price': spot_price,
+            'spot_price': current_spot,  # ✅ Spot mais recente
             'available_dates': available_dates,
             'data_by_date': data_by_date,
+            'spot_prices_by_date': spot_prices_by_date,  # ✅ NOVO: Todos os spots
             'insights': insights,
             'success': True
         }
@@ -1000,6 +1065,7 @@ class HistoricalService:
                 'spot_price': result['spot_price'],
                 'available_dates': result['available_dates'],
                 'data_by_date': result['data_by_date'],
+                'spot_prices_by_date': result['spot_prices_by_date'],  # ✅ NOVO
                 'insights': result['insights'],
                 'success': True
             }

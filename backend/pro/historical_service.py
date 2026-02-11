@@ -936,7 +936,7 @@ class HistoricalAnalyzer:
             
             logging.info(f"🔄 Processando {date_str}...")
             
-            # ✅ 1. BUSCAR SPOT HISTÓRICO DO DIA ESPECÍFICO
+            # ✅ 1. BUSCAR SPOT HISTÓRICO
             spot_price = self.data_provider.get_historical_spot_price(ticker, date_obj)
             
             if not spot_price:
@@ -952,11 +952,29 @@ class HistoricalAnalyzer:
                 logging.warning(f"Oplab vazio para {date_str} - pulando")
                 continue
             
-            # 3. BUSCAR DADOS BANCO
+            # 3. BUSCAR DADOS BANCO - COM FALLBACK PARA OUTROS VENCIMENTOS
             oi_breakdown = self.data_provider.get_floqui_historical(ticker, vencimento, date_obj)
             
+            # ✅ NOVO: Se não tem dados do vencimento principal, tenta outros vencimentos
             if not oi_breakdown:
-                logging.warning(f"Banco vazio para {date_str} - pulando")
+                logging.warning(f"⚠️ Vencimento {vencimento} sem dados em {date_str}, tentando alternativas...")
+                
+                # Busca vencimentos disponíveis para esta data específica
+                expirations = self.data_provider.get_available_expirations(ticker)
+                
+                for exp in expirations:
+                    if exp['code'] != vencimento and exp['available']:
+                        logging.info(f"🔄 Tentando vencimento alternativo: {exp['code']}")
+                        oi_breakdown = self.data_provider.get_floqui_historical(ticker, exp['code'], date_obj)
+                        
+                        if oi_breakdown:
+                            logging.info(f"✅ Dados encontrados em {exp['code']} para {date_str}")
+                            vencimento = exp['code']  # Atualiza o vencimento usado
+                            expiration_desc = exp['desc']
+                            break
+                        
+            if not oi_breakdown:
+                logging.error(f"Nenhum vencimento com dados para {date_str} - pulando dia")
                 continue
             
             # 4. CALCULAR GEX COM SPOT CORRETO DO DIA
