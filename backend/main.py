@@ -13,6 +13,7 @@ from database import get_db_connection
 from gratis.beta_routes import beta_bp
 from gratis.rsl_routes import get_rsl_blueprint
 from gratis.amplitude_routes import amplitude_bp
+from gratis.rrg_routes import get_rrg_blueprint
 
 # Pro
 from pro.opcoes_routes import opcoes_bp
@@ -29,6 +30,7 @@ from pro.mm_temporal_routes import mm_temporal_bp
 from pro.oplab_routes import oplab_bp
 from pro.screening_routes import get_screening_blueprint
 from pro.railway_sync_routes import railway_bp
+
 
 
 
@@ -123,6 +125,7 @@ app.register_blueprint(beta_bp)
 app.register_blueprint(opcoes_bp)
 app.register_blueprint(oplab_bp)
 app.register_blueprint(railway_bp)
+app.register_blueprint(get_rrg_blueprint())
 
 
 # market maker
@@ -423,6 +426,11 @@ def amplitude_page():
 @app.route('/rsl.html')
 def rsl_page():
     return send_from_directory('../frontend', 'rsl.html')
+
+@app.route('/rrg')
+@app.route('/rrg.html')
+def rrg_page():
+    return send_from_directory('../frontend', 'rrg.html')
 
 
 ##========== Opções ===============##

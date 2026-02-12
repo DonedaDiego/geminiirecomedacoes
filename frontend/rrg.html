@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RRG - Relative Rotation Graph - Geminii Tech</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            dark: '#000000',
+            light: '#ffffff',
+            subtle: 'rgba(255,255,255,0.1)',
+            geminii: '#fb1ebb'
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <style>
+    body { 
+      font-family: 'Inter', sans-serif; 
+      background: linear-gradient(135deg, #0c0c0c 0%, #1a1a1a 100%);
+      min-height: 100vh;
+    }
+    
+    .rrg-card {
+      background: rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 16px;
+      transition: all 0.3s ease;
+    }
+    
+    .rrg-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 20px 40px rgba(186, 57, 175, 0.15);
+      border-color: rgba(186, 57, 175, 0.3);
+    }
+    
+    .spinner {
+      border: 2px solid rgba(255, 255, 255, 0.1);
+      border-radius: 50%;
+      border-top: 2px solid #fb1ebb;
+      width: 20px;
+      height: 20px;
+      animation: spin 1s linear infinite;
+      display: inline-block;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .chart-container {
+      width: 100%;
+      height: 700px;
+      background: transparent;
+      border-radius: 12px;
+      padding: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .metric-card {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      padding: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      transition: all 0.3s ease;
+    }
+
+    .metric-card:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(186, 57, 175, 0.3);
+    }
+
+    .loading {
+      opacity: 0.6;
+      pointer-events: none;
+    }
+
+    .regime-badge {
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-weight: 600;
+      font-size: 14px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    
+    .regime-leading {
+      background: rgba(34, 197, 94, 0.2);
+      color: #22c55e;
+      border: 1px solid rgba(34, 197, 94, 0.3);
+    }
+    
+    .regime-improving {
+      background: rgba(59, 130, 246, 0.2);
+      color: #3b82f6;
+      border: 1px solid rgba(59, 130, 246, 0.3);
+    }
+
+    .regime-weakening {
+      background: rgba(234, 179, 8, 0.2);
+      color: #eab308;
+      border: 1px solid rgba(234, 179, 8, 0.3);
+    }
+
+    .regime-lagging {
+      background: rgba(239, 68, 68, 0.2);
+      color: #ef4444;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    .sector-item {
+      background: linear-gradient(90deg, transparent 0%, rgba(59, 130, 246, 0.1) 100%);
+      border-left: 3px solid #3b82f6;
+      padding: 12px;
+      margin: 8px 0;
+      border-radius: 8px;
+      transition: all 0.3s;
+      cursor: pointer;
+    }
+    
+    .sector-item:hover {
+      background: linear-gradient(90deg, transparent 0%, rgba(59, 130, 246, 0.2) 100%);
+      transform: translateX(4px);
+    }
+
+    .quadrant-label {
+      position: absolute;
+      font-weight: bold;
+      font-size: 18px;
+      opacity: 0.3;
+      pointer-events: none;
+    }
+
+  </style>
+</head>
+
+<body class="text-white">
+  
+  <!-- Navbar -->
+  <nav class="fixed top-6 left-1/2 transform -translate-x-1/2 z-50 bg-opacity-5 border-opacity-10 bg-white border-white border rounded-full px-4 py-3 shadow-xl backdrop-blur-md">
+    <div class="flex items-center justify-between">
+      <div class="flex items-center">
+        <a href="/dashboard.html">
+          <img src="logo.png" alt="Geminii Logo" class="w-6 h-6 cursor-pointer">
+        </a>
+      </div>
+      <div class="hidden md:flex items-center space-x-6 text-xs text-gray-300 ml-8">
+        <a href="rsl.html" class="hover:text-white transition-colors">RSL Setores</a>
+        <span class="text-white font-medium">RRG Analysis</span>
+      </div>
+      <div class="flex items-center space-x-3 ml-8">
+        <div class="w-8 h-8 bg-purple-500 bg-opacity-10 border border-purple-500 border-opacity-30 rounded-full flex items-center justify-center relative">
+          <i class="fas fa-chart-scatter text-purple-500 text-xs"></i>
+          <div class="absolute -top-1 -right-1 w-2 h-2 bg-purple-500 rounded-full animate-pulse"></div>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Content -->
+  <div class="pt-32 pb-16">
+    <div class="max-w-7xl mx-auto px-6">
+      
+      <!-- Header -->
+      <div class="text-center mb-12">
+        <h1 class="text-4xl md:text-5xl font-bold mb-4">
+          <span style="color: #fb1ebb; font-weight: 900;">Relative Rotation</span>
+          <span class="text-white font-light">Graph</span>
+        </h1>
+        <p class="text-neutral-300 text-lg max-w-3xl mx-auto">
+          Análise de força relativa trimestral (EMA 65) vs anual (EMA 252). 
+          Identifique setores e ativos em Leading, Improving, Weakening ou Lagging.
+        </p>
+      </div>
+
+      <!-- Controles -->
+      <div class="rrg-card p-6 mb-8">
+        <div class="flex flex-col md:flex-row gap-4 items-center justify-center">
+          <select 
+            id="analysisType" 
+            class="px-4 py-2 bg-white bg-opacity-10 border border-white border-opacity-20 rounded-lg text-white focus:outline-none focus:border-geminii backdrop-blur-sm"
+          >
+            <option value="setores">Análise por Setores</option>
+            <option value="ticker">Análise Individual (Ticker)</option>
+          </select>
+
+          <input 
+            id="tickerInput" 
+            type="text" 
+            placeholder="Digite o ticker (ex: PETR4)" 
+            class="hidden px-4 py-2 bg-white bg-opacity-10 border border-white border-opacity-20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-geminii backdrop-blur-sm uppercase"
+          >
+
+          <button 
+            id="analyzeBtn" 
+            class="px-6 py-2 bg-gradient-to-r from-geminii to-purple-600 hover:shadow-lg rounded-lg transition-all font-medium"
+          >
+            <i class="fas fa-chart-scatter mr-2"></i>Analisar RRG
+          </button>
+        </div>
+      </div>
+
+      <!-- Status -->
+      <div id="statusMsg" class="mb-6 p-4 rounded-lg hidden backdrop-blur-sm"></div>
+
+      <!-- Loading State -->
+      <div id="loadingState" class="hidden rrg-card p-12 text-center mb-8">
+        <div class="spinner mx-auto mb-4" style="width: 40px; height: 40px; border-width: 3px;"></div>
+        <p class="text-xl font-semibold" style="color: #fb1ebb;">Calculando análise RRG...</p>
+        <p class="text-sm text-gray-400 mt-2">Processando EMAs 65 e 252...</p>
+      </div>
+
+      <!-- Statistics -->
+      <div id="statsSection" class="hidden mb-8">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div class="metric-card text-center">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-sm text-gray-400">Leading</span>
+              <i class="fas fa-arrow-up text-green-400"></i>
+            </div>
+            <p class="text-2xl font-bold text-green-400" id="leadingCount">0</p>
+            <p class="text-xs text-gray-500 mt-1">Forte momentum</p>
+          </div>
+
+          <div class="metric-card text-center">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-sm text-gray-400">Improving</span>
+              <i class="fas fa-chart-line text-blue-400"></i>
+            </div>
+            <p class="text-2xl font-bold text-blue-400" id="improvingCount">0</p>
+            <p class="text-xs text-gray-500 mt-1">Recuperação</p>
+          </div>
+
+          <div class="metric-card text-center">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-sm text-gray-400">Weakening</span>
+              <i class="fas fa-chart-line-down text-yellow-400"></i>
+            </div>
+            <p class="text-2xl font-bold text-yellow-400" id="weakeningCount">0</p>
+            <p class="text-xs text-gray-500 mt-1">Enfraquecendo</p>
+          </div>
+
+          <div class="metric-card text-center">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-sm text-gray-400">Lagging</span>
+              <i class="fas fa-arrow-down text-red-400"></i>
+            </div>
+            <p class="text-2xl font-bold text-red-400" id="laggingCount">0</p>
+            <p class="text-xs text-gray-500 mt-1">Fraco momentum</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Gráfico RRG -->
+      <div id="chartSection" class="hidden rrg-card p-6 mb-8">
+        <h2 class="text-2xl font-bold mb-6 text-center">
+          <i class="fas fa-chart-scatter mr-3" style="color: #fb1ebb;"></i>
+          Mapa RRG - <span id="chartTitle" style="color: #fb1ebb;">Setores</span>
+        </h2>
+        
+        <div class="chart-container relative">
+          <div id="rrgChart" style="width: 100%; height: 100%;"></div>
+        </div>
+      </div>
+
+      <!-- Lista de Setores/Tickers -->
+      <div id="listSection" class="hidden rrg-card p-6">
+        <h2 class="text-2xl font-bold mb-6">
+          <i class="fas fa-list mr-3" style="color: #fb1ebb;"></i>
+          Detalhes por <span id="listTitle">Setor</span>
+        </h2>
+        
+        <div id="itemsList" class="space-y-2">
+          <!-- Preenchido dinamicamente -->
+        </div>
+      </div>
+
+      <!-- Estado Vazio -->
+      <div id="emptyState" class="rrg-card p-12 text-center">
+        <i class="fas fa-chart-scatter text-6xl mb-4" style="color: rgba(186, 57, 175, 0.5);"></i>
+        <h3 class="text-2xl font-bold mb-2 text-gray-300">Nenhuma análise carregada</h3>
+        <p class="text-gray-400">Selecione o tipo de análise e clique em "Analisar RRG"</p>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    let userToken = localStorage.getItem('geminii_token');
+    
+    if (!userToken) {
+      window.location.href = '/login.html';
+    }
+
+    // Estado global
+    let currentData = null;
+    let currentType = 'setores';
+
+    // Elementos DOM
+    const analysisType = document.getElementById('analysisType');
+    const tickerInput = document.getElementById('tickerInput');
+    const analyzeBtn = document.getElementById('analyzeBtn');
+    const statusMsg = document.getElementById('statusMsg');
+    const loadingState = document.getElementById('loadingState');
+    const emptyState = document.getElementById('emptyState');
+    const statsSection = document.getElementById('statsSection');
+    const chartSection = document.getElementById('chartSection');
+    const listSection = document.getElementById('listSection');
+
+    // Funções utilitárias
+    function showStatus(message, type = 'info') {
+      const bgClass = type === 'success' ? 'bg-green-600 bg-opacity-20 border-green-500 border-opacity-30' : 
+                     type === 'error' ? 'bg-red-600 bg-opacity-20 border-red-500 border-opacity-30' : 
+                     'bg-blue-600 bg-opacity-20 border-blue-500 border-opacity-30';
+      
+      statusMsg.className = `mb-6 p-4 rounded-lg border backdrop-blur-sm ${bgClass}`;
+      statusMsg.textContent = message;
+      statusMsg.classList.remove('hidden');
+      
+      setTimeout(() => statusMsg.classList.add('hidden'), 5000);
+    }
+
+    function setLoading(isLoading) {
+      if (isLoading) {
+        analyzeBtn.classList.add('loading');
+        analyzeBtn.innerHTML = '<span class="spinner mr-2"></span>Processando...';
+      } else {
+        analyzeBtn.classList.remove('loading');
+        analyzeBtn.innerHTML = '<i class="fas fa-chart-scatter mr-2"></i>Analisar RRG';
+      }
+    }
+
+    // Controle de tipo de análise
+    analysisType.addEventListener('change', (e) => {
+      currentType = e.target.value;
+      
+      if (currentType === 'ticker') {
+        tickerInput.classList.remove('hidden');
+      } else {
+        tickerInput.classList.add('hidden');
+      }
+    });
+
+    // Análise RRG
+    async function analyzeRRG() {
+      emptyState.classList.add('hidden');
+      statsSection.classList.add('hidden');
+      chartSection.classList.add('hidden');
+      listSection.classList.add('hidden');
+      loadingState.classList.remove('hidden');
+      setLoading(true);
+
+      try {
+        let endpoint = '';
+        
+        if (currentType === 'setores') {
+          endpoint = '/api/rrg-radar-setores';
+        } else {
+          const ticker = tickerInput.value.trim().toUpperCase();
+          if (!ticker) {
+            showStatus('Digite o ticker', 'error');
+            emptyState.classList.remove('hidden');
+            return;
+          }
+          endpoint = `/api/rrg-ticker/${ticker}`;
+        }
+
+        const response = await fetch(endpoint, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${userToken}`
+          }
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          currentData = data.data;
+          renderAnalysis(data.data);
+          showStatus('Análise RRG concluída com sucesso', 'success');
+        } else {
+          showStatus(data.error || 'Erro na análise', 'error');
+          emptyState.classList.remove('hidden');
+        }
+
+      } catch (error) {
+        console.error('Erro:', error);
+        showStatus('Erro ao processar análise', 'error');
+        emptyState.classList.remove('hidden');
+      } finally {
+        loadingState.classList.add('hidden');
+        setLoading(false);
+      }
+    }
+
+    function renderAnalysis(data) {
+      if (currentType === 'setores') {
+        renderSetoresAnalysis(data);
+      } else {
+        renderTickerAnalysis(data);
+      }
+
+      statsSection.classList.remove('hidden');
+      chartSection.classList.remove('hidden');
+      listSection.classList.remove('hidden');
+    }
+
+    function renderSetoresAnalysis(data) {
+      const setores = data.setores;
+      const stats = data.statistics;
+
+      // Atualizar contadores
+      document.getElementById('leadingCount').textContent = stats.distribuicao_regimes.Leading || 0;
+      document.getElementById('improvingCount').textContent = stats.distribuicao_regimes.Improving || 0;
+      document.getElementById('weakeningCount').textContent = stats.distribuicao_regimes.Weakening || 0;
+      document.getElementById('laggingCount').textContent = stats.distribuicao_regimes.Lagging || 0;
+
+      // Gráfico
+      document.getElementById('chartTitle').textContent = 'Setores';
+      renderRRGChart(setores);
+
+      // Lista
+      document.getElementById('listTitle').textContent = 'Setor';
+      renderSetoresList(setores);
+    }
+
+    function renderTickerAnalysis(data) {
+      // Contadores (1 ticker só)
+      const regime = data.regime;
+      document.getElementById('leadingCount').textContent = regime === 'Leading' ? 1 : 0;
+      document.getElementById('improvingCount').textContent = regime === 'Improving' ? 1 : 0;
+      document.getElementById('weakeningCount').textContent = regime === 'Weakening' ? 1 : 0;
+      document.getElementById('laggingCount').textContent = regime === 'Lagging' ? 1 : 0;
+
+      // Gráfico
+      document.getElementById('chartTitle').textContent = data.symbol;
+      renderRRGChart([data]);
+
+      // Detalhes
+      document.getElementById('listTitle').textContent = 'Ticker';
+      renderTickerDetails(data);
+    }
+
+    function renderRRGChart(items) {
+      const trace = {
+        x: items.map(item => item.dist_ema252_pct),
+        y: items.map(item => item.dist_ema65_pct),
+        mode: 'markers+text',
+        type: 'scatter',
+        text: items.map(item => item.setor || item.symbol),
+        textposition: 'top center',
+        marker: {
+          size: items.map(item => Math.max(10, (item.volatilidade_30d || 20) * 0.8)),
+          color: items.map(item => getRegimeColor(item.regime)),
+          line: {
+            color: 'white',
+            width: 1
+          }
+        },
+        hovertemplate: items.map(item => 
+          `<b>${item.setor || item.symbol}</b><br>` +
+          `Regime: ${item.regime}<br>` +
+          `EMA65: ${item.dist_ema65_pct}%<br>` +
+          `EMA252: ${item.dist_ema252_pct}%<br>` +
+          `Volatilidade: ${item.volatilidade_30d}%<br>` +
+          `<extra></extra>`
+        )
+      };
+
+      const layout = {
+        title: {
+          text: 'Relative Rotation Graph',
+          font: { size: 20, color: '#ffffff', family: 'Inter' },
+          x: 0.5,
+          xanchor: 'center'
+        },
+        xaxis: {
+          title: 'EMA 252 (Anual) - %',
+          zeroline: true,
+          zerolinewidth: 2,
+          zerolinecolor: 'rgba(255,255,255,0.5)',
+          gridcolor: 'rgba(255,255,255,0.1)',
+          color: '#ffffff'
+        },
+        yaxis: {
+          title: 'EMA 65 (Trimestral) - %',
+          zeroline: true,
+          zerolinewidth: 2,
+          zerolinecolor: 'rgba(255,255,255,0.5)',
+          gridcolor: 'rgba(255,255,255,0.1)',
+          color: '#ffffff'
+        },
+        paper_bgcolor: 'transparent',
+        plot_bgcolor: 'transparent',
+        font: { color: '#ffffff', family: 'Inter' },
+        showlegend: false,
+        hovermode: 'closest',
+        shapes: [
+          // Quadrante Leading (superior direito)
+          {
+            type: 'rect',
+            xref: 'x', yref: 'y',
+            x0: 0, y0: 0,
+            x1: 100, y1: 100,
+            fillcolor: 'rgba(34, 197, 94, 0.1)',
+            line: { width: 0 }
+          },
+          // Quadrante Improving (superior esquerdo)
+          {
+            type: 'rect',
+            xref: 'x', yref: 'y',
+            x0: -100, y0: 0,
+            x1: 0, y1: 100,
+            fillcolor: 'rgba(59, 130, 246, 0.1)',
+            line: { width: 0 }
+          },
+          // Quadrante Weakening (inferior direito)
+          {
+            type: 'rect',
+            xref: 'x', yref: 'y',
+            x0: 0, y0: -100,
+            x1: 100, y1: 0,
+            fillcolor: 'rgba(234, 179, 8, 0.1)',
+            line: { width: 0 }
+          },
+          // Quadrante Lagging (inferior esquerdo)
+          {
+            type: 'rect',
+            xref: 'x', yref: 'y',
+            x0: -100, y0: -100,
+            x1: 0, y1: 0,
+            fillcolor: 'rgba(239, 68, 68, 0.1)',
+            line: { width: 0 }
+          }
+        ],
+        annotations: [
+          {
+            x: 0.85, y: 0.85,
+            xref: 'paper', yref: 'paper',
+            text: 'LEADING',
+            showarrow: false,
+            font: { size: 18, color: 'rgba(34, 197, 94, 0.3)', family: 'Inter', weight: 'bold' }
+          },
+          {
+            x: 0.15, y: 0.85,
+            xref: 'paper', yref: 'paper',
+            text: 'IMPROVING',
+            showarrow: false,
+            font: { size: 18, color: 'rgba(59, 130, 246, 0.3)', family: 'Inter', weight: 'bold' }
+          },
+          {
+            x: 0.85, y: 0.15,
+            xref: 'paper', yref: 'paper',
+            text: 'WEAKENING',
+            showarrow: false,
+            font: { size: 18, color: 'rgba(234, 179, 8, 0.3)', family: 'Inter', weight: 'bold' }
+          },
+          {
+            x: 0.15, y: 0.15,
+            xref: 'paper', yref: 'paper',
+            text: 'LAGGING',
+            showarrow: false,
+            font: { size: 18, color: 'rgba(239, 68, 68, 0.3)', family: 'Inter', weight: 'bold' }
+          }
+        ]
+      };
+
+      const config = {
+        responsive: true,
+        displayModeBar: true,
+        displaylogo: false,
+        modeBarButtonsToRemove: ['pan2d', 'lasso2d', 'select2d']
+      };
+
+      Plotly.newPlot('rrgChart', [trace], layout, config);
+    }
+
+    function renderSetoresList(setores) {
+      const list = document.getElementById('itemsList');
+      list.innerHTML = '';
+
+      setores.forEach(setor => {
+        const regimeClass = `regime-${setor.regime.toLowerCase()}`;
+        
+        const html = `
+          <div class="sector-item">
+            <div class="flex items-center justify-between">
+              <div class="flex-1">
+                <div class="flex items-center gap-3 mb-2">
+                  <span class="text-lg font-bold">${setor.setor}</span>
+                  <span class="regime-badge ${regimeClass}">${setor.regime}</span>
+                </div>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                  <div>
+                    <span class="text-gray-400">EMA65:</span>
+                    <span class="font-semibold ml-1 ${setor.dist_ema65_pct > 0 ? 'text-green-400' : 'text-red-400'}">
+                      ${setor.dist_ema65_pct > 0 ? '+' : ''}${setor.dist_ema65_pct}%
+                    </span>
+                  </div>
+                  <div>
+                    <span class="text-gray-400">EMA252:</span>
+                    <span class="font-semibold ml-1 ${setor.dist_ema252_pct > 0 ? 'text-green-400' : 'text-red-400'}">
+                      ${setor.dist_ema252_pct > 0 ? '+' : ''}${setor.dist_ema252_pct}%
+                    </span>
+                  </div>
+                  <div>
+                    <span class="text-gray-400">Momentum:</span>
+                    <span class="font-semibold ml-1">${setor.momentum_21d}%</span>
+                  </div>
+                  <div>
+                    <span class="text-gray-400">Volatilidade:</span>
+                    <span class="font-semibold ml-1">${setor.volatilidade_30d}%</span>
+                  </div>
+                </div>
+              </div>
+              <div class="text-right text-sm text-gray-400">
+                ${setor.empresas_com_dados}/${setor.empresas} empresas
+              </div>
+            </div>
+          </div>
+        `;
+        list.innerHTML += html;
+      });
+    }
+
+    function renderTickerDetails(data) {
+      const list = document.getElementById('itemsList');
+      const regimeClass = `regime-${data.regime.toLowerCase()}`;
+      
+      list.innerHTML = `
+        <div class="sector-item">
+          <div class="space-y-4">
+            <div class="flex items-center gap-3">
+              <span class="text-2xl font-bold">${data.symbol}</span>
+              <span class="regime-badge ${regimeClass}">${data.regime}</span>
+            </div>
+            
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+              <div class="metric-card">
+                <p class="text-xs text-gray-400 mb-1">Preço Atual</p>
+                <p class="text-xl font-bold">R$ ${data.preco_atual}</p>
+              </div>
+              <div class="metric-card">
+                <p class="text-xs text-gray-400 mb-1">EMA 65</p>
+                <p class="text-xl font-bold">R$ ${data.ema65}</p>
+                <p class="text-xs ${data.dist_ema65_pct > 0 ? 'text-green-400' : 'text-red-400'}">
+                  ${data.dist_ema65_pct > 0 ? '+' : ''}${data.dist_ema65_pct}%
+                </p>
+              </div>
+              <div class="metric-card">
+                <p class="text-xs text-gray-400 mb-1">EMA 252</p>
+                <p class="text-xl font-bold">R$ ${data.ema252}</p>
+                <p class="text-xs ${data.dist_ema252_pct > 0 ? 'text-green-400' : 'text-red-400'}">
+                  ${data.dist_ema252_pct > 0 ? '+' : ''}${data.dist_ema252_pct}%
+                </p>
+              </div>
+              <div class="metric-card">
+                <p class="text-xs text-gray-400 mb-1">Força Trimestral</p>
+                <p class="text-lg font-bold">${data.forca_trimestral}</p>
+              </div>
+              <div class="metric-card">
+                <p class="text-xs text-gray-400 mb-1">Tendência Anual</p>
+                <p class="text-lg font-bold">${data.tendencia_anual}</p>
+              </div>
+              <div class="metric-card">
+                <p class="text-xs text-gray-400 mb-1">Momentum 21d</p>
+                <p class="text-lg font-bold ${data.momentum_21d > 0 ? 'text-green-400' : 'text-red-400'}">
+                  ${data.momentum_21d > 0 ? '+' : ''}${data.momentum_21d}%
+                </p>
+              </div>
+              <div class="metric-card">
+                <p class="text-xs text-gray-400 mb-1">Projeção Trimestral</p>
+                <p class="text-lg font-bold text-blue-400">R$ ${data.projecao_trimestral}</p>
+              </div>
+              <div class="metric-card">
+                <p class="text-xs text-gray-400 mb-1">Projeção Anual</p>
+                <p class="text-lg font-bold text-purple-400">R$ ${data.projecao_anual}</p>
+              </div>
+              <div class="metric-card">
+                <p class="text-xs text-gray-400 mb-1">Volatilidade 30d</p>
+                <p class="text-lg font-bold">${data.volatilidade_30d}%</p>
+              </div>
+            </div>
+
+            <div class="mt-4 p-4 bg-white bg-opacity-5 rounded-lg">
+              <p class="text-sm text-gray-400">Setor: <span class="text-white font-semibold">${data.setor}</span></p>
+              <p class="text-xs text-gray-500 mt-1">Última atualização: ${data.data_calculo}</p>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function getRegimeColor(regime) {
+      const cores = {
+        'Leading': '#22c55e',
+        'Improving': '#3b82f6',
+        'Weakening': '#eab308',
+        'Lagging': '#ef4444'
+      };
+      return cores[regime] || '#6b7280';
+    }
+
+    analyzeBtn.addEventListener('click', analyzeRRG);
+    
+    tickerInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') analyzeRRG();
+    });
+
+    window.addEventListener('resize', () => {
+      const chartDiv = document.getElementById('rrgChart');
+      if (chartDiv && currentData) {
+        Plotly.Plots.resize(chartDiv);
+      }
+    });
+
+    document.addEventListener('DOMContentLoaded', function() {
+      showStatus('Sistema RRG carregado. Selecione o tipo de análise e clique em "Analisar RRG".', 'info');
+    });
+
+  </script>
+
+  <div class="mt-6 max-w-4xl mx-auto bg-red-900/20 border-2 border-red-500/40 rounded-xl p-6">
+    <div class="flex items-start gap-4">
+      <i class="fas fa-exclamation-triangle text-red-400 text-2xl mt-1 flex-shrink-0"></i>
+      <div class="text-left">
+        <h3 class="text-red-400 font-bold text-base mb-3">AVISO LEGAL IMPORTANTE</h3>
+        <p class="text-gray-300 text-xs leading-relaxed mb-3">
+          As informações fornecidas são de caráter educativo. <strong>Não constituem recomendação de investimento.</strong> Investimentos envolvem riscos. Rentabilidade passada não garante resultados futuros.
+        </p>
+        <div class="pt-3 border-t border-gray-700 text-gray-400 text-xs">
+          <p><strong>Geminii Research Ltda</strong> - CNPJ 60.897.331/0001-06 | Analista: Diego Doneda - CNPI 9668</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>
