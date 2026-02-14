@@ -123,17 +123,21 @@
       </div>
       
       <nav class="space-y-2">
-        <a href="#dashboard" class="nav-item active flex items-center p-3 text-white border border-transparent" onclick="showSection('dashboard')">
+        <a href="javascript:void(0)" data-section="dashboard" class="nav-item active flex items-center p-3 text-white border border-transparent">
           <i class="fas fa-tachometer-alt mr-3"></i>
           Dashboard
         </a>
-        <a href="#users" class="nav-item flex items-center p-3 text-gray-300 border border-transparent" onclick="showSection('users')">
+        <a href="javascript:void(0)" data-section="users" class="nav-item flex items-center p-3 text-gray-300 border border-transparent">
           <i class="fas fa-users mr-3"></i>
           Usuários
         </a>
-        <a href="#recommendationsFree" class="nav-item flex items-center p-3 text-gray-300 border border-transparent" onclick="showSection('recommendationsFree')">
+        <a href="javascript:void(0)" data-section="recommendationsFree" class="nav-item flex items-center p-3 text-gray-300 border border-transparent">
           <i class="fas fa-gift mr-3"></i>
           Recomendações Free
+        </a>
+        <a href="javascript:void(0)" data-section="railway" class="nav-item flex items-center p-3 text-gray-300 border border-transparent">
+          <i class="fas fa-database mr-3"></i>
+          Sync Railway
         </a>
       </nav>
       
@@ -256,7 +260,6 @@
             </div>
 
             <div class="overflow-x-auto">
-              <!-- Substitua a tabela de usuários por esta versão LIMPA: -->
               <table class="w-full">
                 <thead>
                   <tr class="text-left border-b border-gray-600">
@@ -400,135 +403,234 @@
       </div>
     </div>
 
-      <!-- Recommendations Free Section -->
-      <div id="recommendationsFreeSection" class="section hidden">
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          
-          <!-- Lista de Recomendações -->
-          <div class="lg:col-span-2">
-            <div class="admin-card p-6">
-              <div class="flex items-center justify-between mb-4">
-                <h3 class="text-xl font-bold text-white">
-                  <i class="fas fa-gift mr-2"></i>
-                  Recomendações Free Mensais
-                </h3>
-                <div class="flex gap-2">
-                  <button onclick="updateAllPrices()" class="bg-blue-600 hover:bg-blue-700 py-2 px-4 rounded-lg text-sm">
-                    <i class="fas fa-sync mr-1"></i>
-                    Atualizar Preços
-                  </button>
-                  <button onclick="generateMonthlyRecommendations()" class="bg-green-600 hover:bg-green-700 py-2 px-4 rounded-lg text-sm">
-                    <i class="fas fa-robot mr-1"></i>
-                    Gerar Mensais
-                  </button>
-                </div>
+    <!-- Recommendations Free Section -->
+    <div id="recommendationsFreeSection" class="section hidden">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- Lista de Recomendações -->
+        <div class="lg:col-span-2">
+          <div class="admin-card p-6">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="text-xl font-bold text-white">
+                <i class="fas fa-gift mr-2"></i>
+                Recomendações Free Mensais
+              </h3>
+              <div class="flex gap-2">
+                <button onclick="updateAllPrices()" class="bg-blue-600 hover:bg-blue-700 py-2 px-4 rounded-lg text-sm">
+                  <i class="fas fa-sync mr-1"></i>
+                  Atualizar Preços
+                </button>
+                <button onclick="generateMonthlyRecommendations()" class="bg-green-600 hover:bg-green-700 py-2 px-4 rounded-lg text-sm">
+                  <i class="fas fa-robot mr-1"></i>
+                  Gerar Mensais
+                </button>
               </div>
+            </div>
 
-              <div id="recommendationsList" class="space-y-3">
-                <div class="text-center py-4 text-gray-400">
-                  <div class="spinner mx-auto mb-2"></div>
-                  <p class="text-sm">Carregando recomendações...</p>
-                </div>
+            <div id="recommendationsList" class="space-y-3">
+              <div class="text-center py-4 text-gray-400">
+                <div class="spinner mx-auto mb-2"></div>
+                <p class="text-sm">Carregando recomendações...</p>
               </div>
             </div>
           </div>
-          
-          <!-- Criar Recomendação -->
-          <div>
-            <div class="admin-card p-6">
-              <h3 class="text-lg font-bold text-white mb-4">
-                <i class="fas fa-plus mr-2"></i>
-                Nova Recomendação
-              </h3>
+        </div>
+        
+        <!-- Criar Recomendação -->
+        <div>
+          <div class="admin-card p-6">
+            <h3 class="text-lg font-bold text-white mb-4">
+              <i class="fas fa-plus mr-2"></i>
+              Nova Recomendação
+            </h3>
+            
+            <form id="recommendationFreeForm" class="space-y-4">
+              <div>
+                <label class="block text-sm text-gray-300 mb-1">Ticker</label>
+                <input type="text" id="recFreeTicker" required
+                      class="w-full px-3 py-2 bg-white bg-opacity-10 border border-gray-600 rounded-lg text-white text-sm"
+                      placeholder="PETR4">
+              </div>
               
-              <form id="recommendationFreeForm" class="space-y-4">
-                <div>
-                  <label class="block text-sm text-gray-300 mb-1">Ticker</label>
-                  <input type="text" id="recFreeTicker" required
-                        class="w-full px-3 py-2 bg-white bg-opacity-10 border border-gray-600 rounded-lg text-white text-sm"
-                        placeholder="PETR4">
-                </div>
-                
-                <div>
-                  <label class="block text-sm text-gray-300 mb-1">Ação</label>
-                  <select id="recFreeAction" required class="w-full px-3 py-2 bg-white bg-opacity-10 border border-gray-600 rounded-lg text-white text-sm">
-                    <option value="">Selecione...</option>
-                    <option value="COMPRA">Compra</option>
-                    <option value="VENDA">Venda</option>
-                  </select>
-                </div>
-                
-                <div>
-                  <label class="block text-sm text-gray-300 mb-1">Preço de Entrada (R$)</label>
-                  <input type="number" id="recFreeEntryPrice" required min="0" step="0.01"
-                        class="w-full px-3 py-2 bg-white bg-opacity-10 border border-gray-600 rounded-lg text-white text-sm"
-                        placeholder="35.50">
-                </div>
-                
-                <div>
-                  <label class="block text-sm text-gray-300 mb-1">Stop Loss (R$)</label>
-                  <input type="number" id="recFreeStopLoss" required min="0" step="0.01"
-                        class="w-full px-3 py-2 bg-white bg-opacity-10 border border-gray-600 rounded-lg text-white text-sm"
-                        placeholder="33.00">
-                </div>
-                
-                <div>
-                  <label class="block text-sm text-gray-300 mb-1">Alvo (R$)</label>
-                  <input type="number" id="recFreeTargetPrice" required min="0" step="0.01"
-                        class="w-full px-3 py-2 bg-white bg-opacity-10 border border-gray-600 rounded-lg text-white text-sm"
-                        placeholder="40.00">
-                </div>
-                
-                <div>
-                  <label class="block text-sm text-gray-300 mb-1">Confiança (%)</label>
-                  <input type="number" id="recFreeConfidence" min="0" max="100" step="1" value="85"
-                        class="w-full px-3 py-2 bg-white bg-opacity-10 border border-gray-600 rounded-lg text-white text-sm">
-                </div>
-                
-                <button type="button" onclick="createRecommendationFree()" class="action-btn w-full bg-geminii hover:bg-purple-700 py-2 px-4 rounded-lg text-sm font-medium">
-                  <i class="fas fa-plus mr-1"></i>
-                  Criar Recomendação
-                </button>
-              </form>
-            </div>
+              <div>
+                <label class="block text-sm text-gray-300 mb-1">Ação</label>
+                <select id="recFreeAction" required class="w-full px-3 py-2 bg-white bg-opacity-10 border border-gray-600 rounded-lg text-white text-sm">
+                  <option value="">Selecione...</option>
+                  <option value="COMPRA">Compra</option>
+                  <option value="VENDA">Venda</option>
+                </select>
+              </div>
+              
+              <div>
+                <label class="block text-sm text-gray-300 mb-1">Preço de Entrada (R$)</label>
+                <input type="number" id="recFreeEntryPrice" required min="0" step="0.01"
+                      class="w-full px-3 py-2 bg-white bg-opacity-10 border border-gray-600 rounded-lg text-white text-sm"
+                      placeholder="35.50">
+              </div>
+              
+              <div>
+                <label class="block text-sm text-gray-300 mb-1">Stop Loss (R$)</label>
+                <input type="number" id="recFreeStopLoss" required min="0" step="0.01"
+                      class="w-full px-3 py-2 bg-white bg-opacity-10 border border-gray-600 rounded-lg text-white text-sm"
+                      placeholder="33.00">
+              </div>
+              
+              <div>
+                <label class="block text-sm text-gray-300 mb-1">Alvo (R$)</label>
+                <input type="number" id="recFreeTargetPrice" required min="0" step="0.01"
+                      class="w-full px-3 py-2 bg-white bg-opacity-10 border border-gray-600 rounded-lg text-white text-sm"
+                      placeholder="40.00">
+              </div>
+              
+              <div>
+                <label class="block text-sm text-gray-300 mb-1">Confiança (%)</label>
+                <input type="number" id="recFreeConfidence" min="0" max="100" step="1" value="85"
+                      class="w-full px-3 py-2 bg-white bg-opacity-10 border border-gray-600 rounded-lg text-white text-sm">
+              </div>
+              
+              <button type="button" onclick="createRecommendationFree()" class="action-btn w-full bg-geminii hover:bg-purple-700 py-2 px-4 rounded-lg text-sm font-medium">
+                <i class="fas fa-plus mr-1"></i>
+                Criar Recomendação
+              </button>
+            </form>
+          </div>
 
-            <!-- Estatísticas -->
-            <div class="admin-card p-6 mt-6">
-              <h3 class="text-lg font-bold text-white mb-4">
-                <i class="fas fa-chart-line mr-2"></i>
-                Estatísticas
-              </h3>
-              
-              <div id="recommendationsStats" class="space-y-3">
-                <div class="flex justify-between">
-                  <span class="text-gray-400">Total:</span>
-                  <span class="text-white font-medium" id="recStatsTotal">0</span>
-                </div>
-                <div class="flex justify-between">
-                  <span class="text-gray-400">Ativas:</span>
-                  <span class="text-green-400 font-medium" id="recStatsActive">0</span>
-                </div>
-                <div class="flex justify-between">
-                  <span class="text-gray-400">Finalizadas:</span>
-                  <span class="text-gray-300 font-medium" id="recStatsClosed">0</span>
-                </div>
-                <div class="flex justify-between">
-                  <span class="text-gray-400">Taxa de Acerto:</span>
-                  <span class="text-yellow-400 font-medium" id="recStatsSuccess">0%</span>
-                </div>
-                <div class="flex justify-between">
-                  <span class="text-gray-400">Ganho Médio:</span>
-                  <span class="text-green-400 font-medium" id="recStatsAvgGain">+0%</span>
-                </div>
-                <div class="flex justify-between">
-                  <span class="text-gray-400">Perda Média:</span>
-                  <span class="text-red-400 font-medium" id="recStatsAvgLoss">-0%</span>
-                </div>
+          <!-- Estatísticas -->
+          <div class="admin-card p-6 mt-6">
+            <h3 class="text-lg font-bold text-white mb-4">
+              <i class="fas fa-chart-line mr-2"></i>
+              Estatísticas
+            </h3>
+            
+            <div id="recommendationsStats" class="space-y-3">
+              <div class="flex justify-between">
+                <span class="text-gray-400">Total:</span>
+                <span class="text-white font-medium" id="recStatsTotal">0</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-400">Ativas:</span>
+                <span class="text-green-400 font-medium" id="recStatsActive">0</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-400">Finalizadas:</span>
+                <span class="text-gray-300 font-medium" id="recStatsClosed">0</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-400">Taxa de Acerto:</span>
+                <span class="text-yellow-400 font-medium" id="recStatsSuccess">0%</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-400">Ganho Médio:</span>
+                <span class="text-green-400 font-medium" id="recStatsAvgGain">+0%</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-400">Perda Média:</span>
+                <span class="text-red-400 font-medium" id="recStatsAvgLoss">-0%</span>
               </div>
             </div>
           </div>
         </div>
       </div>
+    </div>
+
+    <!-- Railway Sync Section -->
+    <div id="railwaySection" class="section hidden">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- Terminal / Console -->
+        <div class="lg:col-span-2">
+          <div class="admin-card p-6">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="text-xl font-bold text-white">
+                <i class="fas fa-terminal mr-2"></i>
+                Console de Sincronização
+              </h3>
+              <button onclick="clearSyncConsole()" class="bg-gray-600 hover:bg-gray-700 py-2 px-4 rounded-lg text-sm">
+                <i class="fas fa-eraser mr-1"></i>
+                Limpar
+              </button>
+            </div>
+
+            <!-- Console Output -->
+            <div id="syncConsole" class="bg-black bg-opacity-50 rounded-lg p-4 font-mono text-sm h-96 overflow-y-auto border border-gray-700">
+              <div class="text-green-400">🚂 Railway Sync Console - Pronto</div>
+              <div class="text-gray-500">Aguardando comando...</div>
+            </div>
+
+            <!-- Botão de Sincronização -->
+            <div class="mt-4">
+              <button id="syncButton" onclick="runRailwaySync()" 
+                      class="action-btn w-full bg-geminii hover:bg-purple-700 py-3 px-4 rounded-lg text-base font-medium">
+                <i class="fas fa-sync-alt mr-2"></i>
+                Sincronizar Dados B3 → Railway
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Status e Estatísticas -->
+        <div class="space-y-6">
+          
+          <!-- Status Atual -->
+          <div class="admin-card p-6">
+            <h3 class="text-lg font-bold text-white mb-4">
+              <i class="fas fa-info-circle mr-2"></i>
+              Status do Banco
+            </h3>
+            
+            <div id="railwayStatus" class="space-y-3">
+              <div class="text-center py-4">
+                <div class="spinner mx-auto mb-2"></div>
+                <p class="text-gray-400 text-sm">Carregando status...</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Datas Disponíveis -->
+          <div class="admin-card p-6">
+            <h3 class="text-lg font-bold text-white mb-4">
+              <i class="fas fa-calendar-alt mr-2"></i>
+              Datas Configuradas
+            </h3>
+            
+            <div id="railwayDates" class="space-y-2 text-sm max-h-64 overflow-y-auto">
+              <div class="text-center py-4">
+                <div class="spinner mx-auto mb-2"></div>
+                <p class="text-gray-400 text-sm">Carregando datas...</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Resumo Executivo -->
+          <div class="admin-card p-6">
+            <h3 class="text-lg font-bold text-white mb-4">
+              <i class="fas fa-chart-pie mr-2"></i>
+              Resumo
+            </h3>
+            
+            <div id="railwayResumo" class="space-y-3">
+              <div class="flex justify-between">
+                <span class="text-gray-400">Total Registros:</span>
+                <span class="text-white font-medium" id="railwayTotalReg">0</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-400">Datas no Banco:</span>
+                <span class="text-green-400 font-medium" id="railwayDatasDisp">0</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-400">Última Atualização:</span>
+                <span class="text-yellow-400 font-medium text-xs" id="railwayUltimaData">-</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-400">Progresso:</span>
+                <span class="text-purple-400 font-medium" id="railwayProgresso">0%</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
 
     </div>
   </div>
@@ -562,7 +664,7 @@
           const isAdmin = currentUser.user_type === 'admin' || currentUser.user_type === 'master';
           
           if (!isAdmin) {
-            alert(' Acesso negado! Você não tem privilégios de administrador.');
+            alert('❌ Acesso negado! Você não tem privilégios de administrador.');
             window.location.href = '/dashboard.html';
             return;
           }
@@ -665,36 +767,64 @@
       displayRecentActivity(mockActivities);
     }
     
-    // Show section
+    // ===== NAVIGATION FIX =====
     function showSection(sectionName) {
+      console.log('Showing section:', sectionName);
+      
       // Hide all sections
-      document.querySelectorAll('.section').forEach(section => {
+      const sections = document.querySelectorAll('.section');
+      sections.forEach(section => {
         section.classList.add('hidden');
       });
       
       // Show selected section
-      document.getElementById(sectionName + 'Section').classList.remove('hidden');
+      const targetSection = document.getElementById(sectionName + 'Section');
+      if (targetSection) {
+        targetSection.classList.remove('hidden');
+      } else {
+        console.error('Section not found:', sectionName + 'Section');
+      }
       
       // Update navigation
       document.querySelectorAll('.nav-item').forEach(item => {
         item.classList.remove('active');
       });
       
-      event.target.closest('.nav-item').classList.add('active');
+      const activeItem = document.querySelector(`[data-section="${sectionName}"]`);
+      if (activeItem) {
+        activeItem.classList.add('active');
+      }
       
-      // Update title
+      // Update title      
       const titles = {
         dashboard: { title: 'Dashboard', subtitle: 'Visão geral do sistema' },
         users: { title: 'Usuários', subtitle: 'Gerenciar usuários e assinaturas' },
-        recommendationsFree: { title: 'Recomendações Free', subtitle: 'Recomendações gratuitas mensais' }
+        recommendationsFree: { title: 'Recomendações Free', subtitle: 'Recomendações gratuitas mensais' },
+        railway: { title: 'Sincronização Railway', subtitle: 'Sincronizar dados B3 com banco Railway' }
       };
-      
-      document.getElementById('sectionTitle').textContent = titles[sectionName].title;
-      document.getElementById('sectionSubtitle').textContent = titles[sectionName].subtitle;
-      
+
+      if (titles[sectionName]) {
+        document.getElementById('sectionTitle').textContent = titles[sectionName].title;
+        document.getElementById('sectionSubtitle').textContent = titles[sectionName].subtitle;
+      }
+
       // Load section data
-      if (sectionName === 'users') loadUsers();
+      if (sectionName === 'users') loadUsersEnhanced();
       if (sectionName === 'recommendationsFree') loadRecommendationsFree();
+      if (sectionName === 'railway') loadRailwaySync();
+    }
+
+    // Setup navigation event listeners
+    function setupNavigation() {
+      document.querySelectorAll('.nav-item').forEach(item => {
+        item.addEventListener('click', function(e) {
+          e.preventDefault();
+          const sectionName = this.getAttribute('data-section');
+          if (sectionName) {
+            showSection(sectionName);
+          }
+        });
+      });
     }
 
     // ===== USER MANAGEMENT =====
@@ -811,7 +941,7 @@
       const planId = document.getElementById('newPlanId').value;
       
       if (!email) {
-        alert('Digite o e-mail do usuário');
+        alert('❌ Digite o e-mail do usuário');
         return;
       }
       
@@ -832,16 +962,16 @@
         const result = await response.json();
         
         if (result.success) {
-          alert(' ' + result.message);
+          alert('✅ ' + result.message);
           document.getElementById('manageUserEmail').value = '';
           loadUsers();
           loadDashboardStats();
         } else {
-          alert(' ' + result.error);
+          alert('❌ ' + result.error);
         }
         
       } catch (error) {
-        alert(' Erro de conexão');
+        alert('❌ Erro de conexão');
       }
     }
 
@@ -850,7 +980,7 @@
       const email = document.getElementById('manageUserEmail').value;
       
       if (!email) {
-        alert('Digite o e-mail do usuário');
+        alert('❌ Digite o e-mail do usuário');
         return;
       }
       
@@ -872,16 +1002,16 @@
         const result = await response.json();
         
         if (result.success) {
-          alert(' ' + result.message);
+          alert('✅ ' + result.message);
           document.getElementById('manageUserEmail').value = '';
           loadUsers();
           loadDashboardStats();
         } else {
-          alert(' ' + result.error);
+          alert('❌ ' + result.error);
         }
         
       } catch (error) {
-        alert(' Erro de conexão');
+        alert('❌ Erro de conexão');
       }
     }
 
@@ -890,7 +1020,7 @@
       const email = document.getElementById('manageUserEmail').value;
       
       if (!email) {
-        alert('Digite o e-mail do usuário');
+        alert('❌ Digite o e-mail do usuário');
         return;
       }
       
@@ -912,15 +1042,15 @@
         const result = await response.json();
         
         if (result.success) {
-          alert(' ' + result.message);
+          alert('✅ ' + result.message);
           document.getElementById('manageUserEmail').value = '';
           loadUsers();
         } else {
-          alert(' ' + result.error);
+          alert('❌ ' + result.error);
         }
         
       } catch (error) {
-        alert(' Erro de conexão');
+        alert('❌ Erro de conexão');
       }
     }
 
@@ -929,11 +1059,11 @@
       const email = document.getElementById('manageUserEmail').value;
       
       if (!email) {
-        alert('Digite o e-mail do usuário');
+        alert('❌ Digite o e-mail do usuário');
         return;
       }
       
-      if (!confirm(` ATENÇÃO: Remover usuário ${email}?\n\nEsta ação marcará o usuário como removido.\nDeseja continuar?`)) {
+      if (!confirm(`⚠️ ATENÇÃO: Remover usuário ${email}?\n\nEsta ação marcará o usuário como removido.\nDeseja continuar?`)) {
         return;
       }
       
@@ -950,17 +1080,17 @@
         const result = await response.json();
         
         if (result.success) {
-          alert(' ' + result.message);
+          alert('✅ ' + result.message);
           document.getElementById('manageUserEmail').value = '';
           loadUsers();
           loadDashboardStats();
         } else {
-          alert(' ' + result.error);
+          alert('❌ ' + result.error);
         }
         
       } catch (error) {
         console.error('Error deleting user:', error);
-        alert(' Erro de conexão');
+        alert('❌ Erro de conexão');
       }
     }
 
@@ -1135,11 +1265,6 @@
       document.getElementById('recStatsAvgGain').textContent = `+${avgGain.toFixed(2)}%`;
       document.getElementById('recStatsAvgLoss').textContent = `${avgLoss.toFixed(2)}%`;
     }
-
-
-    // Adicione estas funções no seu script
-
-    // Timer utilities
   
     function formatTimeWithUs(days) {
       if (days < 1) return 'Hoje';
@@ -1160,10 +1285,8 @@
     }
 
     // Enhanced user loading
-    // VERSÃO CORRIGIDA - SEM CACHE
     async function loadUsersEnhanced() {
       try {
-        //  Adicionar timestamp para evitar cache
         const timestamp = new Date().getTime();
         
         const response = await fetch(`/api/admin/list-users-enhanced?_t=${timestamp}`, {
@@ -1183,13 +1306,12 @@
           }
         }
       } catch (error) {
-        console.error(' Erro ao carregar usuários:', error);
-        // Fallback para versão básica se enhanced não funcionar
+        console.error('❌ Erro ao carregar usuários:', error);
         loadUsers();
       }
     }
     
-    // Display users LIMPO (sem último login)
+    // Display users
     function displayUsersEnhanced(users) {
       const tbody = document.getElementById('usersTableEnhanced');
       
@@ -1290,7 +1412,7 @@
       const days = document.getElementById('trialDays').value;
       
       if (!email) {
-        alert(' Digite o email do usuário');
+        alert('❌ Digite o email do usuário');
         return;
       }
       
@@ -1311,15 +1433,15 @@
         const result = await response.json();
         
         if (result.success) {
-          alert(' ' + result.message);
+          alert('✅ ' + result.message);
           document.getElementById('manageUserEmail').value = '';
           loadUsersEnhanced();
         } else {
-          alert(' ' + result.error);
+          alert('❌ ' + result.error);
         }
         
       } catch (error) {
-        alert(' Erro de conexão');
+        alert('❌ Erro de conexão');
       }
     }
 
@@ -1327,7 +1449,7 @@
       const email = document.getElementById('manageUserEmail').value;
       
       if (!email) {
-        alert(' Digite o email do usuário');
+        alert('❌ Digite o email do usuário');
         return;
       }
       
@@ -1347,212 +1469,97 @@
         const result = await response.json();
         
         if (result.success) {
-          alert(' ' + result.message);
+          alert('✅ ' + result.message);
           document.getElementById('manageUserEmail').value = '';
           loadUsersEnhanced();
         } else {
-          alert(' ' + result.error);
+          alert('❌ ' + result.error);
         }
         
       } catch (error) {
-        alert(' Erro de conexão');
+        alert('❌ Erro de conexão');
       }
     }
 
-    // Update the showSection function to use enhanced users
-    function showSection(sectionName) {
-      // Hide all sections
-      document.querySelectorAll('.section').forEach(section => {
-        section.classList.add('hidden');
+  // Criar novo usuário
+  async function createNewUser() {
+    const name = document.getElementById('newUserName').value.trim();
+    const email = document.getElementById('newUserEmail').value.trim();
+    const trialDays = document.getElementById('newUserTrialDays').value;
+    
+    if (!name || !email) {
+      alert('❌ Nome e email são obrigatórios');
+      return;
+    }
+    
+    if (!confirm(`Criar usuário "${name}" com trial de ${trialDays} dias?`)) return;
+    
+    try {
+      const response = await fetch('/api/admin/create-user', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${adminToken}`
+        },
+        body: JSON.stringify({
+          name: name,
+          email: email,
+          trial_days: parseInt(trialDays)
+        })
       });
       
-      // Show selected section
-      document.getElementById(sectionName + 'Section').classList.remove('hidden');
+      const result = await response.json();
       
-      // Update navigation
-      document.querySelectorAll('.nav-item').forEach(item => {
-        item.classList.remove('active');
-      });
-      
-      event.target.closest('.nav-item').classList.add('active');
-      
-      // Update title
-      const titles = {
-        dashboard: { title: 'Dashboard', subtitle: 'Visão geral do sistema' },
-        users: { title: 'Usuários', subtitle: 'Gerenciar usuários e assinaturas' },
-        recommendationsFree: { title: 'Recomendações Free', subtitle: 'Recomendações gratuitas mensais' }
-      };
-      
-      document.getElementById('sectionTitle').textContent = titles[sectionName].title;
-      document.getElementById('sectionSubtitle').textContent = titles[sectionName].subtitle;
-      
-      // Load section data
-      if (sectionName === 'users') loadUsersEnhanced(); // Use enhanced version
-      if (sectionName === 'recommendationsFree') loadRecommendationsFree();
-    }
-
-
-    // Adicione estas funções no seu script
-
-// Criar novo usuário
-async function createNewUser() {
-  const name = document.getElementById('newUserName').value.trim();
-  const email = document.getElementById('newUserEmail').value.trim();
-  const trialDays = document.getElementById('newUserTrialDays').value;
-  
-  if (!name || !email) {
-    alert(' Nome e email são obrigatórios');
-    return;
-  }
-  
-  if (!confirm(`Criar usuário "${name}" com trial de ${trialDays} dias?`)) return;
-  
-  try {
-    const response = await fetch('/api/admin/create-user', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${adminToken}`
-      },
-      body: JSON.stringify({
-        name: name,
-        email: email,
-        trial_days: parseInt(trialDays)
-      })
-    });
-    
-    const result = await response.json();
-    
-    if (result.success) {
-      alert(` Usuário criado!\nEmail: ${email}\nSenha: 123456\nTrial: ${trialDays} dias`);
-      
-      // Limpar formulário
-      document.getElementById('newUserName').value = '';
-      document.getElementById('newUserEmail').value = '';
-      
-      // Recarregar
-      loadUsersEnhanced();
-      loadDashboardStats();
-    } else {
-      alert(' ' + result.error);
-    }
-    
-  } catch (error) {
-    alert(' Erro de conexão');
-  }
-}
-
-// Função atualizada para mostrar informações de último login
-function displayUsersEnhanced(users) {
-  const tbody = document.getElementById('usersTableEnhanced');
-  
-  if (!users || users.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-gray-400">Nenhum usuário encontrado</td></tr>';
-    return;
-  }
-
-  // Clear existing timers
-  window.userTimers = window.userTimers || [];
-  window.userTimers.forEach(timer => clearInterval(timer));
-  window.userTimers = [];
-
-  tbody.innerHTML = users.map((user, index) => {
-    const uniqueId = `countdown-${user.id}-${index}`;
-    let timeInfo = '';
-    let statusBadge = '';
-    let lastLoginInfo = '';
-    
-    // Status badge
-    if (user.subscription_status === 'trial') {
-      statusBadge = '<span class="px-2 py-1 rounded text-xs font-medium bg-yellow-600 text-yellow-200">Trial</span>';
-    } else if (user.subscription_status === 'active') {
-      statusBadge = '<span class="px-2 py-1 rounded text-xs font-medium bg-green-600 text-green-200">Ativo</span>';
-    } else if (user.is_expired) {
-      statusBadge = '<span class="px-2 py-1 rounded text-xs font-medium bg-red-600 text-red-200">Expirado</span>';
-    } else {
-      statusBadge = '<span class="px-2 py-1 rounded text-xs font-medium bg-gray-600 text-gray-200">Free</span>';
-    }
-    
-    // Last login info
-    if (user.last_login) {
-      const lastLogin = new Date(user.last_login);
-      const now = new Date();
-      const diffDays = Math.floor((now - lastLogin) / (1000 * 60 * 60 * 24));
-      
-      if (diffDays === 0) {
-        lastLoginInfo = `<div class="text-xs text-green-400">Hoje</div>`;
-      } else if (diffDays === 1) {
-        lastLoginInfo = `<div class="text-xs text-yellow-400">Ontem</div>`;
-      } else if (diffDays <= 7) {
-        lastLoginInfo = `<div class="text-xs text-orange-400">${diffDays} dias atrás</div>`;
-      } else {
-        lastLoginInfo = `<div class="text-xs text-red-400">${diffDays} dias atrás</div>`;
-      }
-      lastLoginInfo += `<div class="text-xs text-gray-500">${user.formatted_last_login}</div>`;
-    } else {
-      lastLoginInfo = `
-        <div class="text-xs text-gray-400">Nunca logou</div>
-        <div class="text-xs text-red-500">Usuário novo</div>
-      `;
-    }
-    
-    // Time info
-    if (user.has_trial && user.plan_expires_at) {
-      if (user.is_expired) {
-        timeInfo = `
-          <div class="text-xs text-red-400">Expirou</div>
-          <div class="text-xs text-gray-500">Conosco: ${formatTimeWithUs(user.days_with_us)}</div>
-        `;
-      } else {
-        timeInfo = `
-          <div class="text-xs" id="${uniqueId}">Calculando...</div>
-          <div class="text-xs text-gray-500">Conosco: ${formatTimeWithUs(user.days_with_us)}</div>
-        `;
+      if (result.success) {
+        alert(`✅ Usuário criado!\nEmail: ${email}\nSenha: 123456\nTrial: ${trialDays} dias`);
         
-        // Create countdown timer
-        setTimeout(() => {
-          const timer = createCountdownTimer(user.plan_expires_at, uniqueId);
-          window.userTimers.push(timer);
-        }, 100);
+        // Limpar formulário
+        document.getElementById('newUserName').value = '';
+        document.getElementById('newUserEmail').value = '';
+        
+        // Recarregar
+        loadUsersEnhanced();
+        loadDashboardStats();
+      } else {
+        alert('❌ ' + result.error);
       }
-    } else {
-      timeInfo = `
-        <div class="text-xs text-gray-400">Sem expiração</div>
-        <div class="text-xs text-gray-500">Conosco: ${formatTimeWithUs(user.days_with_us)}</div>
-      `;
+      
+    } catch (error) {
+      alert('❌ Erro de conexão');
     }
+  }
+
+  // Countdown timer function
+  function createCountdownTimer(expiryDate, elementId) {
+    const updateCountdown = () => {
+      const now = new Date().getTime();
+      const expiry = new Date(expiryDate).getTime();
+      const distance = expiry - now;
+      
+      const element = document.getElementById(elementId);
+      if (!element) return;
+      
+      if (distance < 0) {
+        element.innerHTML = '<span class="text-red-400">Expirado</span>';
+        return;
+      }
+      
+      const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+      
+      if (days > 0) {
+        element.innerHTML = `<span class="text-green-400">${days}d ${hours}h restantes</span>`;
+      } else if (hours > 0) {
+        element.innerHTML = `<span class="text-yellow-400">${hours}h ${minutes}m restantes</span>`;
+      } else {
+        element.innerHTML = `<span class="text-orange-400">${minutes}m restantes</span>`;
+      }
+    };
     
-    return `
-      <tr class="table-row">
-        <td class="py-3 px-2">
-          <div class="font-medium text-white">${user.name}</div>
-          <div class="text-xs text-gray-400">${user.email}</div>
-          <div class="text-xs text-gray-500 mt-1">${user.formatted_date}</div>
-        </td>
-        <td class="py-3 px-2">
-          <span class="px-2 py-1 rounded text-xs font-medium ${getPlanBadgeClass(user.plan)}">
-            ${user.plan}
-          </span>
-          <div class="text-xs text-gray-500 mt-1">${getTypeBadgeText(user.type)}</div>
-        </td>
-        <td class="py-3 px-2">
-          ${statusBadge}
-        </td>
-        <td class="py-3 px-2">
-          ${timeInfo}
-        </td>
-        <td class="py-3 px-2">
-          ${lastLoginInfo}
-        </td>
-        <td class="py-3 px-2">
-          <button onclick="fillUserEmail('${user.email}')" class="text-blue-400 hover:text-blue-300 text-sm">
-            <i class="fas fa-edit mr-1"></i>Editar
-          </button>
-        </td>
-      </tr>
-    `;
-  }).join('');
-}
+    updateCountdown();
+    return setInterval(updateCountdown, 60000); // Update every minute
+  }
 
     // Create recommendation
     async function createRecommendationFree() {
@@ -1567,7 +1574,7 @@ function displayUsersEnhanced(users) {
 
       // Validations
       if (!formData.ticker || !formData.action || !formData.entry_price || !formData.stop_loss || !formData.target_price) {
-        alert(' Preencha todos os campos obrigatórios!');
+        alert('❌ Preencha todos os campos obrigatórios!');
         return;
       }
 
@@ -1584,7 +1591,7 @@ function displayUsersEnhanced(users) {
         const result = await response.json();
         
         if (result.success) {
-          alert(' Recomendação criada com sucesso!');
+          alert('✅ Recomendação criada com sucesso!');
           
           // Clear form
           document.getElementById('recFreeTicker').value = '';
@@ -1597,12 +1604,12 @@ function displayUsersEnhanced(users) {
           // Reload list
           loadRecommendationsFree();
         } else {
-          alert(' ' + result.error);
+          alert('❌ ' + result.error);
         }
         
       } catch (error) {
         console.error('Error creating recommendation:', error);
-        alert(' Erro de conexão com o servidor');
+        alert('❌ Erro de conexão com o servidor');
       }
     }
 
@@ -1625,21 +1632,21 @@ function displayUsersEnhanced(users) {
         const result = await response.json();
         
         if (result.success) {
-          alert(' Recomendação encerrada com sucesso!');
+          alert('✅ Recomendação encerrada com sucesso!');
           loadRecommendationsFree();
         } else {
-          alert(' ' + result.error);
+          alert('❌ ' + result.error);
         }
         
       } catch (error) {
         console.error('Error closing recommendation:', error);
-        alert(' Erro de conexão com o servidor');
+        alert('❌ Erro de conexão com o servidor');
       }
     }
 
     // Delete recommendation
     async function deleteRecommendationFree(recId) {
-      if (!confirm(' Remover esta recomendação permanentemente?')) return;
+      if (!confirm('❌ Remover esta recomendação permanentemente?')) return;
 
       try {
         const response = await fetch(`/api/recommendations/admin/delete/${recId}`, {
@@ -1653,15 +1660,15 @@ function displayUsersEnhanced(users) {
         const result = await response.json();
         
         if (result.success) {
-          alert(' Recomendação removida com sucesso!');
+          alert('✅ Recomendação removida com sucesso!');
           loadRecommendationsFree();
         } else {
-          alert(' ' + result.error);
+          alert('❌ ' + result.error);
         }
         
       } catch (error) {
         console.error('Error deleting recommendation:', error);
-        alert(' Erro de conexão com o servidor');
+        alert('❌ Erro de conexão com o servidor');
       }
     }
 
@@ -1686,15 +1693,15 @@ function displayUsersEnhanced(users) {
         const result = await response.json();
         
         if (result.success) {
-          alert(` ${result.message}\n\n${result.recommendations.length} recomendações criadas!`);
+          alert(`✅ ${result.message}\n\n${result.recommendations.length} recomendações criadas!`);
           loadRecommendationsFree();
         } else {
-          alert(' ' + result.error);
+          alert('❌ ' + result.error);
         }
         
       } catch (error) {
         console.error('Error generating recommendations:', error);
-        alert(' Erro de conexão com o servidor');
+        alert('❌ Erro de conexão com o servidor');
       } finally {
         button.disabled = false;
         button.innerHTML = originalText;
@@ -1720,15 +1727,15 @@ function displayUsersEnhanced(users) {
         const result = await response.json();
         
         if (result.success) {
-          alert(' Preços atualizados com sucesso!');
+          alert('✅ Preços atualizados com sucesso!');
           loadRecommendationsFree();
         } else {
-          alert(' ' + result.error);
+          alert('❌ ' + result.error);
         }
         
       } catch (error) {
         console.error('Error updating prices:', error);
-        alert(' Erro de conexão com o servidor');
+        alert('❌ Erro de conexão com o servidor');
       } finally {
         button.disabled = false;
         button.innerHTML = originalText;
@@ -1743,7 +1750,6 @@ function displayUsersEnhanced(users) {
           return;
       }
       
-      // Criar link temporário com token nos headers via fetch
       fetch('/api/admin/export-users', {
           method: 'GET',
           headers: {
@@ -1770,6 +1776,7 @@ function displayUsersEnhanced(users) {
           alert('❌ Erro ao exportar: ' + error.message);
       });
     }  
+
     // Logout
     function logout() {
       if (confirm('Deseja realmente sair do painel administrativo?')) {
@@ -1779,19 +1786,223 @@ function displayUsersEnhanced(users) {
       }
     }
 
+    // ===== RAILWAY SYNC FUNCTIONS =====
+
+    // Load Railway status on section open
+    async function loadRailwaySync() {
+      loadRailwayStatus();
+      loadRailwayDates();
+      loadRailwayResumo();
+    }
+
+    // Load status
+    async function loadRailwayStatus() {
+      try {
+        const response = await fetch('/railway/status', {
+          headers: { 'Authorization': `Bearer ${adminToken}` }
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          if (result.success) {
+            displayRailwayStatus(result.data);
+          }
+        }
+      } catch (error) {
+        console.error('Error loading railway status:', error);
+        document.getElementById('railwayStatus').innerHTML = `
+          <div class="text-red-400 text-sm">❌ Erro ao conectar</div>
+        `;
+      }
+    }
+
+    function displayRailwayStatus(status) {
+      const container = document.getElementById('railwayStatus');
+      
+      if (status.status === 'erro') {
+        container.innerHTML = `
+          <div class="text-red-400 text-sm">❌ ${status.mensagem}</div>
+        `;
+        return;
+      }
+
+      container.innerHTML = `
+        <div class="flex justify-between text-sm">
+          <span class="text-gray-400">Status:</span>
+          <span class="text-green-400">✅ Conectado</span>
+        </div>
+        <div class="flex justify-between text-sm">
+          <span class="text-gray-400">Total Registros:</span>
+          <span class="text-white">${status.total_registros.toLocaleString('pt-BR')}</span>
+        </div>
+        <div class="flex justify-between text-sm">
+          <span class="text-gray-400">Datas:</span>
+          <span class="text-white">${status.datas_disponiveis}</span>
+        </div>
+        <div class="flex justify-between text-sm">
+          <span class="text-gray-400">Última:</span>
+          <span class="text-white">${status.ultima_atualizacao || 'N/A'}</span>
+        </div>
+      `;
+    }
+
+    // Load dates
+    async function loadRailwayDates() {
+      try {
+        const response = await fetch('/railway/datas-disponiveis', {
+          headers: { 'Authorization': `Bearer ${adminToken}` }
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          if (result.success) {
+            displayRailwayDates(result.datas);
+          }
+        }
+      } catch (error) {
+        console.error('Error loading dates:', error);
+      }
+    }
+
+    function displayRailwayDates(datas) {
+      const container = document.getElementById('railwayDates');
+      
+      container.innerHTML = datas.slice(0, 10).map(data => `
+        <div class="flex items-center justify-between p-2 rounded ${data.existe_no_banco ? 'bg-green-900 bg-opacity-20' : 'bg-gray-800 bg-opacity-30'}">
+          <span class="text-xs text-gray-300">${data.data_formatada}</span>
+          <span class="text-xs ${data.existe_no_banco ? 'text-green-400' : 'text-gray-500'}">
+            ${data.existe_no_banco ? '✅' : '⏳'}
+          </span>
+        </div>
+      `).join('');
+      
+      if (datas.length > 10) {
+        container.innerHTML += `
+          <div class="text-xs text-gray-500 text-center mt-2">
+            +${datas.length - 10} datas...
+          </div>
+        `;
+      }
+    }
+
+    // Load resumo
+    async function loadRailwayResumo() {
+      try {
+        const response = await fetch('/railway/resumo', {
+          headers: { 'Authorization': `Bearer ${adminToken}` }
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          if (result.success) {
+            const resumo = result.resumo;
+            document.getElementById('railwayTotalReg').textContent = resumo.total_registros.toLocaleString('pt-BR');
+            document.getElementById('railwayDatasDisp').textContent = resumo.datas_no_banco;
+            document.getElementById('railwayUltimaData').textContent = resumo.ultima_atualizacao || '-';
+            document.getElementById('railwayProgresso').textContent = `${resumo.percentual_completo}%`;
+          }
+        }
+      } catch (error) {
+        console.error('Error loading resumo:', error);
+      }
+    }
+
+    // Run sync
+    async function runRailwaySync() {
+      const button = document.getElementById('syncButton');
+      const console = document.getElementById('syncConsole');
+      
+      button.disabled = true;
+      button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Sincronizando...';
+      
+      console.innerHTML = `
+        <div class="text-green-400">🚂 Iniciando sincronização...</div>
+        <div class="text-gray-400">📡 Conectando ao Railway...</div>
+      `;
+      
+      try {
+        const response = await fetch('/railway/sync', {
+          method: 'POST',
+          headers: { 
+            'Authorization': `Bearer ${adminToken}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        const result = await response.json();
+        
+        if (result.success) {
+          const data = result.data;
+          
+          console.innerHTML += `
+            <div class="text-blue-400 mt-2">📊 Processando datas...</div>
+          `;
+          
+          data.detalhes.forEach(det => {
+            let icon = det.status === 'sucesso' ? '✅' : det.status === 'pulado' ? '⏭️' : '❌';
+            let color = det.status === 'sucesso' ? 'text-green-400' : det.status === 'pulado' ? 'text-yellow-400' : 'text-red-400';
+            
+            console.innerHTML += `
+              <div class="${color}">${icon} ${det.data} - ${det.status.toUpperCase()}${det.registros ? ` (${det.registros} registros)` : ''}</div>
+            `;
+          });
+          
+          console.innerHTML += `
+            <div class="text-white mt-3">═══════════════════════════════════</div>
+            <div class="text-green-400">📊 RESUMO:</div>
+            <div class="text-white">✅ Sucesso: ${data.resumo.sucesso}</div>
+            <div class="text-yellow-400">⏭️  Pulados: ${data.resumo.pulados}</div>
+            <div class="text-red-400">❌ Falhas: ${data.resumo.falhas}</div>
+            <div class="text-white mt-2">💾 Total no banco: ${data.banco.total_registros.toLocaleString('pt-BR')} registros</div>
+            <div class="text-green-400 mt-3">✅ Sincronização concluída!</div>
+          `;
+          
+          loadRailwayStatus();
+          loadRailwayDates();
+          loadRailwayResumo();
+          
+        } else {
+          console.innerHTML += `
+            <div class="text-red-400 mt-2">❌ Erro: ${result.error}</div>
+          `;
+        }
+        
+      } catch (error) {
+        console.innerHTML += `
+          <div class="text-red-400 mt-2">❌ Erro de conexão: ${error.message}</div>
+        `;
+      } finally {
+        button.disabled = false;
+        button.innerHTML = '<i class="fas fa-sync-alt mr-2"></i>Sincronizar Dados B3 → Railway';
+        console.scrollTop = console.scrollHeight;
+      }
+    }
+
+    // Clear console
+    function clearSyncConsole() {
+      document.getElementById('syncConsole').innerHTML = `
+        <div class="text-green-400">🚂 Railway Sync Console - Pronto</div>
+        <div class="text-gray-500">Aguardando comando...</div>
+      `;
+    }
+
     // Initialize admin dashboard
     async function initAdminDashboard() {
-      console.log(' Inicializando Admin Dashboard...');
+      console.log('🚀 Inicializando Admin Dashboard...');
       
       await checkAdminAuth();
       await loadDashboardStats();
       loadRecentActivity();
       
-      console.log(' Admin Dashboard carregado!');
+      // Setup navigation event listeners
+      setupNavigation();
+      
+      console.log('✅ Admin Dashboard carregado!');
     }
 
     // Initialize when page loads
     document.addEventListener('DOMContentLoaded', initAdminDashboard);
+
   </script>
 </body>
 </html>

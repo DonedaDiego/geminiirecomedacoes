@@ -267,17 +267,18 @@
                     <th class="py-3 px-2 text-gray-400">Plano</th>
                     <th class="py-3 px-2 text-gray-400">Status</th>
                     <th class="py-3 px-2 text-gray-400">Tempo</th>
+                    <th class="py-3 px-2 text-gray-400">Último Login</th>
                     <th class="py-3 px-2 text-gray-400">Ações</th>
                   </tr>
                 </thead>
                 <tbody id="usersTableEnhanced">
-                  <tr>
-                    <td colspan="5" class="text-center py-8">
-                      <div class="spinner mx-auto mb-2"></div>
-                      <p class="text-gray-400">Carregando usuários...</p>
-                    </td>
-                  </tr>
-                </tbody>
+                    <tr>
+                      <td colspan="6" class="text-center py-8">
+                        <div class="spinner mx-auto mb-2"></div>
+                        <p class="text-gray-400">Carregando usuários...</p>
+                      </td>
+                    </tr>
+                  </tbody>
               </table>
             </div>
           </div>
@@ -1310,27 +1311,25 @@
         loadUsers();
       }
     }
-    
-    // Display users
+
+
     function displayUsersEnhanced(users) {
       const tbody = document.getElementById('usersTableEnhanced');
       
       if (!users || users.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-gray-400">Nenhum usuário encontrado</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-gray-400">Nenhum usuário encontrado</td></tr>';
         return;
       }
-    
-      // Clear existing timers
+
       window.userTimers = window.userTimers || [];
       window.userTimers.forEach(timer => clearInterval(timer));
       window.userTimers = [];
-    
+
       tbody.innerHTML = users.map((user, index) => {
         const uniqueId = `countdown-${user.id}-${index}`;
         let timeInfo = '';
         let statusBadge = '';
         
-        // Status badge
         if (user.subscription_status === 'trial') {
           statusBadge = '<span class="px-2 py-1 rounded text-xs font-medium bg-yellow-600 text-yellow-200">Trial</span>';
         } else if (user.subscription_status === 'active') {
@@ -1341,7 +1340,6 @@
           statusBadge = '<span class="px-2 py-1 rounded text-xs font-medium bg-gray-600 text-gray-200">Free</span>';
         }
         
-        // Time info
         if (user.has_trial && user.plan_expires_at) {
           if (user.is_expired) {
             timeInfo = `
@@ -1354,7 +1352,6 @@
               <div class="text-xs text-gray-500">Conosco: ${formatTimeWithUs(user.days_with_us)}</div>
             `;
             
-            // Create countdown timer
             setTimeout(() => {
               const timer = createCountdownTimer(user.plan_expires_at, uniqueId);
               window.userTimers.push(timer);
@@ -1365,6 +1362,51 @@
             <div class="text-xs text-gray-400">Sem expiração</div>
             <div class="text-xs text-gray-500">Conosco: ${formatTimeWithUs(user.days_with_us)}</div>
           `;
+        }
+        
+        let lastLoginInfo = '';
+        if (user.last_login) {
+          const lastLoginDate = new Date(user.last_login);
+          const now = new Date();
+          
+          // Zerar horas para comparar apenas datas
+          const lastLoginDay = new Date(lastLoginDate.getFullYear(), lastLoginDate.getMonth(), lastLoginDate.getDate());
+          const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+          
+          const diffMs = today - lastLoginDay;
+          const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+          
+          const dateStr = lastLoginDate.toLocaleDateString('pt-BR');
+          
+          let timeAgo = '';
+          if (diffDays === 0) {
+            timeAgo = 'Hoje';
+          } else if (diffDays === 1) {
+            timeAgo = 'Ontem';
+          } else if (diffDays < 7) {
+            timeAgo = `${diffDays}d atrás`;
+          } else if (diffDays < 30) {
+            const weeks = Math.floor(diffDays / 7);
+            timeAgo = `${weeks}sem atrás`;
+          } else if (diffDays < 365) {
+            const months = Math.floor(diffDays / 30);
+            timeAgo = `${months}m atrás`;
+          } else {
+            const years = Math.floor(diffDays / 365);
+            timeAgo = `${years}a atrás`;
+          }
+          
+          let colorClass = 'text-green-400';
+          if (diffDays > 7) colorClass = 'text-yellow-400';
+          if (diffDays > 30) colorClass = 'text-orange-400';
+          if (diffDays > 90) colorClass = 'text-red-400';
+          
+          lastLoginInfo = `
+            <div class="text-xs ${colorClass}">${dateStr}</div>
+            <div class="text-xs text-gray-500">${timeAgo}</div>
+          `;
+        } else {
+          lastLoginInfo = '<div class="text-xs text-gray-500">Nunca</div>';
         }
         
         return `
@@ -1387,6 +1429,9 @@
               ${timeInfo}
             </td>
             <td class="py-3 px-2">
+              ${lastLoginInfo}
+            </td>
+            <td class="py-3 px-2">
               <button onclick="fillUserEmail('${user.email}')" class="text-blue-400 hover:text-blue-300 text-sm">
                 <i class="fas fa-edit mr-1"></i>Editar
               </button>
@@ -1395,6 +1440,7 @@
         `;
       }).join('');
     }
+
 
     function getTypeBadgeText(type) {
       const types = {
