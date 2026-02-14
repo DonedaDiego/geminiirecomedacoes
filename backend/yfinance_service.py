@@ -169,7 +169,7 @@ class YFinanceService:
             brazilian_stocks = [
                 'PETR4', 'VALE3', 'ITUB4', 'BBDC4', 'ABEV3', 'MGLU3', 'B3SA3',
                 'WEGE3', 'RENT3', 'LREN3', 'GGBR4', 'SUZB3', 'RAIL3', 'USIM5',
-                'CSNA3', 'CSAN3', 'NTCO3', 'VIVT3', 'TIMP3', 'AXIA3', 'CMIG4','BVSP'
+                'CSNA3', 'CSAN3', 'NATU3', 'VIVT3', 'TIMP3', 'AXIA3', 'CMIG4','BVSP'
             ]
             
             # Filtrar por query

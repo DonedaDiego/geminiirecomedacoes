@@ -1,47 +1,96 @@
-#!/usr/bin/env python3
-# listar_railway.py - Lista todas as tabelas e colunas no banco Railway
-
+"""
+Teste simples para verificar o cálculo do trial
+Rode: python test_trial.py
+"""
 import psycopg2
+from datetime import datetime
+import os
 
-def listar_tabelas_e_colunas():
-    try:
-        conn = psycopg2.connect(
-            host="ballast.proxy.rlwy.net",
-            port=33654,
-            dbname="railway",
-            user="postgres",
-            password="SWYYPTWLukrNVucLgnyImUfTftHSadyS"
-        )
-        cur = conn.cursor()
-        print(" Conectado ao Railway!")
+# CONFIGURE AQUI
+DB_CONFIG = {
+    'host': 'ballast.proxy.rlwy.net',
+    'database': 'railway',
+    'user': 'postgres',
+    'password': 'SWYYPTWLukrNVucLgnyImUfTftHSadyS',
+    'port': 33654
+}
 
-        # Buscar todas as tabelas no schema public
-        cur.execute("""
-            SELECT table_name 
-            FROM information_schema.tables 
-            WHERE table_schema = 'public'
-            ORDER BY table_name
-        """)
-        tabelas = [row[0] for row in cur.fetchall()]
+EMAIL = 'diedoneda@gmail.com'
 
-        for tabela in tabelas:
-            print(f"\n🗂️ Tabela: {tabela}")
-            cur.execute("""
-                SELECT column_name, data_type, is_nullable
-                FROM information_schema.columns
-                WHERE table_name = %s
-                ORDER BY ordinal_position
-            """, (tabela,))
-            colunas = cur.fetchall()
-            for nome, tipo, nulo in colunas:
-                print(f"   - {nome} ({tipo}) {'NULL' if nulo == 'YES' else 'NOT NULL'}")
+def test():
+    conn = psycopg2.connect(**DB_CONFIG)
+    cur = conn.cursor()
+    
+    # Buscar dados
+    cur.execute("""
+        SELECT 
+            name,
+            email,
+            user_type,
+            plan_name,
+            subscription_status,
+            plan_expires_at,
+            created_at,
+            registration_date,
+            last_login,
+            NOW() as now,
+            plan_expires_at - NOW() as diff,
+            EXTRACT(DAY FROM (plan_expires_at - NOW())) as days_sql
+        FROM users 
+        WHERE email = %s
+    """, (EMAIL,))
+    
+    row = cur.fetchone()
+    
+    if not row:
+        print("❌ Usuário não encontrado!")
+        return
+    
+    name, email, user_type, plan_name, sub_status, plan_expires, created, reg_date, last_login, now, diff, days_sql = row
+    
+    print("=" * 60)
+    print(f"👤 {name} ({email})")
+    print(f"📋 User Type: {user_type}")
+    print(f"💳 Plan Name: {plan_name}")
+    print(f"📊 Status: {sub_status}")
+    print("=" * 60)
+    print(f"🗓️  Plan Expires At: {plan_expires}")
+    print(f"🗓️  Created At:      {created}")
+    print(f"🗓️  Registration:    {reg_date}")
+    print(f"🗓️  Last Login:      {last_login}")
+    print(f"⏰ Now (DB):        {now}")
+    print(f"📊 Diferença:       {diff}")
+    print(f"🔢 Dias (SQL):      {days_sql}")
+    print("=" * 60)
+    
+    # Calcular em Python
+    now_py = datetime.now()
+    if plan_expires:
+        diff_py = plan_expires - now_py
+        days_py = diff_py.days
+        print(f"🐍 Now (Python):    {now_py}")
+        print(f"🐍 Dias (Python):   {days_py}")
+        print("=" * 60)
+        
+        # Comparar
+        if days_sql is not None and days_py != int(days_sql):
+            print(f"⚠️  DIFERENÇA! SQL={int(days_sql)} vs Python={days_py}")
+        else:
+            print(f"✅ OK! Ambos calcularam {days_py} dias")
+            
+        # Status do plano
+        if days_py < 0:
+            print(f"🚨 PLANO EXPIRADO há {abs(days_py)} dias!")
+        elif days_py < 5:
+            print(f"⏰ ATENÇÃO: Plano expira em {days_py} dias!")
+        else:
+            print(f"✅ Plano ativo com {days_py} dias restantes")
+    else:
+        print("⚠️  plan_expires_at é NULL!")
+        print("💡 Sugestão: Verificar se o trial foi configurado corretamente")
+    
+    cur.close()
+    conn.close()
 
-        cur.close()
-        conn.close()
-        print("\n Finalizado com sucesso!")
-
-    except Exception as e:
-        print(f" Erro: {e}")
-
-if __name__ == "__main__":
-    listar_tabelas_e_colunas()
+if __name__ == '__main__':
+    test()

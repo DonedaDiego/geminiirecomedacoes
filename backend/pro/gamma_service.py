@@ -119,7 +119,8 @@ class LiquidityManager:
 class ExpirationManager:
     def __init__(self, db_engine):
         self.db_engine = db_engine
-        self.available_expirations = {                                    
+        self.available_expirations = {
+            "20260213": {"date": datetime(2026, 2, 13), "desc": "13 Fev 26 - W2"},                                    
             "20260220": {"date": datetime(2026, 2, 20), "desc": "20 Fev 26 - M"},
             "20260227": {"date": datetime(2026, 2, 27), "desc": "27 Fev 26 - W4"},
             "20260306": {"date": datetime(2026, 3, 6), "desc": "06 Mar 26 - W1"},

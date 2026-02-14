@@ -822,6 +822,14 @@
                     <div class="text-xs text-gray-400">Movimentação do Ativo</div>
                   </div>
                 </a>
+
+                <a href="rrg.html" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white">
+                  <i class="fas fa-chart-bar text-orange-400 w-6"></i>
+                  <div>
+                    <div class="font-medium">RRG</div>
+                    <div class="text-xs text-gray-400">Momentum</div>
+                  </div>
+                </a>
           
                 
                 <a href="sup_res_vol.html" class="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-white">
@@ -831,6 +839,8 @@
                     <div class="text-xs text-gray-400">Com base em Volatilidade</div>
                   </div>
                 </a>
+
+                
               </div>
             </div>
           </div>
@@ -1172,13 +1182,14 @@
       const opcoesCard = document.getElementById('opcoesCard');
       const mlCard = document.getElementById('mlCard');
       const opcoes4dCard = document.querySelector('[onclick="toggleOpcoes4dDropdown()"]').closest('.relative');
+      const rastreamentoCard = document.querySelector('[onclick="toggleRastreamentoDropdown()"]').closest('.relative'); // ← ADICIONAR ESTA LINHA
       
       // SÓ BLOQUEIA SE FOR REGULAR (user_type = 'regular')
       if (userPlan === 'free') {
-        console.log(' BLOQUEANDO ACESSO - USUÁRIO REGULAR');
+        console.log('🔒 BLOQUEANDO ACESSO - USUÁRIO REGULAR');
         
         // Bloquear cards...
-        [opcoesCard, mlCard, opcoes4dCard].forEach(card => {
+        [opcoesCard, mlCard, opcoes4dCard, rastreamentoCard].forEach(card => { // ← ADICIONAR rastreamentoCard AQUI
           if (card) {
             card.style.opacity = '0.5';
             card.style.cursor = 'not-allowed';
@@ -1204,9 +1215,9 @@
         });
       } else {
         // LIBERA TUDO para admin, paid, trial
-        console.log(' LIBERANDO ACESSO TOTAL para user_type:', userPlan);
+        console.log('✅ LIBERANDO ACESSO TOTAL para user_type:', userPlan);
         
-        [opcoesCard, mlCard, opcoes4dCard].forEach(card => {
+        [opcoesCard, mlCard, opcoes4dCard, rastreamentoCard].forEach(card => { // ← ADICIONAR rastreamentoCard AQUI TAMBÉM
           if (card) {
             card.style.opacity = '1';
             card.style.cursor = 'pointer';
@@ -1246,8 +1257,6 @@
       initDashboard();
     });
 
-
-    
     function updatePlanInterface(plan, user = null) {
       const planBadge = document.getElementById('userPlanBadge');
       const upgradeBtn = document.getElementById('upgradeBtn');
@@ -1273,22 +1282,38 @@
         upgradeBtn.classList.remove('hidden');
         trialInfo.classList.remove('hidden');
         
-        let daysLeft = 15;
-        if (user && user.trial_end_date) {
+        // ========== CORREÇÃO AQUI ==========
+        let daysLeft = 0;
+        
+        if (user && user.plan_expires_at) {
+          // USAR UTC PARA EVITAR DIFERENÇA DE TIMEZONE
           const now = new Date();
-          const trialEnd = new Date(user.trial_end_date);
-          daysLeft = Math.ceil((trialEnd - now) / (1000 * 60 * 60 * 24));
+          const expiresAt = new Date(user.plan_expires_at);
+          
+          // Calcular diferença em milissegundos
+          const diffMs = expiresAt - now;
+          
+          // Converter para dias (arredondar pra cima)
+          daysLeft = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+          
+          console.log('🔍 Debug Trial:');
+          console.log('  Now:', now.toISOString());
+          console.log('  Expires:', expiresAt.toISOString());
+          console.log('  Diff (ms):', diffMs);
+          console.log('  Days:', daysLeft);
         }
         
         trialDaysLeft.textContent = Math.max(0, daysLeft);
+        // ===================================
+        
       } else {
         planBadge.className = 'free-badge';
         planBadge.innerHTML = '<i class="fas fa-user"></i>Plano Free';
         upgradeBtn.classList.remove('hidden');
         trialInfo.classList.add('hidden');
       }
-    }
-
+    } 
+   
     async function checkAuth() {
       const token = localStorage.getItem('geminii_token');
       const userData = localStorage.getItem('geminii_user');

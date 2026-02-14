@@ -46,8 +46,8 @@ class YFinanceRRGService:
         'RAIL3': 'Transporte',
         'JSLG3': 'Transporte',
         'TGMA3': 'Transporte',
-        'CCRO3': 'Transporte',        
-        'PORT3': 'Transporte',
+        '3': 'Transporte',        
+        '': 'Transporte',
         'WEGE3': 'Máquinas',
         'ROMI3': 'Máquinas',
         'TASA4': 'Máquinas',
@@ -60,7 +60,7 @@ class YFinanceRRGService:
         'BEEF3': 'Alimentos',
         'ODER4': 'Alimentos',
         'ABEV3': 'Bebidas',
-        'NTCO3': 'Produtos',
+        'NATU3': 'Produtos',
         'ASAI3': 'Produtos',
         'CEDO4': 'Tecidos, Ves, Cal',
         'SGPS3': 'Tecidos, Ves, Cal',
@@ -197,10 +197,10 @@ class YFinanceRRGService:
             
             close_prices = data['Close']
             
-            # 📈 EMA65 - Força Trimestral (~3 meses úteis)
+            
             ema65 = close_prices.ewm(span=65, adjust=False).mean().iloc[-1]
             
-            # 📈 EMA252 - Força Anual (~1 ano útil)
+            
             ema252 = close_prices.ewm(span=252, adjust=False).mean().iloc[-1]
             
             return float(ema65), float(ema252)
