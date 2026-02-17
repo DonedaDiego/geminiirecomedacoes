@@ -236,8 +236,7 @@ class RailwaySyncService:
     
     def obter_datas_disponiveis(self) -> List[str]:
         """Retorna lista de datas para sincronização"""
-        return [                       
-            "20260206",  
+        return [                                   
             "20260209",
             "20260210",
             "20260211",

@@ -5,8 +5,15 @@ from pro.railway_sync_service import RailwaySyncService
 
 railway_bp = Blueprint('railway', __name__, url_prefix='/railway')
 
-# Inicializar serviço
-sync_service = RailwaySyncService()
+# Instancia lazy — evita falha no startup se Railway estiver offline
+_sync_service = None
+
+def get_sync_service():
+    global _sync_service
+    if _sync_service is None:
+        _sync_service = RailwaySyncService()
+    return _sync_service
+
 
 @railway_bp.route('/health', methods=['GET'])
 def health_check():
@@ -16,11 +23,12 @@ def health_check():
         "service": "railway_sync"
     })
 
+
 @railway_bp.route('/status', methods=['GET'])
 def get_status():
     """Retorna status atual do banco Railway"""
     try:
-        status = sync_service.obter_status()
+        status = get_sync_service().obter_status()
         return jsonify({
             "success": True,
             "data": status
@@ -31,78 +39,75 @@ def get_status():
             "error": str(e)
         }), 500
 
+
 @railway_bp.route('/sync', methods=['POST'])
 def sincronizar():
     """Sincroniza todas as datas disponíveis"""
     try:
-        datas = sync_service.obter_datas_disponiveis()
-        
-        resultado = sync_service.sincronizar_datas(datas)
-        
+        service = get_sync_service()
+        datas = service.obter_datas_disponiveis()
+        resultado = service.sincronizar_datas(datas)
         return jsonify({
             "success": True,
             "data": resultado
         })
-        
     except Exception as e:
         return jsonify({
             "success": False,
             "error": str(e)
         }), 500
+
 
 @railway_bp.route('/datas-disponiveis', methods=['GET'])
 def listar_datas():
     """Lista datas disponíveis para sincronização"""
     try:
-        datas = sync_service.obter_datas_disponiveis()
-        
-        # Formatar datas
+        from datetime import datetime
+        service = get_sync_service()
+        datas = service.obter_datas_disponiveis()
+
         datas_formatadas = []
         for data_str in datas:
-            from datetime import datetime
             data_obj = datetime.strptime(data_str, '%Y%m%d')
-            
-            # Verificar se existe
-            existe = sync_service.verificar_data_existe(data_obj)
-            
+            existe = service.verificar_data_existe(data_obj)
             datas_formatadas.append({
                 "data_raw": data_str,
                 "data_formatada": data_obj.strftime('%d/%m/%Y'),
                 "existe_no_banco": existe,
-                "status": " Sincronizado" if existe else "⏳ Pendente"
+                "status": "✅ Sincronizado" if existe else "⏳ Pendente"
             })
-        
+
         return jsonify({
             "success": True,
             "total": len(datas_formatadas),
             "datas": datas_formatadas
         })
-        
     except Exception as e:
         return jsonify({
             "success": False,
             "error": str(e)
         }), 500
 
+
 @railway_bp.route('/resumo', methods=['GET'])
 def obter_resumo():
     """Resumo executivo da sincronização"""
     try:
-        status = sync_service.obter_status()
-        datas = sync_service.obter_datas_disponiveis()
-        
-        # Contar quantas já existem
         from datetime import datetime
+        service = get_sync_service()
+        status = service.obter_status()
+        datas = service.obter_datas_disponiveis()
+
         datas_sincronizadas = 0
         datas_pendentes = 0
-        
+
         for data_str in datas:
             data_obj = datetime.strptime(data_str, '%Y%m%d')
-            if sync_service.verificar_data_existe(data_obj):
+            if service.verificar_data_existe(data_obj):
                 datas_sincronizadas += 1
             else:
                 datas_pendentes += 1
-        
+
         return jsonify({
             "success": True,
             "resumo": {
@@ -116,7 +121,6 @@ def obter_resumo():
             },
             "top_tickers": status.get('top_tickers', [])
         })
-        
     except Exception as e:
         return jsonify({
             "success": False,
