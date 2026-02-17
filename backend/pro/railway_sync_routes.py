@@ -1,5 +1,6 @@
 # railway_sync_routes.py - Blueprint para sincronização Railway
 
+import threading
 from flask import Blueprint, jsonify
 from pro.railway_sync_service import RailwaySyncService
 
@@ -42,15 +43,39 @@ def get_status():
 
 @railway_bp.route('/sync', methods=['POST'])
 def sincronizar():
-    """Sincroniza todas as datas disponíveis"""
+    """Dispara sync em background e retorna imediato — evita worker timeout"""
     try:
         service = get_sync_service()
         datas = service.obter_datas_disponiveis()
-        resultado = service.sincronizar_datas(datas)
+
+        # Roda em thread separada — não bloqueia o worker Gunicorn
+        def rodar_sync():
+            service.sincronizar_datas(datas)
+
+        thread = threading.Thread(target=rodar_sync)
+        thread.daemon = True
+        thread.start()
+
         return jsonify({
             "success": True,
-            "data": resultado
+            "data": {
+                "resumo": {
+                    "total_datas": len(datas),
+                    "sucesso": 0,
+                    "falhas": 0,
+                    "pulados": 0
+                },
+                "detalhes": [
+                    {"data": d, "status": "iniciado", "registros": 0}
+                    for d in datas
+                ],
+                "banco": {
+                    "total_registros": 0,
+                    "top_tickers": []
+                }
+            }
         })
+
     except Exception as e:
         return jsonify({
             "success": False,
