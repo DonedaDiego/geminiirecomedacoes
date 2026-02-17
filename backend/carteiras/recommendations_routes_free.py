@@ -211,7 +211,7 @@ def get_performance_history_public():
 def update_prices_public():
     """ PÚBLICO: Atualizar preços atuais via Yahoo Finance"""
     try:
-        print("🔄 Iniciando atualização de preços (endpoint público)...")
+        print(" Iniciando atualização de preços (endpoint público)...")
         
         # Chamar função de atualização
         success = RecommendationsServiceFree.update_current_prices()
@@ -247,7 +247,7 @@ def update_prices_public():
 def refresh_all_data():
     """ PÚBLICO: Refresh completo - atualiza preços e retorna dados atualizados"""
     try:
-        print("🔄 Refresh completo iniciado...")
+        print(" Refresh completo iniciado...")
         
         # 1. Atualizar preços primeiro
         price_update_success = RecommendationsServiceFree.update_current_prices()
@@ -425,9 +425,9 @@ def close_recommendation(rec_id):
         status = data.get('status', 'FINALIZADA_MANUAL')
         final_price = data.get('final_price')
         
-        print(f"🔄 Encerrando recomendação {rec_id}")
+        print(f" Encerrando recomendação {rec_id}")
         print(f" Status: {status}")
-        print(f"💰 Preço final: {final_price} (tipo: {type(final_price)})")
+        print(f" Preço final: {final_price} (tipo: {type(final_price)})")
         
         from database import get_db_connection
         conn = get_db_connection()

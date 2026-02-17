@@ -48,13 +48,13 @@ class RankingService:
                 "limit": limit
             }
             
-            print(f"🔍 Buscando dados: {rank_by} (limit: {limit})")
+            print(f" Buscando dados: {rank_by} (limit: {limit})")
             
             response = requests.get(self.base_url, headers=self.headers, params=params, timeout=30)
             
             if response.status_code == 200:
                 data = response.json()
-                print(f"📦 Recebidos: {len(data)} registros")
+                print(f" Recebidos: {len(data)} registros")
                 
                 # Filtrar apenas ações com opções
                 filtered = [item for item in data if item.get('symbol') in self.options_stocks]

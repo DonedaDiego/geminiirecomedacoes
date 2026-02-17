@@ -255,7 +255,7 @@ def delete_opcoes_recommendation_service(recommendation_id):
 def close_opcoes_recommendation_service(recommendation_id, status, resultado_final=None):
     """Fechar recomendação de opção com resultado - VERSÃO CORRIGIDA"""
     try:
-        print(f"🔄 Fechando recomendação ID: {recommendation_id}")
+        print(f" Fechando recomendação ID: {recommendation_id}")
         print(f"📋 Status: {status}, Resultado: {resultado_final}")
         
         if not recommendation_id:

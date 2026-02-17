@@ -346,7 +346,7 @@
                   ${data.creation_date ? `<span class="bg-green-900/30 text-green-400 px-2 py-1 rounded">Criada em: ${formatDate(data.creation_date)}</span>` : ''}
                   ${data.granted_at ? `<span class="bg-purple-900/30 text-purple-400 px-2 py-1 rounded">Acesso: ${formatDate(data.granted_at)}</span>` : ''}
                   <span class="px-2 py-1 rounded text-xs ${source === 'REAL' ? 'bg-green-900/30 text-green-400' : 'bg-blue-900/30 text-blue-400'}">
-                    ${source === 'REAL' ? '🔄 Sistema Real' : ' API Clássica'}
+                    ${source === 'REAL' ? ' Sistema Real' : ' API Clássica'}
                   </span>
                 </div>
               </div>
@@ -991,7 +991,7 @@
         refreshBtn.disabled = true;
         refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Atualizando...';
         
-        console.log(`🔄 Refresh: ${currentPortfolioId}`);
+        console.log(` Refresh: ${currentPortfolioId}`);
         
         // Tentar endpoint de refresh
         const response = await fetch(`/chart_ativos/portfolio/${currentPortfolioId}/refresh`, {

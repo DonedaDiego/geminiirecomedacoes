@@ -49,7 +49,7 @@ class PaymentScheduler:
     
     def run_scheduler(self):
         """Loop principal do scheduler"""
-        print("🔄 Scheduler thread iniciada")
+        print(" Scheduler thread iniciada")
         
         while self.running:
             try:
@@ -64,7 +64,7 @@ class PaymentScheduler:
         """Job: Processar assinaturas expiradas"""
         try:
             print("\n" + "="*50)
-            print(f"🔄 JOB INICIADO: Processar Expirados - {datetime.now()}")
+            print(f" JOB INICIADO: Processar Expirados - {datetime.now()}")
             print("="*50)
             
             result = process_expired_paid_subscriptions()
@@ -89,7 +89,7 @@ class PaymentScheduler:
         """Job: Processar trials expirados"""
         try:
             print("\n" + "="*50)
-            print(f"🔄 JOB INICIADO: Processar Trials Expirados - {datetime.now()}")
+            print(f" JOB INICIADO: Processar Trials Expirados - {datetime.now()}")
             print("="*50)
             
             from backend.pag.trial_service import process_expired_trials
@@ -145,7 +145,7 @@ class PaymentScheduler:
         """Job: Verificação de integridade (semanal)"""
         try:
             print("\n" + "="*50)
-            print(f"🔍 JOB INICIADO: Verificação de Integridade - {datetime.now()}")
+            print(f" JOB INICIADO: Verificação de Integridade - {datetime.now()}")
             print("="*50)
             
             from pag.control_pay_service import verify_payments_integrity

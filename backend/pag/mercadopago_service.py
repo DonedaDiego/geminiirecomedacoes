@@ -437,7 +437,7 @@ def find_or_create_user(cursor, payment_data):
     user_id = payment_data.get('user_id')
     user_email = payment_data.get('user_email')
     
-    print(f"🔍 Buscando usuário...")
+    print(f" Buscando usuário...")
     print(f"   Strategy: {payment_data.get('search_strategy', 'unknown')}")
     print(f"   User ID: {user_id}")
     print(f"   Email: {user_email}")
@@ -465,7 +465,7 @@ def find_or_create_user(cursor, payment_data):
             print(f" Usuário email {user_email} não encontrado")
     
     #  ESTRATÉGIA 3: BUSCAR USUÁRIOS RECENTES (ÚLTIMO RECURSO)
-    print("🔍 Tentando encontrar usuário recente...")
+    print(" Tentando encontrar usuário recente...")
     cursor.execute("""
         SELECT id, name, email FROM users 
         WHERE created_at > NOW() - INTERVAL '7 days'
@@ -510,12 +510,12 @@ def update_user_plan_with_correct_expiration(cursor, user_id, plan_db_id, plan_n
     
     was_trial = current_user and current_user[0] == 'trial'
     if was_trial:
-        print(f"   🔄 CANCELANDO TRIAL: Usuário {user_id} estava em trial, convertendo para pago")
+        print(f"    CANCELANDO TRIAL: Usuário {user_id} estava em trial, convertendo para pago")
     
     # Calcular expiração correta
     expires_at = calculate_expiration(cycle)
     
-    print(f"🔄 Atualizando usuário {user_id}:")
+    print(f" Atualizando usuário {user_id}:")
     print(f"   - Plano: {plan_name}")
     print(f"   - Ciclo: {cycle}")
     print(f"   - Era trial: {'Sim' if was_trial else 'Não'}")
@@ -544,7 +544,7 @@ def update_user_plan_with_correct_expiration(cursor, user_id, plan_db_id, plan_n
 
 def update_user_plan(cursor, user_id, plan_db_id, plan_name, expires_at):
     """Atualizar plano do usuário"""
-    print(f"   🔄 Atualizando usuário {user_id} para plano {plan_name}")
+    print(f"    Atualizando usuário {user_id} para plano {plan_name}")
     
     cursor.execute("""
         UPDATE users 

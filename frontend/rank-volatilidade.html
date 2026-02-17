@@ -541,7 +541,7 @@
     async function loadAndRenderCharts() {
       try {
         updateButtonState(true);
-        debug('🔄 Carregando dados da API...');
+        debug(' Carregando dados da API...');
         
         // Chamar a API que já existe para buscar TODOS os dados
         const response = await fetch('/api/rank/analise-completa?top_n=150');
@@ -607,7 +607,7 @@
         return stock.symbol && optionsStocks.includes(stock.symbol);
       });
       
-      debug(`🔍 ${filtered.length} ações filtradas (com opções)`);
+      debug(` ${filtered.length} ações filtradas (com opções)`);
       
       // Remover ações sem IV atual E LIMPAR DADOS
       const withIV = filtered.filter(stock => {

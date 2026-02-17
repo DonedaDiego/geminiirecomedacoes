@@ -6,11 +6,11 @@ set -o errexit  # Sair se algum comando falhar
 echo "🔨 Iniciando build do Geminii Tech..."
 
 # Atualizar pip
-echo "📦 Atualizando pip..."
+echo " Atualizando pip..."
 python -m pip install --upgrade pip
 
 # Instalar dependências
-echo "📦 Instalando dependências..."
+echo " Instalando dependências..."
 pip install -r requirements.txt
 
 # Verificar instalação

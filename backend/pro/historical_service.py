@@ -129,7 +129,7 @@ class HistoricalDataProvider:
             'Content-Type': 'application/json'
         }
         
-        # ✅ CONEXÃO COM BANCO DE DADOS - RAILWAY POSTGRESQL
+        #  CONEXÃO COM BANCO DE DADOS - RAILWAY POSTGRESQL
         DATABASE_URL = os.getenv('DATABASE_URL')
         
         if not DATABASE_URL:
@@ -155,7 +155,7 @@ class HistoricalDataProvider:
             with self.db_engine.connect() as conn:
                 result = conn.execute(text("SELECT COUNT(*) FROM opcoes_b3"))
                 count = result.fetchone()[0]
-                logging.info(f"✅ Conexão OK (Historical) - {count:,} registros")
+                logging.info(f" Conexão OK (Historical) - {count:,} registros")
                 
         except Exception as e:
             logging.error(f"❌ Erro ao conectar (Historical): {e}")
@@ -178,7 +178,7 @@ class HistoricalDataProvider:
                 logging.error("Nenhuma data_referencia encontrada no banco")
                 return datetime.now().date()
             
-            logging.info(f"✅ Última data_referencia no banco: {ultima_data}")
+            logging.info(f" Última data_referencia no banco: {ultima_data}")
             return ultima_data if isinstance(ultima_data, datetime) else datetime.combine(ultima_data, datetime.min.time())
             
         except Exception as e:
@@ -214,7 +214,7 @@ class HistoricalDataProvider:
             
             dates_sorted = sorted(dates)
             
-            logging.info(f"✅ Últimas {len(dates_sorted)} datas_referencia do banco:")
+            logging.info(f" Últimas {len(dates_sorted)} datas_referencia do banco:")
             for d in dates_sorted:
                 logging.info(f"   📅 {d.strftime('%Y-%m-%d')}")
             
@@ -250,7 +250,7 @@ class HistoricalDataProvider:
             return None
     
     def get_historical_spot_price(self, symbol, target_date):
-        """✅ NOVO: Busca cotação HISTÓRICA de uma data específica"""
+        """ NOVO: Busca cotação HISTÓRICA de uma data específica"""
         try:
             ticker_yf = f"{symbol}.SA" if not symbol.endswith('.SA') else symbol
             stock = yf.Ticker(ticker_yf)
@@ -266,10 +266,10 @@ class HistoricalDataProvider:
                 hist_filtered = hist[hist.index.date >= target_date.date()]
                 if not hist_filtered.empty:
                     price = float(hist_filtered['Close'].iloc[0])
-                    logging.info(f"✅ Spot histórico {date_str}: R$ {price:.2f}")
+                    logging.info(f" Spot histórico {date_str}: R$ {price:.2f}")
                     return price
             
-            logging.warning(f"⚠️ Sem dados históricos para {date_str}, tentando Oplab...")
+            logging.warning(f" Sem dados históricos para {date_str}, tentando Oplab...")
             
             # Fallback: tentar Oplab histórico
             symbol_clean = symbol.replace('.SA', '')
@@ -284,7 +284,7 @@ class HistoricalDataProvider:
                 if data and len(data) > 0:
                     price = float(data[-1].get('close', 0))
                     if price > 0:
-                        logging.info(f"✅ Spot histórico Oplab {date_str}: R$ {price:.2f}")
+                        logging.info(f" Spot histórico Oplab {date_str}: R$ {price:.2f}")
                         return price
             
             logging.error(f"❌ Não foi possível obter spot histórico para {date_str}")
@@ -324,7 +324,7 @@ class HistoricalDataProvider:
                     logging.info(f"Datas disponíveis: {sorted(df['time'].dt.date.unique())}")
                     return pd.DataFrame()
                 
-                logging.info(f"✅ Oplab filtrado para {target_date_obj}: {len(filtered_data)} opções")
+                logging.info(f" Oplab filtrado para {target_date_obj}: {len(filtered_data)} opções")
                 latest_data = filtered_data
             else:
                 latest_date = df['time'].max().date()
@@ -382,7 +382,7 @@ class HistoricalDataProvider:
                 logging.warning(f"Sem dados banco: VENC={vencimento} DATA={dt_referencia.strftime('%Y-%m-%d')}")
                 return {}
             
-            # ✅ ESTRUTURA COM STRING COMO CHAVE
+            #  ESTRUTURA COM STRING COMO CHAVE
             oi_breakdown = {}
             for row in rows:
                 strike = float(row[0])
@@ -401,7 +401,7 @@ class HistoricalDataProvider:
                         'coberto': int(row[5])
                     }
             
-            logging.info(f"✅ Banco VENC={vencimento} DATA={dt_referencia.strftime('%Y-%m-%d')}: {len(oi_breakdown)} strikes")
+            logging.info(f" Banco VENC={vencimento} DATA={dt_referencia.strftime('%Y-%m-%d')}: {len(oi_breakdown)} strikes")
             return oi_breakdown
             
         except Exception as e:
@@ -410,8 +410,7 @@ class HistoricalDataProvider:
     
     def get_available_expirations(self, ticker):
         """Lista vencimentos disponíveis NO BANCO para a última data_referencia"""
-        available_expirations = {                     
-            "20260116": "16 Jan 26 - M",
+        available_expirations = {                                 
             "20260220": "20 Fev 26 - M",
             "20260320": "20 Mar 26 - M",
             "20260417": "17 Abr 26 - M",           
@@ -487,7 +486,7 @@ class HistoricalAnalyzer:
             has_real_call = False
             has_real_put = False
             
-            # ✅ BUSCA COM CHAVE STRING
+            #  BUSCA COM CHAVE STRING
             if len(calls) > 0:
                 call_key = f"{float(strike)}_CALL"
                 if call_key in oi_breakdown:
@@ -748,7 +747,7 @@ class HistoricalAnalyzer:
         return fig.to_json()
     
     def calculate_historical_insights(self, data_by_date, spot_prices_by_date):
-        """✅ CORRIGIDO: Usa spot_price de cada dia específico"""
+        """ CORRIGIDO: Usa spot_price de cada dia específico"""
         if not data_by_date or len(data_by_date) < 2:
             return {}
         
@@ -760,12 +759,12 @@ class HistoricalAnalyzer:
         
         for i, date in enumerate(dates):
             data = data_by_date[date]
-            spot_price = spot_prices_by_date.get(date)  # ✅ Spot correto do dia
+            spot_price = spot_prices_by_date.get(date)  #  Spot correto do dia
             
             flip_evolution.append({
                 'date': date,
                 'flip_strike': data.get('flip_strike'),
-                'spot_price': spot_price,  # ✅ Spot histórico
+                'spot_price': spot_price,  #  Spot histórico
                 'regime': data['regime']
             })
             
@@ -859,7 +858,7 @@ class HistoricalAnalyzer:
         return count
     
     def _identify_most_impacted_strikes(self, data_by_date, spot_prices_by_date, dates):
-        """✅ CORRIGIDO: Usa spot_price médio do período"""
+        """ CORRIGIDO: Usa spot_price médio do período"""
         if len(dates) < 2:
             return []
         
@@ -917,13 +916,13 @@ class HistoricalAnalyzer:
         return impacts[:5]
     
     def analyze_historical(self, ticker, vencimento, days_back=6):
-        """✅ ANÁLISE HISTÓRICA CORRIGIDA - USA SPOT_PRICE DE CADA DIA"""
-        logging.info(f"🔍 INICIANDO ANÁLISE HISTÓRICA - {ticker}")
+        """ ANÁLISE HISTÓRICA CORRIGIDA - USA SPOT_PRICE DE CADA DIA"""
+        logging.info(f" INICIANDO ANÁLISE HISTÓRICA - {ticker}")
         
         business_dates = self.data_provider.get_business_days(days_back)
         
         data_by_date = {}
-        spot_prices_by_date = {}  # ✅ NOVO: Armazena spot de cada dia
+        spot_prices_by_date = {}  #  NOVO: Armazena spot de cada dia
         available_dates = []
         
         expirations = self.data_provider.get_available_expirations(ticker)
@@ -934,9 +933,9 @@ class HistoricalAnalyzer:
         for date_obj in business_dates:
             date_str = date_obj.strftime('%Y-%m-%d')
             
-            logging.info(f"🔄 Processando {date_str}...")
+            logging.info(f" Processando {date_str}...")
             
-            # ✅ 1. BUSCAR SPOT HISTÓRICO
+            #  1. BUSCAR SPOT HISTÓRICO
             spot_price = self.data_provider.get_historical_spot_price(ticker, date_obj)
             
             if not spot_price:
@@ -955,20 +954,20 @@ class HistoricalAnalyzer:
             # 3. BUSCAR DADOS BANCO - COM FALLBACK PARA OUTROS VENCIMENTOS
             oi_breakdown = self.data_provider.get_floqui_historical(ticker, vencimento, date_obj)
             
-            # ✅ NOVO: Se não tem dados do vencimento principal, tenta outros vencimentos
+            #  NOVO: Se não tem dados do vencimento principal, tenta outros vencimentos
             if not oi_breakdown:
-                logging.warning(f"⚠️ Vencimento {vencimento} sem dados em {date_str}, tentando alternativas...")
+                logging.warning(f" Vencimento {vencimento} sem dados em {date_str}, tentando alternativas...")
                 
                 # Busca vencimentos disponíveis para esta data específica
                 expirations = self.data_provider.get_available_expirations(ticker)
                 
                 for exp in expirations:
                     if exp['code'] != vencimento and exp['available']:
-                        logging.info(f"🔄 Tentando vencimento alternativo: {exp['code']}")
+                        logging.info(f" Tentando vencimento alternativo: {exp['code']}")
                         oi_breakdown = self.data_provider.get_floqui_historical(ticker, exp['code'], date_obj)
                         
                         if oi_breakdown:
-                            logging.info(f"✅ Dados encontrados em {exp['code']} para {date_str}")
+                            logging.info(f" Dados encontrados em {exp['code']} para {date_str}")
                             vencimento = exp['code']  # Atualiza o vencimento usado
                             expiration_desc = exp['desc']
                             break
@@ -1023,19 +1022,19 @@ class HistoricalAnalyzer:
             
             available_dates.append(date_str)
             
-            logging.info(f"✅ {date_str}: Spot={spot_price:.2f}, {len(gex_df)} strikes, Flip={flip_strike}, {regime}")
+            logging.info(f" {date_str}: Spot={spot_price:.2f}, {len(gex_df)} strikes, Flip={flip_strike}, {regime}")
         
         if len(available_dates) < 2:
             raise ValueError(f"Dados insuficientes: apenas {len(available_dates)} dia(s) com dados. Mínimo: 2")
         
-        logging.info(f"✅ Dados coletados para {len(available_dates)} dias: {available_dates}")
+        logging.info(f" Dados coletados para {len(available_dates)} dias: {available_dates}")
         
         # 8. CALCULAR INSIGHTS COM SPOTS CORRETOS
         insights = {}
         try:
             logging.info(f"Calculando insights...")
             insights = self.calculate_historical_insights(data_by_date, spot_prices_by_date)
-            logging.info(f"✅ Insights calculados")
+            logging.info(f" Insights calculados")
         except Exception as e:
             logging.error(f"Erro ao calcular insights: {e}", exc_info=True)
             insights = {
@@ -1047,17 +1046,17 @@ class HistoricalAnalyzer:
                 }
             }
         
-        # ✅ Pega último spot para referência
+        #  Pega último spot para referência
         current_spot = spot_prices_by_date[available_dates[-1]]
         
         result = {
             'ticker': ticker,
             'vencimento': vencimento,
             'expiration_desc': expiration_desc,
-            'spot_price': current_spot,  # ✅ Spot mais recente
+            'spot_price': current_spot,  #  Spot mais recente
             'available_dates': available_dates,
             'data_by_date': data_by_date,
-            'spot_prices_by_date': spot_prices_by_date,  # ✅ NOVO: Todos os spots
+            'spot_prices_by_date': spot_prices_by_date,  #  NOVO: Todos os spots
             'insights': insights,
             'success': True
         }
@@ -1083,7 +1082,7 @@ class HistoricalService:
                 'spot_price': result['spot_price'],
                 'available_dates': result['available_dates'],
                 'data_by_date': result['data_by_date'],
-                'spot_prices_by_date': result['spot_prices_by_date'],  # ✅ NOVO
+                'spot_prices_by_date': result['spot_prices_by_date'],  #  NOVO
                 'insights': result['insights'],
                 'success': True
             }

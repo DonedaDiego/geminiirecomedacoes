@@ -68,7 +68,7 @@ def get_carrossel_stocks():
             return jsonify(response_data)
         
         # Buscar dados frescos
-        logger.info("🔄 Carrossel: Buscando dados frescos...")
+        logger.info(" Carrossel: Buscando dados frescos...")
         carrossel_data = CarrosselYFinanceService.get_carrossel_data()
         
         if carrossel_data['success']:
@@ -131,7 +131,7 @@ def get_single_stock(symbol):
         # Limpar e formatar símbolo
         symbol = symbol.upper().strip()
         
-        logger.info(f"🔍 Buscando dados de: {symbol}")
+        logger.info(f" Buscando dados de: {symbol}")
         
         # Buscar dados da ação
         stock_data = CarrosselYFinanceService.get_stock_by_symbol(symbol)

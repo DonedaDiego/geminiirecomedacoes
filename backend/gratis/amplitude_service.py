@@ -297,7 +297,7 @@ class AmplitudeService:
         
         for ticker in tickers_list:
             try:
-                print(f"🔄 Analisando {ticker}...")  # Debug
+                print(f" Analisando {ticker}...")  # Debug
                 analysis = AmplitudeService.analyze_amplitude_patterns(ticker)
                 if analysis:
                     results.append({

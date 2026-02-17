@@ -16,12 +16,12 @@ jobs:
     steps:
       - name: 📧 Enviar Avisos de Renovação
         run: |
-          echo "🔄 Enviando avisos de renovação..."
+          echo " Enviando avisos de renovação..."
           curl -X POST https://app-geminii.railway.app/api/subscriptions/cron/send-warnings || echo " Falha nos avisos"
           
       - name:  Processar Trials Expirados  
         run: |
-          echo "🔄 Processando trials expirados..."
+          echo " Processando trials expirados..."
           curl -X POST https://app-geminii.railway.app/api/subscriptions/cron/process-expired || echo " Falha no processamento"
           
       - name:  Jobs Concluídos

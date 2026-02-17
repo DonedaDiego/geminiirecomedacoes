@@ -14,16 +14,16 @@ print("="*70 + "\n")
 try:
     service = ThetaService()
     
-    print("🔄 Executando análise TEX para BOVA11...")
+    print(" Executando análise TEX para BOVA11...")
     result = service.analyze_theta_complete('BOVA11')
     
     print("\n" + "="*70)
-    print("  ✅ RESULTADO")
+    print("   RESULTADO")
     print("="*70)
     
-    print(f"\n✅ Success: {result['success']}")
-    print(f"💰 Spot: R$ {result['spot_price']:.2f}")
-    print(f"📊 Options analyzed: {result['options_count']}")
+    print(f"\n Success: {result['success']}")
+    print(f" Spot: R$ {result['spot_price']:.2f}")
+    print(f" Options analyzed: {result['options_count']}")
     print(f"📅 Expiration: {result['data_quality']['expiration']}")
     print(f"🎯 Real data count: {result['data_quality']['real_data_count']}")
     
@@ -37,7 +37,7 @@ try:
     print(f"   Interpretation: {decay['market_interpretation']}")
     
     print("\n" + "="*70)
-    print("  ✅ THETA SERVICE FUNCIONANDO PERFEITAMENTE!")
+    print("   THETA SERVICE FUNCIONANDO PERFEITAMENTE!")
     print("="*70 + "\n")
     
 except Exception as e:

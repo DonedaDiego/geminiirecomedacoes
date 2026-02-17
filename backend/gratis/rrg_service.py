@@ -17,7 +17,7 @@ logging.basicConfig(level=logging.INFO)
 class YFinanceRRGService:
     """Serviço completo para análise RRG usando YFinance"""
     
-    # 📊 DICIONÁRIO DE TICKERS E SETORES (mesma base do RSL)
+    #  DICIONÁRIO DE TICKERS E SETORES (mesma base do RSL)
     TICKERS_SETORES = {
         'BRAV3': 'Petróleo, Gás e Bio',
         'CSAN3': 'Petróleo, Gás e Bio',
@@ -172,13 +172,13 @@ class YFinanceRRGService:
             if not symbol.endswith('.SA'):
                 symbol += '.SA'
             
-            logging.info(f"📊 Buscando histórico de {symbol} para RRG...")
+            logging.info(f" Buscando histórico de {symbol} para RRG...")
             
             stock = yf.Ticker(symbol)
             data = stock.history(period=period)
             
             if data.empty:
-                logging.warning(f"⚠️ Nenhum dado histórico para {symbol}")
+                logging.warning(f" Nenhum dado histórico para {symbol}")
                 return None
             
             return data
@@ -192,7 +192,7 @@ class YFinanceRRGService:
         """Calcula EMA65 (trimestre) e EMA252 (ano)"""
         try:
             if len(data) < 252:
-                logging.warning(f"⚠️ Dados insuficientes para EMA252 (tem {len(data)}, precisa 252+)")
+                logging.warning(f" Dados insuficientes para EMA252 (tem {len(data)}, precisa 252+)")
                 return None, None
             
             close_prices = data['Close']
@@ -350,7 +350,7 @@ class YFinanceRRGService:
             data = cls.get_historical_data(symbol_clean, period='2y')
             
             if data is None or len(data) < 252:
-                logging.warning(f"⚠️ Dados insuficientes para {symbol_clean}")
+                logging.warning(f" Dados insuficientes para {symbol_clean}")
                 return None
             
             # 2️⃣ PREÇO ATUAL
@@ -388,7 +388,7 @@ class YFinanceRRGService:
             # 🔟 SETOR
             setor = cls.TICKERS_SETORES.get(symbol_clean, 'Setor Não Classificado')
             
-            # 📊 RESULTADO FINAL
+            #  RESULTADO FINAL
             return {
                 'symbol': symbol_clean,
                 'setor': setor,
@@ -424,29 +424,29 @@ class YFinanceRRGService:
     def get_sector_rrg_data(cls, setor_nome: str) -> Optional[Dict]:
         """Calcula RRG médio de um setor"""
         try:
-            logging.info(f"📊 Calculando RRG do setor: {setor_nome}")
+            logging.info(f" Calculando RRG do setor: {setor_nome}")
             
             tickers_do_setor = cls.get_tickers_by_setor(setor_nome)
             
             if not tickers_do_setor:
-                logging.warning(f"⚠️ Setor '{setor_nome}' não encontrado")
+                logging.warning(f" Setor '{setor_nome}' não encontrado")
                 return None
             
             resultados_individuais = []
             
             for ticker in tickers_do_setor:
-                logging.info(f"  ⚡ Processando {ticker}...")
+                logging.info(f"   Processando {ticker}...")
                 
                 rrg_data = cls.get_rrg_data_cached(ticker)
                 
                 if rrg_data:
                     resultados_individuais.append(rrg_data)
-                    logging.info(f"     ✅ {ticker}: {rrg_data['regime']}")
+                    logging.info(f"      {ticker}: {rrg_data['regime']}")
             
             if not resultados_individuais:
                 return None
             
-            # 📊 MÉDIAS DO SETOR
+            #  MÉDIAS DO SETOR
             avg_dist_ema65 = np.mean([r['dist_ema65_pct'] for r in resultados_individuais])
             avg_dist_ema252 = np.mean([r['dist_ema252_pct'] for r in resultados_individuais])
             avg_momentum = np.mean([r['momentum_21d'] for r in resultados_individuais if r['momentum_21d']])
@@ -486,20 +486,20 @@ class YFinanceRRGService:
     @classmethod
     def get_all_sectors_rrg(cls) -> Dict[str, Dict]:
         """Calcula RRG para todos os setores"""
-        logging.info("📊 Calculando RRG para todos os setores...")
+        logging.info(" Calculando RRG para todos os setores...")
         
         setores = cls.get_all_setores()
         resultados = {}
         
         for i, setor in enumerate(setores, 1):
-            logging.info(f"🔄 Processando setor {i}/{len(setores)}: {setor}")
+            logging.info(f" Processando setor {i}/{len(setores)}: {setor}")
             
             rrg_data = cls.get_sector_rrg_data(setor)
             
             if rrg_data:
                 resultados[setor] = rrg_data
         
-        logging.info(f"✅ Concluído! {len(resultados)}/{len(setores)} setores processados")
+        logging.info(f" Concluído! {len(resultados)}/{len(setores)} setores processados")
         return resultados
     
     @staticmethod
@@ -529,7 +529,7 @@ if __name__ == "__main__":
     # Teste individual
     result = service.get_rrg_data('PETR4')
     if result:
-        print(f"\n✅ {result['symbol']}: {result['regime']}")
+        print(f"\n {result['symbol']}: {result['regime']}")
         print(f"   EMA65: {result['dist_ema65_pct']}%")
         print(f"   EMA252: {result['dist_ema252_pct']}%")
         print(f"   Projeção Trimestral: R$ {result['projecao_trimestral']}")

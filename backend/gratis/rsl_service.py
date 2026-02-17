@@ -316,7 +316,7 @@ class YFinanceRSLService:
             
             #  CALCULAR RSL PARA CADA TICKER DO SETOR
             for ticker in tickers_do_setor:
-                print(f"  ⚡ Processando {ticker}...")
+                print(f"   Processando {ticker}...")
                 
                 # Usar versão com cache para otimizar
                 rsl_data = cls.get_rsl_data_cached(ticker, period)

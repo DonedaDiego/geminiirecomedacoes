@@ -52,14 +52,14 @@ def test():
     print(f"👤 {name} ({email})")
     print(f"📋 User Type: {user_type}")
     print(f"💳 Plan Name: {plan_name}")
-    print(f"📊 Status: {sub_status}")
+    print(f" Status: {sub_status}")
     print("=" * 60)
     print(f"🗓️  Plan Expires At: {plan_expires}")
     print(f"🗓️  Created At:      {created}")
     print(f"🗓️  Registration:    {reg_date}")
     print(f"🗓️  Last Login:      {last_login}")
-    print(f"⏰ Now (DB):        {now}")
-    print(f"📊 Diferença:       {diff}")
+    print(f" Now (DB):        {now}")
+    print(f" Diferença:       {diff}")
     print(f"🔢 Dias (SQL):      {days_sql}")
     print("=" * 60)
     
@@ -74,19 +74,19 @@ def test():
         
         # Comparar
         if days_sql is not None and days_py != int(days_sql):
-            print(f"⚠️  DIFERENÇA! SQL={int(days_sql)} vs Python={days_py}")
+            print(f"  DIFERENÇA! SQL={int(days_sql)} vs Python={days_py}")
         else:
-            print(f"✅ OK! Ambos calcularam {days_py} dias")
+            print(f" OK! Ambos calcularam {days_py} dias")
             
         # Status do plano
         if days_py < 0:
             print(f"🚨 PLANO EXPIRADO há {abs(days_py)} dias!")
         elif days_py < 5:
-            print(f"⏰ ATENÇÃO: Plano expira em {days_py} dias!")
+            print(f" ATENÇÃO: Plano expira em {days_py} dias!")
         else:
-            print(f"✅ Plano ativo com {days_py} dias restantes")
+            print(f" Plano ativo com {days_py} dias restantes")
     else:
-        print("⚠️  plan_expires_at é NULL!")
+        print("  plan_expires_at é NULL!")
         print("💡 Sugestão: Verificar se o trial foi configurado corretamente")
     
     cur.close()

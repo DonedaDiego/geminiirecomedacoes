@@ -84,7 +84,7 @@ def get_rsl_setor(setor_nome):
         # Parâmetros opcionais
         period = request.args.get('period', '1y')
         
-        print(f"🔍 Calculando RSL para setor: {setor_nome} (período: {period})")
+        print(f" Calculando RSL para setor: {setor_nome} (período: {period})")
         
         service = YFinanceRSLService()
         rsl_data = service.get_sector_rsl_data(setor_nome, period)
@@ -115,7 +115,7 @@ def get_rsl_ticker(ticker):
         # Parâmetros opcionais
         period = request.args.get('period', '1y')
         
-        print(f"🔍 Calculando RSL para ticker: {ticker} (período: {period})")
+        print(f" Calculando RSL para ticker: {ticker} (período: {period})")
         
         service = YFinanceRSLService()
         rsl_data = service.get_ticker_rsl(ticker, period)

@@ -54,7 +54,7 @@ def forgot_password():
 
 @email_bp.route('/validate-reset-token', methods=['POST'])
 def validate_reset_token():
-    """🔍 Validar token de recuperação de senha"""
+    """ Validar token de recuperação de senha"""
     try:
         data = request.get_json()
         
@@ -66,7 +66,7 @@ def validate_reset_token():
         if not token:
             return jsonify({'success': False, 'error': 'Token é obrigatório'}), 400
         
-        print(f"🔍 Validando token: {token[:20]}...")
+        print(f" Validando token: {token[:20]}...")
         
         # Validar token
         result = email_service.validate_password_reset_token(token)
@@ -281,7 +281,7 @@ def confirm_email():
 
 @email_bp.route('/debug-user', methods=['POST'])
 def debug_user():
-    """🔍 Debug de usuário (apenas para desenvolvimento)"""
+    """ Debug de usuário (apenas para desenvolvimento)"""
     try:
         data = request.get_json()
         email = data.get('email', '').strip()

@@ -504,7 +504,7 @@ def create_opcoes_recommendations_table():
         return False
 
 def verify_service_compatibility():
-    """🔍 Verificar se o banco está compatível com o service"""
+    """ Verificar se o banco está compatível com o service"""
     try:
         conn = get_db_connection()
         if not conn:
@@ -512,7 +512,7 @@ def verify_service_compatibility():
             
         cursor = conn.cursor()
         
-        print("🔍 VERIFICANDO COMPATIBILIDADE COM MERCADOPAGO SERVICE...")
+        print(" VERIFICANDO COMPATIBILIDADE COM MERCADOPAGO SERVICE...")
         
         # 1. Verificar planos
         cursor.execute("SELECT id, name FROM plans ORDER BY id")

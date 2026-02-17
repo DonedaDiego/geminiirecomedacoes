@@ -841,7 +841,7 @@
           // Copiar para clipboard
           await navigator.clipboard.writeText(data.ntsl_code);
           
-          showStatus(`✅ Código NTSL copiado! ${data.total_tickers} ativos prontos para colar no Profit.`, 'success');
+          showStatus(` Código NTSL copiado! ${data.total_tickers} ativos prontos para colar no Profit.`, 'success');
           
         } else {
           showStatus(data.error || 'Erro ao gerar código NTSL', 'error');

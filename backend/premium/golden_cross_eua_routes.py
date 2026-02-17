@@ -112,7 +112,7 @@ def obter_analise_acao(ticker):
                 'erro': 'Período deve estar entre 100 e 1000 dias'
             }), 400
         
-        logger.info(f"🔍 Solicitação de análise Golden Cross para {ticker.upper()}")
+        logger.info(f" Solicitação de análise Golden Cross para {ticker.upper()}")
         
         # Buscar dados da empresa na lista
         empresas = golden_cross_eua_service.obter_top_50_empresas_eua()
@@ -279,7 +279,7 @@ def listar_empresas():
 def verificar_status():
     """Verifica status da API e conectividade"""
     try:
-        logger.info("🔍 Verificação de status da API")
+        logger.info(" Verificação de status da API")
         
         # Teste rápido com uma ação
         teste = golden_cross_eua_service.obter_dados_acao('AAPL', 50)
@@ -305,7 +305,7 @@ def verificar_status():
 @golden_cross_eua_bp.before_request
 def log_request():
     """Log de todas as requisições"""
-    logger.info(f"🔄 {request.method} {request.path} - IP: {request.remote_addr}")
+    logger.info(f" {request.method} {request.path} - IP: {request.remote_addr}")
 
 @golden_cross_eua_bp.after_request
 def log_response(response):

@@ -55,7 +55,7 @@ def get_portfolio_analytics(portfolio_id):
         force_refresh = request.args.get('refresh', 'false').lower() == 'true'
         
         if force_refresh:
-            logger.info("🔄 Refresh forçado solicitado")
+            logger.info(" Refresh forçado solicitado")
 
         # Executar análise com auto-atualização
         result = chart_service.analyze_portfolio(portfolio_id, force_refresh)
@@ -95,7 +95,7 @@ def get_portfolio_analytics(portfolio_id):
 def refresh_portfolio_prices(portfolio_id):
     """Endpoint específico para forçar atualização de preços"""
     try:
-        logger.info(f"🔄 Refresh forçado para carteira: {portfolio_id}")
+        logger.info(f" Refresh forçado para carteira: {portfolio_id}")
         
         # Verificar autenticação
         auth_header = request.headers.get('Authorization')

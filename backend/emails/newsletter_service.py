@@ -125,7 +125,7 @@ class NewsletterService:
             params = {"filter[email]": email}
             response = requests.get(url, headers=self.headers, params=params, timeout=30)
             
-            print(f"🔍 Buscar subscriber: {response.status_code}")
+            print(f" Buscar subscriber: {response.status_code}")
             
             if response.status_code == 200:
                 data = response.json()

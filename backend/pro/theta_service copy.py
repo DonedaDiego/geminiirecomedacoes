@@ -553,7 +553,7 @@ class ThetaService:
             
             decay_regime = result.get('decay_regime', {})
             
-            # ✅ ADICIONAR TIME_PRESSURE BASEADO EM WEIGHTED_DAYS
+            #  ADICIONAR TIME_PRESSURE BASEADO EM WEIGHTED_DAYS
             weighted_days = decay_regime.get('weighted_days', 30)
             
             if weighted_days < 10:

@@ -192,7 +192,7 @@ class DataProvider:
             with self.db_engine.connect() as conn:
                 result = conn.execute(text("SELECT COUNT(*) FROM opcoes_b3"))
                 count = result.fetchone()[0]
-                logging.info(f"✅ Conexão OK (TEX) - {count:,} registros na opcoes_b3")
+                logging.info(f" Conexão OK (TEX) - {count:,} registros na opcoes_b3")
                 
         except Exception as e:
             logging.error(f"❌ Erro ao conectar (TEX): {e}")
@@ -261,7 +261,7 @@ class DataProvider:
             return pd.DataFrame()
     
     def get_floqui_oi_breakdown(self, symbol, expiration_code=None):
-        """✅ VERSÃO CORRIGIDA - Filtra strikes realistas"""
+        """ VERSÃO CORRIGIDA - Filtra strikes realistas"""
         try:
             if expiration_code:
                 expiration = {
@@ -279,17 +279,17 @@ class DataProvider:
             
             exp_date = datetime.strptime(expiration['code'], '%Y%m%d')
             
-            # ✅ BUSCAR SPOT ATUAL
+            #  BUSCAR SPOT ATUAL
             spot_price = self.get_spot_price(symbol)
             if not spot_price:
                 logging.error(f"Não conseguiu spot para {symbol}")
                 spot_price = 100
             
-            # ✅ FILTRO: ±50% do spot
+            #  FILTRO: ±50% do spot
             min_strike = spot_price * 0.5
             max_strike = spot_price * 1.5
             
-            logging.info(f"🔍 TEX: Filtrando strikes {min_strike:.2f} - {max_strike:.2f} (spot={spot_price:.2f})")
+            logging.info(f" TEX: Filtrando strikes {min_strike:.2f} - {max_strike:.2f} (spot={spot_price:.2f})")
             
             query = text("""
                 SELECT 
@@ -322,7 +322,7 @@ class DataProvider:
                 logging.warning(f"❌ TEX: Sem dados para {symbol}")
                 return {}, expiration
             
-            logging.info(f"✅ TEX: {len(df)} registros, strikes {df['preco_exercicio'].min():.2f} - {df['preco_exercicio'].max():.2f}")
+            logging.info(f" TEX: {len(df)} registros, strikes {df['preco_exercicio'].min():.2f} - {df['preco_exercicio'].max():.2f}")
             
             oi_breakdown = {}
             for _, row in df.iterrows():
@@ -342,7 +342,7 @@ class DataProvider:
                         'coberto': int(row['qtd_coberto'])
                     }
             
-            logging.info(f"✅ TEX: {len(oi_breakdown)} chaves no dicionário")
+            logging.info(f" TEX: {len(oi_breakdown)} chaves no dicionário")
             
             return oi_breakdown, expiration
             
@@ -355,12 +355,12 @@ class DataProvider:
 
 class TEXCalculator:
     def calculate_tex(self, oplab_df, oi_breakdown, spot_price):
-        """✅ VERSÃO COM DEBUG - Calcula TEX"""
+        """ VERSÃO COM DEBUG - Calcula TEX"""
         if oplab_df.empty:
             logging.error("❌ TEX: oplab_df vazio!")
             return pd.DataFrame()
         
-        # ✅ DEBUG
+        #  DEBUG
         oplab_strikes = sorted(oplab_df['strike'].unique())
         
         db_strikes = set()
@@ -371,7 +371,7 @@ class TEXCalculator:
         db_strikes_sorted = sorted(db_strikes)
         
         logging.info(f"")
-        logging.info(f"🔍 DEBUG TEX:")
+        logging.info(f" DEBUG TEX:")
         logging.info(f"   Spot: R$ {spot_price:.2f}")
         logging.info(f"   Oplab: {len(oplab_strikes)} strikes ({min(oplab_strikes):.2f} - {max(oplab_strikes):.2f})")
         if db_strikes_sorted:
@@ -472,8 +472,8 @@ class TEXCalculator:
                 'has_real_data': bool(call_data or put_data)
             })
         
-        logging.info(f"   ✅ Matches: {matches} | ❌ No match: {no_matches}")
-        logging.info(f"   📊 TEX: {len(tex_data)} strikes")
+        logging.info(f"    Matches: {matches} | ❌ No match: {no_matches}")
+        logging.info(f"    TEX: {len(tex_data)} strikes")
         
         return pd.DataFrame(tex_data).sort_values('strike')
 

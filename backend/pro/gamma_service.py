@@ -235,7 +235,7 @@ class DataProvider:
             'Content-Type': 'application/json'
         }
         
-        # ✅ CONEXÃO COM BANCO - RAILWAY COMPATIBLE
+        #  CONEXÃO COM BANCO - RAILWAY COMPATIBLE
         DATABASE_URL = os.getenv('DATABASE_URL')
         
         if not DATABASE_URL:
@@ -359,7 +359,7 @@ class DataProvider:
                 logging.warning(f"Nenhum dado encontrado no banco para {symbol}")
                 return {}, expiration
             
-            # ✅ NOVA ESTRUTURA - USA STRING COMO CHAVE
+            #  NOVA ESTRUTURA - USA STRING COMO CHAVE
             oi_breakdown = {}
             for _, row in df.iterrows():
                 strike = float(row['preco_exercicio'])
@@ -368,7 +368,7 @@ class DataProvider:
                 oi_descoberto = int(row['qtd_descoberto'])
                 
                 if strike > 0 and oi_total > 0:
-                    # ✅ CHAVE COMO STRING: "7.25_CALL"
+                    #  CHAVE COMO STRING: "7.25_CALL"
                     key = f"{strike}_{option_type}"
                     oi_breakdown[key] = {
                         'strike': strike,
@@ -424,7 +424,7 @@ class GEXAnalyzer:
             has_real_call = False
             has_real_put = False
             
-            # ✅ BUSCA COM CHAVE STRING
+            #  BUSCA COM CHAVE STRING
             if len(calls) > 0:
                 call_key = f"{float(strike)}_CALL"
                 if call_key in oi_breakdown:

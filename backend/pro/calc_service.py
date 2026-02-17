@@ -475,7 +475,7 @@ class OptionsCalculatorService:
         banda_inf_1sigma = banda_inf_2sigma  # Temporário - será corrigido no analyze_option_trade
         
         # DEBUG: Imprimir valores para diagnóstico
-        print(f"\n🔍 DEBUG TARGETS:")
+        print(f"\n DEBUG TARGETS:")
         print(f"   Preço atual: R$ {current_price:.2f}")
         print(f"   Strike: R$ {strike:.2f}")
         print(f"   Banda Sup 1σ: R$ {banda_sup_1sigma:.2f} ← TARGET 1")
@@ -591,7 +591,7 @@ class OptionsCalculatorService:
                 return {"error": f"Opção {option_code} não encontrada na API OpLab", "success": False}
             
             current_price = current_option['spot_price']
-            print(f"💰 Preço atual da API: R$ {current_price:.2f}")
+            print(f" Preço atual da API: R$ {current_price:.2f}")
             
             # Criar bandas usando preço atual
             stock_data = self.create_bands(stock_data, current_price)

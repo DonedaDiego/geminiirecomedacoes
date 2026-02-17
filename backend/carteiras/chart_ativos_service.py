@@ -25,7 +25,7 @@ class ChartAtivosService:
         Atualiza preços dos ativos da carteira no banco de dados
         """
         try:
-            logger.info(f"💰 Atualizando preços da carteira: {portfolio_name}")
+            logger.info(f" Atualizando preços da carteira: {portfolio_name}")
             
             conn = get_db_connection()
             if not conn:
@@ -67,7 +67,7 @@ class ChartAtivosService:
             
             # Buscar novos preços
             tickers = [asset[0] for asset in assets]
-            logger.info(f"🔄 Buscando preços atualizados para: {tickers}")
+            logger.info(f" Buscando preços atualizados para: {tickers}")
             
             new_prices = self.fetch_current_prices(tickers)
             
@@ -155,7 +155,7 @@ class ChartAtivosService:
                 # Busca individual para tickers que falharam
                 missing_tickers = [t for t in tickers if t not in prices]
                 if missing_tickers:
-                    logger.info(f"🔄 Busca individual para {len(missing_tickers)} ativos")
+                    logger.info(f" Busca individual para {len(missing_tickers)} ativos")
                     for ticker in missing_tickers:
                         try:
                             individual_price = self.fetch_single_price(ticker)

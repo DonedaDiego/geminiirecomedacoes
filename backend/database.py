@@ -8,10 +8,10 @@ from psycopg2 import pool
 from datetime import datetime, timezone
 import warnings
 
-# ✅ SUPRIMIR WARNING DE COLLATION
+#  SUPRIMIR WARNING DE COLLATION
 warnings.filterwarnings('ignore', message='.*collation version.*')
 
-# ✅ CONNECTION POOL GLOBAL
+#  CONNECTION POOL GLOBAL
 _connection_pool = None
 
 def get_connection_pool():
@@ -144,7 +144,7 @@ def create_plans_table():
         cursor.close()
         return_db_connection(conn)
         
-        print("✅ Planos criados com sucesso!")
+        print(" Planos criados com sucesso!")
         return True
         
     except Exception as e:
@@ -188,7 +188,7 @@ def create_users_table():
             );
         """)
         
-        # ✅ BATCH DE ÍNDICES
+        #  BATCH DE ÍNDICES
         cursor.execute("""
             DO $$ 
             BEGIN
@@ -228,7 +228,7 @@ def update_users_table_for_service():
             
         cursor = conn.cursor()
         
-        # ✅ BATCH DE ALTER TABLE
+        #  BATCH DE ALTER TABLE
         cursor.execute("""
             DO $$ 
             BEGIN
@@ -277,7 +277,7 @@ def update_users_table_for_service():
             WHERE email_confirmed IS NULL
         """)
         
-        # ✅ ÍNDICES EM BATCH
+        #  ÍNDICES EM BATCH
         cursor.execute("""
             DO $$ 
             BEGIN
@@ -328,7 +328,7 @@ def create_payments_table():
             )
         """)
         
-        # ✅ ÍNDICES EM BATCH
+        #  ÍNDICES EM BATCH
         cursor.execute("""
             DO $$ 
             BEGIN
@@ -385,7 +385,7 @@ def create_payment_history():
             )
         """)
         
-        # ✅ ÍNDICES EM BATCH
+        #  ÍNDICES EM BATCH
         cursor.execute("""
             DO $$ 
             BEGIN
@@ -454,7 +454,7 @@ def create_coupons_table():
             )
         """)
         
-        # ✅ ÍNDICES EM BATCH
+        #  ÍNDICES EM BATCH
         cursor.execute("""
             DO $$ 
             BEGIN
@@ -502,7 +502,7 @@ def create_password_reset_table():
             );
         """)
         
-        # ✅ ÍNDICES EM BATCH
+        #  ÍNDICES EM BATCH
         cursor.execute("""
             DO $$ 
             BEGIN
@@ -611,7 +611,7 @@ def create_opcoes_recommendations_table():
             );
         """)
         
-        # ✅ ÍNDICES EM BATCH
+        #  ÍNDICES EM BATCH
         cursor.execute("""
             DO $$ 
             BEGIN
@@ -640,7 +640,7 @@ def create_opcoes_recommendations_table():
         cursor.close()
         return_db_connection(conn)
         
-        print("✅ Tabela opcoes_recommendations criada com sucesso!")
+        print(" Tabela opcoes_recommendations criada com sucesso!")
         return True
         
     except Exception as e:
@@ -650,7 +650,7 @@ def create_opcoes_recommendations_table():
         return False
 
 def verify_service_compatibility():
-    """🔍 Verificar se o banco está compatível com o service - VERSÃO RÁPIDA"""
+    """ Verificar se o banco está compatível com o service - VERSÃO RÁPIDA"""
     try:
         conn = get_db_connection()
         if not conn:
@@ -658,9 +658,9 @@ def verify_service_compatibility():
             
         cursor = conn.cursor()
         
-        print("🔍 VERIFICANDO COMPATIBILIDADE COM MERCADOPAGO SERVICE...")
+        print(" VERIFICANDO COMPATIBILIDADE COM MERCADOPAGO SERVICE...")
         
-        # ✅ QUERY ÚNICA OTIMIZADA
+        #  QUERY ÚNICA OTIMIZADA
         cursor.execute("""
             SELECT 
                 (SELECT COUNT(*) FROM plans) as plan_count,
@@ -679,8 +679,8 @@ def verify_service_compatibility():
         
         print(f"\n📋 Planos: {plan_count}")
         print(f"👤 Campos users: {user_fields}/3")
-        print(f"💳 device_id: {'✅' if has_device_id else '❌'}")
-        print(f"🎫 coupon_uses: {'✅' if has_coupon_uses else '❌'}")
+        print(f"💳 device_id: {'' if has_device_id else '❌'}")
+        print(f"🎫 coupon_uses: {'' if has_coupon_uses else '❌'}")
         print(f"👥 Total usuários: {user_count}")
         
         cursor.close()
@@ -688,7 +688,7 @@ def verify_service_compatibility():
         
         all_good = (plan_count >= 2 and user_fields == 3 and has_device_id and has_coupon_uses)
         
-        print(f"\n✅ STATUS GERAL: {'✅ COMPATÍVEL' if all_good else '❌ NECESSITA CORREÇÕES'}")
+        print(f"\n STATUS GERAL: {' COMPATÍVEL' if all_good else '❌ NECESSITA CORREÇÕES'}")
         
         return all_good
         
@@ -750,7 +750,7 @@ def create_email_confirmations_table():
             );
         """)
         
-        # ✅ ÍNDICES EM BATCH
+        #  ÍNDICES EM BATCH
         cursor.execute("""
             DO $$ 
             BEGIN
@@ -784,7 +784,7 @@ def validate_coupon(code, plan_name, user_id):
         
         cursor = conn.cursor()
         
-        # ✅ QUERY ÚNICA COM JOIN
+        #  QUERY ÚNICA COM JOIN
         cursor.execute("""
             SELECT 
                 c.id, c.discount_percent, c.discount_type, c.max_uses, 
@@ -912,7 +912,7 @@ def create_portfolio_tables():
             );
         """)
         
-        # ✅ ÍNDICES EM BATCH
+        #  ÍNDICES EM BATCH
         cursor.execute("""
             DO $$ 
             BEGIN

@@ -362,7 +362,7 @@ class RecommendationsServiceFree:
                     target_price_float = float(rec['target_price'])
                     stop_loss_float = float(rec['stop_loss'])
                     
-                    print(f"🔄 Atualizando {ticker}: R$ {current_price}")
+                    print(f" Atualizando {ticker}: R$ {current_price}")
                     
                     # Calcular performance - USANDO APENAS FLOAT
                     if rec['action'] == 'COMPRA':

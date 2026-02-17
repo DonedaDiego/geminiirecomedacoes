@@ -14,7 +14,7 @@ def criar_tabela_opcoes_b3():
             password="SWYYPTWLukrNVucLgnyImUfTftHSadyS"
         )
         cur = conn.cursor()
-        print("✅ Conectado ao Railway!")
+        print(" Conectado ao Railway!")
         
         # VERIFICA SE TABELA JÁ EXISTE
         cur.execute("""
@@ -27,7 +27,7 @@ def criar_tabela_opcoes_b3():
         existe = cur.fetchone()[0]
         
         if existe:
-            print("⚠️  Tabela opcoes_b3 já existe!")
+            print("  Tabela opcoes_b3 já existe!")
             opcao = input("Apagar e recriar? (SIM/nao): ").strip().upper()
             
             if opcao == "SIM":
@@ -67,7 +67,7 @@ def criar_tabela_opcoes_b3():
         """)
         
         conn.commit()
-        print("✅ Tabela opcoes_b3 criada com sucesso!")
+        print(" Tabela opcoes_b3 criada com sucesso!")
         
         # LISTA AS COLUNAS CRIADAS
         print("\n📋 Estrutura da tabela:")
@@ -85,11 +85,11 @@ def criar_tabela_opcoes_b3():
         # CONTA REGISTROS (deve ser 0)
         cur.execute("SELECT COUNT(*) FROM opcoes_b3")
         total = cur.fetchone()[0]
-        print(f"\n📊 Total de registros: {total}")
+        print(f"\n Total de registros: {total}")
         
         cur.close()
         conn.close()
-        print("\n✅ Tudo pronto! Tabela vazia criada no Railway")
+        print("\n Tudo pronto! Tabela vazia criada no Railway")
 
     except Exception as e:
         print(f"❌ Erro: {e}")

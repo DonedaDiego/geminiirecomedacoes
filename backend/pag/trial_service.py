@@ -452,7 +452,7 @@ def can_access_premium_features(user_id):
      AJUSTE: Community trial (plan_id=4) tem acesso a Premium
     """
     try:
-        print(f"🔍 Verificando acesso Premium para user_id: {user_id}")
+        print(f" Verificando acesso Premium para user_id: {user_id}")
         
         conn = get_db_connection()
         if not conn:
@@ -517,7 +517,7 @@ def can_access_pro_features(user_id):
      AJUSTE: Community trial (plan_id=4) tem acesso a Pro
     """
     try:
-        print(f"🔍 Verificando acesso Pro para user_id: {user_id}")
+        print(f" Verificando acesso Pro para user_id: {user_id}")
         
         conn = get_db_connection()
         if not conn:

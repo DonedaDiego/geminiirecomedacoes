@@ -54,7 +54,7 @@ class VolatilityImpliedService:
         if symbol:
             params['symbol'] = symbol
         
-        print(f"🔍 Buscando dados das opções: {ticker} ({from_date} a {to_date})")
+        print(f" Buscando dados das opções: {ticker} ({from_date} a {to_date})")
         
         try:
             response = requests.get(url, headers=self.headers, params=params, timeout=10)

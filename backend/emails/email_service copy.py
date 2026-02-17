@@ -67,7 +67,7 @@ class EmailService:
             server.send_message(msg)
             server.quit()
             
-            print(f"✅ Email enviado com sucesso para {to_email}!")
+            print(f" Email enviado com sucesso para {to_email}!")
             return True
             
         except smtplib.SMTPAuthenticationError as e:
@@ -706,7 +706,7 @@ Dúvidas? Entre em contato: contato@geminii.com.br
         return self.send_email(email, "Confirme seu email - Geminii Tech", html_content, text_content)
 
     def confirm_email_token(self, token):
-        """✅ Confirmar email com token"""
+        """ Confirmar email com token"""
         try:
             conn = get_db_connection()
             if not conn:
@@ -714,7 +714,7 @@ Dúvidas? Entre em contato: contato@geminii.com.br
             
             cursor = conn.cursor()
             
-            print(f"🔍 Confirmando token: {token[:20]}...")
+            print(f" Confirmando token: {token[:20]}...")
             
             # Buscar token válido
             cursor.execute("""
@@ -768,15 +768,15 @@ Dúvidas? Entre em contato: contato@geminii.com.br
             cursor.close()
             conn.close()
             
-            print(f"✅ Email confirmado: {user_name} ({email})")
+            print(f" Email confirmado: {user_name} ({email})")
             
-            # ✅ ENVIAR EMAIL DE BOAS-VINDAS (ESTA LINHA ESTAVA FALTANDO!)
+            #  ENVIAR EMAIL DE BOAS-VINDAS (ESTA LINHA ESTAVA FALTANDO!)
             try:
                 print(f"📧 Enviando email de boas-vindas para {email}...")
                 welcome_sent = self.send_trial_welcome_community_email(user_name, email)
                 
                 if welcome_sent:
-                    print(f"✅ Email de boas-vindas enviado com sucesso!")
+                    print(f" Email de boas-vindas enviado com sucesso!")
                 else:
                     print(f" Falha ao enviar email de boas-vindas (mas confirmação OK)")
             except Exception as e:
@@ -822,7 +822,7 @@ Dúvidas? Entre em contato: contato@geminii.com.br
                 WHERE user_id = %s AND used = FALSE
             """, (user_id,))
             
-            # ✅ CORREÇÃO - Gerar token com UTC explícito
+            #  CORREÇÃO - Gerar token com UTC explícito
             token = secrets.token_urlsafe(32)
             now_utc = datetime.now(timezone.utc)
             expires_at_utc = now_utc + timedelta(hours=1)
@@ -833,7 +833,7 @@ Dúvidas? Entre em contato: contato@geminii.com.br
             print(f"   Expira em (UTC): {expires_at_utc}")
             print(f"   Token: {token[:20]}...")
             
-            # ✅ IMPORTANTE - Salvar com timezone
+            #  IMPORTANTE - Salvar com timezone
             cursor.execute("""
                 INSERT INTO password_reset_tokens (user_id, token, expires_at)
                 VALUES (%s, %s, %s AT TIME ZONE 'UTC')
@@ -841,14 +841,14 @@ Dúvidas? Entre em contato: contato@geminii.com.br
             
             conn.commit()
             
-            # ✅ VERIFICAR SE SALVOU CORRETAMENTE
+            #  VERIFICAR SE SALVOU CORRETAMENTE
             cursor.execute("""
                 SELECT expires_at FROM password_reset_tokens 
                 WHERE token = %s
             """, (token,))
             
             saved_expires = cursor.fetchone()[0]
-            print(f"   ✅ Salvo no banco como: {saved_expires}")
+            print(f"    Salvo no banco como: {saved_expires}")
             
             cursor.close()
             conn.close()
@@ -920,7 +920,7 @@ Dúvidas? Entre em contato: contato@geminii.com.br
         
         try:
             print(f"\n{'='*60}")
-            print(f"🔍 VALIDANDO TOKEN DE RESET:")
+            print(f" VALIDANDO TOKEN DE RESET:")
             print(f"{'='*60}")
             print(f"   Token recebido: {token}")
             print(f"   Tamanho: {len(token)} chars")
@@ -942,9 +942,9 @@ Dúvidas? Entre em contato: contato@geminii.com.br
             result = cursor.fetchone()
             
             if not result:
-                # 🔍 DEBUG - Mostrar tokens recentes
+                #  DEBUG - Mostrar tokens recentes
                 print(f"\n❌ Token não encontrado no banco!")
-                print(f"🔍 Buscando tokens recentes...")
+                print(f" Buscando tokens recentes...")
                 
                 cursor.execute("""
                     SELECT token, expires_at, used, created_at
@@ -968,11 +968,11 @@ Dúvidas? Entre em contato: contato@geminii.com.br
             
             user_id, email, name, expires_at, db_token = result
             
-            print(f"\n✅ Token encontrado!")
+            print(f"\n Token encontrado!")
             print(f"   Usuário: {name} ({email})")
             print(f"   Expira em: {expires_at}")
             
-            # ✅ CORREÇÃO - Usar UTC consistente
+            #  CORREÇÃO - Usar UTC consistente
             now_utc = datetime.now(timezone.utc)
             expires_utc = expires_at.replace(tzinfo=timezone.utc) if expires_at.tzinfo is None else expires_at
             
@@ -987,7 +987,7 @@ Dúvidas? Entre em contato: contato@geminii.com.br
                 conn.close()
                 return {'success': False, 'error': 'Token expirado'}
             
-            print(f"✅ Token válido!")
+            print(f" Token válido!")
             print(f"{'='*60}\n")
             
             cursor.close()
@@ -1564,7 +1564,7 @@ Continue sua jornada conosco!
 
 
     def debug_user(self, email):
-        """🔍 Debug de usuário"""
+        """ Debug de usuário"""
         try:
             conn = get_db_connection()
             if not conn:
@@ -1581,7 +1581,7 @@ Continue sua jornada conosco!
             user = cursor.fetchone()
             if user:
                 user_id, name, email, confirmed, confirmed_at, created_at = user
-                print(f"\n🔍 DEBUG - {email}:")
+                print(f"\n DEBUG - {email}:")
                 print(f"   ID: {user_id}")
                 print(f"   Nome: {name}")
                 print(f"   Confirmado: {confirmed}")

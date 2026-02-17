@@ -243,7 +243,7 @@ if __name__ == "__main__":
     result = CarrosselYFinanceService.get_stock_by_symbol('PETR4')
     if result:
         print(f" {result['name']} ({result['symbol']})")
-        print(f"💰 Preço: R$ {result['price']} ({result['change_percent']:+.2f}%)")
+        print(f" Preço: R$ {result['price']} ({result['change_percent']:+.2f}%)")
     else:
         print(" Falha ao buscar PETR4")
     

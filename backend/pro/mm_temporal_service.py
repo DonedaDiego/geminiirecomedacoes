@@ -66,12 +66,14 @@ class HistoricalDataProvider:
     """Provedor de dados do Floqui para análise temporal"""
     
     def __init__(self):
-        self.available_expirations = {
-            "20250919": datetime(2025, 9, 19).date(),
-            "20251017": datetime(2025, 10, 17).date(), 
-            "20251121": datetime(2025, 11, 21).date(),
-            "20251219": datetime(2025, 12, 19).date(),
+        self.available_expirations = {            
             "20260116": datetime(2026, 1, 16).date(),
+            "20260220": datetime(2026, 1, 16).date(),
+            "20260320": datetime(2026, 1, 16).date(),
+            "20260417": datetime(2026, 1, 16).date(),
+
+
+
         }
     
     def get_expiration_for_date(self, date_str):

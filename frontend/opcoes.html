@@ -664,7 +664,7 @@
       const token = localStorage.getItem('geminii_token');
       const userData = localStorage.getItem('geminii_user');
  
-      console.log('🔍 DEBUG - Dados iniciais:');
+      console.log(' DEBUG - Dados iniciais:');
       console.log('   Token existe:', !!token);
       console.log('   UserData existe:', !!userData);
       console.log('   UserData conteúdo:', userData);
@@ -676,7 +676,7 @@
       }
  
       try {
-        console.log('🔄 Fazendo verificação de token...');
+        console.log(' Fazendo verificação de token...');
         
         const response = await fetch('/auth/verify', {
           headers: { 'Authorization': `Bearer ${token}` }
@@ -708,7 +708,7 @@
           console.log(' User type válido?', hasValidUserType, '(user_type:', currentUser.user_type, ')');
           
           const isAdmin = ['admin', 'master'].includes(currentUser.user_type);
-          console.log('👑 É admin?', isAdmin);
+          console.log(' É admin?', isAdmin);
           
           const shouldHaveAccess = hasValidPlan || hasValidUserType || isAdmin;
           console.log(' DECISÃO FINAL - Deve ter acesso?', shouldHaveAccess);

@@ -14,7 +14,7 @@ try:
 except ImportError as e:
     MP_AVAILABLE = False
     print(f" SDK Mercado Pago não disponível: {e}")
-    print("📦 Instale com: pip install mercadopago")
+    print(" Instale com: pip install mercadopago")
     # Criar service mock para evitar crashes
     class MockService:
         @staticmethod
@@ -115,7 +115,7 @@ def create_checkout():
         # =====  APLICAR DESCONTO DO CUPOM (NOVA ADIÇÃO) =====
         if coupon_code and discounted_price:
             print(f"🎫 CUPOM DETECTADO: {coupon_code}")
-            print(f"💰 PREÇO COM DESCONTO: R$ {discounted_price}")
+            print(f" PREÇO COM DESCONTO: R$ {discounted_price}")
         else:
             print("ℹ️ Nenhum cupom aplicado")
         
@@ -192,7 +192,7 @@ def webhook():
         
         print(f"💳 Payment ID: {payment_id}")
         
-        print("🔄 Iniciando processamento otimizado...")
+        print(" Iniciando processamento otimizado...")
         result = mercadopago_service.process_payment(payment_id)
         
         if result['status'] == 'success':
@@ -234,7 +234,7 @@ def webhook():
 def check_payment_status(payment_id):
     """Verificar status de pagamento"""
     try:
-        print(f"🔍 Verificando status do pagamento: {payment_id}")
+        print(f" Verificando status do pagamento: {payment_id}")
         result = mercadopago_service.check_payment_status_service(payment_id)
         return jsonify(result)
         

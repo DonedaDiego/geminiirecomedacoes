@@ -28,7 +28,7 @@ class OplabService:
         # Inicializar GammaService se disponível
         if GAMMA_SERVICE_AVAILABLE:
             self.gamma_service = GammaService()
-            print("✅ GammaService integrado - dados reais de GEX disponíveis")
+            print(" GammaService integrado - dados reais de GEX disponíveis")
         else:
             self.gamma_service = None
             print(" GammaService não disponível - modo standalone")
@@ -56,7 +56,7 @@ class OplabService:
                 return None
             
             url = f"https://api.oplab.com.br/v3/market/options/{ticker}"
-            print(f"🔍 Buscando opções OpLab: {ticker}")
+            print(f" Buscando opções OpLab: {ticker}")
             
             response = self.session.get(
                 url,
@@ -96,7 +96,7 @@ class OplabService:
                         'liquidity_score': volume + (oi * 0.5)  # Score de liquidez
                     })
             
-            print(f"✅ {len(opcoes_liquidas)} opções com liquidez encontradas")
+            print(f" {len(opcoes_liquidas)} opções com liquidez encontradas")
             return opcoes_liquidas if opcoes_liquidas else None
             
         except Exception as e:
@@ -157,7 +157,7 @@ class OplabService:
             return None
         
         try:
-            print(f"🔍 Buscando dados GEX reais para {ticker}...")
+            print(f" Buscando dados GEX reais para {ticker}...")
             
             # Chamar análise completa do GammaService
             resultado = self.gamma_service.analyze_gamma_complete(
@@ -181,7 +181,7 @@ class OplabService:
                 'real_data_count': resultado.get('data_quality', {}).get('real_data_count', 0)
             }
             
-            print(f"✅ Dados GEX obtidos:")
+            print(f" Dados GEX obtidos:")
             print(f"   Spot: R$ {dados_gex['spot_price']:.2f}")
             print(f"   Flip: R$ {dados_gex['flip_strike']:.2f}")
             print(f"   GEX Descoberto: {dados_gex['gex_descoberto']:,.0f}")
@@ -250,7 +250,7 @@ class OplabService:
                 if cenario_num == 13:
                     estruturas.extend(self._criar_venda_straddle(spot_price, strikes_validos, calls, puts))
         
-        print(f"\n✅ {len(estruturas)} estruturas calculadas")
+        print(f"\n {len(estruturas)} estruturas calculadas")
         return estruturas
 
     def _criar_compra_call(self, spot, flip, strikes, calls):
@@ -619,7 +619,7 @@ class OplabService:
             if self.validar_estrutura(est)
         ]
         
-        print(f"\n✅ {len(estruturas_validas)} estruturas calculadas")
+        print(f"\n {len(estruturas_validas)} estruturas calculadas")
         
         return {
             'success': True,

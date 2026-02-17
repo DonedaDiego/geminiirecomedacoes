@@ -35,9 +35,9 @@ class RailwaySyncService:
                     ADD COLUMN IF NOT EXISTS ticker VARCHAR(20)
                 """))
                 conn.commit()
-                self.logger.info("✅ Estrutura verificada")
+                self.logger.info(" Estrutura verificada")
         except Exception as e:
-            self.logger.warning(f"⚠️ Estrutura: {e}")
+            self.logger.warning(f" Estrutura: {e}")
     
     def verificar_data_existe(self, data_obj: datetime) -> bool:
         """Verifica se data já existe no banco"""
@@ -68,10 +68,10 @@ class RailwaySyncService:
             response = requests.get(url, headers=headers, timeout=30)
             
             if response.status_code == 200:
-                self.logger.info(f"✅ Download OK: {folder_date}")
+                self.logger.info(f" Download OK: {folder_date}")
                 return response.json()
             else:
-                self.logger.warning(f"⚠️ HTTP {response.status_code}: {folder_date}")
+                self.logger.warning(f" HTTP {response.status_code}: {folder_date}")
                 return None
                 
         except Exception as e:
@@ -134,7 +134,7 @@ class RailwaySyncService:
         df['qtd_trava'] = pd.to_numeric(df['qtd_trava'], errors='coerce').fillna(0).astype(int)
         df['qtd_coberto'] = pd.to_numeric(df['qtd_coberto'], errors='coerce').fillna(0).astype(int)
         
-        self.logger.info(f"📊 Processados: {len(df)} registros")
+        self.logger.info(f" Processados: {len(df)} registros")
         return df
     
     def salvar_no_railway(self, df: pd.DataFrame) -> bool:
@@ -180,7 +180,7 @@ class RailwaySyncService:
                 
                 # Salva
                 if self.salvar_no_railway(df):
-                    self.logger.info(f"✅ SUCESSO!")
+                    self.logger.info(f" SUCESSO!")
                     total_sucesso += 1
                     detalhes.append({
                         "data": data_formatada,
@@ -236,18 +236,22 @@ class RailwaySyncService:
     
     def obter_datas_disponiveis(self) -> List[str]:
         """Retorna lista de datas para sincronização"""
-        return [           
-            "20260130",  
-            "20260202",  
-            "20260203",  
-            "20260204",  
-            "20260205",  
+        return [                       
             "20260206",  
             "20260209",
             "20260210",
             "20260211",
             "20260212",
             "20260213",
+            "20260218",  
+            "20260219",
+            "20260220",
+            "20260223",
+            "20260224",
+            "20260225",
+            "20260226",
+            "20260227",
+
         ]
     
     def obter_status(self) -> Dict:

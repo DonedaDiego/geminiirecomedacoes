@@ -127,9 +127,7 @@ class LiquidityManager:
 
 class ExpirationManager:
     def __init__(self):
-        self.available_expirations = {            
-            "20251219": {"date": datetime(2025, 12, 19), "desc": "19 Dez 25 - M"},
-            "20260116": {"date": datetime(2026, 1, 16),  "desc": "16 Jan 26 - M"},
+        self.available_expirations = {                        
             "20260220": {"date": datetime(2026, 2, 20),  "desc": "20 Fev 26 - M"},
             "20260320": {"date": datetime(2026, 3, 20),  "desc": "20 Mar 26 - M"},
             "20260417": {"date": datetime(2026, 4, 17),  "desc": "17 Abr 26 - M"},

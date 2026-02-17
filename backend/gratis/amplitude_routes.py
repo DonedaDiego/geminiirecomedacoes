@@ -74,7 +74,7 @@ def compare_multiple_stocks():
                 'error': 'Nenhum ticker válido encontrado'
             }), 400
         
-        print(f"🔄 Iniciando comparação de: {clean_tickers}")  # Debug
+        print(f" Iniciando comparação de: {clean_tickers}")  # Debug
         
         # Fazer análise comparativa
         comparison = AmplitudeService.get_multiple_stocks_analysis(clean_tickers)

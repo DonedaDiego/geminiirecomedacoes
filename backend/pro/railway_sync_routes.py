@@ -69,7 +69,7 @@ def listar_datas():
                 "data_raw": data_str,
                 "data_formatada": data_obj.strftime('%d/%m/%Y'),
                 "existe_no_banco": existe,
-                "status": "✅ Sincronizado" if existe else "⏳ Pendente"
+                "status": " Sincronizado" if existe else "⏳ Pendente"
             })
         
         return jsonify({

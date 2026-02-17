@@ -95,7 +95,7 @@ def hunter_walls_analysis(current_user_id):
         has_valid_user_type = user_type in allowed_user_types
         is_admin = user_type in ['admin', 'master']
         
-        print(f"🔍 Verificação de acesso:")
+        print(f" Verificação de acesso:")
         print(f"   - Plan válido: {has_valid_plan} (plan_id {plan_id} in {allowed_plans})")
         print(f"   - User type válido: {has_valid_user_type} (user_type '{user_type}' in {allowed_user_types})")
         print(f"   - É admin: {is_admin}")

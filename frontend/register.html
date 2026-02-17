@@ -437,13 +437,13 @@
             loadingOverlay.classList.remove('hidden');
             
             try {
-                // ✅ URL RELATIVA - Funciona local E Railway
+                //  URL RELATIVA - Funciona local E Railway
                 const API_URL = window.location.origin;
                 console.log('🌐 API Base URL:', API_URL);
-                console.log('🔄 Enviando registro para:', `${API_URL}/auth/register`);
-                console.log('📦 Dados:', { name, email, password: '***' });
+                console.log(' Enviando registro para:', `${API_URL}/auth/register`);
+                console.log(' Dados:', { name, email, password: '***' });
                 
-                const response = await fetch('/auth/register', {  // ✅ URL RELATIVA
+                const response = await fetch('/auth/register', {  //  URL RELATIVA
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -471,7 +471,7 @@
                 console.log('📥 Resposta:', data);
                 
                 if (data.success) {
-                    console.log('✅ Registro bem-sucedido!');
+                    console.log(' Registro bem-sucedido!');
                     showSuccessContainer({
                         name: data.data?.name || name,
                         email: data.data?.email || email,

@@ -79,7 +79,7 @@ def create_historical_blueprint():
             
             if result and result.get('available_dates') and len(result['available_dates']) > 0:
                 dates_count = len(result['available_dates'])
-                logging.info(f"✅ Análise concluída: {ticker} - {dates_count} datas disponíveis")
+                logging.info(f" Análise concluída: {ticker} - {dates_count} datas disponíveis")
             else:
                 logging.error(f" Análise retornou vazia: {ticker}")
                 return jsonify({
@@ -271,7 +271,7 @@ def create_historical_blueprint():
             if not ticker.endswith('.SA'):
                 ticker = f"{ticker}.SA"
             
-            logging.info(f"🔍 Análise histórica: {ticker} - {vencimento} - {days_back} dias úteis")
+            logging.info(f" Análise histórica: {ticker} - {vencimento} - {days_back} dias úteis")
             
             # Executar análise
             result = historical_service.analyze_historical_complete(ticker, vencimento, days_back)
@@ -308,7 +308,7 @@ def create_historical_blueprint():
                 }), 404
             
             dates_count = len(available_dates)
-            logging.info(f"✅ Análise concluída: {ticker} - {dates_count} datas disponíveis")
+            logging.info(f" Análise concluída: {ticker} - {dates_count} datas disponíveis")
             
             return jsonify(result)
         

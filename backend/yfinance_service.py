@@ -211,7 +211,7 @@ if __name__ == "__main__":
     if result['success']:
         data = result['data']
         print(f" {data['name']} ({data['symbol']})")
-        print(f"💰 Preço: R$ {data['current_price']} ({data['change_percent']:+.2f}%)")
+        print(f" Preço: R$ {data['current_price']} ({data['change_percent']:+.2f}%)")
     else:
         print(f" {result['error']}")
     

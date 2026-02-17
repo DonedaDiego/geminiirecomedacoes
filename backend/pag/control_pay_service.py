@@ -774,7 +774,7 @@ if __name__ == "__main__":
     if stats['success']:
         print(f" Stats carregadas: {stats['stats']}")
     
-    print("\n🔍 Verificação de integridade:")
+    print("\n Verificação de integridade:")
     integrity = verify_payments_integrity()
     if integrity['success']:
         print(f" Integridade: {integrity['integrity_check']}")

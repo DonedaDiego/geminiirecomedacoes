@@ -390,7 +390,7 @@ class VEXCalculator:
         atm_focused = valid_options[valid_options['strike'].isin(atm_focused_strikes)].copy()
               
         
-        # ✅ CALCULAR IV MÉDIA GLOBAL (para weighted_iv no regime)
+        #  CALCULAR IV MÉDIA GLOBAL (para weighted_iv no regime)
         atm_calls = atm_focused[atm_focused['type'] == 'CALL']
         atm_puts = atm_focused[atm_focused['type'] == 'PUT']
         
@@ -413,7 +413,7 @@ class VEXCalculator:
         else:
             global_avg_iv = 0
                        
-        # ✅ CALCULAR IV GLOBAL HISTÓRICA DOS ATM±2
+        #  CALCULAR IV GLOBAL HISTÓRICA DOS ATM±2
         global_historical_iv = global_avg_iv  # fallback
         
         if historical_df is not None and not historical_df.empty:
@@ -483,7 +483,7 @@ class VEXCalculator:
             total_vex = call_vex + put_vex
             total_vex_descoberto = call_vex_descoberto + put_vex_descoberto
             
-            # ✅ IV POR STRIKE (não global)
+            #  IV POR STRIKE (não global)
             avg_iv_strike = 0.0
             if call_iv > 0 and put_iv > 0:
                 avg_iv_strike = (call_iv + put_iv) / 2
@@ -492,7 +492,7 @@ class VEXCalculator:
             elif put_iv > 0:
                 avg_iv_strike = put_iv
             
-            # ✅ IV REFINADA POR STRIKE (se estiver nos ATM±2, usa valor específico; senão usa global)
+            #  IV REFINADA POR STRIKE (se estiver nos ATM±2, usa valor específico; senão usa global)
             if strike in atm_focused_strikes:
                 refined_call_iv_strike = call_iv if call_iv > 0 else global_call_iv
                 refined_put_iv_strike = put_iv if put_iv > 0 else global_put_iv
@@ -518,7 +518,7 @@ class VEXCalculator:
                 'call_iv': float(call_iv),
                 'put_iv': float(put_iv),
                 'avg_iv': float(avg_iv_strike),
-                # ✅ IV REFINADA POR STRIKE
+                #  IV REFINADA POR STRIKE
                 'refined_call_iv': float(refined_call_iv_strike),
                 'refined_put_iv': float(refined_put_iv_strike),
                 'refined_avg_iv': float(refined_avg_iv_strike),
@@ -601,7 +601,7 @@ class VolatilityRegimeDetector:
         
         atm_strike = float(vex_df_copy.loc[atm_idx, 'strike'])
         
-        # ✅ USA IV GLOBAL ATUAL (média ATM±2 hoje)
+        #  USA IV GLOBAL ATUAL (média ATM±2 hoje)
         current_iv = float(vex_df_copy.loc[atm_idx, 'global_avg_iv'])
         
         
@@ -635,7 +635,7 @@ class VolatilityRegimeDetector:
         
         abs_iv_diff_pp = abs(iv_diff_pp)
         
-        # ✅ RISCO SIMPLIFICADO: > 2 p.p. = ALTO, <= 2 p.p. = BAIXO
+        #  RISCO SIMPLIFICADO: > 2 p.p. = ALTO, <= 2 p.p. = BAIXO
         if abs_iv_diff_pp > 2:
             volatility_risk = 'HIGH'
             if iv_diff_pp > 0:
@@ -694,7 +694,7 @@ class VEXAnalyzer:
             horizontal_spacing=0.08
         )
         
-        # ✅ EXTRAIR TODAS AS VARIÁVEIS NECESSÁRIAS
+        #  EXTRAIR TODAS AS VARIÁVEIS NECESSÁRIAS
         strikes = [float(x) for x in vex_df['strike'].tolist()]
         call_iv = [float(x) for x in vex_df['call_iv'].tolist()]
         put_iv = [float(x) for x in vex_df['put_iv'].tolist()]
@@ -930,7 +930,7 @@ class VEXAnalyzer:
         max_vex_idx = vex_real['total_vex_descoberto'].idxmax()
         max_vex_strike = float(vex_real.loc[max_vex_idx, 'strike'])
         
-        # ✅ USA IV REFINADA
+        #  USA IV REFINADA
         max_iv_idx = vex_real['refined_avg_iv'].idxmax()
         max_iv_strike = float(vex_real.loc[max_iv_idx, 'strike'])
         

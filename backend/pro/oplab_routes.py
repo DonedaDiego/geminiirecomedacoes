@@ -95,7 +95,7 @@ def estruturas_inteligentes(current_user_id):
             if oplab_service.validar_estrutura(est)
         ]
         
-        print(f"✅ {len(estruturas_validas)} estruturas válidas calculadas")
+        print(f" {len(estruturas_validas)} estruturas válidas calculadas")
         
         return jsonify({
             'success': True,

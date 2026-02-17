@@ -837,11 +837,11 @@
     }
 
     function classifyScenario(gamma, delta, vega, theta) {
-      // ✅ USA O REGIME DA API (NÃO O SINAL DO VALOR)
+      //  USA O REGIME DA API (NÃO O SINAL DO VALOR)
       const gexRegime = gamma?.regime || 'Long Gamma';
       const gexSign = gexRegime.includes('Short') ? 'SHORT' : 'LONG';
       
-      // ✅ USA O MARKET_BIAS DA API (NÃO O SINAL DO total_dex_descoberto)
+      //  USA O MARKET_BIAS DA API (NÃO O SINAL DO total_dex_descoberto)
       const marketBias = delta?.dex_levels?.market_bias || 'NEUTRAL';
       const dexSign = (marketBias === 'BULLISH') ? 'POS' : 
                       (marketBias === 'BEARISH') ? 'NEG' : 'NEG';
@@ -969,11 +969,11 @@
       const spotPrice = gamma?.spot_price || 0;
       const flipStrike = gamma?.flip_strike || spotPrice;
       
-      // ✅ PEGA OS WALLS REAIS DA API
+      //  PEGA OS WALLS REAIS DA API
       const supportWall = gamma?.walls?.support || null;
       const resistanceWall = gamma?.walls?.resistance || null;
       
-      // ✅ REGIME ATUAL
+      //  REGIME ATUAL
       const currentRegime = gamma?.regime || 'Long Gamma';
       const isShortGamma = currentRegime.toLowerCase().includes('short');
       
@@ -990,7 +990,7 @@
           message: `Dealers vão ${scenario.direction === 'ALTA' ? 'COMPRAR' : 'VENDER'} agressivamente conforme movimento se desenvolve, AMPLIFICANDO a direção. Zona de alta volatilidade.`
         });
         
-        // ✅ BARREIRA DE ACELERAÇÃO = PRÓXIMO WALL NA DIREÇÃO
+        //  BARREIRA DE ACELERAÇÃO = PRÓXIMO WALL NA DIREÇÃO
         if (scenario.direction === 'ALTA' && supportWall && supportWall > spotPrice) {
           alerts.push({
             type: 'warning',
@@ -1021,7 +1021,7 @@
           message: `Dealers vão ${scenario.direction === 'ALTA' ? 'VENDER' : 'COMPRAR'} conforme movimento se desenvolve, CONTENDO extremos. Zona de estabilidade.`
         });
         
-        // ✅ BARREIRA DE CONTENÇÃO = WALL MAIS PRÓXIMO
+        //  BARREIRA DE CONTENÇÃO = WALL MAIS PRÓXIMO
         if (scenario.direction === 'ALTA' && supportWall && supportWall > spotPrice) {
           alerts.push({
             type: 'info',
@@ -1404,7 +1404,7 @@
       // 3. GEX DESCOBERTO (OK - esse está certo)
       document.getElementById('gexDescoberto').textContent = formatLargeNumber(gammaData.gex_levels?.total_gex_descoberto);
       
-      // 4. ✅ DEX DESCOBERTO (CORREÇÃO)
+      // 4.  DEX DESCOBERTO (CORREÇÃO)
       const dex_levels = deltaData.dex_levels || {};
       const netDexTotal = dex_levels.total_dex || 0;
       document.getElementById('volumeHedge').textContent = formatLargeNumber(netDexTotal);
@@ -1547,7 +1547,7 @@
         await displayResults();
         
         const vencimentoUsado = gammaData.data_quality?.expiration || 'Automático';
-        showStatus(`✅ Análise 4D de ${ticker} concluída! Vencimento: ${vencimentoUsado}`, 'success');
+        showStatus(` Análise 4D de ${ticker} concluída! Vencimento: ${vencimentoUsado}`, 'success');
 
       } catch (error) {
         showStatus('Erro: ' + error.message, 'error');

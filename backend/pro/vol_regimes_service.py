@@ -759,10 +759,10 @@ class VolatilityRegimesService:
                     recent_data.reset_index(inplace=True)
                     current_price = float(recent_data['Close'].iloc[-1])
                     last_date = recent_data['Date'].iloc[-1]
-                    self.logger.info(f"✅ ÚLTIMO FECHAMENTO: R$ {current_price:.4f} em {last_date}")
+                    self.logger.info(f" ÚLTIMO FECHAMENTO: R$ {current_price:.4f} em {last_date}")
                     
                     if last_date.date() >= (now_sp.date() - pd.Timedelta(days=1)):
-                        self.logger.info("✅ DADOS ATUALIZADOS - Usando fechamento recente")
+                        self.logger.info(" DADOS ATUALIZADOS - Usando fechamento recente")
                         last_update_time = last_date
                     else:
                         self.logger.warning(f" DADOS ANTIGOS - Último: {last_date.date()}, Hoje: {now_sp.date()}")
@@ -776,7 +776,7 @@ class VolatilityRegimesService:
                 current_price = float(data['Close'].iloc[-1])
                 last_update_time = data['Date'].iloc[-1]
                 self.logger.error(f" ERRO ao buscar dados recentes: {e}")
-                self.logger.info(f"🔄 FALLBACK: R$ {current_price:.4f} (dados históricos)")
+                self.logger.info(f" FALLBACK: R$ {current_price:.4f} (dados históricos)")
             
             # Processar dados através do pipeline
             data = self.calculate_base_volatility(data)
@@ -788,11 +788,11 @@ class VolatilityRegimesService:
             # Atualizar último preço
             if 'current_price' in locals():
                 data.loc[data.index[-1], 'Close'] = current_price
-                self.logger.info(f"🔄 PREÇO ATUALIZADO no DataFrame: R$ {current_price:.4f}")
+                self.logger.info(f" PREÇO ATUALIZADO no DataFrame: R$ {current_price:.4f}")
             
             signals = self.get_current_signals(data, search_ticker)
             signals['price'] = current_price
-            self.logger.info(f"✅ PREÇO FINAL nos SINAIS: R$ {signals['price']:.4f}")
+            self.logger.info(f" PREÇO FINAL nos SINAIS: R$ {signals['price']:.4f}")
             
             chart_html = self.generate_plotly_chart(data, search_ticker)
             
@@ -856,7 +856,7 @@ class VolatilityRegimesService:
                 'success': True
             }
             
-            self.logger.info(f"✅ Análise concluída para {clean_ticker}: {signals['signal']} - Preço: R$ {current_price:.2f}")
+            self.logger.info(f" Análise concluída para {clean_ticker}: {signals['signal']} - Preço: R$ {current_price:.2f}")
             return summary
             
         except Exception as e:

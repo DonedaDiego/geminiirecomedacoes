@@ -33,7 +33,7 @@ class Config:
     
     # Configurações de Trading
     DEFAULT_START_DATE = "2020-01-01"
-    DEFAULT_END_DATE = "2026-01-01"
+    DEFAULT_END_DATE = "2027-01-01"
     DEFAULT_FLOW_DAYS = 30
     MIN_FLOW_DAYS = 7
     MAX_FLOW_DAYS = 90

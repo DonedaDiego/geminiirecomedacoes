@@ -67,7 +67,7 @@ class OpcoesService:
                 return None
             
             url = f"https://api.oplab.com.br/v3/market/options/{ticker}"
-            print(f"🔍 Buscando opções: {url}")
+            print(f" Buscando opções: {url}")
             
             response = self.session.get(
                 url,
@@ -349,7 +349,7 @@ class OpcoesService:
             batch_size = 20  # Reduzido de 30 para 20
             ticker_batches = [tickers_reais[i:i + batch_size] for i in range(0, len(tickers_reais), batch_size)]
             
-            print(f"📦 Processando {len(tickers_reais)} tickers em {len(ticker_batches)} lotes (OTIMIZADO)")
+            print(f" Processando {len(tickers_reais)} tickers em {len(ticker_batches)} lotes (OTIMIZADO)")
             
             # OTIMIZAÇÃO 2: Buscar apenas 7 dias úteis (máximo 14 dias calendário)
             dias_coletados = 0
@@ -367,7 +367,7 @@ class OpcoesService:
                 if date.weekday() >= 5:
                     continue
                 
-                print(f"🔍 Buscando {date_str}... ({dias_coletados+1}/{days})")
+                print(f" Buscando {date_str}... ({dias_coletados+1}/{days})")
                 
                 volume_dia_total = 0
                 calls_volume_dia = 0
@@ -727,7 +727,7 @@ class OpcoesService:
     def get_strike_detalhes(self, ticker: str, strike: float) -> Optional[Dict]:
         """Buscar detalhes específicos de um strike"""
         try:
-            print(f"🔍 Buscando detalhes strike {ticker} R$ {strike}")
+            print(f" Buscando detalhes strike {ticker} R$ {strike}")
             
             # Buscar opções atuais
             options_data = self.get_options_data(ticker)

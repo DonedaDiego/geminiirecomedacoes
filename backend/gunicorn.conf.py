@@ -7,9 +7,9 @@ worker_class = "sync"
 worker_connections = 1000
 max_requests = 1000
 max_requests_jitter = 50
-timeout = 30  # ✅ 30 segundos (era 120)
+timeout = 30  #  30 segundos (era 120)
 keepalive = 2
-graceful_timeout = 30  # ✅ ADICIONAR ISSO
+graceful_timeout = 30  #  ADICIONAR ISSO
 
 # Configurações de logging
 loglevel = "info"

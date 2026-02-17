@@ -80,7 +80,7 @@ def get_empresas_setor(setor_nome):
 def get_rrg_ticker(ticker):
     """Calcula RRG de um ticker específico"""
     try:
-        print(f"🔍 Calculando RRG para ticker: {ticker}")
+        print(f" Calculando RRG para ticker: {ticker}")
         
         service = YFinanceRRGService()
         rrg_data = service.get_rrg_data(ticker)
@@ -108,7 +108,7 @@ def get_rrg_ticker(ticker):
 def get_rrg_setor(setor_nome):
     """Calcula RRG de um setor específico"""
     try:
-        print(f"🔍 Calculando RRG para setor: {setor_nome}")
+        print(f" Calculando RRG para setor: {setor_nome}")
         
         service = YFinanceRRGService()
         rrg_data = service.get_sector_rrg_data(setor_nome)
@@ -136,7 +136,7 @@ def get_rrg_setor(setor_nome):
 def get_rrg_todos_setores():
     """Calcula RRG de todos os setores"""
     try:
-        print(f"📊 Calculando RRG para todos os setores")
+        print(f" Calculando RRG para todos os setores")
         
         service = YFinanceRRGService()
         all_rrg_data = service.get_all_sectors_rrg()
@@ -175,7 +175,7 @@ def get_radar_setores():
     Retorna dados formatados para o gráfico scatter
     """
     try:
-        print(f"📊 Gerando dados para Radar RRG de Setores")
+        print(f" Gerando dados para Radar RRG de Setores")
         
         service = YFinanceRRGService()
         all_rrg_data = service.get_all_sectors_rrg()
@@ -256,7 +256,7 @@ def get_radar_tickers():
                 'error': 'Lista de tickers vazia'
             }), 400
         
-        print(f"📊 Calculando RRG para {len(tickers)} tickers")
+        print(f" Calculando RRG para {len(tickers)} tickers")
         
         service = YFinanceRRGService()
         resultados = []

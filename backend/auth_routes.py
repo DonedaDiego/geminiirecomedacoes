@@ -26,7 +26,7 @@ def generate_jwt_token(user_id, email, secret_key):
 
 @auth_bp.route('/register', methods=['POST'])
 def register():
-    """✅ Registro SIMPLES"""
+    """ Registro SIMPLES"""
     try:
         data = request.get_json()
         
@@ -102,7 +102,7 @@ def register():
         user_id = cursor.fetchone()[0]
         conn.commit()
         
-        print(f"✅ Usuário criado: ID {user_id}")
+        print(f" Usuário criado: ID {user_id}")
         
         # Gerar token
         token_result = email_service.generate_confirmation_token(user_id, email)
@@ -140,7 +140,7 @@ def register():
 
 @auth_bp.route('/login', methods=['POST'])
 def login():
-    """✅ Login SIMPLES sem verificação de subscription"""
+    """ Login SIMPLES sem verificação de subscription"""
     try:
         data = request.get_json()
         
@@ -287,7 +287,7 @@ def confirm_email_page():
         <!DOCTYPE html>
         <html><head><meta charset="UTF-8"><title>Email Confirmado</title></head>
         <body style="font-family:Arial;text-align:center;padding:50px;background:#fb1ebb;color:white">
-            <h1>✅ Email Confirmado!</h1>
+            <h1> Email Confirmado!</h1>
             <p>Olá, {result['user_name']}!</p>
             <p> Trial de 15 dias ativado!</p>
             <a href="/login" style="background:white;color:#fb1ebb;padding:15px 30px;text-decoration:none;border-radius:10px;display:inline-block;margin-top:20px">Fazer Login</a>
@@ -355,7 +355,8 @@ def verify_token():
                     'plan_name': plan_name,
                     'user_type': user_type,
                     'email_confirmed': email_confirmed,
-                    'created_at': created_at.isoformat() if created_at else None
+                    'created_at': created_at.isoformat() if created_at else None,
+                    'plan_expires_at': plan_expires_at.isoformat() if plan_expires_at else None
                 }
             }
         }), 200

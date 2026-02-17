@@ -370,7 +370,7 @@ def get_bandas_pro_blueprint():
         → S4σ: {bands['suporte_4sigma']:.2f} (Suporte Extremo)
 
         ═══════════════════════════════════════════════════════════════
-        ⚡ INTERPRETAÇÃO:
+         INTERPRETAÇÃO:
         ═══════════════════════════════════════════════════════════════
         • COMPRA: Preço próximo ou abaixo dos suportes (S2σ/S4σ)
         • VENDA: Preço próximo ou acima das resistências (R2σ/R4σ)  
