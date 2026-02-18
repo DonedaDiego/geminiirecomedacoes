@@ -7,9 +7,11 @@ from statsmodels.regression.rolling import RollingOLS
 from datetime import datetime, timedelta
 from functools import lru_cache
 import hashlib
-from multiprocessing import Pool, cpu_count
 import pickle
 import os
+import warnings
+
+warnings.simplefilter('ignore')
 
 # Cache persistente em disco
 CACHE_DIR = os.path.join(os.path.dirname(__file__), '.cache')
@@ -43,7 +45,6 @@ SETORES = {
    "CXSE3": "Previdência e Seguros",
    "CYRE3": "Construção Civil",
    "AXIA3": "Energia Elétrica",
-   "AXIA6": "Energia Elétrica",
    "AXIA6": "Energia Elétrica",
    "EGIE3": "Energia Elétrica",
    "EMBJ3": "Material de Transporte",
@@ -79,7 +80,7 @@ SETORES = {
    "RENT3": "Diversos",
    "SANB11": "Intermediários Financeiros",
    "SANB4": "Intermediários Financeiros",
-   "3": "Água e Saneamento",
+   "SBSP3": "Água e Saneamento",
    "SUZB3": "Madeira e Papel",
    "VBBR3": "Petróleo, Gás e Biocombustíveis",
    "VALE3": "Mineração",
@@ -91,22 +92,46 @@ SETORES = {
 
 def obter_top_50_acoes_brasileiras():
     return [
-      "ABEV3",  "AZZA3", "B3SA3", "BBAS3", "BBDC3", "BBDC4", "BBSE3", "BPAC11",  
+      "ABEV3", "AZZA3", "B3SA3", "BBAS3", "BBDC3", "BBDC4", "BBSE3", "BPAC11",  
       "BPAN4", "BRAP3", "BRAP4", "BRAV3", "CMIG3", "CMIG4", "CMIN3", 
-      "CPFE3",  "CPLE5", "CSAN3", "CSMG3", "CSNA3", "CXSE3", "CYRE3",  "AXIA3", "AXIA6", 
+      "CPFE3", "CPLE5", "CSAN3", "CSMG3", "CSNA3", "CXSE3", "CYRE3", "AXIA3", "AXIA6", 
       "EGIE3", "EMBJ3", "ENEV3", "ENGI11", "ENGI3", "ENGI4", "EQTL3", "GGBR3", "GGBR4", "GOAU4", "HAPV3", "HYPE3", 
-      "ITSA3", "ITSA4", "ITUB3", "ITUB4", "KLBN11", "KLBN3", "KLBN4", "LREN3", "MDIA3",  "NEOE3","MBRF3",
-      "NATU3", "PETR3", "PETR4", "PRIO3", "PSSA3", "RAIL3", "RAIZ4", "RDOR3", "RENT3", "SANB11", "SANB4", "3", "SUZB3", 
+      "ITSA3", "ITSA4", "ITUB3", "ITUB4", "KLBN11", "KLBN3", "KLBN4", "LREN3", "MDIA3", "NEOE3", "MBRF3",
+      "NATU3", "PETR3", "PETR4", "PRIO3", "PSSA3", "RAIL3", "RAIZ4", "RDOR3", "RENT3", "SANB11", "SANB4", "SBSP3", "SUZB3", 
       "VBBR3", "VALE3", "VIVT3", "WEGE3", "UGPA3"
     ]
 
 
+def limpar_cache_expirado():
+    """Remove arquivos de cache expirados"""
+    try:
+        if not os.path.exists(CACHE_DIR):
+            return
+        for filename in os.listdir(CACHE_DIR):
+            filepath = os.path.join(CACHE_DIR, filename)
+            if os.path.isfile(filepath):
+                file_time = datetime.fromtimestamp(os.path.getmtime(filepath))
+                if (datetime.now() - file_time).total_seconds() > CACHE_TTL:
+                    os.remove(filepath)
+                    print(f"[CACHE LIMPO] {filename}")
+    except Exception as e:
+        print(f"[AVISO] Erro ao limpar cache: {e}")
+
+
 def obter_dados(tickers, data_inicio, data_fim):
     try:
-        # Normaliza as datas para evitar hashes diferentes
-        if isinstance(data_inicio, str):
+        # Limpar cache expirado antes de qualquer coisa
+        limpar_cache_expirado()
+        
+        # Normaliza as datas
+        if isinstance(data_inicio, datetime):
+            data_inicio = data_inicio.strftime('%Y-%m-%d')
+        elif isinstance(data_inicio, str):
             data_inicio = pd.to_datetime(data_inicio).strftime('%Y-%m-%d')
-        if isinstance(data_fim, str):
+            
+        if isinstance(data_fim, datetime):
+            data_fim = data_fim.strftime('%Y-%m-%d')
+        elif isinstance(data_fim, str):
             data_fim = pd.to_datetime(data_fim).strftime('%Y-%m-%d')
         
         # Ordena os tickers para garantir mesmo hash
@@ -125,11 +150,21 @@ def obter_dados(tickers, data_inicio, data_fim):
         if os.path.exists(cache_file):
             file_time = datetime.fromtimestamp(os.path.getmtime(cache_file))
             if (datetime.now() - file_time).total_seconds() < CACHE_TTL:
-                print(f"[CACHE HIT - DISCO] {len(tickers)} tickers")
-                with open(cache_file, 'rb') as f:
-                    cached_data = pickle.load(f)
-                    CACHE_DADOS[cache_key] = (cached_data, datetime.now())
-                    return cached_data
+                try:
+                    print(f"[CACHE HIT - DISCO] {len(tickers)} tickers")
+                    with open(cache_file, 'rb') as f:
+                        cached_data = pickle.load(f)
+                        # Validar que o cache não está corrompido
+                        if isinstance(cached_data, pd.DataFrame) and not cached_data.empty:
+                            CACHE_DADOS[cache_key] = (cached_data, datetime.now())
+                            return cached_data
+                        else:
+                            print("[AVISO] Cache corrompido, re-baixando...")
+                            os.remove(cache_file)
+                except Exception as e:
+                    print(f"[AVISO] Erro ao ler cache: {e}")
+                    if os.path.exists(cache_file):
+                        os.remove(cache_file)
         
         # Download dos dados
         print(f"[DOWNLOAD] Baixando {len(tickers)} tickers...")
@@ -142,10 +177,14 @@ def obter_dados(tickers, data_inicio, data_fim):
             end=data_fim, 
             group_by='ticker', 
             threads=True,
-            auto_adjust=True,  # Adiciona para evitar o warning
-            progress=False  # Remove a barra de progresso repetitiva
+            auto_adjust=True,
+            progress=False
         )
         
+        if data.empty:
+            raise Exception("yfinance retornou DataFrame vazio")
+        
+        # Montar DataFrame final
         tuples = []
         for col in ['Open', 'High', 'Low', 'Close', 'Volume']:
             for ticker in tickers_sorted:
@@ -155,25 +194,75 @@ def obter_dados(tickers, data_inicio, data_fim):
         
         for ticker in tickers_sorted:
             ticker_sa = ticker + '.SA'
-            if ticker_sa in data.columns.get_level_values(0):
-                dados_final[('Open', ticker)] = data[ticker_sa]['Open']
-                dados_final[('High', ticker)] = data[ticker_sa]['High']
-                dados_final[('Low', ticker)] = data[ticker_sa]['Low']
-                dados_final[('Close', ticker)] = data[ticker_sa]['Close']
-                dados_final[('Volume', ticker)] = data[ticker_sa]['Volume']
+            try:
+                if ticker_sa in data.columns.get_level_values(0):
+                    dados_final[('Open', ticker)] = data[ticker_sa]['Open']
+                    dados_final[('High', ticker)] = data[ticker_sa]['High']
+                    dados_final[('Low', ticker)] = data[ticker_sa]['Low']
+                    dados_final[('Close', ticker)] = data[ticker_sa]['Close']
+                    dados_final[('Volume', ticker)] = data[ticker_sa]['Volume']
+            except Exception as e:
+                print(f"[AVISO] Erro ao processar {ticker}: {e}")
+                continue
         
         dados_final = dados_final.ffill().bfill().infer_objects(copy=False)
         
+        # ============================================
+        # VALIDAÇÃO PÓS-DOWNLOAD — remover tickers sem dados
+        # ============================================
+        tickers_validos = []
+        tickers_removidos = []
+        
+        for ticker in tickers_sorted:
+            if ('Close', ticker) in dados_final.columns:
+                col = dados_final[('Close', ticker)]
+                # Converter para numérico para garantir
+                col_numeric = pd.to_numeric(col, errors='coerce')
+                
+                if col_numeric.isna().all() or (col_numeric == 0).all():
+                    tickers_removidos.append(ticker)
+                elif col_numeric.isna().sum() > len(col_numeric) * 0.5:
+                    # Mais de 50% NaN = dados insuficientes
+                    tickers_removidos.append(ticker)
+                else:
+                    tickers_validos.append(ticker)
+            else:
+                tickers_removidos.append(ticker)
+        
+        if tickers_removidos:
+            print(f"[AVISO] Tickers removidos (sem dados válidos): {tickers_removidos}")
+            colunas_remover = []
+            for col_name in ['Open', 'High', 'Low', 'Close', 'Volume']:
+                for ticker in tickers_removidos:
+                    if (col_name, ticker) in dados_final.columns:
+                        colunas_remover.append((col_name, ticker))
+            if colunas_remover:
+                dados_final = dados_final.drop(columns=colunas_remover)
+        
+        print(f"[OK] {len(tickers_validos)} tickers válidos de {len(tickers_sorted)} solicitados")
+        
+        if len(tickers_validos) < 2:
+            raise Exception(f"Apenas {len(tickers_validos)} tickers válidos — mínimo necessário: 2")
+        
+        # Garantir tipos numéricos
+        for col in dados_final.columns:
+            dados_final[col] = pd.to_numeric(dados_final[col], errors='coerce')
+        dados_final = dados_final.ffill().bfill()
+        
         # Salva em memória e disco
         CACHE_DADOS[cache_key] = (dados_final, datetime.now())
-        with open(cache_file, 'wb') as f:
-            pickle.dump(dados_final, f)
+        try:
+            with open(cache_file, 'wb') as f:
+                pickle.dump(dados_final, f)
+            print(f"[CACHE SALVO] {len(tickers_validos)} tickers")
+        except Exception as e:
+            print(f"[AVISO] Erro ao salvar cache: {e}")
         
-        print(f"[CACHE SALVO] {len(tickers)} tickers")
         return dados_final
         
     except Exception as e:
         raise Exception(f"Erro ao obter dados: {str(e)}")
+
 
 def limpar_cache_antigo(dias=7):
     """Remove arquivos de cache com mais de X dias"""
@@ -191,45 +280,82 @@ def limpar_cache_antigo(dias=7):
 
 
 def calcular_meia_vida(spread):
-    spread_lag = spread.shift(1)
-    spread_diff = spread.diff()
-    spread_lag = spread_lag.iloc[1:]
-    spread_diff = spread_diff.iloc[1:]
-    modelo = OLS(spread_diff, spread_lag).fit()
-    if modelo.params[0] < 0:
-        return -np.log(2) / modelo.params[0]
-    return None
+    try:
+        spread_lag = spread.shift(1)
+        spread_diff = spread.diff()
+        spread_lag = spread_lag.iloc[1:]
+        spread_diff = spread_diff.iloc[1:]
+        
+        # Remover NaN
+        mask = ~(spread_lag.isna() | spread_diff.isna())
+        spread_lag = spread_lag[mask]
+        spread_diff = spread_diff[mask]
+        
+        if len(spread_lag) < 10:
+            return None
+            
+        modelo = OLS(spread_diff, spread_lag).fit()
+        if modelo.params.iloc[0] < 0:
+            meia_vida = -np.log(2) / modelo.params.iloc[0]
+            if np.isfinite(meia_vida) and meia_vida > 0:
+                return meia_vida
+        return None
+    except Exception:
+        return None
 
 
 def teste_adf(serie_temporal):
-    return adfuller(serie_temporal)[1]
+    try:
+        serie_limpa = serie_temporal.dropna()
+        if len(serie_limpa) < 20:
+            return 1.0  # Retorna p-valor alto = não estacionário
+        return adfuller(serie_limpa)[1]
+    except Exception:
+        return 1.0
 
 
 def calcular_zscore(spread):
     mean = spread.mean()
     std = spread.std()
+    if std == 0 or np.isnan(std):
+        return pd.Series(0, index=spread.index)
     return (spread - mean) / std
 
 
 def processar_par(args):
+    """Processa um par de ações — versão segura sem multiprocessing"""
     dados_close, i, j, max_meia_vida, min_meia_vida, max_pvalor_adf, max_pvalor_coint, correlacao_ij = args
     
     acao1, acao2 = dados_close.columns[i], dados_close.columns[j]
     
     try:
-        serie1 = dados_close[acao1].dropna()
-        serie2 = dados_close[acao2].dropna()
+        serie1 = pd.to_numeric(dados_close[acao1], errors='coerce').dropna()
+        serie2 = pd.to_numeric(dados_close[acao2], errors='coerce').dropna()
         
-        if len(serie1) <= 1 or len(serie2) <= 1:
+        # Alinhar índices
+        idx_comum = serie1.index.intersection(serie2.index)
+        serie1 = serie1.loc[idx_comum]
+        serie2 = serie2.loc[idx_comum]
+        
+        if len(serie1) < 30 or len(serie2) < 30:
+            return None
+        
+        # Verificar se as séries têm variação
+        if serie1.std() == 0 or serie2.std() == 0:
             return None
         
         _, pvalor, _ = coint(serie1, serie2)
         
-        if pvalor > max_pvalor_coint:
+        if pvalor > max_pvalor_coint or np.isnan(pvalor):
             return None
         
         modelo = OLS(serie1, serie2).fit()
-        spread = serie1 - modelo.params[0] * serie2
+        beta = modelo.params.iloc[0]
+        
+        if np.isnan(beta) or np.isinf(beta):
+            return None
+        
+        spread = serie1 - beta * serie2
         meia_vida = calcular_meia_vida(spread)
         
         if meia_vida is None:
@@ -247,9 +373,9 @@ def processar_par(args):
             'MeiaVida': meia_vida,
             'PvalorADF': pvalor_adf,
             'Correlacao': correlacao_ij,
-            'Beta': float(modelo.params[0])
+            'Beta': float(beta)
         }
-    except:
+    except Exception as e:
         return None
 
 
@@ -257,7 +383,9 @@ def analisar_pares(dados, max_meia_vida=30, min_meia_vida=1, max_pvalor_adf=0.05
     n = dados['Close'].shape[1]
     total_pares = 0
     
-    correlacoes = dados['Close'].corr()
+    # Converter para numérico antes de calcular correlação
+    close_data = dados['Close'].apply(pd.to_numeric, errors='coerce')
+    correlacoes = close_data.corr()
     
     args_list = []
     for i in range(n):
@@ -265,9 +393,12 @@ def analisar_pares(dados, max_meia_vida=30, min_meia_vida=1, max_pvalor_adf=0.05
             total_pares += 1
             correlacao = correlacoes.iloc[i, j]
             
+            if np.isnan(correlacao):
+                continue
+            
             if correlacao >= min_correlacao:
                 args_list.append((
-                    dados['Close'],
+                    close_data,
                     i,
                     j,
                     max_meia_vida,
@@ -277,60 +408,99 @@ def analisar_pares(dados, max_meia_vida=30, min_meia_vida=1, max_pvalor_adf=0.05
                     correlacao
                 ))
     
-    num_processes = max(1, cpu_count() - 1)
+    print(f"[ANÁLISE] {len(args_list)} pares pré-filtrados de {total_pares} total (correlação >= {min_correlacao})")
     
-    with Pool(processes=num_processes) as pool:
-        resultados_raw = pool.map(processar_par, args_list)
+    # Loop sequencial — compatível com Railway (sem multiprocessing)
+    resultados_raw = []
+    for i, args in enumerate(args_list):
+        resultado = processar_par(args)
+        if resultado is not None:
+            resultados_raw.append(resultado)
+        
+        # Log de progresso a cada 100 pares
+        if (i + 1) % 100 == 0:
+            print(f"[PROGRESSO] {i+1}/{len(args_list)} pares processados, {len(resultados_raw)} válidos")
     
-    resultados = [r for r in resultados_raw if r is not None]
+    print(f"[RESULTADO] {len(resultados_raw)} pares cointegrados encontrados")
     
-    return pd.DataFrame(resultados), total_pares
+    if not resultados_raw:
+        return pd.DataFrame(), total_pares
+    
+    return pd.DataFrame(resultados_raw), total_pares
 
 
 def filtrar_pares_por_zscore(dados, df_resultados, zscore_minimo=2):
+    if df_resultados.empty:
+        print("[DEBUG] DataFrame de resultados vazio — nenhum par para filtrar")
+        return pd.DataFrame()
+    
     pares_validos = []
+    close_data = dados['Close'].apply(pd.to_numeric, errors='coerce')
     
     for _, row in df_resultados.iterrows():
         acao1, acao2 = row['Acao1'], row['Acao2']
         
-        beta_rotativo = calcular_beta_rotativo(dados, acao1, acao2, 60)  
-        if not beta_rotativo.empty:
-            beta_atual = beta_rotativo.iloc[-1]
-            beta_medio = beta_rotativo.mean()
-            desvio_padrao = beta_rotativo.std()
+        try:
+            serie1 = close_data[acao1].dropna()
+            serie2 = close_data[acao2].dropna()
             
-            distancia_media = abs(beta_atual - beta_medio)
-            if distancia_media <= desvio_padrao:
-                status = 'Favoravel'
-            elif distancia_media <= 1.5 * desvio_padrao:
-                status = 'Cautela'
-            else:
-                status = 'Não Recomendado'
-        else:
-            status = 'Indisponivel'
+            # Alinhar índices
+            idx_comum = serie1.index.intersection(serie2.index)
+            serie1 = serie1.loc[idx_comum]
+            serie2 = serie2.loc[idx_comum]
+            
+            if len(serie1) < 30 or len(serie2) < 30:
+                continue
+            
+            # Beta rotation
+            beta_rotativo = calcular_beta_rotativo(dados, acao1, acao2, 60)  
+            if not beta_rotativo.empty:
+                beta_atual = beta_rotativo.iloc[-1]
+                beta_medio = beta_rotativo.mean()
+                desvio_padrao = beta_rotativo.std()
                 
-        modelo = OLS(dados['Close'][acao1], dados['Close'][acao2]).fit()
-        spread = dados['Close', acao1] - modelo.params[0] * dados['Close', acao2]
-        zscore_atual = calcular_zscore(spread).iloc[-1]
-
-        if abs(zscore_atual) >= zscore_minimo:
-            print(f"[DEBUG] Par válido: {acao1}/{acao2} zscore={zscore_atual:.2f}")
-            direcao_acao1 = "Venda" if zscore_atual > 0 else "Compra"
-            direcao_acao2 = "Compra" if zscore_atual > 0 else "Venda"
+                if desvio_padrao == 0 or np.isnan(desvio_padrao):
+                    status = 'Indisponivel'
+                else:
+                    distancia_media = abs(beta_atual - beta_medio)
+                    if distancia_media <= desvio_padrao:
+                        status = 'Favoravel'
+                    elif distancia_media <= 1.5 * desvio_padrao:
+                        status = 'Cautela'
+                    else:
+                        status = 'NaoRecomendado'
+            else:
+                status = 'Indisponivel'
+                    
+            modelo = OLS(serie1, serie2).fit()
+            spread = serie1 - modelo.params.iloc[0] * serie2
+            zscore_atual = calcular_zscore(spread).iloc[-1]
             
-            pares_validos.append({
-                'Acao1': acao1,
-                'Acao2': acao2,
-                'PvalorCointegracao': row['PvalorCointegracao'],
-                'MeiaVida': row['MeiaVida'],
-                'PvalorADF': row['PvalorADF'],
-                'Correlacao': row['Correlacao'],
-                'Beta': row['Beta'],  
-                'Status': status,
-                'ZscoreAtual': zscore_atual,
-                'DirecaoAcao1': direcao_acao1,
-                'DirecaoAcao2': direcao_acao2
-            })
+            if np.isnan(zscore_atual):
+                continue
+
+            if abs(zscore_atual) >= zscore_minimo:
+                print(f"[DEBUG] Par válido: {acao1}/{acao2} zscore={zscore_atual:.2f} status={status}")
+                direcao_acao1 = "Venda" if zscore_atual > 0 else "Compra"
+                direcao_acao2 = "Compra" if zscore_atual > 0 else "Venda"
+                
+                pares_validos.append({
+                    'Acao1': acao1,
+                    'Acao2': acao2,
+                    'PvalorCointegracao': row['PvalorCointegracao'],
+                    'MeiaVida': row['MeiaVida'],
+                    'PvalorADF': row['PvalorADF'],
+                    'Correlacao': row['Correlacao'],
+                    'Beta': row['Beta'],  
+                    'Status': status,
+                    'ZscoreAtual': zscore_atual,
+                    'DirecaoAcao1': direcao_acao1,
+                    'DirecaoAcao2': direcao_acao2
+                })
+        except Exception as e:
+            print(f"[AVISO] Erro ao filtrar par {acao1}/{acao2}: {e}")
+            continue
+    
     print(f"[DEBUG] Pares após filtro zscore: {len(pares_validos)}")        
     return pd.DataFrame(pares_validos)
 
@@ -341,111 +511,183 @@ def analisar_cointegration_stability(dados, acao1, acao2, periodos=None):
         periodos = [60, 90, 120, 140, 180, 200, 240]
     
     resultados = []
+    close_data = dados['Close'].apply(pd.to_numeric, errors='coerce')
     
     for periodo in periodos:
-        if len(dados) < periodo:
-            continue
+        try:
+            if len(dados) < periodo:
+                continue
+                
+            dados_recentes = close_data.tail(periodo)
             
-        dados_recentes = dados.tail(periodo)
-        
-        # Cointegração
-        _, pvalor, _ = coint(dados_recentes['Close'][acao1], dados_recentes['Close'][acao2])
-        
-        # Spread e Meia-Vida
-        modelo = OLS(dados_recentes['Close'][acao1], dados_recentes['Close'][acao2]).fit()
-        spread = dados_recentes['Close'][acao1] - modelo.params[0] * dados_recentes['Close'][acao2]
-        meia_vida = calcular_meia_vida(spread) if len(spread.dropna()) > 1 else None
-        
-        resultados.append({
-            'Periodo': periodo,
-            'PvalorCoint': round(pvalor, 4),
-            'MeiaVida': round(meia_vida, 2) if meia_vida else None,
-            'R2': round(modelo.rsquared, 4),
-            'Status': 'Cointegrado' if pvalor < 0.05 else 'Não Cointegrado'
-        })
+            serie1 = dados_recentes[acao1].dropna()
+            serie2 = dados_recentes[acao2].dropna()
+            
+            idx_comum = serie1.index.intersection(serie2.index)
+            serie1 = serie1.loc[idx_comum]
+            serie2 = serie2.loc[idx_comum]
+            
+            if len(serie1) < 20:
+                continue
+            
+            # Cointegração
+            _, pvalor, _ = coint(serie1, serie2)
+            
+            # Spread e Meia-Vida
+            modelo = OLS(serie1, serie2).fit()
+            spread = serie1 - modelo.params.iloc[0] * serie2
+            meia_vida = calcular_meia_vida(spread) if len(spread.dropna()) > 1 else None
+            
+            resultados.append({
+                'Periodo': periodo,
+                'PvalorCoint': round(pvalor, 4),
+                'MeiaVida': round(meia_vida, 2) if meia_vida else None,
+                'R2': round(modelo.rsquared, 4),
+                'Status': 'Cointegrado' if pvalor < 0.05 else 'Não Cointegrado'
+            })
+        except Exception as e:
+            print(f"[AVISO] Erro na estabilidade período {periodo}: {e}")
+            continue
 
     return pd.DataFrame(resultados)
 
 
 def calcular_atr(dados, acao, periodo=14):
-    high = dados['High'][acao].values
-    low = dados['Low'][acao].values
-    close = np.roll(dados['Close'][acao].values, 1)
-    close[0] = np.nan
-    
-    tr = np.maximum.reduce([
-        high - low,
-        np.abs(high - close),
-        np.abs(low - close)
-    ])
-    
-    atr = pd.Series(tr, index=dados['High'][acao].index).rolling(window=periodo).mean()
-    return atr
+    try:
+        high = pd.to_numeric(dados['High'][acao], errors='coerce').values
+        low = pd.to_numeric(dados['Low'][acao], errors='coerce').values
+        close = np.roll(pd.to_numeric(dados['Close'][acao], errors='coerce').values, 1)
+        close[0] = np.nan
+        
+        tr = np.maximum.reduce([
+            high - low,
+            np.abs(high - close),
+            np.abs(low - close)
+        ])
+        
+        atr = pd.Series(tr, index=dados['High'][acao].index).rolling(window=periodo).mean()
+        return atr
+    except Exception as e:
+        print(f"[AVISO] Erro no ATR de {acao}: {e}")
+        return pd.Series(0, index=dados.index)
 
 
 def calcular_valor_stop_atr(dados, acao1, acao2, qtd1, qtd2, direcao_acao1, direcao_acao2, multiplicador_atr=2):
-    atr1 = calcular_atr(dados, acao1)
-    atr2 = calcular_atr(dados, acao2)
-    ultimo_preco1 = dados['Close'][acao1].iloc[-1]
-    ultimo_preco2 = dados['Close'][acao2].iloc[-1]
-
-    if direcao_acao1 == "Compra":
-        stop_acao1 = ultimo_preco1 - (multiplicador_atr * atr1.iloc[-1])
-        stop_acao2 = ultimo_preco2 + (multiplicador_atr * atr2.iloc[-1])
-    else:
-        stop_acao1 = ultimo_preco1 + (multiplicador_atr * atr1.iloc[-1])
-        stop_acao2 = ultimo_preco2 - (multiplicador_atr * atr2.iloc[-1])
+    try:
+        atr1 = calcular_atr(dados, acao1)
+        atr2 = calcular_atr(dados, acao2)
+        ultimo_preco1 = float(pd.to_numeric(dados['Close'][acao1].iloc[-1], errors='coerce'))
+        ultimo_preco2 = float(pd.to_numeric(dados['Close'][acao2].iloc[-1], errors='coerce'))
         
-    return abs(qtd1 * (ultimo_preco1 - stop_acao1) + qtd2 * (stop_acao2 - ultimo_preco2))
+        atr1_val = float(atr1.iloc[-1]) if not np.isnan(atr1.iloc[-1]) else ultimo_preco1 * 0.02
+        atr2_val = float(atr2.iloc[-1]) if not np.isnan(atr2.iloc[-1]) else ultimo_preco2 * 0.02
+
+        if direcao_acao1 == "Compra":
+            stop_acao1 = ultimo_preco1 - (multiplicador_atr * atr1_val)
+            stop_acao2 = ultimo_preco2 + (multiplicador_atr * atr2_val)
+        else:
+            stop_acao1 = ultimo_preco1 + (multiplicador_atr * atr1_val)
+            stop_acao2 = ultimo_preco2 - (multiplicador_atr * atr2_val)
+            
+        return abs(qtd1 * (ultimo_preco1 - stop_acao1) + qtd2 * (stop_acao2 - ultimo_preco2))
+    except Exception as e:
+        print(f"[AVISO] Erro no cálculo de stop: {e}")
+        return 0.0
 
 
 def calcular_valor_gain_atr(dados, acao1, acao2, qtd1, qtd2, direcao_acao1, direcao_acao2, multiplicador_atr=3):
-    atr1 = calcular_atr(dados, acao1)
-    atr2 = calcular_atr(dados, acao2)
-    ultimo_preco1 = dados['Close'][acao1].iloc[-1]
-    ultimo_preco2 = dados['Close'][acao2].iloc[-1]
-
-    if direcao_acao1 == "Compra":
-        gain_acao1 = ultimo_preco1 + (multiplicador_atr * atr1.iloc[-1])
-        gain_acao2 = ultimo_preco2 - (multiplicador_atr * atr2.iloc[-1])
-    else:
-        gain_acao1 = ultimo_preco1 - (multiplicador_atr * atr1.iloc[-1])
-        gain_acao2 = ultimo_preco2 + (multiplicador_atr * atr2.iloc[-1])
+    try:
+        atr1 = calcular_atr(dados, acao1)
+        atr2 = calcular_atr(dados, acao2)
+        ultimo_preco1 = float(pd.to_numeric(dados['Close'][acao1].iloc[-1], errors='coerce'))
+        ultimo_preco2 = float(pd.to_numeric(dados['Close'][acao2].iloc[-1], errors='coerce'))
         
-    return abs(qtd1 * (gain_acao1 - ultimo_preco1) + qtd2 * (ultimo_preco2 - gain_acao2))
+        atr1_val = float(atr1.iloc[-1]) if not np.isnan(atr1.iloc[-1]) else ultimo_preco1 * 0.02
+        atr2_val = float(atr2.iloc[-1]) if not np.isnan(atr2.iloc[-1]) else ultimo_preco2 * 0.02
+
+        if direcao_acao1 == "Compra":
+            gain_acao1 = ultimo_preco1 + (multiplicador_atr * atr1_val)
+            gain_acao2 = ultimo_preco2 - (multiplicador_atr * atr2_val)
+        else:
+            gain_acao1 = ultimo_preco1 - (multiplicador_atr * atr1_val)
+            gain_acao2 = ultimo_preco2 + (multiplicador_atr * atr2_val)
+            
+        return abs(qtd1 * (gain_acao1 - ultimo_preco1) + qtd2 * (ultimo_preco2 - gain_acao2))
+    except Exception as e:
+        print(f"[AVISO] Erro no cálculo de gain: {e}")
+        return 0.0
 
 
 def calcular_zscore_serie(dados, acao1, acao2):
-    modelo = OLS(dados['Close'][acao1], dados['Close'][acao2]).fit()
-    spread = dados['Close'][acao1] - modelo.params[0] * dados['Close'][acao2]
-    zscore = calcular_zscore(spread)
-    
-    return {
-        'zscore': zscore.tolist(),
-        'datas': zscore.index.strftime('%Y-%m-%d').tolist()
-    }
+    try:
+        close_data = dados['Close'].apply(pd.to_numeric, errors='coerce')
+        serie1 = close_data[acao1].dropna()
+        serie2 = close_data[acao2].dropna()
+        
+        idx_comum = serie1.index.intersection(serie2.index)
+        serie1 = serie1.loc[idx_comum]
+        serie2 = serie2.loc[idx_comum]
+        
+        modelo = OLS(serie1, serie2).fit()
+        spread = serie1 - modelo.params.iloc[0] * serie2
+        zscore = calcular_zscore(spread)
+        
+        return {
+            'zscore': zscore.tolist(),
+            'datas': zscore.index.strftime('%Y-%m-%d').tolist()
+        }
+    except Exception as e:
+        print(f"[AVISO] Erro ao calcular zscore série: {e}")
+        return {'zscore': [], 'datas': []}
 
 
 def calcular_spread_serie(dados, acao1, acao2):
-    spread = dados['Close'][acao1] / dados['Close'][acao2]
-    
-    return {
-        'spread': spread.tolist(),
-        'datas': spread.index.strftime('%Y-%m-%d').tolist()
-    }
+    try:
+        close_data = dados['Close'].apply(pd.to_numeric, errors='coerce')
+        serie1 = close_data[acao1].dropna()
+        serie2 = close_data[acao2].dropna()
+        
+        idx_comum = serie1.index.intersection(serie2.index)
+        serie1 = serie1.loc[idx_comum]
+        serie2 = serie2.loc[idx_comum]
+        
+        spread = serie1 / serie2
+        
+        return {
+            'spread': spread.tolist(),
+            'datas': spread.index.strftime('%Y-%m-%d').tolist()
+        }
+    except Exception as e:
+        print(f"[AVISO] Erro ao calcular spread série: {e}")
+        return {'spread': [], 'datas': []}
 
 
 def calcular_beta_rotativo(dados, acao1, acao2, janela):
-    log_returns1 = np.log(dados['Close'][acao1] / dados['Close'][acao1].shift(1))
-    log_returns2 = np.log(dados['Close'][acao2] / dados['Close'][acao2].shift(1))
+    try:
+        close_data = dados['Close'].apply(pd.to_numeric, errors='coerce')
+        
+        log_returns1 = np.log(close_data[acao1] / close_data[acao1].shift(1))
+        log_returns2 = np.log(close_data[acao2] / close_data[acao2].shift(1))
+        
+        # Remover NaN e infinitos
+        mask = ~(log_returns1.isna() | log_returns2.isna() | np.isinf(log_returns1) | np.isinf(log_returns2))
+        log_returns1 = log_returns1[mask]
+        log_returns2 = log_returns2[mask]
 
-    if len(log_returns1.dropna()) < janela or len(log_returns2.dropna()) < janela:
-        return pd.Series()
+        if len(log_returns1) < janela or len(log_returns2) < janela:
+            return pd.Series(dtype=float)
 
-    model = RollingOLS(log_returns1, log_returns2, window=janela)
-    rolling_res = model.fit()
+        model = RollingOLS(log_returns1, log_returns2, window=janela)
+        rolling_res = model.fit()
 
-    return pd.Series(rolling_res.params.iloc[:, 0], index=dados.index[janela:])
+        result = pd.Series(rolling_res.params.iloc[:, 0])
+        # Remover NaN do resultado
+        result = result.dropna()
+        
+        return result
+    except Exception as e:
+        print(f"[AVISO] Erro no beta rotativo {acao1}/{acao2}: {e}")
+        return pd.Series(dtype=float)
 
 
 def analisar_beta_rotativo(beta_rotativo, beta_atual, beta_medio, desvio_padrao):
@@ -457,6 +699,11 @@ def analisar_beta_rotativo(beta_rotativo, beta_atual, beta_medio, desvio_padrao)
         'interpretacao': '',
         'explicacaoStatus': ''
     }
+    
+    if desvio_padrao == 0 or np.isnan(desvio_padrao) or np.isnan(beta_atual) or np.isnan(beta_medio):
+        analise['status'] = 'Indisponivel'
+        analise['explicacaoStatus'] = 'Dados insuficientes para análise'
+        return analise
     
     distancia_media = abs(beta_atual - beta_medio)
     
@@ -481,7 +728,7 @@ def analisar_beta_rotativo(beta_rotativo, beta_atual, beta_medio, desvio_padrao)
         ])
         
     else:
-        analise['status'] = 'Não Recomendado'
+        analise['status'] = 'NaoRecomendado'
         analise['nivelRisco'] = 'Alto'
         analise['explicacaoStatus'] = 'Beta muito distante da media'
         analise['sugestoes'].extend([
@@ -490,10 +737,13 @@ def analisar_beta_rotativo(beta_rotativo, beta_atual, beta_medio, desvio_padrao)
             "Aguardar estabilizacao do beta"
         ])
 
-    if beta_atual > beta_medio:
-        analise['interpretacao'] = f"Ativos {((beta_atual/beta_medio - 1) * 100):.1f}% mais correlacionados que o normal"
+    if beta_medio != 0:
+        if beta_atual > beta_medio:
+            analise['interpretacao'] = f"Ativos {((beta_atual/beta_medio - 1) * 100):.1f}% mais correlacionados que o normal"
+        else:
+            analise['interpretacao'] = f"Ativos {((1 - beta_atual/beta_medio) * 100):.1f}% menos correlacionados que o normal"
     else:
-        analise['interpretacao'] = f"Ativos {((1 - beta_atual/beta_medio) * 100):.1f}% menos correlacionados que o normal"
+        analise['interpretacao'] = "Beta medio igual a zero — análise indisponível"
         
     return analise
 
@@ -504,16 +754,16 @@ def calcular_beta_rotativo_serie(dados, acao1, acao2, janela):
     if beta_rotativo.empty:
         return None
 
-    media_beta = beta_rotativo.mean()
-    desvio_padrao_beta = beta_rotativo.std()
+    media_beta = float(beta_rotativo.mean())
+    desvio_padrao_beta = float(beta_rotativo.std())
     limite_superior = media_beta + 2 * desvio_padrao_beta
     limite_inferior = media_beta - 2 * desvio_padrao_beta
 
     return {
         'beta': beta_rotativo.tolist(),
         'datas': beta_rotativo.index.strftime('%Y-%m-%d').tolist(),
-        'mediaBeta': float(media_beta),
-        'desvioPadraoBeta': float(desvio_padrao_beta),
+        'mediaBeta': media_beta,
+        'desvioPadraoBeta': desvio_padrao_beta,
         'limiteSuperior': float(limite_superior),
         'limiteInferior': float(limite_inferior)
     }
@@ -525,65 +775,72 @@ def ajustar_quantidade(qtd):
         if resto >= 51:
             return round((qtd + (100 - resto)) / 100) * 100
         return round((qtd - resto) / 100) * 100
-    return round(qtd)
+    return max(1, round(qtd))
 
 
 def calcular_quantidades_operacao(dados, acao1, acao2, beta, direcao_acao1, direcao_acao2, investimento):    
-    ultimo_preco1 = dados['Close'][acao1].iloc[-1]
-    ultimo_preco2 = dados['Close'][acao2].iloc[-1]
-
-    if beta > 0:
-        valor_por_lado = investimento / 2
-        qtd1 = ajustar_quantidade(round(valor_por_lado / ultimo_preco1))
-        qtd2 = ajustar_quantidade(round(valor_por_lado / ultimo_preco2))
+    try:
+        ultimo_preco1 = float(pd.to_numeric(dados['Close'][acao1].iloc[-1], errors='coerce'))
+        ultimo_preco2 = float(pd.to_numeric(dados['Close'][acao2].iloc[-1], errors='coerce'))
         
-        valor_acao1 = qtd1 * ultimo_preco1
-        valor_acao2 = qtd2 * ultimo_preco2
-        
-        valor_total = abs(qtd1 * ultimo_preco1) + abs(qtd2 * ultimo_preco2)
-        if valor_total > investimento:
-            fator_ajuste = investimento / valor_total
-            qtd1 = round(qtd1 * fator_ajuste)
-            qtd2 = round(qtd2 * fator_ajuste)
-            qtd1 = ajustar_quantidade(qtd1)
-            qtd2 = ajustar_quantidade(qtd2)
-                
-        valor_acao1 = qtd1 * ultimo_preco1
-        valor_acao2 = qtd2 * ultimo_preco2
+        if ultimo_preco1 <= 0 or ultimo_preco2 <= 0 or np.isnan(ultimo_preco1) or np.isnan(ultimo_preco2):
+            raise ValueError(f"Preços inválidos: {acao1}={ultimo_preco1}, {acao2}={ultimo_preco2}")
 
-        if abs(valor_acao1 - valor_acao2) > min(ultimo_preco1, ultimo_preco2):
-            if valor_acao1 > valor_acao2:
-                qtd1 = ajustar_quantidade(round(qtd1 * (valor_acao2 / valor_acao1)))
-            else:
-                qtd2 = ajustar_quantidade(round(qtd2 * (valor_acao1 / valor_acao2)))
-    else:
-        valor_por_lado = investimento / 2
-        qtd1 = ajustar_quantidade(round(valor_por_lado / ultimo_preco1))
-        qtd2 = ajustar_quantidade(round(valor_por_lado / ultimo_preco2))
+        if beta > 0:
+            valor_por_lado = investimento / 2
+            qtd1 = ajustar_quantidade(round(valor_por_lado / ultimo_preco1))
+            qtd2 = ajustar_quantidade(round(valor_por_lado / ultimo_preco2))
+            
+            valor_acao1 = qtd1 * ultimo_preco1
+            valor_acao2 = qtd2 * ultimo_preco2
+            
+            valor_total = abs(qtd1 * ultimo_preco1) + abs(qtd2 * ultimo_preco2)
+            if valor_total > investimento:
+                fator_ajuste = investimento / valor_total
+                qtd1 = round(qtd1 * fator_ajuste)
+                qtd2 = round(qtd2 * fator_ajuste)
+                qtd1 = ajustar_quantidade(qtd1)
+                qtd2 = ajustar_quantidade(qtd2)
                     
-        valor_total = abs(qtd1 * ultimo_preco1) + abs(qtd2 * ultimo_preco2)
-        if valor_total > investimento:
-            fator_ajuste = investimento / valor_total
-            qtd1 = round(qtd1 * fator_ajuste)
-            qtd2 = round(qtd2 * fator_ajuste)
-            qtd1 = ajustar_quantidade(qtd1)
-            qtd2 = ajustar_quantidade(qtd2)
+            valor_acao1 = qtd1 * ultimo_preco1
+            valor_acao2 = qtd2 * ultimo_preco2
 
-    valor_total_acao1 = (qtd1 * ultimo_preco1) * (1 if direcao_acao1 == "Venda" else -1)
-    valor_total_acao2 = (qtd2 * ultimo_preco2) * (1 if direcao_acao2 == "Venda" else -1)
+            if abs(valor_acao1 - valor_acao2) > min(ultimo_preco1, ultimo_preco2):
+                if valor_acao1 > valor_acao2:
+                    qtd1 = ajustar_quantidade(round(qtd1 * (valor_acao2 / valor_acao1)))
+                else:
+                    qtd2 = ajustar_quantidade(round(qtd2 * (valor_acao1 / valor_acao2)))
+        else:
+            valor_por_lado = investimento / 2
+            qtd1 = ajustar_quantidade(round(valor_por_lado / ultimo_preco1))
+            qtd2 = ajustar_quantidade(round(valor_por_lado / ultimo_preco2))
+                        
+            valor_total = abs(qtd1 * ultimo_preco1) + abs(qtd2 * ultimo_preco2)
+            if valor_total > investimento:
+                fator_ajuste = investimento / valor_total
+                qtd1 = round(qtd1 * fator_ajuste)
+                qtd2 = round(qtd2 * fator_ajuste)
+                qtd1 = ajustar_quantidade(qtd1)
+                qtd2 = ajustar_quantidade(qtd2)
 
-    impacto_liquido = abs(valor_total_acao1) if "Venda" in direcao_acao1 else -abs(valor_total_acao1)
-    impacto_liquido += abs(valor_total_acao2) if "Venda" in direcao_acao2 else -abs(valor_total_acao2)
+        valor_total_acao1 = (qtd1 * ultimo_preco1) * (1 if direcao_acao1 == "Venda" else -1)
+        valor_total_acao2 = (qtd2 * ultimo_preco2) * (1 if direcao_acao2 == "Venda" else -1)
 
-    return {
-        'qtd1': int(qtd1),
-        'qtd2': int(qtd2),
-        'ultimoPreco1': float(ultimo_preco1),
-        'ultimoPreco2': float(ultimo_preco2),
-        'valorTotal1': float(abs(valor_total_acao1)),
-        'valorTotal2': float(abs(valor_total_acao2)),
-        'impactoLiquido': float(impacto_liquido)
-    }
+        impacto_liquido = abs(valor_total_acao1) if "Venda" in direcao_acao1 else -abs(valor_total_acao1)
+        impacto_liquido += abs(valor_total_acao2) if "Venda" in direcao_acao2 else -abs(valor_total_acao2)
+
+        return {
+            'qtd1': int(qtd1),
+            'qtd2': int(qtd2),
+            'ultimoPreco1': float(ultimo_preco1),
+            'ultimoPreco2': float(ultimo_preco2),
+            'valorTotal1': float(abs(valor_total_acao1)),
+            'valorTotal2': float(abs(valor_total_acao2)),
+            'impactoLiquido': float(impacto_liquido)
+        }
+    except Exception as e:
+        print(f"[ERRO] calcular_quantidades_operacao: {e}")
+        raise
 
 
 def calcular_margem_custos(valor_vendido, valor_comprado, percentual_garantia, taxa_btc_anual, dias_operacao, taxa_corretora_btc):
