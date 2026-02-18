@@ -226,42 +226,23 @@ class RailwaySyncService:
         }
 
     def obter_datas_disponiveis(self) -> List[str]:
-        """Retorna datas úteis B3 disponíveis — respeita D+1 e feriados"""
+            """Retorna lista de datas para sincronização"""
+            return [                                   
+                "20260209",
+                "20260210",
+                "20260211",
+                "20260212",
+                "20260213",
+                "20260218",  
+                "20260219",
+                "20260220",
+                "20260223",
+                "20260224",
+                "20260225",
+                "20260226",
+                "20260227",
 
-        # Feriados B3 2026
-        feriados_b3 = {
-            date(2026, 1, 1),
-            date(2026, 2, 16),   # Carnaval segunda
-            date(2026, 2, 17),   # Carnaval terça
-            date(2026, 2, 18),   # Quarta-feira de Cinzas
-            date(2026, 4, 3),    # Sexta-feira Santa
-            date(2026, 4, 21),   # Tiradentes
-            date(2026, 5, 1),    # Dia do Trabalho
-            date(2026, 6, 4),    # Corpus Christi
-            date(2026, 9, 7),    # Independência
-            date(2026, 10, 12),  # N. Sra. Aparecida
-            date(2026, 11, 2),   # Finados
-            date(2026, 11, 15),  # Proclamação da República
-            date(2026, 11, 20),  # Consciência Negra
-            date(2026, 12, 24),  # Véspera Natal
-            date(2026, 12, 25),  # Natal
-            date(2026, 12, 31),  # Véspera Ano Novo
-        }
-
-        datas = []
-        inicio = date(2026, 2, 9)
-
-        # D+1: dados de ontem só ficam disponíveis hoje
-        # último dia seguro = anteontem (hoje - 2)
-        fim = date.today() - timedelta(days=2)
-
-        atual = inicio
-        while atual <= fim:
-            if atual.weekday() < 5 and atual not in feriados_b3:
-                datas.append(atual.strftime('%Y%m%d'))
-            atual += timedelta(days=1)
-
-        return datas
+            ]
 
     def obter_status(self) -> Dict:
         """Retorna status atual do banco"""
