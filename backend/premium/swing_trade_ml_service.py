@@ -53,18 +53,25 @@ class SwingTradeMachineLearningService:
         print("Dados normalizados com sucesso")
         return df
 
-    def download_data(self, ticker, start_date='2010-01-01', end_date='2027-12-31'):
+    def download_data(self, ticker, years_back=10, start_date=None, end_date=None):
         """Download dos dados históricos"""
         try:
             ticker_symbol = ticker.upper() + ".SA" if not ticker.endswith('.SA') else ticker.upper()
             print(f"Baixando dados para {ticker_symbol}...")
+            
+            # Datas dinâmicas - sempre relativas a hoje
+            if end_date is None:
+                end_date = datetime.now().strftime('%Y-%m-%d')
+            if start_date is None:
+                start_date = (datetime.now() - timedelta(days=years_back * 365)).strftime('%Y-%m-%d')
+            
+            print(f"Período: {start_date} até {end_date}")
             
             df = yf.download(ticker_symbol, start=start_date, end=end_date, progress=False)
             
             if df.empty:
                 raise ValueError(f"Nenhum dado encontrado para {ticker_symbol}")
             
-            # Normalizar dados do yfinance
             df = self.normalize_yfinance_data(df)
             
             print(f"Dados baixados: {len(df)} registros")
@@ -294,8 +301,7 @@ class SwingTradeMachineLearningService:
             learning_rate=0.1, 
             colsample_bytree=0.8, 
             subsample=0.8, 
-            random_state=42, 
-            use_label_encoder=False, 
+            random_state=42,             
             eval_metric='logloss'
         )
 
@@ -733,14 +739,14 @@ Sinal histórico: {'COMPRA' if historical_prediction == 1 else 'VENDA'}
         print("=== FIM DEBUG ===")
         return True
 
-    def run_analysis(self, ticker, prediction_days):
+    def run_analysis(self, ticker, prediction_days, years_back=10):
         """Executa a análise completa"""
         try:
             print(f"=== INICIANDO ANÁLISE SWING TRADE ML ===")
             print(f"Ticker: {ticker}, Dias: {prediction_days}")
             
             # Download dos dados
-            df, ticker_symbol = self.download_data(ticker)
+            df, ticker_symbol = self.download_data(ticker, years_back=years_back)
             
             # Verificar se temos dados suficientes
             if len(df) < 300:
