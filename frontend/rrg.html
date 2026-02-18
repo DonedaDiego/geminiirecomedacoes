@@ -62,7 +62,6 @@
       100% { transform: rotate(360deg); }
     }
 
-    /* 🔧 FIX: Container sem padding e com height definido */
     .chart-container {
       width: 100%;
       height: 650px;
@@ -76,7 +75,6 @@
       overflow: hidden;
     }
     
-    /* 🔧 FIX: Força o Plotly a ocupar 100% */
     #rrgChart {
       width: 100% !important;
       height: 100% !important;
@@ -148,7 +146,10 @@
       background: linear-gradient(90deg, transparent 0%, rgba(59, 130, 246, 0.2) 100%);
       transform: translateX(4px);
     }
-
+    select option {
+      background: #575353;
+      color: white;
+    }
   </style>
 </head>
 
@@ -162,9 +163,11 @@
           <img src="logo.png" alt="Geminii Logo" class="w-6 h-6 cursor-pointer">
         </a>
       </div>
-      <div class="hidden md:flex items-center space-x-6 text-xs text-gray-300 ml-8">
-        <a href="rsl.html" class="hover:text-white transition-colors">RSL Setores</a>
-        <span class="text-white font-medium">RRG Analysis</span>
+      <div class="hidden md:flex items-center space-x-6 text-xs text-gray-300 ml-8">        
+        <span class="text-white font-medium">RRG</span>
+        <a href="monitor-basico.html" class="hover:text-white transition-colors">Monitor Beta</a>        
+        <a href="amplitude.html" class="hover:text-white transition-colors">Amplitude</a>
+        <a href="sup_res_vol.html" class="hover:text-white transition-colors">Suporte e Resistência</a>
       </div>
       <div class="flex items-center space-x-3 ml-8">
         <div class="w-8 h-8 bg-purple-500 bg-opacity-10 border border-purple-500 border-opacity-30 rounded-full flex items-center justify-center relative">
@@ -174,6 +177,8 @@
       </div>
     </div>
   </nav>
+        
+
 
   <!-- Content -->
   <div class="pt-32 pb-16">
@@ -186,8 +191,8 @@
           <span class="text-white font-light">Graph</span>
         </h1>
         <p class="text-neutral-300 text-lg max-w-3xl mx-auto">
-          Análise de força relativa trimestral (EMA 65) vs anual (EMA 252). 
-          Identifique setores e ativos em Leading, Improving, Weakening ou Lagging.
+          Mapa de rotacao setorial. Identifique quais setores e ativos estao ganhando ou perdendo forca 
+          em relacao ao mercado, com base na tendencia de curto e longo prazo.
         </p>
       </div>
 
@@ -198,8 +203,8 @@
             id="analysisType" 
             class="px-4 py-2 bg-white bg-opacity-10 border border-white border-opacity-20 rounded-lg text-white focus:outline-none focus:border-geminii backdrop-blur-sm"
           >
-            <option value="setores">Análise por Setores</option>
-            <option value="ticker">Análise Individual (Ticker)</option>
+            <option value="setores">Analise por Setores</option>
+            <option value="ticker">Analise Individual (Ticker)</option>
           </select>
 
           <input 
@@ -224,8 +229,8 @@
       <!-- Loading State -->
       <div id="loadingState" class="hidden rrg-card p-12 text-center mb-8">
         <div class="spinner mx-auto mb-4" style="width: 40px; height: 40px; border-width: 3px;"></div>
-        <p class="text-xl font-semibold" style="color: #fb1ebb;">Calculando análise RRG...</p>
-        <p class="text-sm text-gray-400 mt-2">Processando EMAs 65 e 252...</p>
+        <p class="text-xl font-semibold" style="color: #fb1ebb;">Calculando analise RRG...</p>
+        <p class="text-sm text-gray-400 mt-2">Processando</p>
       </div>
 
       <!-- Statistics -->
@@ -237,7 +242,7 @@
               <i class="fas fa-arrow-up text-green-400"></i>
             </div>
             <p class="text-2xl font-bold text-green-400" id="leadingCount">0</p>
-            <p class="text-xs text-gray-500 mt-1">Forte momentum</p>
+            <p class="text-xs text-gray-500 mt-1">Forte em ambos os prazos</p>
           </div>
 
           <div class="metric-card text-center">
@@ -246,7 +251,7 @@
               <i class="fas fa-chart-line text-blue-400"></i>
             </div>
             <p class="text-2xl font-bold text-blue-400" id="improvingCount">0</p>
-            <p class="text-xs text-gray-500 mt-1">Recuperação</p>
+            <p class="text-xs text-gray-500 mt-1">Ganhando forca</p>
           </div>
 
           <div class="metric-card text-center">
@@ -255,7 +260,7 @@
               <i class="fas fa-chart-line-down text-yellow-400"></i>
             </div>
             <p class="text-2xl font-bold text-yellow-400" id="weakeningCount">0</p>
-            <p class="text-xs text-gray-500 mt-1">Enfraquecendo</p>
+            <p class="text-xs text-gray-500 mt-1">Perdendo forca</p>
           </div>
 
           <div class="metric-card text-center">
@@ -264,19 +269,18 @@
               <i class="fas fa-arrow-down text-red-400"></i>
             </div>
             <p class="text-2xl font-bold text-red-400" id="laggingCount">0</p>
-            <p class="text-xs text-gray-500 mt-1">Fraco momentum</p>
+            <p class="text-xs text-gray-500 mt-1">Fraco em ambos os prazos</p>
           </div>
         </div>
       </div>
 
-      <!-- 🔧 FIX: Gráfico RRG com estrutura corrigida -->
+      <!-- Grafico RRG -->
       <div id="chartSection" class="hidden rrg-card p-6 mb-8">
         <h2 class="text-2xl font-bold mb-4 text-center">
           <i class="fas fa-chart-scatter mr-3" style="color: #fb1ebb;"></i>
           Mapa RRG - <span id="chartTitle" style="color: #fb1ebb;">Setores</span>
         </h2>
         
-        <!-- Container sem padding adicional -->
         <div class="chart-container">
           <div id="rrgChart"></div>
         </div>
@@ -289,18 +293,32 @@
           Detalhes por <span id="listTitle">Setor</span>
         </h2>
         
-        <div id="itemsList" class="space-y-2">
-          <!-- Preenchido dinamicamente -->
-        </div>
+        <div id="itemsList" class="space-y-2"></div>
       </div>
 
       <!-- Estado Vazio -->
       <div id="emptyState" class="rrg-card p-12 text-center">
         <i class="fas fa-chart-scatter text-6xl mb-4" style="color: rgba(186, 57, 175, 0.5);"></i>
-        <h3 class="text-2xl font-bold mb-2 text-gray-300">Nenhuma análise carregada</h3>
-        <p class="text-gray-400">Selecione o tipo de análise e clique em "Analisar RRG"</p>
+        <h3 class="text-2xl font-bold mb-2 text-gray-300">Nenhuma analise carregada</h3>
+        <p class="text-gray-400">Selecione o tipo de analise e clique em "Analisar RRG"</p>
       </div>
 
+    </div>
+  </div>
+
+  <!-- Disclaimer -->
+  <div class="mt-6 max-w-4xl mx-auto bg-red-900/20 border-2 border-red-500/40 rounded-xl p-6">
+    <div class="flex items-start gap-4">
+      <i class="fas fa-exclamation-triangle text-red-400 text-2xl mt-1 flex-shrink-0"></i>
+      <div class="text-left">
+        <h3 class="text-red-400 font-bold text-base mb-3">AVISO LEGAL IMPORTANTE</h3>
+        <p class="text-gray-300 text-xs leading-relaxed mb-3">
+          As informacoes fornecidas sao de carater educativo. <strong>Nao constituem recomendacao de investimento.</strong> Investimentos envolvem riscos. Rentabilidade passada nao garante resultados futuros.
+        </p>
+        <div class="pt-3 border-t border-gray-700 text-gray-400 text-xs">
+          <p><strong>Geminii Research Ltda</strong> - CNPJ 60.897.331/0001-06 | Analista: Diego Doneda - CNPI 9668</p>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -314,6 +332,8 @@
     // Estado global
     let currentData = null;
     let currentType = 'setores';
+    // Controla se estamos no drill-down de empresas
+    let isDrillDown = false;
 
     // Elementos DOM
     const analysisType = document.getElementById('analysisType');
@@ -326,7 +346,6 @@
     const chartSection = document.getElementById('chartSection');
     const listSection = document.getElementById('listSection');
 
-    // Funções utilitárias
     function showStatus(message, type = 'info') {
       const bgClass = type === 'success' ? 'bg-green-600 bg-opacity-20 border-green-500 border-opacity-30' : 
                      type === 'error' ? 'bg-red-600 bg-opacity-20 border-red-500 border-opacity-30' : 
@@ -349,19 +368,14 @@
       }
     }
 
-    // Controle de tipo de análise
     analysisType.addEventListener('change', (e) => {
       currentType = e.target.value;
-      
-      if (currentType === 'ticker') {
-        tickerInput.classList.remove('hidden');
-      } else {
-        tickerInput.classList.add('hidden');
-      }
+      tickerInput.classList.toggle('hidden', currentType !== 'ticker');
     });
 
-    // Análise RRG
+    // Analise RRG
     async function analyzeRRG() {
+      isDrillDown = false;
       emptyState.classList.add('hidden');
       statsSection.classList.add('hidden');
       chartSection.classList.add('hidden');
@@ -396,21 +410,16 @@
 
         if (data.success) {
           currentData = data.data;
-          
-          // 🔧 FIX: Pequeno delay antes de renderizar
-          setTimeout(() => {
-            renderAnalysis(data.data);
-          }, 100);
-          
-          showStatus('Análise RRG concluída com sucesso', 'success');
+          setTimeout(() => { renderAnalysis(data.data); }, 100);
+          showStatus('Analise RRG concluida com sucesso', 'success');
         } else {
-          showStatus(data.error || 'Erro na análise', 'error');
+          showStatus(data.error || 'Erro na analise', 'error');
           emptyState.classList.remove('hidden');
         }
 
       } catch (error) {
         console.error('Erro:', error);
-        showStatus('Erro ao processar análise', 'error');
+        showStatus('Erro ao processar analise', 'error');
         emptyState.classList.remove('hidden');
       } finally {
         loadingState.classList.add('hidden');
@@ -424,7 +433,6 @@
       } else {
         renderTickerAnalysis(data);
       }
-
       statsSection.classList.remove('hidden');
       chartSection.classList.remove('hidden');
       listSection.classList.remove('hidden');
@@ -434,46 +442,48 @@
       const setores = data.setores;
       const stats = data.statistics;
 
-      // Atualizar contadores
       document.getElementById('leadingCount').textContent = stats.distribuicao_regimes.Leading || 0;
       document.getElementById('improvingCount').textContent = stats.distribuicao_regimes.Improving || 0;
       document.getElementById('weakeningCount').textContent = stats.distribuicao_regimes.Weakening || 0;
       document.getElementById('laggingCount').textContent = stats.distribuicao_regimes.Lagging || 0;
 
-      // Gráfico
       document.getElementById('chartTitle').textContent = 'Setores';
-      renderRRGChart(setores);
+      renderRRGChart(setores, false);
 
-      // Lista
       document.getElementById('listTitle').textContent = 'Setor';
       renderSetoresList(setores);
     }
 
     function renderTickerAnalysis(data) {
-      // Contadores (1 ticker só)
       const regime = data.regime;
       document.getElementById('leadingCount').textContent = regime === 'Leading' ? 1 : 0;
       document.getElementById('improvingCount').textContent = regime === 'Improving' ? 1 : 0;
       document.getElementById('weakeningCount').textContent = regime === 'Weakening' ? 1 : 0;
       document.getElementById('laggingCount').textContent = regime === 'Lagging' ? 1 : 0;
 
-      // Gráfico
       document.getElementById('chartTitle').textContent = data.symbol;
-      renderRRGChart([data]);
+      renderRRGChart([data], false);
 
-      // Detalhes
       document.getElementById('listTitle').textContent = 'Ticker';
       renderTickerDetails(data);
     }
 
-    // 🔧 FIX: Renderização do gráfico com configurações otimizadas
-    function renderRRGChart(items) {
+    /**
+     * Renderiza grafico RRG
+     * @param {Array} items - dados dos pontos
+     * @param {boolean} isEmpresaView - true = drill-down (mostra ticker), false = visao setores
+     */
+    function renderRRGChart(items, isEmpresaView) {
       const trace = {
         x: items.map(item => item.dist_ema252_pct),
         y: items.map(item => item.dist_ema65_pct),
         mode: 'markers+text',
         type: 'scatter',
-        text: items.map(item => item.setor || item.symbol),
+        // FIX: No drill-down de empresas mostra o TICKER, na visao geral mostra o SETOR
+        text: items.map(item => {
+          if (isEmpresaView) return item.symbol || item.setor;
+          return item.setor || item.symbol;
+        }),
         textposition: 'top center',
         textfont: {
           size: 11,
@@ -483,30 +493,25 @@
         marker: {
           size: items.map(item => Math.max(12, Math.min(30, (item.volatilidade_30d || 20) * 0.8))),
           color: items.map(item => getRegimeColor(item.regime)),
-          line: {
-            color: 'white',
-            width: 2
-          },
+          line: { color: 'white', width: 2 },
           opacity: 0.9
         },
-        hovertemplate: items.map(item => 
-          `<b>${item.setor || item.symbol}</b><br>` +
-          `Regime: ${item.regime}<br>` +
-          `EMA65: ${item.dist_ema65_pct}%<br>` +
-          `EMA252: ${item.dist_ema252_pct}%<br>` +
-          `Volatilidade: ${item.volatilidade_30d}%<br>` +
-          `<extra></extra>`
-        )
+        hovertemplate: items.map(item => {
+          const nome = isEmpresaView ? item.symbol : item.setor;
+          return `<b>${nome}</b><br>` +
+            `Regime: ${item.regime}<br>` +
+            `Forca Curto Prazo: ${item.dist_ema65_pct}%<br>` +
+            `Tendencia Longo Prazo: ${item.dist_ema252_pct}%<br>` +
+            `Volatilidade: ${item.volatilidade_30d}%<br>` +
+            `<extra></extra>`;
+        })
       };
 
       const layout = {
-        title: {
-          text: '',
-          font: { size: 20, color: '#ffffff', family: 'Inter' }
-        },
+        title: { text: '' },
         xaxis: {
           title: {
-            text: 'EMA 252 (Tendência Anual) - %',
+            text: 'Tendencia de Longo Prazo (%)',
             font: { size: 13, color: '#9ca3af', family: 'Inter' }
           },
           zeroline: true,
@@ -518,7 +523,7 @@
         },
         yaxis: {
           title: {
-            text: 'EMA 65 (Força Trimestral) - %',
+            text: 'Forca de Curto Prazo (%)',
             font: { size: 13, color: '#9ca3af', family: 'Inter' }
           },
           zeroline: true,
@@ -535,70 +540,46 @@
         hovermode: 'closest',
         margin: { l: 70, r: 40, t: 40, b: 60 },
         shapes: [
-          // Quadrante Leading (superior direito)
           {
-            type: 'rect',
-            xref: 'x', yref: 'y',
-            x0: 0, y0: 0,
-            x1: 100, y1: 100,
-            fillcolor: 'rgba(34, 197, 94, 0.12)',
-            line: { width: 0 }
+            type: 'rect', xref: 'x', yref: 'y',
+            x0: 0, y0: 0, x1: 100, y1: 100,
+            fillcolor: 'rgba(34, 197, 94, 0.12)', line: { width: 0 }
           },
-          // Quadrante Improving (superior esquerdo)
           {
-            type: 'rect',
-            xref: 'x', yref: 'y',
-            x0: -100, y0: 0,
-            x1: 0, y1: 100,
-            fillcolor: 'rgba(59, 130, 246, 0.12)',
-            line: { width: 0 }
+            type: 'rect', xref: 'x', yref: 'y',
+            x0: -100, y0: 0, x1: 0, y1: 100,
+            fillcolor: 'rgba(59, 130, 246, 0.12)', line: { width: 0 }
           },
-          // Quadrante Weakening (inferior direito)
           {
-            type: 'rect',
-            xref: 'x', yref: 'y',
-            x0: 0, y0: -100,
-            x1: 100, y1: 0,
-            fillcolor: 'rgba(234, 179, 8, 0.12)',
-            line: { width: 0 }
+            type: 'rect', xref: 'x', yref: 'y',
+            x0: 0, y0: -100, x1: 100, y1: 0,
+            fillcolor: 'rgba(234, 179, 8, 0.12)', line: { width: 0 }
           },
-          // Quadrante Lagging (inferior esquerdo)
           {
-            type: 'rect',
-            xref: 'x', yref: 'y',
-            x0: -100, y0: -100,
-            x1: 0, y1: 0,
-            fillcolor: 'rgba(239, 68, 68, 0.12)',
-            line: { width: 0 }
+            type: 'rect', xref: 'x', yref: 'y',
+            x0: -100, y0: -100, x1: 0, y1: 0,
+            fillcolor: 'rgba(239, 68, 68, 0.12)', line: { width: 0 }
           }
         ],
         annotations: [
           {
-            x: 0.85, y: 0.90,
-            xref: 'paper', yref: 'paper',
-            text: 'LEADING',
-            showarrow: false,
+            x: 0.85, y: 0.90, xref: 'paper', yref: 'paper',
+            text: 'LEADING', showarrow: false,
             font: { size: 16, color: 'rgba(34, 197, 94, 0.35)', family: 'Inter', weight: 'bold' }
           },
           {
-            x: 0.15, y: 0.90,
-            xref: 'paper', yref: 'paper',
-            text: 'IMPROVING',
-            showarrow: false,
+            x: 0.15, y: 0.90, xref: 'paper', yref: 'paper',
+            text: 'IMPROVING', showarrow: false,
             font: { size: 16, color: 'rgba(59, 130, 246, 0.35)', family: 'Inter', weight: 'bold' }
           },
           {
-            x: 0.85, y: 0.10,
-            xref: 'paper', yref: 'paper',
-            text: 'WEAKENING',
-            showarrow: false,
+            x: 0.85, y: 0.10, xref: 'paper', yref: 'paper',
+            text: 'WEAKENING', showarrow: false,
             font: { size: 16, color: 'rgba(234, 179, 8, 0.35)', family: 'Inter', weight: 'bold' }
           },
           {
-            x: 0.15, y: 0.10,
-            xref: 'paper', yref: 'paper',
-            text: 'LAGGING',
-            showarrow: false,
+            x: 0.15, y: 0.10, xref: 'paper', yref: 'paper',
+            text: 'LAGGING', showarrow: false,
             font: { size: 16, color: 'rgba(239, 68, 68, 0.35)', family: 'Inter', weight: 'bold' }
           }
         ]
@@ -611,13 +592,8 @@
         modeBarButtonsToRemove: ['pan2d', 'lasso2d', 'select2d', 'toImage']
       };
 
-      // 🔧 FIX: Usar newPlot ao invés de react para garantir renderização correta
       Plotly.newPlot('rrgChart', [trace], layout, config);
-      
-      // 🔧 FIX: Forçar resize após renderização
-      setTimeout(() => {
-        Plotly.Plots.resize('rrgChart');
-      }, 200);
+      setTimeout(() => { Plotly.Plots.resize('rrgChart'); }, 200);
     }
 
     function renderSetoresList(setores) {
@@ -638,13 +614,13 @@
                 </div>
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                   <div>
-                    <span class="text-gray-400">EMA65:</span>
+                    <span class="text-gray-400">Curto Prazo:</span>
                     <span class="font-semibold ml-1 ${setor.dist_ema65_pct > 0 ? 'text-green-400' : 'text-red-400'}">
                       ${setor.dist_ema65_pct > 0 ? '+' : ''}${setor.dist_ema65_pct}%
                     </span>
                   </div>
                   <div>
-                    <span class="text-gray-400">EMA252:</span>
+                    <span class="text-gray-400">Longo Prazo:</span>
                     <span class="font-semibold ml-1 ${setor.dist_ema252_pct > 0 ? 'text-green-400' : 'text-red-400'}">
                       ${setor.dist_ema252_pct > 0 ? '+' : ''}${setor.dist_ema252_pct}%
                     </span>
@@ -686,30 +662,22 @@
             
             <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
               <div class="metric-card">
-                <p class="text-xs text-gray-400 mb-1">Preço Atual</p>
+                <p class="text-xs text-gray-400 mb-1">Preco Atual</p>
                 <p class="text-xl font-bold">R$ ${data.preco_atual}</p>
               </div>
               <div class="metric-card">
-                <p class="text-xs text-gray-400 mb-1">EMA 65</p>
-                <p class="text-xl font-bold">R$ ${data.ema65}</p>
+                <p class="text-xs text-gray-400 mb-1">Forca Curto Prazo</p>
+                <p class="text-lg font-bold">${data.forca_trimestral}</p>
                 <p class="text-xs ${data.dist_ema65_pct > 0 ? 'text-green-400' : 'text-red-400'}">
                   ${data.dist_ema65_pct > 0 ? '+' : ''}${data.dist_ema65_pct}%
                 </p>
               </div>
               <div class="metric-card">
-                <p class="text-xs text-gray-400 mb-1">EMA 252</p>
-                <p class="text-xl font-bold">R$ ${data.ema252}</p>
+                <p class="text-xs text-gray-400 mb-1">Tendencia Longo Prazo</p>
+                <p class="text-lg font-bold">${data.tendencia_anual}</p>
                 <p class="text-xs ${data.dist_ema252_pct > 0 ? 'text-green-400' : 'text-red-400'}">
                   ${data.dist_ema252_pct > 0 ? '+' : ''}${data.dist_ema252_pct}%
                 </p>
-              </div>
-              <div class="metric-card">
-                <p class="text-xs text-gray-400 mb-1">Força Trimestral</p>
-                <p class="text-lg font-bold">${data.forca_trimestral}</p>
-              </div>
-              <div class="metric-card">
-                <p class="text-xs text-gray-400 mb-1">Tendência Anual</p>
-                <p class="text-lg font-bold">${data.tendencia_anual}</p>
               </div>
               <div class="metric-card">
                 <p class="text-xs text-gray-400 mb-1">Momentum 21d</p>
@@ -718,11 +686,11 @@
                 </p>
               </div>
               <div class="metric-card">
-                <p class="text-xs text-gray-400 mb-1">Projeção Trimestral</p>
+                <p class="text-xs text-gray-400 mb-1">Projecao Trimestral</p>
                 <p class="text-lg font-bold text-blue-400">R$ ${data.projecao_trimestral}</p>
               </div>
               <div class="metric-card">
-                <p class="text-xs text-gray-400 mb-1">Projeção Anual</p>
+                <p class="text-xs text-gray-400 mb-1">Projecao Anual</p>
                 <p class="text-lg font-bold text-purple-400">R$ ${data.projecao_anual}</p>
               </div>
               <div class="metric-card">
@@ -733,7 +701,7 @@
 
             <div class="mt-4 p-4 bg-white bg-opacity-5 rounded-lg">
               <p class="text-sm text-gray-400">Setor: <span class="text-white font-semibold">${data.setor}</span></p>
-              <p class="text-xs text-gray-500 mt-1">Última atualização: ${data.data_calculo}</p>
+              <p class="text-xs text-gray-500 mt-1">Ultima atualizacao: ${data.data_calculo}</p>
             </div>
           </div>
         </div>
@@ -756,7 +724,6 @@
       if (e.key === 'Enter') analyzeRRG();
     });
 
-    // 🔧 FIX: Resize mais robusto
     let resizeTimeout;
     window.addEventListener('resize', () => {
       clearTimeout(resizeTimeout);
@@ -768,9 +735,10 @@
       }, 250);
     });
 
-    // 🔥 NOVA FUNÇÃO: Drill down no setor
+    // Drill down no setor — mostra empresas individuais
     async function drillDownSetor(setorNome) {
       showStatus(`Carregando empresas do setor ${setorNome}...`, 'info');
+      isDrillDown = true;
       
       emptyState.classList.add('hidden');
       statsSection.classList.add('hidden');
@@ -792,18 +760,16 @@
         if (data.success && data.data.detalhes_empresas) {
           const empresas = data.data.detalhes_empresas;
           
-          // Atualizar contadores
           const regimes = empresas.map(e => e.regime);
           document.getElementById('leadingCount').textContent = regimes.filter(r => r === 'Leading').length;
           document.getElementById('improvingCount').textContent = regimes.filter(r => r === 'Improving').length;
           document.getElementById('weakeningCount').textContent = regimes.filter(r => r === 'Weakening').length;
           document.getElementById('laggingCount').textContent = regimes.filter(r => r === 'Lagging').length;
 
-          // Renderizar gráfico com empresas
           document.getElementById('chartTitle').textContent = setorNome;
-          renderRRGChart(empresas);
+          // FIX: isEmpresaView = true → mostra ticker no grafico
+          renderRRGChart(empresas, true);
 
-          // Renderizar lista de empresas
           document.getElementById('listTitle').textContent = `Empresas - ${setorNome}`;
           renderEmpresasList(empresas, setorNome);
 
@@ -826,11 +792,10 @@
       }
     }
 
-    // 🔥 NOVA FUNÇÃO: Renderizar lista de empresas
+    // Lista de empresas no drill-down
     function renderEmpresasList(empresas, setorNome) {
       const list = document.getElementById('itemsList');
       
-      // Botão voltar
       let html = `
         <div class="mb-4">
           <button onclick="analyzeRRG()" class="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition-all">
@@ -852,17 +817,17 @@
                 </div>
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                   <div>
-                    <span class="text-gray-400">Preço:</span>
+                    <span class="text-gray-400">Preco:</span>
                     <span class="font-semibold ml-1">R$ ${empresa.preco_atual}</span>
                   </div>
                   <div>
-                    <span class="text-gray-400">EMA65:</span>
+                    <span class="text-gray-400">Curto Prazo:</span>
                     <span class="font-semibold ml-1 ${empresa.dist_ema65_pct > 0 ? 'text-green-400' : 'text-red-400'}">
                       ${empresa.dist_ema65_pct > 0 ? '+' : ''}${empresa.dist_ema65_pct}%
                     </span>
                   </div>
                   <div>
-                    <span class="text-gray-400">EMA252:</span>
+                    <span class="text-gray-400">Longo Prazo:</span>
                     <span class="font-semibold ml-1 ${empresa.dist_ema252_pct > 0 ? 'text-green-400' : 'text-red-400'}">
                       ${empresa.dist_ema252_pct > 0 ? '+' : ''}${empresa.dist_ema252_pct}%
                     </span>
@@ -882,25 +847,9 @@
     }
 
     document.addEventListener('DOMContentLoaded', function() {
-      showStatus('Sistema RRG carregado. Selecione o tipo de análise e clique em "Analisar RRG".', 'info');
+      showStatus('Sistema RRG carregado. Selecione o tipo de analise e clique em "Analisar RRG".', 'info');
     });
-
   </script>
-
-  <div class="mt-6 max-w-4xl mx-auto bg-red-900/20 border-2 border-red-500/40 rounded-xl p-6">
-    <div class="flex items-start gap-4">
-      <i class="fas fa-exclamation-triangle text-red-400 text-2xl mt-1 flex-shrink-0"></i>
-      <div class="text-left">
-        <h3 class="text-red-400 font-bold text-base mb-3">AVISO LEGAL IMPORTANTE</h3>
-        <p class="text-gray-300 text-xs leading-relaxed mb-3">
-          As informações fornecidas são de caráter educativo. <strong>Não constituem recomendação de investimento.</strong> Investimentos envolvem riscos. Rentabilidade passada não garante resultados futuros.
-        </p>
-        <div class="pt-3 border-t border-gray-700 text-gray-400 text-xs">
-          <p><strong>Geminii Research Ltda</strong> - CNPJ 60.897.331/0001-06 | Analista: Diego Doneda - CNPI 9668</p>
-        </div>
-      </div>
-    </div>
-  </div>
 
 </body>
 </html>

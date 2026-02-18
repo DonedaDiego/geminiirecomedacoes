@@ -214,6 +214,9 @@
       </div>
       <div class="hidden md:flex items-center space-x-6 text-xs text-gray-300 ml-8">
         <span class="text-white font-medium">Long&Short</span>
+        <a href="swing-trade-machine-learning.html" class="hover:text-white transition-colors">ML Trading</a>        
+        <a href="atsmom.html" class="hover:text-white transition-colors">ATSMOM</a>        
+        <a href="beta-regression.html" class="hover:text-white transition-colors">Beta Regression</a>        
       </div>
       <div class="flex items-center space-x-3 ml-8">
         <div class="w-8 h-8 bg-green-500 bg-opacity-10 border border-green-500 border-opacity-30 rounded-full flex items-center justify-center relative">
@@ -832,7 +835,7 @@
 
     async function loadEstabilidadeTable(par, dias) {
       try {
-        const response = await fetch(`${API_URL}/estabilidade/${par.acao1}/${par.acao2}?dias=${dias}`);
+        const response = await fetch(`${API_URL}/estabilidade/${par.acao1}/${par.acao2}?dias=400`);
         const data = await response.json();
 
         if (data.sucesso) {

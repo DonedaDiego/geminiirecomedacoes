@@ -313,7 +313,7 @@ def obter_estabilidade(acao1, acao2):
         
         dados = lss.obter_dados(tickers, data_inicio, data_fim)
         
-        periodos = [60, 90, 120, 140, 180, 200, 240]
+        periodos = [60, 90, 120, 140, 180]
         df_estabilidade = lss.analisar_cointegration_stability(dados, acao1, acao2, periodos)
         
         resultados = []
