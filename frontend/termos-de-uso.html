@@ -3,112 +3,325 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Termos de Uso - Geminii Tech</title>
+    <title>Termos de Uso - Geminii Research</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     colors: {
-                        'geminii': '#fb1ebb',
-                        'geminii-dark': '#fb1ebb'
+                        'geminii': '#fb1ebb'
                     }
                 }
             }
         }
     </script>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Inter', sans-serif; }
-        .gradient-bg {
-            background: linear-gradient(135deg, #fb1ebb, #fb1ebb);
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'DM Sans', sans-serif; 
+            background: #0a0a0a;
+            color: #d1d5db;
+            line-height: 1.7;
+        }
+        h1, h2, h3 { font-family: 'DM Serif Display', serif; }
+        
+        .section-title {
+            color: #ffffff;
+            font-size: 1.25rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+        }
+        .section-title span {
+            color: #fb1ebb;
+            font-family: 'DM Sans', sans-serif;
+            font-weight: 600;
+            font-size: 0.75rem;
+            margin-right: 0.75rem;
+        }
+        
+        .legal-section {
+            padding: 1.5rem 0;
+        }
+        .legal-section + .legal-section {
+            border-top: 1px solid rgba(255,255,255,0.05);
+        }
+        
+        .legal-section p, .legal-section li {
+            font-size: 0.875rem;
+            color: #9ca3af;
+            line-height: 1.8;
+        }
+        
+        .legal-section ul {
+            list-style: none;
+            padding-left: 0;
+            margin-top: 0.75rem;
+        }
+        .legal-section ul li {
+            padding-left: 1.25rem;
+            position: relative;
+            margin-bottom: 0.5rem;
+        }
+        .legal-section ul li::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0.7rem;
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            background: #fb1ebb;
+        }
+
+        .highlight-box {
+            background: rgba(251, 30, 187, 0.05);
+            border-left: 3px solid #fb1ebb;
+            padding: 1rem 1.25rem;
+            border-radius: 0 8px 8px 0;
+            margin: 1rem 0;
+        }
+        .highlight-box p {
+            color: #d1d5db;
+            font-size: 0.875rem;
+        }
+
+        .warning-box {
+            background: rgba(239, 68, 68, 0.05);
+            border: 1px solid rgba(239, 68, 68, 0.15);
+            border-radius: 8px;
+            padding: 1.25rem;
+            margin: 1.5rem 0;
+        }
+        .warning-box p {
+            color: #d1d5db;
+            font-size: 0.8125rem;
+        }
+
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.625rem 1.5rem;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 6px;
+            color: #d1d5db;
+            font-size: 0.8125rem;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+        .back-btn:hover {
+            background: rgba(251, 30, 187, 0.1);
+            border-color: rgba(251, 30, 187, 0.3);
+            color: #ffffff;
         }
     </style>
 </head>
-<body class="bg-gray-900 text-gray-200">
+<body>
+
     <!-- Header -->
-    <header class="gradient-bg p-6 text-center">
-        <div class="max-w-4xl mx-auto">
-            <h1 class="text-4xl font-bold text-white mb-2">Termos de Uso</h1>
-            <p class="text-purple-100">Geminii Tecnologia - Trading Automatizado</p>
+    <header class="border-b border-white/5">
+        <div class="max-w-3xl mx-auto px-6 py-12">
+            <a href="/register.html" class="back-btn mb-8 inline-flex">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                Voltar
+            </a>
+            <h1 class="text-3xl md:text-4xl text-white mt-6 mb-3">Termos de Uso</h1>
+            <p class="text-sm text-gray-500">
+                Geminii Research Ltda — CNPJ 60.897.331/0001-06
+                <br>Ultima atualizacao: fevereiro de 2026
+            </p>
         </div>
     </header>
 
     <!-- Content -->
-    <div class="max-w-4xl mx-auto p-8">
-        <div class="bg-gray-800 rounded-lg p-8 shadow-xl">
-            <p class="mb-6 text-lg">Bem-vindo ao site da <strong class="text-geminii">Geminii Tecnologia</strong>. Ao acessar e utilizar nossos serviços de trading automatizado, você concorda com os seguintes Termos de Uso.</p>
+    <main class="max-w-3xl mx-auto px-6 py-8">
 
-            <div class="space-y-8">
-                <section>
-                    <h2 class="text-2xl font-semibold text-geminii mb-4">1. Aceitação dos Termos</h2>
-                    <p class="text-gray-300 leading-relaxed">Ao utilizar o site e os serviços da Geminii Tecnologia, você declara estar de acordo com estes termos. Caso não concorde, por favor, não utilize nossos serviços.</p>
-                </section>
+        <p class="text-sm text-gray-400 mb-8">
+            Ao acessar e utilizar os servicos da Geminii Research ("Plataforma"), voce declara ter lido, compreendido e concordado 
+            integralmente com os termos abaixo. Caso nao concorde, nao utilize nossos servicos.
+        </p>
 
-                <section>
-                    <h2 class="text-2xl font-semibold text-geminii mb-4">2. Descrição dos Serviços</h2>
-                    <p class="text-gray-300 leading-relaxed">A Geminii oferece serviços de análise financeira, recomendações de investimento e ferramentas de trading automatizado. Nossos serviços são apenas informativos e não constituem consultoria financeira personalizada.</p>
-                </section>
-
-                <section>
-                    <h2 class="text-2xl font-semibold text-geminii mb-4">3. Uso dos Serviços</h2>
-                    <p class="text-gray-300 leading-relaxed">Você concorda em utilizar os serviços oferecidos pela Geminii Tecnologia apenas para fins lícitos e de acordo com todas as leis aplicáveis. É proibido usar nossos serviços para atividades fraudulentas ou ilegais.</p>
-                </section>
-
-                <section>
-                    <h2 class="text-2xl font-semibold text-geminii mb-4">4. Responsabilidades do Usuário</h2>
-                    <p class="text-gray-300 leading-relaxed">Você é responsável por manter a confidencialidade de sua conta, senhas e por todas as atividades realizadas em sua conta. Investimentos envolvem riscos e você deve consultar um consultor financeiro qualificado.</p>
-                </section>
-
-                <section>
-                    <h2 class="text-2xl font-semibold text-geminii mb-4">5. Limitação de Responsabilidade</h2>
-                    <p class="text-gray-300 leading-relaxed">A Geminii não se responsabiliza por perdas financeiras decorrentes do uso de nossas recomendações. Nossos serviços são fornecidos "como estão" sem garantias de resultados específicos.</p>
-                </section>
-
-                <section>
-                    <h2 class="text-2xl font-semibold text-geminii mb-4">6. Propriedade Intelectual</h2>
-                    <p class="text-gray-300 leading-relaxed">Todo o conteúdo do site, incluindo textos, imagens, logos, algoritmos e marcas, pertence à Geminii Tecnologia e é protegido por leis de propriedade intelectual.</p>
-                </section>
-
-                <section>
-                    <h2 class="text-2xl font-semibold text-geminii mb-4">7. Pagamentos e Assinaturas</h2>
-                    <p class="text-gray-300 leading-relaxed">Os pagamentos são processados através do Mercado Pago. As assinaturas são renovadas automaticamente, salvo cancelamento. Não oferecemos reembolsos, exceto conforme exigido por lei.</p>
-                </section>
-
-                <section>
-                    <h2 class="text-2xl font-semibold text-geminii mb-4">8. Modificações</h2>
-                    <p class="text-gray-300 leading-relaxed">Reservamo-nos o direito de alterar estes termos a qualquer momento. As alterações entram em vigor imediatamente após a publicação. Continuaremos a notificá-lo sobre mudanças importantes.</p>
-                </section>
-
-                <section>
-                    <h2 class="text-2xl font-semibold text-geminii mb-4">9. Rescisão</h2>
-                    <p class="text-gray-300 leading-relaxed">Podemos suspender ou encerrar sua conta a qualquer momento por violação destes termos. Você pode cancelar sua conta a qualquer momento através das configurações da conta.</p>
-                </section>
-
-                <section>
-                    <h2 class="text-2xl font-semibold text-geminii mb-4">10. Contato</h2>
-                    <p class="text-gray-300 leading-relaxed">Para dúvidas sobre estes Termos de Uso, entre em contato conosco através do e-mail <a href="mailto:contato@geminii.com.br" class="text-geminii hover:text-geminii-dark underline transition-colors">contato@geminii.com.br</a>.</p>
-                </section>
-            </div>
-
-            <div class="mt-12 pt-8 border-t border-gray-700">
-                <p class="text-sm text-gray-400 text-center">Última atualização: junho de 2025</p>
-            </div>
+        <!-- 1 -->
+        <div class="legal-section">
+            <h2 class="section-title"><span>01</span>Definicoes</h2>
+            <ul>
+                <li><strong class="text-gray-300">Plataforma:</strong> o site, aplicativos e ferramentas disponibilizados pela Geminii Research Ltda.</li>
+                <li><strong class="text-gray-300">Usuario:</strong> qualquer pessoa fisica ou juridica que acessa ou utiliza a Plataforma.</li>
+                <li><strong class="text-gray-300">Servicos:</strong> analises quantitativas, sinais de trading, ferramentas de machine learning, indicadores tecnicos e demais funcionalidades oferecidas.</li>
+                <li><strong class="text-gray-300">Conteudo:</strong> textos, graficos, dados, algoritmos, relatorios e qualquer material disponibilizado na Plataforma.</li>
+            </ul>
         </div>
 
-        <!-- Botão Voltar -->
-        <div class="text-center mt-8">
-          <a href="/register.html"
-             class="gradient-bg text-white px-8 py-3 rounded-lg font-medium hover:opacity-90 transition-opacity hover:text-geminii inline-block">
-              ← Voltar
-          </a>
-      </div>
-      
-      
-      
+        <!-- 2 -->
+        <div class="legal-section">
+            <h2 class="section-title"><span>02</span>Natureza dos Servicos</h2>
+            <p>
+                Os servicos prestados pela Geminii Research possuem carater exclusivamente educativo e informativo. 
+                As analises, sinais e recomendacoes geradas pela Plataforma nao constituem oferta, solicitacao ou 
+                recomendacao de compra ou venda de quaisquer ativos financeiros.
+            </p>
+            <div class="warning-box">
+                <p>
+                    <strong class="text-red-400">Aviso de Risco:</strong> Operacoes em mercado de capitais, incluindo swing trade e day trade, 
+                    envolvem alto grau de risco e podem resultar em perdas superiores ao capital investido. 
+                    Rentabilidade passada nao e garantia de resultados futuros. Os modelos quantitativos utilizados sao 
+                    baseados em dados historicos e podem nao capturar adequadamente mudancas nas condicoes de mercado.
+                </p>
+            </div>
+            <p>
+                Recomendamos fortemente que o Usuario consulte um profissional qualificado e devidamente credenciado 
+                pela Comissao de Valores Mobiliarios (CVM) antes de tomar qualquer decisao de investimento.
+            </p>
+        </div>
+
+        <!-- 3 -->
+        <div class="legal-section">
+            <h2 class="section-title"><span>03</span>Cadastro e Conta do Usuario</h2>
+            <p>Para acessar determinados servicos, o Usuario devera criar uma conta fornecendo informacoes verdadeiras, completas e atualizadas. O Usuario e integralmente responsavel por:</p>
+            <ul>
+                <li>Manter a confidencialidade de suas credenciais de acesso (e-mail e senha).</li>
+                <li>Todas as atividades realizadas em sua conta.</li>
+                <li>Notificar imediatamente a Geminii Research sobre qualquer uso nao autorizado de sua conta.</li>
+            </ul>
+            <p class="mt-3">
+                A Geminii Research reserva-se o direito de suspender ou encerrar contas que apresentem atividades suspeitas, 
+                fraudulentas ou em violacao destes Termos.
+            </p>
+        </div>
+
+        <!-- 4 -->
+        <div class="legal-section">
+            <h2 class="section-title"><span>04</span>Uso Permitido</h2>
+            <p>O Usuario compromete-se a utilizar a Plataforma exclusivamente para fins licitos. E expressamente proibido:</p>
+            <ul>
+                <li>Reproduzir, distribuir ou comercializar o Conteudo da Plataforma sem autorizacao previa por escrito.</li>
+                <li>Utilizar tecnicas de engenharia reversa, scraping ou qualquer metodo automatizado para extrair dados.</li>
+                <li>Compartilhar credenciais de acesso com terceiros.</li>
+                <li>Utilizar os Servicos para manipulacao de mercado ou qualquer atividade ilicita.</li>
+                <li>Sobrecarregar a infraestrutura da Plataforma com requisicoes excessivas.</li>
+            </ul>
+        </div>
+
+        <!-- 5 -->
+        <div class="legal-section">
+            <h2 class="section-title"><span>05</span>Pagamentos e Assinaturas</h2>
+            <p>Os pagamentos sao processados por meio do Mercado Pago. Ao contratar um plano:</p>
+            <ul>
+                <li>A assinatura sera renovada automaticamente no termino de cada ciclo, salvo cancelamento previo pelo Usuario.</li>
+                <li>O cancelamento pode ser realizado a qualquer momento pelas configuracoes da conta, sem cobranca de multa.</li>
+                <li>Nao serao concedidos reembolsos por periodos ja utilizados, exceto nos casos previstos pelo Codigo de Defesa do Consumidor (Lei 8.078/90).</li>
+                <li>A Geminii Research reserva-se o direito de alterar precos mediante aviso previo de 30 dias.</li>
+            </ul>
+        </div>
+
+        <!-- 6 -->
+        <div class="legal-section">
+            <h2 class="section-title"><span>06</span>Propriedade Intelectual</h2>
+            <p>
+                Todo o Conteudo disponibilizado na Plataforma, incluindo mas nao se limitando a textos, graficos, logos, 
+                algoritmos, modelos de machine learning, indicadores tecnicos, design e codigo-fonte, e de propriedade 
+                exclusiva da Geminii Research Ltda e protegido pela legislacao brasileira de propriedade intelectual 
+                (Lei 9.610/98 e Lei 9.279/96).
+            </p>
+            <p class="mt-3">
+                O acesso a Plataforma nao confere ao Usuario qualquer direito de propriedade sobre o Conteudo.
+            </p>
+        </div>
+
+        <!-- 7 -->
+        <div class="legal-section">
+            <h2 class="section-title"><span>07</span>Limitacao de Responsabilidade</h2>
+            <div class="highlight-box">
+                <p>
+                    A Geminii Research nao se responsabiliza, em nenhuma hipotese, por perdas financeiras, 
+                    danos diretos, indiretos, incidentais ou consequentes decorrentes do uso dos Servicos ou 
+                    da confianca depositada nas informacoes fornecidas pela Plataforma.
+                </p>
+            </div>
+            <p>Os Servicos sao fornecidos "no estado em que se encontram" (as is), sem garantias de qualquer natureza, expressas ou implicitas, incluindo mas nao se limitando a:</p>
+            <ul>
+                <li>Garantia de precisao, confiabilidade ou integridade das analises.</li>
+                <li>Garantia de disponibilidade ininterrupta da Plataforma.</li>
+                <li>Garantia de resultados financeiros especificos.</li>
+            </ul>
+        </div>
+
+        <!-- 8 -->
+        <div class="legal-section">
+            <h2 class="section-title"><span>08</span>Isencao de Responsabilidade Regulatoria</h2>
+            <p>
+                A Geminii Research Ltda nao e uma instituicao financeira, corretora de valores, distribuidora de titulos 
+                e valores mobiliarios ou consultora de investimentos registrada na CVM. O Analista Responsavel, 
+                Diego Doneda (CNPI 9668), e credenciado pela APIMEC e atua em conformidade com a Resolucao CVM 20/2021.
+            </p>
+            <p class="mt-3">
+                Os servicos prestados nao se enquadram como gestao de carteira, consultoria de valores mobiliarios 
+                ou administracao de recursos de terceiros.
+            </p>
+        </div>
+
+        <!-- 9 -->
+        <div class="legal-section">
+            <h2 class="section-title"><span>09</span>Modificacoes dos Termos</h2>
+            <p>
+                A Geminii Research reserva-se o direito de alterar estes Termos a qualquer momento. 
+                As alteracoes serao comunicadas ao Usuario por e-mail ou notificacao na Plataforma e entrarao 
+                em vigor na data de sua publicacao. O uso continuado dos Servicos apos a publicacao das 
+                alteracoes constitui aceitacao dos novos Termos.
+            </p>
+        </div>
+
+        <!-- 10 -->
+        <div class="legal-section">
+            <h2 class="section-title"><span>10</span>Rescisao</h2>
+            <p>
+                A Geminii Research podera suspender ou encerrar o acesso do Usuario a Plataforma, a qualquer momento 
+                e sem aviso previo, em caso de violacao destes Termos. O Usuario podera cancelar sua conta a qualquer 
+                momento por meio das configuracoes de sua conta ou solicitacao por e-mail.
+            </p>
+        </div>
+
+        <!-- 11 -->
+        <div class="legal-section">
+            <h2 class="section-title"><span>11</span>Legislacao Aplicavel e Foro</h2>
+            <p>
+                Estes Termos sao regidos pelas leis da Republica Federativa do Brasil. 
+                Fica eleito o foro da Comarca de Curitiba, Estado do Parana, para dirimir quaisquer controversias 
+                oriundas destes Termos, com renuncia expressa a qualquer outro, por mais privilegiado que seja.
+            </p>
+        </div>
+
+        <!-- 12 -->
+        <div class="legal-section">
+            <h2 class="section-title"><span>12</span>Contato</h2>
+            <p>Para duvidas, solicitacoes ou reclamacoes relacionadas a estes Termos:</p>
+            <ul>
+                <li><strong class="text-gray-300">E-mail:</strong> contato@geminiiresearch.com.br</li>
+                <li><strong class="text-gray-300">Empresa:</strong> Geminii Research Ltda</li>
+                <li><strong class="text-gray-300">CNPJ:</strong> 60.897.331/0001-06</li>
+                <li><strong class="text-gray-300">Analista Responsavel:</strong> Diego Doneda — CNPI 9668</li>
+                <li><strong class="text-gray-300">Sede:</strong> Curitiba, Parana, Brasil</li>
+            </ul>
+        </div>
+
+    </main>
 
     <!-- Footer -->
-    <footer class="text-center p-8 text-gray-500">
-        <p>&copy; 2025 Geminii Research - Trading Automatizado</p>
+    <footer class="border-t border-white/5 mt-8">
+        <div class="max-w-3xl mx-auto px-6 py-8 text-center">
+            <p class="text-xs text-gray-600">
+                Geminii Research Ltda — CNPJ 60.897.331/0001-06
+                <br>Analista Responsavel: Diego Doneda — CNPI 9668
+            </p>
+            <p class="text-[10px] text-gray-700 mt-3">
+                &copy; 2025 Geminii Research. Todos os direitos reservados.
+            </p>
+        </div>
     </footer>
+
 </body>
 </html>

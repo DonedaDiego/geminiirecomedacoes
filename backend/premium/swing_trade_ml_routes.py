@@ -156,11 +156,8 @@ def get_available_tickers():
             {'symbol': 'WEGE3', 'name': 'WEG ON'},
             {'symbol': 'RENT3', 'name': 'Localiza ON'},
             {'symbol': 'SUZB3', 'name': 'Suzano ON'},
-            {'symbol': 'GGBR4', 'name': 'Gerdau PN'},
             {'symbol': 'BBAS3', 'name': 'Banco do Brasil ON'},
-            {'symbol': 'VIVT3', 'name': 'Vivo ON'},
-            {'symbol': 'EMBJ3', 'name': 'Embraer ON'},
-            {'symbol': 'RADL3', 'name': 'Raia Drogasil ON'}
+            {'symbol': 'VIVT3', 'name': 'Vivo ON'},                        
         ]
         
         return jsonify({

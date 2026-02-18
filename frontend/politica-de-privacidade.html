@@ -3,100 +3,363 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Política de Privacidade - Geminii Tech</title>
+    <title>Politica de Privacidade - Geminii Research</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     colors: {
-                        'geminii': '#fb1ebb',
-                        'geminii-dark': '#fb1ebb'
+                        'geminii': '#fb1ebb'
                     }
                 }
             }
         }
     </script>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Inter', sans-serif; }
-        .gradient-bg {
-            background: linear-gradient(135deg, #fb1ebb, #fb1ebb);
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'DM Sans', sans-serif; 
+            background: #0a0a0a;
+            color: #d1d5db;
+            line-height: 1.7;
+        }
+        h1, h2, h3 { font-family: 'DM Serif Display', serif; }
+        
+        .section-title {
+            color: #ffffff;
+            font-size: 1.25rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+        }
+        .section-title span {
+            color: #fb1ebb;
+            font-family: 'DM Sans', sans-serif;
+            font-weight: 600;
+            font-size: 0.75rem;
+            margin-right: 0.75rem;
+        }
+        
+        .legal-section {
+            padding: 1.5rem 0;
+        }
+        .legal-section + .legal-section {
+            border-top: 1px solid rgba(255,255,255,0.05);
+        }
+        
+        .legal-section p, .legal-section li {
+            font-size: 0.875rem;
+            color: #9ca3af;
+            line-height: 1.8;
+        }
+        
+        .legal-section ul {
+            list-style: none;
+            padding-left: 0;
+            margin-top: 0.75rem;
+        }
+        .legal-section ul li {
+            padding-left: 1.25rem;
+            position: relative;
+            margin-bottom: 0.5rem;
+        }
+        .legal-section ul li::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0.7rem;
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            background: #fb1ebb;
+        }
+
+        .highlight-box {
+            background: rgba(251, 30, 187, 0.05);
+            border-left: 3px solid #fb1ebb;
+            padding: 1rem 1.25rem;
+            border-radius: 0 8px 8px 0;
+            margin: 1rem 0;
+        }
+        .highlight-box p {
+            color: #d1d5db;
+            font-size: 0.875rem;
+        }
+
+        .data-table {
+            width: 100%;
+            margin: 1rem 0;
+            border-collapse: collapse;
+        }
+        .data-table th {
+            text-align: left;
+            font-size: 0.75rem;
+            color: #fb1ebb;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 0.625rem 0.75rem;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .data-table td {
+            font-size: 0.8125rem;
+            color: #9ca3af;
+            padding: 0.625rem 0.75rem;
+            border-bottom: 1px solid rgba(255,255,255,0.03);
+        }
+        .data-table tr:hover td {
+            color: #d1d5db;
+        }
+
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.625rem 1.5rem;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 6px;
+            color: #d1d5db;
+            font-size: 0.8125rem;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+        .back-btn:hover {
+            background: rgba(251, 30, 187, 0.1);
+            border-color: rgba(251, 30, 187, 0.3);
+            color: #ffffff;
         }
     </style>
 </head>
-<body class="bg-gray-900 text-gray-200">
+<body>
+
     <!-- Header -->
-    <header class="gradient-bg p-6 text-center">
-        <div class="max-w-4xl mx-auto">
-            <h1 class="text-4xl font-bold text-white mb-2">Política de Privacidade</h1>
-            <p class="text-purple-100">Geminii Tecnologia - Trading Automatizado</p>
+    <header class="border-b border-white/5">
+        <div class="max-w-3xl mx-auto px-6 py-12">
+            <a href="/register.html" class="back-btn mb-8 inline-flex">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                Voltar
+            </a>
+            <h1 class="text-3xl md:text-4xl text-white mt-6 mb-3">Politica de Privacidade</h1>
+            <p class="text-sm text-gray-500">
+                Geminii Research Ltda — CNPJ 60.897.331/0001-06
+                <br>Ultima atualizacao: fevereiro de 2026
+            </p>
         </div>
     </header>
 
     <!-- Content -->
-    <div class="max-w-4xl mx-auto p-8">
-        <div class="bg-gray-800 rounded-lg p-8 shadow-xl">
-            <p class="mb-6 text-lg">A <strong class="text-geminii">Geminii Tecnologia</strong> valoriza sua privacidade. Esta política explica como coletamos, usamos e protegemos suas informações pessoais.</p>
+    <main class="max-w-3xl mx-auto px-6 py-8">
 
-            <div class="space-y-8">
-                <section>
-                    <h2 class="text-2xl font-semibold text-geminii mb-4">1. Coleta de Dados</h2>
-                    <p class="text-gray-300 leading-relaxed">Coletamos informações fornecidas por você, como nome, e-mail e senha, ao se registrar em nossa plataforma. Também coletamos dados de uso para melhorar nossos serviços de trading automatizado.</p>
-                </section>
+        <p class="text-sm text-gray-400 mb-8">
+            A Geminii Research Ltda ("Geminii", "nos") valoriza a privacidade de seus usuarios. 
+            Esta Politica de Privacidade descreve como coletamos, utilizamos, armazenamos e protegemos 
+            suas informacoes pessoais em conformidade com a Lei Geral de Protecao de Dados (LGPD — Lei 13.709/2018).
+        </p>
 
-                <section>
-                    <h2 class="text-2xl font-semibold text-geminii mb-4">2. Uso das Informações</h2>
-                    <p class="text-gray-300 leading-relaxed">Utilizamos suas informações para fornecer e melhorar nossos serviços, processar pagamentos, enviar comunicações sobre sua conta e fornecer análises personalizadas de trading.</p>
-                </section>
+        <!-- 1 -->
+        <div class="legal-section">
+            <h2 class="section-title"><span>01</span>Controlador dos Dados</h2>
+            <p>O controlador responsavel pelo tratamento dos dados pessoais e:</p>
+            <ul>
+                <li><strong class="text-gray-300">Razao Social:</strong> Geminii Research Ltda</li>
+                <li><strong class="text-gray-300">CNPJ:</strong> 60.897.331/0001-06</li>
+                <li><strong class="text-gray-300">Sede:</strong> Curitiba, Parana, Brasil</li>
+                <li><strong class="text-gray-300">Contato do Encarregado (DPO):</strong> contato@geminiiresearch.com.br</li>
+            </ul>
+        </div>
 
-                <section>
-                    <h2 class="text-2xl font-semibold text-geminii mb-4">3. Compartilhamento</h2>
-                    <p class="text-gray-300 leading-relaxed">Não vendemos nem compartilhamos seus dados com terceiros, exceto quando necessário para processar pagamentos através do Mercado Pago ou cumprir exigências legais.</p>
-                </section>
+        <!-- 2 -->
+        <div class="legal-section">
+            <h2 class="section-title"><span>02</span>Dados Coletados</h2>
+            <p>Coletamos as seguintes categorias de dados pessoais:</p>
+            
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Categoria</th>
+                        <th>Dados</th>
+                        <th>Finalidade</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Cadastrais</td>
+                        <td>Nome, e-mail, senha (criptografada)</td>
+                        <td>Criacao e gestao da conta</td>
+                    </tr>
+                    <tr>
+                        <td>Financeiros</td>
+                        <td>Dados de pagamento (processados pelo Mercado Pago)</td>
+                        <td>Cobranca e faturamento</td>
+                    </tr>
+                    <tr>
+                        <td>Navegacao</td>
+                        <td>IP, navegador, paginas acessadas, horarios</td>
+                        <td>Seguranca e melhoria da Plataforma</td>
+                    </tr>
+                    <tr>
+                        <td>Uso</td>
+                        <td>Acoes consultadas, funcionalidades utilizadas</td>
+                        <td>Personalizacao e analise de uso</td>
+                    </tr>
+                </tbody>
+            </table>
 
-                <section>
-                    <h2 class="text-2xl font-semibold text-geminii mb-4">4. Segurança</h2>
-                    <p class="text-gray-300 leading-relaxed">Adotamos medidas rigorosas de segurança, incluindo criptografia de senhas, conexões HTTPS e armazenamento seguro para proteger seus dados contra acesso não autorizado, perda ou destruição.</p>
-                </section>
-
-                <section>
-                    <h2 class="text-2xl font-semibold text-geminii mb-4">5. Seus Direitos</h2>
-                    <p class="text-gray-300 leading-relaxed">Você pode acessar, corrigir ou excluir suas informações pessoais a qualquer momento através de sua conta ou mediante solicitação por e-mail.</p>
-                </section>
-
-                <section>
-                    <h2 class="text-2xl font-semibold text-geminii mb-4">6. Cookies e Tecnologias</h2>
-                    <p class="text-gray-300 leading-relaxed">Utilizamos cookies e tecnologias similares para melhorar sua experiência, manter sua sessão ativa e analisar o uso da plataforma.</p>
-                </section>
-
-                <section>
-                    <h2 class="text-2xl font-semibold text-geminii mb-4">7. Alterações nesta Política</h2>
-                    <p class="text-gray-300 leading-relaxed">Podemos atualizar esta política ocasionalmente. Recomendamos que você a revise periodicamente. Notificaremos sobre mudanças significativas.</p>
-                </section>
-
-                <section>
-                    <h2 class="text-2xl font-semibold text-geminii mb-4">8. Contato</h2>
-                    <p class="text-gray-300 leading-relaxed">Para dúvidas sobre esta Política de Privacidade, entre em contato pelo e-mail <a href="mailto:contato@geminii.com.br" class="text-geminii hover:text-geminii-dark underline transition-colors">contato@geminii.com.br</a>.</p>
-                </section>
-            </div>
-
-            <div class="mt-12 pt-8 border-t border-gray-700">
-                <p class="text-sm text-gray-400 text-center">Última atualização: junho de 2025</p>
+            <div class="highlight-box">
+                <p>
+                    Nao coletamos dados sensiveis conforme definido no Art. 5, II da LGPD (origem racial, conviccao religiosa, 
+                    opiniao politica, dados de saude, vida sexual ou dados geneticos/biometricos).
+                </p>
             </div>
         </div>
 
-        <!-- Botão Voltar -->
-        <div class="text-center mt-8">
-          <a href="/register.html"
-             class="gradient-bg text-white px-8 py-3 rounded-lg font-medium hover:opacity-90 transition-opacity hover:text-geminii inline-block">
-              ← Voltar
-          </a>
+        <!-- 3 -->
+        <div class="legal-section">
+            <h2 class="section-title"><span>03</span>Base Legal para Tratamento</h2>
+            <p>O tratamento de dados pessoais pela Geminii Research se fundamenta nas seguintes bases legais previstas na LGPD:</p>
+            <ul>
+                <li><strong class="text-gray-300">Execucao de contrato</strong> (Art. 7, V): para prestacao dos servicos contratados pelo Usuario.</li>
+                <li><strong class="text-gray-300">Consentimento</strong> (Art. 7, I): para envio de comunicacoes de marketing e newsletters.</li>
+                <li><strong class="text-gray-300">Interesse legitimo</strong> (Art. 7, IX): para melhoria dos servicos e seguranca da Plataforma.</li>
+                <li><strong class="text-gray-300">Cumprimento de obrigacao legal</strong> (Art. 7, II): para atendimento a exigencias regulatorias e fiscais.</li>
+            </ul>
         </div>
-    </div>
+
+        <!-- 4 -->
+        <div class="legal-section">
+            <h2 class="section-title"><span>04</span>Compartilhamento de Dados</h2>
+            <p>A Geminii Research nao vende, aluga ou comercializa dados pessoais de seus usuarios. O compartilhamento ocorre exclusivamente nas seguintes hipoteses:</p>
+            <ul>
+                <li><strong class="text-gray-300">Processador de pagamentos:</strong> Mercado Pago, para efetivacao de cobrancas (dados financeiros).</li>
+                <li><strong class="text-gray-300">Provedores de infraestrutura:</strong> servicos de hospedagem e armazenamento (Railway, servidores cloud).</li>
+                <li><strong class="text-gray-300">Obrigacao legal:</strong> quando exigido por autoridade competente, decisao judicial ou legislacao aplicavel.</li>
+            </ul>
+            <p class="mt-3">
+                Todos os terceiros com acesso a dados pessoais estao vinculados a obrigacoes contratuais de confidencialidade e seguranca.
+            </p>
+        </div>
+
+        <!-- 5 -->
+        <div class="legal-section">
+            <h2 class="section-title"><span>05</span>Seguranca dos Dados</h2>
+            <p>Adotamos medidas tecnicas e organizacionais para proteger seus dados pessoais, incluindo:</p>
+            <ul>
+                <li>Criptografia de senhas utilizando algoritmos seguros (bcrypt).</li>
+                <li>Comunicacao exclusivamente via protocolo HTTPS (TLS 1.2+).</li>
+                <li>Controle de acesso restrito aos dados, limitado a pessoal autorizado.</li>
+                <li>Monitoramento continuo de atividades suspeitas e tentativas de acesso nao autorizado.</li>
+                <li>Backups periodicos e armazenamento redundante.</li>
+            </ul>
+            <p class="mt-3">
+                Apesar das medidas adotadas, nenhum sistema e completamente imune a vulnerabilidades. 
+                Em caso de incidente de seguranca, os usuarios afetados e a Autoridade Nacional de Protecao 
+                de Dados (ANPD) serao notificados nos prazos legais.
+            </p>
+        </div>
+
+        <!-- 6 -->
+        <div class="legal-section">
+            <h2 class="section-title"><span>06</span>Direitos do Titular</h2>
+            <p>Em conformidade com os Arts. 17 e 18 da LGPD, o titular dos dados pessoais tem direito a:</p>
+            <ul>
+                <li>Confirmacao da existencia de tratamento de dados.</li>
+                <li>Acesso aos dados pessoais coletados.</li>
+                <li>Correcao de dados incompletos, inexatos ou desatualizados.</li>
+                <li>Anonimizacao, bloqueio ou eliminacao de dados desnecessarios ou excessivos.</li>
+                <li>Portabilidade dos dados a outro fornecedor de servico.</li>
+                <li>Eliminacao dos dados pessoais tratados com base no consentimento.</li>
+                <li>Informacao sobre com quem seus dados foram compartilhados.</li>
+                <li>Revogacao do consentimento a qualquer momento.</li>
+            </ul>
+            <p class="mt-3">
+                Para exercer qualquer desses direitos, envie solicitacao para 
+                <strong class="text-gray-300">contato@geminiiresearch.com.br</strong>. 
+                Responderemos no prazo de ate 15 dias uteis.
+            </p>
+        </div>
+
+        <!-- 7 -->
+        <div class="legal-section">
+            <h2 class="section-title"><span>07</span>Cookies e Tecnologias de Rastreamento</h2>
+            <p>A Plataforma utiliza cookies e tecnologias similares para:</p>
+            <ul>
+                <li><strong class="text-gray-300">Cookies essenciais:</strong> manutencao da sessao do usuario e autenticacao.</li>
+                <li><strong class="text-gray-300">Cookies de desempenho:</strong> analise de uso e melhoria da experiencia.</li>
+            </ul>
+            <p class="mt-3">
+                Nao utilizamos cookies de terceiros para fins publicitarios. O Usuario pode gerenciar 
+                as configuracoes de cookies em seu navegador, ciente de que a desativacao de cookies 
+                essenciais podera comprometer a funcionalidade da Plataforma.
+            </p>
+        </div>
+
+        <!-- 8 -->
+        <div class="legal-section">
+            <h2 class="section-title"><span>08</span>Retencao de Dados</h2>
+            <p>Os dados pessoais serao armazenados pelo periodo necessario ao cumprimento das finalidades para as quais foram coletados, observando os seguintes criterios:</p>
+            <ul>
+                <li><strong class="text-gray-300">Dados cadastrais:</strong> mantidos enquanto a conta estiver ativa, e por ate 5 anos apos o encerramento para fins de obrigacao legal.</li>
+                <li><strong class="text-gray-300">Dados financeiros:</strong> mantidos conforme exigencias fiscais e contabeis (5 anos).</li>
+                <li><strong class="text-gray-300">Dados de navegacao:</strong> mantidos por ate 6 meses.</li>
+            </ul>
+            <p class="mt-3">
+                Apos o termino do periodo de retencao, os dados serao eliminados ou anonimizados de forma irreversivel.
+            </p>
+        </div>
+
+        <!-- 9 -->
+        <div class="legal-section">
+            <h2 class="section-title"><span>09</span>Transferencia Internacional de Dados</h2>
+            <p>
+                Os dados pessoais podem ser processados em servidores localizados fora do Brasil 
+                (provedores de infraestrutura cloud). Nesses casos, garantimos que o tratamento observa 
+                nivel de protecao equivalente ao exigido pela LGPD, conforme Art. 33.
+            </p>
+        </div>
+
+        <!-- 10 -->
+        <div class="legal-section">
+            <h2 class="section-title"><span>10</span>Alteracoes nesta Politica</h2>
+            <p>
+                Esta Politica podera ser atualizada periodicamente. As alteracoes serao comunicadas ao 
+                Usuario por e-mail ou notificacao na Plataforma. O uso continuado dos Servicos apos a 
+                publicacao constitui aceitacao da versao atualizada.
+            </p>
+        </div>
+
+        <!-- 11 -->
+        <div class="legal-section">
+            <h2 class="section-title"><span>11</span>Contato e Canal do Titular</h2>
+            <p>Para exercer seus direitos, esclarecer duvidas ou registrar reclamacoes:</p>
+            <ul>
+                <li><strong class="text-gray-300">E-mail:</strong> contato@geminiiresearch.com.br</li>
+                <li><strong class="text-gray-300">Empresa:</strong> Geminii Research Ltda</li>
+                <li><strong class="text-gray-300">CNPJ:</strong> 60.897.331/0001-06</li>
+                <li><strong class="text-gray-300">Sede:</strong> Curitiba, Parana, Brasil</li>
+            </ul>
+            <p class="mt-3 text-xs text-gray-500">
+                Caso nao obtenha resposta satisfatoria, o titular podera apresentar reclamacao 
+                perante a Autoridade Nacional de Protecao de Dados (ANPD).
+            </p>
+        </div>
+
+    </main>
 
     <!-- Footer -->
-    <footer class="text-center p-8 text-gray-500">
-        <p>&copy; 2025 Geminii Research - Trading Automatizado</p>
+    <footer class="border-t border-white/5 mt-8">
+        <div class="max-w-3xl mx-auto px-6 py-8 text-center">
+            <p class="text-xs text-gray-600">
+                Geminii Research Ltda — CNPJ 60.897.331/0001-06
+                <br>Analista Responsavel: Diego Doneda — CNPI 9668
+            </p>
+            <p class="text-[10px] text-gray-700 mt-3">
+                &copy; 2025 Geminii Research. Todos os direitos reservados.
+            </p>
+        </div>
     </footer>
+
 </body>
 </html>
