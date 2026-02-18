@@ -1956,17 +1956,14 @@
     // Run sync
     async function runRailwaySync() {
       const button = document.getElementById('syncButton');
-      const console = document.getElementById('syncConsole');
+      const syncConsole = document.getElementById('syncConsole');
       
       button.disabled = true;
       button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Sincronizando...';
-      
-      console.innerHTML = `
-        <div class="text-green-400">🚂 Iniciando sincronização...</div>
-        <div class="text-gray-400">📡 Conectando ao Railway...</div>
-      `;
+      syncConsole.innerHTML = `<div class="text-green-400">🚂 Iniciando sincronização...</div>`;
       
       try {
+        // Dispara o sync
         const response = await fetch('/railway/sync', {
           method: 'POST',
           headers: { 
@@ -1977,52 +1974,91 @@
 
         const result = await response.json();
         
-        if (result.success) {
-          const data = result.data;
-          
-          console.innerHTML += `
-            <div class="text-blue-400 mt-2"> Processando datas...</div>
-          `;
-          
-          data.detalhes.forEach(det => {
-            let icon = det.status === 'sucesso' ? '' : det.status === 'pulado' ? '⏭️' : '❌';
-            let color = det.status === 'sucesso' ? 'text-green-400' : det.status === 'pulado' ? 'text-yellow-400' : 'text-red-400';
-            
-            console.innerHTML += `
-              <div class="${color}">${icon} ${det.data} - ${det.status.toUpperCase()}${det.registros ? ` (${det.registros} registros)` : ''}</div>
-            `;
-          });
-          
-          console.innerHTML += `
-            <div class="text-white mt-3">═══════════════════════════════════</div>
-            <div class="text-green-400"> RESUMO:</div>
-            <div class="text-white"> Sucesso: ${data.resumo.sucesso}</div>
-            <div class="text-yellow-400">⏭️  Pulados: ${data.resumo.pulados}</div>
-            <div class="text-red-400">❌ Falhas: ${data.resumo.falhas}</div>
-            <div class="text-white mt-2">💾 Total no banco: ${data.banco.total_registros.toLocaleString('pt-BR')} registros</div>
-            <div class="text-green-400 mt-3"> Sincronização concluída!</div>
-          `;
-          
-          loadRailwayStatus();
-          loadRailwayDates();
-          loadRailwayResumo();
-          
-        } else {
-          console.innerHTML += `
-            <div class="text-red-400 mt-2">❌ Erro: ${result.error}</div>
-          `;
+        if (!result.success) {
+          syncConsole.innerHTML += `<div class="text-red-400">❌ Erro: ${result.error}</div>`;
+          button.disabled = false;
+          button.innerHTML = '<i class="fas fa-sync-alt mr-2"></i>Sincronizar Dados B3 → Railway';
+          return;
         }
-        
+
+        syncConsole.innerHTML += `<div class="text-blue-400">🔄 Processando... aguarde</div>`;
+
+        // Aguarda 5s antes de começar o polling (dá tempo do backend rodar)
+        await new Promise(r => setTimeout(r, 5000));
+
+        // Polling — UMA única verificação final
+        let tentativas = 0;
+        const maxTentativas = 20; // 20 x 3s = 60s máximo
+        let finalizado = false;
+
+        const polling = setInterval(async () => {
+          if (finalizado) return; // guard extra
+          tentativas++;
+
+          try {
+            const resAtual = await fetch('/railway/datas-disponiveis', {
+              headers: { 'Authorization': `Bearer ${adminToken}` }
+            });
+            const dadosAtual = await resAtual.json();
+
+            const pendentes = dadosAtual.datas.filter(d => !d.existe_no_banco);
+            const sincronizadas = dadosAtual.datas.filter(d => d.existe_no_banco);
+
+            // Só finaliza quando não há mais mudanças ou atingiu timeout
+            if (tentativas >= maxTentativas) {
+              finalizado = true;
+              clearInterval(polling);
+
+              // Monta resultado final UMA VEZ
+              syncConsole.innerHTML = `<div class="text-green-400">🚂 Sync finalizado!</div>`;
+              syncConsole.innerHTML += `<div class="text-white mt-1">════════ Resultado ════════</div>`;
+
+              sincronizadas.forEach(d => {
+                syncConsole.innerHTML += `<div class="text-gray-400">⏭️ ${d.data_formatada} - Já sincronizado</div>`;
+              });
+
+              pendentes.forEach(d => {
+                syncConsole.innerHTML += `<div class="text-red-400">❌ ${d.data_formatada} - JSON não disponível na B3</div>`;
+              });
+
+              syncConsole.innerHTML += `
+                <div class="text-white mt-1">══════════════════════════</div>
+                <div class="text-green-400 text-sm">✅ Sincronizados: ${sincronizadas.length}</div>
+                <div class="text-red-400 text-sm">❌ Falhas: ${pendentes.length}</div>
+              `;
+
+              // Atualiza resumo
+              const resResumo = await fetch('/railway/resumo', {
+                headers: { 'Authorization': `Bearer ${adminToken}` }
+              });
+              const dadosResumo = await resResumo.json();
+              if (dadosResumo.success) {
+                document.getElementById('railwayTotalReg').textContent = dadosResumo.resumo.total_registros.toLocaleString('pt-BR');
+                document.getElementById('railwayDatasDisp').textContent = dadosResumo.resumo.datas_no_banco;
+                document.getElementById('railwayUltimaData').textContent = dadosResumo.resumo.ultima_atualizacao || '-';
+                document.getElementById('railwayProgresso').textContent = `${dadosResumo.resumo.percentual_completo}%`;
+              }
+
+              loadRailwayDates();
+              button.disabled = false;
+              button.innerHTML = '<i class="fas fa-sync-alt mr-2"></i>Sincronizar Dados B3 → Railway';
+              syncConsole.scrollTop = syncConsole.scrollHeight;
+            }
+
+          } catch (e) {
+            console.error('Polling error:', e);
+          }
+
+        }, 3000);
+
       } catch (error) {
-        console.innerHTML += `
-          <div class="text-red-400 mt-2">❌ Erro de conexão: ${error.message}</div>
-        `;
-      } finally {
+        syncConsole.innerHTML += `<div class="text-red-400 mt-2">❌ Erro de conexão: ${error.message}</div>`;
         button.disabled = false;
         button.innerHTML = '<i class="fas fa-sync-alt mr-2"></i>Sincronizar Dados B3 → Railway';
-        console.scrollTop = console.scrollHeight;
       }
     }
+    
+
 
     // Clear console
     function clearSyncConsole() {
