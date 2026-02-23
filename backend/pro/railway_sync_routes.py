@@ -1,7 +1,7 @@
 # railway_sync_routes.py - Blueprint para sincronização Railway
 
 import threading
-from flask import Blueprint, jsonify
+from flask import Blueprint, jsonify, request
 from pro.railway_sync_service import RailwaySyncService
 
 railway_bp = Blueprint('railway', __name__, url_prefix='/railway')
@@ -82,6 +82,35 @@ def sincronizar():
             "error": str(e)
         }), 500
 
+@railway_bp.route('/datas-no-banco', methods=['GET'])
+def listar_datas_no_banco():
+    try:
+        datas = get_sync_service().listar_datas_no_banco()
+        return jsonify({"success": True, "datas": datas})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@railway_bp.route('/deletar-data', methods=['DELETE'])
+def deletar_data():
+    try:
+        data = request.get_json()
+        data_str = data.get('data')
+        
+        if not data_str:
+            return jsonify({"success": False, "error": "Data não informada"}), 400
+        
+        result = get_sync_service().deletar_data(data_str)
+        
+        if result['sucesso']:
+            return jsonify({
+                "success": True,
+                "registros_deletados": result['registros_deletados']
+            })
+        else:
+            return jsonify({"success": False, "error": result['erro']}), 500
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
 
 @railway_bp.route('/datas-disponiveis', methods=['GET'])
 def listar_datas():

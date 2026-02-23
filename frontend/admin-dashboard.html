@@ -593,11 +593,26 @@
               <i class="fas fa-calendar-alt mr-2"></i>
               Datas Configuradas
             </h3>
+           
             
             <div id="railwayDates" class="space-y-2 text-sm max-h-64 overflow-y-auto">
               <div class="text-center py-4">
                 <div class="spinner mx-auto mb-2"></div>
                 <p class="text-gray-400 text-sm">Carregando datas...</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="admin-card p-6">
+            <h3 class="text-lg font-bold text-white mb-4">
+              <i class="fas fa-trash mr-2"></i>
+              Gerenciar Datas no Banco
+            </h3>
+            
+            <div id="railwayDatesDelete" class="space-y-2 text-sm max-h-64 overflow-y-auto">
+              <div class="text-center py-4">
+                <div class="spinner mx-auto mb-2"></div>
+                <p class="text-gray-400 text-sm">Carregando...</p>
               </div>
             </div>
           </div>
@@ -768,6 +783,10 @@
       displayRecentActivity(mockActivities);
     }
     
+
+
+
+
     // ===== NAVIGATION FIX =====
     function showSection(sectionName) {
       console.log('Showing section:', sectionName);
@@ -1312,7 +1331,6 @@
       }
     }
 
-
     function displayUsersEnhanced(users) {
       const tbody = document.getElementById('usersTableEnhanced');
       
@@ -1440,7 +1458,6 @@
         `;
       }).join('');
     }
-
 
     function getTypeBadgeText(type) {
       const types = {
@@ -1839,6 +1856,7 @@
       loadRailwayStatus();
       loadRailwayDates();
       loadRailwayResumo();
+      loadRailwayDatesDelete();
     }
 
     // Load status
@@ -1861,6 +1879,82 @@
         `;
       }
     }
+
+    // Carrega datas do banco com botão de deletar
+    async function loadRailwayDatesDelete() {
+      try {
+        const response = await fetch('/railway/datas-no-banco', {
+          headers: { 'Authorization': `Bearer ${adminToken}` }
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          if (result.success) {
+            displayRailwayDatesDelete(result.datas);
+          }
+        }
+      } catch (error) {
+        console.error('Erro:', error);
+      }
+    }
+
+    function displayRailwayDatesDelete(datas) {
+      const container = document.getElementById('railwayDatesDelete');
+      
+      if (!datas || datas.length === 0) {
+        container.innerHTML = '<p class="text-gray-400 text-sm text-center">Nenhuma data no banco</p>';
+        return;
+      }
+
+      container.innerHTML = datas.map(data => `
+        <div class="flex items-center justify-between p-2 rounded bg-gray-800 bg-opacity-30 border border-gray-700">
+          <div>
+            <span class="text-xs text-white">${data.data_formatada}</span>
+            <span class="text-xs text-gray-500 ml-2">${data.total_registros.toLocaleString('pt-BR')} registros</span>
+          </div>
+          <button onclick="deleteDataBanco('${data.data_raw}', '${data.data_formatada}')" 
+                  class="bg-red-600 hover:bg-red-700 px-2 py-1 rounded text-xs">
+            <i class="fas fa-trash"></i>
+          </button>
+        </div>
+      `).join('');
+    }
+
+    async function deleteDataBanco(dataRaw, dataFormatada) {
+      if (!confirm(`Apagar TODOS os registros de ${dataFormatada}?\n\nEsta ação não pode ser desfeita!`)) return;
+      
+      try {
+        const response = await fetch('/railway/deletar-data', {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${adminToken}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ data: dataRaw })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+          addSyncLog(`🗑️ ${dataFormatada} deletada — ${result.registros_deletados} registros removidos`, 'text-yellow-400');
+          loadRailwayDatesDelete();
+          loadRailwayResumo();
+          loadRailwayStatus();
+        } else {
+          alert('❌ ' + result.error);
+        }
+      } catch (error) {
+        alert('❌ Erro de conexão');
+      }
+    }
+
+    // Helper para log no console
+    function addSyncLog(msg, colorClass = 'text-white') {
+      const syncConsole = document.getElementById('syncConsole');
+      syncConsole.innerHTML += `<div class="${colorClass}">${msg}</div>`;
+      syncConsole.scrollTop = syncConsole.scrollHeight;
+    }
+
 
     function displayRailwayStatus(status) {
       const container = document.getElementById('railwayStatus');

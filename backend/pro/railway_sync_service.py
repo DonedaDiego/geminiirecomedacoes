@@ -93,6 +93,11 @@ class RailwaySyncService:
         """Processa JSON em DataFrame"""
         all_opcoes = []
         
+        TICKER_MAP = {
+            ('BRKM', 'PNA'): 'BRKM5',
+            ('BRKM', 'ONA'): 'BRKM3',
+        }
+        
         for letra, empresas in data_json['Empresa'].items():
             if empresas:
                 for opcao in empresas:
@@ -100,27 +105,38 @@ class RailwaySyncService:
                     opcao['tipo_opcao'] = 'CALL' if opcao.get('tMerc') == '70' else 'PUT'
                     opcao['vencimento'] = pd.to_datetime(opcao['dtVen'], format='%Y%m%d')
                     
-                    mer = opcao.get('mer', '')
-                    esp = opcao.get('espPap', '')
+                    mer = opcao.get('mer', '').strip()
+                    esp = opcao.get('espPap', '').strip()
                     
-                    # Gera ticker
-                    if 'ON' in esp:
-                        ticker = f"{mer}3"
-                    elif 'PN' in esp:
-                        ticker = f"{mer}4"
-                    elif 'UNIT' in esp or 'UNT' in esp or 'CI' in esp:
-                        ticker = f"{mer}11"
-                    elif 'DRN' in esp or 'BDR' in esp:
-                        ticker = f"{mer}34"
-                    else:
-                        ticker = mer
+                    # Exceções primeiro
+                    ticker = None
+                    for (m, e), t in TICKER_MAP.items():
+                        if mer == m and e in esp:
+                            ticker = t
+                            break
+                    
+                    # Lógica geral - específicos antes dos genéricos
+                    if ticker is None:
+                        if 'PNB' in esp:
+                            ticker = f"{mer}6"
+                        elif 'ONB' in esp:
+                            ticker = f"{mer}6"
+                        elif 'ON' in esp:
+                            ticker = f"{mer}3"
+                        elif 'PN' in esp:
+                            ticker = f"{mer}4"
+                        elif 'UNIT' in esp or 'UNT' in esp or 'CI' in esp:
+                            ticker = f"{mer}11"
+                        elif 'DRN' in esp or 'BDR' in esp:
+                            ticker = f"{mer}34"
+                        else:
+                            ticker = mer
                     
                     opcao['ticker'] = ticker
                     all_opcoes.append(opcao)
         
         df = pd.DataFrame(all_opcoes)
         
-        # Renomeia colunas
         df.rename(columns={
             'ser': 'serie',
             'prEx': 'preco_exercicio',
@@ -137,7 +153,6 @@ class RailwaySyncService:
             'espPap': 'especie_papel'
         }, inplace=True)
         
-        # Converte tipos
         df['preco_exercicio'] = pd.to_numeric(df['preco_exercicio'], errors='coerce')
         df['tipo_opcao'] = df['tipo_opcao'].astype(str)
         df['qtd_total'] = pd.to_numeric(df['qtd_total'], errors='coerce').fillna(0).astype(int)
@@ -145,7 +160,7 @@ class RailwaySyncService:
         df['qtd_trava'] = pd.to_numeric(df['qtd_trava'], errors='coerce').fillna(0).astype(int)
         df['qtd_coberto'] = pd.to_numeric(df['qtd_coberto'], errors='coerce').fillna(0).astype(int)
         
-        self.logger.info(f" Processados: {len(df)} registros")
+        self.logger.info(f"Processados: {len(df)} registros")
         return df
     
     def salvar_no_railway(self, df: pd.DataFrame) -> bool:
@@ -248,10 +263,6 @@ class RailwaySyncService:
     def obter_datas_disponiveis(self) -> List[str]:
         """Retorna lista de datas para sincronização"""
         return [                                   
-            "20260209",
-            "20260210",
-            "20260211",
-            "20260212",
             "20260213",
             "20260218",  
             "20260219",
@@ -261,9 +272,47 @@ class RailwaySyncService:
             "20260225",
             "20260226",
             "20260227",
+        ]   
 
-        ]
-   
+    def listar_datas_no_banco(self) -> List[Dict]:
+        """Lista datas que existem no banco com contagem"""
+        try:
+            with self.engine.connect() as conn:
+                result = conn.execute(text("""
+                    SELECT data_referencia, COUNT(*) as total
+                    FROM opcoes_b3
+                    GROUP BY data_referencia
+                    ORDER BY data_referencia DESC
+                """))
+                
+                datas = []
+                for row in result:
+                    datas.append({
+                        "data_raw": row[0].strftime('%Y%m%d'),
+                        "data_formatada": row[0].strftime('%d/%m/%Y'),
+                        "total_registros": row[1]
+                    })
+                return datas
+        except Exception as e:
+            self.logger.error(f"❌ Erro ao listar datas: {e}")
+            return []
+
+    def deletar_data(self, data_str: str) -> Dict:
+        """Deleta todos os registros de uma data"""
+        try:
+            data_obj = datetime.strptime(data_str, '%Y%m%d')
+            with self.engine.connect() as conn:
+                result = conn.execute(text("""
+                    DELETE FROM opcoes_b3 
+                    WHERE data_referencia = :data_ref
+                """), {"data_ref": data_obj})
+                conn.commit()
+                
+                return {"sucesso": True, "registros_deletados": result.rowcount}
+        except Exception as e:
+            self.logger.error(f"❌ Erro ao deletar data: {e}")
+            return {"sucesso": False, "erro": str(e)}
+
 
     def obter_status(self) -> Dict:
         """Retorna status atual do banco"""
