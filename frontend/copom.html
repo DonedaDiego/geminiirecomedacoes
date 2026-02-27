@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>COPOM - Opções de Taxa Selic - Geminii Tech</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            dark: '#000000',
+            light: '#ffffff',
+            subtle: 'rgba(255,255,255,0.1)',
+            geminii: '#fb1ebb'
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #0c0c0c 0%, #1a1a1a 100%);
+      min-height: 100vh;
+    }
+
+    .copom-card {
+      background: rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 16px;
+      transition: all 0.3s ease;
+    }
+
+    .copom-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 20px 40px rgba(251, 30, 187, 0.15);
+      border-color: rgba(251, 30, 187, 0.3);
+    }
+
+    .metric-card {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      padding: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      transition: all 0.3s ease;
+    }
+
+    .metric-card:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(251, 30, 187, 0.3);
+    }
+
+    .chart-container {
+      width: 100%;
+      height: 420px;
+      background: transparent;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .chart-container-tall {
+      width: 100%;
+      height: 480px;
+      background: transparent;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .spinner {
+      border: 2px solid rgba(255, 255, 255, 0.1);
+      border-radius: 50%;
+      border-top: 2px solid #fb1ebb;
+      width: 20px;
+      height: 20px;
+      animation: spin 1s linear infinite;
+      display: inline-block;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .loading { opacity: 0.6; pointer-events: none; }
+
+    select option {
+      background: #575353;
+      color: white;
+    }
+
+    .section-divider {
+      border-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .prob-bar-bg {
+      background: rgba(255, 255, 255, 0.07);
+      border-radius: 6px;
+      height: 8px;
+      overflow: hidden;
+    }
+
+    .prob-bar-fill {
+      height: 100%;
+      border-radius: 6px;
+      background: linear-gradient(90deg, #fb1ebb, #a855f7);
+      transition: width 0.8s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeOut {
+      from { opacity: 1; transform: translateY(0); }
+      to   { opacity: 0; transform: translateY(-10px); }
+    }
+
+    .guide-card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 12px;
+      padding: 20px;
+    }
+    .guide-highlight {
+      background: rgba(251,30,187,0.08);
+      border-left: 3px solid #fb1ebb;
+      border-radius: 0 8px 8px 0;
+      padding: 14px 18px;
+    }
+    .guide-purple {
+      background: rgba(168,85,247,0.1);
+      border: 1px solid rgba(168,85,247,0.3);
+      border-radius: 10px;
+      padding: 16px 20px;
+    }
+    .month-table td {
+      padding: 3px 10px;
+      font-size: 12px;
+      color: #d1d5db;
+    }
+    .month-table td:first-child {
+      color: #fb1ebb;
+      font-weight: 600;
+    }
+    .example-box {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 8px;
+      padding: 14px;
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+    }
+    .tag-pink  { color: #fb1ebb; font-weight: 700; }
+    .tag-green { color: #4ade80; font-weight: 600; }
+    .tag-red   { color: #f87171; font-weight: 600; }
+    .tag-blue  { color: #60a5fa; font-weight: 600; }
+    .tag-yellow{ color: #facc15; font-weight: 600; }
+  </style>
+</head>
+
+<body class="text-white">
+
+  <!-- Navbar -->
+  <nav class="fixed top-6 left-1/2 transform -translate-x-1/2 z-50 bg-opacity-5 border-opacity-10 bg-white border-white border rounded-full px-4 py-3 shadow-xl backdrop-blur-md">
+    <div class="flex items-center justify-between">
+      <div class="flex items-center">
+        <a href="/dashboard.html">
+          <img src="logo.png" alt="Geminii Logo" class="w-6 h-6 cursor-pointer">
+        </a>
+      </div>
+      <div class="hidden md:flex items-center space-x-6 text-xs text-gray-300 ml-8">
+        <span class="text-white font-medium">COPOM</span>        
+        <a href="monitor-basico.html" class="hover:text-white transition-colors">Monitor Beta</a>
+        <a href="sup_res_vol.html" class="hover:text-white transition-colors">Suporte e Resistência</a>
+        <a href="amplitude.html" class="hover:text-white transition-colors">Amplitude</a>
+        <a href="rrg.html" class="hover:text-white transition-colors">RRG</a>
+        
+      </div>
+      <div class="flex items-center space-x-3 ml-8">
+        <div class="w-8 h-8 bg-pink-500 bg-opacity-10 border border-pink-500 border-opacity-30 rounded-full flex items-center justify-center relative">
+          <i class="fas fa-landmark text-pink-400 text-xs"></i>
+          <div class="absolute -top-1 -right-1 w-2 h-2 bg-pink-500 rounded-full animate-pulse"></div>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Content -->
+  <div class="pt-32 pb-16">
+    <div class="max-w-7xl mx-auto px-6">
+
+      <!-- Header -->
+      <div class="text-center mb-8">
+        <h1 class="text-4xl md:text-5xl font-bold mb-4">
+          <span style="color: #fb1ebb; font-weight: 900;">Opções</span>
+          <span class="text-white font-light"> de Taxa Selic</span>
+        </h1>
+        <p class="text-neutral-300 text-lg max-w-3xl mx-auto">
+          O Contrato de Opção de Copom permite a negociação da variação da taxa Selic Meta, decidida a cada reunião do comitê.
+          Acompanhe as probabilidades implícitas de mercado para cada cenário.
+        </p>
+      </div>
+
+      <!-- Botão expander -->
+      <div class="text-center mb-12">
+        <button onclick="toggleGuide()" class="bg-gradient-to-r from-geminii to-purple-600 hover:from-purple-600 hover:to-geminii text-white px-6 py-3 rounded-full font-semibold text-sm transition-all duration-300 inline-flex items-center mx-auto shadow-lg hover:shadow-xl transform hover:scale-105">
+          <i id="guideIcon" class="fas fa-info-circle mr-2 transition-transform duration-300"></i>
+          Como Funciona a Análise de Opções COPOM – Guia Completo
+        </button>
+
+        <!-- Conteúdo do Guia -->
+        <div id="guideContent" class="hidden mt-8 max-w-5xl mx-auto text-left">
+          <div class="copom-card p-8 space-y-8">
+
+            <!-- Intro -->
+            <div class="text-center">
+              <h2 class="text-2xl font-bold mb-3">
+                <span style="color:#fb1ebb;">Probabilidades da Taxa Selic</span>
+                <span class="text-white"> nas Opções de Copom</span>
+              </h2>
+              <p class="text-gray-300 text-sm leading-relaxed max-w-3xl mx-auto">
+                Na bolsa, investidores apostam no resultado das reuniões do Copom, que define a Taxa Selic a cada 45 dias.
+                Eles usam o <strong class="text-white">Contrato de Opção de Copom</strong> para negociar variações da Selic.
+                Isso mostra as expectativas do mercado: se acertarem, ganham; se errarem, perdem.
+              </p>
+              <p class="text-gray-400 text-xs mt-3">
+                Comprar uma opção de Copom é como comprar opção de ação, mas o <strong class="text-white">lote mínimo é 100 opções</strong>.
+              </p>
+            </div>
+
+            <hr class="border-white border-opacity-10">
+
+            <!-- Como ler o código -->
+            <div>
+              <h3 class="text-lg font-bold mb-4 text-white">
+                <i class="fas fa-code mr-2" style="color:#fb1ebb;"></i>
+                Como ler o código da opção?
+              </h3>
+              <div class="example-box mb-4">
+                <span class="tag-pink">CPM</span><span class="tag-green">K</span><span class="tag-yellow">26</span><span class="tag-blue">C</span><span class="tag-red">100750</span>
+              </div>
+              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div class="guide-card">
+                  <p class="tag-pink text-sm mb-1">CPM</p>
+                  <p class="text-gray-300 text-xs">Indica que é uma opção de Copom.</p>
+                </div>
+                <div class="guide-card">
+                  <p class="tag-green text-sm mb-1">K → mês da reunião</p>
+                  <p class="text-gray-300 text-xs mb-2">Cada letra representa um mês:</p>
+                  <table class="month-table">
+                    <tr><td>F</td><td>Jan</td><td>G</td><td>Fev</td></tr>
+                    <tr><td>H</td><td>Mar</td><td>J</td><td>Abr</td></tr>
+                    <tr><td>K</td><td>Mai</td><td>M</td><td>Jun</td></tr>
+                    <tr><td>N</td><td>Jul</td><td>Q</td><td>Ago</td></tr>
+                    <tr><td>U</td><td>Set</td><td>V</td><td>Out</td></tr>
+                    <tr><td>X</td><td>Nov</td><td>Z</td><td>Dez</td></tr>
+                  </table>
+                </div>
+                <div class="guide-card">
+                  <p class="tag-yellow text-sm mb-1">26 → ano (2026)</p>
+                  <p class="text-gray-300 text-xs mb-3">Ano da reunião do Copom.</p>
+                  <p class="tag-blue text-sm mb-1">C → reunião ordinária</p>
+                  <p class="text-gray-300 text-xs">P = reunião extraordinária.</p>
+                </div>
+                <div class="guide-card md:col-span-2 lg:col-span-3">
+                  <p class="tag-red text-sm mb-1">100750 → variação na Selic (+0,75%)</p>
+                  <p class="text-gray-300 text-xs leading-relaxed">
+                    Representa a variação da Selic em pontos-base. Exemplos:
+                    <span class="tag-red">101000</span> = +1% &nbsp;|&nbsp;
+                    <span class="text-gray-400">100000</span> = sem mudança &nbsp;|&nbsp;
+                    <span class="tag-green">100250</span> = +0,25% &nbsp;|&nbsp;
+                    <span class="tag-blue">099750</span> = -0,25%
+                  </p>
+                </div>
+              </div>
+              <div class="guide-highlight mt-4">
+                <p class="text-sm text-gray-200">
+                  <strong class="text-white">Exemplo completo:</strong>
+                  <span class="font-mono text-pink-400"> CPMK26C100750</span> →
+                  aposta em <strong class="text-white">alta de 0,75%</strong> na Selic na reunião de <strong class="text-white">maio/2026</strong>.
+                </p>
+              </div>
+            </div>
+
+            <hr class="border-white border-opacity-10">
+
+            <!-- Como ganhar ou perder -->
+            <div>
+              <h3 class="text-lg font-bold mb-4 text-white">
+                <i class="fas fa-scale-balanced mr-2" style="color:#fb1ebb;"></i>
+                Como ganhar ou perder?
+              </h3>
+              <p class="text-gray-300 text-sm mb-4">
+                Se você acerta, <strong class="text-white">cada opção paga R$ 100</strong>. São opções <strong class="text-white">europeias</strong>: só exercidas no vencimento. Se errar, <strong class="tag-red">perde tudo</strong>.
+              </p>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="guide-card">
+                  <div class="flex items-center gap-2 mb-3">
+                    <div class="w-8 h-8 rounded-full bg-green-500 bg-opacity-20 flex items-center justify-center text-green-400 text-xs font-bold">✓</div>
+                    <p class="text-green-400 font-semibold text-sm">Exemplo: ACERTA</p>
+                  </div>
+                  <p class="text-gray-300 text-xs leading-relaxed">
+                    Opção a <strong class="text-white">R$ 92</strong> (lote de 100 = R$ 9.200 investidos).<br>
+                    Se o Copom subir 0,75%, você recebe <strong class="text-green-400">R$ 10.000</strong>.<br>
+                    <strong class="text-green-400">Lucro: R$ 800</strong>
+                  </p>
+                </div>
+                <div class="guide-card">
+                  <div class="flex items-center gap-2 mb-3">
+                    <div class="w-8 h-8 rounded-full bg-red-500 bg-opacity-20 flex items-center justify-center text-red-400 text-xs font-bold">✗</div>
+                    <p class="text-red-400 font-semibold text-sm">Exemplo: ERRA</p>
+                  </div>
+                  <p class="text-gray-300 text-xs leading-relaxed">
+                    Se o Copom sobe 0,5% (diferente do apostado),<br>
+                    você <strong class="tag-red">perde tudo: R$ 9.200</strong>.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <hr class="border-white border-opacity-10">
+
+            <!-- Estratégia de preços -->
+            <div>
+              <h3 class="text-lg font-bold mb-4 text-white">
+                <i class="fas fa-lightbulb mr-2" style="color:#fb1ebb;"></i>
+                Opções caras vs. baratas
+              </h3>
+              <div class="guide-purple mb-4">
+                <p class="text-gray-200 text-sm leading-relaxed">
+                  <strong class="text-white">Opções mais caras</strong> = mais consenso de mercado → <span class="tag-yellow">menor lucro se acertar</span><br>
+                  <strong class="text-white">Opções baratas</strong> = menos consenso → <span class="tag-green">maior lucro se acertar</span>
+                </p>
+              </div>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="guide-card">
+                  <p class="text-yellow-400 font-semibold text-sm mb-2">Alta de 0,75% (provável)</p>
+                  <p class="text-gray-300 text-xs">R$ 92/opção · lote R$ 9.200 · <strong class="tag-green">lucro R$ 800</strong></p>
+                </div>
+                <div class="guide-card">
+                  <p class="text-green-400 font-semibold text-sm mb-2">Alta de 1,25% (improvável)</p>
+                  <p class="text-gray-300 text-xs">R$ 4,20/opção · lote R$ 420 · <strong class="tag-green">lucro R$ 9.580</strong></p>
+                </div>
+              </div>
+            </div>
+
+            <hr class="border-white border-opacity-10">
+
+            <!-- Aviso -->
+            <div class="guide-highlight">
+              <p class="text-sm leading-relaxed text-gray-200">
+                <i class="fas fa-triangle-exclamation mr-2 text-yellow-400"></i>
+                <strong class="text-white">Dica importante:</strong> Só aposte o que pode perder. São só dois resultados: <strong class="tag-green">tudo</strong> ou <strong class="tag-red">nada</strong>.
+                Resultados prováveis custam caro (pouco ganho); improváveis custam barato (grande ganho).
+                Os gráficos da B3 abaixo mostram as expectativas do mercado para a Selic.
+              </p>
+            </div>
+
+          </div>
+        </div><!-- /guideContent -->
+      </div><!-- /expander wrapper -->
+
+      <!-- Controles -->
+      <div class="copom-card p-6 mb-8">
+        <div class="flex flex-col md:flex-row gap-4 items-center justify-between">
+
+          <!-- Data de Referência -->
+          <div class="flex items-center gap-3">
+            <i class="fas fa-calendar-alt text-gray-400 text-lg"></i>
+            <div>
+              <p class="text-xs text-gray-400 mb-1">Data de Referência</p>
+              <input
+                type="date"
+                id="refDateInput"
+                class="px-3 py-2 bg-white bg-opacity-10 border border-white border-opacity-20 rounded-lg text-white text-sm focus:outline-none focus:border-geminii backdrop-blur-sm"
+              >
+            </div>
+          </div>
+
+          <!-- Reunião COPOM -->
+          <div class="flex items-center gap-3">
+            <i class="fas fa-calendar-check text-gray-400 text-lg"></i>
+            <div>
+              <p class="text-xs text-gray-400 mb-1">Reunião do COPOM</p>
+              <select
+                id="meetingSelect"
+                class="px-3 py-2 bg-white bg-opacity-10 border border-white border-opacity-20 rounded-lg text-white text-sm focus:outline-none focus:border-geminii backdrop-blur-sm"
+              >
+                <!-- Populado via JS -->
+              </select>
+            </div>
+          </div>
+
+          <!-- Selic Atual -->
+          <div class="flex items-center gap-3">
+            <i class="fas fa-chart-line text-gray-400 text-lg"></i>
+            <div>
+              <p class="text-xs text-gray-400 mb-1">Taxa Selic Meta Atual</p>
+              <p class="text-2xl font-bold" id="selicAtual" style="color: #fb1ebb;">--</p>
+            </div>
+          </div>
+
+          <!-- Botão -->
+          <button
+            id="loadBtn"
+            onclick="carregarDados()"
+            class="px-6 py-2 bg-gradient-to-r from-geminii to-purple-600 hover:shadow-lg rounded-lg transition-all font-medium"
+          >
+            <i class="fas fa-sync-alt mr-2"></i>Atualizar
+          </button>
+        </div>
+      </div>
+
+      <!-- Status -->
+      <div id="statusMsg" class="mb-6 p-4 rounded-lg hidden backdrop-blur-sm"></div>
+
+      <!-- Loading -->
+      <div id="loadingState" class="hidden copom-card p-12 text-center mb-8">
+        <div class="spinner mx-auto mb-4" style="width: 40px; height: 40px; border-width: 3px;"></div>
+        <p class="text-xl font-semibold" style="color: #fb1ebb;">Carregando dados COPOM...</p>
+        <p class="text-sm text-gray-400 mt-2">Consultando B3</p>
+      </div>
+
+      <!-- ===== SEÇÃO: Probabilidades D-1 ===== -->
+      <div id="probSection" class="hidden copom-card p-6 mb-8">
+        <div class="mb-6">
+          <h2 class="text-2xl font-bold mb-1">
+            <i class="fas fa-chart-bar mr-3" style="color: #fb1ebb;"></i>
+            Probabilidades da Taxa Selic Meta <span class="text-sm font-normal text-gray-400">(D-1)</span>
+          </h2>
+          <p class="text-sm text-gray-400">
+            O gráfico reflete a expectativa do mercado para a próxima reunião.
+            Os valores são obtidos conforme metodologia de apreçamento da B3.
+          </p>
+          <p class="text-xs text-gray-500 mt-1">Data de Referência: <span id="ultimoRptLabel" class="text-gray-300">--</span></p>
+        </div>
+
+        <div class="chart-container">
+          <div id="probChart" style="width:100%;height:100%;"></div>
+        </div>
+      </div>
+
+      <!-- ===== SEÇÃO: Histórico de Probabilidades ===== -->
+      <div id="histProbSection" class="hidden copom-card p-6 mb-8">
+        <div class="mb-6">
+          <h2 class="text-2xl font-bold mb-1">
+            <i class="fas fa-chart-line mr-3" style="color: #fb1ebb;"></i>
+            Dados Históricos
+            <span class="text-lg font-normal text-gray-300 ml-2">— Preço de Referência (Probabilidades)</span>
+          </h2>
+          <p class="text-sm text-gray-400">
+            Evolução das probabilidades implícitas por cenário ao longo do tempo para a reunião selecionada.
+          </p>
+        </div>
+
+        <div class="chart-container-tall">
+          <div id="histProbChart" style="width:100%;height:100%;"></div>
+        </div>
+      </div>
+
+      <!-- ===== SEÇÃO: Volume Negociado ===== -->
+      <div id="volumeSection" class="hidden copom-card p-6 mb-8">
+        <div class="mb-6">
+          <h2 class="text-2xl font-bold mb-1">
+            <i class="fas fa-chart-column mr-3" style="color: #fb1ebb;"></i>
+            Volume Negociado
+          </h2>
+          <p class="text-sm text-gray-400">
+            Histórico de contratos negociados por cenário e data de referência.
+          </p>
+        </div>
+
+        <div class="chart-container-tall">
+          <div id="volumeChart" style="width:100%;height:100%;"></div>
+        </div>
+      </div>
+
+      <!-- Estado Vazio -->
+      <div id="emptyState" class="copom-card p-12 text-center">
+        <i class="fas fa-landmark text-6xl mb-4" style="color: rgba(251, 30, 187, 0.4);"></i>
+        <h3 class="text-2xl font-bold mb-2 text-gray-300">Selecione uma reunião COPOM</h3>
+        <p class="text-gray-400">Escolha a data de referência e a reunião para carregar os dados.</p>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Disclaimer -->
+  <div class="mt-6 max-w-4xl mx-auto px-6 pb-12">
+    <div class="bg-red-900/20 border-2 border-red-500/40 rounded-xl p-6">
+      <div class="flex items-start gap-4">
+        <i class="fas fa-exclamation-triangle text-red-400 text-2xl mt-1 flex-shrink-0"></i>
+        <div class="text-left">
+          <h3 class="text-red-400 font-bold text-base mb-3">AVISO LEGAL IMPORTANTE</h3>
+          <p class="text-gray-300 text-xs leading-relaxed mb-3">
+            As informações fornecidas são de caráter educativo. <strong>Não constituem recomendação de investimento.</strong>
+            Investimentos envolvem riscos. Rentabilidade passada não garante resultados futuros.
+          </p>
+          <div class="pt-3 border-t border-gray-700 text-gray-400 text-xs">
+            <p><strong>Geminii Research Ltda</strong> - CNPJ 60.897.331/0001-06 | Analista: Diego Doneda - CNPI 9668</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ── Auth ──────────────────────────────────────────────
+    const userToken = localStorage.getItem('geminii_token');
+    if (!userToken) window.location.href = '/login.html';
+
+    // ── Paleta de cores para cenários ────────────────────
+    const SCENARIO_COLORS = {
+      'Queda de 2%':       '#7c3aed',
+      'Queda de 1,75%':    '#6d28d9',
+      'Queda de 1,5%':     '#5b21b6',
+      'Queda de 1,25%':    '#4c1d95',
+      'Queda de 1%':       '#7e22ce',
+      'Queda de 0,75%':    '#9333ea',
+      'Queda de 0,5%':     '#a855f7',
+      'Queda de 0,25%':    '#c084fc',
+      'Manutenção':        '#6b7280',
+      'Aumento de 0,25%':  '#fb923c',
+      'Aumento de 0,5%':   '#f97316',
+      'Aumento de 0,75%':  '#ea580c',
+      'Aumento de 1%':     '#c2410c',
+    };
+
+    // ── Helpers ───────────────────────────────────────────
+    function showStatus(msg, type = 'info') {
+      const el = document.getElementById('statusMsg');
+      const bg = type === 'success'
+        ? 'bg-green-600 bg-opacity-20 border-green-500 border-opacity-30'
+        : type === 'error'
+        ? 'bg-red-600 bg-opacity-20 border-red-500 border-opacity-30'
+        : 'bg-blue-600 bg-opacity-20 border-blue-500 border-opacity-30';
+      el.className = `mb-6 p-4 rounded-lg border backdrop-blur-sm ${bg}`;
+      el.textContent = msg;
+      el.classList.remove('hidden');
+      setTimeout(() => el.classList.add('hidden'), 5000);
+    }
+
+    function setLoading(on) {
+      const btn = document.getElementById('loadBtn');
+      if (on) {
+        btn.classList.add('loading');
+        btn.innerHTML = '<span class="spinner mr-2"></span>Carregando...';
+        document.getElementById('loadingState').classList.remove('hidden');
+        document.getElementById('emptyState').classList.add('hidden');
+      } else {
+        btn.classList.remove('loading');
+        btn.innerHTML = '<i class="fas fa-sync-alt mr-2"></i>Atualizar';
+        document.getElementById('loadingState').classList.add('hidden');
+      }
+    }
+
+    function formatDate(isoStr) {
+      if (!isoStr) return '--';
+      const [y, m, d] = isoStr.split('-');
+      return `${d}/${m}/${y}`;
+    }
+
+    // ── Popula select de reuniões ─────────────────────────
+    async function carregarReunioes() {
+      try {
+        const res = await fetch('/api/copom/reunioes', {
+          headers: { 'Authorization': `Bearer ${userToken}` }
+        });
+        const reunioes = await res.json();
+        const sel = document.getElementById('meetingSelect');
+        sel.innerHTML = '';
+        reunioes.forEach(r => {
+          const opt = document.createElement('option');
+          opt.value = r.data_reuniao;
+          opt.textContent = r.label;
+          sel.appendChild(opt);
+        });
+      } catch (e) {
+        console.error('Erro ao carregar reuniões:', e);
+      }
+    }
+
+    // ── Carrega dados principais ──────────────────────────
+    async function carregarDados() {
+      const refDate    = document.getElementById('refDateInput').value;
+      const meetingDate = document.getElementById('meetingSelect').value;
+
+      setLoading(true);
+      ['probSection','histProbSection','volumeSection'].forEach(id =>
+        document.getElementById(id).classList.add('hidden')
+      );
+
+      try {
+        const params = new URLSearchParams({ days: 60 });
+        if (refDate)    params.set('ref_date', refDate);
+        if (meetingDate) params.set('meeting_date', meetingDate);
+
+        const res = await fetch(`/api/copom/dados?${params}`, {
+          headers: { 'Authorization': `Bearer ${userToken}` }
+        });
+        const dados = await res.json();
+
+        if (dados.erro) {
+          showStatus(dados.erro, 'error');
+          document.getElementById('emptyState').classList.remove('hidden');
+          return;
+        }
+
+        renderDados(dados);
+        showStatus('Dados carregados com sucesso', 'success');
+
+      } catch (e) {
+        console.error(e);
+        showStatus('Erro ao carregar dados', 'error');
+        document.getElementById('emptyState').classList.remove('hidden');
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    // ── Render principal ──────────────────────────────────
+    function renderDados(dados) {
+      // Selic
+      const selic = dados.selic;
+      document.getElementById('selicAtual').textContent = selic ? `${selic.toFixed(2)}%` : '--';
+
+      // Data de referência label
+      document.getElementById('ultimoRptLabel').textContent = formatDate(dados.ultimo_rpt);
+
+      // Gráfico 1: Probabilidades D-1
+      if (dados.probabilidades_d1 && dados.probabilidades_d1.length > 0) {
+        renderProbChart(dados.probabilidades_d1);
+        document.getElementById('probSection').classList.remove('hidden');
+      }
+
+      // Gráfico 2: Histórico probabilidades
+      if (dados.historico_probabilidades && dados.historico_probabilidades.datas.length > 0) {
+        renderHistProbChart(dados.historico_probabilidades);
+        document.getElementById('histProbSection').classList.remove('hidden');
+      }
+
+      // Gráfico 3: Volume negociado
+      if (dados.historico_volume && dados.historico_volume.datas.length > 0) {
+        renderVolumeChart(dados.historico_volume);
+        document.getElementById('volumeSection').classList.remove('hidden');
+      }
+
+      document.getElementById('emptyState').classList.add('hidden');
+
+      // Resize após render
+      setTimeout(() => {
+        ['probChart','histProbChart','volumeChart'].forEach(id => {
+          const el = document.getElementById(id);
+          if (el && el.data) Plotly.Plots.resize(el);
+        });
+      }, 300);
+    }
+
+    // ── Gráfico 1: Barras D-1 ─────────────────────────────
+    function renderProbChart(probs) {
+      const cenarios  = probs.map(p => p.cenario);
+      const valores   = probs.map(p => p.probabilidade);
+      const cores     = cenarios.map(c => SCENARIO_COLORS[c] || '#6b7280');
+
+      const trace = {
+        x: cenarios,
+        y: valores,
+        type: 'bar',
+        marker: {
+          color: cores,
+          opacity: 0.85,
+          line: { color: 'rgba(255,255,255,0.15)', width: 1 }
+        },
+        hovertemplate: '<b>%{x}</b><br>Probabilidade: %{y:.2f}%<extra></extra>',
+        text: valores.map(v => v > 1 ? `${v.toFixed(1)}%` : ''),
+        textposition: 'outside',
+        textfont: { color: '#ffffff', size: 11 }
+      };
+
+      const layout = {
+        paper_bgcolor: 'transparent',
+        plot_bgcolor: 'transparent',
+        font: { color: '#ffffff', family: 'Inter' },
+        xaxis: {
+          tickfont: { color: '#9ca3af', size: 10 },
+          gridcolor: 'rgba(255,255,255,0.05)',
+          tickangle: -25
+        },
+        yaxis: {
+          title: { text: 'Probabilidade (%)', font: { size: 12, color: '#9ca3af' } },
+          tickfont: { color: '#9ca3af', size: 11 },
+          gridcolor: 'rgba(255,255,255,0.08)',
+          range: [0, 110],
+          zeroline: false
+        },
+        showlegend: false,
+        margin: { l: 55, r: 20, t: 20, b: 80 },
+        bargap: 0.3
+      };
+
+      Plotly.newPlot('probChart', [trace], layout, { responsive: true, displaylogo: false });
+    }
+
+    // ── Gráfico 2: Histórico linhas ───────────────────────
+    function renderHistProbChart(hist) {
+      const datas   = hist.datas.map(formatDate);
+      const series  = hist.series;
+
+      const traces = series.map(s => ({
+        x: datas,
+        y: s.valores,
+        name: s.cenario,
+        type: 'scatter',
+        mode: 'lines+markers',
+        line: {
+          color: SCENARIO_COLORS[s.cenario] || '#6b7280',
+          width: 2
+        },
+        marker: { size: 4 },
+        hovertemplate: `<b>${s.cenario}</b><br>%{x}: %{y:.2f}%<extra></extra>`
+      }));
+
+      const layout = {
+        paper_bgcolor: 'transparent',
+        plot_bgcolor: 'transparent',
+        font: { color: '#ffffff', family: 'Inter' },
+        xaxis: {
+          tickfont: { color: '#9ca3af', size: 10 },
+          gridcolor: 'rgba(255,255,255,0.06)',
+          tickangle: -25
+        },
+        yaxis: {
+          title: { text: 'Preço de Referência', font: { size: 12, color: '#9ca3af' } },
+          tickfont: { color: '#9ca3af', size: 11 },
+          gridcolor: 'rgba(255,255,255,0.08)',
+          zeroline: false
+        },
+        legend: {
+          orientation: 'h',
+          x: 0, y: -0.25,
+          font: { color: '#9ca3af', size: 10 },
+          bgcolor: 'rgba(0,0,0,0)'
+        },
+        margin: { l: 55, r: 20, t: 20, b: 100 },
+        hovermode: 'x unified'
+      };
+
+      Plotly.newPlot('histProbChart', traces, layout, { responsive: true, displaylogo: false });
+    }
+
+    // ── Gráfico 3: Volume barras empilhadas ───────────────
+    function renderVolumeChart(vol) {
+      const datas   = vol.datas.map(formatDate);
+      const totais  = vol.totais;
+
+      const traces = vol.series.map(s => ({
+        x: datas,
+        y: s.valores,
+        name: s.cenario,
+        type: 'bar',
+        marker: {
+          color: SCENARIO_COLORS[s.cenario] || '#6b7280',
+          opacity: 0.85
+        },
+        hovertemplate: `<b>${s.cenario}</b><br>%{x}: %{y:,.0f} contratos<extra></extra>`
+      }));
+
+      // Trace de totais como texto acima
+      const traceTotal = {
+        x: datas,
+        y: totais,
+        type: 'scatter',
+        mode: 'text',
+        text: totais.map(v => v > 0 ? v.toLocaleString('pt-BR') : ''),
+        textposition: 'top center',
+        textfont: { color: 'rgba(255,255,255,0.6)', size: 9 },
+        showlegend: false,
+        hoverinfo: 'none'
+      };
+
+      const layout = {
+        barmode: 'stack',
+        paper_bgcolor: 'transparent',
+        plot_bgcolor: 'transparent',
+        font: { color: '#ffffff', family: 'Inter' },
+        xaxis: {
+          tickfont: { color: '#9ca3af', size: 10 },
+          gridcolor: 'rgba(255,255,255,0.06)',
+          tickangle: -25
+        },
+        yaxis: {
+          title: { text: 'Quantidade de Contratos', font: { size: 12, color: '#9ca3af' } },
+          tickfont: { color: '#9ca3af', size: 11 },
+          gridcolor: 'rgba(255,255,255,0.08)',
+          zeroline: false
+        },
+        legend: {
+          orientation: 'h',
+          x: 0, y: -0.28,
+          font: { color: '#9ca3af', size: 10 },
+          bgcolor: 'rgba(0,0,0,0)'
+        },
+        margin: { l: 70, r: 20, t: 30, b: 110 },
+        hovermode: 'x unified'
+      };
+
+      Plotly.newPlot('volumeChart', [...traces, traceTotal], layout, { responsive: true, displaylogo: false });
+    }
+
+    // ── Init ──────────────────────────────────────────────
+    async function init() {
+      // Define data de referência como hoje
+      const hoje = new Date().toISOString().split('T')[0];
+      document.getElementById('refDateInput').value = hoje;
+
+      // Carrega lista de reuniões e dispara dados
+      await carregarReunioes();
+      await carregarDados();
+    }
+
+    // Resize janela
+    let resizeTimeout;
+    window.addEventListener('resize', () => {
+      clearTimeout(resizeTimeout);
+      resizeTimeout = setTimeout(() => {
+        ['probChart','histProbChart','volumeChart'].forEach(id => {
+          const el = document.getElementById(id);
+          if (el && el.data) Plotly.Plots.resize(el);
+        });
+      }, 250);
+    });
+
+    document.addEventListener('DOMContentLoaded', init);
+
+    // ── Expander Guia — padrão Amplitude ─────────────────
+    function toggleGuide() {
+      const content = document.getElementById('guideContent');
+      const icon    = document.getElementById('guideIcon');
+
+      if (content.classList.contains('hidden')) {
+        content.classList.remove('hidden');
+        content.style.animation = 'fadeIn 0.5s ease-in-out';
+        icon.classList.remove('fa-info-circle');
+        icon.classList.add('fa-times');
+        setTimeout(() => content.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+      } else {
+        content.style.animation = 'fadeOut 0.3s ease-in-out';
+        setTimeout(() => content.classList.add('hidden'), 300);
+        icon.classList.remove('fa-times');
+        icon.classList.add('fa-info-circle');
+      }
+    }
+    window.toggleGuide = toggleGuide;
+  </script>
+
+</body>
+</html>

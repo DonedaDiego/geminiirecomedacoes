@@ -14,6 +14,7 @@ from gratis.beta_routes import beta_bp
 from gratis.rsl_routes import get_rsl_blueprint
 from gratis.amplitude_routes import amplitude_bp
 from gratis.rrg_routes import get_rrg_blueprint
+from gratis.copom_routes import copom_bp
 
 # Pro
 from pro.opcoes_routes import opcoes_bp
@@ -126,6 +127,7 @@ app.register_blueprint(opcoes_bp)
 app.register_blueprint(oplab_bp)
 app.register_blueprint(railway_bp)
 app.register_blueprint(get_rrg_blueprint())
+app.register_blueprint(copom_bp)
 
 
 # market maker
@@ -431,6 +433,13 @@ def rsl_page():
 @app.route('/rrg.html')
 def rrg_page():
     return send_from_directory('../frontend', 'rrg.html')
+
+
+@app.route('/copom')
+@app.route('/copom.html')
+def copom_page():
+    return send_from_directory('../frontend', 'copom.html')
+
 
 
 ##========== Opções ===============##
