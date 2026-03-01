@@ -18,140 +18,149 @@ class YFinanceRRGService:
     """Servico completo para analise RRG usando YFinance"""
     
     TICKERS_SETORES = {
-        'BRAV3': 'Petroleo, Gas e Bio',
-        'CSAN3': 'Petroleo, Gas e Bio',
-        'RPMG3': 'Petroleo, Gas e Bio',
-        'PETR4': 'Petroleo, Gas e Bio',
-        'RECV3': 'Petroleo, Gas e Bio',
-        'PRIO3': 'Petroleo, Gas e Bio',
-        'RAIZ4': 'Petroleo, Gas e Bio',
-        'UGPA3': 'Petroleo, Gas e Bio',
-        'VBBR3': 'Petroleo, Gas e Bio',
-        'AURA33': 'Mineracao',
-        'BRAP4': 'Mineracao',
-        'CBAV3': 'Mineracao',
-        'VALE3': 'Mineracao',
-        'GGBR4': 'Siderurgia e Metalurgia',
-        'GOAU4': 'Siderurgia e Metalurgia',
-        'CSNA3': 'Siderurgia e Metalurgia',
-        'USIM5': 'Siderurgia e Metalurgia',
-        'BRKM5': 'Quimicos',
-        'KLBN11': 'Madeira e Papel',
-        'SUZB3': 'Madeira e Papel',
-        'EMBJ3': 'Transporte',
-        'FRAS3': 'Transporte',
-        'POMO4': 'Transporte',
-        'RAPT4': 'Transporte',
-        'RAIL3': 'Transporte',
-        'JSLG3': 'Transporte',
-        'TGMA3': 'Transporte',
-        'WEGE3': 'Maquinas',
-        'ROMI3': 'Maquinas',
-        'TASA4': 'Maquinas',
-        'AGXY3': 'Agropecuaria',
-        'SOJA3': 'Agropecuaria',
-        'AGRO3': 'Agropecuaria',
-        'SLCE3': 'Agropecuaria',
-        'SMTO3': 'Alimentos',
-        'MRFG3': 'Alimentos',
-        'BEEF3': 'Alimentos',
-        'ODER4': 'Alimentos',
-        'ABEV3': 'Bebidas',
-        'NATU3': 'Produtos',
-        'ASAI3': 'Produtos',
-        'CEDO4': 'Tecidos, Ves, Cal',
-        'SGPS3': 'Tecidos, Ves, Cal',
-        'ALPA4': 'Tecidos, Ves, Cal',
-        'CAMB3': 'Tecidos, Ves, Cal',
-        'GRND3': 'Tecidos, Ves, Cal',
-        'VULC3': 'Tecidos, Ves, Cal',
-        'MNDL3': 'Tecidos, Ves, Cal',
-        'TECN3': 'Tecidos, Ves, Cal',
-        'VIVA3': 'Tecidos, Ves, Cal',
-        'MYPK3': 'Automoveis',
-        'LEVE3': 'Automoveis',
-        'BMKS3': 'Viagens e Lazer',
-        'ESTR3': 'Viagens e Lazer',
-        'SHOW3': 'Viagens e Lazer',
-        'CVCB3': 'Viagens e Lazer',
-        'BHIA3': 'Diversos',
-        'COGN3': 'Diversos',
-        'CSED3': 'Diversos',
-        'YDUQ3': 'Diversos',
-        'RENT3': 'Diversos',
-        'MOVI3': 'Diversos',
-        'VAMO3': 'Diversos',
-        'DOTZ3': 'Diversos',
-        'AZZA3': 'Varejista',
-        'CEAB3': 'Varejista',
-        'CGRA4': 'Varejista',
-        'GUAR3': 'Varejista',
-        'AMAR3': 'Varejista',
-        'LREN3': 'Varejista',
-        'ALLD3': 'Varejista',
-        'MGLU3': 'Varejista',
-        'PETZ3': 'Varejista',
-        'FLRY3': 'Servicos Medico',
-        'ODPV3': 'Servicos Medico',
-        'ONCO3': 'Servicos Medico',
-        'QUAL3': 'Servicos Medico',
-        'RDOR3': 'Servicos Medico',
-        'TRAD3': 'Servicos',
-        'TOTS3': 'Servicos',
-        'ALUP11': 'Energia',
-        'CBEE3': 'Energia',
-        'AURE3': 'Energia',
-        'CEBR3': 'Energia',
-        'CEED3': 'Energia',
-        'CLSC3': 'Energia',
-        'CMIG4': 'Energia',
-        'CEEB3': 'Energia',
-        'COCE5': 'Energia',
-        'CPLE3': 'Energia',
-        'CPFE3': 'Energia',
-        'AXIA6': 'Energia',
-        'ENGI4': 'Energia',
-        'ENEV3': 'Energia',
-        'EGIE3': 'Energia',
-        'EQTL3': 'Energia',
-        'GEPA3': 'Energia',
-        'LIGT3': 'Energia',
-        'NEOE3': 'Energia',
-        'TAEE11': 'Energia',
-        'AMBP3': 'Saneamento',
-        'CASN3': 'Saneamento',
-        'CSMG3': 'Saneamento',
-        'SAPR4': 'Saneamento',
-        'SBSP3': 'Saneamento',
-        'CEGR3': 'Gas',
-        'ABCB4': 'Inter Financeiros',
-        'BMGB4': 'Inter Financeiros',
-        'BPAN4': 'Inter Financeiros',
-        'BEES3': 'Inter Financeiros',
-        'BPAR3': 'Inter Financeiros',
-        'BBDC4': 'Inter Financeiros',
-        'BBAS3': 'Inter Financeiros',
-        'BPAC11': 'Inter Financeiros',
-        'ITUB4': 'Inter Financeiros',
-        'BMEB4': 'Inter Financeiros',
-        'BNBR3': 'Inter Financeiros',
-        'PINE4': 'Inter Financeiros',
-        'SANB11': 'Inter Financeiros',
-        'B3SA3': 'Ser Financeiros',
-        'BBSE3': 'Previdencia e Seguros',
-        'CXSE3': 'Previdencia e Seguros',
-        'PSSA3': 'Previdencia e Seguros',
-        'IRBR3': 'Previdencia e Seguros',
-        'WIZC3': 'Previdencia e Seguros',
-        'ALOS3': 'Exploracao de Imoveis',
-        'HBRE3': 'Exploracao de Imoveis',
-        'LOGG3': 'Exploracao de Imoveis',
-        'MULT3': 'Exploracao de Imoveis',
-        'SYNE3': 'Exploracao de Imoveis',
-        'ITSA4': 'Holdings Diversificadas',
-        'MOAR3': 'Holdings Diversificadas',
-        'SIMH3': 'Holdings Diversificadas'
-    }
+    # Petroleo, Gas e Bio
+    'PETR3': 'Petroleo, Gas e Bio',
+    'PETR4': 'Petroleo, Gas e Bio',
+    'BRAV3': 'Petroleo, Gas e Bio',
+    'CSAN3': 'Petroleo, Gas e Bio',
+    'PRIO3': 'Petroleo, Gas e Bio',
+    'UGPA3': 'Petroleo, Gas e Bio',
+    'VBBR3': 'Petroleo, Gas e Bio',
+    'RECV3': 'Petroleo, Gas e Bio',
+    'RPMG3': 'Petroleo, Gas e Bio',
+
+    # Mineracao
+    'VALE3': 'Mineracao',
+    'AURA33': 'Mineracao',
+    'BRAP4': 'Mineracao',
+    'CBAV3': 'Mineracao',
+    'CMIN3': 'Mineracao',
+
+    # Siderurgia e Metalurgia
+    'GGBR4': 'Siderurgia e Metalurgia',
+    'GOAU4': 'Siderurgia e Metalurgia',
+    'CSNA3': 'Siderurgia e Metalurgia',
+    'USIM5': 'Siderurgia e Metalurgia',
+
+    # Quimicos
+    'BRKM5': 'Quimicos',
+
+    # Madeira e Papel
+    'KLBN11': 'Madeira e Papel',
+    'SUZB3': 'Madeira e Papel',
+
+    # Transporte
+    'EMBJ3': 'Transporte',
+    'RAIL3': 'Transporte',
+    'JSLG3': 'Transporte',
+    'POMO4': 'Transporte',
+    'MOTV3': 'Transporte',
+
+    # Maquinas
+    'WEGE3': 'Maquinas',
+    'ROMI3': 'Maquinas',
+
+    # Agropecuaria
+    'AGXY3': 'Agropecuaria',
+    'SOJA3': 'Agropecuaria',
+    'AGRO3': 'Agropecuaria',
+    'SLCE3': 'Agropecuaria',
+
+    # Alimentos
+    'MBRF3': 'Alimentos',
+    'BEEF3': 'Alimentos',
+
+    # Bebidas
+    'ABEV3': 'Bebidas',
+
+    # Produtos (não duráveis/cosméticos)
+    'NATU3': 'Produtos',
+
+    # Varejista
+    'ASAI3': 'Varejista',
+    'AZZA3': 'Varejista',
+    'CEAB3': 'Varejista',
+    'LREN3': 'Varejista',
+    'MGLU3': 'Varejista',
+    'RADL3': 'Varejista',
+
+    # Tecidos, Ves, Cal (vestuário)
+    'VIVA3': 'Tecidos, Ves, Cal',
+
+    # Automoveis
+    'MYPK3': 'Automoveis',
+    'LEVE3': 'Automoveis',
+
+    # Viagens e Lazer
+    'CVCB3': 'Viagens e Lazer',
+
+    # Diversos
+    'COGN3': 'Diversos',
+    'YDUQ3': 'Diversos',
+    'RENT3': 'Diversos',
+    'VAMO3': 'Diversos',
+
+    # Servicos Medico
+    'RDOR3': 'Servicos Medico',
+    'FLRY3': 'Servicos Medico',
+    'HAPV3': 'Servicos Medico',
+
+    # Servicos (TI/comunicações)
+    'TOTS3': 'Servicos',
+    'VIVT3': 'Servicos',
+    'TIMS3': 'Servicos',
+
+    # Energia
+    'ALUP11': 'Energia',
+    'CBEE3': 'Energia',
+    'AURE3': 'Energia',
+    'CEBR3': 'Energia',
+    'CLSC3': 'Energia',
+    'CMIG4': 'Energia',
+    'CPLE3': 'Energia',
+    'CPFE3': 'Energia',
+    'AXIA3': 'Energia',
+    'AXIA6': 'Energia',
+    'ENGI4': 'Energia',
+    'ENEV3': 'Energia',
+    'EGIE3': 'Energia',
+    'EQTL3': 'Energia',
+    'NEOE3': 'Energia',
+    'TAEE11': 'Energia',
+
+    # Saneamento
+    'SBSP3': 'Saneamento',
+    'CSMG3': 'Saneamento',
+    'SAPR11': 'Saneamento',
+
+    # Gas
+    'CEGR3': 'Gas',
+
+    # Inter Financeiros (bancos)
+    'ABCB4': 'Inter Financeiros',
+    'BBDC3': 'Inter Financeiros',
+    'BBDC4': 'Inter Financeiros',
+    'BBAS3': 'Inter Financeiros',
+    'ITUB4': 'Inter Financeiros',
+    'BPAC11': 'Inter Financeiros',
+
+    # Ser Financeiros
+    'B3SA3': 'Ser Financeiros',
+
+    # Previdencia e Seguros
+    'BBSE3': 'Previdencia e Seguros',
+    'CXSE3': 'Previdencia e Seguros',
+    'PSSA3': 'Previdencia e Seguros',
+    'IRBR3': 'Previdencia e Seguros',
+
+    # Exploracao de Imoveis
+    'ALOS3': 'Exploracao de Imoveis',
+    'MULT3': 'Exploracao de Imoveis',
+
+    # Holdings Diversificadas
+    'ITSA4': 'Holdings Diversificadas'
+}
+
     
     @classmethod
     def get_all_setores(cls) -> List[str]:
@@ -410,8 +419,11 @@ class YFinanceRRGService:
             
             avg_dist_ema65 = np.mean([r['dist_ema65_pct'] for r in resultados_individuais])
             avg_dist_ema252 = np.mean([r['dist_ema252_pct'] for r in resultados_individuais])
-            avg_momentum = np.mean([r['momentum_21d'] for r in resultados_individuais if r['momentum_21d']])
-            avg_vol = np.mean([r['volatilidade_30d'] for r in resultados_individuais if r['volatilidade_30d']])
+            momentum_vals = [r['momentum_21d'] for r in resultados_individuais if r['momentum_21d'] is not None]
+            vol_vals = [r['volatilidade_30d'] for r in resultados_individuais if r['volatilidade_30d'] is not None]
+
+            avg_momentum = float(np.mean(momentum_vals)) if momentum_vals else 0.0
+            avg_vol = float(np.mean(vol_vals)) if vol_vals else 0.0
             
             regimes = [r['regime'] for r in resultados_individuais]
             regime_predominante = max(set(regimes), key=regimes.count)
