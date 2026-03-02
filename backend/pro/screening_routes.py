@@ -103,7 +103,7 @@ def get_screening_blueprint():
         """Retorna listas pré-definidas de ativos para screening"""
         
         presets = {
-            'Todos':["ABEV3","ASAI3","AURE3","AXIA3","B3SA3","BBAS3","BBDC4","BBSE3","VULC3"
+            'Todos':["ABEV3","ASAI3","AURE3","AXIA3","B3SA3","BBAS3","BBDC4","BBSE3","VULC3",
                      "BRAV3","CMIG4","CMIN3","COGN3","CPFE3","CPLE5","CSAN3","CSMG3","CSNA3","CURY3","CXSE3",
                      "EMBJ3","ENEV3","ENGI11","EQTL3","FLRY3","GGBR4","GOAU4","IRBR3","ITSA4","ITUB4","KLBN11","LREN3","MBRF3","MGLU3","MOTV3",
                      "MRVE3","MULT3","NATU3","PCAR3","PETR4","POMO4","PRIO3","PSSA3","RADL3","RAIL3","RAIZ4","RDOR3","RECV3","RENT3","SANB11","SBSP3","SLCE3",

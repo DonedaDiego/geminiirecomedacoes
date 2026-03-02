@@ -262,16 +262,19 @@ class RailwaySyncService:
     
     def obter_datas_disponiveis(self) -> List[str]:
         """Retorna lista de datas para sincronização"""
-        return [                                   
-            "20260213",
-            "20260218",  
-            "20260219",
-            "20260220",
+        return [                                               
             "20260223",
             "20260224",
             "20260225",
             "20260226",
             "20260227",
+            "20260302",
+            "20260303",
+            "20260304",
+            "20260305",
+            "20260306",           
+
+
         ]   
 
     def listar_datas_no_banco(self) -> List[Dict]:
