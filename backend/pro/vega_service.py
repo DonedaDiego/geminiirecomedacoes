@@ -51,8 +51,9 @@ class ExpirationManager:
     def __init__(self, db_engine):
         self.db_engine = db_engine
         self.available_expirations = {
-            
-           
+            "20260213": {"date": datetime(2026, 2, 13), "desc": "13 Fev 26 - W2"},
+            "20260220": {"date": datetime(2026, 2, 20), "desc": "20 Fev 26 - M"},
+            "20260227": {"date": datetime(2026, 2, 27), "desc": "27 Fev 26 - W4"},
             "20260306": {"date": datetime(2026, 3, 6), "desc": "06 Mar 26 - W1"},
             "20260313": {"date": datetime(2026, 3, 13), "desc": "13 Mar 26 - W2"},
             "20260320": {"date": datetime(2026, 3, 20), "desc": "20 Mar 26 - M"},
@@ -848,7 +849,7 @@ class VEXAnalyzer:
         # Linhas de referência (spot, max_vex, etc)
         for row in range(1, 4):
             for col in range(1, 3):
-                fig.add_vline(x=spot_price, line=dict(color='#fbbf24', width=2, dash='dash'), row=row, col=col)
+                fig.add_vline(x=spot_price, line=dict(color='#ffffff', width=2, dash='dash'), row=row, col=col)
                 
                 if vol_zones and vol_zones.get('max_vex_strike'):
                     fig.add_vline(x=vol_zones['max_vex_strike'], line=dict(color='#9333ea', width=2, dash='dot'), row=row, col=col)

@@ -650,7 +650,7 @@ class GEXAnalyzer:
         
         for row in range(1, 4):
             for col in range(1, 3):
-                fig.add_vline(x=spot_price, line=dict(color='#fbbf24', width=3, dash='dash'), row=row, col=col)
+                fig.add_vline(x=spot_price, line=dict(color='#ffffff', width=3, dash='dash'), row=row, col=col)
                 
                 if flip_strike:
                     fig.add_vline(x=flip_strike, line=dict(color='#f97316', width=3, dash='dot'), row=row, col=col)

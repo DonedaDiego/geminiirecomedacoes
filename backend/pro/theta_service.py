@@ -602,7 +602,7 @@ class TEXAnalyzer:
         
         for row in range(1, 4):
             for col in range(1, 3):
-                fig.add_vline(x=spot_price, line=dict(color='#fbbf24', width=2, dash='dash'), row=row, col=col)
+                fig.add_vline(x=spot_price, line=dict(color='#ffffff', width=2, dash='dash'), row=row, col=col)
                 if not (row == 2 and col == 1):
                     fig.add_hline(y=0, line=dict(color='rgba(255,255,255,0.3)', width=1), row=row, col=col)
         
