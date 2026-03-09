@@ -52,7 +52,7 @@ class ExpirationManager:
         self.available_expirations = {                        
             
            
-            "20260306": {"date": datetime(2026, 3, 6), "desc": "06 Mar 26 - W1"},
+            
             "20260313": {"date": datetime(2026, 3, 13), "desc": "13 Mar 26 - W2"},
             "20260320": {"date": datetime(2026, 3, 20), "desc": "20 Mar 26 - M"},
             "20260327": {"date": datetime(2026, 3, 27), "desc": "27 Mar 26 - W4"},

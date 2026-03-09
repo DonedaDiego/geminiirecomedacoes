@@ -410,8 +410,7 @@ class HistoricalDataProvider:
     
     def get_available_expirations(self, ticker):
         """Lista vencimentos disponíveis NO BANCO para a última data_referencia"""
-        available_expirations = {                                 
-            "20260220": "20 Fev 26 - M",
+        available_expirations = {                                             
             "20260320": "20 Mar 26 - M",
             "20260417": "17 Abr 26 - M",           
         }

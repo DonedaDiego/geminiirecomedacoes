@@ -16,12 +16,13 @@ class ScreeningService:
         self.gamma_service = GammaService()
         self.max_workers = 5  # Limite de threads paralelas
     
-    def analyze_single_ticker(self, ticker, expiration_code=None):
+    def analyze_single_ticker(self, ticker):
+        """Analisa um único ticker e retorna dados resumidos"""
         try:
-            logging.info(f"Screening: Analisando {ticker} | venc: {expiration_code}")
+            logging.info(f"Screening: Analisando {ticker}")
             
             # Executa análise completa do GEX
-            result = self.gamma_service.analyze_gamma_complete(ticker, expiration_code)
+            result = self.gamma_service.analyze_gamma_complete(ticker)
             
             if not result.get('success'):
                 return None
@@ -74,7 +75,7 @@ class ScreeningService:
                 'timestamp': datetime.now().isoformat()
             }
     
-    def screen_multiple_tickers(self, tickers_list, expiration_code=None):
+    def screen_multiple_tickers(self, tickers_list):
         """Executa screening em paralelo para múltiplos tickers"""
         try:
             logging.info(f"Iniciando screening de {len(tickers_list)} ativos")
@@ -85,7 +86,7 @@ class ScreeningService:
             # Execução paralela com ThreadPoolExecutor
             with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
                 future_to_ticker = {
-                    executor.submit(self.analyze_single_ticker, ticker, expiration_code): ticker
+                    executor.submit(self.analyze_single_ticker, ticker): ticker 
                     for ticker in tickers_list
                 }
                 

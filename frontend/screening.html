@@ -261,6 +261,19 @@
       animation: progressPulse 1.5s ease-in-out infinite;
     }
 
+    select.custom-input {
+      background: rgba(30, 30, 30, 0.9);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: white;
+      appearance: none;
+      cursor: pointer;
+    }
+
+    select.custom-input option {
+      background: #1a1a1a;
+      color: white;
+    }
+
     @keyframes progressPulse {
       0%, 100% { opacity: 1; }
       50% { opacity: 0.7; }
@@ -428,6 +441,22 @@
               <button id="screenBtn" class="px-6 py-2 bg-gradient-to-r from-pink-500 to-purple-600 hover:shadow-lg rounded-lg transition-all font-medium whitespace-nowrap">
                 <i class="fas fa-search mr-2"></i>Iniciar Screening
               </button>
+            </div>
+          </div>
+
+          <!-- Linha 1.5: Seletor de Vencimento -->
+          <div>
+            <label class="text-sm font-semibold text-gray-300 mb-3 block">
+              <i class="fas fa-calendar-alt mr-2"></i>Vencimento
+            </label>
+            <div class="flex gap-3 items-center">
+              <select id="expirationSelect" class="custom-input w-64">
+                <option value="">Carregando vencimentos...</option>
+              </select>
+              <button id="loadExpBtn" class="preset-btn" onclick="loadExpirations()">
+                <i class="fas fa-sync-alt mr-1"></i>Atualizar
+              </button>
+              <span id="expStatus" class="text-xs text-gray-400"></span>
             </div>
           </div>
 
@@ -653,6 +682,43 @@
       });
     });
     
+    async function loadExpirations() {
+      const select = document.getElementById('expirationSelect');
+      const expStatus = document.getElementById('expStatus');
+      
+      select.innerHTML = '<option value="">Carregando...</option>';
+      expStatus.textContent = '';
+      
+      try {
+        const response = await fetch(`${API_BASE}/expirations`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ticker: 'PETR4' })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok && data.success) {
+          const available = data.expirations.filter(e => e.available);
+          
+          select.innerHTML = available.map((exp, i) => `
+            <option value="${exp.code}" ${i === 0 ? 'selected' : ''}>
+              ${exp.date || exp.code}${i === 0 ? ' (mais próximo)' : ''}
+            </option>
+          `).join('');
+          
+          expStatus.textContent = `${available.length} vencimentos disponíveis`;
+        } else {
+          select.innerHTML = '<option value="">Erro ao carregar</option>';
+        }
+      } catch (err) {
+        select.innerHTML = '<option value="">Erro de conexão</option>';
+        console.error(err);
+      }
+    }
+
+
+
     // Executar screening
     async function runScreening() {
       let tickersInput = customTickers.value.trim();
@@ -690,7 +756,8 @@
           },
           body: JSON.stringify({
             tickers: tickers,
-            max_workers: 5
+            max_workers: 5,
+            expiration_code: expCode
           })
         });
         
@@ -855,7 +922,7 @@
     
     // Event Listeners
     screenBtn.addEventListener('click', runScreening);
-    const exportNTSLBtn = document.getElementById('exportNTSLBtn');
+    const expCode = document.getElementById('expirationSelect').value || null;
     exportNTSLBtn.addEventListener('click', exportToNTSL);
     
     customTickers.addEventListener('keypress', (e) => {
@@ -869,6 +936,7 @@
       if (apiConnected) {
         showStatus('Sistema de Screening carregado! Selecione um preset ou digite os tickers.', 'info');
         await loadPresets();
+        await loadExpirations();
       } else {
         showStatus('Aviso: Erro na conectividade da API. Verifique se o servidor está rodando.', 'error');
       }

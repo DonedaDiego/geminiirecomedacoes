@@ -45,9 +45,6 @@ def get_screening_blueprint():
             # Executa screening
             result = service.screen_multiple_tickers(tickers)
             
-            expiration_code = data.get('expiration_code')  # None = primeiro disponível
-            result = service.screen_multiple_tickers(tickers, expiration_code=expiration_code)    
-
             response = {
                 'success': True,
                 'timestamp': datetime.now().isoformat(),
@@ -161,28 +158,6 @@ def get_screening_blueprint():
             ],
             'max_workers': service.max_workers
         })
-
-
-    @screening_bp.route('/pro/screening/expirations', methods=['POST'])
-    def get_expirations_for_screening():
-        """Busca vencimentos disponíveis usando um ticker de referência"""
-        try:
-            data = request.get_json()
-            ticker = data.get('ticker', 'PETR4').strip().upper()
-            
-            expirations = service.gamma_service.get_available_expirations(ticker)
-            
-            return jsonify({
-                'success': True,
-                'timestamp': datetime.now().isoformat(),
-                'reference_ticker': ticker.replace('.SA', ''),
-                'expirations': expirations,
-                'total_available': len([e for e in expirations if e['available']])
-            })
-            
-        except Exception as e:
-            logging.error(f"Erro ao buscar vencimentos: {str(e)}")
-            return jsonify({'error': f'Erro interno: {str(e)}'}), 500
 
     @screening_bp.route('/pro/screening/export-ntsl-batch', methods=['POST'])
     def export_all_flips_ntsl():
