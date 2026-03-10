@@ -2,12 +2,12 @@ import os
 
 # Configurações do servidor
 bind = f"0.0.0.0:{os.environ.get('PORT', 10000)}"
-workers = 1
+workers = int(os.environ.get('WEB_CONCURRENCY', 2))
 worker_class = "sync"
 worker_connections = 1000
 max_requests = 1000
 max_requests_jitter = 50
-timeout = 120
+timeout = 30  #  30 segundos (era 120)
 keepalive = 2
 graceful_timeout = 30  #  ADICIONAR ISSO
 
@@ -28,5 +28,11 @@ tmp_upload_dir = None
 # Configurações de desenvolvimento vs produção
 if os.environ.get('FLASK_ENV') == 'development':
     reload = True
+    workers = 1
 else:
     reload = False
+    try:
+        import multiprocessing
+        workers = min(multiprocessing.cpu_count() * 2 + 1, 4)
+    except:
+        workers = 2
