@@ -98,7 +98,7 @@ class BetaRegressionService:
                 raise Exception("Dados insuficientes para regressão")
             
             window = 30
-            period = 20  # Para média móvel
+            period = 45  
             
             print(f"Executando regressão móvel com janela de {window} períodos")
             
@@ -115,8 +115,8 @@ class BetaRegressionService:
             
             # Normalização EXATA como no MetaTrader
             df["Beta0_Norm"] = (df["Beta0"]
-                .rolling(20).mean()
-                .rolling(20).apply(lambda x: np.mean(x < x.iloc[-1]) if len(x) > 0 else 0.5))
+                .rolling(45).mean()
+                .rolling(45).apply(lambda x: np.mean(x < x.iloc[-1]) if len(x) > 0 else 0.5))
             
             # Beta0_g = valor defasado (como no MetaTrader)
             df["Beta0_g"] = df["Beta0_Norm"].shift(1)
@@ -146,10 +146,16 @@ class BetaRegressionService:
         """Calcula sinais de trading EXATAMENTE como no MetaTrader"""
         try:
             df = df.copy()
-            
-            # Sinais EXATOS do MetaTrader
-            long_signal = (df["Beta0_Norm"] > 0.5) & (df["MM_Pos"] == 1)
-            short_signal = (df["Beta0_Norm"] < 0.5) & (df["MM_Pos"] == 0)
+
+            # ── CORREÇÃO DE LAG ──────────────────────────────────────────────
+            # Sinais usam shift(1) para evitar look-ahead:
+            # o indicador do candle N só gera sinal no candle N+1 (execução real)
+            Beta0_Norm_lag = df["Beta0_Norm"].shift(1)
+            MM_Pos_lag     = df["MM_Pos"].shift(1)
+            # ────────────────────────────────────────────────────────────────
+
+            long_signal  = (Beta0_Norm_lag > 0.5) & (MM_Pos_lag == 1)
+            short_signal = (Beta0_Norm_lag < 0.5) & (MM_Pos_lag == 0)
             
             df["trading"] = np.where(long_signal, 1, 
                              np.where(short_signal, -1, 0))
