@@ -69,11 +69,8 @@ class HistoricalDataProvider:
         self.available_expirations = {            
             "20260116": datetime(2026, 1, 16).date(),
             "20260220": datetime(2026, 1, 16).date(),
-            "20260320": datetime(2026, 1, 16).date(),
-            "20260417": datetime(2026, 1, 16).date(),
-
-
-
+            "20260320": datetime(2026, 3, 20).date(),
+            "20260417": datetime(2026, 4, 17).date(),
         }
     
     def get_expiration_for_date(self, date_str):

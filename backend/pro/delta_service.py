@@ -49,10 +49,7 @@ def convert_to_json_serializable(obj):
 class ExpirationManager:
     def __init__(self, db_engine):
         self.db_engine = db_engine
-        self.available_expirations = {                        
-            
-           
-            
+        self.available_expirations = {                      
             "20260313": {"date": datetime(2026, 3, 13), "desc": "13 Mar 26 - W2"},
             "20260320": {"date": datetime(2026, 3, 20), "desc": "20 Mar 26 - M"},
             "20260327": {"date": datetime(2026, 3, 27), "desc": "27 Mar 26 - W4"},
@@ -122,12 +119,12 @@ class ExpirationManager:
             return 0
     
     def get_available_expirations_list(self, symbol):
-        today = datetime.now()
+        today = datetime.now().date()
         available = []
         
         for code, data in self.available_expirations.items():
-            if data["date"] > today:
-                days = (data["date"] - today).days
+            if data["date"].date() >= today:
+                days = (data["date"].date() - today).days
                 data_count = self.test_data_availability(symbol, code)
                 available.append({
                     "code": code,
@@ -140,8 +137,9 @@ class ExpirationManager:
         return sorted(available, key=lambda x: x["days"])
     
     def get_best_available_expiration(self, symbol):
+        today = datetime.now().date()
         for code, data in self.available_expirations.items():
-            if data["date"] > datetime.now():
+            if data["date"].date() >= today:
                 data_count = self.test_data_availability(symbol, code)
                 if data_count > 0:
                     return {

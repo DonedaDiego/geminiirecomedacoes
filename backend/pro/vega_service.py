@@ -114,12 +114,12 @@ class ExpirationManager:
             return 0
     
     def get_available_expirations_list(self, symbol):
-        today = datetime.now()
+        today = datetime.now().date()
         available = []
         
         for code, data in self.available_expirations.items():
-            if data["date"] > today:
-                days = (data["date"] - today).days
+            if data["date"].date() >= today:
+                days = (data["date"].date() - today).days
                 data_count = self.test_data_availability(symbol, code)
                 available.append({
                     "code": code,
@@ -132,8 +132,9 @@ class ExpirationManager:
         return sorted(available, key=lambda x: x["days"])
     
     def get_best_available_expiration(self, symbol):
+        today = datetime.now().date()
         for code, data in self.available_expirations.items():
-            if data["date"] > datetime.now():
+            if data["date"].date() >= today:
                 data_count = self.test_data_availability(symbol, code)
                 if data_count > 0:
                     return {
