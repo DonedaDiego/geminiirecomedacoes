@@ -815,10 +815,10 @@ class VolatilityRegimesService:
                         'regime': signals['vol_regime']
                     },
                     'bands': {
-                        'resistencia_2sigma': self.convert_to_json_safe(signals['bandas']['resistencia_2sigma']),
-                        'suporte_2sigma': self.convert_to_json_safe(signals['bandas']['suporte_2sigma']),
-                        'resistencia_4sigma': self.convert_to_json_safe(signals['bandas']['resistencia_4sigma']),
-                        'suporte_4sigma': self.convert_to_json_safe(signals['bandas']['suporte_4sigma']),
+                        'superior_2sigma': self.convert_to_json_safe(signals['bandas']['resistencia_2sigma']),
+                        'inferior_2sigma': self.convert_to_json_safe(signals['bandas']['suporte_2sigma']),
+                        'superior_4sigma': self.convert_to_json_safe(signals['bandas']['resistencia_4sigma']),
+                        'inferior_4sigma': self.convert_to_json_safe(signals['bandas']['suporte_4sigma']),
                         'linha_central': self.convert_to_json_safe(signals['bandas']['linha_central'])
                     },
                     'position': {

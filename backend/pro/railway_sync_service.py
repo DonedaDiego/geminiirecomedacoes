@@ -264,12 +264,7 @@ class RailwaySyncService:
         """Retorna lista de datas para sincronização"""
         return [                                               
            
-            "20260316",
-            "20260317",
-            "20260318",
-            "20260319",
-            "20260320",
-            "20260323",
+           
             "20260324",
             "20260325",
             "20260326",
