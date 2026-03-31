@@ -237,7 +237,7 @@ class DataProvider:
                 (latest_data['premium'] > 0) &
                 (latest_data['strike'] > 0) &
                 (latest_data['days_to_maturity'] > 0) &
-                (latest_data['days_to_maturity'] <= 60)
+                (latest_data['days_to_maturity'] <= 180)
             ].copy()
             
             
@@ -268,25 +268,27 @@ class DataProvider:
                 SELECT 
                     preco_exercicio,
                     tipo_opcao,
-                    qtd_total,
-                    qtd_descoberto,
-                    qtd_trava,
-                    qtd_coberto
+                    SUM(qtd_total)      AS qtd_total,
+                    SUM(qtd_descoberto) AS qtd_descoberto,
+                    SUM(qtd_trava)      AS qtd_trava,
+                    SUM(qtd_coberto)    AS qtd_coberto
                 FROM opcoes_b3
                 WHERE ticker = :symbol
                 AND vencimento = :vencimento
                 AND data_referencia = (
-                    SELECT MAX(data_referencia) 
-                    FROM opcoes_b3 
+                    SELECT MAX(data_referencia)
+                    FROM opcoes_b3
                     WHERE ticker = :symbol
                 )
+                GROUP BY preco_exercicio, tipo_opcao
                 ORDER BY preco_exercicio
             """)
-            
+
             df = pd.read_sql(query, self.db_engine, params={
                 'symbol': symbol,
                 'vencimento': exp_date
             })
+                     
             
             if df.empty:
                 logging.warning(f"Nenhum dado encontrado no banco para {symbol}")

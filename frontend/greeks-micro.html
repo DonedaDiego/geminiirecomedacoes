@@ -843,8 +843,7 @@
       
       //  USA O MARKET_BIAS DA API (NÃO O SINAL DO total_dex_descoberto)
       const marketBias = delta?.dex_levels?.market_bias || 'NEUTRAL';
-      const dexSign = (marketBias === 'BULLISH') ? 'POS' : 
-                      (marketBias === 'BEARISH') ? 'NEG' : 'NEG';
+      const dexSign = (marketBias === 'BULLISH') ? 'POS' : 'NEG';
       
       const vexRisk = vega?.vol_regime?.volatility_risk || 'LOW';
       const vexLevel = (vexRisk === 'HIGH') ? 'ALTO' : 'BAIXO';  

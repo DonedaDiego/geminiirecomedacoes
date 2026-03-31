@@ -336,7 +336,7 @@ class HistoricalDataProvider:
                 (latest_data['premium'] > 0) &
                 (latest_data['strike'] > 0) &
                 (latest_data['days_to_maturity'] > 0) &
-                (latest_data['days_to_maturity'] <= 60)
+                (latest_data['days_to_maturity'] <= 180)
             ].copy()
             
             logging.info(f"Dados Oplab válidos: {len(valid_data)} opções")
@@ -350,46 +350,43 @@ class HistoricalDataProvider:
         """BUSCA DO BANCO DE DADOS POSTGRESQL - histórico"""
         try:
             ticker_clean = ticker.replace('.SA', '')
-            
-            # Converter vencimento string para datetime
             exp_date = datetime.strptime(vencimento, '%Y%m%d')
-            
+
             query = text("""
                 SELECT 
                     preco_exercicio,
                     tipo_opcao,
-                    qtd_total,
-                    qtd_descoberto,
-                    qtd_trava,
-                    qtd_coberto
+                    SUM(qtd_total)      AS qtd_total,
+                    SUM(qtd_descoberto) AS qtd_descoberto,
+                    SUM(qtd_trava)      AS qtd_trava,
+                    SUM(qtd_coberto)    AS qtd_coberto
                 FROM opcoes_b3
                 WHERE ticker = :symbol
                 AND vencimento = :vencimento
                 AND data_referencia = :data_ref
+                GROUP BY preco_exercicio, tipo_opcao
                 ORDER BY preco_exercicio
             """)
-            
+
             with self.db_engine.connect() as conn:
                 result = conn.execute(query, {
                     'symbol': ticker_clean,
                     'vencimento': exp_date,
                     'data_ref': dt_referencia
                 })
-                
                 rows = result.fetchall()
-            
+
             if not rows:
                 logging.warning(f"Sem dados banco: VENC={vencimento} DATA={dt_referencia.strftime('%Y-%m-%d')}")
                 return {}
-            
-            #  ESTRUTURA COM STRING COMO CHAVE
+
             oi_breakdown = {}
             for row in rows:
                 strike = float(row[0])
                 option_type = str(row[1]).upper()
                 oi_total = int(row[2])
                 oi_descoberto = int(row[3])
-                
+
                 if strike > 0 and oi_total > 0:
                     key = f"{strike}_{option_type}"
                     oi_breakdown[key] = {
@@ -400,10 +397,10 @@ class HistoricalDataProvider:
                         'travado': int(row[4]),
                         'coberto': int(row[5])
                     }
-            
-            logging.info(f" Banco VENC={vencimento} DATA={dt_referencia.strftime('%Y-%m-%d')}: {len(oi_breakdown)} strikes")
+
+            logging.info(f"Banco VENC={vencimento} DATA={dt_referencia.strftime('%Y-%m-%d')}: {len(oi_breakdown)} strikes")
             return oi_breakdown
-            
+
         except Exception as e:
             logging.error(f"Erro banco VENC={vencimento} DATA={dt_referencia.strftime('%Y-%m-%d')}: {e}")
             return {}

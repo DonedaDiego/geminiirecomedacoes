@@ -32,15 +32,11 @@ from pro.oplab_routes import oplab_bp
 from pro.screening_routes import get_screening_blueprint
 from pro.railway_sync_routes import railway_bp
 
-
-
-
 # Premium
 from premium.swing_trade_ml_routes import get_swing_trade_ml_blueprint
 from premium.beta_regression_routes import beta_regression_bp
 from premium.atsmom_routes import register_atsmom_routes
 from premium.longshortroutes import longshort_bp  
-
 
 # Trial
 from pag.trial_routes import get_trial_blueprint
@@ -379,6 +375,11 @@ def planos():
 @app.route('/sobre.html')
 def sobre():
     return send_from_directory('../frontend', 'sobre.html')
+
+@app.route('/tutorial')
+@app.route('/tutorial.html')
+def tutorial():
+    return send_from_directory('../frontend', 'tutorial.html')
 
 
 @app.route('/admin-dashboard')

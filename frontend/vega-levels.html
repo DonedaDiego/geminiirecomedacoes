@@ -552,87 +552,90 @@
     async function loadExpirations() {
       const ticker = tickerInput.value.trim().toUpperCase();
       if (!ticker) {
-        showStatus('Digite um ticker primeiro', 'error');
-        return;
+          showStatus('Digite um ticker primeiro', 'error');
+          return;
       }
 
-      setLoading(loadExpirationsBtn, true, '<i class="fas fa-calendar mr-2"></i>Carregar Vencimentos', 'Carregando...');
+      const originalHTML = '<i class="fas fa-calendar mr-2"></i>Carregar Vencimentos';
+      loadExpirationsBtn.classList.add('loading');
+      loadExpirationsBtn.innerHTML = '<span class="spinner mr-2"></span>Carregando...';
 
       try {
-        const response = await fetch('/pro/vega/expirations', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${userToken}`
-          },
-          body: JSON.stringify({ ticker })
-        });
+          const response = await fetch('/pro/vega/expirations', {
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${userToken}`
+              },
+              body: JSON.stringify({ ticker })
+          });
 
-        const data = await response.json();
-        
-        if (!response.ok) throw new Error(data.error);
+          const data = await response.json();
+          if (!response.ok) throw new Error(data.error);
 
-        expirationSelect.innerHTML = '<option value="">Vencimento Automático</option>';
-        
-        data.expirations.forEach(exp => {
-          const option = document.createElement('option');
-          option.value = exp.code;
-          option.textContent = `${exp.desc} (${exp.data_count} contratos)`;
-          option.disabled = !exp.available;
-          expirationSelect.appendChild(option);
-        });
-        
-        loadExpirationsBtn.innerHTML = '<i class="fas fa-check mr-2"></i>Vencimentos Carregados';
-        loadExpirationsBtn.classList.remove('from-blue-500', 'to-blue-600');
-        loadExpirationsBtn.classList.add('from-green-500', 'to-green-600');
-        
-        showStatus(`${data.total_available} vencimentos carregados`, 'success');
+          expirationSelect.innerHTML = '<option value="">Vencimento Automático</option>';
+          data.expirations.forEach(exp => {
+              const option = document.createElement('option');
+              option.value = exp.code;
+              option.textContent = `${exp.desc} (${exp.data_count} contratos)`;
+              option.disabled = !exp.available;
+              expirationSelect.appendChild(option);
+          });
+
+          loadExpirationsBtn.classList.remove('loading');
+          loadExpirationsBtn.classList.remove('from-blue-500', 'to-blue-600');
+          loadExpirationsBtn.classList.add('from-green-500', 'to-green-600');
+          loadExpirationsBtn.innerHTML = '<i class="fas fa-check mr-2"></i>Vencimentos Carregados';
+          showStatus(`${data.total_available} vencimentos carregados`, 'success');
 
       } catch (error) {
-        showStatus('Erro: ' + error.message, 'error');
-        loadExpirationsBtn.innerHTML = '<i class="fas fa-calendar mr-2"></i>Carregar Vencimentos';
-      } finally {
-        setLoading(loadExpirationsBtn, false);
+          loadExpirationsBtn.classList.remove('loading');
+          loadExpirationsBtn.classList.remove('from-green-500', 'to-green-600');
+          loadExpirationsBtn.classList.add('from-blue-500', 'to-blue-600');
+          loadExpirationsBtn.innerHTML = originalHTML;
+          showStatus('Erro: ' + error.message, 'error');
       }
-    }
+  }
 
     async function runVEXAnalysis() {
       const ticker = tickerInput.value.trim().toUpperCase();
       if (!ticker) {
-        showStatus('Digite um ticker', 'error');
-        return;
+          showStatus('Digite um ticker', 'error');
+          return;
       }
 
-      setLoading(analyzeBtn, true, '<i class="fas fa-rocket mr-2"></i>Executar VEX', 'Processando VEX...');
+      const originalHTML = '<i class="fas fa-rocket mr-2"></i>Executar VEX';
+      analyzeBtn.classList.add('loading');
+      analyzeBtn.innerHTML = '<span class="spinner mr-2"></span>Processando VEX...';
       showStatus('Executando análise VEX completa...', 'info');
 
       try {
-        const requestBody = { ticker, days_back: 60 };
-        const expiration = expirationSelect.value;
-        if (expiration) requestBody.expiration_code = expiration;
+          const requestBody = { ticker, days_back: 60 };
+          const expiration = expirationSelect.value;
+          if (expiration) requestBody.expiration_code = expiration;
 
-        const response = await fetch('/pro/vega/analyze', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${userToken}`
-          },
-          body: JSON.stringify(requestBody)
-        });
+          const response = await fetch('/pro/vega/analyze', {
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${userToken}`
+              },
+              body: JSON.stringify(requestBody)
+          });
 
-        const data = await response.json();
-        
-        if (!response.ok) throw new Error(data.error);
+          const data = await response.json();
+          if (!response.ok) throw new Error(data.error);
 
-        displayResults(data);
-        showStatus(`Análise VEX de ${ticker} concluída`, 'success');
+          displayResults(data);
+          showStatus(`Análise VEX de ${ticker} concluída`, 'success');
 
       } catch (error) {
-        showStatus('Erro: ' + error.message, 'error');
+          showStatus('Erro: ' + error.message, 'error');
       } finally {
-        setLoading(analyzeBtn, false);
+          analyzeBtn.classList.remove('loading');
+          analyzeBtn.innerHTML = originalHTML;
       }
-    }
+  }
 
     function displayResults(data) {
       const vol_regime = data.vol_regime || {};

@@ -58,6 +58,7 @@ class LiquidityManager:
             'ITSA4': 6,
             'BBDC4': 6,
             'MGLU3': 6,
+            
         }
         
         self.medium_liquidity = {
@@ -68,7 +69,7 @@ class LiquidityManager:
             'AXIA3': 9,
             'PRIO3': 9,
             'SUZB3': 9,
-            'EMJR3': 9,
+            'EMBJ3': 9,
             'RADL3': 9,
             'BRAV3': 9,
             'BPAC11':9,
@@ -301,7 +302,7 @@ class DataProvider:
                 (latest_data['premium'] > 0) &
                 (latest_data['strike'] > 0) &
                 (latest_data['days_to_maturity'] > 0) &
-                (latest_data['days_to_maturity'] <= 60)
+                (latest_data['days_to_maturity'] <= 180)
             ].copy()
             
             logging.info(f"Dados históricos Oplab: {len(valid_data)} opções")
@@ -321,51 +322,50 @@ class DataProvider:
                 }
             else:
                 expiration = self.expiration_manager.get_best_available_expiration(symbol)
-            
+
             if not expiration:
                 logging.warning("Nenhum vencimento disponível")
                 return {}, None
-            
+
             exp_date = datetime.strptime(expiration['code'], '%Y%m%d')
-            
+
             query = text("""
                 SELECT 
                     preco_exercicio,
                     tipo_opcao,
-                    qtd_total,
-                    qtd_descoberto,
-                    qtd_trava,
-                    qtd_coberto
+                    SUM(qtd_total)      AS qtd_total,
+                    SUM(qtd_descoberto) AS qtd_descoberto,
+                    SUM(qtd_trava)      AS qtd_trava,
+                    SUM(qtd_coberto)    AS qtd_coberto
                 FROM opcoes_b3
                 WHERE ticker = :symbol
                 AND vencimento = :vencimento
                 AND data_referencia = (
-                    SELECT MAX(data_referencia) 
-                    FROM opcoes_b3 
+                    SELECT MAX(data_referencia)
+                    FROM opcoes_b3
                     WHERE ticker = :symbol
                 )
+                GROUP BY preco_exercicio, tipo_opcao
                 ORDER BY preco_exercicio
             """)
-            
+
             df = pd.read_sql(query, self.db_engine, params={
                 'symbol': symbol,
                 'vencimento': exp_date
             })
-            
+
             if df.empty:
                 logging.warning(f"Nenhum dado encontrado no banco para {symbol}")
                 return {}, expiration
-            
-            #  NOVA ESTRUTURA - USA STRING COMO CHAVE
+
             oi_breakdown = {}
             for _, row in df.iterrows():
                 strike = float(row['preco_exercicio'])
                 option_type = str(row['tipo_opcao']).upper()
                 oi_total = int(row['qtd_total'])
                 oi_descoberto = int(row['qtd_descoberto'])
-                
+
                 if strike > 0 and oi_total > 0:
-                    #  CHAVE COMO STRING: "7.25_CALL"
                     key = f"{strike}_{option_type}"
                     oi_breakdown[key] = {
                         'strike': strike,
@@ -375,10 +375,10 @@ class DataProvider:
                         'travado': int(row['qtd_trava']),
                         'coberto': int(row['qtd_coberto'])
                     }
-            
-            logging.info(f"Floqui OI breakdown: {len(oi_breakdown)} strikes")
+
+            logging.info(f"Floqui OI breakdown: {len(oi_breakdown)} strikes (vencimento: {expiration['desc']})")
             return oi_breakdown, expiration
-            
+
         except Exception as e:
             logging.error(f"Erro Floqui: {e}")
             return {}, None
