@@ -1251,28 +1251,38 @@ def list_users_enhanced(admin_id):
         except:
             pass
         
-        #  QUERY CORRIGIDA - Forçar dados mais recentes
+        # Parâmetros de paginação
+        page = max(1, int(request.args.get('page', 1)))
+        limit = max(1, min(200, int(request.args.get('limit', 50))))
+        offset = (page - 1) * limit
+
+        # Contar total de usuários
+        cursor.execute("SELECT COUNT(*) FROM users WHERE user_type != 'deleted'")
+        total_records = cursor.fetchone()[0]
+        total_pages = max(1, (total_records + limit - 1) // limit)
+
+        # QUERY com paginação
         cursor.execute("""
-            SELECT u.id, u.name, u.email, u.plan_id, u.plan_name, u.user_type, 
-                   u.created_at, u.plan_expires_at, u.subscription_status, 
-                   u.last_login,  --  CAMPO CRÍTICO
-                   u.updated_at,   --  ADICIONAR updated_at também
+            SELECT u.id, u.name, u.email, u.plan_id, u.plan_name, u.user_type,
+                   u.created_at, u.plan_expires_at, u.subscription_status,
+                   u.last_login,
+                   u.updated_at,
                    EXTRACT(days FROM (NOW() - u.created_at)) as days_with_us,
-                   CASE 
+                   CASE
                        WHEN u.plan_expires_at IS NOT NULL AND u.plan_expires_at > NOW() THEN
                            EXTRACT(days FROM (u.plan_expires_at - NOW()))
                        ELSE NULL
                    END as days_until_expiry,
-                   CASE 
+                   CASE
                        WHEN u.plan_expires_at IS NOT NULL AND u.plan_expires_at <= NOW() THEN true
                        ELSE false
                    END as is_expired,
-                   NOW() as query_time  --  Debug: hora da query
+                   NOW() as query_time
             FROM users u
             WHERE u.user_type != 'deleted'
             ORDER BY u.created_at DESC
-            LIMIT 100
-        """)
+            LIMIT %s OFFSET %s
+        """, (limit, offset))
         
         users = []
         for row in cursor.fetchall():
@@ -1307,7 +1317,13 @@ def list_users_enhanced(admin_id):
         response = make_response(jsonify({
             'success': True,
             'users': users,
-            'server_time': datetime.now(timezone.utc).isoformat()  #  Tempo do servidor
+            'pagination': {
+                'current_page': page,
+                'total_pages': total_pages,
+                'total_records': total_records,
+                'limit': limit
+            },
+            'server_time': datetime.now(timezone.utc).isoformat()
         }))
         
         response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
