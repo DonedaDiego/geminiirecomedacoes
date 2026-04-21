@@ -51,18 +51,14 @@ class ExpirationManager:
     def __init__(self, db_engine):
         self.db_engine = db_engine
         self.available_expirations = {
-            "20260213": {"date": datetime(2026, 2, 13), "desc": "13 Fev 26 - W2"},
-            "20260220": {"date": datetime(2026, 2, 20), "desc": "20 Fev 26 - M"},
-            "20260227": {"date": datetime(2026, 2, 27), "desc": "27 Fev 26 - W4"},
-            
-            "20260313": {"date": datetime(2026, 3, 13), "desc": "13 Mar 26 - W2"},
-            "20260320": {"date": datetime(2026, 3, 20), "desc": "20 Mar 26 - M"},
-            "20260327": {"date": datetime(2026, 3, 27), "desc": "27 Mar 26 - W4"},
-            "20260402": {"date": datetime(2026, 4, 2), "desc": "02 Abr 26 - W1"},
-            "20260410": {"date": datetime(2026, 4, 10), "desc": "10 Abr 26 - W2"},
-            "20260417": {"date": datetime(2026, 4, 17), "desc": "17 Abr 26 - M"},
-            "20260424": {"date": datetime(2026, 4, 24), "desc": "24 Abr 26 - W4"},
+           "20260424": {"date": datetime(2026, 4, 24), "desc": "24 Abr 26 - W4"},
+            "20260430": {"date": datetime(2026, 4, 30), "desc": "30 Abr 26 - W5"},
+            "20260508": {"date": datetime(2026, 5, 8),  "desc": "08 Mai 26 - W2"},
             "20260515": {"date": datetime(2026, 5, 15), "desc": "15 Mai 26 - M"},
+            "20260522": {"date": datetime(2026, 5, 22), "desc": "22 Mai 26 - W4"},
+            "20260529": {"date": datetime(2026, 5, 29), "desc": "29 Mai 26 - W5"},
+            "20260605": {"date": datetime(2026, 6, 5),  "desc": "05 Jun 26 - W1"},
+            "20260612": {"date": datetime(2026, 6, 12), "desc": "12 Jun 26 - W2"},
             "20260619": {"date": datetime(2026, 6, 19), "desc": "19 Jun 26 - M"},
             "20260717": {"date": datetime(2026, 7, 17), "desc": "17 Jul 26 - M"},
             "20260821": {"date": datetime(2026, 8, 21), "desc": "21 Ago 26 - M"},
