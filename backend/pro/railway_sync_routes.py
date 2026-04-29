@@ -143,6 +143,18 @@ def listar_datas():
         }), 500
 
 
+@railway_bp.route('/auto-sync', methods=['POST'])
+def auto_sync():
+    """Verificação automática diária: checa se o banco está atualizado e sincroniza se necessário.
+    Chamado pelo agendamento em db-sync-scheduler.yml (07:30 e 08:00 BRT)."""
+    try:
+        from pro.auto_sync_service import AutoSyncService
+        resultado = AutoSyncService().executar_verificacao_e_sync()
+        return jsonify({"success": True, "data": resultado})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
 @railway_bp.route('/resumo', methods=['GET'])
 def obter_resumo():
     """Resumo executivo da sincronização"""
