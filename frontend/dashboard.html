@@ -705,6 +705,13 @@
         </div>
       </div>
 
+      <!-- Fundamentos FREE -->
+      <button onclick="mostrarEmBreve()" class="sidebar-link w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-400 hover:text-white transition-all">
+        <i class="fas fa-building-columns w-5 text-blue-400 flex-shrink-0"></i>
+        <span class="font-medium text-sm sidebar-text">Fundamentos</span>
+        <span class="ml-auto text-xs bg-green-500/20 text-green-400 px-2 py-0.5 rounded-full sb-badge sidebar-text">FREE</span>
+      </button>
+
       <!-- Monitor de Opções -->
       <div class="sidebar-accordion">
         <button onclick="toggleSidebarAccordion('sb-opcoes')" class="sidebar-link w-full flex items-center justify-between px-4 py-3 rounded-lg text-gray-400">
@@ -1937,6 +1944,18 @@
     window.prevSlide  = prevSlide;
 
     // Hamburger — mobile
+    function mostrarEmBreve() {
+      const existing = document.getElementById('toast-em-breve');
+      if (existing) return;
+      const toast = document.createElement('div');
+      toast.id = 'toast-em-breve';
+      toast.textContent = 'Em breve!';
+      toast.className = 'fixed bottom-6 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-sm font-medium px-6 py-2.5 rounded-full shadow-xl border border-white/10 z-[9999] transition-opacity duration-500';
+      document.body.appendChild(toast);
+      setTimeout(() => { toast.style.opacity = '0'; }, 1600);
+      setTimeout(() => { toast.remove(); }, 2100);
+    }
+
     function toggleSidebar() {
       const sidebar = document.getElementById('mainSidebar');
       const overlay = document.getElementById('sidebarOverlay');
