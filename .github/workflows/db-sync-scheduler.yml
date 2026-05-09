@@ -17,34 +17,67 @@ on:
 jobs:
   db-sync-check:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
 
     steps:
       - name: Verificar e sincronizar banco de dados B3
         run: |
           echo "=== Verificação automática do banco de dados B3 ==="
-          echo "Horário UTC: $(date -u)"
-          echo "Horário BRT estimado: $(TZ='America/Sao_Paulo' date)"
+          echo "Horário UTC  : $(date -u)"
+          echo "Horário BRT  : $(TZ='America/Sao_Paulo' date)"
+          echo ""
 
-          RESPONSE=$(curl -s -o /tmp/body.json -w "%{http_code}" \
-            -X POST https://app-geminii.railway.app/railway/auto-sync \
-            -H "Content-Type: application/json" \
-            --max-time 30)
+          # Tenta até 3 vezes com intervalo de 20s (lida com cold start do Railway)
+          MAX_TENTATIVAS=3
+          TENTATIVA=0
+          RESPONSE="000"
 
-          echo "HTTP status: $RESPONSE"
-          echo "Resposta: $(cat /tmp/body.json)"
+          while [ $TENTATIVA -lt $MAX_TENTATIVAS ]; do
+            TENTATIVA=$((TENTATIVA + 1))
+            echo "--- Tentativa $TENTATIVA/$MAX_TENTATIVAS ---"
 
+            RESPONSE=$(curl -s -o /tmp/body.json -w "%{http_code}" \
+              -X POST https://app-geminii.railway.app/railway/auto-sync \
+              -H "Content-Type: application/json" \
+              --connect-timeout 15 \
+              --max-time 60)
+
+            echo "HTTP status: $RESPONSE"
+
+            if [ "$RESPONSE" = "200" ]; then
+              echo "Resposta OK: $(cat /tmp/body.json)"
+              break
+            fi
+
+            echo "Resposta do servidor: $(cat /tmp/body.json 2>/dev/null || echo '(sem corpo)')"
+
+            if [ $TENTATIVA -lt $MAX_TENTATIVAS ]; then
+              echo "Aguardando 20s antes de nova tentativa..."
+              sleep 20
+            fi
+          done
+
+          echo ""
           if [ "$RESPONSE" != "200" ]; then
-            echo "ERRO: endpoint retornou HTTP $RESPONSE"
+            echo "ERRO: endpoint retornou HTTP $RESPONSE após $MAX_TENTATIVAS tentativas"
             exit 1
           fi
 
-          ATUALIZADO=$(cat /tmp/body.json | python3 -c \
-            "import sys,json; d=json.load(sys.stdin); print(d.get('data',{}).get('banco_atualizado','?'))")
+          ATUALIZADO=$(python3 -c \
+            "import sys,json; d=json.load(open('/tmp/body.json')); print(d.get('data',{}).get('banco_atualizado','?'))")
 
-          SYNC=$(cat /tmp/body.json | python3 -c \
-            "import sys,json; d=json.load(sys.stdin); print(d.get('data',{}).get('sync_disparado','?'))")
+          SYNC=$(python3 -c \
+            "import sys,json; d=json.load(open('/tmp/body.json')); print(d.get('data',{}).get('sync_disparado','?'))")
 
-          echo "---"
-          echo "Banco atualizado: $ATUALIZADO"
-          echo "Sync disparado  : $SYNC"
+          ESPERADO=$(python3 -c \
+            "import sys,json; d=json.load(open('/tmp/body.json')); print(d.get('data',{}).get('data_referencia_esperada','?'))")
+
+          ULTIMO=$(python3 -c \
+            "import sys,json; d=json.load(open('/tmp/body.json')); print(d.get('data',{}).get('ultima_data_banco','?'))")
+
+          echo "=== Resultado ==="
+          echo "Data esperada (ontem BRT) : $ESPERADO"
+          echo "Última data no banco      : $ULTIMO"
+          echo "Banco atualizado          : $ATUALIZADO"
+          echo "Sync disparado            : $SYNC"
           echo "=== Verificação concluída ==="

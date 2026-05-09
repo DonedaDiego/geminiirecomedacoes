@@ -2,11 +2,11 @@
 # Não altera nenhuma função existente; apenas reutiliza RailwaySyncService.
 
 import threading
-from datetime import datetime, timedelta
-from zoneinfo import ZoneInfo
+from datetime import datetime, timedelta, timezone
 from pro.railway_sync_service import RailwaySyncService
 
-_TIMEZONE_SP = ZoneInfo('America/Sao_Paulo')
+# Brasil não adota horário de verão desde 2019 — UTC-3 é sempre correto
+_TZ_SP = timezone(timedelta(hours=-3))
 
 
 class AutoSyncService:
@@ -19,8 +19,8 @@ class AutoSyncService:
         return self._sync_service
 
     def obter_ontem_sp(self):
-        """Retorna a data de ontem no timezone America/Sao_Paulo."""
-        now_sp = datetime.now(_TIMEZONE_SP)
+        """Retorna a data de ontem em UTC-3 (America/Sao_Paulo, sem DST desde 2019)."""
+        now_sp = datetime.now(_TZ_SP)
         return (now_sp - timedelta(days=1)).date()
 
     def obter_ultima_data_banco(self):
