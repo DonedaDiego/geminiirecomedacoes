@@ -30,3 +30,6 @@ mercadopago
 
 # Environment Variables
 python-dotenv
+
+# Timezone database (necessário para zoneinfo no container Railway)
+tzdata

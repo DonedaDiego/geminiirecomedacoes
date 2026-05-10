@@ -21,7 +21,8 @@ def health_check():
     """Health check do serviço"""
     return jsonify({
         "status": "ok",
-        "service": "railway_sync"
+        "service": "railway_sync",
+        "deploy_version": "2026-05-09-auto-sync-v2"
     })
 
 

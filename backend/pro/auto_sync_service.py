@@ -2,11 +2,11 @@
 # Não altera nenhuma função existente; apenas reutiliza RailwaySyncService.
 
 import threading
-from datetime import datetime, timedelta
-from zoneinfo import ZoneInfo
+from datetime import datetime, timedelta, timezone
 from pro.railway_sync_service import RailwaySyncService
 
-_TIMEZONE_SP = ZoneInfo('America/Sao_Paulo')
+# Brasil não adota horário de verão desde 2019 — UTC-3 é sempre correto
+_TZ_SP = timezone(timedelta(hours=-3))
 
 
 class AutoSyncService:
@@ -19,8 +19,8 @@ class AutoSyncService:
         return self._sync_service
 
     def obter_ontem_sp(self):
-        """Retorna a data de ontem no timezone America/Sao_Paulo."""
-        now_sp = datetime.now(_TIMEZONE_SP)
+        """Retorna a data de ontem em UTC-3 (America/Sao_Paulo, sem DST desde 2019)."""
+        now_sp = datetime.now(_TZ_SP)
         return (now_sp - timedelta(days=1)).date()
 
     def obter_ultima_data_banco(self):
@@ -38,11 +38,24 @@ class AutoSyncService:
         atualizado = ultima_data == ontem if ultima_data is not None else False
         return atualizado, ontem, ultima_data
 
+    def gerar_datas_pendentes(self, ultima_data, ontem):
+        """
+        Gera dinamicamente todas as datas de (ultima_data + 1 dia) até ontem inclusive.
+        Passa todos os dias corridos — a B3 já retorna None para fins de semana/feriados
+        e sincronizar_datas() pula datas sem dados disponíveis.
+        """
+        datas = []
+        data_atual = ultima_data + timedelta(days=1)
+        while data_atual <= ontem:
+            datas.append(data_atual.strftime('%Y%m%d'))
+            data_atual += timedelta(days=1)
+        return datas
+
     def executar_verificacao_e_sync(self) -> dict:
         """
         Verifica se o banco está atualizado com base na data de ontem (SP).
-        Se não estiver, dispara a sincronização em background usando as
-        funções existentes de RailwaySyncService — sem alterá-las.
+        Se não estiver, gera dinamicamente as datas pendentes e dispara a
+        sincronização em background via RailwaySyncService — sem alterá-la.
         """
         atualizado, ontem, ultima_data = self.banco_esta_atualizado()
 
@@ -54,8 +67,17 @@ class AutoSyncService:
         }
 
         if not atualizado:
+            if ultima_data is None:
+                resultado["erro"] = "Banco vazio — execute o sync manual para carregar o histórico inicial."
+                return resultado
+
+            datas = self.gerar_datas_pendentes(ultima_data, ontem)
+
+            if not datas:
+                resultado["banco_atualizado"] = True
+                return resultado
+
             service = self._get_sync_service()
-            datas = service.obter_datas_disponiveis()
 
             def rodar_sync():
                 service.sincronizar_datas(datas)
@@ -64,6 +86,7 @@ class AutoSyncService:
             thread.start()
 
             resultado["sync_disparado"] = True
-            resultado["total_datas_verificadas"] = len(datas)
+            resultado["datas_pendentes"] = datas
+            resultado["total_datas_a_sincronizar"] = len(datas)
 
         return resultado
