@@ -261,28 +261,47 @@ class RailwaySyncService:
         }
     
     def obter_datas_disponiveis(self) -> List[str]:
-        """Retorna lista de datas para sincronização"""
-        return [                                                                              
-            
-            
-            
-            "20260424",
-            "20260427",
-            "20260428",
-            "20260429",
-            "20260430",
-            "20260430",
-            "20260504",
-            "20260505",
-            "20260506",
-            "20260507",
-            "20260508",
-            "20260511",
-            
+        """Retorna datas pendentes de sincronização de forma dinâmica.
 
+        Calcula automaticamente de (última data no banco + 1 dia) até ontem
+        no timezone America/Sao_Paulo (UTC-3, Brasil sem DST desde 2019).
+        Inclui todos os dias corridos — sincronizar_datas() já pula fins de
+        semana e dias sem dados disponíveis na B3.
 
+        O botão de sync manual no admin dashboard continua funcionando
+        exatamente como antes: chama esta mesma função, sem nenhuma mudança
+        na interface ou no fluxo de uso.
+        """
+        from datetime import datetime, timedelta, timezone, date as date_type
 
-        ]   
+        TZ_SP = timezone(timedelta(hours=-3))
+        ontem = (datetime.now(TZ_SP) - timedelta(days=1)).date()
+
+        # Data mínima do histórico (primeira data que existe no banco)
+        DATA_INICIO_HISTORICO = date_type(2026, 4, 14)
+
+        try:
+            datas_no_banco = self.listar_datas_no_banco()
+            if datas_no_banco:
+                ultima_data = datetime.strptime(
+                    datas_no_banco[0]['data_raw'], '%Y%m%d'
+                ).date()
+                data_inicio = ultima_data + timedelta(days=1)
+            else:
+                data_inicio = DATA_INICIO_HISTORICO
+        except Exception:
+            data_inicio = DATA_INICIO_HISTORICO
+
+        if data_inicio > ontem:
+            return []  # banco já atualizado
+
+        datas = []
+        data_atual = data_inicio
+        while data_atual <= ontem:
+            datas.append(data_atual.strftime('%Y%m%d'))
+            data_atual += timedelta(days=1)
+
+        return datas
 
     def listar_datas_no_banco(self) -> List[Dict]:
         """Lista datas que existem no banco com contagem"""
