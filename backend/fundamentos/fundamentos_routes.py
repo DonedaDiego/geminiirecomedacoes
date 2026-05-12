@@ -9,71 +9,60 @@ def _con(banco):
     return duckdb.connect(f"{DATA_DIR}/{banco}.duckdb", read_only=True)
 
 
+def _resolve_cnpj(ticker):
+    con_t = _con("dados_tickers")
+    row = con_t.execute(
+        "SELECT cnpj FROM tickers WHERE ticker = ? LIMIT 1", [ticker]
+    ).fetchone()
+    con_t.close()
+    return row[0] if row else None
+
+
 def get_fundamentos_blueprint():
     bp = Blueprint("fundamentos", __name__)
 
-    # ─── /api/info ────────────────────────────────────────────────────────────
     @bp.route("/api/info")
     def info():
         ticker = request.args.get("ticker", "").upper().strip()
-        cnpj   = request.args.get("cnpj",   "").strip()
-
+        cnpj   = request.args.get("cnpj", "").strip()
         if not ticker and not cnpj:
             return jsonify({"empresa": "", "cnpj": "", "segmento": ""})
-
         try:
             con = _con("dados_tickers")
             if cnpj:
                 row = con.execute(
-                    "SELECT nome_empresa, cnpj, segmento FROM tickers WHERE cnpj = ? LIMIT 1",
-                    [cnpj]
+                    "SELECT nome_empresa, cnpj, segmento FROM tickers WHERE cnpj = ? LIMIT 1", [cnpj]
                 ).fetchone()
             else:
                 row = con.execute(
-                    "SELECT nome_empresa, cnpj, segmento FROM tickers WHERE ticker = ? LIMIT 1",
-                    [ticker]
+                    "SELECT nome_empresa, cnpj, segmento FROM tickers WHERE ticker = ? LIMIT 1", [ticker]
                 ).fetchone()
             con.close()
-
             if row:
                 return jsonify({"empresa": row[0], "cnpj": row[1], "segmento": row[2] or ""})
             return jsonify({"empresa": ticker, "cnpj": cnpj, "segmento": ""})
-
         except Exception as e:
             return jsonify({"empresa": ticker, "cnpj": cnpj, "segmento": "", "erro": str(e)})
 
-
-    # ─── /api/balanco ─────────────────────────────────────────────────────────
     @bp.route("/api/balanco")
     def balanco():
         ticker = request.args.get("ticker", "").upper().strip()
-        cnpj   = request.args.get("cnpj",   "").strip()
-
+        cnpj   = request.args.get("cnpj", "").strip()
         if not ticker and not cnpj:
             return jsonify([])
 
-        # contas relevantes para o balanço
         CONTAS = (
             "1", "1.01", "1.01.01", "1.01.02", "1.01.03", "1.01.04",
             "1.01.06", "1.01.08",
             "1.02", "1.02.01", "1.02.02", "1.02.03", "1.02.04",
             "2", "2.01", "2.01.02", "2.01.04",
-            "2.02", "2.02.01",
-            "2.03",
+            "2.02", "2.02.01", "2.03",
         )
         placeholders = ", ".join(["?" for _ in CONTAS])
 
         try:
-            # resolve cnpj a partir do ticker se necessário
             if not cnpj and ticker:
-                con_t = _con("dados_tickers")
-                row = con_t.execute(
-                    "SELECT cnpj FROM tickers WHERE ticker = ? LIMIT 1", [ticker]
-                ).fetchone()
-                con_t.close()
-                if row:
-                    cnpj = row[0]
-
+                cnpj = _resolve_cnpj(ticker)
             if not cnpj:
                 return jsonify([])
 
@@ -84,8 +73,8 @@ def get_fundamentos_blueprint():
                 FROM dados_dfp
                 WHERE cnpj_cia = ?
                   AND cd_conta IN ({placeholders})
-                  AND con_ind  = 'CON'
-                  AND tipo_dem = 'BPA'
+                  AND con_ind = 'DF Consolidado'
+                  AND tipo_dem IN ('Balanço Patrimonial Ativo', 'Balanço Patrimonial Passivo')
                   AND ordem_exerc = 'ÚLTIMO'
                 ORDER BY ano ASC, cd_conta ASC
                 """,
@@ -93,38 +82,15 @@ def get_fundamentos_blueprint():
             ).fetchall()
             con.close()
 
-            # Se não achou com BPA tenta sem filtro de tipo_dem
-            if not rows:
-                con = _con("dados_dfp")
-                rows = con.execute(
-                    f"""
-                    SELECT cd_conta, ano, vl_conta
-                    FROM dados_dfp
-                    WHERE cnpj_cia = ?
-                      AND cd_conta IN ({placeholders})
-                      AND con_ind  = 'CON'
-                      AND ordem_exerc = 'ÚLTIMO'
-                    ORDER BY ano ASC, cd_conta ASC
-                    """,
-                    [cnpj, *CONTAS]
-                ).fetchall()
-                con.close()
-
-            return jsonify([
-                {"cd_conta": r[0], "ano": r[1], "vl_conta": r[2]}
-                for r in rows
-            ])
+            return jsonify([{"cd_conta": r[0], "ano": r[1], "vl_conta": r[2]} for r in rows])
 
         except Exception as e:
             return jsonify({"erro": str(e)}), 500
 
-
-    # ─── /api/dre ─────────────────────────────────────────────────────────────
     @bp.route("/api/dre")
     def dre():
         ticker = request.args.get("ticker", "").upper().strip()
-        cnpj   = request.args.get("cnpj",   "").strip()
-
+        cnpj   = request.args.get("cnpj", "").strip()
         if not ticker and not cnpj:
             return jsonify([])
 
@@ -138,14 +104,7 @@ def get_fundamentos_blueprint():
 
         try:
             if not cnpj and ticker:
-                con_t = _con("dados_tickers")
-                row = con_t.execute(
-                    "SELECT cnpj FROM tickers WHERE ticker = ? LIMIT 1", [ticker]
-                ).fetchone()
-                con_t.close()
-                if row:
-                    cnpj = row[0]
-
+                cnpj = _resolve_cnpj(ticker)
             if not cnpj:
                 return jsonify([])
 
@@ -156,8 +115,8 @@ def get_fundamentos_blueprint():
                 FROM dados_dfp
                 WHERE cnpj_cia = ?
                   AND cd_conta IN ({placeholders})
-                  AND con_ind  = 'CON'
-                  AND tipo_dem = 'DRE'
+                  AND con_ind = 'DF Consolidado'
+                  AND tipo_dem = 'Demonstração do Resultado'
                   AND ordem_exerc = 'ÚLTIMO'
                 ORDER BY ano ASC, cd_conta ASC
                 """,
@@ -165,39 +124,16 @@ def get_fundamentos_blueprint():
             ).fetchall()
             con.close()
 
-            # fallback sem tipo_dem
-            if not rows:
-                con = _con("dados_dfp")
-                rows = con.execute(
-                    f"""
-                    SELECT cd_conta, ano, vl_conta
-                    FROM dados_dfp
-                    WHERE cnpj_cia = ?
-                      AND cd_conta IN ({placeholders})
-                      AND con_ind  = 'CON'
-                      AND ordem_exerc = 'ÚLTIMO'
-                    ORDER BY ano ASC, cd_conta ASC
-                    """,
-                    [cnpj, *CONTAS]
-                ).fetchall()
-                con.close()
-
-            return jsonify([
-                {"cd_conta": r[0], "ano": r[1], "vl_conta": r[2]}
-                for r in rows
-            ])
+            return jsonify([{"cd_conta": r[0], "ano": r[1], "vl_conta": r[2]} for r in rows])
 
         except Exception as e:
             return jsonify({"erro": str(e)}), 500
 
-
-    # ─── /api/tickers/busca — autocomplete ────────────────────────────────────
     @bp.route("/api/tickers/busca")
     def busca_tickers():
         q = request.args.get("q", "").upper().strip()
         if not q or len(q) < 2:
             return jsonify([])
-
         try:
             con = _con("dados_tickers")
             rows = con.execute(
@@ -212,12 +148,7 @@ def get_fundamentos_blueprint():
                 [f"{q}%", f"%{q}%"]
             ).fetchall()
             con.close()
-
-            return jsonify([
-                {"ticker": r[0], "nome": r[1], "cnpj": r[2]}
-                for r in rows
-            ])
-
+            return jsonify([{"ticker": r[0], "nome": r[1], "cnpj": r[2]} for r in rows])
         except Exception as e:
             return jsonify({"erro": str(e)}), 500
 

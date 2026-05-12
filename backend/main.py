@@ -1,4 +1,7 @@
 #main.py
+import os
+os.environ['LD_LIBRARY_PATH'] = '/nix/store/ybjcla5bhj8g1y84998pn4a2drfxybkv-gcc-13.3.0-lib/lib'
+
 from flask import Flask, jsonify, send_from_directory, request
 import jwt
 from flask_cors import CORS
