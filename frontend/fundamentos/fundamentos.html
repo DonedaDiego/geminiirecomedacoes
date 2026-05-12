@@ -2,9 +2,9 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
   <title>Fundamentos — Geminii Tech</title>
-  <link rel="icon" type="image/png" sizes="32x32" href="../assets/logo.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/logo.png">
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -22,17 +22,12 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
-    :root {
-      --sidebar-width: 240px;
-      --sidebar-collapsed: 64px;
-    }
+    :root { --sidebar-width: 240px; --sidebar-collapsed: 64px; }
     html, body {
       font-family: 'Inter', sans-serif;
-      background: #050505;
-      min-height: 100vh;
-      width: 100%;
-      overflow-x: hidden;
-      margin: 0; padding: 0;
+      background: #050505; color: #e8e8e8;
+      min-height: 100vh; width: 100%;
+      overflow-x: hidden; margin: 0; padding: 0;
     }
     .sidebar {
       background: #0a0a0a;
@@ -43,11 +38,9 @@
       transition: width 0.3s ease, transform 0.3s ease;
     }
     .sidebar::-webkit-scrollbar { width: 4px; }
+    .sidebar::-webkit-scrollbar-track { background: transparent; }
     .sidebar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 4px; }
-    .sidebar-link {
-      transition: all 0.2s ease;
-      border-left: 3px solid transparent;
-    }
+    .sidebar-link { transition: all 0.2s ease; border-left: 3px solid transparent; }
     .sidebar-link:hover { background: rgba(255,255,255,0.05); border-left-color: #6366f1; }
     .sidebar-link.active { background: rgba(99,102,241,0.12); border-left-color: #6366f1; color: #6366f1; }
     .main-content {
@@ -60,24 +53,20 @@
       display: none; position: fixed; top: 14px; left: 14px; z-index: 50;
       background: rgba(20,20,25,0.95); border: 1px solid rgba(255,255,255,0.12);
       color: white; width: 40px; height: 40px; border-radius: 10px;
-      align-items: center; justify-content: center; cursor: pointer;
+      align-items: center; justify-content: center; cursor: pointer; backdrop-filter: blur(10px);
     }
     .sidebar-overlay {
       display: none; position: fixed; inset: 0;
-      background: rgba(0,0,0,0.6); z-index: 39;
+      background: rgba(0,0,0,0.6); z-index: 39; backdrop-filter: blur(2px);
     }
     .sidebar-overlay.show { display: block; }
-
+    @media (min-width: 1440px) { :root { --sidebar-width: 260px; } }
     @media (min-width: 768px) and (max-width: 1023px) {
       :root { --sidebar-width: var(--sidebar-collapsed); }
-      .sidebar { width: var(--sidebar-collapsed); }
+      .sidebar { width: var(--sidebar-collapsed); overflow: hidden; }
       .sidebar:hover { width: 240px; box-shadow: 4px 0 24px rgba(0,0,0,0.6); }
-      .sidebar:hover .sidebar-text,
-      .sidebar:hover .sb-badge,
-      .sidebar:hover .sidebar-logo-text { opacity: 1; width: auto; }
-      .sidebar-text, .sb-badge, .sidebar-logo-text {
-        opacity: 0; width: 0; overflow: hidden; white-space: nowrap;
-      }
+      .sidebar:hover .sidebar-text, .sidebar:hover .sb-badge, .sidebar:hover .sidebar-logo-text { opacity: 1; width: auto; }
+      .sidebar-text, .sb-badge, .sidebar-logo-text { opacity: 0; width: 0; overflow: hidden; white-space: nowrap; transition: opacity 0.2s ease, width 0.2s ease; }
       .sidebar nav a, .sidebar nav button { justify-content: center; padding-left: 0; padding-right: 0; }
       .sidebar:hover nav a, .sidebar:hover nav button { justify-content: flex-start; padding-left: 16px; padding-right: 16px; }
     }
@@ -87,26 +76,27 @@
       .sidebar.open { transform: translateX(0); }
       .main-content { margin-left: 0; width: 100%; padding-top: 60px; }
     }
-
-    /* Accordion sidebar */
-    .sb-submenu { overflow: hidden; transition: max-height 0.25s ease; }
+    .sb-submenu { overflow: hidden; transition: max-height 0.25s ease, opacity 0.25s ease; }
+    .sb-submenu.open { display: block !important; }
     .sb-chevron { transition: transform 0.25s ease; }
     .sb-chevron.rotated { transform: rotate(180deg); }
-
+    .sidebar-accordion > button.active-accordion { background: rgba(255,255,255,0.04); color: white; }
+    .market-maker-btn {
+      background: linear-gradient(135deg, rgba(234,179,8,0.1) 0%, rgba(186,57,175,0.1) 100%);
+      border: 1px solid rgba(234,179,8,0.3); position: relative;
+    }
+    .market-maker-btn:hover {
+      background: linear-gradient(135deg, rgba(234,179,8,0.2) 0%, rgba(186,57,175,0.2) 100%);
+      border-color: rgba(234,179,8,0.5); transform: translateX(4px);
+    }
     /* Buscador */
     .search-wrap { position: relative; }
     .search-input {
-      width: 100%;
-      background: rgba(255,255,255,0.04);
-      border: 1px solid rgba(255,255,255,0.1);
-      color: #e8e8e8;
-      font-family: 'IBM Plex Mono', monospace;
-      font-size: 14px;
-      padding: 12px 48px 12px 16px;
-      border-radius: 12px;
-      outline: none;
-      transition: border-color 0.2s;
-      text-transform: uppercase;
+      width: 100%; background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.1); color: #e8e8e8;
+      font-family: 'IBM Plex Mono', monospace; font-size: 14px;
+      padding: 12px 48px 12px 16px; border-radius: 12px;
+      outline: none; transition: border-color 0.2s; text-transform: uppercase;
     }
     .search-input::placeholder { color: #555; text-transform: none; }
     .search-input:focus { border-color: #fb1ebb; }
@@ -123,41 +113,25 @@
     .autocomplete-item {
       padding: 10px 16px; cursor: pointer;
       display: flex; align-items: center; justify-content: space-between;
-      border-bottom: 1px solid rgba(255,255,255,0.04);
-      transition: background 0.15s;
+      border-bottom: 1px solid rgba(255,255,255,0.04); transition: background 0.15s;
     }
     .autocomplete-item:hover { background: rgba(255,255,255,0.05); }
     .autocomplete-item:last-child { border-bottom: none; }
     .ac-ticker { font-family: 'IBM Plex Mono', monospace; font-size: 13px; font-weight: 500; color: #fb1ebb; }
     .ac-nome { font-size: 12px; color: #666; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-
-    /* Tabs */
     .tabs { display: flex; gap: 4px; margin-bottom: 16px; }
     .tab-btn {
       padding: 8px 20px; border-radius: 8px; font-size: 13px; font-weight: 600;
       cursor: pointer; border: 1px solid rgba(255,255,255,0.08);
-      background: rgba(255,255,255,0.03); color: #666;
-      transition: all 0.2s; font-family: 'Inter', sans-serif;
+      background: rgba(255,255,255,0.03); color: #666; transition: all 0.2s;
     }
-    .tab-btn.active {
-      background: rgba(251,30,187,0.12); border-color: rgba(251,30,187,0.3);
-      color: #fb1ebb;
-    }
+    .tab-btn.active { background: rgba(251,30,187,0.12); border-color: rgba(251,30,187,0.3); color: #fb1ebb; }
     .tab-btn:hover:not(.active) { background: rgba(255,255,255,0.06); color: #999; }
-
-    /* Frame container */
     .frame-container {
-      background: #0a0a0a;
-      border: 1px solid rgba(255,255,255,0.07);
-      border-radius: 16px;
-      overflow: hidden;
+      background: #0a0a0a; border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 16px; overflow: hidden;
     }
-    .frame-container iframe {
-      width: 100%; border: none; display: block;
-      min-height: 680px;
-    }
-
-    /* Estado vazio */
+    .frame-container iframe { width: 100%; border: none; display: block; min-height: 680px; }
     .empty-state {
       display: flex; flex-direction: column; align-items: center;
       justify-content: center; padding: 80px 40px; text-align: center;
@@ -165,24 +139,17 @@
     .empty-icon { font-size: 48px; color: #222; margin-bottom: 16px; }
     .empty-title { font-size: 16px; font-weight: 600; color: #444; margin-bottom: 8px; }
     .empty-sub { font-size: 13px; color: #333; }
-
-    /* Empresa info */
     .empresa-info {
       display: flex; align-items: center; gap: 12px;
       padding: 12px 16px; background: rgba(251,30,187,0.06);
-      border: 1px solid rgba(251,30,187,0.15); border-radius: 10px;
-      margin-bottom: 16px;
+      border: 1px solid rgba(251,30,187,0.15); border-radius: 10px; margin-bottom: 16px;
     }
     .empresa-ticker { font-family: 'IBM Plex Mono', monospace; font-size: 18px; font-weight: 700; color: #fb1ebb; }
     .empresa-nome { font-size: 13px; color: #999; }
     .empresa-seg { font-size: 11px; color: #555; margin-top: 2px; }
-
-    /* Loading */
     .loading-bar {
       height: 2px; background: linear-gradient(90deg, #fb1ebb, #6366f1, #fb1ebb);
-      background-size: 200% 100%;
-      animation: shimmer 1.2s infinite;
-      border-radius: 2px; margin-bottom: 16px;
+      background-size: 200% 100%; animation: shimmer 1.2s infinite; border-radius: 2px; margin-bottom: 16px;
     }
     @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
   </style>
@@ -194,15 +161,14 @@
   </button>
   <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
 
-  <!-- Sidebar — idêntica ao dashboard -->
   <aside class="sidebar" id="mainSidebar">
     <div class="p-6 border-b border-white/10">
       <div class="flex items-center space-x-3">
-        <img src="../assets/logo.png" alt="Geminii" class="w-8 h-8 rounded-lg flex-shrink-0"
-          onerror="this.src='/assets/logo.png'; this.onerror=null;">
+        <img src="/assets/logo.png" alt="Geminii Logo" class="w-8 h-8 rounded-lg flex-shrink-0" onerror="this.src='/assets/logo.png'; this.onerror=null;">
         <span class="text-xl font-bold text-white sidebar-text sidebar-logo-text">Geminii</span>
       </div>
     </div>
+
     <nav class="p-4 space-y-2">
       <a href="/dashboard.html" class="sidebar-link flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-400">
         <i class="fas fa-home w-5 flex-shrink-0"></i>
@@ -217,8 +183,7 @@
         <i class="fas fa-graduation-cap w-5 text-yellow-400 flex-shrink-0"></i>
         <span class="font-medium sidebar-text">Tutoriais</span>
       </a>
-      <a href="https://www.youtube.com/@geminiiresearch?sub_confirmation=1" target="_blank"
-        class="sidebar-link flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-400">
+      <a href="https://www.youtube.com/@geminiiresearch?sub_confirmation=1" target="_blank" class="sidebar-link flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-400">
         <i class="fab fa-youtube w-5 text-red-500 flex-shrink-0"></i>
         <span class="font-medium sidebar-text">Canal YouTube</span>
       </a>
@@ -228,7 +193,7 @@
 
       <!-- Análise Essencial -->
       <div class="sidebar-accordion">
-        <button onclick="toggleAcc('sb-gratis')" class="sidebar-link w-full flex items-center justify-between px-4 py-3 rounded-lg text-gray-400">
+        <button onclick="toggleSidebarAccordion('sb-gratis')" class="sidebar-link w-full flex items-center justify-between px-4 py-3 rounded-lg text-gray-400">
           <div class="flex items-center space-x-3">
             <i class="fas fa-gift w-5 text-success flex-shrink-0"></i>
             <span class="font-medium text-sm sidebar-text">Análise Essencial</span>
@@ -263,6 +228,116 @@
         <span class="font-medium text-sm sidebar-text">Fundamentos</span>
         <span class="ml-auto text-xs bg-green-500/20 text-green-400 px-2 py-0.5 rounded-full sb-badge sidebar-text">FREE</span>
       </a>
+
+      <!-- Monitor Opções -->
+      <div class="sidebar-accordion">
+        <button onclick="toggleSidebarAccordion('sb-opcoes')" class="sidebar-link w-full flex items-center justify-between px-4 py-3 rounded-lg text-gray-400">
+          <div class="flex items-center space-x-3">
+            <i class="fas fa-chart-pie w-5 text-orange-400 flex-shrink-0"></i>
+            <span class="font-medium text-sm sidebar-text">Monitor Opções</span>
+          </div>
+          <div class="flex items-center gap-2 sidebar-text">
+            <span class="text-xs bg-orange-500/20 text-orange-400 px-2 py-0.5 rounded-full sb-badge">PRO</span>
+            <i class="fas fa-chevron-down text-gray-600 text-xs sb-chevron" id="chev-sb-opcoes"></i>
+          </div>
+        </button>
+        <div id="sb-opcoes" class="sb-submenu hidden px-3 pb-1">
+          <a href="/vi-pro.html" class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 text-sm">
+            <i class="fas fa-search text-purple-400 text-xs w-4"></i>Implícita Sigma
+          </a>
+          <a href="/regimes-pro.html" class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 text-sm">
+            <i class="fas fa-chart-area text-purple-400 text-xs w-4"></i>Bandas Volatilidade
+          </a>
+          <a href="/rank-volatilidade.html" class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 text-sm">
+            <i class="fas fa-search text-green-400 text-xs w-4"></i>IV Scanner
+          </a>
+          <a href="/opcoes.html" class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 text-sm">
+            <i class="fas fa-crosshairs text-orange-400 text-xs w-4"></i>Hunter Walls
+          </a>
+        </div>
+      </div>
+
+      <!-- Machine Learning -->
+      <div class="sidebar-accordion">
+        <button onclick="toggleSidebarAccordion('sb-ml')" class="sidebar-link w-full flex items-center justify-between px-4 py-3 rounded-lg text-gray-400">
+          <div class="flex items-center space-x-3">
+            <i class="fas fa-brain w-5 text-purple-400 flex-shrink-0"></i>
+            <span class="font-medium text-sm sidebar-text">Machine Learning</span>
+          </div>
+          <div class="flex items-center gap-2 sidebar-text">
+            <span class="text-xs bg-purple-500/20 text-purple-400 px-2 py-0.5 rounded-full sb-badge">PRO</span>
+            <i class="fas fa-chevron-down text-gray-600 text-xs sb-chevron" id="chev-sb-ml"></i>
+          </div>
+        </button>
+        <div id="sb-ml" class="sb-submenu hidden px-3 pb-1">
+          <a href="/swing-trade-machine-learning.html" class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 text-sm">
+            <i class="fas fa-chart-line text-green-400 text-xs w-4"></i>Swing Trade ML
+          </a>
+          <a href="/beta-regression.html" class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 text-sm">
+            <i class="fas fa-calculator text-blue-400 text-xs w-4"></i>Beta Regression
+          </a>
+          <a href="/atsmom.html" class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 text-sm">
+            <i class="fas fa-rocket text-purple-400 text-xs w-4"></i>ATSMOM
+          </a>
+          <a href="/longshort.html" class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 text-sm">
+            <i class="fas fa-exchange-alt text-yellow-400 text-xs w-4"></i>Long/Short Cointegração
+          </a>
+        </div>
+      </div>
+
+      <!-- Opções 4D -->
+      <div class="sidebar-accordion">
+        <button onclick="toggleSidebarAccordion('sb-4d')" class="sidebar-link w-full flex items-center justify-between px-4 py-3 rounded-lg text-gray-400">
+          <div class="flex items-center space-x-3">
+            <i class="fas fa-cube w-5 text-indigo-400 flex-shrink-0"></i>
+            <span class="font-medium text-sm sidebar-text">Opções 4D</span>
+          </div>
+          <div class="flex items-center gap-2 sidebar-text">
+            <span class="text-xs bg-indigo-500/20 text-indigo-400 px-2 py-0.5 rounded-full sb-badge">PRO</span>
+            <i class="fas fa-chevron-down text-gray-600 text-xs sb-chevron" id="chev-sb-4d"></i>
+          </div>
+        </button>
+        <div id="sb-4d" class="sb-submenu hidden px-3 pb-1">
+          <a href="/gamma-levels.html" class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 text-sm">
+            <i class="fas fa-layer-group text-purple-400 text-xs w-4"></i>GEX - Gamma
+          </a>
+          <a href="/delta-levels.html" class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 text-sm">
+            <i class="fas fa-layer-group text-purple-400 text-xs w-4"></i>DEX - Delta
+          </a>
+          <a href="/vega-levels.html" class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 text-sm">
+            <i class="fas fa-layer-group text-purple-400 text-xs w-4"></i>VEX - Vega
+          </a>
+          <a href="/theta-levels.html" class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 text-sm">
+            <i class="fas fa-layer-group text-purple-400 text-xs w-4"></i>TEX - Theta
+          </a>
+          <a href="/historical-levels.html" class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 text-sm">
+            <i class="fas fa-history text-indigo-400 text-xs w-4"></i>Análise Histórica
+          </a>
+        </div>
+      </div>
+
+      <!-- Rastreamento -->
+      <div class="sidebar-accordion">
+        <button onclick="toggleSidebarAccordion('sb-rastr')" class="sidebar-link w-full flex items-center justify-between px-4 py-3 rounded-lg text-gray-400">
+          <div class="flex items-center space-x-3">
+            <i class="fas fa-search-plus w-5 text-cyan-400 flex-shrink-0"></i>
+            <span class="font-medium text-sm sidebar-text">Rastreamento</span>
+          </div>
+          <div class="flex items-center gap-2 sidebar-text">
+            <span class="text-xs bg-cyan-500/20 text-cyan-400 px-2 py-0.5 rounded-full sb-badge">PRO</span>
+            <i class="fas fa-chevron-down text-gray-600 text-xs sb-chevron" id="chev-sb-rastr"></i>
+          </div>
+        </button>
+        <div id="sb-rastr" class="sb-submenu hidden px-3 pb-1">
+          <a href="/greeks-micro.html" class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 text-sm">
+            <i class="fas fa-layer-group text-cyan-400 text-xs w-4"></i>Visão Global
+          </a>
+          <a href="/screening.html" class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 text-sm">
+            <i class="fas fa-search text-cyan-400 text-xs w-4"></i>Gamma Flip Screening
+          </a>
+        </div>
+      </div>
+
     </nav>
 
     <div class="border-t border-white/10 mx-4 mt-2"></div>
@@ -281,7 +356,6 @@
   <main class="main-content px-6 py-8">
     <div class="w-full max-w-screen-2xl mx-auto">
 
-      <!-- Header -->
       <div class="mb-6">
         <h1 class="text-2xl font-bold text-white mb-1 flex items-center gap-3">
           <i class="fas fa-building-columns text-blue-400"></i>
@@ -293,25 +367,17 @@
 
       <!-- Buscador -->
       <div class="search-wrap mb-6" style="max-width: 480px;">
-        <input
-          id="searchInput"
-          class="search-input"
-          type="text"
+        <input id="searchInput" class="search-input" type="text"
           placeholder="Digite o ticker (ex: VALE3, PETR4...)"
           autocomplete="off"
           oninput="onSearchInput(this.value)"
-          onkeydown="onSearchKey(event)"
-        >
-        <button class="search-btn" onclick="buscar()">
-          <i class="fas fa-search"></i>
-        </button>
+          onkeydown="onSearchKey(event)">
+        <button class="search-btn" onclick="buscar()"><i class="fas fa-search"></i></button>
         <div class="autocomplete-list" id="autocompleteList" style="display:none;"></div>
       </div>
 
-      <!-- Loading bar -->
       <div class="loading-bar" id="loadingBar" style="display:none;"></div>
 
-      <!-- Empresa info -->
       <div class="empresa-info" id="empresaInfo" style="display:none;">
         <div>
           <div class="empresa-ticker" id="infoTicker">—</div>
@@ -322,7 +388,6 @@
         </div>
       </div>
 
-      <!-- Tabs -->
       <div class="tabs" id="tabsContainer" style="display:none;">
         <button class="tab-btn active" onclick="setTab('balanco')" id="tab-balanco">
           <i class="fas fa-scale-balanced mr-2"></i>Balanço Patrimonial
@@ -332,9 +397,7 @@
         </button>
       </div>
 
-      <!-- Frame area -->
       <div id="frameArea">
-        <!-- Estado vazio -->
         <div class="frame-container" id="emptyState">
           <div class="empty-state">
             <div class="empty-icon"><i class="fas fa-building-columns"></i></div>
@@ -342,8 +405,6 @@
             <div class="empty-sub">Digite o ticker acima para ver o Balanço e a DRE</div>
           </div>
         </div>
-
-        <!-- Frames -->
         <div class="frame-container" id="frameContainer" style="display:none;">
           <iframe id="frameBalanco" src="" style="display:block;"></iframe>
           <iframe id="frameDre"     src="" style="display:none;"></iframe>
@@ -357,18 +418,15 @@
     let currentTicker = '';
     let currentTab    = 'balanco';
     let acTimer       = null;
-    let userToken     = localStorage.getItem('geminii_token');
 
-    // ── Auth ───────────────────────────────────────────────────────────────
     async function checkAuth() {
       const token = localStorage.getItem('geminii_token');
       if (!token) { window.location.href = '/login.html'; return; }
-      userToken = token;
       try {
         const r = await fetch('/auth/verify', { headers: { 'Authorization': `Bearer ${token}` } });
         const j = await r.json();
         if (!j.success) { window.location.href = '/login.html'; }
-      } catch (e) { /* offline fallback — continua */ }
+      } catch (e) {}
     }
 
     function logout() {
@@ -377,7 +435,6 @@
       window.location.href = '/';
     }
 
-    // ── Sidebar ────────────────────────────────────────────────────────────
     function toggleSidebar() {
       document.getElementById('mainSidebar').classList.toggle('open');
       document.getElementById('sidebarOverlay').classList.toggle('show');
@@ -386,19 +443,23 @@
       document.getElementById('mainSidebar').classList.remove('open');
       document.getElementById('sidebarOverlay').classList.remove('show');
     }
-    function toggleAcc(id) {
-      const sub = document.getElementById(id);
-      const chev = document.getElementById('chev-' + id);
-      const isOpen = !sub.classList.contains('hidden');
+
+    function toggleSidebarAccordion(id) {
+      const submenu = document.getElementById(id);
+      const chevron = document.getElementById('chev-' + id);
+      const btn = submenu ? submenu.previousElementSibling : null;
+      if (!submenu) return;
+      const isOpen = !submenu.classList.contains('hidden');
       document.querySelectorAll('.sb-submenu').forEach(el => el.classList.add('hidden'));
       document.querySelectorAll('.sb-chevron').forEach(el => el.classList.remove('rotated'));
+      document.querySelectorAll('.sidebar-accordion > button').forEach(el => el.classList.remove('active-accordion'));
       if (!isOpen) {
-        sub.classList.remove('hidden');
-        if (chev) chev.classList.add('rotated');
+        submenu.classList.remove('hidden');
+        if (chevron) chevron.classList.add('rotated');
+        if (btn) btn.classList.add('active-accordion');
       }
     }
 
-    // ── Autocomplete ───────────────────────────────────────────────────────
     function onSearchInput(val) {
       clearTimeout(acTimer);
       if (val.length < 2) { hideAc(); return; }
@@ -425,51 +486,30 @@
       list.style.display = 'block';
     }
 
-    function hideAc() {
-      document.getElementById('autocompleteList').style.display = 'none';
-    }
-
-    function selectAc(ticker, nome) {
-      document.getElementById('searchInput').value = ticker;
-      hideAc();
-      buscar(ticker);
-    }
-
-    function onSearchKey(e) {
-      if (e.key === 'Enter') { hideAc(); buscar(); }
-      if (e.key === 'Escape') hideAc();
-    }
-
+    function hideAc() { document.getElementById('autocompleteList').style.display = 'none'; }
+    function selectAc(ticker) { document.getElementById('searchInput').value = ticker; hideAc(); buscar(ticker); }
+    function onSearchKey(e) { if (e.key === 'Enter') { hideAc(); buscar(); } if (e.key === 'Escape') hideAc(); }
     function escH(s) { return (s||'').replace(/'/g,"&#39;"); }
 
-    // ── Busca principal ────────────────────────────────────────────────────
     async function buscar(ticker) {
       const t = (ticker || document.getElementById('searchInput').value).toUpperCase().trim();
       if (!t) return;
       currentTicker = t;
-
-      setLoading(true);
-      hideAc();
-
+      setLoading(true); hideAc();
       try {
         const r = await fetch(`/api/info?ticker=${t}`);
         const info = await r.json();
-
         document.getElementById('infoTicker').textContent = t;
         document.getElementById('infoNome').textContent   = info.empresa || t;
         document.getElementById('infoSeg').textContent    = info.segmento || '';
-        document.getElementById('empresaInfo').style.display = 'flex';
+        document.getElementById('empresaInfo').style.display  = 'flex';
         document.getElementById('tabsContainer').style.display = 'flex';
-        document.getElementById('emptyState').style.display = 'none';
+        document.getElementById('emptyState').style.display    = 'none';
         document.getElementById('frameContainer').style.display = 'block';
-
         carregarFrames(t);
         setTab(currentTab);
-      } catch (e) {
-        console.error(e);
-      } finally {
-        setLoading(false);
-      }
+      } catch (e) { console.error(e); }
+      finally { setLoading(false); }
     }
 
     function carregarFrames(ticker) {
@@ -477,7 +517,6 @@
       document.getElementById('frameDre').src     = `/fundamentos/dre.html?ticker=${ticker}`;
     }
 
-    // ── Tabs ───────────────────────────────────────────────────────────────
     function setTab(tab) {
       currentTab = tab;
       document.getElementById('tab-balanco').classList.toggle('active', tab === 'balanco');
@@ -486,27 +525,23 @@
       document.getElementById('frameDre').style.display     = tab === 'dre'     ? 'block' : 'none';
     }
 
-    // ── Loading ────────────────────────────────────────────────────────────
     function setLoading(on) {
       document.getElementById('loadingBar').style.display = on ? 'block' : 'none';
     }
 
-    // ── Init ───────────────────────────────────────────────────────────────
     document.addEventListener('DOMContentLoaded', () => {
       checkAuth();
-      // se vier ?ticker= na URL, busca direto
       const params = new URLSearchParams(window.location.search);
       const t = params.get('ticker');
-      if (t) {
-        document.getElementById('searchInput').value = t.toUpperCase();
-        buscar(t.toUpperCase());
-      }
+      if (t) { document.getElementById('searchInput').value = t.toUpperCase(); buscar(t.toUpperCase()); }
     });
 
-    // fecha autocomplete ao clicar fora
-    document.addEventListener('click', e => {
-      if (!e.target.closest('.search-wrap')) hideAc();
-    });
+    document.addEventListener('click', e => { if (!e.target.closest('.search-wrap')) hideAc(); });
+
+    window.toggleSidebar = toggleSidebar;
+    window.closeSidebar  = closeSidebar;
+    window.toggleSidebarAccordion = toggleSidebarAccordion;
+    window.logout = logout;
   </script>
 </body>
 </html>
