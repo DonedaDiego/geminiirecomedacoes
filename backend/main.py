@@ -16,6 +16,9 @@ from gratis.amplitude_routes import amplitude_bp
 from gratis.rrg_routes import get_rrg_blueprint
 from gratis.copom_routes import copom_bp
 
+#fundamentos
+from fundamentos.fundamentos_routes import get_fundamentos_blueprint
+
 # Pro
 from pro.opcoes_routes import opcoes_bp
 from pro.rank_routes import get_rank_blueprint
@@ -72,6 +75,13 @@ app.config['MAIL_PASSWORD'] = os.environ.get('EMAIL_PASSWORD', '#Geminii20##')
 # Auth Blueprint
 AUTH_AVAILABLE = False
 auth_bp = None
+
+try:
+    app.register_blueprint(get_fundamentos_blueprint())
+    print(" Fundamentos blueprint registrado!")
+except Exception as e:
+    print(f" Erro ao registrar fundamentos blueprint: {e}")
+
 
 try:
     auth_bp = get_auth_blueprint()
@@ -441,6 +451,20 @@ def rrg_page():
 def copom_page():
     return send_from_directory('../frontend', 'copom.html')
 
+##=========== Fundamentos =========
+
+@app.route('/fundamentos')
+@app.route('/fundamentos.html')
+def fundamentos_page():
+    return send_from_directory('../frontend/fundamentos', 'fundamentos.html')
+
+@app.route('/fundamentos/balanco.html')
+def fundamentos_balanco():
+    return send_from_directory('../frontend/fundamentos', 'balanco.html')
+
+@app.route('/fundamentos/dre.html')
+def fundamentos_dre():
+    return send_from_directory('../frontend/fundamentos', 'dre.html')
 
 
 ##========== Opções ===============##

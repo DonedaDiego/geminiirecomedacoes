@@ -260,18 +260,7 @@ class RailwaySyncService:
             }
         }
     
-    def obter_datas_disponiveis(self) -> List[str]:
-        """Retorna datas pendentes de sincronização de forma dinâmica.
-
-        Calcula automaticamente de (última data no banco + 1 dia) até ontem
-        no timezone America/Sao_Paulo (UTC-3, Brasil sem DST desde 2019).
-        Inclui todos os dias corridos — sincronizar_datas() já pula fins de
-        semana e dias sem dados disponíveis na B3.
-
-        O botão de sync manual no admin dashboard continua funcionando
-        exatamente como antes: chama esta mesma função, sem nenhuma mudança
-        na interface ou no fluxo de uso.
-        """
+    def obter_datas_disponiveis(self) -> List[str]:   
         from datetime import datetime, timedelta, timezone, date as date_type
 
         TZ_SP = timezone(timedelta(hours=-3))

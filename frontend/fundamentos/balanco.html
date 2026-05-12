@@ -1,0 +1,192 @@
+<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Balanco</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Montserrat:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0f0f0f;--bg2:#141414;--bg3:#1a1a1a;--bg4:#1f1f1f;
+  --border:#222;--border2:#2a2a2a;
+  --text:#e8e8e8;--muted:#666;--muted2:#999;
+  --accent:#fb1ebb;--green:#27ae60;--red:#e74c3c;--gold:#f39c12;
+  --mono:'IBM Plex Mono',monospace;--sans:'Montserrat',sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:var(--mono);font-size:12px;padding:20px 24px;}
+
+.titulo{font-family:var(--sans);font-size:15px;font-weight:700;margin-bottom:2px;}
+.subtitulo{font-size:11px;color:var(--muted);margin-bottom:20px;letter-spacing:.5px;}
+
+table{border-collapse:collapse;width:100%;font-size:12px;}
+
+/* HEADER */
+thead tr th{
+  background:var(--bg3);
+  padding:6px 12px;
+  font-size:10px;letter-spacing:2px;text-transform:uppercase;
+  color:var(--muted);font-weight:500;
+  border-bottom:2px solid var(--border2);
+  white-space:nowrap;
+}
+thead tr th:first-child{text-align:left;}
+thead tr th:not(:first-child){text-align:right;}
+
+/* GRUPO */
+tr.grupo td{
+  background:#1c1014;
+  color:var(--accent);
+  font-size:9px;letter-spacing:3px;text-transform:uppercase;
+  padding:4px 12px;
+  border-top:1px solid #2a1520;
+  border-bottom:1px solid #2a1520;
+  font-family:var(--sans);font-weight:600;
+}
+
+/* SUBTOTAL */
+tr.subtotal td{
+  background:#161616;
+  font-weight:700;font-size:13px;
+  padding:6px 12px;
+  border-top:1px solid var(--border2);
+  border-bottom:1px solid var(--border2);
+}
+tr.subtotal td:first-child{color:var(--text);}
+tr.subtotal td:not(:first-child){text-align:right;}
+
+/* LINHA NORMAL */
+tr.linha td{
+  padding:5px 12px;
+  border-bottom:1px solid #191919;
+  color:var(--muted2);
+  font-size:12px;
+}
+tr.linha:hover td{background:#171717;color:var(--text);}
+tr.linha td:first-child{color:var(--text);padding-left:28px;}
+tr.linha td:not(:first-child){text-align:right;}
+
+/* AH% */
+td.ah{font-size:10px;text-align:right!important;min-width:52px;}
+td.ah.pos{color:var(--green);}
+td.ah.neg{color:var(--red);}
+td.ah.neu{color:var(--muted);}
+
+/* VALOR */
+td.val{font-size:12px;min-width:110px;}
+tr.subtotal td.val{font-size:13px;}
+</style>
+</head>
+<body>
+
+<div class="titulo" id="titulo">Balanco Patrimonial Consolidado (DFP)</div>
+<div class="subtitulo">Valores em R$ mil</div>
+
+<div id="root"></div>
+
+<script>
+function getTicker(){const p=new URLSearchParams(window.location.search);return p.get('ticker')||'';}
+function getCnpj(){const p=new URLSearchParams(window.location.search);return p.get('cnpj')||'';}
+function getParam(){const c=getCnpj();const t=getTicker();return c?'cnpj='+c+(t?'&ticker='+t:''):'ticker='+t;}
+
+function fmtN(v){
+  if(v===null||v===undefined||isNaN(Number(v))||Number(v)===0) return '-';
+  const n=Number(v);
+  const neg=n<0;
+  const s=Math.abs(n).toLocaleString('pt-BR',{maximumFractionDigits:0});
+  return neg?`(${s})`:s;
+}
+
+function fmtAH(cur, prev){
+  if(!cur||!prev||prev===0) return {txt:'-', cls:'neu'};
+  const pct=((cur-prev)/Math.abs(prev))*100;
+  if(isNaN(pct)||!isFinite(pct)) return {txt:'-', cls:'neu'};
+  const txt=(pct>=0?'+':'')+pct.toFixed(1)+'%';
+  return {txt, cls: pct>0?'pos':pct<0?'neg':'neu'};
+}
+
+// estrutura do balanco
+const ESTRUTURA = [
+  {tipo:'grupo',   label:'ATIVO TOTAL'},
+  {tipo:'subtotal',label:'ATIVO TOTAL',        conta:'1'},
+  {tipo:'grupo',   label:'ATIVO CIRCULANTE'},
+  {tipo:'subtotal',label:'Ativo Circulante',   conta:'1.01'},
+  {tipo:'linha',   label:'Caixa e Equivalentes',     conta:'1.01.01'},
+  {tipo:'linha',   label:'Aplicacoes Financeiras',   conta:'1.01.02'},
+  {tipo:'linha',   label:'Contas a Receber',          conta:'1.01.03'},
+  {tipo:'linha',   label:'Estoques',                  conta:'1.01.04'},
+  {tipo:'linha',   label:'Tributos a Recuperar',      conta:'1.01.06'},
+  {tipo:'linha',   label:'Outros Ativos Circ.',       conta:'1.01.08'},
+  {tipo:'grupo',   label:'ATIVO NAO CIRCULANTE'},
+  {tipo:'subtotal',label:'Ativo Nao Circulante',conta:'1.02'},
+  {tipo:'linha',   label:'Realizavel a LP',           conta:'1.02.01'},
+  {tipo:'linha',   label:'Investimentos',             conta:'1.02.02'},
+  {tipo:'linha',   label:'Imobilizado',               conta:'1.02.03'},
+  {tipo:'linha',   label:'Intangivel',                conta:'1.02.04'},
+  {tipo:'grupo',   label:'PASSIVO TOTAL'},
+  {tipo:'subtotal',label:'PASSIVO TOTAL',       conta:'2'},
+  {tipo:'grupo',   label:'PASSIVO CIRCULANTE'},
+  {tipo:'subtotal',label:'Passivo Circulante',  conta:'2.01'},
+  {tipo:'linha',   label:'Fornecedores',              conta:'2.01.02'},
+  {tipo:'linha',   label:'Emprestimos CP',            conta:'2.01.04'},
+  {tipo:'grupo',   label:'PASSIVO NAO CIRCULANTE'},
+  {tipo:'subtotal',label:'Passivo Nao Circulante',conta:'2.02'},
+  {tipo:'linha',   label:'Emprestimos LP',            conta:'2.02.01'},
+  {tipo:'grupo',   label:'PATRIMONIO LIQUIDO'},
+  {tipo:'subtotal',label:'Patrimonio Liquido',  conta:'2.03'},
+];
+
+async function init(){
+  const ticker=getTicker(); const cnpj=getCnpj();
+  if(!ticker&&!cnpj) return;
+
+  const [data, info] = await Promise.all([
+    fetch(`/api/balanco?${getParam()}`).then(r=>r.json()),
+    fetch(`/api/info?${getParam()}`).then(r=>r.json()),
+  ]);
+
+  document.getElementById('titulo').textContent =
+    `${info.empresa||ticker} — Balanco Patrimonial Consolidado (DFP)`;
+
+  // montar pivot: conta -> ano -> valor
+  const pivot = {};
+  const anosSet = new Set();
+  data.forEach(r=>{
+    if(!pivot[r.cd_conta]) pivot[r.cd_conta]={};
+    pivot[r.cd_conta][r.ano]=r.vl_conta;
+    anosSet.add(r.ano);
+  });
+  const anos = [...anosSet].sort();
+
+  // header
+  let h = '<table><thead><tr><th>DESCRICAO</th>';
+  anos.forEach((a,i)=>{
+    if(i>0) h+=`<th class="ah">AH%</th>`;
+    h+=`<th class="val">${a}</th>`;
+  });
+  h+='</tr></thead><tbody>';
+
+  // linhas
+  ESTRUTURA.forEach(item=>{
+    if(item.tipo==='grupo'){
+      h+=`<tr class="grupo"><td colspan="${1+(anos.length*2)-1}">${item.label}</td></tr>`;
+      return;
+    }
+
+    const vals = anos.map(a=> pivot[item.conta]?.[a] ?? null);
+
+    h+=`<tr class="${item.tipo}">`;
+    h+=`<td>${item.label}</td>`;
+
+    vals.forEach((v,i)=>{
+      if(i>0){
+        const ah=fmtAH(v, vals[i-1]);
+        h+=`<td class="ah ${ah.cls}">${ah.txt}</td>`;
+      }
+      h+=`<td class="val">${fmtN(v)}</td>`;
+    });
+    h+='</tr>';
+  });
+
+  h+='</tbody></table>';
+  document.getElementById('root').innerHTML=h;
+}
+
+init();
+</script>
+</body></html>
