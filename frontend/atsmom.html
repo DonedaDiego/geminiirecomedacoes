@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ATSMOM - Geminii Tech</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <script>
     tailwind.config = {
       theme: {
@@ -16,9 +16,7 @@
             subtle: 'rgba(255,255,255,0.1)',
             geminii: '#fb1ebb'
           },
-          fontFamily: {
-            sans: ['Inter', 'sans-serif']
-          }
+          fontFamily: { sans: ['Inter', 'sans-serif'] }
         }
       }
     }
@@ -26,1371 +24,692 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
-    body { 
-      font-family: 'Inter', sans-serif; 
+    body {
+      font-family: 'Inter', sans-serif;
       background: linear-gradient(135deg, #0c0c0c 0%, #1a1a1a 100%);
       min-height: 100vh;
     }
-    
+
     .beta-card {
-      background: rgba(255, 255, 255, 0.08);
+      background: rgba(255,255,255,0.08);
       backdrop-filter: blur(20px);
-      border: 1px solid rgba(255, 255, 255, 0.2);
+      border: 1px solid rgba(255,255,255,0.2);
       border-radius: 20px;
       padding: 2rem;
       transition: all 0.3s ease;
     }
-    
     .beta-card:hover {
-      transform: translateY(-2px) scale(1.01);
-      box-shadow: 0 20px 40px rgba(186, 57, 175, 0.15);
-      border-color: rgba(186, 57, 175, 0.3);
-    }
-    
-    .loading {
-      opacity: 0.6;
-      pointer-events: none;
-    }
-    
-    .spinner {
-      border: 2px solid rgba(255, 255, 255, 0.1);
-      border-radius: 50%;
-      border-top: 2px solid #fb1ebb;
-      width: 20px;
-      height: 20px;
-      animation: spin 1s linear infinite;
-      display: inline-block;
-    }
-    
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
+      transform: translateY(-2px) scale(1.005);
+      box-shadow: 0 20px 40px rgba(186,57,175,0.15);
+      border-color: rgba(186,57,175,0.3);
     }
 
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    @keyframes fadeOut {
-      from { opacity: 1; transform: translateY(0); }
-      to { opacity: 0; transform: translateY(-10px); }
-    }
-
-    /* Tabs */
     .tab-button {
       padding: 12px 24px;
       border-radius: 8px;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      background: rgba(255,255,255,0.05);
       color: #94a3b8;
       cursor: pointer;
       transition: all 0.3s ease;
       font-weight: 500;
     }
-
     .tab-button.active {
       background: linear-gradient(135deg, #fb1ebb, #8b5cf6);
       color: white;
-      border-color: rgba(186, 57, 175, 0.3);
+      border-color: rgba(186,57,175,0.3);
     }
-
     .tab-button:not(.active):hover {
-      background: rgba(255, 255, 255, 0.08);
+      background: rgba(255,255,255,0.08);
       color: #e2e8f0;
-      border-color: rgba(255, 255, 255, 0.2);
+      border-color: rgba(255,255,255,0.2);
+    }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; animation: fadeIn 0.3s ease; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
     }
 
-    .tab-content {
-      display: none;
+    .spinner {
+      border: 2px solid rgba(255,255,255,0.1);
+      border-top: 2px solid #fb1ebb;
+      border-radius: 50%;
+      width: 18px; height: 18px;
+      animation: spin 0.8s linear infinite;
+      display: inline-block;
     }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading { opacity: 0.6; pointer-events: none; }
 
-    .tab-content.active {
-      display: block;
-      animation: fadeIn 0.3s ease-in-out;
-    }
-
-    /* Chart Container - Dentro do card */
-    .chart-section {
-      background: rgba(255, 255, 255, 0.02);
+    /* Métricas */
+    .metric-card {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.08);
       border-radius: 12px;
-      padding: 1.5rem;
-      margin-top: 2rem;
+      padding: 14px 16px;
+      position: relative;
+      overflow: hidden;
+    }
+    .metric-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: var(--accent, rgba(255,255,255,0.1));
     }
 
-    .chart-grid {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 1.5rem;
-    }
-
-    @media (min-width: 1024px) {
-      .chart-grid {
-        grid-template-columns: 1fr 1fr;
-      }
-    }
-
-    .chart-item {
-      background: rgba(255, 255, 255, 0.05);
+    /* Diretriz */
+    .directive-panel {
       border-radius: 12px;
-      padding: 1.5rem;
-      min-height: 350px;
+      padding: 16px 20px;
+      border: 1px solid;
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+    }
+    .directive-action {
+      display: inline-block;
+      margin-top: 8px;
+      font-size: 11px;
+      padding: 3px 10px;
+      border-radius: 999px;
+      border: 1px solid currentColor;
     }
 
-    .chart-item.full-width {
-      grid-column: 1 / -1;
-      min-height: 400px;
+    /* Gráficos */
+    .chart-wrap {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 12px;
+      padding: 16px;
     }
+
+    /* Compare */
+    .compare-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      font-size: 13px;
+    }
+    .compare-row:last-child { border-bottom: none; }
   </style>
 </head>
 <body class="text-white">
-  
-  <!-- Navbar -->
-  <nav class="fixed top-6 left-1/2 transform -translate-x-1/2 z-50 bg-opacity-5 border-opacity-10 bg-white border-white border rounded-full px-4 py-3 shadow-xl backdrop-blur-md">
-    <div class="flex items-center justify-between">
-      <div class="flex items-center">
-        <img src="logo.png" alt="Geminii Logo" class="w-6 h-6 cursor-pointer" onclick="window.location.href='/dashboard'">
-      </div>
-      <div class="hidden md:flex items-center space-x-6 text-xs text-gray-300 ml-8">        
-        <a href="swing-trade-machine-learning" class="hover:text-white transition-colors">ML Trading</a>
-        <a href="/beta-regression" class="hover:text-white transition-colors">Beta Regression</a>
-        <span class="text-white font-medium">ATSMOM</span>
-        <a href="longshort.html" class="hover:text-white transition-colors">Long&short</a>        
-      </div>
-      <div class="flex items-center space-x-3 ml-8">
-        <div id="apiStatus" class="w-8 h-8 bg-green-500 bg-opacity-10 border border-green-500 border-opacity-30 rounded-full flex items-center justify-center relative">
-          <i class="fas fa-brain text-green-500 text-xs"></i>
-          <div class="absolute -top-1 -right-1 w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-        </div>
-      </div>
+
+<!-- NAV -->
+<nav class="fixed top-6 left-1/2 transform -translate-x-1/2 z-50 bg-opacity-5 border-opacity-10 bg-white border-white border rounded-full px-4 py-3 shadow-xl backdrop-blur-md">
+  <div class="flex items-center justify-between">
+    <img src="logo.png" alt="Geminii" class="w-6 h-6 cursor-pointer" onclick="window.location.href='/dashboard'">
+    <div class="hidden md:flex items-center space-x-6 text-xs text-gray-300 ml-8">
+      <a href="/swing-trade-machine-learning" class="hover:text-white transition-colors">ML Trading</a>
+      <a href="/beta-regression" class="hover:text-white transition-colors">Beta Regression</a>
+      <span class="text-white font-medium">ATSMOM</span>
+      <a href="/longshort" class="hover:text-white transition-colors">Long&Short</a>
     </div>
-  </nav>
-
-  <!-- Content -->
-  <div class="pt-32 pb-16">
-    <div class="max-w-7xl mx-auto px-6">
-      
-      <!-- Header -->
-      <div class="text-center mb-12">
-        <h1 class="text-4xl md:text-5xl font-bold mb-4">
-          <span style="color: #fb1ebb; font-weight: 900;">ATSMOM</span>
-          <span class="text-white font-light">Analytics</span>
-        </h1>
-        <p class="text-neutral-300 text-lg max-w-2xl mx-auto">
-          Adaptive Time Series Momentum - Análise Avançada de Sinais de Trading (5 Anos)
-        </p>
-        
-        <!-- Info Expander -->
-        <div class="mt-8">
-          <button onclick="toggleInfo()" class="bg-gradient-to-r from-geminii to-purple-600 hover:from-purple-600 hover:to-geminii text-white px-6 py-3 rounded-full font-semibold text-sm transition-all duration-300 flex items-center mx-auto shadow-lg hover:shadow-xl transform hover:scale-105">
-            <i id="infoIcon" class="fas fa-info-circle mr-2 transition-transform duration-300"></i>
-            Como Funciona o ATSMOM Revolucionário
-          </button>
-          
-          <div id="infoContent" class="hidden mt-8 max-w-6xl mx-auto">
-            <div class="beta-card p-8 text-left">
-              
-              <!-- Explicação Principal -->
-              <div class="text-center mb-8">
-                <h3 class="text-2xl font-bold text-white mb-4">ATSMOM: Revolução em Análise Quantitativa</h3>
-                <p class="text-gray-300 text-base leading-relaxed max-w-4xl mx-auto">
-                  O <strong>Adaptive Time Series Momentum</strong> é um indicador revolucionário que combina 
-                  <strong>volatilidade adaptativa</strong>, <strong>machine learning</strong> e <strong>redes neurais</strong> 
-                  para gerar sinais de momentum com precisão matemática nunca vista antes.
-                </p>
-              </div>
-              
-              <!-- Tecnologias Revolucionárias -->
-              <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                
-                <!-- Volatilidade Adaptativa -->
-                <div class="bg-blue-500/10 border border-blue-500/30 rounded-lg p-6">
-                  <div class="flex items-center mb-4">
-                    <div class="w-3 h-3 rounded-full bg-blue-400 mr-3"></div>
-                    <h4 class="text-lg font-bold text-blue-400">Volatilidade Adaptativa</h4>
-                  </div>
-                  <p class="text-gray-300 text-sm mb-3">
-                    <strong>Ajuste automático em tempo real</strong> - o indicador se adapta à volatilidade do mercado instantaneamente.
-                  </p>
-                  <div class="bg-white/5 rounded p-3">
-                    <p class="text-white text-xs font-medium">Inovação:</p>
-                    <p class="text-gray-400 text-xs">
-                      • Detecção automática de regimes<br>
-                      • Calibração dinâmica de parâmetros<br>
-                      • Filtros adaptativos avançados
-                    </p>
-                  </div>
-                </div>
-                
-                <!-- Machine Learning -->
-                <div class="bg-green-500/10 border border-green-500/30 rounded-lg p-6">
-                  <div class="flex items-center mb-4">
-                    <div class="w-3 h-3 rounded-full bg-green-400 mr-3"></div>
-                    <h4 class="text-lg font-bold text-green-400">Machine Learning</h4>
-                  </div>
-                  <p class="text-gray-300 text-sm mb-3">
-                    <strong>Algoritmos de aprendizado</strong> que evoluem com o mercado e reconhecem padrões complexos.
-                  </p>
-                  <div class="bg-white/5 rounded p-3">
-                    <p class="text-white text-xs font-medium">Técnicas:</p>
-                    <p class="text-gray-400 text-xs">
-                      • Ensemble Learning<br>
-                      • Feature Selection dinâmica<br>
-                      • Cross-validation temporal
-                    </p>
-                  </div>
-                </div>
-                
-                <!-- Redes Neurais -->
-                <div class="bg-purple-500/10 border border-purple-500/30 rounded-lg p-6">
-                  <div class="flex items-center mb-4">
-                    <div class="w-3 h-3 rounded-full bg-purple-400 mr-3"></div>
-                    <h4 class="text-lg font-bold text-purple-400">Redes Neurais</h4>
-                  </div>
-                  <p class="text-gray-300 text-sm mb-3">
-                    <strong>Deep Learning</strong> para identificar relações não-lineares e padrões ocultos no momentum.
-                  </p>
-                  <div class="bg-white/5 rounded p-3">
-                    <p class="text-white text-xs font-medium">Arquitetura:</p>
-                    <p class="text-gray-400 text-xs">
-                      • LSTM para séries temporais<br>
-                      • Attention Mechanisms<br>
-                      • Transfer Learning
-                    </p>
-                  </div>
-                </div>
-                
-              </div>
-              
-              <!-- Como Funciona o ATSMOM -->
-              <div class="border-t border-white/10 pt-8">
-                <h4 class="text-xl font-bold text-white mb-6 text-center">Arquitetura do ATSMOM</h4>
-                
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  
-                  <!-- Cálculo do Momentum -->
-                  <div class="bg-cyan-500/10 border border-cyan-500/30 rounded-lg p-6">
-                    <div class="flex items-center mb-4">
-                      <i class="fas fa-rocket text-cyan-400 mr-3"></i>
-                      <h5 class="text-lg font-bold text-cyan-400">Cálculo do Momentum</h5>
-                    </div>
-                    <p class="text-gray-300 text-sm mb-4">
-                      <strong>1. Momentum Base:</strong> Velocidade e aceleração dos preços
-                    </p>
-                    <div class="space-y-3">
-                      <div class="flex items-start">
-                        <span class="text-cyan-400 text-sm mr-2"></span>
-                        <div>
-                          <p class="text-white text-sm font-medium">Rate of Change Multiperíodo</p>
-                          <p class="text-gray-400 text-xs">Análise de 1, 5, 10, 20 e 50 períodos</p>
-                        </div>
-                      </div>
-                      <div class="flex items-start">
-                        <span class="text-cyan-400 text-sm mr-2"></span>
-                        <div>
-                          <p class="text-white text-sm font-medium">Momentum Aceleração</p>
-                          <p class="text-gray-400 text-xs">Segunda derivada dos preços</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <!-- Ajuste Adaptativo -->
-                  <div class="bg-orange-500/10 border border-orange-500/30 rounded-lg p-6">
-                    <div class="flex items-center mb-4">
-                      <i class="fas fa-cogs text-orange-400 mr-3"></i>
-                      <h5 class="text-lg font-bold text-orange-400">Ajuste Adaptativo</h5>
-                    </div>
-                    <p class="text-gray-300 text-sm mb-4">
-                      <strong>2. Calibração Dinâmica:</strong> Parâmetros que evoluem
-                    </p>
-                    <div class="space-y-3">
-                      <div class="flex items-start">
-                        <span class="text-orange-400 text-sm mr-2"></span>
-                        <div>
-                          <p class="text-white text-sm font-medium">Regime Detection</p>
-                          <p class="text-gray-400 text-xs">Identifica mudanças no mercado</p>
-                        </div>
-                      </div>
-                      <div class="flex items-start">
-                        <span class="text-orange-400 text-sm mr-2"></span>
-                        <div>
-                          <p class="text-white text-sm font-medium">Parâmetros Dinâmicos</p>
-                          <p class="text-gray-400 text-xs">Lookback e thresholds adaptativos</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  
-                </div>
-              </div>
-              
-              <!-- Inovações Tecnológicas -->
-              <div class="mt-8 pt-6 border-t border-white/10">
-                <h4 class="text-xl font-bold text-white mb-6 text-center">Inovações Tecnológicas</h4>
-                
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  
-                  <!-- Volatilidade Inteligente -->
-                  <div class="bg-red-500/10 border border-red-500/30 rounded-lg p-4">
-                    <h5 class="text-red-400 font-bold mb-3">Volatilidade Inteligente</h5>
-                    <div class="bg-black/30 rounded p-4">
-                      <p class="text-white text-sm font-medium mb-2">Redes Neurais</p>
-                      <p class="text-gray-400 text-xs mb-2">• Estimação em tempo real</p>
-                      <p class="text-gray-400 text-xs mb-2">• Clustering automático</p>
-                      <p class="text-orange-300 text-xs mt-2">
-                        <strong>Resultado:</strong> Sinais mais precisos
-                      </p>
-                    </div>
-                  </div>
-                  
-                  <!-- Ensemble Learning -->
-                  <div class="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
-                    <h5 class="text-blue-400 font-bold mb-3">Ensemble Learning</h5>
-                    <div class="bg-black/30 rounded p-4">
-                      <p class="text-white text-sm font-medium mb-2">Múltiplos Modelos</p>
-                      <p class="text-gray-400 text-xs mb-2">• Random Forest + XGBoost</p>
-                      <p class="text-gray-400 text-xs mb-2">• Neural Networks</p>
-                      <p class="text-orange-300 text-xs mt-2">
-                        <strong>Vantagem:</strong> Robustez máxima
-                      </p>
-                    </div>
-                  </div>
-                  
-                  <!-- Feature Engineering -->
-                  <div class="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4">
-                    <h5 class="text-yellow-400 font-bold mb-3">Feature Engineering</h5>
-                    <div class="bg-black/30 rounded p-4">
-                      <p class="text-white text-sm font-medium mb-2">12+ Variáveis</p>
-                      <p class="text-gray-400 text-xs mb-2">• Matemática + Estatística</p>
-                      <p class="text-orange-300 text-xs mt-2">
-                        <strong>Poder:</strong> Visão 360° do mercado
-                      </p>
-                    </div>
-                  </div>
-                  
-                </div>
-              </div>
-              
-              <!-- Sinais e Interpretação -->
-              <div class="mt-8 pt-6 border-t border-white/10">
-                <h4 class="text-xl font-bold text-white mb-6 text-center">Como Interpretar os Sinais</h4>
-                
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  
-                  <!-- Força do Sinal -->
-                  <div class="bg-green-500/10 border border-green-500/30 rounded-lg p-6">
-                    <h5 class="text-green-400 font-bold mb-4">Força da Tendência</h5>
-                    <div class="space-y-3">
-                      <div class="bg-white/5 rounded p-3">
-                        <p class="text-white text-sm font-medium mb-1">Sinal > +2.0</p>
-                        <p class="text-gray-400 text-xs">Momentum de alta muito forte - considerar venda/p>
-                      </div>
-                      <div class="bg-white/5 rounded p-3">
-                        <p class="text-white text-sm font-medium mb-1">0 a +0.5</p>
-                        <p class="text-gray-400 text-xs">Momentum de alta moderado - considerar alta ate o 2</p>
-                      </div>
-                      <div class="bg-white/5 rounded p-3">
-                        <p class="text-white text-sm font-medium mb-1">-0-5 a 0.0</p>
-                        <p class="text-gray-400 text-xs">Momentum de alta moderado - considerar baixa ate o -2</p>
-                      </div>
-                      <div class="bg-white/5 rounded p-3">
-                        <p class="text-white text-sm font-medium mb-1">Sinal < -2.0</p>
-                        <p class="text-gray-400 text-xs">Momentum de baixa forte - considerar Compra</p>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <!-- Volatilidade Adaptativa -->
-                  <div class="bg-purple-500/10 border border-purple-500/30 rounded-lg p-6">
-                    <h5 class="text-purple-400 font-bold mb-4">Regimes de Volatilidade</h5>
-                    <div class="space-y-3">
-                      <div class="bg-white/5 rounded p-3">
-                        <p class="text-white text-sm font-medium mb-1">Baixa Volatilidade</p>
-                        <p class="text-gray-400 text-xs">Sinais mais confiáveis - posições maiores</p>
-                      </div>
-                      <div class="bg-white/5 rounded p-3">
-                        <p class="text-white text-sm font-medium mb-1">Alta Volatilidade</p>
-                        <p class="text-gray-400 text-xs">Sinais mais arriscados - posições menores</p>
-                      </div>
-                      <div class="bg-white/5 rounded p-3">
-                        <p class="text-white text-sm font-medium mb-1">Regime de Stress</p>
-                        <p class="text-gray-400 text-xs">Evitar novas posições - proteção</p>
-                      </div>
-                    </div>
-                  </div>
-                  
-                </div>
-              </div>
-              
-              <!-- Diferenciais Únicos -->
-              <div class="mt-8 pt-6 border-t border-white/10">
-                <h4 class="text-xl font-bold text-white mb-6 text-center">Por que o ATSMOM é muito bom/h4>
-                
-                <div class="bg-gradient-to-r from-geminii/20 to-purple-600/20 border border-geminii/50 rounded-lg p-6">
-                  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    
-                    <!-- Diferenciais Técnicos -->
-                    <div>
-                      <h6 class="text-geminii font-bold mb-4">Inovações Técnicas:</h6>
-                      <div class="space-y-3">
-                        <div class="flex items-start">
-                          <i class="fas fa-microchip text-blue-400 mr-3 mt-1"></i>
-                          <div>
-                            <p class="text-white text-sm font-medium">Processamento Paralelo</p>
-                            <p class="text-gray-400 text-xs">Cálculos em GPU para velocidade extrema</p>
-                          </div>
-                        </div>
-                        <div class="flex items-start">
-                          <i class="fas fa-brain text-purple-400 mr-3 mt-1"></i>
-                          <div>
-                            <p class="text-white text-sm font-medium">AutoML Integration</p>
-                            <p class="text-gray-400 text-xs">Otimização automática de hiperparâmetros</p>
-                          </div>
-                        </div>
-                        <div class="flex items-start">
-                          <i class="fas fa-infinity text-green-400 mr-3 mt-1"></i>
-                          <div>
-                            <p class="text-white text-sm font-medium">Streaming Analytics</p>
-                            <p class="text-gray-400 text-xs">Sinais em tempo real, sem delay</p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <!-- Resultados Práticos -->
-                    <div>
-                      <h6 class="text-purple-400 font-bold mb-4"> Resultados Únicos:</h6>
-                      <div class="space-y-3">
-                        <div class="flex items-start">
-                          <i class="fas fa-target text-green-400 mr-3 mt-1"></i>
-                          <div>
-                            <p class="text-white text-sm font-medium">Precisão Extrema</p>
-                            <p class="text-gray-400 text-xs">Taxa de acerto 15% superior aos indicadores tradicionais</p>
-                          </div>
-                        </div>
-                        <div class="flex items-start">
-                          <i class="fas fa-shield-alt text-orange-400 mr-3 mt-1"></i>
-                          <div>
-                            <p class="text-white text-sm font-medium">Proteção Inteligente</p>
-                            <p class="text-gray-400 text-xs">Redução de 40% no drawdown máximo</p>
-                          </div>
-                        </div>
-                        <div class="flex items-start">
-                          <i class="fas fa-chart-line text-cyan-400 mr-3 mt-1"></i>
-                          <div>
-                            <p class="text-white text-sm font-medium">Alpha Consistente</p>
-                            <p class="text-gray-400 text-xs">Geração de retorno acima do benchmark</p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    
-                  </div>
-                </div>
-              </div>
-              
-              <!-- Resumo Final -->
-              <div class="mt-8 pt-6 border-t border-white/10 text-center">
-                <h4 class="text-geminii font-bold text-lg mb-3">O Futuro do Trading Quantitativo</h4>
-                <div class="max-w-4xl mx-auto">
-                  <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                    
-                    <div class="bg-blue-500/10 border border-blue-500/30 rounded-lg p-3">
-                      <p class="text-blue-400 font-bold text-sm mb-2">AI-Powered</p>
-                      <p class="text-gray-300 text-xs">Inteligência artificial de última geração</p>
-                    </div>
-                    
-                    <div class="bg-green-500/10 border border-green-500/30 rounded-lg p-3">
-                      <p class="text-green-400 font-bold text-sm mb-2">Adaptativo</p>
-                      <p class="text-gray-300 text-xs">Evolui com as condições do mercado</p>
-                    </div>
-                    
-                    <div class="bg-purple-500/10 border border-purple-500/30 rounded-lg p-3">
-                      <p class="text-purple-400 font-bold text-sm mb-2">Tempo Real</p>
-                      <p class="text-gray-300 text-xs">Sinais instantâneos e precisos</p>
-                    </div>
-                    
-                    <div class="bg-orange-500/10 border border-orange-500/30 rounded-lg p-3">
-                      <p class="text-orange-400 font-bold text-sm mb-2">Robusto</p>
-                      <p class="text-gray-300 text-xs">Testado em 20 anos de dados</p>
-                    </div>
-                    
-                  </div>
-                  
-                  <div class="bg-geminii/10 border border-geminii/30 rounded-lg p-4">
-                    <p class="text-geminii font-medium text-sm">
-                       <strong>Revolução ATSMOM:</strong> indicador que combina volatilidade adaptativa + 
-                      machine learning + redes neurais para <strong>momentum trading com precisão</strong>. 
-                      O futuro do trading quantitativo chegou!
-                    </p>
-                  </div>
-                </div>
-              </div>
-              
-            </div>
-          </div>
-        </div>
+    <div class="flex items-center space-x-3 ml-8">
+      <div class="w-8 h-8 bg-green-500 bg-opacity-10 border border-green-500 border-opacity-30 rounded-full flex items-center justify-center relative">
+        <i class="fas fa-brain text-green-500 text-xs"></i>
+        <div class="absolute -top-1 -right-1 w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
       </div>
-
-      <!-- Tabs -->
-      <div class="beta-card mb-8">
-        <div class="flex flex-wrap gap-2 mb-6 justify-center">
-          <button class="tab-button active" data-tab="individual">
-            <i class="fas fa-chart-line mr-2"></i>Análise Individual
-          </button>
-          <button class="tab-button" data-tab="compare">
-            <i class="fas fa-balance-scale mr-2"></i>Comparar Ativos
-          </button>
-        </div>
-
-        <!-- Tab Content: Individual -->
-        <div id="individual-content" class="tab-content active">
-          <div class="flex flex-col md:flex-row gap-4 items-center justify-center">
-            <div class="flex gap-3 flex-wrap items-center">
-              <input 
-                id="individual-symbol" 
-                type="text" 
-                placeholder="Digite o código da ação (ex: PETR4)" 
-                class="px-4 py-2 bg-white bg-opacity-10 border border-white border-opacity-20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-geminii backdrop-blur-sm"
-              />
-              <button id="analyzeIndividualBtn" class="px-6 py-2 bg-gradient-to-r from-pink-500 to-purple-600 hover:shadow-lg rounded-lg transition-all font-medium">
-                <i class="fas fa-rocket mr-2"></i>Analisar ATSMOM
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Tab Content: Compare -->
-        <div id="compare-content" class="tab-content">
-          <div class="flex flex-col md:flex-row gap-4 items-center justify-center">
-            <div class="flex gap-3 flex-wrap items-center">
-              <input 
-                id="compare-symbol1" 
-                type="text" 
-                placeholder="Primeiro ativo (ex: PETR4)" 
-                class="px-4 py-2 bg-white bg-opacity-10 border border-white border-opacity-20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-geminii backdrop-blur-sm"
-              >
-              <input 
-                id="compare-symbol2" 
-                type="text" 
-                placeholder="Segundo ativo (ex: VALE3)" 
-                class="px-4 py-2 bg-white bg-opacity-10 border border-white border-opacity-20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-geminii backdrop-blur-sm"
-              >
-              <button id="compareBtn" class="px-6 py-2 bg-gradient-to-r from-purple-500 to-blue-600 hover:shadow-lg rounded-lg transition-all font-medium">
-                <i class="fas fa-balance-scale mr-2"></i>Comparar
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Status -->
-      <div id="statusMsg" class="mb-6 p-4 rounded-lg hidden backdrop-blur-sm"></div>
-
-      <!-- Análise Individual - Resultados (TUDO EM UM CARD) -->
-      <div id="individual-results" class="mb-8 hidden">
-        <div class="beta-card">
-          <div class="flex justify-between items-center mb-6">
-            <h3 id="individual-title" class="text-2xl font-bold"></h3>
-            <div id="individual-timestamp" class="text-sm text-gray-400"></div>
-          </div>
-          
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-            <div class="bg-white bg-opacity-5 p-4 rounded-lg">
-              <div class="text-sm text-gray-400">Sinal Atual</div>
-              <div id="individual-signal" class="text-xl font-bold"></div>
-            </div>
-            
-            <div class="bg-white bg-opacity-5 p-4 rounded-lg">
-              <div class="text-sm text-gray-400">Preço Atual</div>
-              <div id="individual-price" class="text-xl font-bold"></div>
-            </div>
-            
-            <div class="bg-white bg-opacity-5 p-4 rounded-lg">
-              <div class="text-sm text-gray-400">Força do Sinal</div>
-              <div id="individual-strength" class="text-xl font-bold"></div>
-            </div>
-            
-            <div class="bg-white bg-opacity-5 p-4 rounded-lg">
-              <div class="text-sm text-gray-400">Volatilidade</div>
-              <div id="individual-volatility" class="text-xl font-bold"></div>
-            </div>
-          </div>
-          
-          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-            <div>
-              <h4 class="text-lg font-semibold mb-4">Métricas ATSMOM</h4>
-              <div class="space-y-3">
-                <div class="bg-white bg-opacity-5 p-3 rounded-lg flex justify-between">
-                  <span class="text-gray-400">Tendência:</span>
-                  <span id="individual-trend" class="font-semibold">0</span>
-                </div>
-                <div class="bg-white bg-opacity-5 p-3 rounded-lg flex justify-between">
-                  <span class="text-gray-400">Beta:</span>
-                  <span id="individual-beta" class="font-semibold">0</span>
-                </div>
-                <div class="bg-white bg-opacity-5 p-3 rounded-lg flex justify-between">
-                  <span class="text-gray-400">Última Atualização:</span>
-                  <span id="individual-update" class="font-semibold text-xs">--</span>
-                </div>
-              </div>
-            </div>
-            
-            <div>
-              <h4 class="text-lg font-semibold mb-4">Período de Análise</h4>
-              <div class="space-y-3">
-                <div class="bg-white bg-opacity-5 p-3 rounded-lg flex justify-between">
-                  <span class="text-gray-400">Dados:</span>
-                  <span class="font-semibold">5 Anos</span>
-                </div>
-                <div class="bg-white bg-opacity-5 p-3 rounded-lg flex justify-between">
-                  <span class="text-gray-400">Fonte:</span>
-                  <span class="font-semibold">Yahoo Finance</span>
-                </div>
-                <div class="bg-white bg-opacity-5 p-3 rounded-lg flex justify-between">
-                  <span class="text-gray-400">Benchmark:</span>
-                  <span class="font-semibold">IBOVESPA</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- GRÁFICOS DENTRO DO MESMO CARD -->
-          <div class="chart-section">
-            <h3 class="text-xl font-bold mb-6">
-              <i class="fas fa-chart-area text-purple-400 mr-2"></i>
-              Análise ATSMOM Completa
-            </h3>
-            <div id="plotly-chart" class="w-full"></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Comparação - Resultados -->
-      <div id="compare-results" class="mb-8 hidden">
-        <div class="beta-card mb-6">
-          <h3 class="text-xl font-bold mb-4">Resumo da Comparação</h3>
-          <div id="comparison-summary" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
-        </div>
-        
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div id="compare-asset1" class="beta-card">
-            <!-- Primeiro ativo -->
-          </div>
-          <div id="compare-asset2" class="beta-card">
-            <!-- Segundo ativo -->
-          </div>
-        </div>
-      </div>
-
     </div>
   </div>
+</nav>
 
-  <script>
-    // ===== FUNÇÃO DO EXPANDER =====
-    function toggleInfo() {
-      const content = document.getElementById('infoContent');
-      const icon = document.getElementById('infoIcon');
-      
-      if (content.classList.contains('hidden')) {
-        content.classList.remove('hidden');
-        content.style.animation = 'fadeIn 0.5s ease-in-out';
-        icon.classList.remove('fa-info-circle');
-        icon.classList.add('fa-times');
-      } else {
-        content.style.animation = 'fadeOut 0.3s ease-in-out';
-        setTimeout(() => {
-          content.classList.add('hidden');
-        }, 300);
-        icon.classList.remove('fa-times');
-        icon.classList.add('fa-info-circle');
+<div class="pt-32 pb-16">
+  <div class="max-w-7xl mx-auto px-6">
+
+    <!-- HEADER -->
+    <div class="text-center mb-12">
+      <h1 class="text-4xl md:text-5xl font-bold mb-4">
+        <span style="color:#fb1ebb; font-weight:900;">ATSMOM</span>
+        <span class="text-white font-light">Analytics</span>
+      </h1>
+      <p class="text-neutral-300 text-lg max-w-2xl mx-auto">
+        Adaptive Time Series Momentum — Análise de Sinais de Trading (5 Anos)
+      </p>
+
+      <!-- Info toggle -->
+      <div class="mt-8">
+        <button onclick="toggleInfo()" class="bg-gradient-to-r from-geminii to-purple-600 hover:from-purple-600 hover:to-geminii text-white px-6 py-3 rounded-full font-semibold text-sm transition-all duration-300 flex items-center mx-auto shadow-lg hover:shadow-xl transform hover:scale-105">
+          <i id="infoIcon" class="fas fa-info-circle mr-2"></i>
+          Como funciona o ATSMOM
+        </button>
+
+        <div id="infoContent" class="hidden mt-8 max-w-5xl mx-auto">
+          <div class="beta-card text-left">
+            <h3 class="text-xl font-bold text-white mb-6 text-center">Arquitetura do modelo</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+              <div class="bg-white/5 border border-white/10 rounded-xl p-4">
+                <div class="text-xs text-gray-400 uppercase tracking-widest mb-2">Ensemble de lookbacks</div>
+                <p class="text-sm text-gray-200 leading-relaxed">241 janelas simultâneas (20–260 dias). Cada janela calcula o retorno ajustado pela volatilidade do período. Média ponderada — janelas curtas pesam 1.5× mais.</p>
+              </div>
+              <div class="bg-white/5 border border-white/10 rounded-xl p-4">
+                <div class="text-xs text-gray-400 uppercase tracking-widest mb-2">Vol-target adaptativo</div>
+                <p class="text-sm text-gray-200 leading-relaxed">Calculado pela vol histórica de 252 dias do próprio ativo (range 25%–60%). O sizing reduz automaticamente quando a volatilidade sobe.</p>
+              </div>
+              <div class="bg-white/5 border border-white/10 rounded-xl p-4">
+                <div class="text-xs text-gray-400 uppercase tracking-widest mb-2">Filtro de regime MA200</div>
+                <p class="text-sm text-gray-200 leading-relaxed">Transição suave via tanh em vez de filtro binário. Quando o preço está próximo da MA200 o sinal não inverte abruptamente.</p>
+              </div>
+              <div class="bg-white/5 border border-white/10 rounded-xl p-4">
+                <div class="text-xs text-gray-400 uppercase tracking-widest mb-2">Alpha relativo vs IBOV</div>
+                <p class="text-sm text-gray-200 leading-relaxed">O mesmo modelo roda no ^BVSP. Sinal do ativo menos sinal do IBOV = alpha relativo. Quando positivo, o ativo tem momentum acima do índice.</p>
+              </div>
+            </div>
+            <h3 class="text-base font-bold text-white mb-4 text-center">Como interpretar os sinais</h3>
+            <div class="space-y-2">
+              <div class="flex items-center gap-3 bg-white/5 rounded-lg px-4 py-3">
+                <span class="text-green-400 font-bold text-sm w-24 shrink-0">&gt; +0.3</span>
+                <span class="text-xs text-gray-300 leading-relaxed">Tendência de alta confirmada. Contexto favorável para posição comprada — dimensionar pelo valor do sinal.</span>
+              </div>
+              <div class="flex items-center gap-3 bg-white/5 rounded-lg px-4 py-3">
+                <span class="font-bold text-sm w-24 shrink-0" style="color:#afffcc">+0.1 a +0.3</span>
+                <span class="text-xs text-gray-300 leading-relaxed">Viés de alta moderado. Aguardar sinal superar +0.3 com tendência positiva antes de entrar com tamanho cheio.</span>
+              </div>
+              <div class="flex items-center gap-3 bg-white/5 rounded-lg px-4 py-3">
+                <span class="text-gray-400 font-bold text-sm w-24 shrink-0">-0.1 a +0.1</span>
+                <span class="text-xs text-gray-300 leading-relaxed">Neutro. Momentum indefinido. Ficar fora ou posição mínima — revisitar quando sinal superar ±0.1.</span>
+              </div>
+              <div class="flex items-center gap-3 bg-white/5 rounded-lg px-4 py-3">
+                <span class="font-bold text-sm w-24 shrink-0" style="color:#ffaaaa">-0.3 a -0.1</span>
+                <span class="text-xs text-gray-300 leading-relaxed">Viés de baixa. Reduzir exposição existente. Não iniciar novas posições compradas.</span>
+              </div>
+              <div class="flex items-center gap-3 bg-white/5 rounded-lg px-4 py-3">
+                <span class="text-red-400 font-bold text-sm w-24 shrink-0">&lt; -0.3</span>
+                <span class="text-xs text-gray-300 leading-relaxed">Tendência de baixa confirmada. Avaliar saída total, proteção via opções ou short relativo.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CARD DE CONTROLES -->
+    <div class="beta-card mb-8">
+      <div class="flex flex-wrap gap-2 mb-6 justify-center">
+        <button class="tab-button active" data-tab="individual">
+          <i class="fas fa-chart-line mr-2"></i>Análise Individual
+        </button>
+        <button class="tab-button" data-tab="compare">
+          <i class="fas fa-balance-scale mr-2"></i>Comparar Ativos
+        </button>
+      </div>
+
+      <div id="individual-content" class="tab-content active">
+        <div class="flex flex-col md:flex-row gap-4 items-center justify-center">
+          <input id="individual-symbol" type="text" placeholder="Código da ação (ex: PETR4)"
+            class="px-4 py-2 bg-white bg-opacity-10 border border-white border-opacity-20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-geminii backdrop-blur-sm uppercase tracking-wider"
+            style="min-width:230px">
+          <button id="analyzeIndividualBtn" onclick="analyzeIndividual()"
+            class="px-6 py-2 bg-gradient-to-r from-pink-500 to-purple-600 hover:shadow-lg rounded-lg transition-all font-medium flex items-center gap-2">
+            <i class="fas fa-rocket"></i>Analisar ATSMOM
+          </button>
+        </div>
+      </div>
+
+      <div id="compare-content" class="tab-content">
+        <div class="flex flex-col md:flex-row gap-4 items-center justify-center flex-wrap">
+          <input id="compare-symbol1" type="text" placeholder="Primeiro ativo (ex: PETR4)"
+            class="px-4 py-2 bg-white bg-opacity-10 border border-white border-opacity-20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-geminii backdrop-blur-sm uppercase tracking-wider"
+            style="min-width:210px">
+          <input id="compare-symbol2" type="text" placeholder="Segundo ativo (ex: VALE3)"
+            class="px-4 py-2 bg-white bg-opacity-10 border border-white border-opacity-20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-geminii backdrop-blur-sm uppercase tracking-wider"
+            style="min-width:210px">
+          <button id="compareBtn" onclick="compareAssets()"
+            class="px-6 py-2 bg-gradient-to-r from-purple-500 to-blue-600 hover:shadow-lg rounded-lg transition-all font-medium flex items-center gap-2">
+            <i class="fas fa-balance-scale"></i>Comparar
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- STATUS -->
+    <div id="statusMsg" class="mb-6 p-4 rounded-lg hidden backdrop-blur-sm text-sm"></div>
+
+    <!-- RESULTADO INDIVIDUAL -->
+    <div id="individual-results" class="mb-8 hidden">
+      <div class="beta-card">
+
+        <!-- Título -->
+        <div class="flex justify-between items-center mb-6">
+          <h3 id="res-title" class="text-2xl font-bold"></h3>
+          <span id="res-update" class="text-xs text-gray-500 font-mono"></span>
+        </div>
+
+        <!-- Métricas strip -->
+        <div id="metrics-strip" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-6"></div>
+
+        <!-- Painel de diretriz -->
+        <div id="directive-panel" class="mb-6"></div>
+
+        <!-- Gráfico 1: Tendência -->
+        <div class="mb-5">
+          <div class="flex justify-between items-center mb-3">
+            <div class="flex items-center gap-2">
+              <span class="text-xs text-gray-400 uppercase tracking-widest">Força da Tendência</span>
+              <span id="g1-ticker" class="text-xs font-bold" style="color:#fb1ebb"></span>
+            </div>
+            <div class="flex gap-4 text-xs text-gray-500">
+              <span class="flex items-center gap-1">
+                <span style="display:inline-block;width:16px;height:2px;background:#fb1ebb;border-radius:1px"></span>
+                <span id="leg1-ticker">Ativo</span>
+              </span>
+              <span class="flex items-center gap-1">
+                <span style="display:inline-block;width:16px;height:0;border-top:2px dashed rgba(255,255,255,0.4)"></span>
+                IBOV
+              </span>
+            </div>
+          </div>
+          <div class="chart-wrap">
+            <canvas id="chartTrend" height="110"></canvas>
+          </div>
+        </div>
+
+        <!-- Gráfico 2: Sinal Final -->
+        <div>
+          <div class="flex justify-between items-center mb-3">
+            <div class="flex items-center gap-2">
+              <span class="text-xs text-gray-400 uppercase tracking-widest">Sinal Ajustado pela Volatilidade</span>
+              <span id="g2-ticker" class="text-xs font-bold" style="color:#fb1ebb"></span>
+            </div>
+            <div class="flex gap-4 text-xs text-gray-500">
+              <span class="flex items-center gap-1">
+                <span style="display:inline-block;width:16px;height:2px;background:#fb1ebb"></span>
+                <span id="leg2-ticker">Ativo</span>
+              </span>
+              <span class="flex items-center gap-1">
+                <span style="display:inline-block;width:16px;height:0;border-top:2px dashed rgba(255,255,255,0.4)"></span>
+                IBOV
+              </span>
+              <span class="flex items-center gap-1">
+                <span style="display:inline-block;width:14px;height:0;border-top:2px dashed rgba(0,232,122,0.7)"></span>
+                +0.3
+              </span>
+              <span class="flex items-center gap-1">
+                <span style="display:inline-block;width:14px;height:0;border-top:2px dashed rgba(255,59,92,0.7)"></span>
+                −0.3
+              </span>
+            </div>
+          </div>
+          <div class="chart-wrap">
+            <canvas id="chartSignal" height="110"></canvas>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- RESULTADO COMPARAÇÃO -->
+    <div id="compare-results" class="mb-8 hidden">
+      <div class="beta-card mb-4">
+        <h3 class="text-lg font-semibold mb-4">Resumo da Comparação</h3>
+        <div id="comparison-summary" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
+      </div>
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div id="compare-asset1" class="beta-card"></div>
+        <div id="compare-asset2" class="beta-card"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const API_BASE = window.location.origin + '/atsmom';
+let chartTrendInst = null;
+let chartSignalInst = null;
+
+// ── UTILS ────────────────────────────────────────────
+function showStatus(msg, type = 'info') {
+  const el = document.getElementById('statusMsg');
+  const map = {
+    success: 'bg-green-600 bg-opacity-20 border border-green-500 border-opacity-30 text-green-300',
+    error:   'bg-red-600 bg-opacity-20 border border-red-500 border-opacity-30 text-red-300',
+    info:    'bg-blue-600 bg-opacity-20 border border-blue-500 border-opacity-30 text-blue-300'
+  };
+  el.className = `mb-6 p-4 rounded-lg backdrop-blur-sm text-sm ${map[type]}`;
+  el.textContent = msg;
+  el.classList.remove('hidden');
+  if (type !== 'info') setTimeout(() => el.classList.add('hidden'), 5000);
+}
+
+function fmtBRL(v) {
+  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
+}
+function fmtSig(v) { return (v >= 0 ? '+' : '') + v.toFixed(4); }
+function calcMean(arr) {
+  const a = arr.map(Math.abs);
+  return a.reduce((s, x) => s + x, 0) / a.length || 0.001;
+}
+
+function setLoading(btnId, on) {
+  const btn = document.getElementById(btnId);
+  const icon = btn.querySelector('i');
+  if (on) {
+    btn.classList.add('loading');
+    if (icon) icon.className = 'fas fa-spinner fa-spin';
+  } else {
+    btn.classList.remove('loading');
+    if (btnId === 'analyzeIndividualBtn' && icon) icon.className = 'fas fa-rocket';
+    if (btnId === 'compareBtn'           && icon) icon.className = 'fas fa-balance-scale';
+  }
+}
+
+function hideAllResults() {
+  document.getElementById('individual-results').classList.add('hidden');
+  document.getElementById('compare-results').classList.add('hidden');
+}
+
+// ── TABS ─────────────────────────────────────────────
+document.querySelectorAll('.tab-button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(btn.dataset.tab + '-content').classList.add('active');
+    hideAllResults();
+  });
+});
+
+// ── INFO TOGGLE ──────────────────────────────────────
+function toggleInfo() {
+  const panel = document.getElementById('infoContent');
+  const icon  = document.getElementById('infoIcon');
+  if (panel.classList.contains('hidden')) {
+    panel.classList.remove('hidden');
+    icon.className = 'fas fa-times mr-2';
+  } else {
+    panel.classList.add('hidden');
+    icon.className = 'fas fa-info-circle mr-2';
+  }
+}
+window.toggleInfo = toggleInfo;
+
+// ── SIGNAL STATE ─────────────────────────────────────
+function getSignalState(sig, trnd) {
+  if (sig > 0.3 && trnd > 0)  return { color:'#00e87a', border:'rgba(0,232,122,0.3)',   bg:'rgba(0,232,122,0.06)',   icon:'↑', label:'COMPRA',     title:'Tendência de alta confirmada' };
+  if (sig > 0.1)               return { color:'#afffcc', border:'rgba(175,255,204,0.25)',bg:'rgba(175,255,204,0.04)', icon:'↗', label:'VIÉS ALTA',  title:'Momentum positivo moderado' };
+  if (sig < -0.3 && trnd < 0) return { color:'#ff3b5c', border:'rgba(255,59,92,0.3)',   bg:'rgba(255,59,92,0.06)',   icon:'↓', label:'VENDA',      title:'Tendência de baixa confirmada' };
+  if (sig < -0.1)              return { color:'#ffaaaa', border:'rgba(255,170,170,0.25)',bg:'rgba(255,170,170,0.04)',icon:'↘', label:'VIÉS BAIXA', title:'Momentum negativo moderado' };
+  return                         { color:'#94a3b8', border:'rgba(148,163,184,0.2)', bg:'rgba(148,163,184,0.04)', icon:'→', label:'NEUTRO',     title:'Momentum indefinido' };
+}
+
+// ── MÉTRICAS ─────────────────────────────────────────
+function buildMetrics(a, ibovSigLast) {
+  const sig   = a.current_signal;
+  const trnd  = a.current_trend;
+  const state = getSignalState(sig, trnd);
+  const alpha = +(sig - ibovSigLast).toFixed(4);
+
+  const items = [
+    { label:'Sinal',         value:fmtSig(sig),                            sub:state.label,  accent:state.color },
+    { label:'Tendência',     value:fmtSig(trnd),                           sub:trnd>0?'positiva':trnd<0?'negativa':'lateral', accent:trnd>0?'#00e87a':trnd<0?'#ff3b5c':'#94a3b8' },
+    { label:'Alpha vs IBOV', value:(alpha>=0?'+':'')+alpha,                sub:'relativo',   accent:alpha>=0?'#00e87a':'#ff3b5c' },
+    { label:'Volatilidade',  value:a.current_volatility.toFixed(1)+'%',    sub:'anualizada', accent:a.current_volatility>50?'#ffb020':'#00e87a' },
+    { label:'Beta',          value:a.beta,                                  sub:'vs IBOV',    accent:'rgba(255,255,255,0.6)' },
+    { label:'Preço',         value:fmtBRL(a.current_price),                sub:'fechamento', accent:'rgba(255,255,255,0.6)' },
+  ];
+
+  return items.map(m => `
+    <div class="metric-card" style="--accent:${m.accent}">
+      <div class="text-xs text-gray-500 uppercase tracking-wider mb-1">${m.label}</div>
+      <div class="text-lg font-bold leading-tight" style="color:${m.accent}">${m.value}</div>
+      <div class="text-xs text-gray-500 mt-1">${m.sub}</div>
+    </div>
+  `).join('');
+}
+
+// ── DIRETRIZ ─────────────────────────────────────────
+function buildDirective(a, ibovSigLast) {
+  const sig   = a.current_signal;
+  const trnd  = a.current_trend;
+  const alpha = +(sig - ibovSigLast).toFixed(4);
+  const state = getSignalState(sig, trnd);
+  let text = '', action = '';
+
+  if (state.label === 'COMPRA') {
+    text   = `Sinal ${fmtSig(sig)} com tendência ${fmtSig(trnd)} confirmada. ${alpha > 0.05 ? `Alpha relativo de +${alpha} vs IBOV — movimentação com convicção acima do índice.` : 'Alinhado ao IBOV, sem alpha expressivo no momento.'}`;
+    action = 'Dimensionar posição pelo sinal — reduzir se cair abaixo de +0.1';
+  } else if (state.label === 'VIÉS ALTA') {
+    text   = `Sinal levemente positivo (${fmtSig(sig)}). Tendência ainda não confirma com clareza (${fmtSig(trnd)}). Aguardar sinal superar +0.3 com tendência positiva.`;
+    action = 'Posição reduzida ou observação — confirmar antes de entrar';
+  } else if (state.label === 'VENDA') {
+    text   = `Sinal ${fmtSig(sig)} com tendência ${fmtSig(trnd)} negativa. ${alpha < -0.05 ? `Underperformance de ${alpha} vs IBOV — fraqueza relativa clara.` : 'Em linha com o IBOV.'}`;
+    action = 'Avaliar saída total, proteção via opções ou short relativo';
+  } else if (state.label === 'VIÉS BAIXA') {
+    text   = `Sinal levemente negativo (${fmtSig(sig)}). Sem confirmação de tendência forte (${fmtSig(trnd)}). Reduzir exposição existente.`;
+    action = 'Reduzir exposição — não iniciar novas posições compradas';
+  } else {
+    text   = `Sinal próximo de zero (${fmtSig(sig)}). Momentum indefinido — volatilidade ${a.current_volatility.toFixed(1)}% pode estar comprimindo o sinal, ou mercado lateral.`;
+    action = 'Ficar fora ou posição mínima — revisitar quando sinal superar ±0.1';
+  }
+
+  return `
+    <div class="directive-panel" style="background:${state.bg}; border-color:${state.border}">
+      <div style="font-size:28px;line-height:1;flex-shrink:0;margin-top:2px">${state.icon}</div>
+      <div class="flex-1">
+        <div class="flex items-center gap-2 mb-1">
+          <span class="text-sm font-bold" style="color:${state.color}">${state.label}</span>
+          <span class="text-gray-500 text-xs">·</span>
+          <span class="text-sm text-gray-300">${state.title}</span>
+        </div>
+        <p class="text-xs text-gray-400 leading-relaxed">${text}</p>
+        <span class="directive-action" style="color:${state.color}">${action}</span>
+      </div>
+    </div>
+  `;
+}
+
+// ── CHARTS ───────────────────────────────────────────
+function buildCharts(raw, analysis) {
+  if (chartTrendInst)  { chartTrendInst.destroy();  chartTrendInst = null; }
+  if (chartSignalInst) { chartSignalInst.destroy(); chartSignalInst = null; }
+
+  const step   = raw.dates.length > 800 ? 2 : 1;
+  const f      = arr => arr.filter((_, i) => i % step === 0);
+  const labels = f(raw.dates);
+  const trends = f(raw.trends);
+  const sigs   = f(raw.signals);
+  const ibovT  = f(raw.ibov_trends);
+  const ibovS  = f(raw.ibov_signals);
+  const n      = labels.length;
+  const tMean  = calcMean(trends);
+  const sym    = analysis.symbol;
+
+  const baseOpts = {
+    responsive: true,
+    maintainAspectRatio: false,
+    animation: false,
+    interaction: { mode: 'index', intersect: false },
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        backgroundColor: 'rgba(10,10,20,0.95)',
+        titleColor: 'rgba(255,255,255,0.4)',
+        bodyColor: '#ffffff',
+        borderColor: 'rgba(251,30,187,0.3)',
+        borderWidth: 1,
+        cornerRadius: 8,
+        titleFont: { family: 'Inter', size: 10 },
+        bodyFont:  { family: 'Inter', size: 11 },
+        callbacks: { label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.y.toFixed(4)}` }
       }
-    }
-
-    // Make toggleInfo global
-    window.toggleInfo = toggleInfo;
-
-    // Configurações
-    const API_BASE = window.location.origin + '/atsmom';
-    
-    // Elements
-    const statusMsg = document.getElementById('statusMsg');
-    
-    // Funções utilitárias
-    function showStatus(message, type = 'info') {
-      const bgClass = type === 'success' ? 'bg-green-600 bg-opacity-20 border-green-500 border-opacity-30' : 
-                     type === 'error' ? 'bg-red-600 bg-opacity-20 border-red-500 border-opacity-30' : 
-                     'bg-blue-600 bg-opacity-20 border-blue-500 border-opacity-30';
-      
-      statusMsg.className = `mb-6 p-4 rounded-lg border backdrop-blur-sm ${bgClass}`;
-      statusMsg.textContent = message;
-      statusMsg.classList.remove('hidden');
-      setTimeout(() => statusMsg.classList.add('hidden'), 5000);
-    }
-    
-    function formatCurrency(value) {
-      return new Intl.NumberFormat('pt-BR', {
-        style: 'currency',
-        currency: 'BRL'
-      }).format(value);
-    }
-    
-    function setLoading(element, loading) {
-      if (loading) {
-        element.classList.add('loading');
-        const icon = element.querySelector('i');
-        if (icon) icon.className = 'fas fa-spinner fa-spin mr-2';
-      } else {
-        element.classList.remove('loading');
-        const icon = element.querySelector('i');
-        if (icon && element.id === 'analyzeIndividualBtn') icon.className = 'fas fa-rocket mr-2';
-        if (icon && element.id === 'compareBtn') icon.className = 'fas fa-balance-scale mr-2';
+    },
+    scales: {
+      x: {
+        ticks: { color:'rgba(255,255,255,0.25)', maxTicksLimit:9, font:{ family:'Inter', size:10 } },
+        grid:  { color:'rgba(255,255,255,0.04)' }
+      },
+      y: {
+        ticks: { color:'rgba(255,255,255,0.3)', font:{ family:'Inter', size:10 }, callback: v => v.toFixed(2) },
+        grid:  { color:'rgba(255,255,255,0.04)' }
       }
-    }
-    
-    function getStatusColor(status) {
-      switch(status) {
-        case 'COMPRA': return 'text-green-400';
-        case 'VENDA': return 'text-red-400';
-        default: return 'text-gray-400';
-      }
-    }
-    
-    function hideAllResults() {
-      document.getElementById('individual-results').classList.add('hidden');
-      document.getElementById('compare-results').classList.add('hidden');
-    }
+    },
+    elements: { point: { radius:0, hoverRadius:3, hoverBackgroundColor:'#fb1ebb' } }
+  };
 
-    // Tab Navigation
-    document.querySelectorAll('.tab-button').forEach(button => {
-      button.addEventListener('click', () => {
-        // Remove active from all tabs
-        document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
-        document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-        
-        // Add active to clicked tab
-        button.classList.add('active');
-        const tabId = button.getAttribute('data-tab');
-        document.getElementById(`${tabId}-content`).classList.add('active');
-        
-        // Hide results
-        hideAllResults();
-      });
+  chartTrendInst = new Chart(document.getElementById('chartTrend').getContext('2d'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        { label:sym,   data:trends, borderColor:'#fb1ebb', backgroundColor:'rgba(251,30,187,0.06)', borderWidth:2, fill:true,  tension:0.25 },
+        { label:'IBOV',data:ibovT,  borderColor:'rgba(255,255,255,0.35)', borderDash:[5,4], borderWidth:1.5, fill:false, tension:0.25 },
+        { label:'zero',data:Array(n).fill(0),    borderColor:'rgba(255,255,255,0.15)', borderDash:[6,5], borderWidth:1, fill:false, pointRadius:0 },
+        { label:'+ref',data:Array(n).fill(tMean),  borderColor:'rgba(0,232,122,0.3)',  borderDash:[3,3], borderWidth:1, fill:false, pointRadius:0 },
+        { label:'-ref',data:Array(n).fill(-tMean), borderColor:'rgba(255,59,92,0.3)',  borderDash:[3,3], borderWidth:1, fill:false, pointRadius:0 }
+      ]
+    },
+    options: baseOpts
+  });
+
+  chartSignalInst = new Chart(document.getElementById('chartSignal').getContext('2d'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        { label:sym,        data:sigs,  borderColor:'#fb1ebb', backgroundColor:'rgba(251,30,187,0.05)', borderWidth:2, fill:true,  tension:0.25 },
+        { label:'IBOV',     data:ibovS, borderColor:'rgba(255,255,255,0.35)', borderDash:[5,4], borderWidth:1.5, fill:false, tension:0.25 },
+        { label:'zero',     data:Array(n).fill(0),    borderColor:'rgba(255,255,255,0.15)', borderDash:[6,5], borderWidth:1, fill:false, pointRadius:0 },
+        { label:'+0.3',     data:Array(n).fill(0.3),  borderColor:'rgba(0,232,122,0.55)',   borderDash:[3,3], borderWidth:1, fill:false, pointRadius:0 },
+        { label:'-0.3',     data:Array(n).fill(-0.3), borderColor:'rgba(255,59,92,0.55)',   borderDash:[3,3], borderWidth:1, fill:false, pointRadius:0 }
+      ]
+    },
+    options: baseOpts
+  });
+}
+
+// ── DISPLAY ──────────────────────────────────────────
+function displayIndividual(data) {
+  const a   = data.analysis_data;
+  const raw = data.raw_data;
+  const ibovSigLast = raw.ibov_signals[raw.ibov_signals.length - 1] || 0;
+
+  document.getElementById('res-title').textContent  = `${a.symbol} — ATSMOM`;
+  document.getElementById('res-update').textContent = a.last_update;
+  document.getElementById('metrics-strip').innerHTML   = buildMetrics(a, ibovSigLast);
+  document.getElementById('directive-panel').innerHTML = buildDirective(a, ibovSigLast);
+
+  ['g1-ticker','g2-ticker','leg1-ticker','leg2-ticker'].forEach(id => {
+    document.getElementById(id).textContent = a.symbol;
+  });
+
+  buildCharts(raw, a);
+
+  document.getElementById('individual-results').classList.remove('hidden');
+  document.getElementById('individual-results').scrollIntoView({ behavior:'smooth', block:'start' });
+}
+
+// ── ANALYZE ──────────────────────────────────────────
+async function analyzeIndividual() {
+  const sym = document.getElementById('individual-symbol').value.trim().toUpperCase();
+  if (!sym) { showStatus('Digite o código do ativo.', 'error'); return; }
+
+  setLoading('analyzeIndividualBtn', true);
+  hideAllResults();
+  showStatus(`Calculando ATSMOM para ${sym} — buscando 5 anos de dados...`, 'info');
+
+  try {
+    const res  = await fetch(`${API_BASE}/analyze`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ symbol: sym })
     });
-
-    // Análise Individual
-    async function analyzeIndividual() {
-      const symbol = document.getElementById('individual-symbol').value.trim().toUpperCase();
-      const btn = document.getElementById('analyzeIndividualBtn');
-
-      if (!symbol) {
-        showStatus('Digite o código de uma ação', 'error');
-        return;
-      }
-
-      setLoading(btn, true);
-      hideAllResults();
-      showStatus('Executando análise ATSMOM (5 anos)... Isso pode levar alguns segundos', 'info');
-
-      try {
-        const payload = {
-          symbol: symbol
-        };
-
-        const response = await fetch(`${API_BASE}/analyze`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(payload)
-        });
-
-        const data = await response.json();
-        console.log('=== DADOS RECEBIDOS DO BACKEND ===');
-        console.log('Success:', data.success);
-        console.log('Dados completos:', data);
-
-        if (data.success) {
-          displayIndividualResults(data);
-          showStatus(`Análise ATSMOM de ${symbol} concluída com sucesso!`, 'success');
-        } else {
-          showStatus(data.error || 'Erro na análise', 'error');
-        }
-      } catch (error) {
-        showStatus('Erro ao executar análise', 'error');
-        console.error(error);
-      }
-
-      setLoading(btn, false);
+    const data = await res.json();
+    if (data.success) {
+      displayIndividual(data);
+      showStatus(`${sym} analisado com sucesso.`, 'success');
+    } else {
+      showStatus(data.error || 'Erro na análise.', 'error');
     }
+  } catch (e) {
+    showStatus('Erro de conexão com o servidor.', 'error');
+    console.error(e);
+  }
+  setLoading('analyzeIndividualBtn', false);
+}
 
-    // Display Individual Results
-    function displayIndividualResults(data) {
-      console.log('=== DISPLAY INDIVIDUAL RESULTS ===');
-      console.log('Data recebida:', data);
-      
-      const analysis = data.analysis_data;
-      
-      // Header
-      document.getElementById('individual-title').textContent = `${analysis.symbol} - ATSMOM`;
-      document.getElementById('individual-timestamp').textContent = analysis.last_update;
-      
-      // Main metrics
-      document.getElementById('individual-signal').textContent = analysis.signal_status;
-      document.getElementById('individual-signal').className = `text-xl font-bold ${getStatusColor(analysis.signal_status)}`;
-      
-      document.getElementById('individual-price').textContent = formatCurrency(analysis.current_price);
-      document.getElementById('individual-strength').textContent = analysis.current_signal.toFixed(4);
-      document.getElementById('individual-volatility').textContent = `${analysis.current_volatility.toFixed(1)}%`;
-      
-      // Additional metrics
-      document.getElementById('individual-trend').textContent = analysis.current_trend.toFixed(4);
-      document.getElementById('individual-beta').textContent = analysis.beta;
-      document.getElementById('individual-update').textContent = analysis.last_update;
-      
-      // Show results
-      document.getElementById('individual-results').classList.remove('hidden');
-      
-      // Criar gráfico com Chart.js baseado nos dados do ATSMOM
-      createATSMOMChart(data);
-    }
+// ── COMPARE ──────────────────────────────────────────
+function createAssetCard(assetData) {
+  const d     = assetData.data;
+  const state = getSignalState(d.current_signal, d.current_trend);
+  return `
+    <h3 class="text-xl font-bold mb-4 text-center" style="color:${state.color}">${assetData.symbol}</h3>
+    <div class="space-y-1">
+      <div class="compare-row"><span class="text-gray-400">Sinal</span><span style="color:${state.color}" class="font-semibold">${fmtSig(d.current_signal)} — ${state.label}</span></div>
+      <div class="compare-row"><span class="text-gray-400">Tendência</span><span class="font-semibold">${fmtSig(d.current_trend)}</span></div>
+      <div class="compare-row"><span class="text-gray-400">Volatilidade</span><span class="font-semibold">${d.current_volatility.toFixed(1)}%</span></div>
+      <div class="compare-row"><span class="text-gray-400">Beta</span><span class="font-semibold">${d.beta}</span></div>
+      <div class="compare-row"><span class="text-gray-400">Preço</span><span class="font-semibold">${fmtBRL(d.current_price)}</span></div>
+    </div>
+  `;
+}
 
-    // NOVA FUNÇÃO: Criar gráfico ATSMOM com dados REAIS do backend
-    function createATSMOMChart(data) {
-      try {
-        console.log('=== CRIANDO GRÁFICO ATSMOM COM DADOS REAIS ===');
-        console.log('Raw data recebida:', data.raw_data);
-        
-        const analysis = data.analysis_data;
-        const rawData = data.raw_data;
-        
-        // Usar dados REAIS do backend
-        let chartData = {
-          labels: rawData.dates || [],
-          prices: rawData.prices || [],
-          signals: rawData.signals || [],
-          trends: rawData.trends || [],
-          ibov_signals: rawData.ibov_signals || [],
-          ibov_trends: rawData.ibov_trends || []
-        };
-        
-        // Verificar se temos dados suficientes
-        if (chartData.labels.length === 0 || chartData.prices.length === 0) {
-          console.warn('Dados insuficientes, usando dados de exemplo');
-          chartData = generateExampleData(analysis);
-        }
-        
-        // Criar HTML dos gráficos DENTRO do card
-        const chartContainer = document.getElementById('plotly-chart');
-        chartContainer.innerHTML = `
-          <!-- Gráfico Principal - Preços -->
-          <div class="chart-item full-width mb-6">
-            <h3 class="text-xl font-bold mb-4" style="color: #00FFAA;">
-              <i class="fas fa-chart-line mr-2"></i>
-              ${analysis.symbol} - Preço de Fechamento
-            </h3>
-            <div class="mb-4 flex flex-wrap gap-4 text-sm">
-              <div class="flex items-center gap-2">
-                <div class="w-3 h-3 rounded-full" style="background-color: #00FFAA;"></div>
-                <span>${analysis.symbol}</span>
-              </div>
-            </div>
-            <div style="position: relative; height: 350px; width: 100%;">
-              <canvas id="atsmomPriceChart"></canvas>
-            </div>
-          </div>
+async function compareAssets() {
+  const s1 = document.getElementById('compare-symbol1').value.trim().toUpperCase();
+  const s2 = document.getElementById('compare-symbol2').value.trim().toUpperCase();
+  if (!s1 || !s2) { showStatus('Digite os dois símbolos.', 'error'); return; }
+  if (s1 === s2)  { showStatus('Os ativos devem ser diferentes.', 'error'); return; }
 
-          <!-- Gráficos de Sinais - Grid -->
-          <div class="chart-grid">
-            
-            <!-- Força da Tendência -->
-            <div class="chart-item">
-              <h3 class="text-lg font-bold mb-4" style="color: #00BFFF;">
-                <i class="fas fa-wave-square mr-2"></i>
-                Força da Tendência (ATSMOM)
-              </h3>
-              <div class="mb-4 flex flex-wrap gap-4 text-sm">
-                <div class="flex items-center gap-2">
-                  <div class="w-3 h-3 rounded-full" style="background-color: #00FFAA;"></div>
-                  <span>Tendência ${analysis.symbol}</span>
-                </div>
-                <div class="flex items-center gap-2">
-                  <div class="w-3 h-3 rounded-full" style="background-color: #ffffff;"></div>
-                  <span>Tendência IBOV</span>
-                </div>
-              </div>
-              <div style="position: relative; height: 280px; width: 100%;">
-                <canvas id="atsmomTrendChart"></canvas>
-              </div>
-            </div>
-            
-            <!-- Sinal Ajustado -->
-            <div class="chart-item">
-              <h3 class="text-lg font-bold mb-4" style="color: #9400D3;">
-                <i class="fas fa-chart-area mr-2"></i>
-                Sinal Ajustado pela Volatilidade
-              </h3>
-              <div class="mb-4 flex flex-wrap gap-4 text-sm">
-                <div class="flex items-center gap-2">
-                  <div class="w-3 h-3 rounded-full" style="background-color: #00FFAA;"></div>
-                  <span>Sinal ${analysis.symbol}</span>
-                </div>
-                <div class="flex items-center gap-2">
-                  <div class="w-3 h-3 rounded-full" style="background-color: #ffffff;"></div>
-                  <span>Sinal IBOV</span>
-                </div>
-              </div>
-              <div style="position: relative; height: 280px; width: 100%;">
-                <canvas id="atsmomSignalChart"></canvas>
-              </div>
-            </div>
-            
-          </div>
-        `;
+  setLoading('compareBtn', true);
+  hideAllResults();
+  showStatus(`Comparando ${s1} vs ${s2}...`, 'info');
 
-        // Configuração base para Chart.js (cyberpunk style)
-        const baseChartConfig = {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: {
-              labels: {
-                color: '#ffffff',
-                font: { size: 12 },
-                usePointStyle: true
-              }
-            },
-            tooltip: {
-              backgroundColor: 'rgba(17, 17, 58, 0.95)',
-              titleColor: '#00FFAA',
-              bodyColor: '#ffffff',
-              borderColor: '#00FFAA',
-              borderWidth: 1,
-              cornerRadius: 8
-            }
-          },
-          scales: {
-            x: {
-              ticks: { 
-                color: '#ffffff',
-                maxTicksLimit: 10
-              },
-              grid: { 
-                color: 'rgba(255, 255, 255, 0.1)',
-                drawBorder: false
-              }
-            },
-            y: {
-              ticks: { 
-                color: '#ffffff',
-                font: { size: 11 }
-              },
-              grid: { 
-                color: 'rgba(255, 255, 255, 0.1)',
-                drawBorder: false
-              }
-            }
-          },
-          elements: {
-            point: { 
-              radius: 0,
-              hoverRadius: 4
-            }
-          }
-        };
-        
-        // 1. Gráfico de Preços
-        const priceCtx = document.getElementById('atsmomPriceChart').getContext('2d');
-        new Chart(priceCtx, {
-          type: 'line',
-          data: {
-            labels: chartData.labels,
-            datasets: [
-              {
-                label: analysis.symbol,
-                data: chartData.prices,
-                borderColor: '#00FFAA',
-                backgroundColor: 'rgba(0, 255, 170, 0.1)',
-                borderWidth: 3,
-                fill: false,
-                tension: 0.1
-              }
-            ]
-          },
-          options: {
-            ...baseChartConfig,
-            scales: {
-              ...baseChartConfig.scales,
-              y: {
-                ...baseChartConfig.scales.y,
-                ticks: {
-                  color: '#ffffff',
-                  font: { size: 11 },
-                  callback: function(value) {
-                    return 'R$ ' + value.toFixed(2);
-                  }
-                }
-              }
-            }
-          }
-        });
-        
-        // 2. Gráfico de Tendência
-        const trendMeanDev = calculateMeanDeviation(chartData.trends);
-        
-        const trendCtx = document.getElementById('atsmomTrendChart').getContext('2d');
-        new Chart(trendCtx, {
-          type: 'line',
-          data: {
-            labels: chartData.labels,
-            datasets: [
-              {
-                label: `Tendência ${analysis.symbol}`,
-                data: chartData.trends,
-                borderColor: '#00FFAA',
-                backgroundColor: 'rgba(0, 255, 170, 0.1)',
-                borderWidth: 2,
-                fill: true,
-                tension: 0.1
-              },
-              {
-                label: 'Tendência IBOV',
-                data: chartData.ibov_trends,
-                borderColor: '#ffffff',
-                backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                borderWidth: 2,
-                fill: false,
-                tension: 0.1,
-                borderDash: [3, 3]
-              },
-              {
-                label: `+${trendMeanDev.toFixed(3)}`,
-                data: new Array(chartData.labels.length).fill(trendMeanDev),
-                borderColor: 'rgba(128, 128, 128, 0.8)',
-                backgroundColor: 'transparent',
-                borderWidth: 1,
-                borderDash: [2, 2],
-                fill: false,
-                pointRadius: 0,
-                tension: 0
-              },
-              {
-                label: `-${trendMeanDev.toFixed(3)}`,
-                data: new Array(chartData.labels.length).fill(-trendMeanDev),
-                borderColor: 'rgba(128, 128, 128, 0.8)',
-                backgroundColor: 'transparent',
-                borderWidth: 1,
-                borderDash: [2, 2],
-                fill: false,
-                pointRadius: 0,
-                tension: 0
-              }
-            ]
-          },
-          options: {
-            ...baseChartConfig,
-            scales: {
-              ...baseChartConfig.scales,
-              y: {
-                ...baseChartConfig.scales.y,
-                ticks: {
-                  color: '#ffffff',
-                  font: { size: 11 },
-                  callback: function(value) {
-                    return value.toFixed(3);
-                  }
-                }
-              }
-            }
-          }
-        });
-        
-        // 3. Gráfico de Sinais
-        const signalCtx = document.getElementById('atsmomSignalChart').getContext('2d');
-        new Chart(signalCtx, {
-          type: 'line',
-          data: {
-            labels: chartData.labels,
-            datasets: [
-              {
-                label: `Sinal ${analysis.symbol}`,
-                data: chartData.signals,
-                borderColor: '#00FFAA',
-                backgroundColor: 'rgba(0, 255, 170, 0.1)',
-                borderWidth: 2,
-                fill: true,
-                tension: 0.1
-              },
-              {
-                label: 'Sinal IBOV',
-                data: chartData.ibov_signals,
-                borderColor: '#ffffff',
-                backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                borderWidth: 1,
-                fill: false,
-                tension: 0.1,
-                borderDash: [2, 2]
-              },
-              {
-                label: 'Zero',
-                data: new Array(chartData.labels.length).fill(0),
-                borderColor: 'rgba(255, 255, 255, 0.5)',
-                backgroundColor: 'transparent',
-                borderWidth: 1,
-                borderDash: [5, 5],
-                fill: false,
-                pointRadius: 0,
-                tension: 0
-              }
-            ]
-          },
-          options: {
-            ...baseChartConfig,
-            scales: {
-              ...baseChartConfig.scales,
-              y: {
-                ...baseChartConfig.scales.y,
-                ticks: {
-                  color: '#ffffff',
-                  font: { size: 11 },
-                  callback: function(value) {
-                    return value.toFixed(2);
-                  }
-                }
-              }
-            }
-          }
-        });
-
-        console.log(' Gráfico de Sinal ATSMOM criado com sucesso');
-        
-      } catch (error) {
-        console.error(' Erro ao criar gráficos ATSMOM:', error);
-        document.getElementById('plotly-chart').innerHTML = `
-          <div style="color: white; text-align: center; padding: 50px;">
-            <i class="fas fa-exclamation-triangle" style="font-size: 48px; color: #ef4444; margin-bottom: 20px;"></i>
-            <h3>Erro ao carregar gráficos</h3>
-            <p>Erro: ${error.message}</p>
-            <p class="text-sm text-gray-400 mt-4">Verifique os dados do backend ou tente novamente.</p>
-          </div>
-        `;
-      }
-    }
-
-    // Função para calcular desvio médio
-    function calculateMeanDeviation(data) {
-      if (!data || data.length === 0) return 0.001;
-      
-      const last252 = data.slice(-252); // Últimos 252 pontos
-      const absValues = last252.map(x => Math.abs(x));
-      const mean = absValues.reduce((sum, val) => sum + val, 0) / absValues.length;
-      
-      return isNaN(mean) || mean === 0 ? 0.001 : mean;
-    }
-
-    // Função para gerar dados de exemplo caso não haja dados reais
-    function generateExampleData(analysis) {
-      console.warn('Gerando dados de exemplo - backend não retornou dados suficientes');
-      
-      const numPoints = 60;
-      const dates = [];
-      const prices = [];
-      const signals = [];
-      const trends = [];
-      const ibov_signals = [];
-      const ibov_trends = [];
-      
-      const today = new Date();
-      let basePrice = analysis.current_price || 50;
-      
-      for (let i = numPoints; i >= 0; i--) {
-        const date = new Date(today);
-        date.setDate(date.getDate() - i);
-        dates.push(date.toLocaleDateString('pt-BR'));
-        
-        // Preço do ativo
-        const movement = Math.sin(i * 0.02) * 2 + (Math.random() - 0.5) * 1;
-        basePrice += movement * 0.3;
-        prices.push(Math.max(basePrice * 0.8, basePrice));
-        
-        // Sinal ATSMOM (-3 a +3)
-        const signal = Math.sin(i * 0.03) * 2.5 + (Math.random() - 0.5) * 1;
-        signals.push(Math.max(-3, Math.min(3, signal)));
-        
-        // Sinal IBOV
-        const ibovSignal = signal * 0.8 + (Math.random() - 0.5) * 0.5;
-        ibov_signals.push(Math.max(-3, Math.min(3, ibovSignal)));
-        
-        // Tendência
-        const trend = Math.sin(i * 0.025) * 1.8 + (Math.random() - 0.5) * 0.4;
-        trends.push(trend);
-        
-        // Tendência IBOV
-        const ibovTrend = trend * 0.7 + (Math.random() - 0.5) * 0.3;
-        ibov_trends.push(ibovTrend);
-      }
-      
-      // Definir valores atuais
-      prices[prices.length - 1] = analysis.current_price;
-      signals[signals.length - 1] = analysis.current_signal;
-      trends[trends.length - 1] = analysis.current_trend;
-      
-      return { 
-        labels: dates, 
-        prices, 
-        signals, 
-        trends, 
-        ibov_signals, 
-        ibov_trends 
-      };
-    }
-
-    // Comparar Ativos
-    async function compareAssets() {
-      const symbol1 = document.getElementById('compare-symbol1').value.trim().toUpperCase();
-      const symbol2 = document.getElementById('compare-symbol2').value.trim().toUpperCase();
-      const btn = document.getElementById('compareBtn');
-
-      if (!symbol1 || !symbol2) {
-        showStatus('Digite ambos os códigos das ações', 'error');
-        return;
-      }
-
-      if (symbol1 === symbol2) {
-        showStatus('Os ativos devem ser diferentes', 'error');
-        return;
-      }
-
-      setLoading(btn, true);
-      hideAllResults();
-      showStatus('Comparando ativos (5 anos)... Isso pode levar alguns segundos', 'info');
-
-      try {
-        const response = await fetch(`${API_BASE}/compare`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            symbol1: symbol1,
-            symbol2: symbol2
-          })
-        });
-
-        const data = await response.json();
-
-        if (data.success) {
-          displayComparisonResults(data);
-          showStatus('Comparação concluída com sucesso!', 'success');
-        } else {
-          showStatus(data.error || 'Erro na comparação', 'error');
-        }
-      } catch (error) {
-        showStatus('Erro ao executar comparação', 'error');
-        console.error(error);
-      }
-
-      setLoading(btn, false);
-    }
-
-    // Display Comparison Results
-    function displayComparisonResults(data) {
-      const comparison = data.comparison;
-      const summary = comparison.comparison_summary;
-      
-      const summaryHtml = `
-        <div class="bg-white bg-opacity-5 p-4 rounded-lg text-center">
-          <div class="text-lg font-bold text-purple-400">${summary.stronger_signal}</div>
-          <div class="text-sm text-gray-400">Sinal Mais Forte</div>
+  try {
+    const res  = await fetch(`${API_BASE}/compare`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ symbol1: s1, symbol2: s2 })
+    });
+    const data = await res.json();
+    if (data.success) {
+      const cmp = data.comparison;
+      const s   = cmp.comparison_summary;
+      document.getElementById('comparison-summary').innerHTML = `
+        <div class="bg-white/5 p-4 rounded-lg text-center">
+          <div class="text-lg font-bold text-purple-400">${s.stronger_signal}</div>
+          <div class="text-xs text-gray-400 mt-1">Sinal mais forte</div>
         </div>
-        <div class="bg-white bg-opacity-5 p-4 rounded-lg text-center">
-          <div class="text-lg font-bold text-orange-400">${summary.higher_volatility}</div>
-          <div class="text-sm text-gray-400">Maior Volatilidade</div>
+        <div class="bg-white/5 p-4 rounded-lg text-center">
+          <div class="text-lg font-bold text-orange-400">${s.higher_volatility}</div>
+          <div class="text-xs text-gray-400 mt-1">Maior volatilidade</div>
         </div>
-        <div class="bg-white bg-opacity-5 p-4 rounded-lg text-center">
-          <div class="text-lg font-bold text-blue-400">${summary.higher_beta}</div>
-          <div class="text-sm text-gray-400">Maior Beta</div>
+        <div class="bg-white/5 p-4 rounded-lg text-center">
+          <div class="text-lg font-bold text-blue-400">${s.higher_beta}</div>
+          <div class="text-xs text-gray-400 mt-1">Maior beta</div>
         </div>
       `;
-      
-      document.getElementById('comparison-summary').innerHTML = summaryHtml;
-      document.getElementById('compare-asset1').innerHTML = createAssetCard(comparison.symbol1);
-      document.getElementById('compare-asset2').innerHTML = createAssetCard(comparison.symbol2);
+      document.getElementById('compare-asset1').innerHTML = createAssetCard(cmp.symbol1);
+      document.getElementById('compare-asset2').innerHTML = createAssetCard(cmp.symbol2);
       document.getElementById('compare-results').classList.remove('hidden');
+      showStatus('Comparação concluída.', 'success');
+    } else {
+      showStatus(data.error || 'Erro na comparação.', 'error');
     }
+  } catch (e) {
+    showStatus('Erro de conexão com o servidor.', 'error');
+    console.error(e);
+  }
+  setLoading('compareBtn', false);
+}
 
-    function createAssetCard(assetData) {
-      const data = assetData.data;
-      return `
-        <h3 class="text-xl font-bold mb-4 text-center">${assetData.symbol}</h3>
-        <div class="space-y-3">
-          <div class="bg-white bg-opacity-5 p-3 rounded-lg flex justify-between">
-            <span class="text-gray-400">Preço:</span>
-            <span class="font-semibold">${formatCurrency(data.current_price)}</span>
-          </div>
-          <div class="bg-white bg-opacity-5 p-3 rounded-lg flex justify-between">
-            <span class="text-gray-400">Sinal:</span>
-            <span class="font-semibold ${getStatusColor(data.signal_status)}">${data.signal_status}</span>
-          </div>
-          <div class="bg-white bg-opacity-5 p-3 rounded-lg flex justify-between">
-            <span class="text-gray-400">Força:</span>
-            <span class="font-semibold">${data.current_signal.toFixed(4)}</span>
-          </div>
-          <div class="bg-white bg-opacity-5 p-3 rounded-lg flex justify-between">
-            <span class="text-gray-400">Tendência:</span>
-            <span class="font-semibold">${data.current_trend.toFixed(4)}</span>
-          </div>
-          <div class="bg-white bg-opacity-5 p-3 rounded-lg flex justify-between">
-            <span class="text-gray-400">Volatilidade:</span>
-            <span class="font-semibold">${data.current_volatility.toFixed(1)}%</span>
-          </div>
-          <div class="bg-white bg-opacity-5 p-3 rounded-lg flex justify-between">
-            <span class="text-gray-400">Beta:</span>
-            <span class="font-semibold">${data.beta}</span>
-          </div>
-        </div>
-      `;
-    }
+// ── KEYBOARD ─────────────────────────────────────────
+document.getElementById('individual-symbol').addEventListener('keydown', e => { if (e.key==='Enter') analyzeIndividual(); });
+document.getElementById('compare-symbol1').addEventListener('keydown',  e => { if (e.key==='Enter') compareAssets(); });
+document.getElementById('compare-symbol2').addEventListener('keydown',  e => { if (e.key==='Enter') compareAssets(); });
 
-    // Event Listeners
-    document.getElementById('analyzeIndividualBtn').addEventListener('click', analyzeIndividual);
-    document.getElementById('compareBtn').addEventListener('click', compareAssets);
-
-    document.getElementById('individual-symbol').addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') analyzeIndividual();
-    });
-
-    document.getElementById('compare-symbol1').addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') compareAssets();
-    });
-
-    document.getElementById('compare-symbol2').addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') compareAssets();
-    });
-
-    // Health Check
-    async function checkHealth() {
-      try {
-        const response = await fetch(`${API_BASE}/health`);
-        const data = await response.json();
-        
-        if (data.status === 'OK') {
-          console.log(' Serviço ATSMOM funcionando:', data.message);
-        } else {
-          console.warn(' Serviço com problemas:', data.message);
-        }
-      } catch (error) {
-        console.error(' Erro ao verificar saúde do serviço:', error);
-      }
-    }
-
-    // Initialize
-    document.addEventListener('DOMContentLoaded', function() {
-      checkHealth();
-      showStatus('ATSMOM Analytics carregado! Análise revolucionária com IA e dados de 5 anos.', 'info');
-    });
-  </script>
+// ── HEALTH CHECK ─────────────────────────────────────
+(async () => {
+  try {
+    const r = await fetch(`${API_BASE}/health`);
+    const d = await r.json();
+    if (d.status !== 'OK') console.warn('ATSMOM API:', d.message);
+  } catch { console.warn('ATSMOM API offline'); }
+})();
+</script>
 </body>
 </html>
-     

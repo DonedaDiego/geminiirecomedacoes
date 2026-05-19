@@ -97,8 +97,8 @@ class BetaRegressionService:
             if len(df_clean) < 50:
                 raise Exception("Dados insuficientes para regressão")
             
-            window = 30
-            period = 45  
+            window = 21
+            period = 21  
             
             print(f"Executando regressão móvel com janela de {window} períodos")
             
@@ -113,10 +113,18 @@ class BetaRegressionService:
             df["Beta0"] = np.nan
             df.loc[df_clean.index, "Beta0"] = reg.params["const"]
             
-            # Normalização EXATA como no MetaTrader
-            df["Beta0_Norm"] = (df["Beta0"]
-                .rolling(45).mean()
-                .rolling(45).apply(lambda x: np.mean(x < x.iloc[-1]) if len(x) > 0 else 0.5))
+            
+            beta0_ma = df["Beta0"].rolling(21).mean()
+
+            
+            def rolling_percentile(x):
+                if len(x) < 2:
+                    return 0.5
+                return float(np.mean(x[:-1] < x[-1]))
+
+            df["Beta0_Norm"] = beta0_ma.rolling(21, min_periods=21).apply(
+                rolling_percentile, raw=True
+)
             
             # Beta0_g = valor defasado (como no MetaTrader)
             df["Beta0_g"] = df["Beta0_Norm"].shift(1)
@@ -126,7 +134,9 @@ class BetaRegressionService:
             df["MM_Pos"] = np.where(df["Adj Close"] > df["MM"], 1, 0)
             
             # ===== PREENCHER VALORES INICIAIS (MÉTODO MODERNO) =====
-            df["Beta0"] = df["Beta0"].bfill().ffill()
+            df["Beta0"] = df["Beta0"].ffill()  
+            df.loc[df["Beta0"].isna(), "trading"] = 0
+
             df["Beta0_Norm"] = df["Beta0_Norm"].fillna(0.5)
             df["Beta0_g"] = df["Beta0_g"].fillna(0.5)
             
@@ -146,10 +156,6 @@ class BetaRegressionService:
         """Calcula sinais de trading EXATAMENTE como no MetaTrader"""
         try:
             df = df.copy()
-
-            # ── CORREÇÃO DE LAG ──────────────────────────────────────────────
-            # Sinais usam shift(1) para evitar look-ahead:
-            # o indicador do candle N só gera sinal no candle N+1 (execução real)
             Beta0_Norm_lag = df["Beta0_Norm"].shift(1)
             MM_Pos_lag     = df["MM_Pos"].shift(1)
             # ────────────────────────────────────────────────────────────────
@@ -165,13 +171,19 @@ class BetaRegressionService:
                              np.where(df["trading"] == -1, -df["Returns"], 0))
             
             # Stop loss fixo em -5% (como no MetaTrader)
-            df["Trading"] = np.where(df["Trading"] < -0.05, -0.05, df["Trading"])
+            atr = (df['high'] - df['low']).rolling(14).mean()
+            atr_pct = (atr / df['close']).rolling(14).mean()
+            dynamic_stop = -(atr_pct * 1.5).clip(0.02, 0.08)  # entre 2% e 8%
+            df["Trading"] = df.apply(
+                lambda row: max(row["Trading"], dynamic_stop.loc[row.name])
+                if row["trading"] != 0 else row["Trading"], axis=1
+            )
             
             # Retornos acumulados (antes das taxas)
             df["Acc_Returns"] = df["Trading"].cumsum()
             
-            # Volume financeiro e taxas (como no MetaTrader)
-            df["Volume"] = df["close"] * 100  # Lote de 100 ações
+            capital_por_trade = 10_000
+            df["Volume"] = capital_por_trade
             df["Fees"] = df["Volume"].apply(self.calculate_fees)
             df["Trading_Fees"] = np.where(df["trading"] != 0, df["Volume"] * df["Fees"], 0)
             
@@ -200,13 +212,11 @@ class BetaRegressionService:
             drawdown_af = (rolling_max_af - df["Acc_Returns_After_Fees"])
             max_drawdown = drawdown_af.max() * 100
             
-            # Métricas adicionais - CORRIGIDO
-            avg_return = df["Trading_After_Fees"].mean()  # Mantém em decimal
-            volatility = df["Trading_After_Fees"].std()    # Mantém em decimal
-            
-            # Sharpe Ratio anualizado (assumindo ~252 dias de trading)
+            trades_only = df[df["trading"] != 0]["Trading_After_Fees"]
+            avg_return  = trades_only.mean()
+            volatility  = trades_only.std()
             sharpe_ratio = (avg_return / volatility * np.sqrt(252)) if volatility != 0 else 0
-            
+                        
             # Converte para % apenas para exibição
             avg_return_pct = avg_return * 100
             volatility_pct = volatility * 100 * np.sqrt(252)  # anualizada
