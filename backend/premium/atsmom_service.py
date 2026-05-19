@@ -53,51 +53,60 @@ class ATSMOMService:
         return beta
 
     def calculate_atsmom(self, data, min_lookback=20, max_lookback=260,
-                        vol_window=60, max_leverage=3):
+                     vol_window=60, max_leverage=3):
 
-        # Retornos diários
         returns = data['close'].pct_change()
         returns = returns.fillna(0)
 
-        # Volatilidade EWMA anualizada
         volatility = returns.ewm(span=vol_window, min_periods=vol_window//2).std() * np.sqrt(252)
 
-        # M1 — vol_target adaptativo pelo histórico do próprio ativo
+        # M1 — vol_target adaptativo
         hist_vol = volatility.rolling(252, min_periods=60).mean().iloc[-1]
         hist_vol = hist_vol if not np.isnan(hist_vol) else 0.40
         vol_target = float(np.clip(hist_vol, 0.25, 0.60))
 
-        # Ensemble de momentum multi-lookback
-        signals = []
-        weights = np.linspace(1.5, 1.0, max_lookback - min_lookback + 1)
+        # Guard — adapta max_lookback ao tamanho real dos dados
+        n_candles = len(data)
+        effective_max_lookback = min(max_lookback, n_candles - 1)
+        effective_min_lookback = min(min_lookback, effective_max_lookback - 1)
 
-        for lookback, weight in zip(range(min_lookback, max_lookback + 1), weights):
+        if effective_max_lookback <= effective_min_lookback:
+            # Dados insuficientes para qualquer lookback — retorna zeros
+            zero = pd.Series(0.0, index=data.index)
+            return zero, zero, volatility.fillna(0), returns
+
+        signals = []
+        weights = np.linspace(1.5, 1.0, effective_max_lookback - effective_min_lookback + 1)
+
+        for lookback, weight in zip(range(effective_min_lookback, effective_max_lookback + 1), weights):
             period_return = data['close'].pct_change(lookback)
             vol_adj_return = period_return / (returns.rolling(lookback).std() * np.sqrt(lookback))
             signal = np.sign(vol_adj_return) * weight
-            signals.append(signal)
+            # Garante mesmo índice antes de empilhar
+            signals.append(signal.reindex(data.index))
 
         combined_signal = pd.concat(signals, axis=1).mean(axis=1)
-        combined_signal = combined_signal / combined_signal.abs().max()
 
-        # Sizing pelo vol-target — única penalização de vol (M3)
+        # Evita divisão por zero se abs().max() == 0
+        max_abs = combined_signal.abs().max()
+        if max_abs > 0:
+            combined_signal = combined_signal / max_abs
+
         position_size = (vol_target / np.sqrt(252)) / volatility
         position_size = position_size.clip(-max_leverage, max_leverage)
 
         final_signal = combined_signal * position_size
 
-        # M2 — filtro MA200 com transição suave via tanh
-        long_ma = data['close'].rolling(window=200).mean()
+        # M2 — filtro MA200 suave
+        long_ma = data['close'].rolling(window=200, min_periods=1).mean()
         dist_from_ma = (data['close'] - long_ma) / long_ma
         trend_filter = np.tanh(dist_from_ma * 10)
         trend_filter = trend_filter.fillna(0)
 
         final_signal = final_signal * trend_filter
 
-        # M5 — suavização com span coerente ao horizonte do modelo
+        # M5 — suavização span 15
         final_signal = final_signal.ewm(span=15).mean()
-
-        # M3 — vol_scale removido (position_size já escala por volatilidade)
 
         final_signal = final_signal.fillna(0)
         combined_signal = combined_signal.fillna(0)
@@ -113,13 +122,19 @@ class ATSMOMService:
         data = self.get_data(symbol)
         ibov_data = self.get_data('IBOV')
         
-        if data is None or ibov_data is None:
+        # Alinha os dois DataFrames pelo índice comum — resolve dessincronias de feriados
+        common_index = data.index.intersection(ibov_data.index)
+        data = data.loc[common_index]
+        ibov_data = ibov_data.loc[common_index]
+
+        if len(data) < 30:
             return {
                 'success': False,
-                'error': f"Erro ao obter dados para {symbol} ou IBOV"
+                'error': f"{symbol} tem dados insuficientes ({len(data)} candles após alinhamento)"
             }
-        
-        print(f"Dados obtidos com sucesso! Período: {data.index[0].strftime('%Y-%m-%d')} a {data.index[-1].strftime('%Y-%m-%d')}")
+
+        print(f"Dados obtidos! Período: {data.index[0].strftime('%Y-%m-%d')} a {data.index[-1].strftime('%Y-%m-%d')} ({len(data)} candles)")
+
         
         # ATSMOM - mantém análise original
         final_signal, trend_strength, vol, returns = self.calculate_atsmom(data)
