@@ -150,13 +150,13 @@ class ATSMOMService:
         beta = self.calculate_beta(returns, ibov_returns)
         
         # Determina status do sinal (SEM limitadores artificiais)
-        if current_signal > 0.3:
+        if current_trend > 0.3:
             signal_status = "COMPRA"
-        elif current_signal > 0.1:
+        elif current_trend > 0.1:
             signal_status = "VIÉS COMPRA"
-        elif current_signal < -0.3:
+        elif current_trend < -0.3:
             signal_status = "VENDA"
-        elif current_signal < -0.1:
+        elif current_trend < -0.1:
             signal_status = "VIÉS VENDA"
         else:
             signal_status = "NEUTRO"
@@ -208,7 +208,7 @@ class ATSMOMService:
         """Lista símbolos disponíveis"""
         return [
             'PETR4', 'VALE3', 'ITUB4', 'BBDC4', 'ABEV3',
-            'MGLU3', 'WEGE3', 'RENT3', 'LREN3', 'JBSS3',
+            'MGLU3', 'WEGE3', 'RENT3', 'LREN3', 
             'B3SA3', 'SUZB3', 'RAIL3', 'USIM5', 'CSNA3',
             'GOAU4', 'EMBJ3', 'CIEL3', 'JHSF3', 'TOTS3'
         ]

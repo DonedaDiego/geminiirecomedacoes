@@ -431,11 +431,11 @@ window.toggleInfo = toggleInfo;
 
 // ── SIGNAL STATE ─────────────────────────────────────
 function getSignalState(sig, trnd) {
-  if (sig > 0.3 && trnd > 0)  return { color:'#00e87a', border:'rgba(0,232,122,0.3)',   bg:'rgba(0,232,122,0.06)',   icon:'↑', label:'COMPRA',     title:'Tendência de alta confirmada' };
-  if (sig > 0.1)               return { color:'#afffcc', border:'rgba(175,255,204,0.25)',bg:'rgba(175,255,204,0.04)', icon:'↗', label:'VIÉS ALTA',  title:'Momentum positivo moderado' };
-  if (sig < -0.3 && trnd < 0) return { color:'#ff3b5c', border:'rgba(255,59,92,0.3)',   bg:'rgba(255,59,92,0.06)',   icon:'↓', label:'VENDA',      title:'Tendência de baixa confirmada' };
-  if (sig < -0.1)              return { color:'#ffaaaa', border:'rgba(255,170,170,0.25)',bg:'rgba(255,170,170,0.04)',icon:'↘', label:'VIÉS BAIXA', title:'Momentum negativo moderado' };
-  return                         { color:'#94a3b8', border:'rgba(148,163,184,0.2)', bg:'rgba(148,163,184,0.04)', icon:'→', label:'NEUTRO',     title:'Momentum indefinido' };
+  if (trnd > 0.3)  return { color:'#00e87a', border:'rgba(0,232,122,0.3)',   bg:'rgba(0,232,122,0.06)',   icon:'↑', label:'COMPRA',     title:'Tendência de alta confirmada' };
+  if (trnd > 0.1)  return { color:'#afffcc', border:'rgba(175,255,204,0.25)',bg:'rgba(175,255,204,0.04)', icon:'↗', label:'VIÉS ALTA',  title:'Momentum positivo moderado' };
+  if (trnd < -0.3) return { color:'#ff3b5c', border:'rgba(255,59,92,0.3)',   bg:'rgba(255,59,92,0.06)',   icon:'↓', label:'VENDA',      title:'Tendência de baixa confirmada' };
+  if (trnd < -0.1) return { color:'#ffaaaa', border:'rgba(255,170,170,0.25)',bg:'rgba(255,170,170,0.04)',icon:'↘', label:'VIÉS BAIXA', title:'Momentum negativo moderado' };
+  return             { color:'#94a3b8', border:'rgba(148,163,184,0.2)', bg:'rgba(148,163,184,0.04)', icon:'→', label:'NEUTRO',     title:'Momentum indefinido' };
 }
 
 // ── MÉTRICAS ─────────────────────────────────────────
