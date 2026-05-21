@@ -5,821 +5,659 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Análise Histórica GEX - Geminii Tech</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
   <script>
     tailwind.config = {
       theme: {
         extend: {
-          colors: {
-            dark: '#000000',
-            light: '#ffffff',
-            subtle: 'rgba(255,255,255,0.1)',
-            geminii: '#fb1ebb'
-          },
-          fontFamily: {
-            sans: ['Inter', 'sans-serif']
-          }
+          colors: { dark:'#030303', geminii:'#fb1ebb' },
+          fontFamily: { sans:['Inter','sans-serif'] }
         }
       }
     }
   </script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  
   <style>
-    body { 
-      font-family: 'Inter', sans-serif; 
-      background: linear-gradient(135deg, #0c0c0c 0%, #1a1a1a 100%);
-      min-height: 100vh;
-    }
-    
-    .gex-card {
-      background: rgba(255, 255, 255, 0.08);
-      backdrop-filter: blur(20px);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      border-radius: 16px;
-      transition: all 0.3s ease;
-    }
-    
-    .gex-card:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 20px 40px rgba(186, 57, 175, 0.15);
-      border-color: rgba(186, 57, 175, 0.3);
-    }
-    
-    .spinner {
-      border: 2px solid rgba(255, 255, 255, 0.1);
-      border-radius: 50%;
-      border-top: 2px solid #fb1ebb;
-      width: 20px;
-      height: 20px;
-      animation: spin 1s linear infinite;
-      display: inline-block;
-    }
-    
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-
-    .chart-container {
-      width: 100%;
-      height: 1200px;
-      background: transparent;
-      border-radius: 12px;
-      padding: 20px;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      position: relative;
-    }
-
-    .metric-card {
-      background: rgba(255, 255, 255, 0.05);
-      border-radius: 12px;
-      padding: 20px;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      transition: all 0.3s ease;
-    }
-
-    .metric-card:hover {
-      background: rgba(255, 255, 255, 0.08);
-      border-color: rgba(186, 57, 175, 0.3);
-    }
-
-    .loading {
-      opacity: 0.6;
-      pointer-events: none;
-    }
-
-    .timeline-dot {
-      width: 12px;
-      height: 12px;
-      border-radius: 50%;
-      transition: all 0.3s;
-      cursor: pointer;
-    }
-    
-    .timeline-dot:hover {
-      transform: scale(1.2);
-    }
-    
-    .timeline-dot.active {
-      width: 16px;
-      height: 16px;
-      box-shadow: 0 0 20px rgba(59, 130, 246, 0.8);
-    }
-
-    .insight-card {
-      background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
-      border: 1px solid rgba(59, 130, 246, 0.2);
-      transition: all 0.3s;
-      border-radius: 12px;
-    }
-    
-    .insight-card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 12px 40px rgba(59, 130, 246, 0.3);
-    }
-
-    .regime-badge {
-      padding: 6px 16px;
-      border-radius: 20px;
-      font-weight: 600;
-      font-size: 14px;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-    }
-    
-    .regime-long {
-      background: rgba(34, 197, 94, 0.2);
-      color: #22c55e;
-      border: 1px solid rgba(34, 197, 94, 0.3);
-    }
-    
-    .regime-short {
-      background: rgba(239, 68, 68, 0.2);
-      color: #ef4444;
-      border: 1px solid rgba(239, 68, 68, 0.3);
-    }
-
-    .strike-impact {
-      background: linear-gradient(90deg, transparent 0%, rgba(59, 130, 246, 0.1) 100%);
-      border-left: 3px solid #3b82f6;
-      padding: 12px;
-      margin: 8px 0;
-      border-radius: 8px;
-      transition: all 0.3s;
-    }
-    
-    .strike-impact:hover {
-      background: linear-gradient(90deg, transparent 0%, rgba(59, 130, 246, 0.2) 100%);
-      transform: translateX(4px);
-    }
-
+    body { font-family:'Inter',sans-serif; background:radial-gradient(circle at 50% 0%,#0d0614 0%,#030305 70%); min-height:100vh; color:#f4f4f5; overflow-x:hidden; }
+    .gex-card { background:rgba(10,10,16,.6); backdrop-filter:blur(16px) saturate(180%); -webkit-backdrop-filter:blur(16px) saturate(180%); border:1px solid rgba(255,255,255,.05); border-radius:16px; box-shadow:0 8px 32px rgba(0,0,0,.37); }
+    .pill-group { display:flex; gap:4px; background:rgba(255,255,255,.03); padding:4px; border-radius:12px; border:1px solid rgba(255,255,255,.05); }
+    .pill { padding:8px 16px; border-radius:8px; font-size:11px; font-weight:700; letter-spacing:.05em; cursor:pointer; border:none; background:transparent; color:#71717a; transition:all .3s; text-transform:uppercase; }
+    .pill:hover { color:#f4f4f5; background:rgba(255,255,255,.02); }
+    .pill.active { background:linear-gradient(135deg,#fb1ebb,#a855f7); color:#fff; box-shadow:0 4px 20px rgba(251,30,187,.4); }
+    .pill.active-neutral { background:rgba(255,255,255,.1); color:#fff; }
+    .date-pill { padding:6px 14px; border-radius:8px; font-size:11px; font-weight:700; letter-spacing:.04em; cursor:pointer; border:1px solid rgba(255,255,255,.08); background:transparent; color:#71717a; transition:all .2s; text-transform:uppercase; font-family:monospace; }
+    .date-pill:hover { color:#f4f4f5; border-color:rgba(251,30,187,.3); }
+    .date-pill.active { background:rgba(251,30,187,.12); border-color:rgba(251,30,187,.5); color:#fb1ebb; box-shadow:0 0 12px rgba(251,30,187,.15); }
+    #tickerInput { background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.08); color:#fff; border-radius:12px; padding:12px 18px; font-size:15px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; outline:none; width:150px; transition:all .25s; }
+    #tickerInput:focus { border-color:#fb1ebb; background:rgba(251,30,187,.03); box-shadow:0 0 25px rgba(251,30,187,.2); }
+    #tickerInput::placeholder { color:#4b5563; font-weight:500; }
+    #expirationSelect,#daysSelect { background:rgba(10,10,16,.9); border:1px solid rgba(255,255,255,.08); color:#e4e4e7; border-radius:12px; padding:12px 18px; font-size:13px; font-weight:600; outline:none; cursor:pointer; transition:all .25s; }
+    #expirationSelect:focus,#daysSelect:focus { border-color:#fb1ebb; }
+    #expirationSelect option,#daysSelect option { background:#0a0a10; color:#e4e4e7; }
+    .btn-run { background:linear-gradient(135deg,#fb1ebb,#ff007a); border:none; border-radius:12px; padding:12px 28px; font-size:13px; font-weight:800; color:#fff; cursor:pointer; text-transform:uppercase; letter-spacing:.06em; position:relative; overflow:hidden; transition:all .3s; box-shadow:0 4px 24px rgba(251,30,187,.4); }
+    .btn-run:hover { transform:translateY(-2px); box-shadow:0 6px 30px rgba(251,30,187,.6); }
+    .btn-run::after { content:''; position:absolute; top:-50%; left:-60%; width:30%; height:200%; background:linear-gradient(to right,rgba(255,255,255,0),rgba(255,255,255,.3),rgba(255,255,255,0)); transform:rotate(25deg); animation:sheen 4s infinite linear; }
+    @keyframes sheen { 0%{left:-60%} 15%{left:140%} 100%{left:140%} }
+    .btn-run:disabled { opacity:.4; cursor:not-allowed; transform:none; }
+    .btn-secondary { background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.08); border-radius:12px; padding:12px 20px; font-size:13px; font-weight:600; color:#d4d4d8; cursor:pointer; transition:all .2s; }
+    .btn-secondary:hover { background:rgba(255,255,255,.08); color:#fff; border-color:rgba(255,255,255,.2); }
+    .regime-badge { display:inline-flex; align-items:center; gap:8px; padding:8px 16px; border-radius:8px; font-size:11px; font-weight:900; text-transform:uppercase; letter-spacing:.08em; }
+    .regime-long  { background:rgba(0,242,254,.08); border:1px solid rgba(0,242,254,.3); color:#00f2fe; }
+    .regime-short { background:rgba(255,8,68,.08);  border:1px solid rgba(255,8,68,.3);  color:#ff0844; }
+    .stat-card { background:rgba(20,20,30,.4); border:1px solid rgba(255,255,255,.03); border-radius:12px; padding:16px; position:relative; }
+    .stat-card::before { content:''; position:absolute; top:0; left:0; width:100%; height:100%; border-radius:12px; pointer-events:none; box-shadow:inset 0 1px 0 rgba(255,255,255,.05); }
+    .stat-label { font-size:10px; font-weight:700; letter-spacing:.1em; color:#52525b; text-transform:uppercase; margin-bottom:8px; }
+    .stat-value { font-size:22px; font-weight:800; color:#fff; letter-spacing:-.03em; }
+    .stat-sub   { font-size:11px; color:#a1a1aa; margin-top:4px; font-weight:500; font-family:monospace; }
+    /* insight expandable */
+    .insight-block { background:rgba(255,255,255,.015); border:1px solid rgba(255,255,255,.04); border-radius:12px; overflow:hidden; }
+    .insight-header { padding:14px 16px; cursor:pointer; display:flex; align-items:center; justify-content:space-between; transition:background .2s; }
+    .insight-header:hover { background:rgba(255,255,255,.02); }
+    .insight-body { max-height:0; overflow:hidden; transition:max-height .3s cubic-bezier(.4,0,.2,1); }
+    .insight-body.open { max-height:600px; }
+    .strike-impact { background:rgba(255,255,255,.02); border-left:2px solid #3b82f6; padding:10px 12px; border-radius:6px; }
+    .glow-orb { position:absolute; width:400px; height:400px; background:radial-gradient(circle,rgba(251,30,187,.06),transparent 70%); top:-150px; left:50%; transform:translateX(-50%); z-index:0; pointer-events:none; }
+    .spinner { border:2px solid rgba(255,255,255,.1); border-top:2px solid #fff; border-radius:50%; width:16px; height:16px; animation:spin .8s linear infinite; display:inline-block; }
+    @keyframes spin { to{transform:rotate(360deg)} }
+    .dot { width:6px; height:6px; border-radius:50%; display:inline-block; margin-right:8px; }
+    .expander-header { cursor:pointer; transition:background .2s; }
+    .expander-header:hover { background:rgba(255,255,255,.02); }
+    .expander-content { max-height:0; overflow:hidden; transition:max-height .3s cubic-bezier(.4,0,.2,1); }
+    .expander-content.open { max-height:500px; }
+    .expander-icon { transition:transform .3s; }
+    .expander-icon.rotate { transform:rotate(180deg); color:#fb1ebb; }
   </style>
 </head>
+<body class="antialiased">
+<div class="glow-orb"></div>
 
-<body class="text-white">
-  
-  <!-- Navbar -->
-  <nav class="fixed top-6 left-1/2 transform -translate-x-1/2 z-50 bg-opacity-5 border-opacity-10 bg-white border-white border rounded-full px-4 py-3 shadow-xl backdrop-blur-md">
-    <div class="flex items-center justify-between">
-      <div class="flex items-center">
-        <a href="/dashboard.html">
-          <img src="logo.png" alt="Geminii Logo" class="w-6 h-6 cursor-pointer">
-        </a>
-      </div>
-      <div class="hidden md:flex items-center space-x-6 text-xs text-gray-300 ml-8">
-        <a href="gamma-levels.html" class="hover:text-white transition-colors">Gamma Exposure</a>
-        <span class="text-white font-medium">Análise Histórica</span>
-        <a href="delta-levels.html" class="hover:text-white transition-colors">Delta Exposure</a>
-        <a href="vega-levels.html" class="hover:text-white transition-colors">Vega Exposure</a>
-        <a href="theta-levels.html" class="hover:text-white transition-colors">Theta Exposure</a>
-      </div>
-      <div class="flex items-center space-x-3 ml-8">
-        <div class="w-8 h-8 bg-purple-500 bg-opacity-10 border border-purple-500 border-opacity-30 rounded-full flex items-center justify-center relative">
-          <i class="fas fa-history text-purple-500 text-xs"></i>
-          <div class="absolute -top-1 -right-1 w-2 h-2 bg-purple-500 rounded-full animate-pulse"></div>
-        </div>
+<!-- Navbar -->
+<nav class="fixed top-0 left-0 w-full z-50 bg-[#030305]/60 backdrop-blur-xl border-b border-white/[0.04] px-8 py-4">
+  <div class="max-w-screen-2xl mx-auto flex items-center justify-between">
+    <div class="flex items-center space-x-12">
+      <a href="/dashboard.html" class="flex items-center gap-3 group">
+        <img src="logo.png" alt="Geminii" class="w-6 h-6">
+        <span class="text-sm font-black tracking-widest text-white group-hover:text-geminii transition-colors">GEMINII<span class="text-geminii"> TECH</span></span>
+      </a>
+      <div class="hidden lg:flex items-center space-x-8 text-xs font-bold uppercase tracking-wider text-gray-400">
+        <a href="gamma-levels.html"     class="hover:text-white transition-colors pb-5 pt-1">Gamma Exposure</a>
+        <a href="delta-levels.html"     class="hover:text-white transition-colors pb-5 pt-1">Delta Exposure</a>
+        <a href="vega-levels.html"      class="hover:text-white transition-colors pb-5 pt-1">Vega Exposure</a>
+        <a href="theta-levels.html"     class="hover:text-white transition-colors pb-5 pt-1">Theta Exposure</a>
+        <span class="text-white border-b-2 border-geminii pb-5 pt-1">Análise Histórica</span>
       </div>
     </div>
-  </nav>
+  </div>
+</nav>
 
-  <!-- Content -->
-  <div class="pt-32 pb-16">
-    <div class="max-w-7xl mx-auto px-6">
-      
-      <!-- Header -->
-      <div class="text-center mb-12">
-        <h1 class="text-4xl md:text-5xl font-bold mb-4">
-          <span style="color: #fb1ebb; font-weight: 900;">Market Maker</span>
-          <span class="text-white font-light">Histórico GEX</span>
-        </h1>
-        <p class="text-neutral-300 text-lg max-w-3xl mx-auto">
-          Acompanhe a evolução do Gamma Exposure nos últimos 5 dias úteis, destacando quais strikes vêm ganhando ou perdendo relevância ao longo do tempo.
-         Identifique os pontos de virada e entenda como as posições de mercado estão se ajustando dentro do regime atual.  
-        </p>
+<div class="pt-28 pb-16 max-w-screen-2xl mx-auto px-6 relative z-10">
+
+  <!-- Expander -->
+  <div class="gex-card mb-6 overflow-hidden">
+    <div id="histExpanderHeader" class="expander-header p-4 flex items-center justify-between text-xs font-bold uppercase tracking-wider text-gray-300">
+      <div class="flex items-center gap-2.5">
+        <i class="fas fa-circle-info text-geminii text-sm"></i>
+        <span>O que é a Análise Histórica GEX e como interpretar?</span>
       </div>
-
-      <!-- Controles de Análise -->
-      <div class="gex-card p-6 mb-8">
-        <div class="flex flex-col md:flex-row gap-4 items-center justify-center">
-          <input 
-            id="tickerInput" 
-            type="text" 
-            placeholder="Digite o código da ação (ex: PETR4)" 
-            class="px-4 py-2 bg-white bg-opacity-10 border border-white border-opacity-20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-geminii backdrop-blur-sm uppercase"
-          >
-          <button 
-            id="analyzeBtn" 
-            class="px-6 py-2 bg-gradient-to-r from-geminii to-purple-600 hover:shadow-lg rounded-lg transition-all font-medium"
-          >
-            <i class="fas fa-history mr-2"></i>Analisar Histórico
-          </button>
-        </div>
-      </div>
-
-      <!-- Status -->
-      <div id="statusMsg" class="mb-6 p-4 rounded-lg hidden backdrop-blur-sm"></div>
-
-      <!-- Loading State -->
-      <div id="loadingState" class="hidden gex-card p-12 text-center mb-8">
-        <div class="spinner mx-auto mb-4" style="width: 40px; height: 40px; border-width: 3px;"></div>
-        <p class="text-xl font-semibold" style="color: #fb1ebb;">Processando análise histórica...</p>
-        <p class="text-sm text-gray-400 mt-2">Buscando dados um momento por favor</p>
-      </div>
-
-      <!-- Insights Gerenciais -->
-      <div id="insightsSection" class="hidden mb-8">
-        <div class="gex-card p-6">
-          <h2 class="text-2xl font-bold mb-6 text-center">
-            <i class="fas fa-chart-bar mr-3" style="color: #fb1ebb;"></i>
-            Insights Gerenciais
-          </h2>
-
-          <!-- Período e Regime Atual -->
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <div class="metric-card text-center">
-              <div class="flex items-center justify-between mb-2">
-                <span class="text-sm text-gray-400">Período Analisado</span>
-                <i class="fas fa-calendar-alt" style="color: #fb1ebb;"></i>
-              </div>
-              <p class="text-2xl font-bold" id="periodText">-</p>
-              <p class="text-xs text-gray-500 mt-1" id="periodSubtext">-</p>
-            </div>
-
-            <div class="metric-card text-center">
-              <div class="flex items-center justify-between mb-2">
-                <span class="text-sm text-gray-400">Regime Atual</span>
-                <i class="fas fa-wave-square text-green-400"></i>
-              </div>
-              <div id="currentRegimeText" class="text-2xl font-bold">-</div>
-              <p class="text-xs text-gray-500 mt-1" id="regimeStabilityText">-</p>
-            </div>
-
-            <div class="metric-card text-center">
-              <div class="flex items-center justify-between mb-2">
-                <span class="text-sm text-gray-400">Variação no Período</span>
-                <i class="fas fa-chart-line text-cyan-400"></i>
-              </div>
-              <p class="text-2xl font-bold" id="periodVariationText">-</p>
-              <p class="text-xs text-gray-500 mt-1" id="periodVariationSubtext">-</p>
-            </div>
+      <i id="expanderIcon" class="fas fa-chevron-down expander-icon text-gray-500 text-xs mr-1"></i>
+    </div>
+    <div id="histExpanderContent" class="expander-content border-t border-white/[0.02]">
+      <div class="p-5 text-xs text-gray-400 leading-relaxed space-y-4">
+        <p>A <strong>Análise Histórica GEX</strong> visualiza como a estrutura de gamma exposure evoluiu nas últimas sessões, usando o spot price histórico correto de cada dia. Ideal para identificar mudanças estruturais de posicionamento institucional.</p>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+          <div class="p-4 bg-white/[0.02] border border-white/[0.04] rounded-xl">
+            <span class="font-bold text-[#fb1ebb] uppercase block mb-2">Evolução do Gamma Flip</span>
+            <p class="text-[11px]">Acompanha o deslocamento do ponto de inversão — se o flip sobe ou desce indica pressão estrutural direcional.</p>
           </div>
-
-          <!-- Movimento do Flip -->
-          <div id="flipMovementCard" class="hidden insight-card p-5 mb-6">
-            <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
-              <i class="fas fa-exchange-alt text-orange-400"></i>
-              Movimento do Gamma Flip
-            </h3>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <p class="text-xs text-gray-400 mb-1">Primeiro Flip</p>
-                <p class="text-xl font-bold text-blue-400" id="firstFlipText">-</p>
-                <p class="text-xs text-gray-500" id="firstFlipDate">-</p>
-              </div>
-              <div>
-                <p class="text-xs text-gray-400 mb-1">Último Flip</p>
-                <p class="text-xl font-bold text-purple-400" id="lastFlipText">-</p>
-                <p class="text-xs text-gray-500" id="lastFlipDate">-</p>
-              </div>
-              <div>
-                <p class="text-xs text-gray-400 mb-1">Variação</p>
-                <p class="text-xl font-bold" id="flipChangeText">-</p>
-                <p class="text-xs" id="flipDirectionText">-</p>
-              </div>
-            </div>
+          <div class="p-4 bg-white/[0.02] border border-white/[0.04] rounded-xl">
+            <span class="font-bold text-[#00f2fe] uppercase block mb-2">Mudanças de Regime</span>
+            <p class="text-[11px]">Detecta transições Long/Short Gamma — momentos de maior instabilidade e risco de aceleração de movimentos.</p>
           </div>
-
-          <!-- Tendência de GEX -->
-          <div class="insight-card p-5 mb-6">
-            <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
-              <i class="fas fa-chart-line text-cyan-400"></i>
-              Tendência de GEX Descoberto
-            </h3>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <p class="text-xs text-gray-400 mb-1">GEX Inicial</p>
-                <p class="text-xl font-bold" id="firstGexText">-</p>
-              </div>
-              <div>
-                <p class="text-xs text-gray-400 mb-1">GEX Final</p>
-                <p class="text-xl font-bold" id="lastGexText">-</p>
-              </div>
-              <div>
-                <p class="text-xs text-gray-400 mb-1">Mudança</p>
-                <p class="text-xl font-bold" id="gexChangeText">-</p>
-                <p class="text-xs mt-1" id="gexTrendText">-</p>
-              </div>
-            </div>
-          </div>
-
-          <!-- Strikes Mais Impactados -->
-          <div id="impactedStrikesCard" class="hidden insight-card p-5">
-            <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
-              <i class="fas fa-bullseye text-yellow-400"></i>
-              Top 5 Strikes Mais Impactados
-            </h3>
-            <div id="impactedStrikesList" class="space-y-2">
-              <!-- Preenchido dinamicamente -->
-            </div>
-          </div>
-
-          <!-- Mudanças de Regime -->
-          <div id="regimeChangesCard" class="hidden insight-card p-5 mt-6">
-            <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
-              <i class="fas fa-sync-alt text-red-400"></i>
-              Mudanças de Regime
-            </h3>
-            <div id="regimeChangesList" class="space-y-2">
-              <!-- Preenchido dinamicamente -->
-            </div>
+          <div class="p-4 bg-white/[0.02] border border-white/[0.04] rounded-xl">
+            <span class="font-bold text-[#f97316] uppercase block mb-2">Strikes Impactados</span>
+            <p class="text-[11px]">Identifica os níveis com maior variação de GEX Descoberto — onde houve abertura ou fechamento relevante de posições.</p>
           </div>
         </div>
       </div>
-
-      <!-- Timeline de Navegação -->
-      <div id="timelineSection" class="hidden gex-card p-6 mb-8">
-        <h2 class="text-2xl font-bold mb-6 text-center">
-          <i class="fas fa-calendar-week mr-3" style="color: #fb1ebb;"></i>
-          Linha do Tempo
-        </h2>
-        
-        <div id="timelineContainer" class="relative">
-          <!-- Linha horizontal -->
-          <div class="absolute top-1/2 left-0 right-0 h-0.5 bg-gray-600"></div>
-          
-          <!-- Dots de datas (preenchido dinamicamente) -->
-          <div id="timelineDots" class="relative flex justify-between items-center px-4">
-            <!-- Preenchido pelo JS -->
-          </div>
-        </div>
-
-        <!-- Info da Data Selecionada -->
-        <div id="selectedDateInfo" class="mt-6 p-4 rounded-lg" style="background: rgba(186, 57, 175, 0.1); border: 1px solid rgba(186, 57, 175, 0.3);">
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-sm text-gray-400">Data Selecionada</p>
-              <p class="text-xl font-bold" id="selectedDateText">-</p>
-            </div>
-            <div class="text-right">
-              <p class="text-sm text-gray-400">Regime</p>
-              <div id="selectedDateRegime" class="text-xl font-bold">-</div>
-            </div>
-            <div class="text-right">
-              <p class="text-sm text-gray-400">Gamma Flip</p>
-              <p class="text-xl font-bold text-orange-400" id="selectedDateFlip">-</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Gráficos GEX (6 gráficos por data) -->
-      <div id="chartsSection" class="hidden">
-        <div class="gex-card p-6">
-          <h2 class="text-2xl font-bold mb-6 text-center">
-            <i class="fas fa-chart-area mr-3" style="color: #fb1ebb;"></i>
-            Análise GEX - <span id="chartDateTitle" style="color: #fb1ebb;">-</span>
-          </h2>
-          
-          <!-- Container do Plotly -->
-          <div class="chart-container">
-            <div id="gexChart" style="width: 100%; height: 100%;"></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Estado Vazio -->
-      <div id="emptyState" class="gex-card p-12 text-center">
-        <i class="fas fa-history text-6xl mb-4" style="color: rgba(186, 57, 175, 0.5);"></i>
-        <h3 class="text-2xl font-bold mb-2 text-gray-300">Nenhuma análise carregada</h3>
-        <p class="text-gray-400">Digite o ticker para começar</p>
-      </div>
-
     </div>
   </div>
 
-  <script>
-    let userToken = localStorage.getItem('geminii_token');
-    
-    if (!userToken) {
-      window.location.href = '/login.html';
-    }
+  <!-- Controles -->
+  <div class="gex-card p-4 mb-6 flex flex-col lg:flex-row gap-4 items-stretch lg:items-center justify-between">
+    <div class="flex flex-wrap items-center gap-3">
+      <div class="relative flex-1 sm:flex-initial">
+        <i class="fas fa-terminal absolute left-4 top-4 text-gray-600 text-xs"></i>
+        <input id="tickerInput" type="text" placeholder="PETR4" maxlength="8" class="pl-10 w-full sm:w-auto">
+      </div>
+      <button class="btn-secondary" id="loadExpirationsBtn">
+        <i class="fas fa-search-dollar mr-2 text-geminii"></i> Buscar Vencimentos
+      </button>
+      <select id="expirationSelect" class="flex-1 sm:flex-initial min-w-[200px]">
+        <option value="">Selecione o vencimento</option>
+      </select>
+      <select id="daysSelect">
+        <option value="5">Últimas 5 sessões</option>
+        <option value="7" selected>Últimas 7 sessões</option>
+        <option value="10">Últimas 10 sessões</option>
+        <option value="15">Últimas 15 sessões</option>
+      </select>
+    </div>
+    <div class="flex flex-wrap items-center justify-end gap-4">
+      <div class="pill-group" id="windowGroup">
+        <button class="pill active-neutral" data-window="ALL">TODOS OS CONTRATOS</button>
+        <button class="pill" data-window="SEMANAL">Semanal</button>
+        <button class="pill" data-window="MENSAL">Mensal</button>
+      </div>
+      <button class="btn-run" id="analyzeBtn">
+        <i class="fas fa-clock-rotate-left mr-2"></i> Analisar Histórico
+      </button>
+    </div>
+  </div>
 
-    // Estado global
-    let currentAnalysis = null;
-    let selectedDate = null;
+  <div id="statusMsg" class="hidden mb-6 text-xs font-mono p-4 rounded-xl border"></div>
 
-    // Elementos DOM
-    const tickerInput = document.getElementById('tickerInput');
-    const analyzeBtn = document.getElementById('analyzeBtn');
-    const statusMsg = document.getElementById('statusMsg');
-    const loadingState = document.getElementById('loadingState');
-    const emptyState = document.getElementById('emptyState');
-    const insightsSection = document.getElementById('insightsSection');
-    const timelineSection = document.getElementById('timelineSection');
-    const chartsSection = document.getElementById('chartsSection');
+  <!-- Resultados -->
+  <div id="resultsSection" class="hidden">
 
-    // Funções utilitárias
-    function showStatus(message, type = 'info') {
-      const bgClass = type === 'success' ? 'bg-green-600 bg-opacity-20 border-green-500 border-opacity-30' : 
-                     type === 'error' ? 'bg-red-600 bg-opacity-20 border-red-500 border-opacity-30' : 
-                     'bg-blue-600 bg-opacity-20 border-blue-500 border-opacity-30';
-      
-      statusMsg.className = `mb-6 p-4 rounded-lg border backdrop-blur-sm ${bgClass}`;
-      statusMsg.textContent = message;
-      statusMsg.classList.remove('hidden');
-      
-      setTimeout(() => statusMsg.classList.add('hidden'), 5000);
-    }
-
-    function setLoading(isLoading) {
-      if (isLoading) {
-        analyzeBtn.classList.add('loading');
-        analyzeBtn.innerHTML = '<span class="spinner mr-2"></span>Processando...';
-      } else {
-        analyzeBtn.classList.remove('loading');
-        analyzeBtn.innerHTML = '<i class="fas fa-history mr-2"></i>Analisar Histórico';
-      }
-    }
-
-    // Análise Histórica
-    async function analyzeHistorical() {
-      const ticker = tickerInput.value.trim().toUpperCase();
-
-      if (!ticker) {
-        showStatus('Digite o ticker', 'error');
-        return;
-      }
-
-      emptyState.classList.add('hidden');
-      insightsSection.classList.add('hidden');
-      timelineSection.classList.add('hidden');
-      chartsSection.classList.add('hidden');
-      loadingState.classList.remove('hidden');
-      setLoading(true);
-
-      try {
-        const expResponse = await fetch('/pro/historical/expirations', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${userToken}`
-          },
-          body: JSON.stringify({ ticker })
-        });
-
-        const expData = await expResponse.json();
-
-        if (!expData.success || expData.total_available === 0) {
-          showStatus('Nenhum vencimento disponível para este ticker', 'error');
-          emptyState.classList.remove('hidden');
-          return;
-        }
-
-        const vencimento = expData.expirations.find(e => e.available).code;
-
-        const response = await fetch('/pro/historical/analyze', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${userToken}`
-          },
-          body: JSON.stringify({ 
-            ticker, 
-            vencimento, 
-            days_back: 5 
-          })
-        });
-
-        const data = await response.json();
-
-        if (data.success) {
-          currentAnalysis = data;
-          renderAnalysis(data);
-          showStatus('Análise concluída com sucesso', 'success');
-        } else {
-          showStatus(data.error || 'Erro na análise', 'error');
-          emptyState.classList.remove('hidden');
-        }
-
-      } catch (error) {
-        console.error('Erro:', error);
-        showStatus('Erro ao processar análise', 'error');
-        emptyState.classList.remove('hidden');
-      } finally {
-        loadingState.classList.add('hidden');
-        setLoading(false);
-      }
-    }
-
-    function renderAnalysis(data) {
-      renderInsights(data);
-      renderTimeline(data);
-      
-      if (data.available_dates && data.available_dates.length > 0) {
-        const lastDate = data.available_dates[data.available_dates.length - 1];
-        selectDate(lastDate);
-      }
-
-      insightsSection.classList.remove('hidden');
-      timelineSection.classList.remove('hidden');
-      chartsSection.classList.remove('hidden');
-    }
-
-    function renderInsights(data) {
-      const insights = data.insights;
-
-      document.getElementById('periodText').textContent = `${insights.period.days} dias úteis`;
-      document.getElementById('periodSubtext').textContent = `${formatDate(insights.period.start)} até ${formatDate(insights.period.end)}`;
-
-      const currentRegime = insights.current_regime;
-      const regimeHtml = currentRegime === 'Long Gamma' 
-        ? '<span class="regime-badge regime-long"><i class="fas fa-arrow-up"></i>Long Gamma</span>'
-        : '<span class="regime-badge regime-short"><i class="fas fa-arrow-down"></i>Short Gamma</span>';
-      document.getElementById('currentRegimeText').innerHTML = regimeHtml;
-      
-      const stability = insights.regime_stability ? 'Regime estável' : `${insights.regime_changes.length} mudanças`;
-      document.getElementById('regimeStabilityText').textContent = `${stability} - ${insights.days_in_current_regime} dias consecutivos`;
-
-      if (data.spot_prices_by_date) {
-        const dates = Object.keys(data.spot_prices_by_date).sort();
-        if (dates.length >= 2) {
-          const firstPrice = data.spot_prices_by_date[dates[0]];
-          const lastPrice = data.spot_prices_by_date[dates[dates.length - 1]];
-          const variation = ((lastPrice - firstPrice) / firstPrice * 100);
-          const variationAbs = lastPrice - firstPrice;
-          
-          const variationColor = variation >= 0 ? 'text-green-400' : 'text-red-400';
-          const variationIcon = variation >= 0 ? 'fa-arrow-up' : 'fa-arrow-down';
-          
-          document.getElementById('periodVariationText').className = `text-2xl font-bold ${variationColor}`;
-          document.getElementById('periodVariationText').innerHTML = `<i class="fas ${variationIcon}"></i> ${variation >= 0 ? '+' : ''}${variation.toFixed(2)}%`;
-          
-          document.getElementById('periodVariationSubtext').textContent = 
-            `R$ ${firstPrice.toFixed(2)} → R$ ${lastPrice.toFixed(2)} (${variation >= 0 ? '+' : ''}R$ ${variationAbs.toFixed(2)})`;
-        }
-      }
-
-      if (insights.flip_movement) {
-        const fm = insights.flip_movement;
-        document.getElementById('firstFlipText').textContent = `R$ ${fm.first_flip.toFixed(2)}`;
-        document.getElementById('firstFlipDate').textContent = formatDate(fm.first_date);
-        document.getElementById('lastFlipText').textContent = `R$ ${fm.last_flip.toFixed(2)}`;
-        document.getElementById('lastFlipDate').textContent = formatDate(fm.last_date);
-        
-        const changeColor = fm.change_pct > 0 ? 'text-green-400' : 'text-red-400';
-        const changeIcon = fm.change_pct > 0 ? 'fa-arrow-up' : 'fa-arrow-down';
-        document.getElementById('flipChangeText').className = `text-xl font-bold ${changeColor}`;
-        document.getElementById('flipChangeText').textContent = `${fm.change_pct > 0 ? '+' : ''}${fm.change_pct.toFixed(2)}%`;
-        
-        document.getElementById('flipDirectionText').className = `text-xs ${changeColor}`;
-        document.getElementById('flipDirectionText').innerHTML = `<i class="fas ${changeIcon}"></i> ${fm.direction}`;
-        
-        document.getElementById('flipMovementCard').classList.remove('hidden');
-      }
-
-      if (insights.gex_change) {
-        const gc = insights.gex_change;
-        document.getElementById('firstGexText').textContent = formatLargeNumber(gc.first_gex);
-        document.getElementById('lastGexText').textContent = formatLargeNumber(gc.last_gex);
-        
-        const gexChangeColor = gc.change_abs > 0 ? 'text-green-400' : 'text-red-400';
-        document.getElementById('gexChangeText').className = `text-xl font-bold ${gexChangeColor}`;
-        document.getElementById('gexChangeText').textContent = formatLargeNumber(gc.change_abs);
-        
-        let trendText = '';
-        let trendColor = '';
-        switch(gc.trend) {
-          case 'INCREASING_LONG':
-            trendText = 'Aumentando posição LONG';
-            trendColor = 'text-green-400';
-            break;
-          case 'INCREASING_SHORT':
-            trendText = 'Aumentando posição SHORT';
-            trendColor = 'text-red-400';
-            break;
-          case 'DECREASING':
-            trendText = 'Reduzindo posição';
-            trendColor = 'text-yellow-400';
-            break;
-        }
-        document.getElementById('gexTrendText').className = `text-xs mt-1 ${trendColor}`;
-        document.getElementById('gexTrendText').textContent = trendText;
-      }
-
-      if (insights.most_impacted_strikes && insights.most_impacted_strikes.length > 0) {
-        const list = document.getElementById('impactedStrikesList');
-        list.innerHTML = '';
-        
-        insights.most_impacted_strikes.forEach((strike, index) => {
-          const directionColor = strike.direction === 'MORE_LONG' ? 'text-green-400' : 'text-red-400';
-          const directionIcon = strike.direction === 'MORE_LONG' ? 'fa-arrow-up' : 'fa-arrow-down';
-          
-          const html = `
-            <div class="strike-impact">
-              <div class="flex items-center justify-between">
-                <div>
-                  <span class="text-lg font-bold">R$ ${strike.strike.toFixed(2)}</span>
-                  <span class="text-xs text-gray-400 ml-2">${strike.distance_from_spot_pct.toFixed(1)}% do spot</span>
-                </div>
-                <div class="text-right">
-                  <span class="${directionColor} font-bold"><i class="fas ${directionIcon}"></i> ${formatLargeNumber(strike.change)}</span>
-                  <p class="text-xs text-gray-400">${strike.direction.replace('_', ' ')}</p>
-                </div>
-              </div>
-            </div>
-          `;
-          list.innerHTML += html;
-        });
-        
-        document.getElementById('impactedStrikesCard').classList.remove('hidden');
-      }
-
-      if (insights.regime_changes && insights.regime_changes.length > 0) {
-        const list = document.getElementById('regimeChangesList');
-        list.innerHTML = '';
-        
-        insights.regime_changes.forEach(change => {
-          const html = `
-            <div class="strike-impact">
-              <div class="flex items-center justify-between">
-                <div>
-                  <span class="font-bold">${formatDate(change.date)}</span>
-                </div>
-                <div class="flex items-center gap-2">
-                  <span class="regime-badge ${change.from === 'Long Gamma' ? 'regime-long' : 'regime-short'}">${change.from}</span>
-                  <i class="fas fa-arrow-right text-gray-400"></i>
-                  <span class="regime-badge ${change.to === 'Long Gamma' ? 'regime-long' : 'regime-short'}">${change.to}</span>
-                </div>
-              </div>
-            </div>
-          `;
-          list.innerHTML += html;
-        });
-        
-        document.getElementById('regimeChangesCard').classList.remove('hidden');
-      }
-    } 
-
-    function renderTimeline(data) {
-      const container = document.getElementById('timelineDots');
-      container.innerHTML = '';
-
-      const validDates = data.available_dates.filter(date => {
-        const dateData = data.data_by_date[date];
-        return dateData && dateData.plot_json;
-      });
-
-      if (validDates.length === 0) {
-        container.innerHTML = '<p class="text-gray-400 text-center">Nenhuma data com dados completos</p>';
-        return;
-      }
-
-      validDates.forEach((date, index) => {
-        const dateData = data.data_by_date[date];
-        const regime = dateData.regime;
-        const dotColor = regime === 'Long Gamma' ? 'bg-green-500' : 'bg-red-500';
-
-        const dateObj = new Date(date + 'T00:00:00');
-        const displayDate = dateObj.toLocaleDateString('pt-BR', { 
-          day: '2-digit', 
-          month: 'short' 
-        });
-
-        const dotHtml = `
-          <div class="flex flex-col items-center cursor-pointer hover:scale-110 transition" 
-              data-date="${date}"
-              onclick="selectDate('${date}')">
-            <div class="timeline-dot ${dotColor} mb-2" data-date="${date}"></div>
-            <span class="text-xs text-gray-400">${displayDate}</span>
-          </div>
-        `;
-
-        container.innerHTML += dotHtml;
-      });
-      
-      //  Atualizar texto do período
-      const firstDate = validDates[0];
-      const lastDate = validDates[validDates.length - 1];
-      
-      document.getElementById('periodText').textContent = `${validDates.length} dias úteis`;
-      document.getElementById('periodSubtext').textContent = 
-        `${formatDate(firstDate)} até ${formatDate(lastDate)}`;
-    }    
-
-    function selectDate(date) {
-      selectedDate = date;
-      const dateData = currentAnalysis.data_by_date[date];
-
-      document.querySelectorAll('.timeline-dot').forEach(dot => {
-        if (dot.dataset.date === date) {
-          dot.classList.add('active');
-        } else {
-          dot.classList.remove('active');
-        }
-      });
-
-      document.getElementById('selectedDateText').textContent = formatDate(date);
-      
-      const regimeHtml = dateData.regime === 'Long Gamma'
-        ? '<span class="regime-badge regime-long"><i class="fas fa-arrow-up"></i>Long Gamma</span>'
-        : '<span class="regime-badge regime-short"><i class="fas fa-arrow-down"></i>Short Gamma</span>';
-      document.getElementById('selectedDateRegime').innerHTML = regimeHtml;
-      
-      document.getElementById('selectedDateFlip').textContent = 
-        dateData.flip_strike ? `R$ ${dateData.flip_strike.toFixed(2)}` : 'N/A';
-
-      renderCharts(date, dateData);
-    }
-
-    function renderCharts(date, dateData) {
-      document.getElementById('chartDateTitle').textContent = formatDate(date);
-
-      if (dateData.plot_json) {
-        const plotData = JSON.parse(dateData.plot_json);
-        
-        plotData.layout.height = 1200;
-        plotData.layout.width = null;
-        plotData.layout.autosize = true;
-        plotData.layout.margin = { l: 80, r: 80, t: 120, b: 80 };
-        plotData.layout.paper_bgcolor = 'transparent';
-        plotData.layout.plot_bgcolor = 'transparent';
-
-        const chartDiv = document.getElementById('gexChart');
-        Plotly.purge(chartDiv);
-        
-        Plotly.newPlot(chartDiv, plotData.data, plotData.layout, {
-          responsive: true,
-          displayModeBar: true,
-          displaylogo: false,
-          modeBarButtonsToRemove: ['pan2d', 'lasso2d', 'select2d']
-        });
-
-        setTimeout(() => {
-          Plotly.Plots.resize(chartDiv);
-        }, 100);
-      }
-    }
-
-    function formatDate(dateStr) {
-      const date = new Date(dateStr + 'T00:00:00');
-      return date.toLocaleDateString('pt-BR', { 
-        day: '2-digit', 
-        month: 'long', 
-        year: 'numeric' 
-      });
-    }
-
-    function formatLargeNumber(num) {
-      const absNum = Math.abs(num);
-      const sign = num < 0 ? '-' : '';
-      
-      if (absNum >= 1000000000) {
-        return sign + (absNum / 1000000000).toFixed(2) + 'B';
-      } else if (absNum >= 1000000) {
-        return sign + (absNum / 1000000).toFixed(2) + 'M';
-      } else if (absNum >= 1000) {
-        return sign + (absNum / 1000).toFixed(2) + 'K';
-      }
-      return sign + absNum.toFixed(0);
-    }
-
-    analyzeBtn.addEventListener('click', analyzeHistorical);
-    
-    tickerInput.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') analyzeHistorical();
-    });
-
-    window.addEventListener('resize', () => {
-      const chartDiv = document.getElementById('gexChart');
-      if (chartDiv && currentAnalysis) {
-        Plotly.Plots.resize(chartDiv);
-      }
-    });
-
-    document.addEventListener('DOMContentLoaded', function() {
-      showStatus('Sistema de Análise Histórica carregado. Digite um ticker para começar.', 'info');
-    });
-
-  </script>
-
-    <div class="mt-6 max-w-4xl mx-auto bg-red-900/20 border-2 border-red-500/40 rounded-xl p-6">
-        <div class="flex items-start gap-4">
-          <i class="fas fa-exclamation-triangle text-red-400 text-2xl mt-1 flex-shrink-0"></i>
-          <div class="text-left">
-            <h3 class="text-red-400 font-bold text-base mb-3">AVISO LEGAL IMPORTANTE</h3>
-            <p class="text-gray-300 text-xs leading-relaxed mb-3">
-              As informações e sinais fornecidos por esta ferramenta são de caráter educativo e informativo. <strong>Não constituem recomendação de investimento nem garantia de rentabilidade.</strong> Investimentos em valores mobiliários envolvem riscos de perda patrimonial. Rentabilidade passada não garante resultados futuros. Os modelos quantitativos utilizados são baseados em dados históricos e podem não capturar adequadamente mudanças nas condições de mercado. Recomendamos a consulta a profissionais qualificados antes de tomar decisões de investimento. <strong>Operações de swing trade e day trade envolvem alto risco e podem resultar em perdas significativas.</strong> Este tipo de operação requer conhecimento técnico e não é adequado para todos os perfis de investidor.
-            </p>
-            <div class="pt-3 border-t border-gray-700 text-gray-400 text-xs">
-              <p><strong>Geminii Research Ltda</strong> - CNPJ 60.897.331/0001-06 | Analista Responsável: Diego Doneda - CNPI 9668</p>
-            </div>
-          </div>
-        </div>
+    <!-- Barra de contexto -->
+    <div class="flex flex-wrap gap-4 items-center mb-6 bg-white/[0.01] p-4 rounded-xl border border-white/[0.03]">
+      <div id="regimeIndicator" class="regime-badge">--</div>
+      <div class="text-[11px] text-gray-500 uppercase font-semibold tracking-wider">
+        Vencimento: <span id="expirationLabel" class="text-white font-mono font-bold ml-1">--</span>
+      </div>
+      <div class="text-[11px] text-gray-500 uppercase font-semibold tracking-wider sm:border-l sm:border-white/[0.05] sm:pl-4">
+        Sessões: <span id="sessionsLabel" class="text-white font-bold ml-1">--</span>
+      </div>
+      <div class="text-[11px] text-gray-500 uppercase font-semibold tracking-wider sm:border-l sm:border-white/[0.05] sm:pl-4">
+        Período: <span id="periodLabel" class="text-white font-mono font-bold ml-1">--</span>
+      </div>
+      <div class="text-[11px] text-gray-500 uppercase font-semibold tracking-wider sm:border-l sm:border-white/[0.05] sm:pl-4">
+        Variação Spot: <span id="spotVariation" class="font-mono font-bold ml-1">--</span>
       </div>
     </div>
 
+    <!-- Seletor de datas -->
+    <div class="bg-white/[0.01] border border-white/[0.04] rounded-2xl p-4 mb-6">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+        <span class="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
+          <i class="fas fa-calendar-days text-geminii"></i> Sessões disponíveis
+        </span>
+        <span class="text-[10px] text-gray-600 font-mono">🟢 Long γ &nbsp;|&nbsp; 🔴 Short γ — clique para visualizar</span>
+      </div>
+      <div id="datePills" class="flex flex-wrap gap-2"></div>
+    </div>
+
+    <div class="flex flex-col gap-6">
+
+      <!-- GEX do dia + métricas inline -->
+      <div class="bg-white/[0.01] border border-white/[0.04] p-5 rounded-2xl">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 pb-4 border-b border-white/[0.04]">
+          <span class="text-xs font-bold text-gray-300 uppercase tracking-widest flex items-center gap-2">
+            <i class="fas fa-chart-bar text-geminii"></i> GEX da Sessão
+            <span id="selectedDateLabel" class="text-geminii font-mono normal-case">--</span>
+          </span>
+          <div class="flex flex-wrap gap-4 text-[11px]">
+            <div class="flex items-center gap-2">
+              <span class="text-gray-500 uppercase font-bold">Spot</span>
+              <span id="daySpot" class="text-white font-mono font-bold">--</span>
+            </div>
+            <div class="flex items-center gap-2 sm:border-l sm:border-white/[0.05] sm:pl-4">
+              <span class="text-gray-500 uppercase font-bold">Flip</span>
+              <span id="dayFlip" class="font-mono font-bold" style="color:#f97316">--</span>
+            </div>
+            <div class="flex items-center gap-2 sm:border-l sm:border-white/[0.05] sm:pl-4">
+              <span class="text-gray-500 uppercase font-bold">GEX Desc</span>
+              <span id="dayGexDesc" class="text-cyan-400 font-mono font-bold">--</span>
+            </div>
+            <div class="sm:border-l sm:border-white/[0.05] sm:pl-4">
+              <span id="dayRegimeBadge" class="regime-badge" style="padding:4px 10px;font-size:10px">--</span>
+            </div>
+          </div>
+        </div>
+        <div id="gexDayChart" style="width:100%;height:520px;"></div>
+      </div>
+
+      <!-- Evolução do Flip -->
+      <div class="bg-white/[0.01] border border-white/[0.04] rounded-2xl p-5">
+        <div class="text-xs font-bold text-gray-300 uppercase tracking-widest mb-4 flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-orange-400 shadow-[0_0_8px_rgba(249,115,22,.5)]"></span>
+          Evolução do Gamma Flip · Spot vs Flip por Sessão
+        </div>
+        <div id="flipEvolutionChart" style="width:100%;height:260px;"></div>
+      </div>
+
+      <!-- Insights expandíveis -->
+      <div class="flex flex-col gap-3" id="insightsContainer"></div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Footer -->
+<div class="max-w-screen-2xl mx-auto px-6 pb-12 relative z-10">
+  <div class="bg-white/[0.01] border border-white/[0.04] rounded-2xl p-6">
+    <div class="flex items-start gap-4">
+      <i class="fas fa-shield-halved text-gray-600 mt-1 flex-shrink-0 text-base"></i>
+      <div class="w-full">
+        <p class="text-gray-400 font-bold text-xs uppercase tracking-widest mb-2">Termos de Uso e Restrições de Compliance</p>
+        <p class="text-gray-500 text-xs leading-relaxed">
+          As análises quantitativas estruturais geradas por este terminal refletem cenários matemáticos pautados no histórico de posições em aberto de derivativos. <strong>Este módulo não constitui assessoria, recomendação, oferta ou direcionamento de alocação de ativos.</strong>
+        </p>
+        <div class="flex flex-wrap items-center justify-between gap-4 mt-6 pt-4 border-t border-white/[0.04] text-gray-600 text-[11px] font-mono">
+          <div><strong>Geminii Research Ltda</strong> · CNPJ 60.897.331/0001-06</div>
+          <div>Analista Responsável: Diego Doneda · CNPI 9668</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const userToken = localStorage.getItem('geminii_token');
+if (!userToken) window.location.href = '/login.html';
+
+let currentData  = null;
+let selectedDate = null;
+let allExpirationsCache = [];
+
+const tickerInput        = document.getElementById('tickerInput');
+const expirationSelect   = document.getElementById('expirationSelect');
+const daysSelect         = document.getElementById('daysSelect');
+const loadExpirationsBtn = document.getElementById('loadExpirationsBtn');
+const analyzeBtn         = document.getElementById('analyzeBtn');
+const statusMsg          = document.getElementById('statusMsg');
+const resultsSection     = document.getElementById('resultsSection');
+
+document.getElementById('histExpanderHeader').addEventListener('click', () => {
+  document.getElementById('histExpanderContent').classList.toggle('open');
+  document.getElementById('expanderIcon').classList.toggle('rotate');
+});
+
+function fmt(v) {
+  if (v === null || v === undefined) return '--';
+  const a = Math.abs(v);
+  if (a >= 1e9) return (v/1e9).toFixed(2)+'B';
+  if (a >= 1e6) return (v/1e6).toFixed(2)+'M';
+  if (a >= 1e3) return (v/1e3).toFixed(1)+'K';
+  return v.toFixed(0);
+}
+function fmtDate(s) {
+  if (!s) return '--';
+  const [y,m,d] = s.split('-');
+  return `${d}/${m}`;
+}
+function fmtDateLong(s) {
+  if (!s) return '--';
+  return new Date(s+'T00:00:00').toLocaleDateString('pt-BR', {day:'2-digit',month:'long',year:'numeric'});
+}
+function showStatus(msg, type='info') {
+  const c = {
+    info:   'background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.2);color:#93c5fd;',
+    success:'background:rgba(251,30,187,.1);border:1px solid rgba(251,30,187,.2);color:#fb1ebb;',
+    error:  'background:rgba(255,8,68,.1);border:1px solid rgba(255,8,68,.2);color:#ff0844;',
+  };
+  statusMsg.style.cssText = c[type]||c.info;
+  statusMsg.textContent   = msg;
+  statusMsg.classList.remove('hidden');
+  setTimeout(()=>statusMsg.classList.add('hidden'), 6000);
+}
+function setLoading(btn, loading, idle) {
+  btn.disabled = loading;
+  btn.innerHTML = loading ? '<span class="spinner"></span>' : idle;
+}
+
+// Window filter
+let currentWindow = 'ALL';
+
+document.getElementById('windowGroup').addEventListener('click', e => {
+  const btn = e.target.closest('[data-window]');
+  if (!btn) return;
+  currentWindow = btn.dataset.window;
+  document.querySelectorAll('#windowGroup .pill').forEach(p => p.classList.remove('active','active-neutral'));
+  btn.classList.add(currentWindow === 'ALL' ? 'active-neutral' : 'active');
+  filterExpirationSelect();
+});
+
+function filterExpirationSelect() {
+  const prev = expirationSelect.value;
+  expirationSelect.innerHTML = '<option value="">Selecione o vencimento</option>';
+  allExpirationsCache.forEach(exp => {
+    if (!exp.available) return;
+    if (currentWindow !== 'ALL' && exp.window !== currentWindow) return;
+    const opt = document.createElement('option');
+    opt.value       = exp.code;
+    opt.textContent = `${exp.desc} (${exp.data_count} contratos)`;
+    expirationSelect.appendChild(opt);
+  });
+  if (prev && [...expirationSelect.options].some(o => o.value === prev))
+    expirationSelect.value = prev;
+}
+
+loadExpirationsBtn.addEventListener('click', loadExpirations);
+tickerInput.addEventListener('keypress', e=>{ if(e.key==='Enter') loadExpirations(); });
+
+async function loadExpirations() {
+  const ticker = tickerInput.value.trim().toUpperCase();
+  if (!ticker) { showStatus('Digite um ticker','error'); return; }
+  setLoading(loadExpirationsBtn, true);
+  try {
+    const res  = await fetch('/pro/historical/expirations', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':`Bearer ${userToken}`},
+      body:JSON.stringify({ticker})
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error);
+    allExpirationsCache = data.expirations || [];
+    filterExpirationSelect();
+    loadExpirationsBtn.innerHTML = '<i class="fas fa-check mr-1"></i> Carregados';
+    showStatus(`${allExpirationsCache.filter(e=>e.available).length} vencimentos disponíveis`, 'success');
+  } catch(err) {
+    showStatus('Erro: '+err.message, 'error');
+    loadExpirationsBtn.innerHTML = '<i class="fas fa-search-dollar mr-2 text-geminii"></i> Buscar Vencimentos';
+  } finally { loadExpirationsBtn.disabled = false; }
+}
+
+analyzeBtn.addEventListener('click', runHistoricalAnalysis);
+
+async function runHistoricalAnalysis() {
+  const ticker     = tickerInput.value.trim().toUpperCase();
+  const vencimento = expirationSelect.value;
+  const daysBack   = parseInt(daysSelect.value);
+  if (!ticker)     { showStatus('Digite um ticker','error'); return; }
+  if (!vencimento) { showStatus('Selecione um vencimento','error'); return; }
+
+  setLoading(analyzeBtn, true);
+  showStatus(`Analisando ${ticker} — ${daysBack} sessões...`, 'info');
+  try {
+    const res  = await fetch('/pro/historical/analyze', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':`Bearer ${userToken}`},
+      body:JSON.stringify({ticker, vencimento, days_back: daysBack})
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error);
+    currentData = data;
+    displayResults(data);
+    showStatus(`Análise histórica de ${ticker} concluída`, 'success');
+  } catch(err) {
+    showStatus('Erro: '+err.message, 'error');
+  } finally {
+    setLoading(analyzeBtn, false, '<i class="fas fa-clock-rotate-left mr-2"></i> Analisar Histórico');
+  }
+}
+
+function displayResults(data) {
+  const insights   = data.insights   || {};
+  const dates      = data.available_dates || [];
+  const byDate     = data.data_by_date   || {};
+  const spotByDate = data.spot_prices_by_date || {};
+  const lastDate   = dates[dates.length - 1];
+  const lastDay    = byDate[lastDate] || {};
+
+  // Regime badge
+  const regEl = document.getElementById('regimeIndicator');
+  if (lastDay.regime === 'Long Gamma') {
+    regEl.className = 'regime-badge regime-long';
+    regEl.innerHTML = '<i class="fas fa-shield-halved"></i> Long Gamma';
+  } else {
+    regEl.className = 'regime-badge regime-short';
+    regEl.innerHTML = '<i class="fas fa-bolt-lightning"></i> Short Gamma';
+  }
+
+  document.getElementById('expirationLabel').textContent = data.expiration_desc || '--';
+  document.getElementById('sessionsLabel').textContent   = dates.length;
+
+  const period = insights.period || {};
+  if (period.start && period.end) {
+    document.getElementById('periodLabel').textContent = `${fmtDate(period.start)} → ${fmtDate(period.end)}`;
+  }
+
+  // Variação do spot no período
+  const sdates = Object.keys(spotByDate).sort();
+  if (sdates.length >= 2) {
+    const fp = spotByDate[sdates[0]];
+    const lp = spotByDate[sdates[sdates.length-1]];
+    const pct = (lp - fp) / fp * 100;
+    const el  = document.getElementById('spotVariation');
+    el.textContent  = `${pct >= 0 ? '+' : ''}${pct.toFixed(2)}%`;
+    el.style.color  = pct >= 0 ? '#22c55e' : '#ff0844';
+  }
+
+  buildDatePills(dates, byDate);
+  selectDate(lastDate, byDate);
+  renderFlipEvolutionChart(insights, spotByDate);
+  renderInsightBlocks(insights, spotByDate);
+  resultsSection.classList.remove('hidden');
+  setTimeout(() => {
+    Plotly.Plots.resize('gexDayChart');
+    Plotly.Plots.resize('flipEvolutionChart');
+  }, 50);
+}
+
+function buildDatePills(dates, byDate) {
+  const container = document.getElementById('datePills');
+  container.innerHTML = '';
+  dates.forEach(dateStr => {
+    const day   = byDate[dateStr] || {};
+    const isL   = day.regime === 'Long Gamma';
+    const btn   = document.createElement('button');
+    btn.className    = 'date-pill';
+    btn.dataset.date = dateStr;
+    btn.innerHTML    = `${isL ? '🟢' : '🔴'} ${fmtDate(dateStr)}`;
+    btn.title        = `${dateStr} · ${day.regime} · Spot R$ ${(day.spot_price||0).toFixed(2)}`;
+    btn.addEventListener('click', () => selectDate(dateStr, currentData.data_by_date));
+    container.appendChild(btn);
+  });
+}
+
+function selectDate(dateStr, byDate) {
+  selectedDate = dateStr;
+  document.querySelectorAll('.date-pill').forEach(p => p.classList.toggle('active', p.dataset.date === dateStr));
+  const day = byDate[dateStr] || {};
+  document.getElementById('selectedDateLabel').textContent = dateStr;
+  document.getElementById('daySpot').textContent  = day.spot_price ? `R$ ${day.spot_price.toFixed(2)}` : '--';
+  document.getElementById('dayFlip').textContent  = day.flip_strike ? `R$ ${day.flip_strike.toFixed(2)}` : 'N/D';
+  document.getElementById('dayGexDesc').textContent = fmt(day.net_gex_descoberto);
+  const badge = document.getElementById('dayRegimeBadge');
+  if (day.regime === 'Long Gamma') {
+    badge.className = 'regime-badge regime-long'; badge.innerHTML = '<i class="fas fa-shield-halved"></i> Long γ';
+  } else {
+    badge.className = 'regime-badge regime-short'; badge.innerHTML = '<i class="fas fa-bolt-lightning"></i> Short γ';
+  }
+  renderDayChart(day.plot_json);
+}
+
+function renderDayChart(plotJson) {
+  if (!plotJson) {
+    document.getElementById('gexDayChart').innerHTML = '<div style="color:#4b5563;padding:40px;text-align:center;font-size:13px;">Dados indisponíveis para esta sessão.</div>';
+    return;
+  }
+  try {
+    const fig = JSON.parse(plotJson);
+    fig.layout.height        = 520;
+    fig.layout.paper_bgcolor = 'transparent';
+    fig.layout.plot_bgcolor  = 'transparent';
+    fig.layout.margin        = {l:70,r:20,t:55,b:55};
+    if (!fig.layout.annotations) fig.layout.annotations = [];
+    fig.layout.annotations.push({
+      text:'GEMINII RESEARCH', textangle:0,
+      xref:'paper', yref:'paper', x:0.5, y:0.5,
+      xanchor:'center', yanchor:'middle',
+      font:{family:'Inter,sans-serif',size:32,color:'rgba(255,255,255,.035)'},
+      showarrow:false, layer:'below'
+    });
+    Plotly.react('gexDayChart', fig.data, fig.layout, {responsive:true,displayModeBar:false,displaylogo:false});
+  } catch(err) { console.error('Erro gexDayChart:', err); }
+}
+
+function renderFlipEvolutionChart(insights, spotByDate) {
+  const fe = insights.flip_evolution || [];
+  if (!fe.length) return;
+  const dates  = fe.map(f=>f.date);
+  const flips  = fe.map(f=>f.flip_strike);
+  const spots  = fe.map(f=>spotByDate[f.date] || f.spot_price);
+  const colors = fe.map(f=>f.regime==='Long Gamma'?'#00f2fe':'#ff0844');
+  Plotly.react('flipEvolutionChart', [
+    { x:dates, y:spots, type:'scatter', mode:'lines+markers', name:'Spot Price',
+      line:{color:'#ffffff',width:2,dash:'dash'}, marker:{color:'#ffffff',size:5},
+      hovertemplate:'%{x}<br>Spot: R$ %{y:.2f}<extra></extra>' },
+    { x:dates, y:flips, type:'scatter', mode:'lines+markers', name:'Gamma Flip',
+      line:{color:'#f97316',width:2}, marker:{color:colors,size:8,line:{color:'#f97316',width:1}},
+      hovertemplate:'%{x}<br>Flip: R$ %{y:.2f}<extra></extra>' }
+  ], {
+    height:260, paper_bgcolor:'transparent', plot_bgcolor:'transparent',
+    margin:{l:60,r:20,t:30,b:45},
+    font:{color:'#aaa',family:'Inter,sans-serif',size:11},
+    showlegend:true,
+    legend:{orientation:'h',x:0,y:1.15,font:{color:'#aaa',size:10}},
+    xaxis:{gridcolor:'rgba(255,255,255,.05)',color:'#555',tickformat:'%d/%m',zeroline:false},
+    yaxis:{gridcolor:'rgba(255,255,255,.05)',color:'#555',zeroline:false,tickprefix:'R$ ',tickformat:'.2f'},
+    annotations:[{text:'GEMINII RESEARCH',textangle:0,xref:'paper',yref:'paper',x:.5,y:.5,
+      xanchor:'center',yanchor:'middle',font:{family:'Inter,sans-serif',size:24,color:'rgba(255,255,255,.025)'},
+      showarrow:false,layer:'below'}]
+  }, {responsive:true,displayModeBar:false,displaylogo:false});
+}
+
+function renderInsightBlocks(insights, spotByDate) {
+  const container = document.getElementById('insightsContainer');
+  container.innerHTML = '';
+
+  // ── 1. Resumo do período ──────────────────────────────────────────────────
+  const sdates = Object.keys(spotByDate).sort();
+  let spotRows = '';
+  if (sdates.length >= 2) {
+    const fp = spotByDate[sdates[0]], lp = spotByDate[sdates[sdates.length-1]];
+    const pct = (lp - fp) / fp * 100;
+    const col = pct >= 0 ? '#22c55e' : '#ff0844';
+    spotRows = `
+      <div class="grid grid-cols-3 gap-4 text-[11px]">
+        <div class="stat-card"><div class="stat-label">Spot Inicial</div><div class="stat-value font-mono">R$ ${fp.toFixed(2)}</div><div class="stat-sub">${fmtDate(sdates[0])}</div></div>
+        <div class="stat-card"><div class="stat-label">Spot Final</div><div class="stat-value font-mono">R$ ${lp.toFixed(2)}</div><div class="stat-sub">${fmtDate(sdates[sdates.length-1])}</div></div>
+        <div class="stat-card"><div class="stat-label">Variação</div><div class="stat-value font-mono" style="color:${col}">${pct>=0?'+':''}${pct.toFixed(2)}%</div><div class="stat-sub">${pct>=0?'+':''}R$ ${(lp-fp).toFixed(2)}</div></div>
+      </div>`;
+  }
+  addBlock(container, 'fa-calendar-week', '#fb1ebb', 'Resumo do Período', spotRows, true);
+
+  // ── 2. Movimento do Flip ─────────────────────────────────────────────────
+  const fm = insights.flip_movement;
+  if (fm) {
+    const col  = fm.direction==='UP' ? '#22c55e' : '#ff0844';
+    const icon = fm.direction==='UP' ? 'fa-arrow-up' : 'fa-arrow-down';
+    const body = `
+      <div class="grid grid-cols-3 gap-4">
+        <div class="stat-card"><div class="stat-label">Flip Inicial</div><div class="stat-value font-mono text-blue-400">R$ ${fm.first_flip.toFixed(2)}</div><div class="stat-sub">${fmtDateLong(fm.first_date)}</div></div>
+        <div class="stat-card"><div class="stat-label">Flip Final</div><div class="stat-value font-mono text-purple-400">R$ ${fm.last_flip.toFixed(2)}</div><div class="stat-sub">${fmtDateLong(fm.last_date)}</div></div>
+        <div class="stat-card"><div class="stat-label">Variação</div><div class="stat-value font-mono" style="color:${col}"><i class="fas ${icon} mr-1"></i>${fm.change_pct>=0?'+':''}${fm.change_pct.toFixed(2)}%</div><div class="stat-sub">R$ ${fm.change_abs>=0?'+':''}${fm.change_abs.toFixed(2)}</div></div>
+      </div>`;
+    addBlock(container, 'fa-arrows-up-down', col, 'Movimento do Gamma Flip', body, true);
+  }
+
+  // ── 3. Regime ────────────────────────────────────────────────────────────
+  const changes = insights.regime_changes || [];
+  const regColor = changes.length===0 ? '#22c55e' : '#f97316';
+  let regBody = `
+    <div class="grid grid-cols-2 gap-4 mb-4">
+      <div class="stat-card"><div class="stat-label">Regime Atual</div>
+        <div class="stat-value text-base mt-1">
+          ${insights.current_regime==='Long Gamma'
+            ? '<span class="regime-badge regime-long"><i class="fas fa-shield-halved"></i> Long Gamma</span>'
+            : '<span class="regime-badge regime-short"><i class="fas fa-bolt-lightning"></i> Short Gamma</span>'}
+        </div>
+        <div class="stat-sub">${insights.days_in_current_regime} sessão(ões) consecutivas</div>
+      </div>
+      <div class="stat-card"><div class="stat-label">Estabilidade</div>
+        <div class="stat-value text-base mt-1" style="color:${regColor}">${changes.length===0 ? 'Estável' : `${changes.length} mudança(s)`}</div>
+      </div>
+    </div>`;
+  if (changes.length > 0) {
+    regBody += `<div class="space-y-2">${changes.map(c=>`
+      <div class="strike-impact flex items-center justify-between">
+        <span class="font-bold font-mono text-[11px]">${fmtDateLong(c.date)}</span>
+        <div class="flex items-center gap-2">
+          ${c.from==='Long Gamma'
+            ? '<span class="regime-badge regime-long" style="padding:3px 8px;font-size:10px"><i class="fas fa-shield-halved"></i> Long γ</span>'
+            : '<span class="regime-badge regime-short" style="padding:3px 8px;font-size:10px"><i class="fas fa-bolt-lightning"></i> Short γ</span>'}
+          <i class="fas fa-arrow-right text-gray-500 text-xs"></i>
+          ${c.to==='Long Gamma'
+            ? '<span class="regime-badge regime-long" style="padding:3px 8px;font-size:10px"><i class="fas fa-shield-halved"></i> Long γ</span>'
+            : '<span class="regime-badge regime-short" style="padding:3px 8px;font-size:10px"><i class="fas fa-bolt-lightning"></i> Short γ</span>'}
+        </div>
+      </div>`).join('')}</div>`;
+  }
+  addBlock(container, 'fa-wave-square', regColor, 'Regime de Mercado', regBody, true);
+
+  // ── 4. Tendência GEX ─────────────────────────────────────────────────────
+  const gc = insights.gex_change;
+  if (gc) {
+    const trendMap = {
+      'INCREASING_LONG':  {label:'Aumentando posição Long γ',  color:'#00f2fe'},
+      'INCREASING_SHORT': {label:'Aumentando posição Short γ', color:'#ff0844'},
+      'DECREASING':       {label:'Reduzindo exposição',         color:'#a1a1aa'}
+    };
+    const t = trendMap[gc.trend] || {label:gc.trend,color:'#a1a1aa'};
+    const body = `
+      <div class="grid grid-cols-3 gap-4">
+        <div class="stat-card"><div class="stat-label">GEX Inicial</div><div class="stat-value font-mono text-sm">${fmt(gc.first_gex)}</div></div>
+        <div class="stat-card"><div class="stat-label">GEX Final</div><div class="stat-value font-mono text-sm">${fmt(gc.last_gex)}</div></div>
+        <div class="stat-card"><div class="stat-label">Tendência</div><div class="stat-value text-sm mt-1" style="color:${t.color}">${t.label}</div><div class="stat-sub">Δ ${fmt(gc.change_abs)}</div></div>
+      </div>`;
+    addBlock(container, 'fa-chart-line', t.color, 'Tendência de GEX Descoberto', body, true);
+  }
+
+  // ── 5. Strikes mais impactados ────────────────────────────────────────────
+  const impacts = insights.most_impacted_strikes || [];
+  if (impacts.length > 0) {
+    const body = `<div class="space-y-2">${impacts.map((s,i)=>{
+      const col  = s.direction==='MORE_LONG' ? '#22c55e' : '#ff0844';
+      const icon = s.direction==='MORE_LONG' ? 'fa-arrow-up' : 'fa-arrow-down';
+      return `<div class="strike-impact flex items-center justify-between">
+        <div>
+          <span class="text-base font-black font-mono text-white">R$ ${s.strike.toFixed(2)}</span>
+          <span class="text-[10px] text-gray-500 ml-2">${s.distance_from_spot_pct.toFixed(1)}% do spot avg</span>
+        </div>
+        <div class="text-right">
+          <span class="font-bold text-sm" style="color:${col}"><i class="fas ${icon} mr-1"></i>${fmt(s.change)}</span>
+          <div class="text-[10px] text-gray-500">${s.direction.replace('_',' ')}</div>
+        </div>
+      </div>`;
+    }).join('')}</div>`;
+    addBlock(container, 'fa-bullseye', '#eab308', 'Top 5 Strikes Mais Impactados', body, true);
+  }
+}
+
+function addBlock(container, icon, iconColor, title, bodyHTML, defaultOpen=false) {
+  const id   = 'block_' + Math.random().toString(36).slice(2,8);
+  const div  = document.createElement('div');
+  div.className = 'insight-block';
+  div.innerHTML = `
+    <div class="insight-header" onclick="toggleBlock('${id}')">
+      <div class="flex items-center gap-2.5">
+        <i class="fas ${icon} text-sm" style="color:${iconColor}"></i>
+        <span class="text-xs font-bold uppercase tracking-widest text-gray-300">${title}</span>
+      </div>
+      <i id="icon_${id}" class="fas fa-chevron-down text-gray-500 text-xs transition-transform ${defaultOpen ? 'rotate-180' : ''}"></i>
+    </div>
+    <div id="${id}" class="insight-body${defaultOpen?' open':''} px-4 pb-4 pt-2">${bodyHTML}</div>`;
+  container.appendChild(div);
+}
+function toggleBlock(id) {
+  document.getElementById(id).classList.toggle('open');
+  const icon = document.getElementById('icon_'+id);
+  icon.style.transform = document.getElementById(id).classList.contains('open') ? 'rotate(180deg)' : '';
+}
+
+window.addEventListener('resize', () => {
+  if (currentData) {
+    Plotly.Plots.resize('gexDayChart');
+    Plotly.Plots.resize('flipEvolutionChart');
+  }
+});
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelector('#windowGroup [data-window="ALL"]').classList.add('active-neutral');
+  showStatus('Sistema Histórico GEX carregado. Digite um ticker para começar.','info');
+});
+</script>
 </body>
 </html>

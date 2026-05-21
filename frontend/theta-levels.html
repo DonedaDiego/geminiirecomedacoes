@@ -5,734 +5,615 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>TEX Analysis - Geminii Tech</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
   <script>
     tailwind.config = {
       theme: {
         extend: {
           colors: {
-            dark: '#000000',
-            light: '#ffffff',
-            subtle: 'rgba(255,255,255,0.1)',
-            geminii: '#fb1ebb'
+            dark: '#030303',
+            geminii: '#fb1ebb',
+            tHigh: '#dc2626',
+            tLow:  '#eab308'
           },
-          fontFamily: {
-            sans: ['Inter', 'sans-serif']
-          }
+          fontFamily: { sans: ['Inter', 'sans-serif'] }
         }
       }
     }
   </script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  
+
   <style>
-    body { 
-      font-family: 'Inter', sans-serif; 
-      background: linear-gradient(135deg, #0c0c0c 0%, #1a1a1a 100%);
-      min-height: 100vh;
+    body {
+      font-family: 'Inter', sans-serif;
+      background: radial-gradient(circle at 50% 0%, #0d0614 0%, #030305 70%);
+      min-height: 100vh; color: #f4f4f5; overflow-x: hidden;
     }
-    
-    .tex-card {
-      background: rgba(255, 255, 255, 0.08);
-      backdrop-filter: blur(20px);
-      border: 1px solid rgba(255, 255, 255, 0.2);
+    .gex-card {
+      background: rgba(10,10,16,0.6);
+      backdrop-filter: blur(16px) saturate(180%);
+      -webkit-backdrop-filter: blur(16px) saturate(180%);
+      border: 1px solid rgba(255,255,255,0.05);
       border-radius: 16px;
-      transition: all 0.3s ease;
+      box-shadow: 0 8px 32px 0 rgba(0,0,0,0.37);
     }
-    
-    .tex-card:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 20px 40px rgba(186, 57, 175, 0.15);
-      border-color: rgba(186, 57, 175, 0.3);
+    .pill-group {
+      display:flex; gap:4px;
+      background:rgba(255,255,255,0.03);
+      padding:4px; border-radius:12px;
+      border:1px solid rgba(255,255,255,0.05);
     }
-    
-    .spinner {
-      border: 2px solid rgba(255, 255, 255, 0.1);
-      border-radius: 50%;
-      border-top: 2px solid #fb1ebb;
-      width: 20px;
-      height: 20px;
-      animation: spin 1s linear infinite;
-      display: inline-block;
+    .pill {
+      padding:8px 16px; border-radius:8px;
+      font-size:11px; font-weight:700; letter-spacing:.05em;
+      cursor:pointer; border:none; background:transparent;
+      color:#71717a; transition:all 0.3s cubic-bezier(0.25,0.8,0.25,1);
+      text-transform:uppercase;
     }
-    
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
+    .pill:hover { color:#f4f4f5; background:rgba(255,255,255,0.02); }
+    .pill.active {
+      background:linear-gradient(135deg,#fb1ebb 0%,#a855f7 100%);
+      color:#fff; box-shadow:0 4px 20px rgba(251,30,187,0.4);
     }
-
-    .chart-container {
-      height: 1200px;
-      background: transparent;
-      border-radius: 12px;
-      padding: 20px;
-      border: 1px solid rgba(255, 255, 255, 0.1);
+    .pill.active-neutral {
+      background:rgba(255,255,255,0.1); color:#fff;
+      box-shadow:inset 0 1px 0 rgba(255,255,255,0.1);
     }
-
-    .metric-card {
-      background: rgba(255, 255, 255, 0.05);
-      border-radius: 12px;
-      padding: 20px;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      transition: all 0.3s ease;
+    #tickerInput {
+      background:rgba(255,255,255,0.03);
+      border:1px solid rgba(255,255,255,0.08);
+      color:#fff; border-radius:12px;
+      padding:12px 18px; font-size:15px; font-weight:800;
+      letter-spacing:.08em; text-transform:uppercase;
+      outline:none; width:150px; transition:all 0.25s ease;
     }
-
-    .metric-card:hover {
-      background: rgba(255, 255, 255, 0.08);
-      border-color: rgba(186, 57, 175, 0.3);
-    }
-
-    .explanation-card {
-      background: linear-gradient(135deg, rgba(186, 57, 175, 0.1) 0%, rgba(147, 51, 234, 0.1) 100%);
-      border: 1px solid rgba(186, 57, 175, 0.3);
-    }
-
-    .loading {
-      opacity: 0.6;
-      pointer-events: none;
-    }
-
+    #tickerInput:focus { border-color:#fb1ebb; background:rgba(251,30,187,0.03); box-shadow:0 0 25px rgba(251,30,187,0.2); }
+    #tickerInput::placeholder { color:#4b5563; font-weight:500; }
     #expirationSelect {
-      background-color: rgba(30, 30, 30, 0.9);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      color: white;
-      backdrop-filter: blur(10px);
+      background:rgba(10,10,16,0.9);
+      border:1px solid rgba(255,255,255,0.08);
+      color:#e4e4e7; border-radius:12px;
+      padding:12px 18px; font-size:13px; font-weight:600;
+      outline:none; cursor:pointer; transition:all 0.25s ease;
     }
+    #expirationSelect:focus { border-color:#fb1ebb; box-shadow:0 0 25px rgba(251,30,187,0.1); }
+    #expirationSelect option { background:#0a0a10; color:#e4e4e7; }
+    .btn-run {
+      background:linear-gradient(135deg,#fb1ebb 0%,#ff007a 100%);
+      border:none; border-radius:12px; padding:12px 28px;
+      font-size:13px; font-weight:800; color:#fff; cursor:pointer;
+      text-transform:uppercase; letter-spacing:.06em;
+      position:relative; overflow:hidden; transition:all 0.3s ease;
+      box-shadow:0 4px 24px rgba(251,30,187,0.4);
+    }
+    .btn-run:hover { transform:translateY(-2px); box-shadow:0 6px 30px rgba(251,30,187,0.6); }
+    .btn-run::after {
+      content:''; position:absolute;
+      top:-50%; left:-60%; width:30%; height:200%;
+      background:linear-gradient(to right,rgba(255,255,255,0) 0%,rgba(255,255,255,0.3) 50%,rgba(255,255,255,0) 100%);
+      transform:rotate(25deg); animation:sheen 4s infinite linear;
+    }
+    @keyframes sheen { 0%{left:-60%;} 15%{left:140%;} 100%{left:140%;} }
+    .btn-run:active { transform:translateY(1px); }
+    .btn-run:disabled { opacity:.4; cursor:not-allowed; transform:none; }
+    .btn-secondary {
+      background:rgba(255,255,255,0.03);
+      border:1px solid rgba(255,255,255,0.08);
+      border-radius:12px; padding:12px 20px;
+      font-size:13px; font-weight:600; color:#d4d4d8;
+      cursor:pointer; transition:all 0.2s;
+    }
+    .btn-secondary:hover { background:rgba(255,255,255,0.08); color:#fff; border-color:rgba(255,255,255,0.2); }
 
-    #expirationSelect option {
-      background-color: #1a1a1a;
-      color: white;
-      padding: 8px;
+    /* Badges TEX — vermelho alto decaimento, amarelo moderado, verde baixo */
+    .regime-badge {
+      display:inline-flex; align-items:center; gap:8px;
+      padding:8px 16px; border-radius:8px;
+      font-size:11px; font-weight:900; text-transform:uppercase; letter-spacing:.08em;
     }
+    .regime-high     { background:rgba(220,38,38,0.08);  border:1px solid rgba(220,38,38,0.3);  color:#dc2626; box-shadow:0 0 15px rgba(220,38,38,0.1); }
+    .regime-moderate { background:rgba(234,179,8,0.08);  border:1px solid rgba(234,179,8,0.3);  color:#eab308; box-shadow:0 0 15px rgba(234,179,8,0.1); }
+    .regime-low      { background:rgba(34,197,94,0.08);  border:1px solid rgba(34,197,94,0.3);  color:#22c55e; box-shadow:0 0 15px rgba(34,197,94,0.1); }
 
-    #expirationSelect option:disabled {
-      color: #666;
-      background-color: #2a2a2a;
+    .stat-card {
+      background:rgba(20,20,30,0.4);
+      border:1px solid rgba(255,255,255,0.03);
+      border-radius:12px; padding:16px; position:relative;
     }
+    .stat-card::before {
+      content:''; position:absolute; top:0; left:0; width:100%; height:100%;
+      border-radius:12px; pointer-events:none;
+      box-shadow:inset 0 1px 0 rgba(255,255,255,0.05);
+    }
+    .stat-label { font-size:10px; font-weight:700; letter-spacing:.1em; color:#52525b; text-transform:uppercase; margin-bottom:8px; }
+    .stat-value { font-size:24px; font-weight:800; color:#ffffff; letter-spacing:-0.03em; }
+    .stat-sub   { font-size:11px; color:#a1a1aa; margin-top:4px; font-weight:500; font-family:monospace; }
 
-    #expirationSelect:focus {
-      outline: none;
-      border-color: #fb1ebb;
-      box-shadow: 0 0 0 2px rgba(186, 57, 175, 0.2);
+    .glow-orb {
+      position:absolute; width:400px; height:400px;
+      background:radial-gradient(circle,rgba(251,30,187,0.06) 0%,transparent 70%);
+      top:-150px; left:50%; transform:translateX(-50%); z-index:0; pointer-events:none;
     }
+    .spinner {
+      border:2px solid rgba(255,255,255,0.1); border-top:2px solid #fff;
+      border-radius:50%; width:16px; height:16px;
+      animation:spin 0.8s linear infinite; display:inline-block;
+    }
+    @keyframes spin { to{transform:rotate(360deg);} }
 
-    #texTotal, #texDescoberto, #maxBleedStrike, #weightedDays {
-      color: #ffffff;
-      font-size: 1.875rem;
-      font-weight: 900;
-    }
+    @media (min-width:1024px) { #layout{display:grid;grid-template-columns:1fr 320px;gap:24px;} }
+    .dot { width:6px; height:6px; border-radius:50%; display:inline-block; margin-right:8px; }
 
-    #weightedDays {
-      color: #f97316;
-      font-size: 1.875rem;
-      font-weight: 900;
-    }
+    .expander-header { cursor:pointer; transition:background-color 0.2s,border-color 0.2s; }
+    .expander-header:hover { background-color:rgba(255,255,255,0.02); border-color:rgba(251,30,187,0.2); }
+    .expander-content { max-height:0; overflow:hidden; transition:max-height 0.3s cubic-bezier(0.4,0,0.2,1),padding 0.3s ease; }
+    .expander-content.open { max-height:600px; }
+    .expander-icon { transition:transform 0.3s ease; }
+    .expander-icon.rotate { transform:rotate(180deg); color:#fb1ebb; }
   </style>
 </head>
 
-<body class="text-white">
-  
-  <!-- Navbar -->
-  <nav class="fixed top-6 left-1/2 transform -translate-x-1/2 z-50 bg-opacity-5 border-opacity-10 bg-white border-white border rounded-full px-4 py-3 shadow-xl backdrop-blur-md">
-    <div class="flex items-center justify-between">
-      <div class="flex items-center">
-        <a href="/dashboard.html">
-          <img src="logo.png" alt="Geminii Logo" class="w-6 h-6 cursor-pointer">
-        </a>       
+<body class="antialiased">
+  <div class="glow-orb"></div>
 
-      </div>
-      <div class="hidden md:flex items-center space-x-6 text-xs text-gray-300 ml-8">
-        <span class="text-white font-medium">Theta Exposure</span>
-        <a href="gamma-levels.html" class="hover:text-white transition-colors">Gamma Exposure</a>
-        <a href="vega-levels.html" class="hover:text-white transition-colors">Vega Exposure</a>
-        <a href="delta-levels.html" class="hover:text-white transition-colors">Delta Exposure</a>
-        <a href="historical-levels.html" class="hover:text-white transition-colors">Análise Histórica</a>
-      </div>
-      <div class="flex items-center space-x-3 ml-8">
-        <div class="w-8 h-8 bg-green-500 bg-opacity-10 border border-green-500 border-opacity-30 rounded-full flex items-center justify-center relative">
-          <i class="fas fa-chart-line text-green-500 text-xs"></i>
-          <div class="absolute -top-1 -right-1 w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+  <!-- Navbar -->
+  <nav class="fixed top-0 left-0 w-full z-50 bg-[#030305]/60 backdrop-blur-xl border-b border-white/[0.04] px-8 py-4">
+    <div class="max-w-screen-2xl mx-auto flex items-center justify-between">
+      <div class="flex items-center space-x-12">
+        <a href="/dashboard.html" class="flex items-center gap-3 group">
+          <img src="logo.png" alt="Geminii" class="w-6 h-6">
+          <span class="text-sm font-black tracking-widest text-white group-hover:text-geminii transition-colors">GEMINII<span class="text-geminii"> TECH</span></span>
+        </a>
+        <div class="hidden lg:flex items-center space-x-8 text-xs font-bold uppercase tracking-wider text-gray-400">
+          <a href="gamma-levels.html"      class="hover:text-white transition-colors pb-5 pt-1">Gamma Exposure</a>
+          <a href="delta-levels.html"      class="hover:text-white transition-colors pb-5 pt-1">Delta Exposure</a>
+          <a href="vega-levels.html"       class="hover:text-white transition-colors pb-5 pt-1">Vega Exposure</a>
+          <span class="text-white border-b-2 border-geminii pb-5 pt-1">Theta Exposure</span>
+          <a href="historical-levels.html" class="hover:text-white transition-colors pb-5 pt-1">Análise Histórica</a>
         </div>
       </div>
     </div>
   </nav>
 
-  <!-- Content -->
-  <div class="pt-32 pb-16">
-    <div class="max-w-7xl mx-auto px-6">
-      
-      <!-- Header -->
-      <div class="text-center mb-12">
-        <h1 class="text-4xl md:text-5xl font-bold mb-4">
-          <span style="color: #fb1ebb; font-weight: 900;">Theta</span>
-          <span class="text-white font-light">Exposure</span>
-        </h1>
-        <p class="text-neutral-300 text-lg max-w-3xl mx-auto">
-          Análise completa de Theta Exposure usando dados reais. Mede o impacto da passagem do tempo e identifica sangramento diário das posições de opções.
-        </p>
-        
-        <!-- Info Expander -->
-        <div class="mt-8">
-          <button onclick="toggleInfo()" class="bg-gradient-to-r from-geminii to-purple-600 hover:from-purple-600 hover:to-geminii text-white px-6 py-3 rounded-full font-semibold text-sm transition-all duration-300 flex items-center mx-auto shadow-lg hover:shadow-xl transform hover:scale-105">
-            <i id="infoIcon" class="fas fa-info-circle mr-2 transition-transform duration-300"></i>
-            Como Funciona a Análise TEX
-          </button>
-          
-          <div id="infoContent" class="hidden mt-8 max-w-6xl mx-auto">
-            <div class="tex-card p-8 text-left">
-              
-              <!-- Explicação Geral -->
-              <div class="mb-8 text-center">
-                <h3 class="text-2xl font-bold text-white mb-4">O que é Theta Exposure (TEX)</h3>
-                <p class="text-gray-300 text-sm leading-relaxed max-w-4xl mx-auto">
-                  O TEX mede <strong>quanto dinheiro os market makers ganham ou perdem por dia</strong> devido ao decaimento temporal das opções. Theta sempre trabalha contra quem compra opções e a favor de quem vende. É o "aluguel" que se paga por ter uma opção.
-                </p>
-              </div>
+  <div class="pt-28 pb-16 max-w-screen-2xl mx-auto px-6 relative z-10">
 
-              <div class="mb-8 p-6 bg-gray-800/50 rounded-lg">
-                <h4 class="text-xl font-bold text-white mb-4 text-center">Mecânica do Theta</h4>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
-                  <div>
-                    <h5 class="font-bold text-green-400 mb-2">TEX Positivo (+)</h5>
-                    <p class="text-gray-300 leading-relaxed">
-                      Market makers <strong>ganham dinheiro</strong> com a passagem do tempo:
-                      <br>• Venderam opções (coletam theta)
-                      <br>• Cada dia que passa = lucro automático
-                      <br>• Tempo é o melhor amigo dos vendedores
-                    </p>
-                  </div>
-                  <div>
-                    <h5 class="font-bold text-red-400 mb-2">TEX Negativo (-)</h5>
-                    <p class="text-gray-300 leading-relaxed">
-                      Market makers <strong>perdem dinheiro</strong> com a passagem do tempo:
-                      <br>• Compraram opções (pagam theta)
-                      <br>• Cada dia que passa = sangramento automático  
-                      <br>• Tempo é o pior inimigo dos compradores
-                    </p>
-                  </div>
-                </div>
-              </div>
-        
-              <!-- Fórmula -->
-              <div class="mb-8 p-6 bg-red-900/30 rounded-lg border border-red-500/20">
-                <h4 class="text-xl font-bold text-red-400 mb-4 text-center">Cálculo do TEX</h4>
-                <p class="text-gray-300 text-sm leading-relaxed text-center max-w-4xl mx-auto">
-                  <strong>TEX = Open Interest × Theta × 100</strong>
-                  <br><br>
-                  Exemplo: Strike 30 com 50.000 calls compradas (Theta -0.05)<br>
-                  TEX = 50.000 × (-0.05) × 100 = <strong class="text-red-400">-250.000</strong><br>
-                  <em>MMs perdem R$ 250k por dia nesse strike pelo decaimento</em>
-                </p>
-              </div>
-        
-              <!-- Grid dos 6 Gráficos -->
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                
-                <!-- Gráfico 1 -->
-                <div class="explanation-card rounded-lg p-6">
-                  <h4 class="text-lg font-bold text-white mb-3 flex items-center">
-                    <span class="w-8 h-8 bg-red-600 rounded-full flex items-center justify-center text-white text-sm font-bold mr-3">1</span>
-                    Total TEX por Strike (Sangramento)
-                  </h4>
-                  <p class="text-gray-300 text-sm leading-relaxed">
-                    Mostra quanto cada strike ganha/perde por dia devido ao theta. <strong class="text-red-400">Barras vermelhas para baixo</strong> = sangramento (theta negativo).
-                    <br><br>
-                    <strong>Altura da barra</strong> = R$ perdidos/ganhos por dia naquele strike
-                  </p>
-                </div>
-        
-                <!-- Gráfico 2 -->
-                <div class="explanation-card rounded-lg p-6 border-2 border-red-500/50">
-                  <h4 class="text-lg font-bold text-white mb-3 flex items-center">
-                    <span class="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center text-white text-sm font-bold mr-3">2</span>
-                    TEX Descoberto (Risco Temporal)
-                  </h4>
-                  <p class="text-gray-300 text-sm leading-relaxed">
-                    <strong class="text-red-400">O mais importante!</strong> Mostra apenas o sangramento real das posições descobertas.
-                    <br><br>
-                    Remove hedge natural e revela onde o <strong>tempo realmente corrói valor</strong> todos os dias
-                  </p>
-                </div>
-        
-                <!-- Gráfico 3 -->
-                <div class="explanation-card rounded-lg p-6">
-                  <h4 class="text-lg font-bold text-white mb-3 flex items-center">
-                    <span class="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center text-white text-sm font-bold mr-3">3</span>
-                    Pressão Temporal Concentrada (%)
-                  </h4>
-                  <p class="text-gray-300 text-sm leading-relaxed">
-                    Concentração percentual do risco theta por strike. <strong class="text-orange-400">Barras altas</strong> = maior concentração de sangramento temporal.
-                    <br><br>
-                    Pelos gráficos: <strong>máxima concentração no strike 30-31</strong> (≈10% do sangramento total)
-                  </p>
-                </div>
-        
-                <!-- Gráfico 4 -->
-                <div class="explanation-card rounded-lg p-6">
-                  <h4 class="text-lg font-bold text-white mb-3 flex items-center">
-                    <span class="w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center text-white text-sm font-bold mr-3">4</span>
-                    Calls vs Puts TEX
-                  </h4>
-                  <p class="text-gray-300 text-sm leading-relaxed">
-                    Separação do TEX por tipo de opção para análise de distribuição:
-                    <br>
-                    <strong class="text-green-400">Calls (verde):</strong> Theta exposure das opções de compra
-                    <br>
-                    <strong class="text-red-400">Puts (vermelho):</strong> Theta exposure das opções de venda
-                    <br><br>
-                    <em>Mostra qual tipo contribui mais para o sangramento temporal</em>
-                  </p>
-                </div>
-        
-                <!-- Gráfico 5 - DESTAQUE ESPECIAL -->
-                <div class="explanation-card rounded-lg p-6 border-2 border-cyan-500/50">
-                  <h4 class="text-lg font-bold text-white mb-3 flex items-center">
-                    <span class="w-8 h-8 bg-cyan-500 rounded-full flex items-center justify-center text-white text-sm font-bold mr-3">5</span>
-                    TEX Cumulativo - A Cascata do Tempo
-                  </h4>
-                  <p class="text-gray-300 text-sm leading-relaxed">
-                    <strong class="text-cyan-400">Mostra o sangramento acumulado!</strong> Preenchimento vermelho revela:
-                    <br><br>
-                    <strong>Descida abrupta:</strong> Concentração de sangramento entre strikes 30-32
-                    <br>
-                    <strong>Platô:</strong> Após strike 35, pouco sangramento adicional
-                    <br>
-                    <strong>Vale profundo:</strong> Máxima perda temporal concentrada
-                    <br><br>
-                    <em class="text-cyan-300">Cada dia que passa sem movimento corrói valor nessa região</em>
-                  </p>
-                </div>
-        
-                <!-- Gráfico 6 -->
-                <div class="explanation-card rounded-lg p-6">
-                  <h4 class="text-lg font-bold text-white mb-3 flex items-center">
-                    <span class="w-8 h-8 bg-amber-500 rounded-full flex items-center justify-center text-white text-sm font-bold mr-3">6</span>
-                    Velocidade de Sangramento (R$/dia)
-                  </h4>
-                  <p class="text-gray-300 text-sm leading-relaxed">
-                    Mostra exatamente <strong>quantos reais por dia</strong> estão sendo perdidos por strike:
-                    <br><br>
-                    <strong>Picos vermelhos:</strong> Strikes com maior sangramento diário
-                    <br>
-                    <strong>Concentração 30-31:</strong> Máximo sangramento (40-60M/dia)
-                    <br>
-                    <strong>Zonas seguras:</strong> Strikes com baixo decaimento temporal
-                  </p>
-                </div>
-                
-              </div>
-        
-              <!-- Seção Prática -->
-              <div class="mt-8 p-6 bg-gradient-to-r from-red-900/30 to-amber-900/30 rounded-lg">
-                <h4 class="text-xl font-bold text-white mb-4 text-center">Interpretação Prática do TEX</h4>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
-                  <div>
-                    <h5 class="font-bold text-green-400 mb-3">Alto TEX Positivo</h5>
-                    <div class="space-y-2 text-gray-300">
-                      <p>• <strong>MMs coletam theta:</strong> Venderam muitas opções</p>
-                      <p>• <strong>Tempo a favor:</strong> Cada dia = lucro automático</p>
-                      <p>• <strong>Estratégia:</strong> Mercado lateral favorece vendedores</p>
-                      <p>• <strong>Cuidado:</strong> Movimentos grandes podem apagar dias de lucro</p>
-                    </div>
-                  </div>
-                  <div>
-                    <h5 class="font-bold text-red-400 mb-3">Alto TEX Negativo</h5>
-                    <div class="space-y-2 text-gray-300">
-                      <p>• <strong>MMs pagam theta:</strong> Compraram muitas opções</p>
-                      <p>• <strong>Tempo contra:</strong> Cada dia = sangramento automático</p>
-                      <p>• <strong>Pressão:</strong> Precisam de movimento para compensar</p>
-                      <p>• <strong>Urgência:</strong> Quanto mais próximo do vencimento, pior</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              
+    <!-- Expander TEX -->
+    <div class="gex-card mb-6 overflow-hidden border-geminii/10">
+      <div id="texExpanderHeader" class="expander-header p-4 flex items-center justify-between text-xs font-bold uppercase tracking-wider text-gray-300">
+        <div class="flex items-center gap-2.5">
+          <i class="fas fa-circle-info text-geminii text-sm"></i>
+          <span>O que é TEX (Theta Exposure) e como interpretar a ferramenta?</span>
+        </div>
+        <i id="expanderIcon" class="fas fa-chevron-down expander-icon text-gray-500 text-xs mr-1"></i>
+      </div>
+      <div id="texExpanderContent" class="expander-content border-t border-white/[0.02]">
+        <div class="p-5 text-xs text-gray-400 leading-relaxed space-y-4">
 
-              <!-- Pontos-Chave -->
-              <div class="mt-8 pt-6 border-t border-white/10">
-                <h4 class="text-geminii font-bold text-lg mb-4 text-center">Pontos-Chave da Análise TEX</h4>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-sm">
-                  <div class="text-center">
-                    <div class="w-12 h-12 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-3">
-                      <i class="fas fa-tint text-red-400"></i>
-                    </div>
-                    <h5 class="font-bold text-white mb-2">Sangramento Diário</h5>
-                    <p class="text-gray-400">TEX mostra quantos reais são perdidos/ganhos por dia com decaimento temporal.</p>
-                  </div>
-                  <div class="text-center">
-                    <div class="w-12 h-12 bg-cyan-500/20 rounded-full flex items-center justify-center mx-auto mb-3">
-                      <i class="fas fa-chart-area text-cyan-400"></i>
-                    </div>
-                    <h5 class="font-bold text-white mb-2">Cascata Cumulativa</h5>
-                    <p class="text-gray-400">Cumulativo revela onde tempo concentra máximo impacto no valor das posições.</p>
-                  </div>
-                  <div class="text-center">
-                    <div class="w-12 h-12 bg-amber-500/20 rounded-full flex items-center justify-center mx-auto mb-3">
-                      <i class="fas fa-clock text-amber-400"></i>
-                    </div>
-                    <h5 class="font-bold text-white mb-2">Pressão Temporal</h5>
-                    <p class="text-gray-400">Descobertos mostram onde tempo realmente corrói valor sem hedge natural.</p>
-                  </div>
-                </div>
+          <p>
+            O <strong>TEX (Theta Exposure)</strong> mede o <em>sangramento temporal agregado</em> das posições em opções — quanto valor é destruído diariamente pelo decaimento do tempo em cada strike. Representa o fluxo diário de transferência de riqueza de compradores para vendedores de opções.
+          </p>
+          <p>
+            O theta é sempre negativo para compradores e positivo para vendedores. O TEX revela onde está concentrado esse sangramento, permitindo identificar strikes com alta pressão temporal e o impacto potencial do time decay no comportamento do ativo subjacente.
+          </p>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+            <div class="p-4 bg-red-500/[0.03] border border-red-500/10 rounded-xl">
+              <span class="font-bold text-[#dc2626] uppercase block mb-2 tracking-wide">Alta Pressão Temporal (Short)</span>
+              <div class="space-y-2 text-[11px] leading-relaxed">
+                <p><strong class="text-gray-200">Características:</strong> Grande concentração de theta negativo — compradores sofrendo sangramento intenso.</p>
+                <p><strong class="text-gray-200">Dinâmica:</strong> Próximo ao vencimento, o decaimento acelera exponencialmente (efeito gamma-theta).</p>
+                <p><strong class="text-gray-200">Efeito:</strong> Pressão para liquidação antecipada de posições, reduzindo OI e volatilidade.</p>
+              </div>
+            </div>
+            <div class="p-4 bg-yellow-500/[0.03] border border-yellow-500/10 rounded-xl">
+              <span class="font-bold text-[#eab308] uppercase block mb-2 tracking-wide">Baixa Pressão Temporal (Long)</span>
+              <div class="space-y-2 text-[11px] leading-relaxed">
+                <p><strong class="text-gray-200">Características:</strong> Theta distribuído de forma equilibrada ou concentrado em vencimentos distantes.</p>
+                <p><strong class="text-gray-200">Dinâmica:</strong> Menor urgência de rebalanceamento — posições têm tempo para se desenvolver.</p>
+                <p><strong class="text-gray-200">Efeito:</strong> Mercado pode sustentar tendências sem pressão de liquidação por tempo.</p>
               </div>
             </div>
           </div>
+
+          <div class="pt-2 border-t border-white/[0.03]">
+            <div class="mb-3">
+              <span class="font-bold text-white uppercase tracking-wide text-[11px]">Fórmula e interpretação prática</span>
+              <p class="mt-1 text-[11px] text-gray-500 leading-relaxed">
+                TEX = OI × Theta × 100. O <strong class="text-gray-300">TEX Cumulativo</strong> acumula o sangramento total ao longo dos strikes — uma curva descendente indica que o mercado está drenando valor continuamente dos compradores. O <strong class="text-gray-300">TEX Descoberto</strong> isola posições sem hedge natural, revelando o risco temporal real do sistema.
+              </p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-[11px]">
+              <div class="p-3 rounded-lg bg-white/[0.015] border border-white/[0.04]">
+                <span class="text-gray-200 font-semibold block mb-1">Aceleração próximo ao vencimento</span>
+                O theta decai de forma não-linear — nas últimas 2 semanas antes do vencimento, o sangramento diário pode ser 2-3x maior. O TEX captura esse efeito através do campo de velocidade (sangramento R$/dia).
+              </div>
+              <div class="p-3 rounded-lg bg-white/[0.015] border border-white/[0.04]">
+                <span class="text-gray-200 font-semibold block mb-1">TEX vs GEX e VEX</span>
+                Enquanto GEX define o regime de hedge e VEX mede o risco de volatilidade, o TEX revela a <em>urgência temporal</em> do sistema — um TEX alto + GEX positivo sugere mercado estável com compressão de prêmios acelerada.
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- Controles -->
+    <div class="gex-card p-4 mb-6 flex flex-col lg:flex-row gap-4 items-stretch lg:items-center justify-between">
+      <div class="flex flex-wrap items-center gap-3">
+        <div class="relative flex-1 sm:flex-initial">
+          <i class="fas fa-terminal absolute left-4 top-4 text-gray-600 text-xs"></i>
+          <input id="tickerInput" type="text" placeholder="PETR4" maxlength="8" class="pl-10 w-full sm:w-auto">
+        </div>
+        <button class="btn-secondary" id="loadExpirationsBtn">
+          <i class="fas fa-search-dollar mr-2 text-geminii"></i> Buscar Vencimentos
+        </button>
+        <select id="expirationSelect" class="flex-1 sm:flex-initial min-w-[240px]">
+          <option value="">Vencimento mais próximo</option>
+        </select>
+      </div>
+      <div class="flex flex-wrap items-center justify-end gap-4">
+        <div class="pill-group" id="windowGroup">
+          <button class="pill active-neutral" data-window="ALL">TODOS OS CONTRATOS</button>
+          <button class="pill" data-window="SEMANAL">Semanal</button>
+          <button class="pill" data-window="MENSAL">Mensal</button>
+        </div>
+        <button class="btn-run" id="analyzeBtn">
+          <i class="fas fa-bolt mr-2"></i> Executar TEX
+        </button>
+      </div>
+    </div>
+
+    <div id="statusMsg" class="hidden mb-6 text-xs font-mono p-4 rounded-xl border"></div>
+
+    <!-- Resultados -->
+    <div id="resultsSection" class="hidden">
+
+      <!-- Barra de contexto -->
+      <div class="flex flex-wrap gap-4 items-center mb-6 bg-white/[0.01] p-4 rounded-xl border border-white/[0.03]">
+        <div id="regimeIndicator" class="regime-badge">--</div>
+        <div class="text-[11px] text-gray-500 uppercase font-semibold tracking-wider">
+          Vencimento: <span id="expirationLabel" class="text-white font-mono font-bold ml-1">--</span>
+        </div>
+        <div class="text-[11px] text-gray-500 uppercase font-semibold tracking-wider sm:border-l sm:border-white/[0.05] sm:pl-4">
+          Dias para Exp: <span id="daysLabel" class="text-white font-bold ml-1">--</span>
+        </div>
+        <div class="text-[11px] text-gray-500 uppercase font-semibold tracking-wider sm:border-l sm:border-white/[0.05] sm:pl-4">
+          Contratos Derivativos: <span id="strikesLabel" class="text-white font-mono font-bold ml-1">--</span>
         </div>
       </div>
 
-      <!-- Controles -->
-      <div class="tex-card p-6 mb-8">
-        <div class="flex flex-col md:flex-row gap-4 items-center justify-center">
-          <input 
-            id="tickerInput" 
-            type="text" 
-            placeholder="Digite o código da ação (ex: PETR4)" 
-            class="px-4 py-2 bg-white bg-opacity-10 border border-white border-opacity-20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-geminii backdrop-blur-sm"
-          >
-          <select 
-            id="expirationSelect" 
-            class="px-4 py-2 rounded-lg focus:outline-none focus:border-geminii backdrop-blur-sm"
-          >
-            <option value="">Vencimento Automático</option>
-          </select>
-          <button 
-            id="loadExpirationsBtn" 
-            class="px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:shadow-lg rounded-lg transition-all font-medium"
-          >
-            <i class="fas fa-calendar mr-2"></i>Carregar Vencimentos
-          </button>
-          <button 
-            id="analyzeBtn" 
-            class="px-6 py-2 bg-gradient-to-r from-geminii to-purple-600 hover:shadow-lg rounded-lg transition-all font-medium"
-          >
-            <i class="fas fa-rocket mr-2"></i>Executar TEX
-          </button>
+      <div id="layout">
+
+        <div class="flex flex-col gap-6">
+
+          <!-- Gráfico principal com pill modes -->
+          <div class="bg-white/[0.01] border border-white/[0.04] p-5 rounded-2xl">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-white/[0.04]">
+              <span class="text-xs font-bold text-gray-300 uppercase tracking-widest flex items-center gap-2">
+                <i class="fas fa-chart-bar text-geminii"></i> Distribuição Theta por Strike
+              </span>
+              <div class="pill-group" id="modeGroup">
+                <button class="pill active" data-mode="net">Exposure Total</button>
+                <button class="pill" data-mode="descoberto">TEX Descoberto</button>
+                <button class="pill" data-mode="call_put">Call / Put</button>
+                <button class="pill" data-mode="oi">Open Interest</button>
+              </div>
+            </div>
+            <div id="chartWrap" class="p-2">
+              <div id="texChart" style="width:100%; height:520px;"></div>
+            </div>
+          </div>
+
+          <!-- TEX Cumulativo — sangramento acumulado faz sentido para theta -->
+          <div id="cumChartWrap" class="bg-white/[0.01] border border-white/[0.04] rounded-2xl p-5">
+            <div class="text-xs font-bold text-gray-300 uppercase tracking-widest mb-4 flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.5)]"></span>
+              Sangramento Temporal Acumulado · TEX Cumulativo por Strike
+            </div>
+            <div id="cumChart" style="width:100%; height:520px;"></div>
+          </div>
+
+        </div>
+
+        <!-- Sidebar -->
+        <div id="sidebar" class="flex flex-col gap-5 mt-6 lg:mt-0 justify-between">
+
+          <div class="gex-card p-5 flex-1">
+            <div class="text-xs font-black text-gray-400 uppercase tracking-widest mb-4 pb-2 border-b border-white/[0.04]">Níveis Estruturais</div>
+            <div class="grid grid-cols-1 gap-3.5">
+
+              <div class="stat-card">
+                <div class="stat-label">Último Spot</div>
+                <div class="stat-value font-mono text-white" id="spotPrice">--</div>
+              </div>
+
+              <div class="stat-card border-red-500/20 bg-red-500/[0.02]">
+                <div class="stat-label" style="color:#dc2626;">TEX Total</div>
+                <div class="stat-value font-mono" id="texTotal" style="color:#dc2626; text-shadow:0 0 10px rgba(220,38,38,0.2);">--</div>
+                <div class="stat-sub">sangramento diário total</div>
+              </div>
+
+              <div class="stat-card border-orange-500/20 bg-orange-500/[0.02]">
+                <div class="stat-label" style="color:#f97316;">TEX Descoberto</div>
+                <div class="stat-value font-mono" id="texDescoberto" style="color:#f97316; text-shadow:0 0 10px rgba(249,115,22,0.2);">--</div>
+                <div class="stat-sub">risco temporal real</div>
+              </div>
+
+              <div class="stat-card border-yellow-500/20 bg-yellow-500/[0.02]">
+                <div class="stat-label" style="color:#eab308;">Strike Máx. Bleed</div>
+                <div class="stat-value font-mono text-sm" id="maxBleedStrike" style="color:#eab308;">--</div>
+                <div class="stat-sub" id="thetaRegimeLabel">regime theta</div>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- Legenda -->
+          <div class="gex-card p-5 bg-[#08080d]/90">
+            <div class="text-xs font-black text-gray-400 uppercase tracking-widest mb-4">Mapeamento Técnico</div>
+            <div class="space-y-3 text-xs text-gray-400">
+              <div class="flex items-center gap-1"><span class="dot" style="background:#fff; box-shadow:0 0 6px #fff;"></span> Spot Price</div>
+              <div class="flex items-center gap-1"><span class="dot" style="background:#dc2626; box-shadow:0 0 6px #dc2626;"></span> Alto Sangramento (TEX negativo)</div>
+              <div class="flex items-center gap-1"><span class="dot" style="background:#eab308; box-shadow:0 0 6px #eab308;"></span> Sangramento Moderado</div>
+              <div class="flex items-center gap-1"><span class="dot" style="background:#22c55e; box-shadow:0 0 6px #22c55e;"></span> Baixo Impacto Temporal</div>
+              <div class="flex items-center gap-1"><span class="dot" style="background:#06b6d4; box-shadow:0 0 6px #06b6d4;"></span> TEX Cumulativo</div>
+            </div>
+          </div>
+
         </div>
       </div>
+    </div>
+  </div>
 
-      <!-- Status -->
-      <div id="statusMsg" class="mb-6 p-4 rounded-lg hidden backdrop-blur-sm"></div>
-
-      <!-- Resultados -->
-      <div id="resultsSection" class="hidden">
-        
-        <!-- Métricas Principais -->
-        <div class="tex-card p-6 mb-8">
-          <div class="text-center mb-8">
-            <div id="pressureIndicator" class="inline-block px-8 py-4 rounded-2xl text-2xl font-black">
-              <!-- Preenchido via JS -->
-            </div>
-          </div>
-          
-          <div class="grid grid-cols-2 md:grid-cols-5 gap-6">
-            <div class="metric-card text-center">
-              <div class="text-3xl font-black text-white mb-2" id="spotPrice">--</div>
-              <div class="text-white font-bold">SPOT PRICE</div>
-            </div>
-            
-            <div class="metric-card text-center">
-              <div class="mb-2" id="weightedDays">--</div>
-              <div class="text-white font-bold">DIAS CORRIDOS</div>
-            </div>
-            
-            <div class="metric-card text-center">
-              <div class="mb-2" id="maxBleedStrike">--</div>
-              <div class="text-white font-bold">MAX SANGRAMENTO</div>
-            </div>
-            
-            <div class="metric-card text-center">
-              <div class="mb-2" id="texTotal">--</div>
-              <div class="text-white font-bold">TEX TOTAL</div>
-            </div>
-            
-            <div class="metric-card text-center">
-              <div class="mb-2" id="texDescoberto">--</div>
-              <div class="text-white font-bold">TEX DESCOBERTO</div>
-            </div>
+  <!-- Footer compliance -->
+  <div class="max-w-screen-2xl mx-auto px-6 pb-12 relative z-10">
+    <div class="bg-white/[0.01] border border-white/[0.04] rounded-2xl p-6">
+      <div class="flex items-start gap-4">
+        <i class="fas fa-shield-halved text-gray-600 mt-1 flex-shrink-0 text-base"></i>
+        <div class="w-full">
+          <p class="text-gray-400 font-bold text-xs uppercase tracking-widest mb-2">Termos de Uso e Restrições de Compliance</p>
+          <p class="text-gray-500 text-xs leading-relaxed">
+            As análises quantitativas estruturais geradas por este terminal refletem cenários matemáticos pautados no histórico de posições em aberto de derivativos. <strong>Este módulo não constitui assessoria, recomendação, oferta ou direcionamento de alocação de ativos.</strong> Negociações no mercado de opções envolvem alavancagem intrínseca e riscos de perda total de capital.
+          </p>
+          <div class="flex flex-wrap items-center justify-between gap-4 mt-6 pt-4 border-t border-white/[0.04] text-gray-600 text-[11px] font-mono">
+            <div><strong>Geminii Research Ltda</strong> · CNPJ 60.897.331/0001-06</div>
+            <div>Analista Responsável: Diego Doneda · CNPI 9668</div>
           </div>
         </div>
-
-        <!-- Gráficos TEX -->
-        <div class="tex-card p-6">
-          <h3 class="text-2xl font-bold mb-6 text-center">
-            <i class="fas fa-chart-area mr-3" style="color: #fb1ebb;"></i>
-            Análise TEX Completa
-          </h3>
-          <div class="chart-container">
-            <div id="texChart" style="width: 100%; height: 100%;"></div>
-          </div>
-        </div>
-
       </div>
-
     </div>
   </div>
 
   <script>
-    let userToken = localStorage.getItem('geminii_token');
-    
-    if (!userToken) {
-      window.location.href = '/login.html';
-    }
+    const userToken = localStorage.getItem('geminii_token');
+    if (!userToken) window.location.href = '/login.html';
 
-    // Elementos DOM
-    const tickerInput = document.getElementById('tickerInput');
-    const expirationSelect = document.getElementById('expirationSelect');
+    let currentData    = null;
+    let currentMode    = 'net';
+    let currentWindow  = 'ALL';
+    let allExpirations = [];
+
+    const tickerInput        = document.getElementById('tickerInput');
+    const expirationSelect   = document.getElementById('expirationSelect');
     const loadExpirationsBtn = document.getElementById('loadExpirationsBtn');
-    const analyzeBtn = document.getElementById('analyzeBtn');
-    const statusMsg = document.getElementById('statusMsg');
-    const resultsSection = document.getElementById('resultsSection');
+    const analyzeBtn         = document.getElementById('analyzeBtn');
+    const statusMsg          = document.getElementById('statusMsg');
+    const resultsSection     = document.getElementById('resultsSection');
 
-    // Funções utilitárias
-    function formatLargeNumber(value) {
-      const absValue = Math.abs(value);
-      if (absValue >= 1000000000) {
-        return (value / 1000000000).toFixed(1) + 'B';
-      } else if (absValue >= 1000000) {
-        return (value / 1000000).toFixed(1) + 'M';
-      } else if (absValue >= 1000) {
-        return (value / 1000).toFixed(1) + 'K';
-      }
-      return value.toFixed(0);
+    document.getElementById('texExpanderHeader').addEventListener('click', () => {
+      document.getElementById('texExpanderContent').classList.toggle('open');
+      document.getElementById('expanderIcon').classList.toggle('rotate');
+    });
+
+    function formatNum(v) {
+      const a = Math.abs(v);
+      if (a >= 1e9) return (v/1e9).toFixed(1)+'B';
+      if (a >= 1e6) return (v/1e6).toFixed(1)+'M';
+      if (a >= 1e3) return (v/1e3).toFixed(1)+'K';
+      return v.toFixed(0);
     }
 
-    function showStatus(message, type = 'info') {
-      const bgClass = type === 'success' ? 'bg-green-600 bg-opacity-20 border-green-500 border-opacity-30' : 
-                     type === 'error' ? 'bg-red-600 bg-opacity-20 border-red-500 border-opacity-30' : 
-                     'bg-blue-600 bg-opacity-20 border-blue-500 border-opacity-30';
-      
-      statusMsg.className = `mb-6 p-4 rounded-lg border backdrop-blur-sm ${bgClass}`;
-      statusMsg.textContent = message;
+    function showStatus(msg, type='info') {
+      const colors = {
+        info:    'background:rgba(59,130,246,.1); border:1px solid rgba(59,130,246,.2); color:#93c5fd;',
+        success: 'background:rgba(234,179,8,.1);  border:1px solid rgba(234,179,8,.2);  color:#eab308;',
+        error:   'background:rgba(255,8,68,.1);   border:1px solid rgba(255,8,68,.2);   color:#ff0844;',
+      };
+      statusMsg.style.cssText = colors[type]||colors.info;
+      statusMsg.textContent   = msg;
       statusMsg.classList.remove('hidden');
-      
-      setTimeout(() => statusMsg.classList.add('hidden'), 5000);
+      setTimeout(()=>statusMsg.classList.add('hidden'),5000);
     }
 
-    function setLoading(button, loading, originalText, loadingText) {
-      if (loading) {
-        button.classList.add('loading');
-        button.innerHTML = `<span class="spinner mr-2"></span>${loadingText}`;
-      } else {
-        button.classList.remove('loading');
-        button.innerHTML = originalText;
-      }
+    function setLoading(btn, loading, idleHTML) {
+      btn.disabled = loading;
+      btn.innerHTML = loading ? '<span class="spinner"></span>' : idleHTML;
     }
 
-    function toggleInfo() {
-      const content = document.getElementById('infoContent');
-      const icon = document.getElementById('infoIcon');
-      
-      if (content.classList.contains('hidden')) {
-        content.classList.remove('hidden');
-        icon.classList.replace('fa-info-circle', 'fa-times');
-      } else {
-        content.classList.add('hidden');
-        icon.classList.replace('fa-times', 'fa-info-circle');
-      }
-    }
-    window.toggleInfo = toggleInfo;
+    document.getElementById('windowGroup').addEventListener('click', e => {
+      const btn = e.target.closest('[data-window]');
+      if (!btn) return;
+      currentWindow = btn.dataset.window;
+      document.querySelectorAll('#windowGroup .pill').forEach(p=>p.classList.remove('active','active-neutral'));
+      btn.classList.add(currentWindow==='ALL'?'active-neutral':'active');
+      filterExpirationSelect();
+    });
 
-    // Carregar vencimentos
+    function filterExpirationSelect() {
+      const prev = expirationSelect.value;
+      expirationSelect.innerHTML = '<option value="">Vencimento mais próximo</option>';
+      allExpirations.forEach(exp => {
+        if (!exp.available) return;
+        if (currentWindow!=='ALL' && exp.window!==currentWindow) return;
+        const opt = document.createElement('option');
+        opt.value       = exp.code;
+        opt.textContent = `${exp.desc} (${exp.data_count} contratos)`;
+        expirationSelect.appendChild(opt);
+      });
+      if (prev && [...expirationSelect.options].some(o=>o.value===prev))
+        expirationSelect.value = prev;
+    }
+
+    loadExpirationsBtn.addEventListener('click', loadExpirations);
+    tickerInput.addEventListener('keypress', e=>{ if(e.key==='Enter') loadExpirations(); });
+
     async function loadExpirations() {
       const ticker = tickerInput.value.trim().toUpperCase();
-      if (!ticker) {
-        showStatus('Digite um ticker primeiro', 'error');
-        return;
-      }
-
-      setLoading(loadExpirationsBtn, true, '<i class="fas fa-calendar mr-2"></i>Carregar Vencimentos', 'Carregando...');
-
+      if (!ticker) { showStatus('Digite um ticker primeiro','error'); return; }
+      setLoading(loadExpirationsBtn, true);
       try {
-        const response = await fetch('/pro/theta/expirations', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${userToken}`
-          },
-          body: JSON.stringify({ ticker })
+        const res  = await fetch('/pro/theta/expirations', {
+          method:'POST',
+          headers:{'Content-Type':'application/json','Authorization':`Bearer ${userToken}`},
+          body:JSON.stringify({ticker})
         });
-
-        const data = await response.json();
-        
-        if (!response.ok) throw new Error(data.error);
-
-        expirationSelect.innerHTML = '<option value="">Vencimento Automático</option>';
-        
-        data.expirations.forEach(exp => {
-          const option = document.createElement('option');
-          option.value = exp.code;
-          option.textContent = `${exp.desc} (${exp.data_count} contratos)`;
-          option.disabled = !exp.available;
-          expirationSelect.appendChild(option);
-        });
-        
-        loadExpirationsBtn.innerHTML = '<i class="fas fa-check mr-2"></i>Vencimentos Carregados';
-        loadExpirationsBtn.classList.remove('from-blue-500', 'to-blue-600');
-        loadExpirationsBtn.classList.add('from-green-500', 'to-green-600');
-        
-        showStatus(`${data.total_available} vencimentos carregados`, 'success');
-
-      } catch (error) {
-        showStatus('Erro: ' + error.message, 'error');
-        loadExpirationsBtn.innerHTML = '<i class="fas fa-calendar mr-2"></i>Carregar Vencimentos';
-      } finally {
-        setLoading(loadExpirationsBtn, false);
-      }
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
+        allExpirations = data.expirations;
+        filterExpirationSelect();
+        loadExpirationsBtn.innerHTML = '<i class="fas fa-check mr-1"></i> Carregados';
+        showStatus(`${data.total_available} vencimentos disponíveis`,'success');
+      } catch(err) {
+        showStatus('Erro: '+err.message,'error');
+        loadExpirationsBtn.innerHTML = '<i class="fas fa-search-dollar mr-2"></i> Buscar Vencimentos';
+      } finally { loadExpirationsBtn.disabled=false; }
     }
 
-    // Executar análise TEX
+    analyzeBtn.addEventListener('click', runTEXAnalysis);
+
     async function runTEXAnalysis() {
       const ticker = tickerInput.value.trim().toUpperCase();
-      if (!ticker) {
-        showStatus('Digite um ticker', 'error');
+      if (!ticker) { showStatus('Digite um ticker','error'); return; }
+      setLoading(analyzeBtn, true);
+      showStatus('Executando análise TEX...','info');
+      try {
+        const body = {ticker, days_back:60};
+        if (expirationSelect.value) body.expiration_code = expirationSelect.value;
+        const res  = await fetch('/pro/theta/analyze', {
+          method:'POST',
+          headers:{'Content-Type':'application/json','Authorization':`Bearer ${userToken}`},
+          body:JSON.stringify(body)
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
+        currentData = data;
+        displayResults(data);
+        showStatus(`TEX de ${ticker} concluído`,'success');
+      } catch(err) {
+        showStatus('Erro: '+err.message,'error');
+      } finally {
+        setLoading(analyzeBtn,false,'<i class="fas fa-bolt mr-1"></i> Executar TEX');
+      }
+    }
+
+    document.getElementById('modeGroup').addEventListener('click', e => {
+      const btn = e.target.closest('[data-mode]');
+      if (!btn||!currentData) return;
+      currentMode = btn.dataset.mode;
+      document.querySelectorAll('#modeGroup .pill').forEach(p=>p.classList.remove('active'));
+      btn.classList.add('active');
+      renderChart(currentMode);
+    });
+
+    function displayResults(data) {
+      const dr = data.decay_regime || {};
+
+      // Badge pressão temporal
+      const regEl    = document.getElementById('regimeIndicator');
+      const pressure = dr.time_pressure || 'LOW';
+      if (pressure === 'HIGH') {
+        regEl.className = 'regime-badge regime-high';
+        regEl.innerHTML = '<i class="fas fa-fire"></i> Pressão Temporal Alta';
+      } else if (pressure === 'MODERATE') {
+        regEl.className = 'regime-badge regime-moderate';
+        regEl.innerHTML = '<i class="fas fa-hourglass-half"></i> Pressão Temporal Moderada';
+      } else {
+        regEl.className = 'regime-badge regime-low';
+        regEl.innerHTML = '<i class="fas fa-leaf"></i> Pressão Temporal Baixa';
+      }
+
+      const dq = data.data_quality || {};
+      document.getElementById('expirationLabel').textContent = dq.expiration || '--';
+      document.getElementById('strikesLabel').textContent    = data.options_count || '--';
+
+      const days = dr.weighted_days || 0;
+      document.getElementById('daysLabel').textContent = days ? `${Math.round(days)} dias` : '--';
+      document.getElementById('spotPrice').textContent  = data.spot_price ? `R$ ${data.spot_price.toFixed(2)}` : '--';
+
+      document.getElementById('texTotal').textContent      = formatNum(dr.total_tex || 0);
+      document.getElementById('texDescoberto').textContent = formatNum(dr.total_tex_descoberto || 0);
+
+      const bleedStrike = dr.max_bleed_strike;
+      document.getElementById('maxBleedStrike').textContent  = bleedStrike ? `R$ ${bleedStrike.toFixed(2)}` : '--';
+      document.getElementById('thetaRegimeLabel').textContent = dr.theta_regime || '--';
+
+      renderChart(currentMode);
+      resultsSection.classList.remove('hidden');
+
+      setTimeout(() => {
+        renderCumChart(data);
+        Plotly.Plots.resize('texChart');
+        Plotly.Plots.resize('cumChart');
+      }, 50);
+    }
+
+    function renderChart(mode) {
+      if (!currentData) return;
+      const plotJson = (currentData.single_charts||{})[mode];
+      if (!plotJson) {
+        document.getElementById('texChart').innerHTML =
+          '<div style="color:#4b5563;padding:40px;text-align:center;font-size:13px;font-weight:500;">Dados estruturais indisponíveis para este modo.</div>';
         return;
       }
-
-      setLoading(analyzeBtn, true, '<i class="fas fa-rocket mr-2"></i>Executar TEX', 'Processando TEX...');
-      showStatus('Executando análise TEX completa...', 'info');
-
       try {
-        const requestBody = { ticker, days_back: 60 };
-        const expiration = expirationSelect.value;
-        if (expiration) requestBody.expiration_code = expiration;
-
-        const response = await fetch('/pro/theta/analyze', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${userToken}`
-          },
-          body: JSON.stringify(requestBody)
+        const fig = JSON.parse(plotJson);
+        fig.layout.height        = 520;
+        fig.layout.paper_bgcolor = 'transparent';
+        fig.layout.plot_bgcolor  = 'transparent';
+        fig.layout.margin        = {l:70,r:20,t:55,b:55};
+        if (!fig.layout.annotations) fig.layout.annotations=[];
+        fig.layout.annotations.push({
+          text:'GEMINII RESEARCH', textangle:0,
+          xref:'paper', yref:'paper', x:0.5, y:0.5,
+          xanchor:'center', yanchor:'middle',
+          font:{family:'Inter, sans-serif',size:32,color:'rgba(255,255,255,0.035)'},
+          showarrow:false, layer:'below'
         });
-
-        const data = await response.json();
-        
-        if (!response.ok) throw new Error(data.error);
-
-        displayResults(data);
-        showStatus(`Análise TEX de ${ticker} concluída`, 'success');
-
-      } catch (error) {
-        showStatus('Erro: ' + error.message, 'error');
-      } finally {
-        setLoading(analyzeBtn, false);
-      }
+        Plotly.react('texChart',fig.data,fig.layout,{responsive:true,displayModeBar:false,displaylogo:false});
+      } catch(err) { console.error('Erro texChart:',err); }
     }
 
-    // Exibir resultados
-    function displayResults(data) {
-      const decay_regime = data.decay_regime || {};
-      
-      // Pressure indicator - usando apenas decay_regime
-      const pressure = decay_regime.time_pressure || 'LOW';
-      let pressureClass = 'bg-gradient-to-r ';
-      let pressureText = pressure;
-      
-      if (pressure === 'HIGH') {
-        pressureClass += 'from-red-400 to-red-600';
-        pressureText = 'Alta Pressão';
-      } else if (pressure === 'MODERATE') {
-        pressureClass += 'from-yellow-400 to-yellow-600';
-        pressureText = 'Pressão Moderada';
-      } else {
-        pressureClass += 'from-green-400 to-green-600';
-        pressureText = 'Baixa Pressão';
-      }
-      
-      document.getElementById('pressureIndicator').className = 
-        `inline-block px-8 py-4 rounded-2xl text-2xl font-black ${pressureClass}`;
-      document.getElementById('pressureIndicator').textContent = pressureText;
-    
-      // Métricas - apenas decay_regime
-      document.getElementById('spotPrice').textContent = `R$ ${data.spot_price?.toFixed(2)}`;
-      
-      const weightedDays = decay_regime.weighted_days || 0;
-      document.getElementById('weightedDays').textContent = `${Math.round(weightedDays)} dias`;
-      
-      const maxBleedStrike = decay_regime.max_bleed_strike || 0;
-      document.getElementById('maxBleedStrike').textContent = `R$ ${maxBleedStrike.toFixed(2)}`;
-      
-      const texTotal = decay_regime.total_tex || 0;
-      document.getElementById('texTotal').textContent = formatLargeNumber(texTotal);
-      
-      const texDescoberto = decay_regime.total_tex_descoberto || 0;
-      document.getElementById('texDescoberto').textContent = formatLargeNumber(texDescoberto);
-    
-      // Gráfico
-      if (data.plot_json) {
-        renderChart(data.plot_json);
-      }
-    
-      resultsSection.classList.remove('hidden');
-    }
-
-    // Renderizar gráfico
-    function renderChart(plotJson) {
+    function renderCumChart(data) {
+      const plotJson = (data.single_charts||{})['cumulativo'];
+      if (!plotJson) return;
       try {
-        const plotData = JSON.parse(plotJson);
-        
-        const config = {
-          responsive: true,
-          displayModeBar: false,
-          displaylogo: false
-        };
-
-        plotData.layout.height = 1600;
-        plotData.layout.margin = { l: 50, r: 50, t: 100, b: 50 };
-        
-        plotData.layout.paper_bgcolor = 'rgba(0,0,0,0)';
-        plotData.layout.plot_bgcolor = 'rgba(0,0,0,0)';
-
-        Plotly.newPlot('texChart', plotData.data, plotData.layout, config);
-        
-        setTimeout(() => Plotly.Plots.resize('texChart'), 100);
-
-      } catch (error) {
-        console.error('Erro no gráfico:', error);
-        document.getElementById('texChart').innerHTML = 
-          '<div class="text-center text-red-400 p-8">Erro ao carregar gráfico</div>';
-      }
+        const fig = JSON.parse(plotJson);
+        fig.layout.height        = 220;
+        fig.layout.paper_bgcolor = 'transparent';
+        fig.layout.plot_bgcolor  = 'transparent';
+        fig.layout.margin        = {l:60,r:20,t:40,b:45};
+        if (!fig.layout.annotations) fig.layout.annotations=[];
+        fig.layout.annotations.push({
+          text:'GEMINII RESEARCH', textangle:0,
+          xref:'paper', yref:'paper', x:0.5, y:0.5,
+          xanchor:'center', yanchor:'middle',
+          font:{family:'Inter, sans-serif',size:28,color:'rgba(255,255,255,0.025)'},
+          showarrow:false, layer:'below'
+        });
+        Plotly.react('cumChart',fig.data,fig.layout,{responsive:true,displayModeBar:false,displaylogo:false});
+      } catch(err) { console.error('Erro cumChart:',err); }
     }
 
-    // Event listeners
-    loadExpirationsBtn.addEventListener('click', loadExpirations);
-    analyzeBtn.addEventListener('click', runTEXAnalysis);
-    
-    tickerInput.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') loadExpirations();
+    window.addEventListener('resize',()=>{
+      if(currentData){ Plotly.Plots.resize('texChart'); Plotly.Plots.resize('cumChart'); }
     });
 
-    // Resize handler
-    window.addEventListener('resize', function() {
-      const chartElement = document.getElementById('texChart');
-      if (chartElement && chartElement.children.length > 0) {
-        setTimeout(() => Plotly.Plots.resize('texChart'), 100);
-      }
+    document.addEventListener('DOMContentLoaded',()=>{
+      document.querySelector('#windowGroup [data-window="ALL"]').classList.add('active-neutral');
+      showStatus('Sistema TEX carregado. Digite um ticker para começar.','info');
     });
-
-    // Inicializar
-    document.addEventListener('DOMContentLoaded', function() {
-        showStatus('Sistema TEX carregado. Digite um ticker para começar.', 'info');
-      });
-  
-    </script>
-
-    <div class="mt-6 max-w-4xl mx-auto bg-red-900/20 border-2 border-red-500/40 rounded-xl p-6">
-        <div class="flex items-start gap-4">
-          <i class="fas fa-exclamation-triangle text-red-400 text-2xl mt-1 flex-shrink-0"></i>
-          <div class="text-left">
-            <h3 class="text-red-400 font-bold text-base mb-3">AVISO LEGAL IMPORTANTE</h3>
-            <p class="text-gray-300 text-xs leading-relaxed mb-3">
-              As informações e sinais fornecidos por esta ferramenta são de caráter educativo e informativo. <strong>Não constituem recomendação de investimento nem garantia de rentabilidade.</strong> Investimentos em valores mobiliários envolvem riscos de perda patrimonial. Rentabilidade passada não garante resultados futuros. Os modelos quantitativos utilizados são baseados em dados históricos e podem não capturar adequadamente mudanças nas condições de mercado. Recomendamos a consulta a profissionais qualificados antes de tomar decisões de investimento. <strong>Operações de swing trade e day trade envolvem alto risco e podem resultar em perdas significativas.</strong> Este tipo de operação requer conhecimento técnico e não é adequado para todos os perfis de investidor.
-            </p>
-            <div class="pt-3 border-t border-gray-700 text-gray-400 text-xs">
-              <p><strong>Geminii Research Ltda</strong> - CNPJ 60.897.331/0001-06 | Analista Responsável: Diego Doneda - CNPI 9668</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  
-  </body>
-  </html>
+  </script>
+</body>
+</html>
