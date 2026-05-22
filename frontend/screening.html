@@ -10,927 +10,637 @@
       theme: {
         extend: {
           colors: {
-            dark: '#000000',
-            light: '#ffffff',
-            subtle: 'rgba(255,255,255,0.1)',
-            geminii: '#fb1ebb'
+            dark:'#030303', geminii:'#fb1ebb',
+            gLong:'#00f2fe', gShort:'#ff0844'
           },
-          fontFamily: {
-            sans: ['Inter', 'sans-serif']
-          }
+          fontFamily: { sans:['Inter','sans-serif'] }
         }
       }
     }
   </script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
   <style>
-    body { 
-      font-family: 'Inter', sans-serif; 
-      background: linear-gradient(135deg, #0c0c0c 0%, #1a1a1a 100%);
-      min-height: 100vh;
-    }
-    
-    .screening-card {
-      background: rgba(255, 255, 255, 0.08);
-      backdrop-filter: blur(20px);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      border-radius: 16px;
-      transition: all 0.3s ease;
-    }
-    
-    .screening-card:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 20px 40px rgba(186, 57, 175, 0.15);
-      border-color: rgba(186, 57, 175, 0.3);
-    }
-    
-    .loading {
-      opacity: 0.6;
-      pointer-events: none;
-    }
-    
-    .spinner {
-      border: 2px solid rgba(255, 255, 255, 0.1);
-      border-radius: 50%;
-      border-top: 2px solid #fb1ebb;
-      width: 20px;
-      height: 20px;
-      animation: spin 1s linear infinite;
-      display: inline-block;
-    }
-    
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
+    body { font-family:'Inter',sans-serif; background:radial-gradient(circle at 50% 0%,#0d0614,#030305 70%); min-height:100vh; color:#f4f4f5; overflow-x:hidden; }
+
+    /* ── Cards ──────────────────────────────────────────────── */
+    .gex-card { background:rgba(10,10,16,.6); backdrop-filter:blur(16px) saturate(180%); -webkit-backdrop-filter:blur(16px) saturate(180%); border:1px solid rgba(255,255,255,.05); border-radius:16px; box-shadow:0 8px 32px rgba(0,0,0,.37); }
+
+    /* ── Inputs ─────────────────────────────────────────────── */
+    .field { background:rgba(10,10,16,.9); border:1px solid rgba(255,255,255,.08); color:#e4e4e7; border-radius:12px; padding:11px 16px; font-size:13px; font-weight:500; outline:none; cursor:pointer; transition:all .25s; width:100%; }
+    .field:focus { border-color:#fb1ebb; box-shadow:0 0 20px rgba(251,30,187,.15); }
+    .field::placeholder { color:#4b5563; }
+    .field option { background:#0a0a10; color:#e4e4e7; }
+
+    /* ── Botões ─────────────────────────────────────────────── */
+    .btn-run { background:linear-gradient(135deg,#fb1ebb,#ff007a); border:none; border-radius:12px; padding:12px 24px; font-size:13px; font-weight:800; color:#fff; cursor:pointer; text-transform:uppercase; letter-spacing:.06em; position:relative; overflow:hidden; transition:all .3s; box-shadow:0 4px 24px rgba(251,30,187,.4); white-space:nowrap; }
+    .btn-run:hover { transform:translateY(-2px); box-shadow:0 6px 30px rgba(251,30,187,.6); }
+    .btn-run::after { content:''; position:absolute; top:-50%; left:-60%; width:30%; height:200%; background:linear-gradient(to right,rgba(255,255,255,0),rgba(255,255,255,.3),rgba(255,255,255,0)); transform:rotate(25deg); animation:sheen 4s infinite linear; }
+    @keyframes sheen { 0%{left:-60%} 15%{left:140%} 100%{left:140%} }
+    .btn-run:active { transform:translateY(1px); }
+    .btn-run:disabled { opacity:.4; cursor:not-allowed; transform:none; }
+
+    .btn-secondary { background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.08); border-radius:12px; padding:11px 18px; font-size:13px; font-weight:600; color:#d4d4d8; cursor:pointer; transition:all .2s; white-space:nowrap; }
+    .btn-secondary:hover { background:rgba(255,255,255,.08); color:#fff; border-color:rgba(255,255,255,.2); }
+
+    .btn-ntsl { background:linear-gradient(135deg,#7c3aed,#fb1ebb); border:none; border-radius:10px; padding:10px 18px; font-size:12px; font-weight:700; color:#fff; cursor:pointer; transition:all .25s; white-space:nowrap; }
+    .btn-ntsl:hover { transform:translateY(-1px); box-shadow:0 4px 16px rgba(124,58,237,.4); }
+
+    /* ── Preset pills ───────────────────────────────────────── */
+    .preset-pill { background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08); color:#a1a1aa; padding:7px 14px; border-radius:10px; font-size:11px; font-weight:700; letter-spacing:.04em; cursor:pointer; transition:all .2s; text-transform:uppercase; white-space:nowrap; }
+    .preset-pill:hover { color:#f4f4f5; border-color:rgba(251,30,187,.3); background:rgba(251,30,187,.06); }
+    .preset-pill.active { background:linear-gradient(135deg,#fb1ebb,#a855f7); color:#fff; border-color:transparent; box-shadow:0 4px 16px rgba(251,30,187,.35); }
+
+    /* ── Regime badges ──────────────────────────────────────── */
+    .regime-long    { display:inline-flex;align-items:center;gap:5px; background:rgba(0,242,254,.1); border:1px solid rgba(0,242,254,.3); color:#00f2fe; padding:4px 10px; border-radius:8px; font-size:10px; font-weight:800; letter-spacing:.05em; text-transform:uppercase; }
+    .regime-short   { display:inline-flex;align-items:center;gap:5px; background:rgba(255,8,68,.1);  border:1px solid rgba(255,8,68,.3);  color:#ff0844; padding:4px 10px; border-radius:8px; font-size:10px; font-weight:800; letter-spacing:.05em; text-transform:uppercase; }
+    .regime-neutral { display:inline-flex;align-items:center;gap:5px; background:rgba(161,161,170,.08); border:1px solid rgba(161,161,170,.2); color:#a1a1aa; padding:4px 10px; border-radius:8px; font-size:10px; font-weight:800; letter-spacing:.05em; text-transform:uppercase; }
+
+    /* ── Liquidity badges ───────────────────────────────────── */
+    .liq-badge { padding:3px 8px; border-radius:6px; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; }
+    .liq-alta  { background:rgba(34,197,94,.1);  color:#22c55e; border:1px solid rgba(34,197,94,.2); }
+    .liq-media { background:rgba(251,191,36,.1); color:#fbbf24; border:1px solid rgba(251,191,36,.2); }
+    .liq-baixa { background:rgba(239,68,68,.1);  color:#ef4444; border:1px solid rgba(239,68,68,.2); }
+
+    /* ── Summary cards ──────────────────────────────────────── */
+    .stat-card { background:rgba(20,20,30,.4); border:1px solid rgba(255,255,255,.03); border-radius:12px; padding:16px; }
+    .stat-card::before { content:''; position:absolute; top:0;left:0;width:100%;height:100%; border-radius:12px; pointer-events:none; box-shadow:inset 0 1px 0 rgba(255,255,255,.05); }
+    .stat-label { font-size:10px; font-weight:700; letter-spacing:.1em; color:#52525b; text-transform:uppercase; margin-bottom:8px; }
+    .stat-value { font-size:26px; font-weight:800; letter-spacing:-.03em; }
+
+    /* ── Table ──────────────────────────────────────────────── */
+    .screen-table { width:100%; border-collapse:separate; border-spacing:0; font-size:12px; }
+    .screen-table thead th { background:rgba(20,20,30,.8); padding:11px 14px; text-align:left; font-weight:700; color:#52525b; text-transform:uppercase; letter-spacing:.05em; border-bottom:1px solid rgba(255,255,255,.06); position:sticky; top:0; z-index:10; }
+    .screen-table tbody tr { border-bottom:1px solid rgba(255,255,255,.04); transition:background .15s; }
+    .screen-table tbody tr:hover { background:rgba(251,30,187,.05); }
+    .screen-table tbody td { padding:13px 14px; color:#d4d4d8; }
+
+    /* ── Distance colors ────────────────────────────────────── */
+    .dist-pos { color:#22c55e; font-weight:700; }
+    .dist-neg { color:#ff0844; font-weight:700; }
+
+    /* ── Ticker link ────────────────────────────────────────── */
+    .ticker-link { color:#fb1ebb; font-weight:800; cursor:pointer; font-family:monospace; transition:opacity .2s; }
+    .ticker-link:hover { opacity:.75; text-decoration:underline; }
+
+    /* ── Progress bar ───────────────────────────────────────── */
+    .prog-bar { width:100%; height:3px; background:rgba(255,255,255,.06); border-radius:2px; overflow:hidden; margin-top:8px; }
+    .prog-fill { height:100%; background:linear-gradient(90deg,#fb1ebb,#a855f7); transition:width .3s; }
+
+    /* ── Expander ───────────────────────────────────────────── */
+    .expander-header { cursor:pointer; transition:background .2s; }
+    .expander-header:hover { background:rgba(255,255,255,.02); }
+    .expander-content { max-height:0; overflow:hidden; transition:max-height .4s cubic-bezier(.4,0,.2,1); }
+    .expander-content.open { max-height:900px; }
+    .expander-icon { transition:transform .3s; }
+    .expander-icon.rotate { transform:rotate(180deg); color:#fb1ebb; }
+
+    /* ── Spinner ────────────────────────────────────────────── */
+    .spinner { border:2px solid rgba(255,255,255,.1); border-top:2px solid #fff; border-radius:50%; width:15px; height:15px; animation:spin .7s linear infinite; display:inline-block; }
+    @keyframes spin { to{transform:rotate(360deg)} }
+
+    /* ── Glow orb ───────────────────────────────────────────── */
+    .glow-orb { position:absolute; width:400px; height:400px; background:radial-gradient(circle,rgba(251,30,187,.06),transparent 70%); top:-150px; left:50%; transform:translateX(-50%); z-index:0; pointer-events:none; }
+
+    /* ════════════════════════════════════════════════════════
+       RESPONSIVIDADE
+       ════════════════════════════════════════════════════════ */
+
+    /* Navbar px reduzido em mobile */
+    @media(max-width:639px){
+      nav { padding-left:1rem; padding-right:1rem; }
+      .pt-28 { padding-top:5rem; }
+      .px-6  { padding-left:1rem; padding-right:1rem; }
     }
 
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
+    /* Preset pills: scroll horizontal em vez de wrap forçado em telas muito pequenas */
+    .preset-scroll { display:flex; gap:8px; overflow-x:auto; padding-bottom:4px; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
+    .preset-scroll::-webkit-scrollbar { display:none; }
+
+    /* Botão Iniciar Screening: full-width em mobile */
+    @media(max-width:639px){
+      .btn-run { width:100%; justify-content:center; }
+      .ctrl-row { flex-direction:column; }
+      .ctrl-row .btn-secondary { width:100%; }
     }
 
-    @keyframes fadeOut {
-      from { opacity: 1; transform: translateY(0); }
-      to { opacity: 0; transform: translateY(-10px); }
+    /* Tabela: esconde colunas menos importantes em mobile */
+    @media(max-width:767px){
+      .col-hide { display:none !important; }
+      .screen-table { font-size:11px; }
+      .screen-table thead th,
+      .screen-table tbody td { padding:10px 8px; }
+    }
+    @media(max-width:479px){
+      .screen-table { font-size:10px; }
+      .screen-table thead th,
+      .screen-table tbody td { padding:8px 6px; }
     }
 
-    .regime-long {
-      background: linear-gradient(135deg, #10b981, #059669);
-      color: white;
-      padding: 4px 12px;
-      border-radius: 12px;
-      font-size: 11px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
-    }
-    
-    .regime-short {
-      background: linear-gradient(135deg, #ef4444, #dc2626);
-      color: white;
-      padding: 4px 12px;
-      border-radius: 12px;
-      font-size: 11px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+    /* Summary: 2 cols em mobile */
+    @media(max-width:479px){
+      .summary-grid { grid-template-columns:repeat(2,1fr) !important; }
+      .stat-value { font-size:20px !important; }
     }
 
-    .regime-neutral {
-      background: linear-gradient(135deg, #6b7280, #4b5563);
-      color: white;
-      padding: 4px 12px;
-      border-radius: 12px;
-      font-size: 11px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
-    .liquidity-badge {
-      padding: 4px 10px;
-      border-radius: 8px;
-      font-size: 10px;
-      font-weight: 600;
-      text-transform: uppercase;
-    }
-
-    .liquidity-alta {
-      background: rgba(34, 197, 94, 0.2);
-      color: #22c55e;
-      border: 1px solid rgba(34, 197, 94, 0.4);
-    }
-
-    .liquidity-media {
-      background: rgba(251, 191, 36, 0.2);
-      color: #fbbf24;
-      border: 1px solid rgba(251, 191, 36, 0.4);
-    }
-
-    .liquidity-baixa {
-      background: rgba(239, 68, 68, 0.2);
-      color: #ef4444;
-      border: 1px solid rgba(239, 68, 68, 0.4);
-    }
-
-    .screening-table {
-      width: 100%;
-      border-collapse: separate;
-      border-spacing: 0;
-    }
-
-    .screening-table thead th {
-      background: rgba(255, 255, 255, 0.05);
-      color: #9ca3af;
-      font-weight: 600;
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      padding: 12px 16px;
-      text-align: left;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-      position: sticky;
-      top: 0;
-      z-index: 10;
-    }
-
-    .screening-table tbody tr {
-      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-      transition: all 0.2s ease;
-    }
-
-    .screening-table tbody tr:hover {
-      background: rgba(186, 57, 175, 0.1);
-    }
-
-    .screening-table tbody td {
-      padding: 14px 16px;
-      font-size: 13px;
-      color: white;
-    }
-
-    .preset-btn {
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      color: white;
-      padding: 8px 16px;
-      border-radius: 8px;
-      font-size: 12px;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.3s ease;
-    }
-
-    .preset-btn:hover {
-      background: rgba(186, 57, 175, 0.2);
-      border-color: rgba(186, 57, 175, 0.4);
-      transform: translateY(-1px);
-    }
-
-    .preset-btn.active {
-      background: linear-gradient(135deg, #fb1ebb, #9333ea);
-      border-color: #fb1ebb;
-      box-shadow: 0 4px 12px rgba(186, 57, 175, 0.3);
-    }
-
-    .summary-card {
-      background: rgba(255, 255, 255, 0.05);
-      border-radius: 12px;
-      padding: 16px;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-    }
-
-    .distance-positive {
-      color: #22c55e;
-      font-weight: 600;
-    }
-
-    .distance-negative {
-      color: #ef4444;
-      font-weight: 600;
-    }
-
-    .ticker-link {
-      color: #fb1ebb;
-      font-weight: 700;
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-
-    .ticker-link:hover {
-      color: #c916a3;
-      text-decoration: underline;
-    }
-
-    .custom-input {
-      background: rgba(30, 30, 30, 0.9);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      color: white;
-      padding: 10px 14px;
-      border-radius: 8px;
-      font-size: 13px;
-      transition: all 0.3s ease;
-    }
-
-    .custom-input:focus {
-      outline: none;
-      border-color: #fb1ebb;
-      box-shadow: 0 0 0 2px rgba(186, 57, 175, 0.2);
-    }
-
-    .custom-input::placeholder {
-      color: rgba(255, 255, 255, 0.4);
-    }
-
-    .progress-bar {
-      width: 100%;
-      height: 4px;
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 2px;
-      overflow: hidden;
-      margin-top: 8px;
-    }
-
-    .progress-bar-fill {
-      height: 100%;
-      background: linear-gradient(90deg, #fb1ebb, #9333ea);
-      transition: width 0.3s ease;
-      animation: progressPulse 1.5s ease-in-out infinite;
-    }
-
-    select.custom-input {
-      background: rgba(30, 30, 30, 0.9);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      color: white;
-      appearance: none;
-      cursor: pointer;
-    }
-
-    select.custom-input option {
-      background: #1a1a1a;
-      color: white;
-    }
-
-    @keyframes progressPulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.7; }
-    }
+    /* Cabeçalho de seção com scroll em mobile */
+    .section-header { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-bottom:20px; }
   </style>
 </head>
-<body class="text-white">
-  
-  <!-- Navbar -->
-  <nav class="fixed top-6 left-1/2 transform -translate-x-1/2 z-50 bg-opacity-5 border-opacity-10 bg-white border-white border rounded-full px-4 py-3 shadow-xl backdrop-blur-md">
-    <div class="flex items-center justify-between">
-      <div class="flex items-center">
-        <img src="logo.png" alt="Geminii Logo" class="w-6 h-6 cursor-pointer" onclick="window.location.href='/dashboard'">
-      </div>
-      <div class="hidden md:flex items-center space-x-6 text-xs text-gray-300 ml-8">
-        <a href="/dashboard" class="hover:text-white transition-colors">Dashboard</a>
-        <a href="opcoes.html" class="hover:text-white transition-colors">Hunter Walls</a>
-        <a href="vi-pro.html" class="hover:text-white transition-colors">Implícita Sigma</a>
-        <a href="gamma-levels.html" class="hover:text-white transition-colors">Gamma Levels</a>
-        <span class="text-white font-medium">Flip Screening</span>
-      </div>
-      <div class="flex items-center space-x-3 ml-8">
-        <div id="apiStatus" class="w-8 h-8 bg-green-500 bg-opacity-10 border border-green-500 border-opacity-30 rounded-full flex items-center justify-center relative">
-          <i class="fas fa-chart-line text-green-500 text-xs"></i>
-          <div class="absolute -top-1 -right-1 w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-        </div>
+
+<body class="antialiased">
+<div class="glow-orb"></div>
+
+<!-- ══════════════════════════════════════════════════════════
+     NAVBAR — flat top, responsiva
+     ══════════════════════════════════════════════════════════ -->
+<nav class="fixed top-0 left-0 w-full z-50 bg-[#030305]/60 backdrop-blur-xl border-b border-white/[0.04] px-8 py-4">
+  <div class="max-w-screen-2xl mx-auto flex items-center justify-between">
+
+    <!-- Logo + links (hidden em mobile) -->
+    <div class="flex items-center gap-8">
+      <a href="/dashboard.html" class="flex items-center gap-3 group flex-shrink-0">
+        <img src="logo.png" alt="Geminii" class="w-6 h-6">
+        <span class="text-sm font-black tracking-widest text-white group-hover:text-geminii transition-colors">GEMINII<span class="text-geminii"> TECH</span></span>
+      </a>
+      <div class="hidden lg:flex items-center space-x-7 text-xs font-bold uppercase tracking-wider text-gray-400">
+          <a href="visao-global.html"      class="hover:text-white transition-colors pb-5 pt-1">Visão Global</a>
+        <span class="text-white border-b-2 border-geminii pb-5 pt-1">Flip Screening</span>
       </div>
     </div>
-  </nav>
+    
+    <div id="apiStatus" class="w-8 h-8 bg-green-500/10 border border-green-500/30 rounded-full flex items-center justify-center relative flex-shrink-0">
+      <i class="fas fa-chart-line text-green-400 text-xs"></i>
+      <div class="absolute -top-1 -right-1 w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+    </div>
+  </div>
+</nav>
 
-  <!-- Content -->
-  <div class="pt-32 pb-16">
-    <div class="max-w-7xl mx-auto px-6">
-      
-      <!-- Header -->
-      <div class="text-center mb-12">
-        <h1 class="text-4xl md:text-5xl font-bold mb-4">
-          <span style="color: #fb1ebb; font-weight: 900;">Gamma Flip</span>
-          <span class="text-white font-light">Screening</span>
-        </h1>
-        <p class="text-neutral-300 text-lg max-w-3xl mx-auto">
-          Rastreamento em tempo real do Gamma Flip para múltiplos ativos. Identifique rapidamente quais ações estão próximas de seus níveis críticos e o regime de gamma atual.
-        </p>
-        
-        <!-- Info Expander -->
-        <div class="mt-8">
-          <button onclick="toggleInfo()" class="bg-gradient-to-r from-geminii to-purple-600 hover:from-purple-600 hover:to-geminii text-white px-6 py-3 rounded-full font-semibold text-sm transition-all duration-300 flex items-center mx-auto shadow-lg hover:shadow-xl transform hover:scale-105">
-            <i id="infoIcon" class="fas fa-info-circle mr-2 transition-transform duration-300"></i>
-            Como Funciona o Gamma Flip Screening
-          </button>
-          
-          <div id="infoContent" class="hidden mt-8 max-w-5xl mx-auto">
-            <div class="screening-card p-8 text-left">
-              <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                
-                <!-- O que é -->
-                <div class="space-y-4">
-                  <div class="flex items-center mb-4">
-                    <div class="w-4 h-4 rounded-full bg-geminii mr-3"></div>
-                    <h3 class="text-xl font-bold text-white">O que é</h3>
-                  </div>
-                  <p class="text-gray-300 text-sm leading-relaxed">
-                    O <strong>Gamma Flip</strong> é o nível de preço onde o mercado muda de regime. Acima do flip = <strong>Long Gamma</strong> (mercado contido). Abaixo do flip = <strong>Short Gamma</strong> (mercado explosivo).
-                  </p>
-                </div>
-                
-                <!-- Para que serve -->
-                <div class="space-y-4">
-                  <div class="flex items-center mb-4">
-                    <div class="w-4 h-4 rounded-full bg-purple-500 mr-3"></div>
-                    <h3 class="text-xl font-bold text-white">Para que serve</h3>
-                  </div>
-                  <p class="text-gray-300 text-sm leading-relaxed">
-                    Este screening permite <strong>monitorar simultaneamente dezenas de ativos</strong>, identificando quais estão próximos do flip (oportunidade) e qual o regime atual de cada um.
-                  </p>
-                </div>
-                
-                <!-- Como usar -->
-                <div class="space-y-4">
-                  <div class="flex items-center mb-4">
-                    <div class="w-4 h-4 rounded-full bg-blue-500 mr-3"></div>
-                    <h3 class="text-xl font-bold text-white">Como usar</h3>
-                  </div>
-                  <p class="text-gray-300 text-sm leading-relaxed">
-                    Escolha um <strong>preset de ativos</strong> ou crie sua lista personalizada. O sistema analisa todos em paralelo e ordena por <strong>proximidade ao flip</strong>.
-                  </p>
-                </div>
-                
-              </div>
-              
-              <!-- Interpretação -->
-              <div class="mt-8 pt-6 border-t border-white/10">
-                <h4 class="text-geminii font-bold text-lg mb-4">Interpretação dos Resultados</h4>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div class="bg-white/5 rounded-lg p-4">
-                    <h5 class="text-white font-semibold text-sm mb-2">
-                      <i class="fas fa-arrow-up text-green-400 mr-2"></i>Long Gamma (Verde)
-                    </h5>
-                    <p class="text-gray-400 text-xs">
-                      Preço <strong>acima</strong> do flip. Market makers vendem volatilidade, mercado tende a ficar contido com movimentos menores.
-                    </p>
-                  </div>
-                  <div class="bg-white/5 rounded-lg p-4">
-                    <h5 class="text-white font-semibold text-sm mb-2">
-                      <i class="fas fa-arrow-down text-red-400 mr-2"></i>Short Gamma (Vermelho)
-                    </h5>
-                    <p class="text-gray-400 text-xs">
-                      Preço <strong>abaixo</strong> do flip. Market makers compram volatilidade, mercado pode ter movimentos explosivos e amplificados.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
+<!-- ══════════════════════════════════════════════════════════
+     CONTEÚDO
+     ══════════════════════════════════════════════════════════ -->
+<div class="pt-28 pb-16 max-w-screen-2xl mx-auto px-6 relative z-10">
+
+  <!-- Expander explicativo -->
+  <div class="gex-card mb-6 overflow-hidden">
+    <div id="expHeader" class="expander-header p-4 flex items-center justify-between text-xs font-bold uppercase tracking-wider text-gray-300">
+      <div class="flex items-center gap-2.5">
+        <i class="fas fa-circle-info text-geminii text-sm"></i>
+        <span>Como funciona o Gamma Flip Screening?</span>
+      </div>
+      <i id="expIcon" class="fas fa-chevron-down expander-icon text-gray-500 text-xs mr-1"></i>
+    </div>
+    <div id="expContent" class="expander-content border-t border-white/[0.02]">
+      <div class="p-5 text-xs text-gray-400 leading-relaxed space-y-4">
+        <p>O <strong>Gamma Flip Screening</strong> rastreia simultaneamente o Gamma Flip de múltiplos ativos, ordenando-os por proximidade ao nível crítico de inversão de regime.</p>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+          <div class="p-3 bg-white/[0.02] border border-white/[0.04] rounded-xl">
+            <span class="font-bold text-[#fb1ebb] uppercase block mb-1">O que é</span>
+            <p class="text-[11px]">O Gamma Flip é o preço onde o mercado muda de regime. Acima = Long Gamma (contido). Abaixo = Short Gamma (explosivo).</p>
+          </div>
+          <div class="p-3 bg-white/[0.02] border border-white/[0.04] rounded-xl">
+            <span class="font-bold text-[#00f2fe] uppercase block mb-1">Para que serve</span>
+            <p class="text-[11px]">Monitorar dezenas de ativos de uma vez, identificando quais estão próximos do flip e qual o regime atual de cada um.</p>
+          </div>
+          <div class="p-3 bg-white/[0.02] border border-white/[0.04] rounded-xl">
+            <span class="font-bold text-[#a855f7] uppercase block mb-1">Como usar</span>
+            <p class="text-[11px]">Escolha um preset ou cole seus tickers, selecione o vencimento e clique em Iniciar Screening. Os resultados são ordenados por dist. % ao flip.</p>
+          </div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+          <div class="p-3 bg-cyan-500/[0.03] border border-cyan-500/10 rounded-xl">
+            <span class="font-bold text-[#00f2fe] uppercase block mb-1">Long Gamma (verde)</span>
+            <p class="text-[11px]">Preço acima do flip. MMs vendem volatilidade → mercado contido, movimentos menores e mais previsíveis.</p>
+          </div>
+          <div class="p-3 bg-red-500/[0.03] border border-red-500/10 rounded-xl">
+            <span class="font-bold text-[#ff0844] uppercase block mb-1">Short Gamma (vermelho)</span>
+            <p class="text-[11px]">Preço abaixo do flip. MMs compram volatilidade → movimentos explosivos e amplificados.</p>
           </div>
         </div>
       </div>
-
-      <!-- Controles -->
-      <div class="screening-card p-6 mb-8">
-        <div class="space-y-6">
-          
-          <!-- Linha 1: Presets -->
-          <div>
-            <label class="text-sm font-semibold text-gray-300 mb-3 block">
-              <i class="fas fa-list mr-2"></i>Listas Pré-definidas
-            </label>
-            <div class="flex flex-wrap gap-3">
-              <button class="preset-btn" data-preset="Todos">
-                <i class="fas fa-chart-line mr-1"></i>Todos
-              </button>
-              
-              <button class="preset-btn" data-preset="ibovespa_liquidos">
-                <i class="fas fa-chart-line mr-1"></i>Ibovespa Líquidos
-              </button>
-              <button class="preset-btn" data-preset="alta_liquidez">
-                <i class="fas fa-fire mr-1"></i>Alta Liquidez
-              </button>
-              <button class="preset-btn" data-preset="media_liquidez">
-                <i class="fas fa-water mr-1"></i>Média Liquidez
-              </button>
-              <button class="preset-btn" data-preset="small_caps">
-                <i class="fas fa-seedling mr-1"></i>Small Caps
-              </button>
-              <button class="preset-btn" data-preset="commodities">
-                <i class="fas fa-oil-can mr-1"></i>Commodities
-              </button>
-              <button class="preset-btn" data-preset="financeiro">
-                <i class="fas fa-university mr-1"></i>Financeiro
-              </button>
-            </div>
-          </div>
-
-          <!-- Linha 2: Input customizado -->
-          <div>
-            <label class="text-sm font-semibold text-gray-300 mb-3 block">
-              <i class="fas fa-edit mr-2"></i>Lista Personalizada
-            </label>
-            <div class="flex gap-3">
-              <input 
-                id="customTickers" 
-                type="text" 
-                placeholder="Digite os tickers separados por vírgula (ex: PETR4, VALE3, BBAS3)" 
-                class="custom-input flex-1"
-              >
-              <button id="screenBtn" class="px-6 py-2 bg-gradient-to-r from-pink-500 to-purple-600 hover:shadow-lg rounded-lg transition-all font-medium whitespace-nowrap">
-                <i class="fas fa-search mr-2"></i>Iniciar Screening
-              </button>
-            </div>
-          </div>
-
-          <!-- Linha 1.5: Seletor de Vencimento -->
-          <div>
-            <label class="text-sm font-semibold text-gray-300 mb-3 block">
-              <i class="fas fa-calendar-alt mr-2"></i>Vencimento
-            </label>
-            <div class="flex gap-3 items-center">
-              <select id="expirationSelect" class="custom-input w-64">
-                <option value="">Carregando vencimentos...</option>
-              </select>
-              <button id="loadExpBtn" class="preset-btn" onclick="loadExpirations()">
-                <i class="fas fa-sync-alt mr-1"></i>Atualizar
-              </button>
-              <span id="expStatus" class="text-xs text-gray-400"></span>
-            </div>
-          </div>
-
-          <!-- Progress Bar -->
-          <div id="progressContainer" class="hidden">
-            <div class="flex justify-between text-xs text-gray-400 mb-2">
-              <span id="progressText">Analisando...</span>
-              <span id="progressPercent">0%</span>
-            </div>
-            <div class="progress-bar">
-              <div id="progressFill" class="progress-bar-fill" style="width: 0%"></div>
-            </div>
-          </div>
-
-        </div>
-      </div>
-
-      <!-- Status -->
-      <div id="statusMsg" class="mb-6 p-4 rounded-lg hidden backdrop-blur-sm"></div>
-
-      <!-- Summary -->
-      <div id="summarySection" class="mb-8 hidden">
-        <div class="screening-card p-6">
-          <h3 class="text-xl font-bold mb-6 flex items-center">
-            <i class="fas fa-chart-pie text-geminii mr-3"></i>Resumo do Screening
-          </h3>
-          
-          <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div class="summary-card">
-              <div class="text-sm text-gray-400 mb-1">Total Analisado</div>
-              <div id="totalAnalyzed" class="text-2xl font-bold text-white">--</div>
-            </div>
-            <div class="summary-card">
-              <div class="text-sm text-gray-400 mb-1">Long Gamma</div>
-              <div id="totalLong" class="text-2xl font-bold text-green-400">--</div>
-            </div>
-            <div class="summary-card">
-              <div class="text-sm text-gray-400 mb-1">Short Gamma</div>
-              <div id="totalShort" class="text-2xl font-bold text-red-400">--</div>
-            </div>
-            <div class="summary-card">
-              <div class="text-sm text-gray-400 mb-1">Dist. Média Flip</div>
-              <div id="avgDistance" class="text-2xl font-bold text-purple-400">--</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Results Table -->
-      <div id="resultsSection" class="hidden">
-        <div class="screening-card p-6">
-          <div class="flex justify-between items-center mb-6">
-            <h3 class="text-xl font-bold flex items-center">
-              <i class="fas fa-table text-geminii mr-3"></i>Resultados do Screening
-            </h3>
-            <button id="exportNTSLBtn" class="px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 rounded-lg text-sm font-medium transition-all shadow-lg">
-              <i class="fas fa-code mr-2"></i>Copiar Código NTSL
-            </button>
-          </div>
-          
-          <div class="overflow-x-auto">
-            <table class="screening-table">
-              <thead>
-                <tr>
-                  <th>Ticker</th>
-                  <th>Preço Atual</th>
-                  <th>Flip Strike</th>
-                  <th>Distância</th>
-                  <th>Dist. %</th>
-                  <th>Regime</th>
-                  <th>Liquidez</th>
-                  <th>Vencimento</th>
-                  <th>Ações</th>
-                </tr>
-              </thead>
-              <tbody id="resultsTableBody">
-                <!-- Preenchido via JS -->
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
     </div>
   </div>
 
-  <script>
-    // Configurações
-    const API_BASE = window.location.origin + '/pro/screening';
-    
-    // Elementos DOM
-    const customTickers = document.getElementById('customTickers');
-    const screenBtn = document.getElementById('screenBtn');
-    const statusMsg = document.getElementById('statusMsg');
-    const summarySection = document.getElementById('summarySection');
-    const resultsSection = document.getElementById('resultsSection');
-    const resultsTableBody = document.getElementById('resultsTableBody');
-    const progressContainer = document.getElementById('progressContainer');
-    const progressText = document.getElementById('progressText');
-    const progressPercent = document.getElementById('progressPercent');
-    const progressFill = document.getElementById('progressFill');
-    const exportBtn = document.getElementById('exportBtn');
-    
-    // State
-    let currentResults = [];
-    let presets = {};
-    
-    // Função do expander
-    function toggleInfo() {
-      const content = document.getElementById('infoContent');
-      const icon = document.getElementById('infoIcon');
-      
-      if (content.classList.contains('hidden')) {
-        content.classList.remove('hidden');
-        content.style.animation = 'fadeIn 0.5s ease-in-out';
-        icon.classList.remove('fa-info-circle');
-        icon.classList.add('fa-times');
-      } else {
-        content.style.animation = 'fadeOut 0.3s ease-in-out';
-        setTimeout(() => {
-          content.classList.add('hidden');
-        }, 300);
-        icon.classList.remove('fa-times');
-        icon.classList.add('fa-info-circle');
-      }
+  <!-- Controles -->
+  <div class="gex-card p-5 mb-6 space-y-5">
+
+    <!-- Presets -->
+    <div>
+      <div class="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-3 flex items-center gap-2">
+        <i class="fas fa-list text-geminii"></i> Listas Pré-definidas
+      </div>
+      <div class="preset-scroll">
+        <button class="preset-pill" data-preset="Todos">Todos</button>
+        <button class="preset-pill" data-preset="ibovespa_liquidos">Ibovespa Líquidos</button>
+        <button class="preset-pill" data-preset="alta_liquidez">Alta Liquidez</button>
+        <button class="preset-pill" data-preset="media_liquidez">Média Liquidez</button>
+        <button class="preset-pill" data-preset="small_caps">Small Caps</button>
+        <button class="preset-pill" data-preset="commodities">Commodities</button>
+        <button class="preset-pill" data-preset="financeiro">Financeiro</button>
+      </div>
+    </div>
+
+    <!-- Ticker input + vencimento + botão -->
+    <div class="flex flex-col gap-3">
+      <div class="text-[10px] font-bold uppercase tracking-widest text-gray-500 flex items-center gap-2">
+        <i class="fas fa-terminal text-geminii"></i> Lista Personalizada &amp; Vencimento
+      </div>
+
+      <div class="flex flex-col sm:flex-row gap-3">
+        <!-- Ticker textarea -->
+        <div class="relative flex-1">          
+          <input
+            id="customTickers"
+            type="text"
+            placeholder="PETR4, VALE3, BBAS3, BOVA11..."
+            class="field pl-10"
+          >
+        </div>
+
+        <!-- Vencimento select -->
+        <div class="flex items-center gap-2 sm:w-auto w-full">
+          <select id="expirationSelect" class="field sm:min-w-[200px]">
+            <option value="">Carregando vencimentos...</option>
+          </select>
+          <button class="btn-secondary px-3 py-2.5 flex-shrink-0" id="loadExpBtn" title="Atualizar vencimentos">
+            <i class="fas fa-sync-alt text-geminii"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Botão principal -->
+      <button id="screenBtn" class="btn-run flex items-center justify-center gap-2">
+        <i class="fas fa-search"></i> Iniciar Screening
+      </button>
+    </div>
+
+    <!-- Progress bar -->
+    <div id="progressContainer" class="hidden">
+      <div class="flex justify-between text-[11px] text-gray-500 mb-1 font-mono">
+        <span id="progressText">Analisando...</span>
+        <span id="progressPercent">0%</span>
+      </div>
+      <div class="prog-bar">
+        <div id="progressFill" class="prog-fill" style="width:0%"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <div id="statusMsg" class="hidden mb-6 text-xs font-mono p-4 rounded-xl border"></div>
+
+  <!-- Summary -->
+  <div id="summarySection" class="hidden mb-6">
+    <div class="gex-card p-5">
+      <div class="text-xs font-bold uppercase tracking-widest text-gray-400 mb-4 flex items-center gap-2">
+        <i class="fas fa-chart-pie text-geminii"></i> Resumo do Screening
+      </div>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 summary-grid">
+        <div class="stat-card relative text-center">
+          <div class="stat-label">Total Analisado</div>
+          <div class="stat-value text-white" id="totalAnalyzed">--</div>
+        </div>
+        <div class="stat-card relative text-center" style="border-color:rgba(0,242,254,.15)">
+          <div class="stat-label" style="color:#00f2fe">Long Gamma</div>
+          <div class="stat-value" id="totalLong" style="color:#00f2fe">--</div>
+        </div>
+        <div class="stat-card relative text-center" style="border-color:rgba(255,8,68,.15)">
+          <div class="stat-label" style="color:#ff0844">Short Gamma</div>
+          <div class="stat-value" id="totalShort" style="color:#ff0844">--</div>
+        </div>
+        <div class="stat-card relative text-center" style="border-color:rgba(168,85,247,.15)">
+          <div class="stat-label" style="color:#a855f7">Dist. Média Flip</div>
+          <div class="stat-value" id="avgDistance" style="color:#a855f7">--</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Results -->
+  <div id="resultsSection" class="hidden">
+    <div class="gex-card p-5">
+      <div class="section-header">
+        <div class="text-xs font-bold uppercase tracking-widest text-gray-400 flex items-center gap-2">
+          <i class="fas fa-table text-purple-400"></i> Resultados do Screening
+        </div>
+        <button id="exportNTSLBtn" class="btn-ntsl flex items-center gap-2">
+          <i class="fas fa-code"></i> Copiar Código NTSL
+        </button>
+      </div>
+
+      <div class="overflow-x-auto -mx-1 px-1">
+        <table class="screen-table">
+          <thead>
+            <tr>
+              <th>Ticker</th>
+              <th>Preço</th>
+              <th>Flip</th>
+              <th class="col-hide">Dist. R$</th>
+              <th>Dist. %</th>
+              <th>Regime</th>
+              <th class="col-hide">Liquidez</th>
+              <th class="col-hide">Vencimento</th>
+              <th>Ação</th>
+            </tr>
+          </thead>
+          <tbody id="resultsTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Footer -->
+<div class="max-w-screen-2xl mx-auto px-6 pb-12 relative z-10">
+  <div class="bg-white/[0.01] border border-white/[0.04] rounded-2xl p-6">
+    <div class="flex items-start gap-4">
+      <i class="fas fa-shield-halved text-gray-600 mt-1 flex-shrink-0"></i>
+      <div class="w-full">
+        <p class="text-gray-400 font-bold text-xs uppercase tracking-widest mb-2">Termos de Uso e Restrições de Compliance</p>
+        <p class="text-gray-500 text-xs leading-relaxed">
+          As análises quantitativas estruturais geradas por este terminal refletem cenários matemáticos pautados no histórico de posições em aberto de derivativos.
+          <strong>Este módulo não constitui assessoria, recomendação, oferta ou direcionamento de alocação de ativos.</strong>
+        </p>
+        <div class="flex flex-wrap items-center justify-between gap-4 mt-6 pt-4 border-t border-white/[0.04] text-gray-600 text-[11px] font-mono">
+          <div><strong>Geminii Research Ltda</strong> · CNPJ 60.897.331/0001-06</div>
+          <div>Analista Responsável: Diego Doneda · CNPI 9668</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ════════════════════════════════════════════════════════════
+   CONFIG & STATE
+   ════════════════════════════════════════════════════════════ */
+const API_BASE    = window.location.origin + '/pro/screening';
+let currentResults = [];
+let presets        = {};
+
+/* ── DOM refs ──────────────────────────────────────────────── */
+const customTickers    = document.getElementById('customTickers');
+const screenBtn        = document.getElementById('screenBtn');
+const exportNTSLBtn    = document.getElementById('exportNTSLBtn');
+const statusMsg        = document.getElementById('statusMsg');
+const summarySection   = document.getElementById('summarySection');
+const resultsSection   = document.getElementById('resultsSection');
+const resultsTableBody = document.getElementById('resultsTableBody');
+const progressContainer= document.getElementById('progressContainer');
+const progressText     = document.getElementById('progressText');
+const progressPercent  = document.getElementById('progressPercent');
+const progressFill     = document.getElementById('progressFill');
+
+/* ── Expander ─────────────────────────────────────────────── */
+document.getElementById('expHeader').addEventListener('click', ()=>{
+  document.getElementById('expContent').classList.toggle('open');
+  document.getElementById('expIcon').classList.toggle('rotate');
+});
+
+/* ── Status ───────────────────────────────────────────────── */
+function showStatus(msg, type='info') {
+  const c = {
+    info:   'background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.2);color:#93c5fd;',
+    success:'background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.2);color:#22c55e;',
+    error:  'background:rgba(255,8,68,.1);border:1px solid rgba(255,8,68,.2);color:#ff0844;',
+  };
+  statusMsg.style.cssText = c[type]||c.info;
+  statusMsg.textContent   = msg;
+  statusMsg.classList.remove('hidden');
+  if (type === 'success') setTimeout(()=>statusMsg.classList.add('hidden'), 6000);
+}
+
+/* ── Loading ──────────────────────────────────────────────── */
+function setLoading(btn, loading) {
+  btn.disabled = loading;
+  if (loading) { btn.dataset.idle = btn.innerHTML; btn.innerHTML = '<span class="spinner"></span>&nbsp;Screening em andamento...'; }
+  else btn.innerHTML = btn.dataset.idle || btn.innerHTML;
+}
+
+/* ── Progress ─────────────────────────────────────────────── */
+function showProgress(cur, tot) {
+  progressContainer.classList.remove('hidden');
+  const pct = Math.round((cur/tot)*100);
+  progressText.textContent    = `Analisando ${cur} de ${tot} ativos...`;
+  progressPercent.textContent = `${pct}%`;
+  progressFill.style.width    = `${pct}%`;
+}
+function hideProgress() {
+  progressContainer.classList.add('hidden');
+  progressFill.style.width = '0%';
+}
+
+/* ── Format ───────────────────────────────────────────────── */
+function fmtBRL(v) {
+  return new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(v||0);
+}
+
+/* ── API: health ──────────────────────────────────────────── */
+async function testAPI() {
+  try {
+    const r = await fetch(`${API_BASE}/health`);
+    const ok = r.ok;
+    const el = document.getElementById('apiStatus');
+    el.className = ok
+      ? 'w-8 h-8 bg-green-500/10 border border-green-500/30 rounded-full flex items-center justify-center relative flex-shrink-0'
+      : 'w-8 h-8 bg-red-500/10  border border-red-500/30  rounded-full flex items-center justify-center relative flex-shrink-0';
+    el.innerHTML = ok
+      ? '<i class="fas fa-chart-line text-green-400 text-xs"></i><div class="absolute -top-1 -right-1 w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>'
+      : '<i class="fas fa-exclamation text-red-400 text-xs"></i>';
+    return ok;
+  } catch { return false; }
+}
+
+/* ── API: presets ─────────────────────────────────────────── */
+async function loadPresets() {
+  try {
+    const r = await fetch(`${API_BASE}/presets`);
+    const d = await r.json();
+    if (r.ok && d.success) { presets = d.presets; }
+  } catch {}
+}
+
+/* ── Preset pills ─────────────────────────────────────────── */
+document.querySelectorAll('.preset-pill').forEach(btn => {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('.preset-pill').forEach(b=>b.classList.remove('active'));
+    this.classList.add('active');
+    const tickers = presets[this.dataset.preset];
+    if (tickers) {
+      customTickers.value = tickers.join(', ');
+      showStatus(`Lista "${this.dataset.preset}" carregada com ${tickers.length} ativos`, 'info');
     }
-    window.toggleInfo = toggleInfo;
-    
-    // Funções utilitárias
-    function showStatus(message, type = 'info') {
-      const bgClass = type === 'success' ? 'bg-green-600 bg-opacity-20 border-green-500 border-opacity-30' : 
-                     type === 'error' ? 'bg-red-600 bg-opacity-20 border-red-500 border-opacity-30' : 
-                     'bg-blue-600 bg-opacity-20 border-blue-500 border-opacity-30';
-      
-      statusMsg.className = `mb-6 p-4 rounded-lg border backdrop-blur-sm ${bgClass}`;
-      statusMsg.innerHTML = `<i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'} mr-2"></i>${message}`;
-      statusMsg.classList.remove('hidden');
-      
-      if (type === 'success') {
-        setTimeout(() => statusMsg.classList.add('hidden'), 5000);
-      }
-    }
-    
-    function formatCurrency(value) {
-      return new Intl.NumberFormat('pt-BR', {
-        style: 'currency',
-        currency: 'BRL'
-      }).format(value);
-    }
-    
-    function setLoading(button, loading) {
-      if (loading) {
-        button.classList.add('loading');
-        button.innerHTML = '<span class="spinner mr-2"></span>Screening em andamento...';
-      } else {
-        button.classList.remove('loading');
-        button.innerHTML = '<i class="fas fa-search mr-2"></i>Iniciar Screening';
-      }
-    }
-    
-    function showProgress(current, total) {
-      progressContainer.classList.remove('hidden');
-      const percent = Math.round((current / total) * 100);
-      progressText.textContent = `Analisando ${current} de ${total} ativos...`;
-      progressPercent.textContent = `${percent}%`;
-      progressFill.style.width = `${percent}%`;
-    }
-    
-    function hideProgress() {
-      progressContainer.classList.add('hidden');
-      progressFill.style.width = '0%';
-    }
-    
-    // Testar conectividade da API
-    async function testAPI() {
-      try {
-        const response = await fetch(`${API_BASE}/health`);
-        const data = await response.json();
-        
-        if (response.ok) {
-          document.getElementById('apiStatus').className = 'w-8 h-8 bg-green-500 bg-opacity-10 border border-green-500 border-opacity-30 rounded-full flex items-center justify-center relative';
-          return true;
-        } else {
-          throw new Error('API retornou erro');
-        }
-      } catch (error) {
-        document.getElementById('apiStatus').className = 'w-8 h-8 bg-red-500 bg-opacity-10 border border-red-500 border-opacity-30 rounded-full flex items-center justify-center relative';
-        return false;
-      }
-    }
-    
-    // Carregar presets
-    async function loadPresets() {
-      try {
-        const response = await fetch(`${API_BASE}/presets`);
-        const data = await response.json();
-        
-        if (response.ok && data.success) {
-          presets = data.presets;
-          console.log('Presets carregados:', Object.keys(presets).length);
-        }
-      } catch (error) {
-        console.error('Erro ao carregar presets:', error);
-      }
-    }
-    
-    // Event listeners para presets
-    document.querySelectorAll('.preset-btn').forEach(btn => {
-      btn.addEventListener('click', function() {
-        // Remove active de todos
-        document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
-        
-        // Adiciona active no clicado
-        this.classList.add('active');
-        
-        const presetName = this.dataset.preset;
-        const tickers = presets[presetName];
-        
-        if (tickers) {
-          customTickers.value = tickers.join(', ');
-          showStatus(`Lista "${presetName}" carregada com ${tickers.length} ativos`, 'info');
-        }
-      });
+  });
+});
+
+/* ── API: expirations ─────────────────────────────────────── */
+async function loadExpirations() {
+  const sel = document.getElementById('expirationSelect');
+  sel.innerHTML = '<option value="">Carregando...</option>';
+  try {
+    const r = await fetch(`${API_BASE}/expirations`, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({ticker:'PETR4'})
     });
-    
-    async function loadExpirations() {
-      const select = document.getElementById('expirationSelect');
-      const expStatus = document.getElementById('expStatus');
-      
-      select.innerHTML = '<option value="">Carregando...</option>';
-      expStatus.textContent = '';
-      
-      try {
-        const response = await fetch(`${API_BASE}/expirations`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ticker: 'PETR4' })
-        });
-        
-        const data = await response.json();
-        
-        if (response.ok && data.success) {
-          const available = data.expirations.filter(e => e.available);
-          
-          select.innerHTML = available.map((exp, i) => `
-            <option value="${exp.code}" ${i === 0 ? 'selected' : ''}>
-              ${exp.date || exp.code}${i === 0 ? ' (mais próximo)' : ''}
-            </option>
-          `).join('');
-          
-          expStatus.textContent = `${available.length} vencimentos disponíveis`;
-        } else {
-          select.innerHTML = '<option value="">Erro ao carregar</option>';
-        }
-      } catch (err) {
-        select.innerHTML = '<option value="">Erro de conexão</option>';
-        console.error(err);
-      }
+    const d = await r.json();
+    if (r.ok && d.success) {
+      const avail = d.expirations.filter(e=>e.available);
+      sel.innerHTML = avail.map((exp,i)=>`
+        <option value="${exp.code}" ${i===0?'selected':''}>
+          ${exp.desc||exp.date||exp.code}${i===0?' ✓':''}
+        </option>`).join('');
+      if (!avail.length) sel.innerHTML = '<option value="">Nenhum disponível</option>';
+    } else {
+      sel.innerHTML = '<option value="">Erro ao carregar</option>';
     }
+  } catch {
+    sel.innerHTML = '<option value="">Erro de conexão</option>';
+  }
+}
+document.getElementById('loadExpBtn').addEventListener('click', loadExpirations);
 
+/* ── Screening ────────────────────────────────────────────── */
+async function runScreening() {
+  const raw = customTickers.value.trim();
+  if (!raw) { showStatus('Digite os tickers ou selecione um preset', 'error'); return; }
 
+  const tickers = raw.split(',').map(t=>t.trim().toUpperCase().replace('.SA','')).filter(Boolean);
+  if (!tickers.length) { showStatus('Nenhum ticker válido', 'error'); return; }
 
-    // Executar screening
-    async function runScreening() {
-      const tickersInput = customTickers.value.trim();
-      
-      if (!tickersInput) {
-        showStatus('Digite os tickers ou selecione um preset', 'error');
-        return;
-      }
-      
-      const tickers = tickersInput
-        .split(',')
-        .map(t => t.trim().toUpperCase().replace('.SA', ''))
-        .filter(t => t.length > 0);
-      
-      if (tickers.length === 0) {
-        showStatus('Nenhum ticker válido encontrado', 'error');
-        return;
-      }
+  const expCode = document.getElementById('expirationSelect').value || null;
 
-      const expCode = document.getElementById('expirationSelect').value || null;
-      
-      setLoading(screenBtn, true);
-      showProgress(0, tickers.length);
-      showStatus(`Iniciando screening de ${tickers.length} ativos${expCode ? ` · venc. ${expCode}` : ''}...`, 'info');
-      
-      summarySection.classList.add('hidden');
-      resultsSection.classList.add('hidden');
-      currentResults = [];
-      
-      try {
-        const response = await fetch(`${API_BASE}/flip`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ tickers, max_workers: 5, expiration_code: expCode })
-        });
-        
-        const data = await response.json();
-        
-        if (response.ok && data.success) {
-          currentResults = data.results || [];
-          displaySummary(data.summary);
-          displayResults(currentResults);
-          showStatus(`Screening concluído: ${data.successful_analysis}/${data.total_tickers} ativos analisados`, 'success');
-        } else {
-          showStatus(data.error || `Erro HTTP ${response.status}`, 'error');
-        }
-      } catch (error) {
-        showStatus('Erro ao conectar com o servidor', 'error');
-        console.error(error);
-      }
-      
-      hideProgress();
-      setLoading(screenBtn, false);
-    }  
+  setLoading(screenBtn, true);
+  showProgress(0, tickers.length);
+  showStatus(`Iniciando screening de ${tickers.length} ativos${expCode?' · venc. '+expCode:''}...`,'info');
+  summarySection.classList.add('hidden');
+  resultsSection.classList.add('hidden');
+  currentResults = [];
 
-    // Exibir resumo
-    function displaySummary(summary) {
-      if (!summary) return;
-      
-      document.getElementById('totalAnalyzed').textContent = summary.total_analyzed || 0;
-      
-      const regimeDist = summary.regime_distribution || {};
-      document.getElementById('totalLong').textContent = regimeDist['Long Gamma'] || 0;
-      document.getElementById('totalShort').textContent = regimeDist['Short Gamma'] || 0;
-      
-      const distStats = summary.distance_statistics || {};
-      const avgDist = distStats.mean ? Math.abs(distStats.mean).toFixed(1) : '--';
-      document.getElementById('avgDistance').textContent = avgDist !== '--' ? `${avgDist}%` : '--';
-      
-      summarySection.classList.remove('hidden');
-    }
-    
-    // Exibir resultados
-    function displayResults(results) {
-      if (!results || results.length === 0) {
-        resultsTableBody.innerHTML = `
-          <tr>
-            <td colspan="9" class="text-center text-gray-400 py-8">
-              <i class="fas fa-inbox text-4xl mb-2 block"></i>
-              Nenhum resultado encontrado
-            </td>
-          </tr>
-        `;
-        return;
-      }
-      
-      resultsTableBody.innerHTML = '';
-      
-      results.forEach(result => {
-        const row = document.createElement('tr');
-        
-        // Regime badge
-        let regimeBadge = `<span class="regime-neutral">Neutral</span>`;
-        if (result.regime === 'Long Gamma') {
-          regimeBadge = `<span class="regime-long"><i class="fas fa-arrow-up mr-1"></i>Long</span>`;
-        } else if (result.regime === 'Short Gamma') {
-          regimeBadge = `<span class="regime-short"><i class="fas fa-arrow-down mr-1"></i>Short</span>`;
-        }
-        
-        // Liquidez badge
-        let liquidityBadge = `<span class="liquidity-badge liquidity-media">Média</span>`;
-        if (result.liquidity_category === 'ALTA') {
-          liquidityBadge = `<span class="liquidity-badge liquidity-alta">Alta</span>`;
-        } else if (result.liquidity_category === 'BAIXA') {
-          liquidityBadge = `<span class="liquidity-badge liquidity-baixa">Baixa</span>`;
-        }
-        
-        // Distância formatada
-        const distAbs = result.distance_abs || 0;
-        const distPct = result.distance_pct || 0;
-        const distClass = distPct > 0 ? 'distance-positive' : 'distance-negative';
-        const distSign = distPct > 0 ? '+' : '';
-        
-        row.innerHTML = `
-          <td>
-            <span class="ticker-link" onclick="goToGammaLevels('${result.ticker}')">
-              ${result.ticker}
-            </span>
-          </td>
-          <td>${formatCurrency(result.spot_price || 0)}</td>
-          <td>${result.flip_strike ? formatCurrency(result.flip_strike) : '--'}</td>
-          <td class="${distClass}">${formatCurrency(distAbs)}</td>
-          <td class="${distClass}">${distSign}${distPct.toFixed(2)}%</td>
-          <td>${regimeBadge}</td>
-          <td>${liquidityBadge}</td>
-          <td class="text-xs text-gray-400">${result.expiration || '--'}</td>
-          <td>
-            <button 
-              onclick="goToGammaLevels('${result.ticker}')"
-              class="px-3 py-1 bg-geminii bg-opacity-20 hover:bg-opacity-30 text-geminii rounded text-xs font-medium transition-all"
-            >
-              <i class="fas fa-chart-line mr-1"></i>Analisar
-            </button>
-          </td>
-        `;
-        
-        resultsTableBody.appendChild(row);
-      });
-      
-      resultsSection.classList.remove('hidden');
-    }
-    
-    // Navegar para Gamma Levels
-    function goToGammaLevels(ticker) {
-      window.location.href = `greeks-micro.html?ticker=${ticker}`;
-    }
-    window.goToGammaLevels = goToGammaLevels;
-    
-    
-    
-    // Exportar para NTSL
-    async function exportToNTSL() {
-      if (currentResults.length === 0) {
-        showStatus('Nenhum resultado para exportar', 'error');
-        return;
-      }
-      
-      try {
-        showStatus('Gerando código NTSL...', 'info');
-        
-        const response = await fetch(`${API_BASE}/export-ntsl-batch`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            results: currentResults
-          })
-        });
-        
-        const data = await response.json();
-        
-        if (response.ok && data.success) {
-          // Copiar para clipboard
-          await navigator.clipboard.writeText(data.ntsl_code);
-          
-          showStatus(` Código NTSL copiado! ${data.total_tickers} ativos prontos para colar no Profit.`, 'success');
-          
-        } else {
-          showStatus(data.error || 'Erro ao gerar código NTSL', 'error');
-        }
-        
-      } catch (error) {
-        console.error('Erro ao exportar NTSL:', error);
-        showStatus('Erro ao conectar com servidor', 'error');
-      }
-    }
-    
-    // Event Listeners
-    screenBtn.addEventListener('click', runScreening);
-    const expCode = document.getElementById('expirationSelect').value || null;
-    exportNTSLBtn.addEventListener('click', exportToNTSL);
-    
-    customTickers.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') runScreening();
+  try {
+    const r = await fetch(`${API_BASE}/flip`, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({tickers, max_workers:5, expiration_code:expCode})
     });
-    
-    // Inicialização
-    async function initialize() {
-      const apiConnected = await testAPI();
-      
-      if (apiConnected) {
-        showStatus('Sistema de Screening carregado! Selecione um preset ou digite os tickers.', 'info');
-        await loadPresets();
-        await loadExpirations();
-      } else {
-        showStatus('Aviso: Erro na conectividade da API. Verifique se o servidor está rodando.', 'error');
-      }
+    const d = await r.json();
+    if (r.ok && d.success) {
+      currentResults = d.results || [];
+      displaySummary(d.summary);
+      displayResults(currentResults);
+      showStatus(`Screening concluído: ${d.successful_analysis}/${d.total_tickers} ativos analisados`, 'success');
+    } else {
+      showStatus(d.error || `Erro HTTP ${r.status}`, 'error');
     }
-    
-    // Inicializar quando a página carregar
-    initialize();
-  </script>
+  } catch {
+    showStatus('Erro ao conectar com o servidor', 'error');
+  }
+
+  hideProgress();
+  setLoading(screenBtn, false);
+}
+
+screenBtn.addEventListener('click', runScreening);
+customTickers.addEventListener('keypress', e=>{ if(e.key==='Enter') runScreening(); });
+
+/* ── Summary ──────────────────────────────────────────────── */
+function displaySummary(summary) {
+  if (!summary) return;
+  document.getElementById('totalAnalyzed').textContent = summary.total_analyzed || 0;
+  const rd = summary.regime_distribution || {};
+  document.getElementById('totalLong').textContent  = rd['Long Gamma']  || 0;
+  document.getElementById('totalShort').textContent = rd['Short Gamma'] || 0;
+  const ds = summary.distance_statistics || {};
+  document.getElementById('avgDistance').textContent = ds.mean ? `${Math.abs(ds.mean).toFixed(1)}%` : '--';
+  summarySection.classList.remove('hidden');
+}
+
+/* ── Results table ────────────────────────────────────────── */
+function displayResults(results) {
+  if (!results || !results.length) {
+    resultsTableBody.innerHTML = `
+      <tr><td colspan="9" class="text-center text-gray-500 py-10 text-xs">
+        <i class="fas fa-inbox text-3xl block mb-2 opacity-30"></i>Nenhum resultado encontrado
+      </td></tr>`;
+    resultsSection.classList.remove('hidden');
+    return;
+  }
+
+  resultsTableBody.innerHTML = '';
+  results.forEach(r => {
+    const distPct = r.distance_pct || 0;
+    const distAbs = r.distance_abs || 0;
+    const distCls = distPct > 0 ? 'dist-pos' : 'dist-neg';
+    const distSign= distPct > 0 ? '+' : '';
+
+    let regimeBadge = `<span class="regime-neutral"><i class="fas fa-minus"></i>Neutro</span>`;
+    if (r.regime === 'Long Gamma')  regimeBadge = `<span class="regime-long"><i class="fas fa-arrow-up"></i>Long</span>`;
+    if (r.regime === 'Short Gamma') regimeBadge = `<span class="regime-short"><i class="fas fa-arrow-down"></i>Short</span>`;
+
+    const liqCls = r.liquidity_category === 'ALTA' ? 'liq-alta' : r.liquidity_category === 'BAIXA' ? 'liq-baixa' : 'liq-media';
+    const liqLbl = r.liquidity_category === 'ALTA' ? 'Alta' : r.liquidity_category === 'BAIXA' ? 'Baixa' : 'Média';
+
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><span class="ticker-link" onclick="goToGammaLevels('${r.ticker}')">${r.ticker}</span></td>
+      <td class="font-mono text-[11px]">${fmtBRL(r.spot_price)}</td>
+      <td class="font-mono text-[11px] text-orange-400">${r.flip_strike ? fmtBRL(r.flip_strike) : '--'}</td>
+      <td class="col-hide font-mono text-[11px] ${distCls}">${fmtBRL(distAbs)}</td>
+      <td class="font-mono font-bold ${distCls}">${distSign}${distPct.toFixed(2)}%</td>
+      <td>${regimeBadge}</td>
+      <td class="col-hide"><span class="liq-badge ${liqCls}">${liqLbl}</span></td>
+      <td class="col-hide text-[11px] text-gray-500">${r.expiration || '--'}</td>
+      <td>
+        <button onclick="goToGammaLevels('${r.ticker}')"
+          class="px-3 py-1.5 bg-geminii/10 hover:bg-geminii/20 text-geminii rounded-lg text-[10px] font-bold transition-all border border-geminii/20">
+          <i class="fas fa-chart-line mr-1"></i>Ver
+        </button>
+      </td>`;
+    resultsTableBody.appendChild(tr);
+  });
+  resultsSection.classList.remove('hidden');
+}
+
+/* ── Navigate ─────────────────────────────────────────────── */
+function goToGammaLevels(ticker) {
+  window.location.href = `greeks-micro.html?ticker=${ticker}`;
+}
+window.goToGammaLevels = goToGammaLevels;
+
+/* ── Export NTSL ──────────────────────────────────────────── */
+exportNTSLBtn.addEventListener('click', async () => {
+  if (!currentResults.length) { showStatus('Nenhum resultado para exportar', 'error'); return; }
+  try {
+    showStatus('Gerando código NTSL...', 'info');
+    const r = await fetch(`${API_BASE}/export-ntsl-batch`, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({results: currentResults})
+    });
+    const d = await r.json();
+    if (r.ok && d.success) {
+      await navigator.clipboard.writeText(d.ntsl_code);
+      showStatus(`Código NTSL copiado! ${d.total_tickers} ativos prontos para colar no Profit.`, 'success');
+    } else {
+      showStatus(d.error || 'Erro ao gerar NTSL', 'error');
+    }
+  } catch { showStatus('Erro ao conectar com servidor', 'error'); }
+});
+
+/* ── Init ─────────────────────────────────────────────────── */
+async function initialize() {
+  const ok = await testAPI();
+  if (ok) {
+    showStatus('Sistema de Screening carregado! Selecione um preset ou digite os tickers.', 'info');
+    await loadPresets();
+    await loadExpirations();
+  } else {
+    showStatus('Aviso: Erro na conectividade da API. Verifique se o servidor está rodando.', 'error');
+  }
+}
+initialize();
+</script>
 </body>
 </html>
