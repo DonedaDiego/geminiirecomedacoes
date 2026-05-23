@@ -11,10 +11,8 @@
       theme: {
         extend: {
           colors: {
-            dark: '#000000',
-            light: '#ffffff',
-            subtle: 'rgba(255,255,255,0.1)',
-            geminii: '#fb1ebb'
+            dark: '#000000', light: '#ffffff',
+            subtle: 'rgba(255,255,255,0.1)', geminii: '#fb1ebb'
           },
           fontFamily: { sans: ['Inter', 'sans-serif'] }
         }
@@ -24,123 +22,29 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
-    body {
-      font-family: 'Inter', sans-serif;
-      background: linear-gradient(135deg, #0c0c0c 0%, #1a1a1a 100%);
-      min-height: 100vh;
-    }
-
-    .beta-card {
-      background: rgba(255,255,255,0.08);
-      backdrop-filter: blur(20px);
-      border: 1px solid rgba(255,255,255,0.2);
-      border-radius: 20px;
-      padding: 2rem;
-      transition: all 0.3s ease;
-    }
-    .beta-card:hover {
-      transform: translateY(-2px) scale(1.005);
-      box-shadow: 0 20px 40px rgba(186,57,175,0.15);
-      border-color: rgba(186,57,175,0.3);
-    }
-
-    .tab-button {
-      padding: 12px 24px;
-      border-radius: 8px;
-      border: 1px solid rgba(255,255,255,0.1);
-      background: rgba(255,255,255,0.05);
-      color: #94a3b8;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      font-weight: 500;
-    }
-    .tab-button.active {
-      background: linear-gradient(135deg, #fb1ebb, #8b5cf6);
-      color: white;
-      border-color: rgba(186,57,175,0.3);
-    }
-    .tab-button:not(.active):hover {
-      background: rgba(255,255,255,0.08);
-      color: #e2e8f0;
-      border-color: rgba(255,255,255,0.2);
-    }
-    .tab-content { display: none; }
-    .tab-content.active { display: block; animation: fadeIn 0.3s ease; }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-
-    .spinner {
-      border: 2px solid rgba(255,255,255,0.1);
-      border-top: 2px solid #fb1ebb;
-      border-radius: 50%;
-      width: 18px; height: 18px;
-      animation: spin 0.8s linear infinite;
-      display: inline-block;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    .loading { opacity: 0.6; pointer-events: none; }
-
-    /* Métricas */
-    .metric-card {
-      background: rgba(255,255,255,0.05);
-      border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 12px;
-      padding: 14px 16px;
-      position: relative;
-      overflow: hidden;
-    }
-    .metric-card::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 0; right: 0;
-      height: 2px;
-      background: var(--accent, rgba(255,255,255,0.1));
-    }
-
-    /* Diretriz */
-    .directive-panel {
-      border-radius: 12px;
-      padding: 16px 20px;
-      border: 1px solid;
-      display: flex;
-      align-items: flex-start;
-      gap: 16px;
-    }
-    .directive-action {
-      display: inline-block;
-      margin-top: 8px;
-      font-size: 11px;
-      padding: 3px 10px;
-      border-radius: 999px;
-      border: 1px solid currentColor;
-    }
-
-    /* Gráficos */
-    .chart-wrap {
-      background: rgba(255,255,255,0.03);
-      border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 12px;
-      padding: 16px;
-    }
-
-    /* Compare */
-    .compare-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 8px 0;
-      border-bottom: 1px solid rgba(255,255,255,0.06);
-      font-size: 13px;
-    }
-    .compare-row:last-child { border-bottom: none; }
+    body { font-family:'Inter',sans-serif; background:linear-gradient(135deg,#0c0c0c 0%,#1a1a1a 100%); min-height:100vh; }
+    .beta-card { background:rgba(255,255,255,0.08); backdrop-filter:blur(20px); border:1px solid rgba(255,255,255,0.2); border-radius:20px; padding:2rem; transition:all 0.3s ease; }
+    .beta-card:hover { transform:translateY(-2px) scale(1.005); box-shadow:0 20px 40px rgba(186,57,175,0.15); border-color:rgba(186,57,175,0.3); }
+    .tab-button { padding:12px 24px; border-radius:8px; border:1px solid rgba(255,255,255,0.1); background:rgba(255,255,255,0.05); color:#94a3b8; cursor:pointer; transition:all 0.3s ease; font-weight:500; }
+    .tab-button.active { background:linear-gradient(135deg,#fb1ebb,#8b5cf6); color:white; border-color:rgba(186,57,175,0.3); }
+    .tab-button:not(.active):hover { background:rgba(255,255,255,0.08); color:#e2e8f0; border-color:rgba(255,255,255,0.2); }
+    .tab-content { display:none; }
+    .tab-content.active { display:block; animation:fadeIn 0.3s ease; }
+    @keyframes fadeIn { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+    @keyframes spin { to{transform:rotate(360deg)} }
+    .loading { opacity:0.6; pointer-events:none; }
+    .metric-card { background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.08); border-radius:12px; padding:14px 16px; position:relative; overflow:hidden; }
+    .metric-card::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:var(--accent,rgba(255,255,255,0.1)); }
+    .directive-panel { border-radius:12px; padding:16px 20px; border:1px solid; display:flex; align-items:flex-start; gap:16px; }
+    .directive-action { display:inline-block; margin-top:8px; font-size:11px; padding:3px 10px; border-radius:999px; border:1px solid currentColor; }
+    .chart-wrap { background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:12px; padding:16px; }
+    .compare-row { display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.06); font-size:13px; }
+    .compare-row:last-child { border-bottom:none; }
+    .regime-badge { display:inline-flex; align-items:center; gap:5px; font-size:10px; padding:2px 8px; border-radius:999px; font-weight:600; letter-spacing:0.04em; margin-left:4px; vertical-align:middle; }
   </style>
 </head>
 <body class="text-white">
 
-<!-- NAV -->
 <nav class="fixed top-6 left-1/2 transform -translate-x-1/2 z-50 bg-opacity-5 border-opacity-10 bg-white border-white border rounded-full px-4 py-3 shadow-xl backdrop-blur-md">
   <div class="flex items-center justify-between">
     <img src="logo.png" alt="Geminii" class="w-6 h-6 cursor-pointer" onclick="window.location.href='/dashboard'">
@@ -162,21 +66,16 @@
 <div class="pt-32 pb-16">
   <div class="max-w-7xl mx-auto px-6">
 
-    <!-- HEADER -->
     <div class="text-center mb-12">
       <h1 class="text-4xl md:text-5xl font-bold mb-4">
-        <span style="color:#fb1ebb; font-weight:900;">ATSMOM</span>
-        <span class="text-white font-light">Analytics</span>
+        <span style="color:#fb1ebb;font-weight:900;">ATSMOM</span>
+        <span class="text-white font-light">Análise</span>
       </h1>
-      <p class="text-neutral-300 text-lg max-w-2xl mx-auto">
-        Adaptive Time Series Momentum — Análise de Sinais de Trading (5 Anos)
-      </p>
+      <p class="text-neutral-300 text-lg max-w-2xl mx-auto">Adaptive Time Series Momentum</p>
 
-      <!-- Info toggle -->
       <div class="mt-8">
         <button onclick="toggleInfo()" class="bg-gradient-to-r from-geminii to-purple-600 hover:from-purple-600 hover:to-geminii text-white px-6 py-3 rounded-full font-semibold text-sm transition-all duration-300 flex items-center mx-auto shadow-lg hover:shadow-xl transform hover:scale-105">
-          <i id="infoIcon" class="fas fa-info-circle mr-2"></i>
-          Como funciona o ATSMOM
+          <i id="infoIcon" class="fas fa-info-circle mr-2"></i>Como funciona o ATSMOM
         </button>
 
         <div id="infoContent" class="hidden mt-8 max-w-5xl mx-auto">
@@ -197,30 +96,39 @@
               </div>
               <div class="bg-white/5 border border-white/10 rounded-xl p-4">
                 <div class="text-xs text-gray-400 uppercase tracking-widest mb-2">Alpha relativo vs IBOV</div>
-                <p class="text-sm text-gray-200 leading-relaxed">O mesmo modelo roda no ^BVSP. Sinal do ativo menos sinal do IBOV = alpha relativo. Quando positivo, o ativo tem momentum acima do índice.</p>
+                <p class="text-sm text-gray-200 leading-relaxed">O mesmo modelo roda no ^BVSP. Tendência do ativo menos tendência do IBOV = alpha de momentum relativo.</p>
               </div>
             </div>
-            <h3 class="text-base font-bold text-white mb-4 text-center">Como interpretar os sinais</h3>
+
+            <h3 class="text-base font-bold text-white mb-4 text-center">Como interpretar a Tendência (−1 a +1)</h3>
             <div class="space-y-2">
               <div class="flex items-center gap-3 bg-white/5 rounded-lg px-4 py-3">
-                <span class="text-green-400 font-bold text-sm w-24 shrink-0">&gt; +0.3</span>
-                <span class="text-xs text-gray-300 leading-relaxed">Tendência de alta confirmada. Contexto favorável para posição comprada — dimensionar pelo valor do sinal.</span>
+                <span class="font-bold text-sm w-28 shrink-0" style="color:#ffb020">+0.7 a +1.0</span>
+                <span class="text-xs text-gray-300 leading-relaxed"><strong class="text-white">Alta esticada — atenção.</strong> Momentum extremo positivo. Risco de reversão para baixa. Reduzir sizing ou proteger posição.</span>
               </div>
               <div class="flex items-center gap-3 bg-white/5 rounded-lg px-4 py-3">
-                <span class="font-bold text-sm w-24 shrink-0" style="color:#afffcc">+0.1 a +0.3</span>
-                <span class="text-xs text-gray-300 leading-relaxed">Viés de alta moderado. Aguardar sinal superar +0.3 com tendência positiva antes de entrar com tamanho cheio.</span>
+                <span class="text-green-400 font-bold text-sm w-28 shrink-0">+0.3 a +0.7</span>
+                <span class="text-xs text-gray-300 leading-relaxed"><strong class="text-white">Alta confirmada.</strong> Zona ótima de momentum positivo. Manter ou iniciar posição comprada.</span>
               </div>
               <div class="flex items-center gap-3 bg-white/5 rounded-lg px-4 py-3">
-                <span class="text-gray-400 font-bold text-sm w-24 shrink-0">-0.1 a +0.1</span>
-                <span class="text-xs text-gray-300 leading-relaxed">Neutro. Momentum indefinido. Ficar fora ou posição mínima — revisitar quando sinal superar ±0.1.</span>
+                <span class="font-bold text-sm w-28 shrink-0" style="color:#afffcc">+0.1 a +0.3</span>
+                <span class="text-xs text-gray-300 leading-relaxed"><strong class="text-white">Viés de alta.</strong> Aguardar tendência superar +0.3 antes de entrar com tamanho cheio.</span>
               </div>
               <div class="flex items-center gap-3 bg-white/5 rounded-lg px-4 py-3">
-                <span class="font-bold text-sm w-24 shrink-0" style="color:#ffaaaa">-0.3 a -0.1</span>
-                <span class="text-xs text-gray-300 leading-relaxed">Viés de baixa. Reduzir exposição existente. Não iniciar novas posições compradas.</span>
+                <span class="text-gray-400 font-bold text-sm w-28 shrink-0">−0.1 a +0.1</span>
+                <span class="text-xs text-gray-300 leading-relaxed"><strong class="text-white">Neutro / Limiar.</strong> Transição de regime em formação. Ficar fora ou posição mínima.</span>
               </div>
               <div class="flex items-center gap-3 bg-white/5 rounded-lg px-4 py-3">
-                <span class="text-red-400 font-bold text-sm w-24 shrink-0">&lt; -0.3</span>
-                <span class="text-xs text-gray-300 leading-relaxed">Tendência de baixa confirmada. Avaliar saída total, proteção via opções ou short relativo.</span>
+                <span class="font-bold text-sm w-28 shrink-0" style="color:#ffddaa">−0.3 a −0.1</span>
+                <span class="text-xs text-gray-300 leading-relaxed"><strong class="text-white">Viés de baixa.</strong> Reduzir exposição. Não iniciar novas compras.</span>
+              </div>
+              <div class="flex items-center gap-3 bg-white/5 rounded-lg px-4 py-3">
+                <span class="font-bold text-sm w-28 shrink-0" style="color:#ff3b5c">−0.7 a −0.3</span>
+                <span class="text-xs text-gray-300 leading-relaxed"><strong class="text-white">Baixa confirmada.</strong> Zona ótima de momentum negativo. Proteção, saída ou short relativo.</span>
+              </div>
+              <div class="flex items-center gap-3 bg-white/5 rounded-lg px-4 py-3">
+                <span class="font-bold text-sm w-28 shrink-0" style="color:#ff8c69">−1.0 a −0.7</span>
+                <span class="text-xs text-gray-300 leading-relaxed"><strong class="text-white">Baixa esticada — atenção.</strong> Momentum extremo negativo. Risco de reversão para alta. Não iniciar novas posições vendidas.</span>
               </div>
             </div>
           </div>
@@ -228,37 +136,27 @@
       </div>
     </div>
 
-    <!-- CARD DE CONTROLES -->
     <div class="beta-card mb-8">
       <div class="flex flex-wrap gap-2 mb-6 justify-center">
-        <button class="tab-button active" data-tab="individual">
-          <i class="fas fa-chart-line mr-2"></i>Análise Individual
-        </button>
-        <button class="tab-button" data-tab="compare">
-          <i class="fas fa-balance-scale mr-2"></i>Comparar Ativos
-        </button>
+        <button class="tab-button active" data-tab="individual"><i class="fas fa-chart-line mr-2"></i>Análise Individual</button>
+        <button class="tab-button" data-tab="compare"><i class="fas fa-balance-scale mr-2"></i>Comparar Ativos</button>
       </div>
-
       <div id="individual-content" class="tab-content active">
         <div class="flex flex-col md:flex-row gap-4 items-center justify-center">
-          <input id="individual-symbol" type="text" placeholder="Código da ação (ex: PETR4)"
-            class="px-4 py-2 bg-white bg-opacity-10 border border-white border-opacity-20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-geminii backdrop-blur-sm uppercase tracking-wider"
-            style="min-width:230px">
+          <input id="individual-symbol" type="text" placeholder="Ticker"
+            class="px-4 py-2 bg-white bg-opacity-10 border border-white border-opacity-20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-geminii backdrop-blur-sm uppercase tracking-wider" style="min-width:230px">
           <button id="analyzeIndividualBtn" onclick="analyzeIndividual()"
             class="px-6 py-2 bg-gradient-to-r from-pink-500 to-purple-600 hover:shadow-lg rounded-lg transition-all font-medium flex items-center gap-2">
             <i class="fas fa-rocket"></i>Analisar ATSMOM
           </button>
         </div>
       </div>
-
       <div id="compare-content" class="tab-content">
         <div class="flex flex-col md:flex-row gap-4 items-center justify-center flex-wrap">
           <input id="compare-symbol1" type="text" placeholder="Primeiro ativo (ex: PETR4)"
-            class="px-4 py-2 bg-white bg-opacity-10 border border-white border-opacity-20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-geminii backdrop-blur-sm uppercase tracking-wider"
-            style="min-width:210px">
+            class="px-4 py-2 bg-white bg-opacity-10 border border-white border-opacity-20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-geminii backdrop-blur-sm uppercase tracking-wider" style="min-width:210px">
           <input id="compare-symbol2" type="text" placeholder="Segundo ativo (ex: VALE3)"
-            class="px-4 py-2 bg-white bg-opacity-10 border border-white border-opacity-20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-geminii backdrop-blur-sm uppercase tracking-wider"
-            style="min-width:210px">
+            class="px-4 py-2 bg-white bg-opacity-10 border border-white border-opacity-20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-geminii backdrop-blur-sm uppercase tracking-wider" style="min-width:210px">
           <button id="compareBtn" onclick="compareAssets()"
             class="px-6 py-2 bg-gradient-to-r from-purple-500 to-blue-600 hover:shadow-lg rounded-lg transition-all font-medium flex items-center gap-2">
             <i class="fas fa-balance-scale"></i>Comparar
@@ -267,26 +165,17 @@
       </div>
     </div>
 
-    <!-- STATUS -->
     <div id="statusMsg" class="mb-6 p-4 rounded-lg hidden backdrop-blur-sm text-sm"></div>
 
-    <!-- RESULTADO INDIVIDUAL -->
     <div id="individual-results" class="mb-8 hidden">
       <div class="beta-card">
-
-        <!-- Título -->
         <div class="flex justify-between items-center mb-6">
           <h3 id="res-title" class="text-2xl font-bold"></h3>
           <span id="res-update" class="text-xs text-gray-500 font-mono"></span>
         </div>
-
-        <!-- Métricas strip -->
         <div id="metrics-strip" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-6"></div>
-
-        <!-- Painel de diretriz -->
         <div id="directive-panel" class="mb-6"></div>
 
-        <!-- Gráfico 1: Tendência -->
         <div class="mb-5">
           <div class="flex justify-between items-center mb-3">
             <div class="flex items-center gap-2">
@@ -294,22 +183,15 @@
               <span id="g1-ticker" class="text-xs font-bold" style="color:#fb1ebb"></span>
             </div>
             <div class="flex gap-4 text-xs text-gray-500">
-              <span class="flex items-center gap-1">
-                <span style="display:inline-block;width:16px;height:2px;background:#fb1ebb;border-radius:1px"></span>
-                <span id="leg1-ticker">Ativo</span>
-              </span>
-              <span class="flex items-center gap-1">
-                <span style="display:inline-block;width:16px;height:0;border-top:2px dashed rgba(255,255,255,0.4)"></span>
-                IBOV
-              </span>
+              <span class="flex items-center gap-1"><span style="display:inline-block;width:16px;height:2px;background:#fb1ebb;border-radius:1px"></span><span id="leg1-ticker">Ativo</span></span>
+              <span class="flex items-center gap-1"><span style="display:inline-block;width:16px;height:0;border-top:2px dashed rgba(255,255,255,0.4)"></span>IBOV</span>
+              <span class="flex items-center gap-1"><span style="display:inline-block;width:14px;height:0;border-top:2px dashed rgba(255,176,32,0.8)"></span>±0.7</span>
+              <span class="flex items-center gap-1"><span style="display:inline-block;width:14px;height:0;border-top:2px dashed rgba(0,232,122,0.4)"></span>±0.3</span>
             </div>
           </div>
-          <div class="chart-wrap">
-            <canvas id="chartTrend" height="110"></canvas>
-          </div>
+          <div class="chart-wrap"><canvas id="chartTrend" height="110"></canvas></div>
         </div>
 
-        <!-- Gráfico 2: Sinal Final -->
         <div>
           <div class="flex justify-between items-center mb-3">
             <div class="flex items-center gap-2">
@@ -317,33 +199,17 @@
               <span id="g2-ticker" class="text-xs font-bold" style="color:#fb1ebb"></span>
             </div>
             <div class="flex gap-4 text-xs text-gray-500">
-              <span class="flex items-center gap-1">
-                <span style="display:inline-block;width:16px;height:2px;background:#fb1ebb"></span>
-                <span id="leg2-ticker">Ativo</span>
-              </span>
-              <span class="flex items-center gap-1">
-                <span style="display:inline-block;width:16px;height:0;border-top:2px dashed rgba(255,255,255,0.4)"></span>
-                IBOV
-              </span>
-              <span class="flex items-center gap-1">
-                <span style="display:inline-block;width:14px;height:0;border-top:2px dashed rgba(0,232,122,0.7)"></span>
-                +0.3
-              </span>
-              <span class="flex items-center gap-1">
-                <span style="display:inline-block;width:14px;height:0;border-top:2px dashed rgba(255,59,92,0.7)"></span>
-                −0.3
-              </span>
+              <span class="flex items-center gap-1"><span style="display:inline-block;width:16px;height:2px;background:#fb1ebb"></span><span id="leg2-ticker">Ativo</span></span>
+              <span class="flex items-center gap-1"><span style="display:inline-block;width:16px;height:0;border-top:2px dashed rgba(255,255,255,0.4)"></span>IBOV</span>
+              <span class="flex items-center gap-1"><span style="display:inline-block;width:14px;height:0;border-top:2px dashed rgba(0,232,122,0.7)"></span>+0.3</span>
+              <span class="flex items-center gap-1"><span style="display:inline-block;width:14px;height:0;border-top:2px dashed rgba(255,59,92,0.7)"></span>−0.3</span>
             </div>
           </div>
-          <div class="chart-wrap">
-            <canvas id="chartSignal" height="110"></canvas>
-          </div>
+          <div class="chart-wrap"><canvas id="chartSignal" height="110"></canvas></div>
         </div>
-
       </div>
     </div>
 
-    <!-- RESULTADO COMPARAÇÃO -->
     <div id="compare-results" class="mb-8 hidden">
       <div class="beta-card mb-4">
         <h3 class="text-lg font-semibold mb-4">Resumo da Comparação</h3>
@@ -363,95 +229,77 @@ const API_BASE = window.location.origin + '/atsmom';
 let chartTrendInst = null;
 let chartSignalInst = null;
 
-// ── UTILS ────────────────────────────────────────────
-function showStatus(msg, type = 'info') {
+function showStatus(msg, type='info') {
   const el = document.getElementById('statusMsg');
   const map = {
-    success: 'bg-green-600 bg-opacity-20 border border-green-500 border-opacity-30 text-green-300',
-    error:   'bg-red-600 bg-opacity-20 border border-red-500 border-opacity-30 text-red-300',
-    info:    'bg-blue-600 bg-opacity-20 border border-blue-500 border-opacity-30 text-blue-300'
+    success:'bg-green-600 bg-opacity-20 border border-green-500 border-opacity-30 text-green-300',
+    error:'bg-red-600 bg-opacity-20 border border-red-500 border-opacity-30 text-red-300',
+    info:'bg-blue-600 bg-opacity-20 border border-blue-500 border-opacity-30 text-blue-300'
   };
   el.className = `mb-6 p-4 rounded-lg backdrop-blur-sm text-sm ${map[type]}`;
   el.textContent = msg;
   el.classList.remove('hidden');
   if (type !== 'info') setTimeout(() => el.classList.add('hidden'), 5000);
 }
-
-function fmtBRL(v) {
-  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
-}
-function fmtSig(v) { return (v >= 0 ? '+' : '') + v.toFixed(4); }
-function calcMean(arr) {
-  const a = arr.map(Math.abs);
-  return a.reduce((s, x) => s + x, 0) / a.length || 0.001;
-}
-
+function fmtBRL(v) { return new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(v); }
+function fmtSig(v) { return (v>=0?'+':'') + v.toFixed(4); }
 function setLoading(btnId, on) {
   const btn = document.getElementById(btnId);
   const icon = btn.querySelector('i');
-  if (on) {
-    btn.classList.add('loading');
-    if (icon) icon.className = 'fas fa-spinner fa-spin';
-  } else {
+  if (on) { btn.classList.add('loading'); if(icon) icon.className='fas fa-spinner fa-spin'; }
+  else {
     btn.classList.remove('loading');
-    if (btnId === 'analyzeIndividualBtn' && icon) icon.className = 'fas fa-rocket';
-    if (btnId === 'compareBtn'           && icon) icon.className = 'fas fa-balance-scale';
+    if(btnId==='analyzeIndividualBtn' && icon) icon.className='fas fa-rocket';
+    if(btnId==='compareBtn' && icon) icon.className='fas fa-balance-scale';
   }
 }
-
 function hideAllResults() {
   document.getElementById('individual-results').classList.add('hidden');
   document.getElementById('compare-results').classList.add('hidden');
 }
 
-// ── TABS ─────────────────────────────────────────────
 document.querySelectorAll('.tab-button').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
     document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
     btn.classList.add('active');
-    document.getElementById(btn.dataset.tab + '-content').classList.add('active');
+    document.getElementById(btn.dataset.tab+'-content').classList.add('active');
     hideAllResults();
   });
 });
 
-// ── INFO TOGGLE ──────────────────────────────────────
 function toggleInfo() {
   const panel = document.getElementById('infoContent');
   const icon  = document.getElementById('infoIcon');
-  if (panel.classList.contains('hidden')) {
-    panel.classList.remove('hidden');
-    icon.className = 'fas fa-times mr-2';
-  } else {
-    panel.classList.add('hidden');
-    icon.className = 'fas fa-info-circle mr-2';
-  }
+  if (panel.classList.contains('hidden')) { panel.classList.remove('hidden'); icon.className='fas fa-times mr-2'; }
+  else { panel.classList.add('hidden'); icon.className='fas fa-info-circle mr-2'; }
 }
 window.toggleInfo = toggleInfo;
 
-// ── SIGNAL STATE ─────────────────────────────────────
 function getSignalState(sig, trnd) {
-  if (trnd > 0.3)  return { color:'#00e87a', border:'rgba(0,232,122,0.3)',   bg:'rgba(0,232,122,0.06)',   icon:'↑', label:'COMPRA',     title:'Tendência de alta confirmada' };
-  if (trnd > 0.1)  return { color:'#afffcc', border:'rgba(175,255,204,0.25)',bg:'rgba(175,255,204,0.04)', icon:'↗', label:'VIÉS ALTA',  title:'Momentum positivo moderado' };
-  if (trnd < -0.3) return { color:'#ff3b5c', border:'rgba(255,59,92,0.3)',   bg:'rgba(255,59,92,0.06)',   icon:'↓', label:'VENDA',      title:'Tendência de baixa confirmada' };
-  if (trnd < -0.1) return { color:'#ffaaaa', border:'rgba(255,170,170,0.25)',bg:'rgba(255,170,170,0.04)',icon:'↘', label:'VIÉS BAIXA', title:'Momentum negativo moderado' };
-  return             { color:'#94a3b8', border:'rgba(148,163,184,0.2)', bg:'rgba(148,163,184,0.04)', icon:'→', label:'NEUTRO',     title:'Momentum indefinido' };
+  if (trnd >= 0.7)  return { color:'#ffb020', border:'rgba(255,176,32,0.35)',  bg:'rgba(255,176,32,0.06)',  icon:'⚡', label:'ALTA ESTICADA',  title:'Momentum extremo — risco de reversão',    regime:'stretched_up'   };
+  if (trnd >= 0.3)  return { color:'#00e87a', border:'rgba(0,232,122,0.3)',    bg:'rgba(0,232,122,0.06)',   icon:'↑',  label:'ALTA CONFIRMADA', title:'Zona ótima de momentum positivo',          regime:'up'             };
+  if (trnd >= 0.1)  return { color:'#afffcc', border:'rgba(175,255,204,0.25)', bg:'rgba(175,255,204,0.04)', icon:'↗',  label:'VIÉS ALTA',       title:'Momentum positivo incipiente',             regime:'bias_up'        };
+  if (trnd > -0.1)  return { color:'#94a3b8', border:'rgba(148,163,184,0.2)', bg:'rgba(148,163,184,0.04)', icon:'→',  label:'NEUTRO',          title:'Limiar — possível mudança de regime',      regime:'neutral'        };
+  if (trnd > -0.3)  return { color:'#ffddaa', border:'rgba(255,221,170,0.25)', bg:'rgba(255,221,170,0.04)', icon:'↘',  label:'VIÉS BAIXA',      title:'Momentum negativo incipiente',             regime:'bias_down'      };
+  if (trnd > -0.7)  return { color:'#ff3b5c', border:'rgba(255,59,92,0.3)',    bg:'rgba(255,59,92,0.06)',   icon:'↓',  label:'BAIXA CONFIRMADA',title:'Zona ótima de momentum negativo',          regime:'down'           };
+  return                    { color:'#ff8c69', border:'rgba(255,140,105,0.35)', bg:'rgba(255,140,105,0.06)', icon:'⚡', label:'BAIXA ESTICADA',  title:'Momentum extremo — risco de reversão',    regime:'stretched_down' };
 }
 
-// ── MÉTRICAS ─────────────────────────────────────────
-function buildMetrics(a, ibovSigLast) {
+function buildMetrics(a, ibovTrendLast) {
   const sig   = a.current_signal;
   const trnd  = a.current_trend;
   const state = getSignalState(sig, trnd);
-  const alpha = +(sig - ibovSigLast).toFixed(4);
+  // Alpha de momentum: tendência do ativo vs tendência do IBOV (mesma escala −1/+1)
+  const alpha = +(trnd - ibovTrendLast).toFixed(4);
 
   const items = [
-    { label:'Sinal',         value:fmtSig(sig),                            sub:state.label,  accent:state.color },
-    { label:'Tendência',     value:fmtSig(trnd),                           sub:trnd>0?'positiva':trnd<0?'negativa':'lateral', accent:trnd>0?'#00e87a':trnd<0?'#ff3b5c':'#94a3b8' },
-    { label:'Alpha vs IBOV', value:(alpha>=0?'+':'')+alpha,                sub:'relativo',   accent:alpha>=0?'#00e87a':'#ff3b5c' },
-    { label:'Volatilidade',  value:a.current_volatility.toFixed(1)+'%',    sub:'anualizada', accent:a.current_volatility>50?'#ffb020':'#00e87a' },
-    { label:'Beta',          value:a.beta,                                  sub:'vs IBOV',    accent:'rgba(255,255,255,0.6)' },
-    { label:'Preço',         value:fmtBRL(a.current_price),                sub:'fechamento', accent:'rgba(255,255,255,0.6)' },
+    { label:'Tendência',     value:fmtSig(trnd),                         sub:state.label,     accent:state.color },
+    { label:'Sinal',         value:fmtSig(sig),                          sub:'vol-ajustado',  accent:'rgba(255,255,255,0.6)' },
+    { label:'Alpha vs IBOV', value:(alpha>=0?'+':'')+alpha,              sub:'mom. relativo', accent:alpha>=0?'#00e87a':'#ff3b5c' },
+    { label:'Volatilidade',  value:a.current_volatility.toFixed(1)+'%',  sub:'anualizada',    accent:a.current_volatility>50?'#ffb020':'#00e87a' },
+    { label:'Beta',          value:a.beta,                               sub:'vs IBOV',       accent:'rgba(255,255,255,0.6)' },
+    { label:'Preço',         value:fmtBRL(a.current_price),              sub:'fechamento',    accent:'rgba(255,255,255,0.6)' },
   ];
 
   return items.map(m => `
@@ -459,256 +307,236 @@ function buildMetrics(a, ibovSigLast) {
       <div class="text-xs text-gray-500 uppercase tracking-wider mb-1">${m.label}</div>
       <div class="text-lg font-bold leading-tight" style="color:${m.accent}">${m.value}</div>
       <div class="text-xs text-gray-500 mt-1">${m.sub}</div>
-    </div>
-  `).join('');
+    </div>`).join('');
 }
 
-// ── DIRETRIZ ─────────────────────────────────────────
-function buildDirective(a, ibovSigLast) {
+function buildDirective(a, ibovTrendLast) {
   const sig   = a.current_signal;
   const trnd  = a.current_trend;
-  const alpha = +(sig - ibovSigLast).toFixed(4);
   const state = getSignalState(sig, trnd);
-  let text = '', action = '';
+  const alpha = +(trnd - ibovTrendLast).toFixed(4);
+  const alphaStr = (alpha>=0?'+':'') + alpha;
 
-  if (state.label === 'COMPRA') {
-    text   = `Sinal ${fmtSig(sig)} com tendência ${fmtSig(trnd)} confirmada. ${alpha > 0.05 ? `Alpha relativo de +${alpha} vs IBOV — movimentação com convicção acima do índice.` : 'Alinhado ao IBOV, sem alpha expressivo no momento.'}`;
-    action = 'Dimensionar posição pelo sinal — reduzir se cair abaixo de +0.1';
-  } else if (state.label === 'VIÉS ALTA') {
-    text   = `Sinal levemente positivo (${fmtSig(sig)}). Tendência ainda não confirma com clareza (${fmtSig(trnd)}). Aguardar sinal superar +0.3 com tendência positiva.`;
-    action = 'Posição reduzida ou observação — confirmar antes de entrar';
-  } else if (state.label === 'VENDA') {
-    text   = `Sinal ${fmtSig(sig)} com tendência ${fmtSig(trnd)} negativa. ${alpha < -0.05 ? `Underperformance de ${alpha} vs IBOV — fraqueza relativa clara.` : 'Em linha com o IBOV.'}`;
-    action = 'Avaliar saída total, proteção via opções ou short relativo';
-  } else if (state.label === 'VIÉS BAIXA') {
-    text   = `Sinal levemente negativo (${fmtSig(sig)}). Sem confirmação de tendência forte (${fmtSig(trnd)}). Reduzir exposição existente.`;
-    action = 'Reduzir exposição — não iniciar novas posições compradas';
-  } else {
-    text   = `Sinal próximo de zero (${fmtSig(sig)}). Momentum indefinido — volatilidade ${a.current_volatility.toFixed(1)}% pode estar comprimindo o sinal, ou mercado lateral.`;
-    action = 'Ficar fora ou posição mínima — revisitar quando sinal superar ±0.1';
+  // Badge âmbar nas zonas esticadas
+  const stretchBadge = (state.regime==='stretched_up' || state.regime==='stretched_down')
+    ? `<span class="regime-badge" style="background:rgba(255,176,32,0.12);border:1px solid rgba(255,176,32,0.4);color:#ffb020">&#9889; Zona de exaustão — observar reversão</span>`
+    : '';
+
+  let text='', action='';
+
+  switch(state.regime) {
+    case 'stretched_up':
+      text = `Tendência em ${fmtSig(trnd)} — zona de momentum extremo positivo. `
+           + `Próximo de +1, o modelo tende a sinalizar exaustão da alta e eleva o risco de reversão para baixo. `
+           + (Math.abs(alpha)>0.05
+               ? `Alpha de momentum de ${alphaStr} vs IBOV — o ativo liderou o índice, mas o esticamento aumenta o risco de mean reversion.`
+               : `Alinhado ao IBOV, sem alpha expressivo.`);
+      action = 'Reduzir sizing ou proteger posição — não iniciar novas compras neste nível';
+      break;
+    case 'up':
+      text = `Tendência em ${fmtSig(trnd)} — zona ótima de momentum positivo (0.3 a 0.7). `
+           + (alpha>0.05 ? `Alpha de ${alphaStr} vs IBOV confirma força acima do índice.` : `Em linha com o IBOV.`)
+           + ` Contexto favorável para posição comprada.`;
+      action = 'Manter ou iniciar posição — reduzir se tendência cair abaixo de +0.1';
+      break;
+    case 'bias_up':
+      text = `Tendência em ${fmtSig(trnd)} — momentum positivo ainda incipiente. `
+           + `O modelo não confirmou a alta com clareza — aguardar tendência superar +0.3 com consistência.`;
+      action = 'Observar — aguardar confirmação acima de +0.3';
+      break;
+    case 'neutral':
+      text = `Tendência em ${fmtSig(trnd)} — zona de limiar entre regimes. `
+           + `Momentum indefinido; o ativo pode estar em transição de tendência. `
+           + `Volatilidade de ${a.current_volatility.toFixed(1)}% pode estar comprimindo o sinal.`;
+      action = 'Ficar fora ou posição mínima — revisitar quando tendência superar ±0.1';
+      break;
+    case 'bias_down':
+      text = `Tendência em ${fmtSig(trnd)} — momentum negativo incipiente. `
+           + `O modelo sinaliza deterioração, sem confirmação de baixa forte ainda. Reduzir exposição.`;
+      action = 'Reduzir posição — não iniciar novas compras';
+      break;
+    case 'down':
+      text = `Tendência em ${fmtSig(trnd)} — zona ótima de momentum negativo (−0.7 a −0.3). `
+           + (alpha<-0.05 ? `Underperformance de ${alphaStr} vs IBOV — fraqueza relativa clara.` : `Em linha com o IBOV.`)
+           + ` Contexto desfavorável para posições compradas.`;
+      action = 'Avaliar saída total, proteção via opções ou short relativo';
+      break;
+    case 'stretched_down':
+      text = `Tendência em ${fmtSig(trnd)} — zona de momentum extremo negativo. `
+           + `Próximo de −1, o modelo tende a sinalizar exaustão da queda e eleva o risco de reversão para cima. `
+           + (alpha<-0.05
+               ? `Underperformance de ${alphaStr} vs IBOV — mas o esticamento pode sinalizar esgotamento dos vendedores.`
+               : `Alinhado ao IBOV.`);
+      action = 'Não iniciar novas posições vendidas — monitorar sinais de reversão para alta';
+      break;
   }
 
   return `
-    <div class="directive-panel" style="background:${state.bg}; border-color:${state.border}">
+    <div class="directive-panel" style="background:${state.bg};border-color:${state.border}">
       <div style="font-size:28px;line-height:1;flex-shrink:0;margin-top:2px">${state.icon}</div>
       <div class="flex-1">
-        <div class="flex items-center gap-2 mb-1">
+        <div class="flex flex-wrap items-center gap-2 mb-1">
           <span class="text-sm font-bold" style="color:${state.color}">${state.label}</span>
           <span class="text-gray-500 text-xs">·</span>
           <span class="text-sm text-gray-300">${state.title}</span>
+          ${stretchBadge}
         </div>
         <p class="text-xs text-gray-400 leading-relaxed">${text}</p>
         <span class="directive-action" style="color:${state.color}">${action}</span>
       </div>
-    </div>
-  `;
+    </div>`;
 }
 
-// ── CHARTS ───────────────────────────────────────────
 function buildCharts(raw, analysis) {
-  if (chartTrendInst)  { chartTrendInst.destroy();  chartTrendInst = null; }
-  if (chartSignalInst) { chartSignalInst.destroy(); chartSignalInst = null; }
+  if (chartTrendInst)  { chartTrendInst.destroy();  chartTrendInst=null; }
+  if (chartSignalInst) { chartSignalInst.destroy(); chartSignalInst=null; }
 
-  const step   = raw.dates.length > 800 ? 2 : 1;
-  const f      = arr => arr.filter((_, i) => i % step === 0);
+  const step   = raw.dates.length>800?2:1;
+  const f      = arr => arr.filter((_,i)=>i%step===0);
   const labels = f(raw.dates);
   const trends = f(raw.trends);
   const sigs   = f(raw.signals);
   const ibovT  = f(raw.ibov_trends);
   const ibovS  = f(raw.ibov_signals);
   const n      = labels.length;
-  const tMean  = calcMean(trends);
   const sym    = analysis.symbol;
 
   const baseOpts = {
-    responsive: true,
-    maintainAspectRatio: false,
-    animation: false,
-    interaction: { mode: 'index', intersect: false },
-    plugins: {
-      legend: { display: false },
-      tooltip: {
-        backgroundColor: 'rgba(10,10,20,0.95)',
-        titleColor: 'rgba(255,255,255,0.4)',
-        bodyColor: '#ffffff',
-        borderColor: 'rgba(251,30,187,0.3)',
-        borderWidth: 1,
-        cornerRadius: 8,
-        titleFont: { family: 'Inter', size: 10 },
-        bodyFont:  { family: 'Inter', size: 11 },
-        callbacks: { label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.y.toFixed(4)}` }
+    responsive:true, maintainAspectRatio:false, animation:false,
+    interaction:{mode:'index',intersect:false},
+    plugins:{
+      legend:{display:false},
+      tooltip:{
+        backgroundColor:'rgba(10,10,20,0.95)', titleColor:'rgba(255,255,255,0.4)',
+        bodyColor:'#ffffff', borderColor:'rgba(251,30,187,0.3)', borderWidth:1,
+        cornerRadius:8, titleFont:{family:'Inter',size:10}, bodyFont:{family:'Inter',size:11},
+        callbacks:{label:ctx=>` ${ctx.dataset.label}: ${ctx.parsed.y.toFixed(4)}`}
       }
     },
-    scales: {
-      x: {
-        ticks: { color:'rgba(255,255,255,0.25)', maxTicksLimit:9, font:{ family:'Inter', size:10 } },
-        grid:  { color:'rgba(255,255,255,0.04)' }
-      },
-      y: {
-        ticks: { color:'rgba(255,255,255,0.3)', font:{ family:'Inter', size:10 }, callback: v => v.toFixed(2) },
-        grid:  { color:'rgba(255,255,255,0.04)' }
-      }
+    scales:{
+      x:{ticks:{color:'rgba(255,255,255,0.25)',maxTicksLimit:9,font:{family:'Inter',size:10}},grid:{color:'rgba(255,255,255,0.04)'}},
+      y:{ticks:{color:'rgba(255,255,255,0.3)',font:{family:'Inter',size:10},callback:v=>v.toFixed(2)},grid:{color:'rgba(255,255,255,0.04)'}}
     },
-    elements: { point: { radius:0, hoverRadius:3, hoverBackgroundColor:'#fb1ebb' } }
+    elements:{point:{radius:0,hoverRadius:3,hoverBackgroundColor:'#fb1ebb'}}
   };
 
+  // Gráfico Tendência: linhas de referência ±0.7 (âmbar) e ±0.3 (verde/vermelho suave)
   chartTrendInst = new Chart(document.getElementById('chartTrend').getContext('2d'), {
-    type: 'line',
-    data: {
+    type:'line',
+    data:{
       labels,
-      datasets: [
-        { label:sym,   data:trends, borderColor:'#fb1ebb', backgroundColor:'rgba(251,30,187,0.06)', borderWidth:2, fill:true,  tension:0.25 },
-        { label:'IBOV',data:ibovT,  borderColor:'rgba(255,255,255,0.35)', borderDash:[5,4], borderWidth:1.5, fill:false, tension:0.25 },
-        { label:'zero',data:Array(n).fill(0),    borderColor:'rgba(255,255,255,0.15)', borderDash:[6,5], borderWidth:1, fill:false, pointRadius:0 },
-        { label:'+ref',data:Array(n).fill(tMean),  borderColor:'rgba(0,232,122,0.3)',  borderDash:[3,3], borderWidth:1, fill:false, pointRadius:0 },
-        { label:'-ref',data:Array(n).fill(-tMean), borderColor:'rgba(255,59,92,0.3)',  borderDash:[3,3], borderWidth:1, fill:false, pointRadius:0 }
+      datasets:[
+        {label:sym,    data:trends, borderColor:'#fb1ebb', backgroundColor:'rgba(251,30,187,0.06)', borderWidth:2, fill:true, tension:0.25},
+        {label:'IBOV', data:ibovT,  borderColor:'rgba(255,255,255,0.35)', borderDash:[5,4], borderWidth:1.5, fill:false, tension:0.25},
+        {label:'zero', data:Array(n).fill(0),    borderColor:'rgba(255,255,255,0.15)', borderDash:[6,5], borderWidth:1,   fill:false, pointRadius:0},
+        {label:'+0.7', data:Array(n).fill(0.7),  borderColor:'rgba(255,176,32,0.65)',  borderDash:[3,3], borderWidth:1.2, fill:false, pointRadius:0},
+        {label:'-0.7', data:Array(n).fill(-0.7), borderColor:'rgba(255,176,32,0.65)',  borderDash:[3,3], borderWidth:1.2, fill:false, pointRadius:0},
+        {label:'+0.3', data:Array(n).fill(0.3),  borderColor:'rgba(0,232,122,0.22)',   borderDash:[2,5], borderWidth:1,   fill:false, pointRadius:0},
+        {label:'-0.3', data:Array(n).fill(-0.3), borderColor:'rgba(255,59,92,0.22)',   borderDash:[2,5], borderWidth:1,   fill:false, pointRadius:0},
       ]
     },
-    options: baseOpts
+    options:baseOpts
   });
 
+  // Gráfico Sinal vol-ajustado
   chartSignalInst = new Chart(document.getElementById('chartSignal').getContext('2d'), {
-    type: 'line',
-    data: {
+    type:'line',
+    data:{
       labels,
-      datasets: [
-        { label:sym,        data:sigs,  borderColor:'#fb1ebb', backgroundColor:'rgba(251,30,187,0.05)', borderWidth:2, fill:true,  tension:0.25 },
-        { label:'IBOV',     data:ibovS, borderColor:'rgba(255,255,255,0.35)', borderDash:[5,4], borderWidth:1.5, fill:false, tension:0.25 },
-        { label:'zero',     data:Array(n).fill(0),    borderColor:'rgba(255,255,255,0.15)', borderDash:[6,5], borderWidth:1, fill:false, pointRadius:0 },
-        { label:'+0.3',     data:Array(n).fill(0.3),  borderColor:'rgba(0,232,122,0.55)',   borderDash:[3,3], borderWidth:1, fill:false, pointRadius:0 },
-        { label:'-0.3',     data:Array(n).fill(-0.3), borderColor:'rgba(255,59,92,0.55)',   borderDash:[3,3], borderWidth:1, fill:false, pointRadius:0 }
+      datasets:[
+        {label:sym,    data:sigs,  borderColor:'#fb1ebb', backgroundColor:'rgba(251,30,187,0.05)', borderWidth:2, fill:true, tension:0.25},
+        {label:'IBOV', data:ibovS, borderColor:'rgba(255,255,255,0.35)', borderDash:[5,4], borderWidth:1.5, fill:false, tension:0.25},
+        {label:'zero', data:Array(n).fill(0),    borderColor:'rgba(255,255,255,0.15)', borderDash:[6,5], borderWidth:1, fill:false, pointRadius:0},
+        {label:'+0.3', data:Array(n).fill(0.3),  borderColor:'rgba(0,232,122,0.55)',   borderDash:[3,3], borderWidth:1, fill:false, pointRadius:0},
+        {label:'-0.3', data:Array(n).fill(-0.3), borderColor:'rgba(255,59,92,0.55)',   borderDash:[3,3], borderWidth:1, fill:false, pointRadius:0}
       ]
     },
-    options: baseOpts
+    options:baseOpts
   });
 }
 
-// ── DISPLAY ──────────────────────────────────────────
 function displayIndividual(data) {
   const a   = data.analysis_data;
   const raw = data.raw_data;
-  const ibovSigLast = raw.ibov_signals[raw.ibov_signals.length - 1] || 0;
+  // Usa ibov_trends para o alpha de momentum (mesma escala que current_trend)
+  const ibovTrendLast = raw.ibov_trends[raw.ibov_trends.length-1] || 0;
 
   document.getElementById('res-title').textContent  = `${a.symbol} — ATSMOM`;
   document.getElementById('res-update').textContent = a.last_update;
-  document.getElementById('metrics-strip').innerHTML   = buildMetrics(a, ibovSigLast);
-  document.getElementById('directive-panel').innerHTML = buildDirective(a, ibovSigLast);
+  document.getElementById('metrics-strip').innerHTML   = buildMetrics(a, ibovTrendLast);
+  document.getElementById('directive-panel').innerHTML = buildDirective(a, ibovTrendLast);
 
   ['g1-ticker','g2-ticker','leg1-ticker','leg2-ticker'].forEach(id => {
     document.getElementById(id).textContent = a.symbol;
   });
 
   buildCharts(raw, a);
-
   document.getElementById('individual-results').classList.remove('hidden');
-  document.getElementById('individual-results').scrollIntoView({ behavior:'smooth', block:'start' });
+  document.getElementById('individual-results').scrollIntoView({behavior:'smooth',block:'start'});
 }
 
-// ── ANALYZE ──────────────────────────────────────────
 async function analyzeIndividual() {
   const sym = document.getElementById('individual-symbol').value.trim().toUpperCase();
-  if (!sym) { showStatus('Digite o código do ativo.', 'error'); return; }
-
+  if (!sym) { showStatus('Digite o código do ativo.','error'); return; }
   setLoading('analyzeIndividualBtn', true);
   hideAllResults();
-  showStatus(`Calculando ATSMOM para ${sym} — buscando 5 anos de dados...`, 'info');
-
+  showStatus(`Calculando ATSMOM para ${sym} — buscando 5 anos de dados...`,'info');
   try {
-    const res  = await fetch(`${API_BASE}/analyze`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ symbol: sym })
-    });
+    const res  = await fetch(`${API_BASE}/analyze`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({symbol:sym})});
     const data = await res.json();
-    if (data.success) {
-      displayIndividual(data);
-      showStatus(`${sym} analisado com sucesso.`, 'success');
-    } else {
-      showStatus(data.error || 'Erro na análise.', 'error');
-    }
-  } catch (e) {
-    showStatus('Erro de conexão com o servidor.', 'error');
-    console.error(e);
-  }
+    if (data.success) { displayIndividual(data); showStatus(`${sym} analisado com sucesso.`,'success'); }
+    else showStatus(data.error||'Erro na análise.','error');
+  } catch(e) { showStatus('Erro de conexão com o servidor.','error'); console.error(e); }
   setLoading('analyzeIndividualBtn', false);
 }
 
-// ── COMPARE ──────────────────────────────────────────
 function createAssetCard(assetData) {
   const d     = assetData.data;
   const state = getSignalState(d.current_signal, d.current_trend);
   return `
     <h3 class="text-xl font-bold mb-4 text-center" style="color:${state.color}">${assetData.symbol}</h3>
     <div class="space-y-1">
-      <div class="compare-row"><span class="text-gray-400">Sinal</span><span style="color:${state.color}" class="font-semibold">${fmtSig(d.current_signal)} — ${state.label}</span></div>
-      <div class="compare-row"><span class="text-gray-400">Tendência</span><span class="font-semibold">${fmtSig(d.current_trend)}</span></div>
+      <div class="compare-row"><span class="text-gray-400">Tendência</span><span style="color:${state.color}" class="font-semibold">${fmtSig(d.current_trend)} — ${state.label}</span></div>
+      <div class="compare-row"><span class="text-gray-400">Sinal</span><span class="font-semibold">${fmtSig(d.current_signal)}</span></div>
       <div class="compare-row"><span class="text-gray-400">Volatilidade</span><span class="font-semibold">${d.current_volatility.toFixed(1)}%</span></div>
       <div class="compare-row"><span class="text-gray-400">Beta</span><span class="font-semibold">${d.beta}</span></div>
       <div class="compare-row"><span class="text-gray-400">Preço</span><span class="font-semibold">${fmtBRL(d.current_price)}</span></div>
-    </div>
-  `;
+    </div>`;
 }
 
 async function compareAssets() {
   const s1 = document.getElementById('compare-symbol1').value.trim().toUpperCase();
   const s2 = document.getElementById('compare-symbol2').value.trim().toUpperCase();
-  if (!s1 || !s2) { showStatus('Digite os dois símbolos.', 'error'); return; }
-  if (s1 === s2)  { showStatus('Os ativos devem ser diferentes.', 'error'); return; }
-
+  if (!s1||!s2) { showStatus('Digite os dois símbolos.','error'); return; }
+  if (s1===s2)  { showStatus('Os ativos devem ser diferentes.','error'); return; }
   setLoading('compareBtn', true);
   hideAllResults();
-  showStatus(`Comparando ${s1} vs ${s2}...`, 'info');
-
+  showStatus(`Comparando ${s1} vs ${s2}...`,'info');
   try {
-    const res  = await fetch(`${API_BASE}/compare`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ symbol1: s1, symbol2: s2 })
-    });
+    const res  = await fetch(`${API_BASE}/compare`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({symbol1:s1,symbol2:s2})});
     const data = await res.json();
     if (data.success) {
-      const cmp = data.comparison;
-      const s   = cmp.comparison_summary;
-      document.getElementById('comparison-summary').innerHTML = `
-        <div class="bg-white/5 p-4 rounded-lg text-center">
-          <div class="text-lg font-bold text-purple-400">${s.stronger_signal}</div>
-          <div class="text-xs text-gray-400 mt-1">Sinal mais forte</div>
-        </div>
-        <div class="bg-white/5 p-4 rounded-lg text-center">
-          <div class="text-lg font-bold text-orange-400">${s.higher_volatility}</div>
-          <div class="text-xs text-gray-400 mt-1">Maior volatilidade</div>
-        </div>
-        <div class="bg-white/5 p-4 rounded-lg text-center">
-          <div class="text-lg font-bold text-blue-400">${s.higher_beta}</div>
-          <div class="text-xs text-gray-400 mt-1">Maior beta</div>
-        </div>
-      `;
-      document.getElementById('compare-asset1').innerHTML = createAssetCard(cmp.symbol1);
-      document.getElementById('compare-asset2').innerHTML = createAssetCard(cmp.symbol2);
+      const cmp=data.comparison, s=cmp.comparison_summary;
+      document.getElementById('comparison-summary').innerHTML=`
+        <div class="bg-white/5 p-4 rounded-lg text-center"><div class="text-lg font-bold text-purple-400">${s.stronger_signal}</div><div class="text-xs text-gray-400 mt-1">Tendência mais forte</div></div>
+        <div class="bg-white/5 p-4 rounded-lg text-center"><div class="text-lg font-bold text-orange-400">${s.higher_volatility}</div><div class="text-xs text-gray-400 mt-1">Maior volatilidade</div></div>
+        <div class="bg-white/5 p-4 rounded-lg text-center"><div class="text-lg font-bold text-blue-400">${s.higher_beta}</div><div class="text-xs text-gray-400 mt-1">Maior beta</div></div>`;
+      document.getElementById('compare-asset1').innerHTML=createAssetCard(cmp.symbol1);
+      document.getElementById('compare-asset2').innerHTML=createAssetCard(cmp.symbol2);
       document.getElementById('compare-results').classList.remove('hidden');
-      showStatus('Comparação concluída.', 'success');
-    } else {
-      showStatus(data.error || 'Erro na comparação.', 'error');
-    }
-  } catch (e) {
-    showStatus('Erro de conexão com o servidor.', 'error');
-    console.error(e);
-  }
+      showStatus('Comparação concluída.','success');
+    } else showStatus(data.error||'Erro na comparação.','error');
+  } catch(e) { showStatus('Erro de conexão com o servidor.','error'); console.error(e); }
   setLoading('compareBtn', false);
 }
 
-// ── KEYBOARD ─────────────────────────────────────────
-document.getElementById('individual-symbol').addEventListener('keydown', e => { if (e.key==='Enter') analyzeIndividual(); });
-document.getElementById('compare-symbol1').addEventListener('keydown',  e => { if (e.key==='Enter') compareAssets(); });
-document.getElementById('compare-symbol2').addEventListener('keydown',  e => { if (e.key==='Enter') compareAssets(); });
+document.getElementById('individual-symbol').addEventListener('keydown',e=>{ if(e.key==='Enter') analyzeIndividual(); });
+document.getElementById('compare-symbol1').addEventListener('keydown', e=>{ if(e.key==='Enter') compareAssets(); });
+document.getElementById('compare-symbol2').addEventListener('keydown', e=>{ if(e.key==='Enter') compareAssets(); });
 
-// ── HEALTH CHECK ─────────────────────────────────────
-(async () => {
-  try {
-    const r = await fetch(`${API_BASE}/health`);
-    const d = await r.json();
-    if (d.status !== 'OK') console.warn('ATSMOM API:', d.message);
-  } catch { console.warn('ATSMOM API offline'); }
+(async()=>{
+  try { const r=await fetch(`${API_BASE}/health`); const d=await r.json(); if(d.status!=='OK') console.warn('ATSMOM API:',d.message); }
+  catch { console.warn('ATSMOM API offline'); }
 })();
 </script>
 </body>
