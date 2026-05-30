@@ -26,12 +26,12 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
-    body { 
-      font-family: 'Inter', sans-serif; 
+    body {
+      font-family: 'Inter', sans-serif;
       background: linear-gradient(135deg, #0c0c0c 0%, #1a1a1a 100%);
       min-height: 100vh;
     }
-    
+
     .ml-card {
       background: rgba(255, 255, 255, 0.08);
       backdrop-filter: blur(20px);
@@ -39,68 +39,80 @@
       border-radius: 16px;
       transition: all 0.3s ease;
     }
-    
+
     .ml-card:hover {
       transform: translateY(-2px);
       box-shadow: 0 20px 40px rgba(186, 57, 175, 0.15);
       border-color: rgba(186, 57, 175, 0.3);
     }
-    
+
     .signal-badge {
-      padding: 8px 16px;
+      padding: 6px 14px;
       border-radius: 25px;
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 700;
       border: 1px solid;
       text-transform: uppercase;
       letter-spacing: 0.5px;
+      display: inline-block;
     }
-    
+
+    @media (min-width: 640px) {
+      .signal-badge {
+        padding: 8px 16px;
+        font-size: 14px;
+      }
+    }
+
     .signal-buy {
       background: linear-gradient(135deg, #10b981, #059669);
       color: white;
       border-color: #10b981;
     }
-    
+
     .signal-sell {
       background: linear-gradient(135deg, #ef4444, #dc2626);
       color: white;
       border-color: #ef4444;
     }
-    
+
     .loading {
       opacity: 0.6;
       pointer-events: none;
     }
-    
+
     .spinner {
       border: 2px solid rgba(255, 255, 255, 0.1);
       border-radius: 50%;
       border-top: 2px solid #fb1ebb;
-      width: 20px;
-      height: 20px;
+      width: 18px;
+      height: 18px;
       animation: spin 1s linear infinite;
       display: inline-block;
+      flex-shrink: 0;
     }
-    
+
     @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
+      0%  { transform: rotate(0deg); }
+      100%{ transform: rotate(360deg); }
     }
 
     .ticker-suggestion {
       background: rgba(186, 57, 175, 0.1);
       border: 1px solid rgba(186, 57, 175, 0.3);
       border-radius: 8px;
-      padding: 8px 12px;
-      margin: 2px;
+      padding: 6px 10px;
       cursor: pointer;
       transition: all 0.3s ease;
       display: inline-block;
       color: rgba(255, 255, 255, 0.8);
-      font-size: 12px;
+      font-size: 11px;
     }
-    
+
+    @media (min-width: 640px) {
+      .ticker-suggestion { padding: 8px 12px; font-size: 12px; }
+    }
+
     .ticker-suggestion:hover {
       background: rgba(186, 57, 175, 0.2);
       border-color: #fb1ebb;
@@ -115,20 +127,30 @@
 
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    
-    @keyframes fadeOut {
-      from { opacity: 1; transform: translateY(0); }
-      to { opacity: 0; transform: translateY(-10px); }
+      to   { opacity: 1; transform: translateY(0); }
     }
 
+    @keyframes fadeOut {
+      from { opacity: 1; transform: translateY(0); }
+      to   { opacity: 0; transform: translateY(-10px); }
+    }
+
+    /* Chart: altura adaptativa por tamanho de tela */
     .chart-container {
       background: rgba(255, 255, 255, 0.03);
       border: 1px solid rgba(255, 255, 255, 0.1);
       border-radius: 12px;
-      padding: 20px;
-      min-height: 600px;
+      padding: 12px;
+      min-height: 260px;
+      position: relative;
+    }
+
+    @media (min-width: 640px) {
+      .chart-container { padding: 16px; min-height: 360px; }
+    }
+
+    @media (min-width: 1024px) {
+      .chart-container { padding: 20px; min-height: 480px; }
     }
 
     select {
@@ -146,36 +168,15 @@
       background-position: right 12px center !important;
       background-size: 16px !important;
       padding-right: 40px !important;
-    }
-  
-    select:hover {
-      border-color: rgba(186, 57, 175, 0.5) !important;
-      background-color: rgba(255, 255, 255, 0.15) !important;
-    }
-  
-    select:focus {
-      outline: none !important;
-      border-color: #fb1ebb !important;
-      box-shadow: 0 0 0 2px rgba(186, 57, 175, 0.2) !important;
-    }
-  
-    select option {
-      background-color: #1a1a1a !important;
-      color: white !important;
-      padding: 8px 12px !important;
+      width: 100%;
     }
 
-    .icon-transition {
-      transition: transform 0.3s ease;
-    }
-    
-    .icon-rotate {
-      transform: rotate(45deg);
-    }
+    select:hover  { border-color: rgba(186, 57, 175, 0.5) !important; background-color: rgba(255, 255, 255, 0.15) !important; }
+    select:focus  { outline: none !important; border-color: #fb1ebb !important; box-shadow: 0 0 0 2px rgba(186, 57, 175, 0.2) !important; }
+    select option { background-color: #1a1a1a !important; color: white !important; padding: 8px 12px !important; }
 
-    .mt-8 {
-      margin-bottom: 2rem;
-    }
+    .icon-transition { transition: transform 0.3s ease; }
+    .icon-rotate     { transform: rotate(45deg); }
 
     /* ===== RATIO BAR ===== */
     .ratio-bar {
@@ -194,160 +195,170 @@
     /* ===== ACCURACY RING ===== */
     .accuracy-ring {
       position: relative;
-      width: 100px;
-      height: 100px;
+      width: 90px;
+      height: 90px;
     }
-    .accuracy-ring svg {
-      transform: rotate(-90deg);
+    @media (min-width: 640px) {
+      .accuracy-ring { width: 100px; height: 100px; }
     }
-    .accuracy-ring .ring-bg {
-      fill: none;
-      stroke: rgba(255,255,255,0.1);
-      stroke-width: 8;
-    }
-    .accuracy-ring .ring-fill {
-      fill: none;
-      stroke-width: 8;
-      stroke-linecap: round;
-      transition: stroke-dashoffset 1s ease;
-    }
+    .accuracy-ring svg { transform: rotate(-90deg); }
+    .accuracy-ring .ring-bg   { fill: none; stroke: rgba(255,255,255,0.1); stroke-width: 8; }
+    .accuracy-ring .ring-fill { fill: none; stroke-width: 8; stroke-linecap: round; transition: stroke-dashoffset 1s ease; }
     .accuracy-ring .ring-text {
       position: absolute;
-      top: 50%;
-      left: 50%;
+      top: 50%; left: 50%;
       transform: translate(-50%, -50%);
-      font-size: 20px;
+      font-size: 18px;
       font-weight: 700;
+    }
+    @media (min-width: 640px) {
+      .accuracy-ring .ring-text { font-size: 20px; }
     }
 
     /* ===== LEVEL INDICATORS ===== */
-    .level-line {
-      position: relative;
-      padding-left: 16px;
-    }
+    .level-line { position: relative; padding-left: 16px; }
     .level-line::before {
       content: '';
       position: absolute;
-      left: 0;
-      top: 0;
-      bottom: 0;
+      left: 0; top: 0; bottom: 0;
       width: 3px;
       border-radius: 2px;
     }
-    .level-line-green::before { background: #10b981; }
-    .level-line-red::before { background: #ef4444; }
-    .level-line-blue::before { background: #3b82f6; }
+    .level-line-green::before  { background: #10b981; }
+    .level-line-red::before    { background: #ef4444; }
+    .level-line-blue::before   { background: #3b82f6; }
     .level-line-yellow::before { background: #eab308; }
+
+    /* ===== MOBILE TOUCH TARGET ===== */
+    .analyze-btn {
+      min-height: 48px;
+      width: 100%;
+    }
+    @media (min-width: 768px) {
+      .analyze-btn { width: auto; }
+    }
+
+    /* ===== SCROLLBAR SLIM ===== */
+    ::-webkit-scrollbar { width: 4px; height: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(186,57,175,0.4); border-radius: 2px; }
   </style>
 </head>
 <body class="text-white">
-  
+
   <!-- Navbar -->
-  <nav class="fixed top-6 left-1/2 transform -translate-x-1/2 z-50 bg-opacity-5 border-opacity-10 bg-white border-white border rounded-full px-4 py-3 shadow-xl backdrop-blur-md">
-    <div class="flex items-center justify-between">
-      <div class="flex items-center">
-        <img src="logo.png" alt="Geminii Logo" class="w-6 h-6 cursor-pointer" onclick="window.location.href='/dashboard'">
+  <nav class="fixed top-4 sm:top-6 left-1/2 transform -translate-x-1/2 z-50
+              bg-white bg-opacity-5 border border-white border-opacity-10
+              rounded-full px-4 py-2.5 sm:py-3 shadow-xl backdrop-blur-md
+              w-[calc(100%-2rem)] max-w-2xl">
+    <div class="flex items-center justify-between gap-3">
+      <img src="logo.png" alt="Geminii" class="w-6 h-6 cursor-pointer flex-shrink-0"
+           onclick="window.location.href='/dashboard'">
+      <span class="text-white font-medium text-sm truncate">ML Trading</span>
+      <div class="hidden sm:flex items-center space-x-5 text-xs text-gray-300 flex-1 justify-center">
+        <a href="/atsmom.html"       class="hover:text-white transition-colors whitespace-nowrap">ATSMOM</a>
+        <a href="/beta-regression"   class="hover:text-white transition-colors whitespace-nowrap">Beta Regression</a>
+        <a href="longshort.html"     class="hover:text-white transition-colors whitespace-nowrap">Long&amp;Short</a>
       </div>
-      <span class="text-white font-medium">ML Trading</span>
-      <div class="hidden md:flex items-center space-x-6 text-xs text-gray-300 ml-8">        
-        <a href="/atsmom.html" class="hover:text-white transition-colors">ATSMOM</a>
-        <a href="/beta-regression" class="hover:text-white transition-colors">Beta Regression</a>
-        <a href="longshort.html" class="hover:text-white transition-colors">Long&short</a>        
-      </div>
-      <div class="flex items-center space-x-3 ml-8">
-        <div id="apiStatus" class="w-8 h-8 bg-green-500 bg-opacity-10 border border-green-500 border-opacity-30 rounded-full flex items-center justify-center relative">
-          <i class="fas fa-brain text-green-500 text-xs"></i>
-          <div class="absolute -top-1 -right-1 w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-        </div>
+      <div id="apiStatus"
+           class="w-7 h-7 bg-green-500 bg-opacity-10 border border-green-500 border-opacity-30
+                  rounded-full flex items-center justify-center relative flex-shrink-0">
+        <i class="fas fa-brain text-green-500 text-[10px]"></i>
+        <div class="absolute -top-0.5 -right-0.5 w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
       </div>
     </div>
   </nav>
 
   <!-- Content -->
-  <div class="pt-32 pb-16">
-    <div class="max-w-7xl mx-auto px-6">
-      
+  <div class="pt-24 sm:pt-28 md:pt-32 pb-12 md:pb-16">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6">
+
       <!-- Header -->
-      <div class="text-center mb-12">
-        <h1 class="text-4xl md:text-5xl font-bold mb-4">
+      <div class="text-center mb-8 md:mb-12">
+        <h1 class="text-3xl sm:text-4xl md:text-5xl font-bold mb-3 md:mb-4 leading-tight">
           <span style="color: #fb1ebb; font-weight: 900;">Swing Trade</span>
-          <span class="text-white font-light">Machine Learning</span>
+          <span class="text-white font-light"> Machine Learning</span>
         </h1>
-        <p class="text-neutral-300 text-lg max-w-2xl mx-auto">
+        <p class="text-neutral-300 text-sm sm:text-base md:text-lg max-w-2xl mx-auto px-2">
           Análise preditiva com IA, stops dinâmicos e ensemble de modelos avançados
         </p>
       </div>
 
       <!-- Info Expander -->
-      <div class="mt-8 mb-12">
-        <button onclick="toggleInfo()" class="bg-gradient-to-r from-geminii to-purple-600 hover:from-purple-600 hover:to-geminii text-white px-6 py-3 rounded-full font-semibold text-sm transition-all duration-300 flex items-center mx-auto shadow-lg hover:shadow-xl transform hover:scale-105">
+      <div class="mb-8 md:mb-12">
+        <button onclick="toggleInfo()"
+                class="bg-gradient-to-r from-geminii to-purple-600 hover:from-purple-600 hover:to-geminii
+                       text-white px-5 py-2.5 sm:px-6 sm:py-3 rounded-full font-semibold text-sm
+                       transition-all duration-300 flex items-center mx-auto shadow-lg hover:shadow-xl
+                       transform hover:scale-105">
           <i id="infoIcon" class="fas fa-brain mr-2 icon-transition"></i>
           Como Funciona o Machine Learning
         </button>
-        
-        <div id="infoContent" class="hidden mt-8 max-w-6xl mx-auto">
-          <div class="ml-card p-8 text-left">
-            
-            <div class="text-center mb-8">
-              <h3 class="text-2xl font-bold text-white mb-4">Sistema de Machine Learning Avançado</h3>
-              <p class="text-gray-300 text-base leading-relaxed max-w-4xl mx-auto">
+
+        <div id="infoContent" class="hidden mt-6 md:mt-8">
+          <div class="ml-card p-5 sm:p-8 text-left">
+            <div class="text-center mb-6 md:mb-8">
+              <h3 class="text-xl sm:text-2xl font-bold text-white mb-3 md:mb-4">
+                Sistema de Machine Learning Avançado
+              </h3>
+              <p class="text-gray-300 text-sm sm:text-base leading-relaxed max-w-4xl mx-auto">
                 Nosso <strong>Machine Learning altamente preciso</strong> combina um ensemble de modelos avançados:
-                <strong>XGBoost, Random Forest e Regressão Logística</strong>. O sistema utiliza a <strong>volatilidade histórica</strong> 
+                <strong>XGBoost e Random Forest</strong>. O sistema utiliza a <strong>volatilidade histórica</strong>
                 como ponto de partida e adiciona diversas variáveis para encontrar a combinação perfeita.
               </p>
             </div>
-            
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-              <div class="bg-blue-500/10 border border-blue-500/30 rounded-lg p-6">
-                <div class="flex items-center mb-4">
-                  <div class="w-3 h-3 rounded-full bg-blue-400 mr-3"></div>
-                  <h4 class="text-lg font-bold text-blue-400">Ensemble de Modelos</h4>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6 mb-6 md:mb-8">
+              <div class="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4 sm:p-6">
+                <div class="flex items-center mb-3 md:mb-4">
+                  <div class="w-3 h-3 rounded-full bg-blue-400 mr-3 flex-shrink-0"></div>
+                  <h4 class="text-base sm:text-lg font-bold text-blue-400">Ensemble de Modelos</h4>
                 </div>
-                <p class="text-gray-300 text-sm mb-3">
-                  <strong>XGBoost + Random Forest + Regressão Logística</strong> - Combinação de algoritmos para máxima precisão.
+                <p class="text-gray-300 text-xs sm:text-sm mb-3">
+                  <strong>XGBoost + Random Forest</strong> — Combinação de algoritmos para máxima precisão.
                 </p>
                 <div class="bg-white/5 rounded p-3">
-                  <p class="text-white text-xs font-medium"> Resultado:</p>
+                  <p class="text-white text-xs font-medium">Resultado:</p>
                   <p class="text-gray-400 text-xs">Acurácia média de <strong>65%</strong> dos movimentos previstos</p>
                 </div>
               </div>
-              
-              <div class="bg-green-500/10 border border-green-500/30 rounded-lg p-6">
-                <div class="flex items-center mb-4">
-                  <div class="w-3 h-3 rounded-full bg-green-400 mr-3"></div>
-                  <h4 class="text-lg font-bold text-green-400">Volatilidade Histórica</h4>
+
+              <div class="bg-green-500/10 border border-green-500/30 rounded-lg p-4 sm:p-6">
+                <div class="flex items-center mb-3 md:mb-4">
+                  <div class="w-3 h-3 rounded-full bg-green-400 mr-3 flex-shrink-0"></div>
+                  <h4 class="text-base sm:text-lg font-bold text-green-400">Volatilidade Histórica</h4>
                 </div>
-                <p class="text-gray-300 text-sm mb-3">
-                  <strong>Ponto de partida fundamental</strong> - análise dos padrões de oscilação passados do ativo.
+                <p class="text-gray-300 text-xs sm:text-sm mb-3">
+                  <strong>Ponto de partida fundamental</strong> — análise dos padrões de oscilação passados.
                 </p>
                 <div class="bg-white/5 rounded p-3">
-                  <p class="text-white text-xs font-medium"> Base para:</p>
+                  <p class="text-white text-xs font-medium">Base para:</p>
                   <p class="text-gray-400 text-xs">Cálculo de stops dinâmicos e targets otimizados</p>
                 </div>
               </div>
-              
-              <div class="bg-orange-500/10 border border-orange-500/30 rounded-lg p-6">
-                <div class="flex items-center mb-4">
-                  <div class="w-3 h-3 rounded-full bg-orange-400 mr-3"></div>
-                  <h4 class="text-lg font-bold text-orange-400">Stops Dinâmicos</h4>
+
+              <div class="bg-orange-500/10 border border-orange-500/30 rounded-lg p-4 sm:p-6">
+                <div class="flex items-center mb-3 md:mb-4">
+                  <div class="w-3 h-3 rounded-full bg-orange-400 mr-3 flex-shrink-0"></div>
+                  <h4 class="text-base sm:text-lg font-bold text-orange-400">Stops Dinâmicos</h4>
                 </div>
-                <p class="text-gray-300 text-sm mb-3">
-                  <strong>Stop loss calculado pelo ATR</strong> - ajuste automático conforme a volatilidade atual.
+                <p class="text-gray-300 text-xs sm:text-sm mb-3">
+                  <strong>Stop loss calculado pelo ATR</strong> — ajuste automático conforme a volatilidade.
                 </p>
                 <div class="bg-white/5 rounded p-3">
-                  <p class="text-white text-xs font-medium"> Vantagem:</p>
+                  <p class="text-white text-xs font-medium">Vantagem:</p>
                   <p class="text-gray-400 text-xs">Proteção inteligente que se adapta ao mercado</p>
                 </div>
               </div>
             </div>
-            
-            <div class="mt-8 pt-6 border-t border-white/10 text-center">
-              <h4 class="text-geminii font-bold text-lg mb-3">Como Usar na Prática</h4>
+
+            <div class="pt-5 border-t border-white/10 text-center">
+              <h4 class="text-geminii font-bold text-base sm:text-lg mb-3">Como Usar na Prática</h4>
               <div class="max-w-4xl mx-auto">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                   <div class="bg-geminii/10 border border-geminii/30 rounded-lg p-4">
-                    <h5 class="text-geminii font-bold mb-3">O Que o Sistema Faz</h5>
-                    <div class="text-left text-sm space-y-2">
+                    <h5 class="text-geminii font-bold mb-3 text-sm sm:text-base">O Que o Sistema Faz</h5>
+                    <div class="text-left text-xs sm:text-sm space-y-2">
                       <p class="text-gray-300">✓ <strong>Prevê direção</strong>: COMPRA ou VENDA</p>
                       <p class="text-gray-300">✓ <strong>Calcula stop dinâmico</strong>: Baseado no ATR</p>
                       <p class="text-gray-300">✓ <strong>Define target</strong>: Take profit otimizado</p>
@@ -355,18 +366,18 @@
                     </div>
                   </div>
                   <div class="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
-                    <h5 class="text-blue-400 font-bold mb-3">O Que Você Deve Fazer</h5>
-                    <div class="text-left text-sm space-y-2">
-                      <p class="text-gray-300"> <strong>Confirme com análise técnica</strong>: Gráficos e padrões</p>
-                      <p class="text-gray-300"> <strong>Verifique notícias</strong>: Fundamentos da empresa</p>
-                      <p class="text-gray-300"> <strong>Gerencie risco</strong>: Tamanho de posição adequado</p>
-                      <p class="text-gray-300"> <strong>Siga a disciplina</strong>: Respeite stops e targets</p>
+                    <h5 class="text-blue-400 font-bold mb-3 text-sm sm:text-base">O Que Você Deve Fazer</h5>
+                    <div class="text-left text-xs sm:text-sm space-y-2">
+                      <p class="text-gray-300">⚡ <strong>Confirme com análise técnica</strong></p>
+                      <p class="text-gray-300">⚡ <strong>Verifique notícias</strong>: Fundamentos da empresa</p>
+                      <p class="text-gray-300">⚡ <strong>Gerencie risco</strong>: Tamanho de posição adequado</p>
+                      <p class="text-gray-300">⚡ <strong>Siga a disciplina</strong>: Respeite stops e targets</p>
                     </div>
                   </div>
                 </div>
-                <div class="mt-6 bg-geminii/10 border border-geminii/30 rounded-lg p-4">
-                  <p class="text-geminii font-medium text-sm">
-                     <strong>Lembre-se:</strong> Machine Learning é uma <strong>ferramenta de apoio</strong>, não uma bola de cristal. 
+                <div class="mt-4 sm:mt-6 bg-geminii/10 border border-geminii/30 rounded-lg p-4">
+                  <p class="text-geminii font-medium text-xs sm:text-sm">
+                    <strong>Lembre-se:</strong> Machine Learning é uma <strong>ferramenta de apoio</strong>, não uma bola de cristal.
                     Combine com sua <strong>análise pessoal</strong> e sempre pratique <strong>gestão de risco responsável</strong>!
                   </p>
                 </div>
@@ -377,101 +388,116 @@
       </div>
 
       <!-- Controles -->
-      <div class="ml-card p-6 mb-8">
-        <div class="flex flex-col gap-6">
-          <div class="flex flex-col md:flex-row gap-4 items-end">
-            <div class="flex-1">
+      <div class="ml-card p-4 sm:p-6 mb-6 md:mb-8">
+        <div class="flex flex-col gap-5">
+          <!-- Inputs + botão -->
+          <div class="flex flex-col sm:flex-row gap-3 sm:items-end">
+            <div class="flex-1 min-w-0">
               <label class="block text-sm font-medium text-gray-300 mb-2">
                 <i class="fas fa-chart-bar mr-2"></i>Código da Ação
               </label>
-              <input 
-                id="ticker" 
-                type="text" 
-                placeholder="Ex: PETR4, VALE3, ITUB4..." 
-                class="w-full px-4 py-3 bg-white bg-opacity-10 border border-white border-opacity-20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-geminii backdrop-blur-sm"
+              <input
+                id="ticker"
+                type="text"
+                placeholder="Ex: PETR4, VALE3, ITUB4..."
+                class="w-full px-4 py-3 bg-white bg-opacity-10 border border-white border-opacity-20
+                       rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-geminii
+                       backdrop-blur-sm text-base"
+                autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false"
               >
             </div>
-            <div class="md:w-48">
+            <div class="sm:w-44">
               <label class="block text-sm font-medium text-gray-300 mb-2">
                 <i class="fas fa-calendar-alt mr-2"></i>Dias para Previsão
               </label>
-              <select id="predictionDays" class="w-full px-4 py-3 bg-white bg-opacity-10 border border-white border-opacity-20 rounded-lg text-white focus:outline-none focus:border-geminii backdrop-blur-sm">
-                <option value="5" selected>5 dias</option>
+              <select id="predictionDays"
+                      class="w-full px-4 py-3 bg-white bg-opacity-10 border border-white border-opacity-20
+                             rounded-lg text-white focus:outline-none focus:border-geminii backdrop-blur-sm">
+                <option value="5"  selected>5 dias</option>
                 <option value="10">10 dias</option>
                 <option value="15">15 dias</option>
                 <option value="30">30 dias</option>
               </select>
             </div>
-            <button id="analyzeBtn" class="px-8 py-3 bg-gradient-to-r from-pink-500 to-purple-600 hover:shadow-lg rounded-lg transition-all font-medium whitespace-nowrap">
-              <i class="fas fa-brain mr-2"></i>Executar Análise ML
+            <button id="analyzeBtn"
+                    class="analyze-btn px-6 py-3 bg-gradient-to-r from-pink-500 to-purple-600
+                           hover:shadow-lg rounded-lg transition-all font-medium
+                           flex items-center justify-center gap-2">
+              <i class="fas fa-brain"></i>
+              <span>Executar Análise ML</span>
             </button>
           </div>
+
+          <!-- Sugestões de tickers -->
           <div>
-            <label class="block text-sm font-medium text-gray-300 mb-3">
-              <i class="fas fa-lightbulb mr-2"></i>Ações Sugeridas (clique para selecionar)
+            <label class="block text-sm font-medium text-gray-300 mb-2">
+              <i class="fas fa-lightbulb mr-2"></i>Ações Sugeridas
             </label>
-            <div id="tickerSuggestions" class="flex flex-wrap gap-2">
+            <div id="tickerSuggestions" class="flex flex-wrap gap-1.5">
               <div class="spinner"></div>
-              <span class="text-gray-400 ml-2">Carregando sugestões...</span>
+              <span class="text-gray-400 ml-2 text-sm">Carregando...</span>
             </div>
           </div>
         </div>
       </div>
 
       <!-- Status -->
-      <div id="statusMsg" class="mb-6 p-4 rounded-lg hidden backdrop-blur-sm"></div>
+      <div id="statusMsg" class="mb-5 p-3 sm:p-4 rounded-lg hidden backdrop-blur-sm text-sm"></div>
 
       <!-- ============================================== -->
-      <!-- RESULTS SECTION - REDESIGNED                   -->
+      <!-- RESULTS SECTION                                -->
       <!-- ============================================== -->
-      <div id="resultsSection" class="results-section space-y-6">
-        
+      <div id="resultsSection" class="results-section space-y-4 sm:space-y-6">
+
         <!-- ===== CARD 1: SINAL PRINCIPAL ===== -->
-        <div class="ml-card p-6">
-          <div class="flex flex-col md:flex-row items-center gap-6">
-            
+        <div class="ml-card p-4 sm:p-6">
+
+          <!-- Mobile: stack; md+: linha -->
+          <div class="flex flex-col gap-5 md:flex-row md:items-center md:gap-6">
+
             <!-- Sinal -->
-            <div class="text-center md:text-left flex-shrink-0">
+            <div class="text-center md:text-left md:flex-shrink-0">
               <div class="text-xs text-gray-400 uppercase tracking-widest mb-2">Sinal de Trading</div>
-              <div id="tradingSignal" class="mb-2"></div>
+              <div id="tradingSignal" class="mb-1"></div>
               <div class="text-xs text-gray-500" id="signalDate">--</div>
             </div>
 
-            <!-- Separador vertical -->
-            <div class="hidden md:block w-px h-20 bg-white/10"></div>
+            <div class="hidden md:block w-px h-20 bg-white/10 flex-shrink-0"></div>
 
-            <!-- Preço + TP + SL numa linha -->
-            <div class="flex-1 grid grid-cols-3 gap-4 w-full">
+            <!-- Preço / TP / SL — 1 col em xs, 3 col em sm+ -->
+            <div class="flex-1 grid grid-cols-3 gap-2 sm:gap-4">
               <div class="text-center">
-                <div class="text-xs text-gray-400 mb-1">Preço Atual</div>
-                <div id="currentPrice" class="text-2xl font-bold text-white">--</div>
+                <div class="text-[10px] sm:text-xs text-gray-400 mb-1">Preço Atual</div>
+                <div id="currentPrice"
+                     class="text-base sm:text-xl md:text-2xl font-bold text-white leading-tight">--</div>
               </div>
               <div class="text-center">
-                <div class="text-xs text-gray-400 mb-1">Take Profit</div>
-                <div id="takeProfitPrice" class="text-2xl font-bold text-green-400">--</div>
-                <div id="takeProfitPctBadge" class="text-xs text-green-400/70 mt-1">--</div>
+                <div class="text-[10px] sm:text-xs text-gray-400 mb-1">Take Profit</div>
+                <div id="takeProfitPrice"
+                     class="text-base sm:text-xl md:text-2xl font-bold text-green-400 leading-tight">--</div>
+                <div id="takeProfitPctBadge" class="text-[10px] sm:text-xs text-green-400/70 mt-1">--</div>
               </div>
               <div class="text-center">
-                <div class="text-xs text-gray-400 mb-1">Stop Loss</div>
-                <div id="stopLossPrice" class="text-2xl font-bold text-red-400">--</div>
-                <div id="stopLossPctBadge" class="text-xs text-red-400/70 mt-1">--</div>
+                <div class="text-[10px] sm:text-xs text-gray-400 mb-1">Stop Loss</div>
+                <div id="stopLossPrice"
+                     class="text-base sm:text-xl md:text-2xl font-bold text-red-400 leading-tight">--</div>
+                <div id="stopLossPctBadge" class="text-[10px] sm:text-xs text-red-400/70 mt-1">--</div>
               </div>
             </div>
 
-            <!-- Separador vertical -->
-            <div class="hidden md:block w-px h-20 bg-white/10"></div>
+            <div class="hidden md:block w-px h-20 bg-white/10 flex-shrink-0"></div>
 
             <!-- Risco/Retorno -->
-            <div class="flex-shrink-0 text-center min-w-[140px]">
+            <div class="md:flex-shrink-0 md:w-36 text-center">
               <div class="text-xs text-gray-400 uppercase tracking-widest mb-2">Risco / Retorno</div>
-              <div id="riskRewardRatio" class="text-3xl font-bold text-white">--</div>
+              <div id="riskRewardRatio" class="text-2xl sm:text-3xl font-bold text-white">--</div>
               <div id="riskRewardBar" class="mt-3">
                 <div class="ratio-bar w-full">
-                  <div id="rrBarFill" class="ratio-bar-fill" style="width:0%; background: linear-gradient(90deg, #ef4444, #eab308, #10b981);"></div>
+                  <div id="rrBarFill" class="ratio-bar-fill"
+                       style="width:0%; background: linear-gradient(90deg,#ef4444,#eab308,#10b981);"></div>
                 </div>
                 <div class="flex justify-between text-[10px] text-gray-500 mt-1">
-                  <span>Risco</span>
-                  <span>Retorno</span>
+                  <span>Risco</span><span>Retorno</span>
                 </div>
               </div>
             </div>
@@ -480,21 +506,25 @@
 
         <!-- ===== CARD 2: ENTENDA O SINAL (EXPANDER) ===== -->
         <div class="ml-card overflow-hidden">
-          <button onclick="toggleStrategyInfo()" class="w-full p-5 flex items-center justify-between hover:bg-white/5 transition-colors">
+          <button onclick="toggleStrategyInfo()"
+                  class="w-full p-4 sm:p-5 flex items-center justify-between hover:bg-white/5 transition-colors">
             <div class="flex items-center gap-3">
-              <div class="w-8 h-8 bg-gradient-to-r from-pink-500 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
-                <i class="fas fa-question text-white text-xs"></i>
+              <div class="w-7 h-7 sm:w-8 sm:h-8 bg-gradient-to-r from-pink-500 to-purple-600
+                          rounded-full flex items-center justify-center flex-shrink-0">
+                <i class="fas fa-question text-white text-[10px] sm:text-xs"></i>
               </div>
-              <span class="text-sm font-medium text-gray-300">Entenda o que significam esses números</span>
+              <span class="text-xs sm:text-sm font-medium text-gray-300 text-left">
+                Entenda o que significam esses números
+              </span>
             </div>
-            <i id="strategyIcon" class="fas fa-chevron-down text-gray-400 text-xs transition-transform duration-300"></i>
+            <i id="strategyIcon"
+               class="fas fa-chevron-down text-gray-400 text-xs transition-transform duration-300 flex-shrink-0 ml-2"></i>
           </button>
-          
+
           <div id="strategyContent" class="hidden">
-            <div class="px-5 pb-5 space-y-4">
+            <div class="px-4 sm:px-5 pb-4 sm:pb-5 space-y-4">
               <div class="h-px bg-white/10"></div>
-              
-              <!-- O que é o sinal -->
+
               <div class="flex items-start gap-3">
                 <div class="w-6 h-6 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
                   <i class="fas fa-arrow-up text-green-400 text-[10px]"></i>
@@ -502,13 +532,12 @@
                 <div>
                   <div class="text-sm font-semibold text-white mb-1">COMPRA ou VENDA</div>
                   <p class="text-xs text-gray-400 leading-relaxed">
-                    A IA analisou o histórico do ativo e indica a direção mais provável nos próximos dias. 
+                    A IA analisou o histórico do ativo e indica a direção mais provável nos próximos dias.
                     Verde = tendência de alta. Vermelho = tendência de queda.
                   </p>
                 </div>
               </div>
 
-              <!-- Take Profit -->
               <div class="flex items-start gap-3">
                 <div class="w-6 h-6 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
                   <i class="fas fa-bullseye text-green-400 text-[10px]"></i>
@@ -516,13 +545,12 @@
                 <div>
                   <div class="text-sm font-semibold text-green-400 mb-1">Take Profit — onde realizar o lucro</div>
                   <p class="text-xs text-gray-400 leading-relaxed">
-                    Preço-alvo calculado automaticamente com base na volatilidade. 
+                    Preço-alvo calculado automaticamente com base na volatilidade.
                     É o ponto sugerido para encerrar a operação no positivo.
                   </p>
                 </div>
               </div>
 
-              <!-- Stop Loss -->
               <div class="flex items-start gap-3">
                 <div class="w-6 h-6 rounded-full bg-red-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
                   <i class="fas fa-shield-alt text-red-400 text-[10px]"></i>
@@ -530,13 +558,12 @@
                 <div>
                   <div class="text-sm font-semibold text-red-400 mb-1">Stop Loss — limite de perda</div>
                   <p class="text-xs text-gray-400 leading-relaxed">
-                    Preço de proteção calculado pelo ATR (volatilidade real do ativo). 
+                    Preço de proteção calculado pelo ATR (volatilidade real do ativo).
                     Se o preço chegar aqui, é hora de sair para proteger seu capital.
                   </p>
                 </div>
               </div>
 
-              <!-- Risco/Retorno -->
               <div class="flex items-start gap-3">
                 <div class="w-6 h-6 rounded-full bg-blue-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
                   <i class="fas fa-balance-scale text-blue-400 text-[10px]"></i>
@@ -544,14 +571,13 @@
                 <div>
                   <div class="text-sm font-semibold text-blue-400 mb-1">Risco / Retorno</div>
                   <p class="text-xs text-gray-400 leading-relaxed">
-                    Mostra quanto você pode ganhar em relação ao que pode perder. 
+                    Mostra quanto você pode ganhar em relação ao que pode perder.
                     Exemplo: 1:1.5 significa que para cada R$1 de risco, o potencial de ganho é R$1,50.
                   </p>
                 </div>
               </div>
 
-              <!-- Aviso -->
-              <div class="mt-2 p-3 bg-white/5 border border-white/10 rounded-lg">
+              <div class="p-3 bg-white/5 border border-white/10 rounded-lg">
                 <p class="text-xs text-gray-400 text-center">
                   <i class="fas fa-info-circle text-geminii mr-1"></i>
                   Esses valores são <strong class="text-gray-300">sugestões da IA</strong> — você pode ajustar stop e gain como preferir.
@@ -562,29 +588,28 @@
         </div>
 
         <!-- ===== CARD 3: GRÁFICO ===== -->
-        <div class="ml-card p-6">
-          <h3 class="text-xl font-bold mb-4">
+        <div class="ml-card p-4 sm:p-6">
+          <h3 class="text-base sm:text-xl font-bold mb-3 sm:mb-4">
             <i class="fas fa-chart-line mr-2"></i>Análise Gráfica com Previsões
           </h3>
           <div class="chart-container">
-            <canvas id="tradingChart" width="100%" height="400"></canvas>
+            <canvas id="tradingChart"></canvas>
           </div>
         </div>
 
-        <!-- ===== CARD 4: VOLATILIDADE + CONFIANÇA DO MODELO (2 colunas) ===== -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          
-          <!-- Volatilidade do Ativo -->
-          <div class="ml-card p-6">
-            <h3 class="text-lg font-bold mb-5">
+        <!-- ===== CARD 4: VOLATILIDADE + CONFIANÇA (2 colunas em lg) ===== -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+
+          <!-- Volatilidade -->
+          <div class="ml-card p-4 sm:p-6">
+            <h3 class="text-base sm:text-lg font-bold mb-4 sm:mb-5">
               <i class="fas fa-chart-area mr-2 text-blue-400"></i>Volatilidade do Ativo
             </h3>
-            <div class="space-y-5">
-              <!-- ATR Atual -->
+            <div class="space-y-4 sm:space-y-5">
               <div class="level-line level-line-blue">
                 <div class="flex justify-between items-center mb-1">
-                  <span class="text-sm text-gray-300">ATR Atual</span>
-                  <span id="atrPct" class="text-lg font-bold text-blue-400">--</span>
+                  <span class="text-xs sm:text-sm text-gray-300">ATR Atual</span>
+                  <span id="atrPct" class="text-base sm:text-lg font-bold text-blue-400">--</span>
                 </div>
                 <div class="ratio-bar">
                   <div id="atrBar" class="ratio-bar-fill bg-blue-500" style="width:0%"></div>
@@ -595,12 +620,11 @@
                   <span>Alta</span>
                 </div>
               </div>
-              
-              <!-- Volatilidade 60d -->
+
               <div class="level-line level-line-yellow">
                 <div class="flex justify-between items-center mb-1">
-                  <span class="text-sm text-gray-300">Volatilidade 60 dias</span>
-                  <span id="vol60d" class="text-lg font-bold text-yellow-400">--</span>
+                  <span class="text-xs sm:text-sm text-gray-300">Volatilidade 60 dias</span>
+                  <span id="vol60d" class="text-base sm:text-lg font-bold text-yellow-400">--</span>
                 </div>
                 <div class="ratio-bar">
                   <div id="volBar" class="ratio-bar-fill bg-yellow-500" style="width:0%"></div>
@@ -612,55 +636,52 @@
                 </div>
               </div>
 
-              <!-- Stop e TP médios -->
               <div class="grid grid-cols-2 gap-3 pt-3 border-t border-white/10">
                 <div class="bg-red-500/10 border border-red-500/20 rounded-lg p-3 text-center">
-                  <div class="text-[10px] text-gray-400 uppercase tracking-wider">Stop Médio Histórico</div>
-                  <div id="stopLossMedio" class="text-lg font-bold text-red-400 mt-1">--</div>
+                  <div class="text-[10px] text-gray-400 uppercase tracking-wider">Stop Médio</div>
+                  <div id="stopLossMedio" class="text-base sm:text-lg font-bold text-red-400 mt-1">--</div>
                 </div>
                 <div class="bg-green-500/10 border border-green-500/20 rounded-lg p-3 text-center">
-                  <div class="text-[10px] text-gray-400 uppercase tracking-wider">Take Médio Histórico</div>
-                  <div id="takeProfitMedio" class="text-lg font-bold text-green-400 mt-1">--</div>
+                  <div class="text-[10px] text-gray-400 uppercase tracking-wider">Take Médio</div>
+                  <div id="takeProfitMedio" class="text-base sm:text-lg font-bold text-green-400 mt-1">--</div>
                 </div>
               </div>
             </div>
           </div>
 
           <!-- Confiança do Modelo -->
-          <div class="ml-card p-6">
-            <h3 class="text-lg font-bold mb-5">
+          <div class="ml-card p-4 sm:p-6">
+            <h3 class="text-base sm:text-lg font-bold mb-4 sm:mb-5">
               <i class="fas fa-brain mr-2 text-geminii"></i>Confiança do Modelo
             </h3>
             <div class="flex flex-col items-center">
-              
-              <!-- Ring de acurácia -->
-              <div class="accuracy-ring mb-4">
-                <svg width="100" height="100" viewBox="0 0 100 100">
+
+              <div class="accuracy-ring mb-3">
+                <svg width="90" height="90" viewBox="0 0 100 100" class="sm:!w-[100px] sm:!h-[100px]">
                   <circle class="ring-bg" cx="50" cy="50" r="42"></circle>
-                  <circle id="accuracyRing" class="ring-fill" cx="50" cy="50" r="42" 
-                    stroke="#fb1ebb" 
-                    stroke-dasharray="263.9" 
+                  <circle id="accuracyRing" class="ring-fill" cx="50" cy="50" r="42"
+                    stroke="#fb1ebb"
+                    stroke-dasharray="263.9"
                     stroke-dashoffset="263.9">
                   </circle>
                 </svg>
                 <div class="ring-text text-geminii" id="accuracyRingText">--</div>
               </div>
-              <div class="text-xs text-gray-400 mb-6">Acurácia Geral</div>
+              <div class="text-xs text-gray-400 mb-5">Acurácia Geral</div>
 
-              <!-- Precisão e Recall como barras -->
               <div class="w-full space-y-4">
                 <div>
-                  <div class="flex justify-between text-sm mb-1">
+                  <div class="flex justify-between text-xs sm:text-sm mb-1">
                     <span class="text-gray-300">Precisão</span>
                     <span id="precision" class="font-bold text-green-400">--</span>
                   </div>
                   <div class="ratio-bar">
                     <div id="precisionBar" class="ratio-bar-fill bg-green-500" style="width:0%"></div>
                   </div>
-                  <div class="text-[10px] text-gray-500 mt-1">Dos sinais de compra emitidos, quantos acertaram</div>
+                  <div class="text-[10px] text-gray-500 mt-1">Dos sinais de compra, quantos acertaram</div>
                 </div>
                 <div>
-                  <div class="flex justify-between text-sm mb-1">
+                  <div class="flex justify-between text-xs sm:text-sm mb-1">
                     <span class="text-gray-300">Recall</span>
                     <span id="recall" class="font-bold text-blue-400">--</span>
                   </div>
@@ -671,98 +692,129 @@
                 </div>
               </div>
 
-              <!-- Interpretação simplificada -->
-              <div id="modelInterpretation" class="mt-5 w-full p-3 rounded-lg text-center text-sm">
-                <!-- Preenchido via JS -->
-              </div>
+              <div id="modelInterpretation" class="mt-4 sm:mt-5 w-full p-3 rounded-lg text-center text-xs sm:text-sm"></div>
             </div>
           </div>
         </div>
 
         <!-- ===== CARD 5: ANÁLISE HISTÓRICA ===== -->
-        <div class="ml-card p-6">
-          <h3 class="text-lg font-bold mb-4">
+        <div class="ml-card p-4 sm:p-6">
+          <h3 class="text-base sm:text-lg font-bold mb-4">
             <i class="fas fa-history mr-2 text-purple-400"></i>Última Previsão vs Realidade
           </h3>
-          <div class="flex flex-col md:flex-row items-center gap-6">
-            
-            <!-- Lado esquerdo: dados -->
+
+          <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
+
+            <!-- Grade de dados -->
             <div class="flex-1 w-full">
-              <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div class="bg-white/5 p-4 rounded-lg text-center">
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div class="bg-white/5 p-3 sm:p-4 rounded-lg text-center">
                   <div class="text-[10px] text-gray-400 uppercase tracking-wider mb-1">Data do Sinal</div>
-                  <div id="dataHistorica" class="text-sm font-bold text-white">--</div>
+                  <div id="dataHistorica" class="text-xs sm:text-sm font-bold text-white">--</div>
                 </div>
-                <div class="bg-white/5 p-4 rounded-lg text-center">
+                <div class="bg-white/5 p-3 sm:p-4 rounded-lg text-center">
                   <div class="text-[10px] text-gray-400 uppercase tracking-wider mb-1">Sinal Emitido</div>
                   <div id="sinalHistorico" class="mt-1">--</div>
                 </div>
-                <div class="bg-white/5 p-4 rounded-lg text-center">
+                <div class="bg-white/5 p-3 sm:p-4 rounded-lg text-center">
                   <div class="text-[10px] text-gray-400 uppercase tracking-wider mb-1">Preço na Emissão</div>
-                  <div id="precoHistorico" class="text-sm font-bold text-white">--</div>
+                  <div id="precoHistorico" class="text-xs sm:text-sm font-bold text-white">--</div>
                 </div>
-                <div class="bg-white/5 p-4 rounded-lg text-center">
+                <div class="bg-white/5 p-3 sm:p-4 rounded-lg text-center">
                   <div class="text-[10px] text-gray-400 uppercase tracking-wider mb-1">Movimento Real</div>
-                  <div id="movimentoPreco" class="text-sm font-bold">--</div>
+                  <div id="movimentoPreco" class="text-xs sm:text-sm font-bold">--</div>
                 </div>
               </div>
             </div>
-            
-            <!-- Lado direito: resultado grande -->
-            <div class="flex-shrink-0 min-w-[160px]">
-              <div id="resultadoHistoricoCard" class="p-5 rounded-xl text-center border">
+
+            <!-- Resultado destaque — full width em mobile -->
+            <div class="w-full sm:w-auto sm:flex-shrink-0 sm:min-w-[150px]">
+              <div id="resultadoHistoricoCard" class="p-4 sm:p-5 rounded-xl text-center border">
                 <div class="text-[10px] uppercase tracking-widest mb-1" id="resultadoLabel">Resultado</div>
-                <div id="resultadoHistorico" class="text-3xl font-bold">--</div>
+                <div id="resultadoHistorico" class="text-2xl sm:text-3xl font-bold">--</div>
                 <div id="resultadoStatus" class="text-xs font-medium mt-1">--</div>
               </div>
             </div>
           </div>
         </div>
 
-      </div>
+      </div><!-- /resultsSection -->
     </div>
   </div>
 
+  <!-- Footer -->
+  <footer class="border-t border-white/10 mt-12 md:mt-16">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+      <div class="mb-5 sm:mb-6">
+        <button onclick="toggleDisclaimer()"
+                class="flex items-center gap-2 text-xs sm:text-sm text-yellow-500/80 hover:text-yellow-400
+                       transition-colors mx-auto">
+          <i class="fas fa-exclamation-triangle text-xs"></i>
+          <span class="font-semibold">AVISO LEGAL IMPORTANTE</span>
+          <i id="disclaimerIcon" class="fas fa-chevron-down text-[10px] transition-transform duration-300"></i>
+        </button>
+      </div>
+
+      <div id="disclaimerContent" class="hidden mb-5 sm:mb-6">
+        <div class="bg-red-500/5 border border-red-500/20 rounded-xl p-4 sm:p-5 max-w-4xl mx-auto">
+          <p class="text-xs text-gray-400 leading-relaxed text-center">
+            As informações e sinais fornecidos por esta ferramenta são de caráter
+            <strong class="text-gray-300">educativo e informativo</strong>.
+            <strong class="text-gray-300">Não constituem recomendação de investimento nem garantia de rentabilidade.</strong>
+            Investimentos em valores mobiliários envolvem riscos de perda patrimonial. Rentabilidade passada não garante resultados futuros.
+            Os modelos quantitativos são baseados em dados históricos e podem não capturar adequadamente mudanças nas condições de mercado.
+            <strong class="text-gray-300">Operações de swing trade e day trade envolvem alto risco e podem resultar em perdas significativas.</strong>
+          </p>
+        </div>
+      </div>
+
+      <div class="text-center">
+        <p class="text-[11px] text-gray-500">
+          <strong class="text-gray-400">Geminii Research Ltda</strong> — CNPJ 60.897.331/0001-06 &nbsp;|&nbsp;
+          Analista Responsável: Diego Doneda — CNPI 9668
+        </p>
+        <p class="text-[10px] text-gray-600 mt-2">© 2025 Geminii Research. Todos os direitos reservados.</p>
+      </div>
+    </div>
+  </footer>
+
   <script>
-    console.log('=== SCRIPT INICIANDO ===');
-    
     const API_BASE = '/api/swing-trade-ml';
-    
     let ticker, predictionDays, analyzeBtn, statusMsg, resultsSection, tickerSuggestions;
     let tradingChart = null;
-    
+
     function initElements() {
-      ticker = document.getElementById('ticker');
-      predictionDays = document.getElementById('predictionDays');
-      analyzeBtn = document.getElementById('analyzeBtn');
-      statusMsg = document.getElementById('statusMsg');
-      resultsSection = document.getElementById('resultsSection');
+      ticker            = document.getElementById('ticker');
+      predictionDays    = document.getElementById('predictionDays');
+      analyzeBtn        = document.getElementById('analyzeBtn');
+      statusMsg         = document.getElementById('statusMsg');
+      resultsSection    = document.getElementById('resultsSection');
       tickerSuggestions = document.getElementById('tickerSuggestions');
     }
-    
+
     function showStatus(message, type = 'info') {
       if (!statusMsg) return;
-      const bgClasses = {
-        success: 'bg-green-600 bg-opacity-20 border-green-500 border-opacity-30 border',
-        error: 'bg-red-600 bg-opacity-20 border-red-500 border-opacity-30 border',
-        info: 'bg-blue-600 bg-opacity-20 border-blue-500 border-opacity-30 border'
+      const bg = {
+        success: 'bg-green-600/20 border border-green-500/30',
+        error:   'bg-red-600/20 border border-red-500/30',
+        info:    'bg-blue-600/20 border border-blue-500/30'
       };
-      statusMsg.className = `mb-6 p-4 rounded-lg backdrop-blur-sm ${bgClasses[type]}`;
+      statusMsg.className = `mb-5 p-3 sm:p-4 rounded-lg backdrop-blur-sm text-sm ${bg[type]}`;
       statusMsg.textContent = message;
       statusMsg.classList.remove('hidden');
       if (type === 'success' || type === 'error') {
         setTimeout(() => statusMsg.classList.add('hidden'), 5000);
       }
     }
-    
-    function setLoading(element, loading) {
-      if (!element) return;
+
+    function setLoading(el, loading) {
+      if (!el) return;
       if (loading) {
-        element.classList.add('loading');
-        element.innerHTML = '<span class="spinner mr-2"></span>Processando...';
+        el.classList.add('loading');
+        el.innerHTML = '<span class="spinner"></span><span>Processando...</span>';
       } else {
-        element.classList.remove('loading');
-        element.innerHTML = '<i class="fas fa-brain mr-2"></i>Executar Análise ML';
+        el.classList.remove('loading');
+        el.innerHTML = '<i class="fas fa-brain"></i><span>Executar Análise ML</span>';
       }
     }
 
@@ -774,60 +826,44 @@
       if (ticker) { ticker.value = symbol; ticker.focus(); }
     }
 
-    // ===== GRÁFICO COM SEGMENT COLORING =====
+    // ===== GRÁFICO =====
     function createTradingChart(chartData) {
-      console.log('=== CRIANDO GRÁFICO CHART.JS ===');
-      
       const canvas = document.getElementById('tradingChart');
       if (!canvas) return;
-      
-      if (tradingChart) tradingChart.destroy();
-      
-      let labels, priceData, predictionData;
-      
+      if (tradingChart) { tradingChart.destroy(); tradingChart = null; }
+
+      let labels = [], priceData = [], predictionData = [];
+
       if (chartData && chartData.labels && chartData.prices) {
-        labels = chartData.labels;
-        priceData = chartData.prices;
+        labels         = chartData.labels;
+        priceData      = chartData.prices;
         predictionData = chartData.predictions || [];
-      } else {
-        labels = []; priceData = []; predictionData = [];
-        const today = new Date();
-        for (let i = 252; i >= 0; i--) {
-          const date = new Date(today);
-          date.setDate(date.getDate() - i);
-          labels.push(date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }));
-          priceData.push(30 + Math.sin(i * 0.1) * 5 + Math.random() * 2);
-          predictionData.push(Math.random() > 0.6 ? 1 : 0);
-        }
       }
 
       const ctx = canvas.getContext('2d');
 
-      const mainDataset = {
-        label: 'Preço',
-        data: priceData,
-        borderWidth: 2,
-        pointRadius: 0,
-        pointHoverRadius: 4,
-        tension: 0,
-        fill: false,
-        segment: {
-          borderColor: function(ctx) {
-            const idx = ctx.p1DataIndex;
-            return predictionData[idx] === 1 ? '#10b981' : '#ef4444';
-          }
-        },
-        borderColor: '#10b981'
-      };
-
       tradingChart = new Chart(ctx, {
         type: 'line',
         data: {
-          labels: labels,
+          labels,
           datasets: [
-            mainDataset,
+            {
+              label: 'Preço',
+              data: priceData,
+              borderWidth: 1.5,
+              pointRadius: 0,
+              pointHoverRadius: 4,
+              tension: 0,
+              fill: false,
+              segment: {
+                borderColor: function(c) {
+                  return predictionData[c.p1DataIndex] === 1 ? '#10b981' : '#ef4444';
+                }
+              },
+              borderColor: '#10b981'
+            },
             { label: 'Sinal de Compra', data: [], borderColor: '#10b981', backgroundColor: '#10b981', borderWidth: 3, pointStyle: 'line' },
-            { label: 'Sinal de Venda', data: [], borderColor: '#ef4444', backgroundColor: '#ef4444', borderWidth: 3, pointStyle: 'line' }
+            { label: 'Sinal de Venda',  data: [], borderColor: '#ef4444', backgroundColor: '#ef4444', borderWidth: 3, pointStyle: 'line' }
           ]
         },
         options: {
@@ -838,13 +874,13 @@
             legend: {
               labels: {
                 color: '#ffffff',
-                font: { size: 12 },
+                font: { size: 11 },
                 usePointStyle: true,
                 filter: function(item) { return item.text !== 'Preço'; }
               }
             },
             tooltip: {
-              backgroundColor: 'rgba(0, 0, 0, 0.8)',
+              backgroundColor: 'rgba(0,0,0,0.85)',
               titleColor: '#ffffff',
               bodyColor: '#ffffff',
               borderColor: '#fb1ebb',
@@ -852,7 +888,7 @@
               callbacks: {
                 label: function(context) {
                   if (context.dataset.label === 'Preço') {
-                    const idx = context.dataIndex;
+                    const idx   = context.dataIndex;
                     const sinal = predictionData[idx] === 1 ? '🟢 COMPRA' : '🔴 VENDA';
                     return [`Preço: R$ ${context.parsed.y.toFixed(2)}`, `Sinal: ${sinal}`];
                   }
@@ -863,53 +899,55 @@
           },
           scales: {
             x: {
-              ticks: { color: '#9ca3af', maxTicksLimit: 10 },
-              grid: { color: 'rgba(255, 255, 255, 0.1)' }
+              ticks: {
+                color: '#9ca3af',
+                maxTicksLimit: window.innerWidth < 640 ? 5 : 10,
+                font: { size: 10 }
+              },
+              grid: { color: 'rgba(255,255,255,0.07)' }
             },
             y: {
               ticks: {
                 color: '#9ca3af',
-                callback: function(value) { return 'R$ ' + value.toFixed(2); }
+                font: { size: 10 },
+                callback: function(v) { return 'R$' + v.toFixed(2); }
               },
-              grid: { color: 'rgba(255, 255, 255, 0.1)' }
+              grid: { color: 'rgba(255,255,255,0.07)' }
             }
           }
         }
       });
-      
-      console.log('Gráfico criado com sucesso!');
     }
 
-    // ===== CARREGAR TICKERS =====
+    // ===== TICKERS =====
     async function loadTickerSuggestions() {
       if (!tickerSuggestions) return;
       try {
         const response = await fetch(`${API_BASE}/tickers`);
-        const data = await response.json();
+        const data     = await response.json();
         if (data.success) {
           tickerSuggestions.innerHTML = '';
-          data.tickers.forEach(tickerData => {
-            const suggestion = document.createElement('span');
-            suggestion.className = 'ticker-suggestion';
-            suggestion.innerHTML = `<strong>${tickerData.symbol}</strong> - ${tickerData.name}`;
-            suggestion.onclick = () => selectTicker(tickerData.symbol);
-            tickerSuggestions.appendChild(suggestion);
+          data.tickers.forEach(t => {
+            const s = document.createElement('span');
+            s.className  = 'ticker-suggestion';
+            s.innerHTML  = `<strong>${t.symbol}</strong> <span class="hidden sm:inline">— ${t.name}</span>`;
+            s.onclick    = () => selectTicker(t.symbol);
+            tickerSuggestions.appendChild(s);
           });
         } else {
-          tickerSuggestions.innerHTML = '<span class="text-red-400">Erro ao carregar sugestões</span>';
+          tickerSuggestions.innerHTML = '<span class="text-red-400 text-xs">Erro ao carregar sugestões</span>';
         }
-      } catch (error) {
-        console.error('Erro ao carregar sugestões:', error);
-        if (tickerSuggestions) tickerSuggestions.innerHTML = '<span class="text-red-400">Erro ao carregar sugestões</span>';
+      } catch (e) {
+        if (tickerSuggestions) tickerSuggestions.innerHTML = '<span class="text-red-400 text-xs">Erro ao carregar sugestões</span>';
       }
     }
 
-    // ===== EXECUTAR ANÁLISE =====
+    // ===== ANÁLISE =====
     async function runAnalysis() {
       if (!ticker || !predictionDays) return;
-      
+
       const tickerValue = ticker.value.trim().toUpperCase();
-      const predictionDaysValue = parseInt(predictionDays.value);
+      const daysValue   = parseInt(predictionDays.value);
 
       if (!tickerValue) {
         showStatus('Por favor, digite o código da ação', 'error');
@@ -925,20 +963,17 @@
       }
 
       setLoading(analyzeBtn, true);
-      showStatus('Executando análise de Machine Learning... Isso pode levar alguns minutos', 'info');
+      showStatus('Executando análise de Machine Learning… Isso pode levar alguns minutos', 'info');
 
       try {
         const response = await fetch(`${API_BASE}/analysis`, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify({ ticker: tickerValue, prediction_days: predictionDaysValue })
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          body: JSON.stringify({ ticker: tickerValue, prediction_days: daysValue })
         });
 
         const data = await response.json();
-        
+
         if (data.success) {
           displayResults(data.analysis_data, data.chart_data);
           showStatus(`Análise de ${tickerValue} concluída com sucesso!`, 'success');
@@ -954,184 +989,149 @@
         }
       } catch (error) {
         showStatus('Erro ao executar análise: ' + error.message, 'error');
-        console.error('Erro na requisição:', error);
       }
 
       setLoading(analyzeBtn, false);
     }
 
-    // ===== DISPLAY RESULTS - REDESIGNED =====
+    // ===== DISPLAY RESULTS =====
     function displayResults(d, chartData) {
-      console.log('=== DISPLAY RESULTS ===');
-      
       createTradingChart(chartData);
-      
       if (!d) return;
 
       try {
-        // ---------- CARD 1: Sinal Principal ----------
+        const el       = id => document.getElementById(id);
         const isCompra = d.direcao === 'COMPRA';
-        
-        const tradingSignal = document.getElementById('tradingSignal');
-        if (tradingSignal) {
-          tradingSignal.innerHTML = `
+
+        // Card 1 — Sinal
+        if (el('tradingSignal')) {
+          el('tradingSignal').innerHTML = `
             <div class="signal-badge ${isCompra ? 'signal-buy' : 'signal-sell'}">
-              <i class="fas fa-${isCompra ? 'arrow-up' : 'arrow-down'} mr-2"></i>${d.direcao}
-            </div>
-          `;
+              <i class="fas fa-arrow-${isCompra ? 'up' : 'down'} mr-1"></i>${d.direcao}
+            </div>`;
         }
-
-        const signalDate = document.getElementById('signalDate');
-        if (signalDate) signalDate.textContent = d.data_atual;
-
-        const el = (id) => document.getElementById(id);
+        if (el('signalDate')) el('signalDate').textContent = d.data_atual;
 
         // Preços
-        if (el('currentPrice')) el('currentPrice').textContent = formatCurrency(d.preco_atual);
-        if (el('takeProfitPrice')) el('takeProfitPrice').textContent = formatCurrency(d.take_profit_price);
-        if (el('stopLossPrice')) el('stopLossPrice').textContent = formatCurrency(d.stop_loss_price);
-        if (el('takeProfitPctBadge')) el('takeProfitPctBadge').textContent = `+${d.take_profit_pct.toFixed(1)}%`;
-        if (el('stopLossPctBadge')) el('stopLossPctBadge').textContent = `-${d.stop_loss_pct.toFixed(1)}%`;
+        if (el('currentPrice'))       el('currentPrice').textContent       = formatCurrency(d.preco_atual);
+        if (el('takeProfitPrice'))     el('takeProfitPrice').textContent     = formatCurrency(d.take_profit_price);
+        if (el('stopLossPrice'))       el('stopLossPrice').textContent       = formatCurrency(d.stop_loss_price);
+        if (el('takeProfitPctBadge'))  el('takeProfitPctBadge').textContent  = `+${d.take_profit_pct.toFixed(1)}%`;
+        if (el('stopLossPctBadge'))    el('stopLossPctBadge').textContent    = `-${d.stop_loss_pct.toFixed(1)}%`;
 
-        // Risco/Retorno
+        // R/R
         const rrRatio = d.take_profit_pct / d.stop_loss_pct;
         if (el('riskRewardRatio')) el('riskRewardRatio').textContent = `1:${rrRatio.toFixed(1)}`;
-        
-        // Bar fill (ratio 0.5 = 25%, ratio 1 = 50%, ratio 2 = 75%, ratio 3+ = 100%)
         const rrPct = Math.min(Math.max((rrRatio / 3) * 100, 10), 100);
         if (el('rrBarFill')) el('rrBarFill').style.width = `${rrPct}%`;
 
-        // ---------- CARD 4: Volatilidade ----------
-        if (el('atrPct')) el('atrPct').textContent = `${d.atr_pct.toFixed(2)}%`;
-        if (el('vol60d')) el('vol60d').textContent = `${d.volatilidade_60d.toFixed(2)}%`;
-        if (el('atrMedio')) el('atrMedio').textContent = `Média: ${d.atr_medio.toFixed(2)}%`;
-        if (el('volMaxima')) el('volMaxima').textContent = `Máx: ${d.vol_maxima_60d.toFixed(2)}%`;
+        // Card 4 — Volatilidade
+        if (el('atrPct'))         el('atrPct').textContent         = `${d.atr_pct.toFixed(2)}%`;
+        if (el('vol60d'))         el('vol60d').textContent         = `${d.volatilidade_60d.toFixed(2)}%`;
+        if (el('atrMedio'))       el('atrMedio').textContent       = `Média: ${d.atr_medio.toFixed(2)}%`;
+        if (el('volMaxima'))      el('volMaxima').textContent      = `Máx: ${d.vol_maxima_60d.toFixed(2)}%`;
+        if (el('stopLossMedio'))  el('stopLossMedio').textContent  = `${d.stop_loss_medio.toFixed(2)}%`;
+        if (el('takeProfitMedio'))el('takeProfitMedio').textContent= `${d.take_profit_medio.toFixed(2)}%`;
 
-        // ATR bar (proporção relativa ao ATR médio * 2)
         const atrBarPct = Math.min((d.atr_pct / (d.atr_medio * 2)) * 100, 100);
-        if (el('atrBar')) el('atrBar').style.width = `${atrBarPct}%`;
-
-        // Vol bar (proporção relativa à vol máxima)
         const volBarPct = Math.min((d.volatilidade_60d / d.vol_maxima_60d) * 100, 100);
+        if (el('atrBar')) el('atrBar').style.width = `${atrBarPct}%`;
         if (el('volBar')) el('volBar').style.width = `${volBarPct}%`;
 
-        // Stops médios
-        if (el('stopLossMedio')) el('stopLossMedio').textContent = `${d.stop_loss_medio.toFixed(2)}%`;
-        if (el('takeProfitMedio')) el('takeProfitMedio').textContent = `${d.take_profit_medio.toFixed(2)}%`;
+        // Card 4 — Confiança
+        const accPct  = d.accuracy  * 100;
+        const precPct = d.precision * 100;
+        const recPct  = d.recall    * 100;
 
-        // ---------- CARD 4: Confiança do Modelo ----------
-        const accPct = (d.accuracy * 100);
-        const precPct = (d.precision * 100);
-        const recPct = (d.recall * 100);
-
-        // Accuracy ring
-        const circumference = 263.9; // 2 * π * 42
+        const circumference = 263.9;
         const offset = circumference - (circumference * d.accuracy);
-        if (el('accuracyRing')) el('accuracyRing').style.strokeDashoffset = offset;
-        if (el('accuracyRingText')) el('accuracyRingText').textContent = `${accPct.toFixed(0)}%`;
+        if (el('accuracyRing'))     el('accuracyRing').style.strokeDashoffset = offset;
+        if (el('accuracyRingText')) el('accuracyRingText').textContent         = `${accPct.toFixed(0)}%`;
+        if (el('precision'))        el('precision').textContent                = `${precPct.toFixed(1)}%`;
+        if (el('recall'))           el('recall').textContent                   = `${recPct.toFixed(1)}%`;
+        if (el('precisionBar'))     el('precisionBar').style.width             = `${precPct}%`;
+        if (el('recallBar'))        el('recallBar').style.width                = `${recPct}%`;
 
-        // Precision & Recall
-        if (el('precision')) el('precision').textContent = `${precPct.toFixed(1)}%`;
-        if (el('recall')) el('recall').textContent = `${recPct.toFixed(1)}%`;
-        if (el('precisionBar')) el('precisionBar').style.width = `${precPct}%`;
-        if (el('recallBar')) el('recallBar').style.width = `${recPct}%`;
-
-        // Interpretação simplificada
         const interp = el('modelInterpretation');
         if (interp) {
-          let interpText, interpClass;
-          if (accPct >= 65) {
-            interpText = '✅ Modelo com boa confiança — sinais mais confiáveis';
-            interpClass = 'bg-green-500/10 border border-green-500/20 text-green-300';
-          } else if (accPct >= 55) {
-            interpText = '⚠️ Modelo com confiança moderada — combine com análise técnica';
-            interpClass = 'bg-yellow-500/10 border border-yellow-500/20 text-yellow-300';
-          } else {
-            interpText = '⚡ Modelo com confiança baixa — use com cautela extra';
-            interpClass = 'bg-red-500/10 border border-red-500/20 text-red-300';
-          }
-          interp.className = `mt-5 w-full p-3 rounded-lg text-center text-sm ${interpClass}`;
-          interp.textContent = interpText;
+          let txt, cls;
+          if (accPct >= 65)      { txt = '✅ Modelo com boa confiança — sinais mais confiáveis';            cls = 'bg-green-500/10 border border-green-500/20 text-green-300'; }
+          else if (accPct >= 55) { txt = '⚠️ Confiança moderada — combine com análise técnica';             cls = 'bg-yellow-500/10 border border-yellow-500/20 text-yellow-300'; }
+          else                   { txt = '⚡ Confiança baixa — use com cautela extra';                       cls = 'bg-red-500/10 border border-red-500/20 text-red-300'; }
+          interp.className  = `mt-4 sm:mt-5 w-full p-3 rounded-lg text-center text-xs sm:text-sm ${cls}`;
+          interp.textContent = txt;
         }
 
-        // ---------- CARD 5: Análise Histórica ----------
+        // Card 5 — Histórico
         if (el('dataHistorica')) el('dataHistorica').textContent = d.data_historica;
-        
+
         const sinalHistEl = el('sinalHistorico');
         if (sinalHistEl) {
-          const isCompraHist = d.sinal_historico === 'COMPRA';
+          const isBuy = d.sinal_historico === 'COMPRA';
           sinalHistEl.innerHTML = `
-            <span class="signal-badge ${isCompraHist ? 'signal-buy' : 'signal-sell'}" style="padding: 4px 10px; font-size: 10px;">
+            <span class="signal-badge ${isBuy ? 'signal-buy' : 'signal-sell'}"
+                  style="padding:3px 8px;font-size:10px;">
               ${d.sinal_historico}
-            </span>
-          `;
+            </span>`;
         }
-        
+
         if (el('precoHistorico')) el('precoHistorico').textContent = formatCurrency(d.preco_historico);
-        
-        const movPreco = el('movimentoPreco');
-        if (movPreco) {
-          const subiu = d.variacao_percentual > 0;
-          movPreco.innerHTML = `<span class="${subiu ? 'text-green-400' : 'text-red-400'}">
-            <i class="fas fa-arrow-${subiu ? 'up' : 'down'} mr-1"></i>${Math.abs(d.variacao_percentual).toFixed(2)}%
+
+        const movEl = el('movimentoPreco');
+        if (movEl) {
+          const up = d.variacao_percentual > 0;
+          movEl.innerHTML = `<span class="${up ? 'text-green-400' : 'text-red-400'}">
+            <i class="fas fa-arrow-${up ? 'up' : 'down'} mr-1"></i>${Math.abs(d.variacao_percentual).toFixed(2)}%
           </span>`;
         }
 
-        // Resultado grande
         const isLucro = d.resultado_status === 'LUCRO';
         const resCard = el('resultadoHistoricoCard');
-        if (resCard) {
-          resCard.className = `p-5 rounded-xl text-center border ${isLucro ? 'bg-green-500/10 border-green-500/30' : 'bg-red-500/10 border-red-500/30'}`;
-        }
+        if (resCard) resCard.className = `p-4 sm:p-5 rounded-xl text-center border ${isLucro ? 'bg-green-500/10 border-green-500/30' : 'bg-red-500/10 border-red-500/30'}`;
+
         const resLabel = el('resultadoLabel');
         if (resLabel) resLabel.className = `text-[10px] uppercase tracking-widest mb-1 ${isLucro ? 'text-green-400' : 'text-red-400'}`;
-        
+
         if (el('resultadoHistorico')) {
-          el('resultadoHistorico').className = `text-3xl font-bold ${isLucro ? 'text-green-400' : 'text-red-400'}`;
+          el('resultadoHistorico').className  = `text-2xl sm:text-3xl font-bold ${isLucro ? 'text-green-400' : 'text-red-400'}`;
           el('resultadoHistorico').textContent = `${d.resultado_historico > 0 ? '+' : ''}${d.resultado_historico.toFixed(2)}%`;
         }
         if (el('resultadoStatus')) {
-          el('resultadoStatus').className = `text-xs font-medium mt-1 ${isLucro ? 'text-green-300' : 'text-red-300'}`;
+          el('resultadoStatus').className  = `text-xs font-medium mt-1 ${isLucro ? 'text-green-300' : 'text-red-300'}`;
           el('resultadoStatus').textContent = d.resultado_status;
         }
 
-        console.log('Cards preenchidos com sucesso');
-      } catch (error) {
-        console.error('Erro ao preencher cards:', error);
+      } catch (err) {
+        console.error('Erro ao preencher cards:', err);
       }
 
       if (resultsSection) {
         resultsSection.style.display = 'block';
-        setTimeout(() => resultsSection.scrollIntoView({ behavior: 'smooth' }), 500);
+        setTimeout(() => resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' }), 400);
       }
     }
 
-    // ===== EVENT LISTENERS =====
-    function setupEventListeners() {
-      if (analyzeBtn) analyzeBtn.addEventListener('click', runAnalysis);
-      if (ticker) ticker.addEventListener('keypress', (e) => { if (e.key === 'Enter') runAnalysis(); });
-    }
-
+    // ===== TOGGLES =====
     function toggleInfo() {
       const content = document.getElementById('infoContent');
-      const icon = document.getElementById('infoIcon');
+      const icon    = document.getElementById('infoIcon');
       if (content.classList.contains('hidden')) {
         content.classList.remove('hidden');
-        content.style.animation = 'fadeIn 0.5s ease-in-out';
-        icon.classList.remove('fa-brain');
-        icon.classList.add('fa-times', 'icon-rotate');
+        content.style.animation = 'fadeIn 0.4s ease-in-out';
+        icon.classList.replace('fa-brain', 'fa-times');
+        icon.classList.add('icon-rotate');
       } else {
-        content.style.animation = 'fadeOut 0.3s ease-in-out';
-        setTimeout(() => content.classList.add('hidden'), 300);
-        icon.classList.remove('fa-times', 'icon-rotate');
-        icon.classList.add('fa-brain');
+        content.style.animation = 'fadeOut 0.25s ease-in-out';
+        setTimeout(() => content.classList.add('hidden'), 250);
+        icon.classList.replace('fa-times', 'fa-brain');
+        icon.classList.remove('icon-rotate');
       }
     }
     window.toggleInfo = toggleInfo;
 
     function toggleStrategyInfo() {
       const content = document.getElementById('strategyContent');
-      const icon = document.getElementById('strategyIcon');
+      const icon    = document.getElementById('strategyIcon');
       if (content.classList.contains('hidden')) {
         content.classList.remove('hidden');
         content.style.animation = 'fadeIn 0.3s ease-in-out';
@@ -1144,69 +1144,9 @@
     }
     window.toggleStrategyInfo = toggleStrategyInfo;
 
-    function checkAuth() {
-      const token = localStorage.getItem('geminii_token');
-      if (!token) {
-        showStatus('Você precisa estar logado para usar esta funcionalidade', 'error');
-        setTimeout(() => window.location.href = '/login.html', 3000);
-        return false;
-      }
-      return true;
-    }
-
-    document.addEventListener('DOMContentLoaded', function() {
-      initElements();
-      setupEventListeners();
-      if (checkAuth()) {
-        loadTickerSuggestions();
-        showStatus('Swing Trade ML carregado! Digite o código de uma ação para começar.', 'info');
-      }
-    });
-  </script>
-  <!-- Footer Disclaimer -->
-  <footer class="border-t border-white/10 mt-16">
-    <div class="max-w-5xl mx-auto px-6 py-8">
-      
-      <!-- Disclaimer colapsável -->
-      <div class="mb-6">
-        <button onclick="toggleDisclaimer()" class="flex items-center gap-2 text-sm text-yellow-500/80 hover:text-yellow-400 transition-colors mx-auto">
-          <i class="fas fa-exclamation-triangle text-xs"></i>
-          <span class="font-semibold">AVISO LEGAL IMPORTANTE</span>
-          <i id="disclaimerIcon" class="fas fa-chevron-down text-[10px] transition-transform duration-300"></i>
-        </button>
-      </div>
-      
-      <div id="disclaimerContent" class="hidden mb-6">
-        <div class="bg-red-500/5 border border-red-500/20 rounded-xl p-5 max-w-4xl mx-auto">
-          <p class="text-xs text-gray-400 leading-relaxed text-center">
-            As informações e sinais fornecidos por esta ferramenta são de caráter <strong class="text-gray-300">educativo e informativo</strong>. 
-            <strong class="text-gray-300">Não constituem recomendação de investimento nem garantia de rentabilidade.</strong> 
-            Investimentos em valores mobiliários envolvem riscos de perda patrimonial. Rentabilidade passada não garante resultados futuros. 
-            Os modelos quantitativos utilizados são baseados em dados históricos e podem não capturar adequadamente mudanças nas condições de mercado. 
-            Recomendamos a consulta a profissionais qualificados antes de tomar decisões de investimento. 
-            <strong class="text-gray-300">Operações de swing trade e day trade envolvem alto risco e podem resultar em perdas significativas.</strong> 
-            Este tipo de operação requer conhecimento técnico e não é adequado para todos os perfis de investidor.
-          </p>
-        </div>
-      </div>
-
-      <!-- Info da empresa -->
-      <div class="text-center">
-        <p class="text-[11px] text-gray-500">
-          <strong class="text-gray-400">Geminii Research Ltda</strong> — CNPJ 60.897.331/0001-06 &nbsp;|&nbsp; 
-          Analista Responsável: Diego Doneda — CNPI 9668
-        </p>
-        <p class="text-[10px] text-gray-600 mt-2">
-          © 2025 Geminii Research. Todos os direitos reservados.
-        </p>
-      </div>
-    </div>
-  </footer>
-
-  <script>
     function toggleDisclaimer() {
       const content = document.getElementById('disclaimerContent');
-      const icon = document.getElementById('disclaimerIcon');
+      const icon    = document.getElementById('disclaimerIcon');
       if (content.classList.contains('hidden')) {
         content.classList.remove('hidden');
         content.style.animation = 'fadeIn 0.3s ease-in-out';
@@ -1217,6 +1157,28 @@
         icon.style.transform = 'rotate(0deg)';
       }
     }
+    window.toggleDisclaimer = toggleDisclaimer;
+
+    function checkAuth() {
+      const token = localStorage.getItem('geminii_token');
+      if (!token) {
+        showStatus('Você precisa estar logado para usar esta funcionalidade', 'error');
+        setTimeout(() => window.location.href = '/login.html', 3000);
+        return false;
+      }
+      return true;
+    }
+
+    // ===== INIT =====
+    document.addEventListener('DOMContentLoaded', function () {
+      initElements();
+      if (analyzeBtn) analyzeBtn.addEventListener('click', runAnalysis);
+      if (ticker)     ticker.addEventListener('keypress', e => { if (e.key === 'Enter') runAnalysis(); });
+      if (checkAuth()) {
+        loadTickerSuggestions();
+        showStatus('Swing Trade ML carregado! Digite o código de uma ação para começar.', 'info');
+      }
+    });
   </script>
 </body>
 </html>
