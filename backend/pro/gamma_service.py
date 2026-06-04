@@ -118,20 +118,22 @@ class LiquidityManager:
 class ExpirationManager:
     def __init__(self, db_engine):
         self.db_engine = db_engine
-        self.available_expirations = {                                                                    
-            
-            
-            "20260424": {"date": datetime(2026, 4, 24), "desc": "24 Abr 26 - W4"},
-            "20260430": {"date": datetime(2026, 4, 30), "desc": "30 Abr 26 - W5"},
-            "20260508": {"date": datetime(2026, 5, 8),  "desc": "08 Mai 26 - W2"},
-            "20260515": {"date": datetime(2026, 5, 15), "desc": "15 Mai 26 - M"},
-            "20260522": {"date": datetime(2026, 5, 22), "desc": "22 Mai 26 - W4"},
-            "20260529": {"date": datetime(2026, 5, 29), "desc": "29 Mai 26 - W5"},
+        self.available_expirations = {
             "20260605": {"date": datetime(2026, 6, 5),  "desc": "05 Jun 26 - W1"},
             "20260612": {"date": datetime(2026, 6, 12), "desc": "12 Jun 26 - W2"},
             "20260619": {"date": datetime(2026, 6, 19), "desc": "19 Jun 26 - M"},
+            "20260626": {"date": datetime(2026, 6, 26), "desc": "26 Jun 26 - W4"},
+
+            "20260703": {"date": datetime(2026, 7, 3),  "desc": "03 Jul 26 - W1"},
+            "20260710": {"date": datetime(2026, 7, 10), "desc": "10 Jul 26 - W2"},
             "20260717": {"date": datetime(2026, 7, 17), "desc": "17 Jul 26 - M"},
+            "20260724": {"date": datetime(2026, 7, 24), "desc": "24 Jul 26 - W4"},
+            "20260731": {"date": datetime(2026, 7, 31), "desc": "31 Jul 26 - W5"},
+
+            "20260807": {"date": datetime(2026, 8, 7),  "desc": "07 Ago 26 - W1"},
+            "20260814": {"date": datetime(2026, 8, 14), "desc": "14 Ago 26 - W2"},
             "20260821": {"date": datetime(2026, 8, 21), "desc": "21 Ago 26 - M"},
+
             "20260918": {"date": datetime(2026, 9, 18), "desc": "18 Set 26 - M"},
             "20261016": {"date": datetime(2026, 10, 16), "desc": "16 Out 26 - M"},
             "20261119": {"date": datetime(2026, 11, 19), "desc": "19 Nov 26 - M"},
