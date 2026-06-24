@@ -5,16 +5,20 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>GEX Analysis - Geminii Tech</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
   <script>
     tailwind.config = {
       theme: {
         extend: {
           colors: {
-            dark: '#000000',
+            dark: '#030303',
+            surface: 'rgba(10, 10, 16, 0.7)',
+            borderMuted: 'rgba(255, 255, 255, 0.05)',
+            borderActive: 'rgba(251, 30, 187, 0.4)',
             light: '#ffffff',
-            subtle: 'rgba(255,255,255,0.1)',
-            geminii: '#fb1ebb'
+            geminii: '#fb1ebb',
+            gLong: '#00f2fe',
+            gShort: '#ff0844'
           },
           fontFamily: {
             sans: ['Inter', 'sans-serif']
@@ -23,754 +27,804 @@
       }
     }
   </script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  
+
   <style>
-    body { 
-      font-family: 'Inter', sans-serif; 
-      background: linear-gradient(135deg, #0c0c0c 0%, #1a1a1a 100%);
+    body {
+      font-family: 'Inter', sans-serif;
+      background: radial-gradient(circle at 50% 0%, #0d0614 0%, #030305 70%);
       min-height: 100vh;
+      color: #f4f4f5;
+      overflow-x: hidden;
     }
-    
+
+    /* ── Efeito Glassmorphism Premium ── */
     .gex-card {
-      background: rgba(255, 255, 255, 0.08);
-      backdrop-filter: blur(20px);
-      border: 1px solid rgba(255, 255, 255, 0.2);
+      background: rgba(10, 10, 16, 0.6);
+      backdrop-filter: blur(16px) saturate(180%);
+      -webkit-backdrop-filter: blur(16px) saturate(180%);
+      border: 1px solid rgba(255, 255, 255, 0.05);
       border-radius: 16px;
-      transition: all 0.3s ease;
-    }
-    
-    .gex-card:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 20px 40px rgba(186, 57, 175, 0.15);
-      border-color: rgba(186, 57, 175, 0.3);
-    }
-    
-    .spinner {
-      border: 2px solid rgba(255, 255, 255, 0.1);
-      border-radius: 50%;
-      border-top: 2px solid #fb1ebb;
-      width: 20px;
-      height: 20px;
-      animation: spin 1s linear infinite;
-      display: inline-block;
-    }
-    
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
     }
 
-    .chart-container {
-      height: 1200px;
+    /* ── Pílulas de Seleção Futuristas ── */
+    .pill-group { 
+      display: flex; 
+      gap: 4px; 
+      background: rgba(255, 255, 255, 0.03);
+      padding: 4px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .pill {
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .05em;
+      cursor: pointer;
+      border: none;
       background: transparent;
+      color: #71717a;
+      transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+      text-transform: uppercase;
+    }
+    .pill:hover { color: #f4f4f5; background: rgba(255, 255, 255, 0.02); }
+    
+    .pill.active {
+      background: linear-gradient(135deg, #fb1ebb 0%, #a855f7 100%);
+      color: #ffffff;
+      box-shadow: 0 4px 20px rgba(251, 30, 187, 0.4);
+    }
+    .pill.active-neutral {
+      background: rgba(255, 255, 255, 0.1);
+      color: #ffffff;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.1);
+    }
+
+    /* ── Inputs e Seletores Customizados ── */
+    #tickerInput {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: #fff;
       border-radius: 12px;
-      padding: 20px;
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 12px 18px;
+      font-size: 15px;
+      font-weight: 800;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      outline: none;
+      width: 150px;
+      transition: all 0.25s ease;
     }
-
-    .metric-card {
-      background: rgba(255, 255, 255, 0.05);
-      border-radius: 12px;
-      padding: 20px;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      transition: all 0.3s ease;
+    #tickerInput:focus { 
+      border-color: #fb1ebb;
+      background: rgba(251, 30, 187, 0.03);
+      box-shadow: 0 0 25px rgba(251, 30, 187, 0.2);
     }
-
-    .metric-card:hover {
-      background: rgba(255, 255, 255, 0.08);
-      border-color: rgba(186, 57, 175, 0.3);
-    }
-
-    .explanation-card {
-      background: linear-gradient(135deg, rgba(186, 57, 175, 0.1) 0%, rgba(147, 51, 234, 0.1) 100%);
-      border: 1px solid rgba(186, 57, 175, 0.3);
-    }
-
-    .loading {
-      opacity: 0.6;
-      pointer-events: none;
-    }
+    #tickerInput::placeholder { color: #4b5563; font-weight: 500; }
 
     #expirationSelect {
-      background-color: rgba(30, 30, 30, 0.9);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      color: white;
-      backdrop-filter: blur(10px);
-    }
-    
-    #expirationSelect option {
-      background-color: #1a1a1a;
-      color: white;
-      padding: 8px;
-    }
-    
-    #expirationSelect option:disabled {
-      color: #666;
-      background-color: #2a2a2a;
-    }
-    
-    #expirationSelect:focus {
+      background: rgba(10, 10, 16, 0.9);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: #e4e4e7;
+      border-radius: 12px;
+      padding: 12px 18px;
+      font-size: 13px;
+      font-weight: 600;
       outline: none;
-      border-color: #fb1ebb;
-      box-shadow: 0 0 0 2px rgba(186, 57, 175, 0.2);
+      cursor: pointer;
+      transition: all 0.25s ease;
+    }
+    #expirationSelect:focus { border-color: #fb1ebb; box-shadow: 0 0 25px rgba(251, 30, 187, 0.1); }
+    #expirationSelect option { background: #0a0a10; color: #e4e4e7; }
+
+    /* ── Botão Executar High-Tech ── */
+    .btn-run {
+      background: linear-gradient(135deg, #fb1ebb 0%, #ff007a 100%);
+      border: none;
+      border-radius: 12px;
+      padding: 12px 28px;
+      font-size: 13px;
+      font-weight: 800;
+      color: #fff;
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 24px rgba(251, 30, 187, 0.4);
+    }
+    .btn-run:hover { 
+      transform: translateY(-2px);
+      box-shadow: 0 6px 30px rgba(251, 30, 187, 0.6);
+    }
+    .btn-run::after {
+      content: '';
+      position: absolute;
+      top: -50%; left: -60%; width: 30%; height: 200%;
+      background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.3) 50%, rgba(255,255,255,0) 100%);
+      transform: rotate(25deg);
+      animation: sheen 4s infinite linear;
+    }
+    @keyframes sheen {
+      0% { left: -60%; }
+      15% { left: 140%; }
+      100% { left: 140%; }
+    }
+    .btn-run:active { transform: translateY(1px); }
+    .btn-run:disabled { opacity: .4; cursor: not-allowed; transform: none; }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      padding: 12px 20px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #d4d4d8;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-secondary:hover { background: rgba(255,255,255,0.08); color: #fff; border-color: rgba(255,255,255,0.2); }
+
+    /* ── Badges Neon de Regime ── */
+    .regime-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 11px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+    .regime-long  { background: rgba(0, 242, 254, 0.08); border: 1px solid rgba(0, 242, 254, 0.3); color: #00f2fe; box-shadow: 0 0 15px rgba(0, 242, 254, 0.1); }
+    .regime-short { background: rgba(255, 8, 68, 0.08);  border: 1px solid rgba(255, 8, 68, 0.3);  color: #ff0844; box-shadow: 0 0 15px rgba(255, 8, 68, 0.1); }
+
+    /* ── Cards de Métricas Neon Infundido ── */
+    .stat-card {
+      background: rgba(20, 20, 30, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.03);
+      border-radius: 12px;
+      padding: 16px;
+      position: relative;
+    }
+    .stat-card::before {
+      content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      border-radius: 12px; pointer-events: none;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
+    }
+    .stat-label { font-size: 10px; font-weight: 700; letter-spacing: .1em; color: #52525b; text-transform: uppercase; margin-bottom: 8px; }
+    .stat-value { font-size: 24px; font-weight: 800; color: #ffffff; letter-spacing: -0.03em; }
+    .stat-sub   { font-size: 11px; color: #a1a1aa; margin-top: 4px; font-weight: 500; font-family: monospace; }
+
+    /* ── Glows Decorativos de Fundo ── */
+    .glow-orb {
+      position: absolute; width: 400px; height: 400px; background: radial-gradient(circle, rgba(251,30,187,0.06) 0%, transparent 70%);
+      top: -150px; left: 50%; transform: translateX(-50%); z-index: 0; pointer-events: none;
     }
 
+    .spinner {
+      border: 2px solid rgba(255,255,255,0.1);
+      border-top: 2px solid #fff;
+      border-radius: 50%;
+      width: 16px;
+      height: 16px;
+      animation: spin 0.8s linear infinite;
+      display: inline-block;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @media (min-width: 1024px) {
+      #layout { display: grid; grid-template-columns: 1fr 320px; gap: 24px; }
+    }
+
+    .dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; margin-right: 8px; }
+
+    /* ── Estilização Expander GEX ── */
+    .expander-header {
+      cursor: pointer;
+      transition: background-color 0.2s, border-color 0.2s;
+    }
+    .expander-header:hover {
+      background-color: rgba(255, 255, 255, 0.02);
+      border-color: rgba(251, 30, 187, 0.2);
+    }
+    .expander-content {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1), padding 0.3s ease;
+    }
+    .expander-content.open {
+      max-height: 500px; /* valor alto o suficiente para comportar o texto */
+    }
+    .expander-icon {
+      transition: transform 0.3s ease;
+    }
+    .expander-icon.rotate {
+      transform: rotate(180deg);
+      color: #fb1ebb;
+    }
   </style>
 </head>
 
-<body class="text-white">
-  
-  <!-- Navbar -->
-  <nav class="fixed top-6 left-1/2 transform -translate-x-1/2 z-50 bg-opacity-5 border-opacity-10 bg-white border-white border rounded-full px-4 py-3 shadow-xl backdrop-blur-md">
-    <div class="flex items-center justify-between">
-      <div class="flex items-center">
-        <a href="/dashboard.html">
-          <img src="logo.png" alt="Geminii Logo" class="w-6 h-6 cursor-pointer">
-        </a>       
+<body class="antialiased">
 
-      </div>
-      <div class="hidden md:flex items-center space-x-6 text-xs text-gray-300 ml-8">
-        <span class="text-white font-medium">Gamma Exposure</span>
-        <a href="delta-levels.html" class="hover:text-white transition-colors">Delta Exposure</a>
-        <a href="vega-levels.html" class="hover:text-white transition-colors">Vega Exposure</a>
-        <a href="theta-levels.html" class="hover:text-white transition-colors">Theta Exposure</a>
-        <a href="historical-levels.html" class="hover:text-white transition-colors">Análise Histórica</a>
-      </div>
-      <div class="flex items-center space-x-3 ml-8">
-        <div class="w-8 h-8 bg-green-500 bg-opacity-10 border border-green-500 border-opacity-30 rounded-full flex items-center justify-center relative">
-          <i class="fas fa-chart-line text-green-500 text-xs"></i>
-          <div class="absolute -top-1 -right-1 w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+  <div class="glow-orb"></div>
+
+  <nav class="fixed top-0 left-0 w-full z-50 bg-[#030305]/60 backdrop-blur-xl border-b border-white/[0.04] px-8 py-4">
+    <div class="max-w-screen-2xl mx-auto flex items-center justify-between">
+      <div class="flex items-center space-x-12">
+        <div class="flex items-center space-x-3">
+          <a href="/dashboard.html" class="flex items-center gap-3 group">
+          <img src="logo.png" alt="Geminii" class="w-6 h-6">
+          <span class="text-sm font-black tracking-widest text-white group-hover:text-geminii transition-colors">GEMINII<span class="text-geminii"> TECH</span></span>
+        </a>
         </div>
-      </div>
+        <div class="hidden lg:flex items-center space-x-8 text-xs font-bold uppercase tracking-wider text-gray-400">
+          <span class="text-white border-b-2 border-geminii pb-5 pt-1">Gamma Exposure</span>
+          <a href="delta-levels.html" class="hover:text-white transition-colors pb-5 pt-1">Delta Exposure</a>
+          <a href="vega-levels.html" class="hover:text-white transition-colors pb-5 pt-1">Vega Exposure</a>
+          <a href="theta-levels.html" class="hover:text-white transition-colors pb-5 pt-1">Theta Exposure</a>
+          <a href="historical-levels.html" class="hover:text-white transition-colors pb-5 pt-1">Análise Histórica</a>
+        </div>
+      </div>    
+      
     </div>
   </nav>
 
-  <!-- Content -->
-  <div class="pt-32 pb-16">
-    <div class="max-w-7xl mx-auto px-6">
-      
-      <!-- Header -->
-      <div class="text-center mb-12">
-        <h1 class="text-4xl md:text-5xl font-bold mb-4">
-          <span style="color: #fb1ebb; font-weight: 900;">Gamma</span>
-          <span class="text-white font-light">Exposure</span>
-        </h1>
-        <p class="text-neutral-300 text-lg max-w-3xl mx-auto">
-          Análise completa de Gamma Exposure usando dados reais de posições descobertas dos market makers. Identifica pontos de suporte e resistência baseados em opções.
-        </p>
-        
-        <!-- Info Expander -->
-        <div class="mt-8">
-          <button onclick="toggleInfo()" class="bg-gradient-to-r from-geminii to-purple-600 hover:from-purple-600 hover:to-geminii text-white px-4 py-2 rounded-full font-semibold text-sm transition-all duration-300 flex items-center mx-auto shadow-lg hover:shadow-xl transform hover:scale-105">
-            <i id="infoIcon" class="fas fa-info-circle mr-2 transition-transform duration-300"></i>
-            Como Funciona a Análise GEX - Guia Completo
-          </button>
-          
-          <div id="infoContent" class="hidden mt-8 max-w-6xl mx-auto">
-            <div class="gex-card p-8 text-left">
-              
-              <!-- Explicação Geral -->
-              <div class="mb-8 text-center">
-                <h3 class="text-2xl font-bold text-white mb-4">O que é Gamma Exposure (GEX)</h3>
-                <p class="text-gray-300 text-sm leading-relaxed max-w-4xl mx-auto">
-                  O GEX mede a exposição dos market makers ao risco gamma e revela como eles precisam ajustar suas posições quando o preço se move. Esta análise determina se o mercado vai <strong class="text-green-400">estabilizar</strong> ou <strong class="text-red-400">amplificar</strong> movimentos.
-                </p>
-              </div>
-        
-              <!-- Conceitos Fundamentais -->
-              <div class="mb-8 p-6 bg-gray-800/50 rounded-lg">
-                <h4 class="text-xl font-bold text-white mb-4 text-center">Conceitos Fundamentais</h4>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
-                  <div>
-                    <h5 class="font-bold text-green-400 mb-2">Long Gamma (GEX Positivo)</h5>
-                    <p class="text-gray-300 leading-relaxed">
-                      Market makers <strong>compraram opções</strong> do mercado. Agem como <strong>estabilizadores</strong>:
-                      <br>• Preço sobe → MM vende ações (cria resistência)
-                      <br>• Preço desce → MM compra ações (cria suporte)
-                      <br>• <strong>Resultado:</strong> Compressão de volatilidade, mercado em range
-                    </p>
-                  </div>
-                  <div>
-                    <h5 class="font-bold text-red-400 mb-2">Short Gamma (GEX Negativo)</h5>
-                    <p class="text-gray-300 leading-relaxed">
-                      Market makers <strong>venderam opções</strong> para o mercado. Agem como <strong>amplificadores</strong>:
-                      <br>• Preço sobe → MM compra ações (acelera alta)
-                      <br>• Preço desce → MM vende ações (acelera queda)
-                      <br>• <strong>Resultado:</strong> Expansão de volatilidade, movimentos extremos
-                    </p>
-                  </div>
-                </div>
-              </div>
-        
-              <!-- Gamma Flip -->
-              <div class="mb-8 p-6 bg-purple-900/30 rounded-lg border border-purple-500/20">
-                <h4 class="text-xl font-bold text-purple-400 mb-4 text-center">Gamma Flip - O Ponto Crítico</h4>
-                <p class="text-gray-300 text-sm leading-relaxed text-center max-w-4xl mx-auto">
-                  O <strong>Gamma Flip</strong> é onde o GEX muda de positivo para negativo. É o divisor de águas que determina o comportamento do mercado:
-                  <br><br>
-                  <strong class="text-green-400">Acima do Flip:</strong> Long Gamma → Market makers estabilizam o preço
-                  <br>
-                  <strong class="text-red-400">Abaixo do Flip:</strong> Short Gamma → Market makers amplificam movimentos
-                </p>
-              </div>
-        
-              <!-- Grid dos  -->
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                
-                <!-- Gráfico 1 -->
-                <div class="explanation-card rounded-lg p-6">
-                  <h4 class="text-lg font-bold text-white mb-3 flex items-center">
-                    <span class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white text-sm font-bold mr-3">1</span>
-                    Total GEX por Strike
-                  </h4>
-                  <p class="text-gray-300 text-sm leading-relaxed">
-                    Mostra o GEX total calculado por strike. <strong class="text-green-400">Barras verdes</strong> = GEX positivo, <strong class="text-red-400">barras vermelhas</strong> = GEX negativo. 
-                    <br><br>
-                    O que realmente importa são as <strong>posições descobertas</strong> - apenas elas forçam hedge dos market makers e impactam o preço.
+  <div class="pt-28 pb-16 max-w-screen-2xl mx-auto px-6 relative z-10">
+
+    <div class="gex-card mb-6 overflow-hidden border-geminii/10">
+        <div id="gexExpanderHeader" class="expander-header p-4 flex items-center justify-between text-xs font-bold uppercase tracking-wider text-gray-300">
+          <div class="flex items-center gap-2.5">
+            <i class="fas fa-circle-info text-geminii text-sm"></i>
+            <span>O que é GEX (Gamma Exposure) e como interpretar a ferramenta?</span>
+          </div>
+          <i id="expanderIcon" class="fas fa-chevron-down expander-icon text-gray-500 text-xs mr-1"></i>
+        </div>
+
+        <div id="gexExpanderContent" class="expander-content border-t border-white/[0.02]">
+          <div class="p-5 text-xs text-gray-400 leading-relaxed space-y-4">
+
+            <p>
+              O <strong>GEX (Gamma Exposure)</strong> representa a exposição agregada ao gamma das opções de um ativo. 
+              Na prática, ele mostra como participantes do mercado — incluindo Market Makers, fundos de volatilidade e hedgers institucionais — precisam ajustar seus hedges conforme o preço do ativo se movimenta.
+            </p>
+
+            <p>
+              Como esses participantes buscam manter suas posições protegidas (delta neutral), oscilações no preço do ativo obrigam compras ou vendas contínuas do ativo principal para rebalanceamento das exposições. 
+              Esse fluxo influencia diretamente a dinâmica de preço, liquidez e volatilidade do mercado.
+            </p>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+
+              <div class="p-4 bg-cyan-500/[0.03] border border-cyan-500/10 rounded-xl">
+                <span class="font-bold text-[#00f2fe] uppercase block mb-2 tracking-wide">
+                  Regime Long Gamma (+GEX)
+                </span>
+
+                <div class="space-y-2 text-[11px] leading-relaxed">
+                  <p>
+                    <strong class="text-gray-200">Características:</strong>
+                    Compressão de preço e estabilização da volatilidade.
+                  </p>
+
+                  <p>
+                    <strong class="text-gray-200">Dinâmica:</strong>
+                    Quando o preço sobe, os participantes tendem a vender parcialmente; quando cai, tendem a comprar.
+                  </p>
+
+                  <p>
+                    <strong class="text-gray-200">Efeito:</strong>
+                    O fluxo atua como amortecedor, reduzindo movimentos bruscos e favorecendo consolidação.
                   </p>
                 </div>
-        
-                <!-- Gráfico 2 -->
-                <div class="explanation-card rounded-lg p-6">
-                  <h4 class="text-lg font-bold text-white mb-3 flex items-center">
-                    <span class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-bold mr-3">2</span>
-                    GEX Descoberto (Focus)
-                  </h4>
-                  <p class="text-gray-300 text-sm leading-relaxed">
-                    <strong>O mais importante!</strong> Filtra apenas posições descobertas - as que realmente forçam hedge dos MMs e movem preço. 
-                    <br><br>
-                    <strong>Remove o ruído:</strong> Elimina posições cobertas que se cancelam
-                    <br>
-                    <strong>Dados precisos:</strong> Mostra onde MMs estão verdadeiramente expostos
-                  </p>
-                </div>
-        
-                <!-- Gráfico 3 -->
-                <div class="explanation-card rounded-lg p-6">
-                  <h4 class="text-lg font-bold text-white mb-3 flex items-center">
-                    <span class="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center text-white text-sm font-bold mr-3">3</span>
-                    Regime por Strike
-                  </h4>
-                  <p class="text-gray-300 text-sm leading-relaxed">
-                    Classificação visual do comportamento esperado por nível de preço:
-                    <br>
-                    <strong class="text-green-400">Verde = Long Gamma:</strong> Strike tende a estabilizar preço
-                    <br>
-                    <strong class="text-red-400">Vermelho = Short Gamma:</strong> Strike tende a amplificar movimento
-                    <br><br>
-                    Ajuda a identificar <strong>zonas de transição</strong> de comportamento
-                  </p>
-                </div>
-        
-                <!-- Gráfico 4 -->
-                <div class="explanation-card rounded-lg p-6">
-                  <h4 class="text-lg font-bold text-white mb-3 flex items-center">
-                    <span class="w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center text-white text-sm font-bold mr-3">4</span>
-                    Calls vs Puts
-                  </h4>
-                  <p class="text-gray-300 text-sm leading-relaxed">
-                    Separação visual do GEX por tipo de opção para análise de distribuição:
-                    <br>
-                    <strong class="text-green-400">Calls (verde):</strong> Posições em opções de compra
-                    <br>
-                    <strong class="text-red-400">Puts (vermelho):</strong> Posições em opções de venda
-                    <br><br>
-                    <em>Mostra apenas a distribuição por strike - não indica direcionalmente sentimento específico</em>
-                  </p>
-                </div>
-        
-                <!-- Gráfico 5 - DESTAQUE ESPECIAL -->
-                <div class="explanation-card rounded-lg p-6 border-2 border-cyan-500/50">
-                  <h4 class="text-lg font-bold text-white mb-3 flex items-center">
-                    <span class="w-8 h-8 bg-cyan-500 rounded-full flex items-center justify-center text-white text-sm font-bold mr-3">5</span>
-                    GEX Cumulativo - O MAPA DO TESOURO
-                  </h4>
-                  <p class="text-gray-300 text-sm leading-relaxed">
-                    <strong class="text-cyan-400">O gráfico mais revelador!</strong> Soma acumulada que mostra o fluxo de hedge:
-                    <br><br>
-                    <strong>Descendo (mais negativo):</strong> Mais vendas de gamma acontecendo
-                    <br>
-                    <strong>Subindo (menos negativo):</strong> Compras neutralizando o efeito
-                    <br>
-                    <strong>Vales profundos:</strong> Zonas magnéticas de máxima exposição
-                    <br><br>
-                    <em class="text-cyan-300">Revela onde o preço tende a ser "sugado" devido à concentração de hedge</em>
-                  </p>
-                </div>
-        
-                <!-- Gráfico 6 -->
-                <div class="explanation-card rounded-lg p-6">
-                  <h4 class="text-lg font-bold text-white mb-3 flex items-center">
-                    <span class="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center text-white text-sm font-bold mr-3">6</span>
-                    Open Interest - A Base de Tudo
-                  </h4>
-                  <p class="text-gray-300 text-sm leading-relaxed">
-                    Volume de contratos em aberto por strike - a <strong>"matéria-prima"</strong> de todos os cálculos:
-                    <br><br>
-                    <strong>Fórmula:</strong> GEX = OI × Gamma × 100 × Spot × 0.01
-                    <br>
-                    <strong>OI Alto:</strong> Strike com alta negociação, maior relevância
-                    <br>
-                    <strong>OI Baixo:</strong> Strike com pouca atividade, menor impacto
-                  </p>
-                </div>
-                
               </div>
-        
-              <!-- Seção Prática -->
-              <div class="mt-8 p-6 bg-gradient-to-r from-green-900/30 to-red-900/30 rounded-lg">
-                <h4 class="text-xl font-bold text-white mb-4 text-center">Como Interpretar na Prática</h4>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
-                  <div>
-                    <h5 class="font-bold text-green-400 mb-3">Cenário Long Gamma (Estável)</h5>
-                    <div class="space-y-2 text-gray-300">
-                      <p>• <strong>GEX Cumulativo:</strong> Vale profundo = zona magnética</p>
-                      <p>• <strong>Descobertos:</strong> Concentração em strikes específicos</p>
-                      <p>• <strong>Comportamento:</strong> Mercado tende a retornar ao centro</p>
-                      
-                    </div>
-                  </div>
-                  <div>
-                    <h5 class="font-bold text-red-400 mb-3">Cenário Short Gamma (Volátil)</h5>
-                    <div class="space-y-2 text-gray-300">
-                      <p>• <strong>GEX Cumulativo:</strong> Sem vales = caminho livre</p>
-                      <p>• <strong>Poucas Barreiras:</strong> Movimento pode acelerar</p>
-                      <p>• <strong>Amplificação:</strong> MMs alimentam o movimento</p>
-                      
-                    </div>
-                  </div>
+
+              <div class="p-4 bg-red-500/[0.03] border border-red-500/10 rounded-xl">
+                <span class="font-bold text-[#ff0844] uppercase block mb-2 tracking-wide">
+                  Regime Short Gamma (-GEX)
+                </span>
+
+                <div class="space-y-2 text-[11px] leading-relaxed">
+                  <p>
+                    <strong class="text-gray-200">Características:</strong>
+                    Expansão de volatilidade e aceleração direcional.
+                  </p>
+
+                  <p>
+                    <strong class="text-gray-200">Dinâmica:</strong>
+                    O hedge passa a acompanhar o movimento do mercado, amplificando oscilações.
+                  </p>
+
+                  <p>
+                    <strong class="text-gray-200">Efeito:</strong>
+                    Pode gerar movimentos em cascata, aumento de volatilidade e deslocamentos rápidos.
+                  </p>
                 </div>
               </div>
-        
-              <!-- Pontos-Chave -->
-              <div class="mt-8 pt-6 border-t border-white/10">
-                <h4 class="text-geminii font-bold text-lg mb-4 text-center">Pontos-Chave da Estratégia</h4>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-sm">
-                  <div class="text-center">
-                    <div class="w-12 h-12 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-3">
-                      <i class="fas fa-arrow-up text-green-400"></i>
-                    </div>
-                    <h5 class="font-bold text-white mb-2">Gamma Flip</h5>
-                    <p class="text-gray-400">Ponto crítico que determina se mercado vai estabilizar (acima) ou amplificar (abaixo).</p>
-                  </div>
-                  <div class="text-center">
-                    <div class="w-12 h-12 bg-cyan-500/20 rounded-full flex items-center justify-center mx-auto mb-3">
-                      <i class="fas fa-mountain text-cyan-400"></i>
-                    </div>
-                    <h5 class="font-bold text-white mb-2">GEX Cumulativo</h5>
-                    <p class="text-gray-400">Revela o fluxo de hedge e zonas magnéticas onde preço tende a retornar.</p>
-                  </div>
-                  <div class="text-center">
-                    <div class="w-12 h-12 bg-purple-500/20 rounded-full flex items-center justify-center mx-auto mb-3">
-                      <i class="fas fa-eye text-purple-400"></i>
-                    </div>
-                    <h5 class="font-bold text-white mb-2">Posições Descobertas</h5>
-                    <p class="text-gray-400">O que realmente importa - posições que forçam hedge e impactam preço.</p>
-                  </div>
-                </div>
-              </div>
+
             </div>
+
+            <div class="pt-2 border-t border-white/[0.03]">
+
+              <div class="mb-3">
+                <span class="font-bold text-white uppercase tracking-wide text-[11px]">
+                  Gamma Flip Point
+                </span>
+
+                <p class="mt-1 text-[11px] text-gray-500 leading-relaxed">
+                  Nível de preço onde a exposição agregada muda de sinal, indicando a transição entre um regime estabilizador (Long Gamma) e um regime de amplificação de volatilidade (Short Gamma).
+                </p>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-[11px]">
+
+                <div class="p-3 rounded-lg bg-white/[0.015] border border-white/[0.04]">
+                  <span class="text-gray-200 font-semibold block mb-1">
+                    Interpretação prática
+                  </span>
+
+                  O GEX deve ser analisado em conjunto com volume de opções, open interest e volatilidade implícita para identificar possíveis zonas de suporte, resistência e aceleração de fluxo.
+                </div>
+
+                <div class="p-3 rounded-lg bg-white/[0.015] border border-white/[0.04]">
+                  <span class="text-gray-200 font-semibold block mb-1">
+                    Horizonte temporal
+                  </span>
+
+                  O impacto do GEX tende a ser mais relevante no curto prazo, especialmente próximo aos vencimentos e períodos de ajuste de hedge institucional.
+                </div>
+
+              </div>
+
+            </div>
+
           </div>
         </div>
       </div>
 
-      <!-- Controles -->
-      <div class="gex-card p-6 mb-8">
-        <div class="flex flex-col md:flex-row gap-4 items-center justify-center">
-          <input 
-            id="tickerInput" 
-            type="text" 
-            placeholder="Digite o código da ação (ex: PETR4)" 
-            class="px-4 py-2 bg-white bg-opacity-10 border border-white border-opacity-20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-geminii backdrop-blur-sm"
-          >
-          <select 
-            id="expirationSelect" 
-            class="px-4 py-2 bg-white bg-opacity-10 border border-white border-opacity-20 rounded-lg text-white focus:outline-none focus:border-geminii backdrop-blur-sm"
-          >
-            <option value="">Vencimento Atual</option>
-          </select>
-          <button 
-            id="loadExpirationsBtn" 
-            class="px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:shadow-lg rounded-lg transition-all font-medium"
-          >
-            <i class="fas fa-calendar mr-2"></i>Carregar Vencimentos
-          </button>
-          <button 
-            id="analyzeBtn" 
-            class="px-6 py-2 bg-gradient-to-r from-geminii to-purple-600 hover:shadow-lg rounded-lg transition-all font-medium"
-          >
-            <i class="fas fa-rocket mr-2"></i>Executar GEX
-          </button>
+    <div class="gex-card p-4 mb-6 flex flex-col lg:flex-row gap-4 items-stretch lg:items-center justify-between">
+      <div class="flex flex-wrap items-center gap-3">
+        <div class="relative flex-1 sm:flex-initial">
+          
+          <input id="tickerInput" type="text" placeholder="BOVA11" maxlength="8" class="pl-10 w-full sm:w-auto">
+        </div>
+        
+        <button class="btn-secondary transition-all" id="loadExpirationsBtn">
+          <i class="fas fa-search-dollar mr-2 text-geminii"></i> Buscar Vencimentos
+        </button>
+
+        <select id="expirationSelect" class="flex-1 sm:flex-initial min-w-[240px]"></select>
+      </div>
+
+      <div class="flex flex-wrap items-center justify-end gap-4">
+        <div class="pill-group" id="windowGroup">
+          <button class="pill active-neutral" data-window="ALL">TODOS OS CONTRATOS</button>
+          <button class="pill" data-window="SEMANAL">Semanal</button>
+          <button class="pill" data-window="MENSAL">Mensal</button>
+        </div>
+
+        <button class="btn-run" id="analyzeBtn">
+          <i class="fas fa-bolt mr-2"></i> Executar GEX
+        </button>
+      </div>
+    </div>
+
+    <div id="statusMsg" class="hidden mb-6 text-xs font-mono p-4 rounded-xl border"></div>
+
+    <div id="resultsSection" class="hidden">
+
+      <div class="flex flex-wrap gap-4 items-center mb-6 bg-white/[0.01] p-4 rounded-xl border border-white/[0.03]">
+        <div id="regimeIndicator" class="regime-badge">--</div>
+        <div class="text-[11px] text-gray-500 uppercase font-semibold tracking-wider">
+          Vencimento: <span id="expirationLabel" class="text-white font-mono font-bold ml-1">--</span>
+        </div>
+        <div class="text-[11px] text-gray-500 uppercase font-semibold tracking-wider sm:border-l sm:border-white/[0.05] sm:pl-4">
+          Categoria Liquidez: <span id="liquidityLabel" class="text-white font-bold ml-1">--</span>
+        </div>
+        <div class="text-[11px] text-gray-500 uppercase font-semibold tracking-wider sm:border-l sm:border-white/[0.05] sm:pl-4">
+          Contratos Derivativos: <span id="strikesLabel" class="text-white font-mono font-bold ml-1">--</span>
         </div>
       </div>
 
-      <!-- Status -->
-      <div id="statusMsg" class="mb-6 p-4 rounded-lg hidden backdrop-blur-sm"></div>
+      <div id="layout">
 
-      <!-- Resultados -->
-      <div id="resultsSection" class="hidden">
-        
-        <!-- Métricas Principais -->
-        <div class="gex-card p-6 mb-8">
-          <div class="text-center mb-8">
-            <div id="regimeIndicator" class="inline-block px-8 py-4 rounded-2xl text-2xl font-black">
-              <!-- Long Gamma / Short Gamma -->
-            </div>
-            <!-- <div class="mt-2">
-              <span id="behaviorBadge" class="inline-block px-3 py-1 rounded-full text-xs font-bold text-white bg-gray-500">
+        <div class="flex flex-col gap-6">
+          
+          <div class="bg-white/[0.01] border border-white/[0.04] p-5 rounded-2xl">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-white/[0.04]">
+              <span class="text-xs font-bold text-gray-300 uppercase tracking-widest flex items-center gap-2">
+                <i class="fas fa-chart-bar text-geminii"></i> Distribuição Gamma por Strike
               </span>
-            </div> -->
-          </div>
-          
-          <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
-            <div class="metric-card text-center">
-              <div class="text-3xl font-black text-white mb-2" id="spotPrice">--</div>
-              <div class="text-white font-bold">SPOT PRICE</div>
+              <div class="pill-group" id="modeGroup">
+                <button class="pill active" data-mode="net">Exposure Total</button>
+                <button class="pill" data-mode="descoberto">GEX Descoberto</button>
+                <button class="pill" data-mode="call_put">Call / Put</button>
+                <button class="pill" data-mode="oi">Open Interest</button>
+              </div>
             </div>
-            
-            <div class="metric-card text-center">
-              <div class="text-3xl font-black text-orange-400 mb-2" id="flipStrike">--</div>
-              <div class="text-white font-bold">GAMMA FLIP</div>
-            </div>
-            
-            <div class="metric-card text-center">
-              <div class="text-3xl font-black text-cyan-400 mb-2" id="optionsCount">--</div>
-              <div class="text-white font-bold">GEX TOTAL</div>
-            </div>
-            
-            <div class="metric-card text-center">
-              <div class="text-3xl font-black text-cyan-400 mb-2" id="expirationInfo">--</div>
-              <div class="text-white font-bold">GEX DESCOBERTO</div>
+
+            <div id="chartWrap" class="p-2">
+              <div id="gexChart" style="width:100%; height:520px;"></div>
             </div>
           </div>
+
+          <div id="cumChartWrap" class="bg-white/[0.01] border border-white/[0.04] rounded-2xl p-5">
+            <div class="text-xs font-bold text-gray-300 uppercase tracking-widest mb-4 flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.5)]"></span> Vetor de Pressão Acumulada
+            </div>
+            <div id="cumChart" style="width:100%; height:520px;"></div>
+          </div>
+
         </div>
 
-        <!-- Gráficos GEX -->
-        <div class="gex-card p-6">
-          <h3 class="text-2xl font-bold mb-6 text-center">
-            <i class="fas fa-chart-area mr-3" style="color: #fb1ebb;"></i>
-            Análise GEX Completa
-          </h3>
-          <div class="chart-container">
-            <div id="gexChart" style="width: 100%; height: 100%;"></div>
+        <div id="sidebar" class="flex flex-col gap-5 mt-6 lg:mt-0 justify-between">
+
+          <div class="gex-card p-5 flex-1">
+            <div class="text-xs font-black text-gray-400 uppercase tracking-widest mb-4 pb-2 border-b border-white/[0.04]">Níveis Estruturais</div>
+
+            <div class="grid grid-cols-1 gap-3.5">
+              <div class="stat-card">
+                <div class="stat-label">Último Spot</div>
+                <div class="stat-value font-mono text-white" id="spotPrice">--</div>
+              </div>
+
+              <div class="stat-card border-orange-500/20 bg-orange-500/[0.02]">
+                <div class="stat-label" style="color:#f97316;">Ponto Gamma Flip</div>
+                <div class="stat-value font-mono shadow-sm" id="flipStrike" style="color:#f97316; text-shadow: 0 0 10px rgba(249,115,22,0.2);">--</div>
+                <div class="stat-sub" id="flipDist">distância do spot</div>
+              </div>
+
+              <div class="stat-card">
+                <div class="stat-label">Volume GEX Absoluto</div>
+                <div class="stat-value font-mono text-cyan-400" id="gexTotal">--</div>
+              </div>
+
+              <div class="stat-card">
+                <div class="stat-label">Exposição a Descoberto</div>
+                <div class="stat-value font-mono text-purple-400" id="gexDescoberto">--</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="gex-card p-5 bg-[#08080d]/90">
+            <div class="text-xs font-black text-gray-400 uppercase tracking-widest mb-4">Mapeamento Técnico</div>
+            <div class="space-y-3 text-xs text-gray-400">
+              <div class="flex items-center gap-1"><span class="dot" style="background:#fff; box-shadow: 0 0 6px #fff;"></span> Spot Price</div>
+              <div class="flex items-center gap-1"><span class="dot" style="background:#f97316; box-shadow: 0 0 6px #f97316;"></span> Inversão de Regime (G-Flip)</div>
+              <div class="flex items-center gap-1"><span class="dot" style="background:#00f2fe; box-shadow: 0 0 6px #00f2fe;"></span> Estabilidade / Compressão (Long γ)</div>
+              <div class="flex items-center gap-1"><span class="dot" style="background:#ff0844; box-shadow: 0 0 6px #ff0844;"></span> Volatilidade / Aceleração (Short γ)</div>
+            </div>
+          </div>
+
+        </div></div></div></div><div class="max-w-screen-2xl mx-auto px-6 pb-12 relative z-10">
+    <div class="bg-white/[0.01] border border-white/[0.04] rounded-2xl p-6">
+      <div class="flex items-start gap-4">
+        <i class="fas fa-shield-halved text-gray-600 mt-1 flex-shrink-0 text-base"></i>
+        <div class="w-full">
+          <p class="text-gray-400 font-bold text-xs uppercase tracking-widest mb-2">Termos de Uso e Restrições de Compliance</p>
+          <p class="text-gray-500 text-xs leading-relaxed">
+            As análises quantitativas estruturais geradas por este terminal refletem cenários matemáticos pautados no histórico de posições em aberto de derivativos. <strong>Este módulo não constitui assessoria, recomendação, oferta ou direcionamento de alocação de ativos.</strong> Negociações no mercado de opções envolvem alavancagem intrínseca e riscos de perda total de capital.
+          </p>
+          <div class="flex flex-wrap items-center justify-between gap-4 mt-6 pt-4 border-t border-white/[0.04] text-gray-600 text-[11px] font-mono">
+            <div><strong>Geminii Research Ltda</strong> · CNPJ 60.897.331/0001-06</div>
+            <div>Analista Responsável: Diego Doneda · CNPI 9668</div>
           </div>
         </div>
-
       </div>
-
     </div>
   </div>
 
   <script>
-    let userToken = localStorage.getItem('geminii_token');
-    
-    if (!userToken) {
-      window.location.href = '/login.html';
-    }
+    const userToken = localStorage.getItem('geminii_token');
+    if (!userToken) window.location.href = '/login.html';
 
-    // Elementos DOM
-    const tickerInput = document.getElementById('tickerInput');
-    const expirationSelect = document.getElementById('expirationSelect');
+    let currentData    = null;   
+    let currentMode    = 'net';  
+    let currentWindow  = 'ALL';  
+    let allExpirations = [];     
+
+    const tickerInput        = document.getElementById('tickerInput');
+    const expirationSelect   = document.getElementById('expirationSelect');
     const loadExpirationsBtn = document.getElementById('loadExpirationsBtn');
-    const analyzeBtn = document.getElementById('analyzeBtn');
-    const statusMsg = document.getElementById('statusMsg');
-    const resultsSection = document.getElementById('resultsSection');
+    const analyzeBtn         = document.getElementById('analyzeBtn');
+    const statusMsg          = document.getElementById('statusMsg');
+    const resultsSection     = document.getElementById('resultsSection');
 
-    function formatLargeNumber(value) {
-      const absValue = Math.abs(value);
-      if (absValue >= 1000000000) {
-        return (value / 1000000000).toFixed(1) + 'B';
-      } else if (absValue >= 1000000) {
-        return (value / 1000000).toFixed(1) + 'M';
-      } else if (absValue >= 1000) {
-        return (value / 1000).toFixed(1) + 'K';
-      }
-      return value.toFixed(0);
+    // Lógica Interativa do Expander/Accordion GEX
+    const expanderHeader  = document.getElementById('gexExpanderHeader');
+    const expanderContent = document.getElementById('gexExpanderContent');
+    const expanderIcon    = document.getElementById('expanderIcon');
+
+    expanderHeader.addEventListener('click', () => {
+      expanderContent.classList.toggle('open');
+      expanderIcon.classList.toggle('rotate');
+    });
+
+    function formatNum(v) {
+      const a = Math.abs(v);
+      if (a >= 1e9)  return (v/1e9).toFixed(1)  + 'B';
+      if (a >= 1e6)  return (v/1e6).toFixed(1)  + 'M';
+      if (a >= 1e3)  return (v/1e3).toFixed(1)  + 'K';
+      return v.toFixed(0);
     }
 
-    // Funções utilitárias
-    function showStatus(message, type = 'info') {
-      const bgClass = type === 'success' ? 'bg-green-600 bg-opacity-20 border-green-500 border-opacity-30' : 
-                     type === 'error' ? 'bg-red-600 bg-opacity-20 border-red-500 border-opacity-30' : 
-                     'bg-blue-600 bg-opacity-20 border-blue-500 border-opacity-30';
-      
-      statusMsg.className = `mb-6 p-4 rounded-lg border backdrop-blur-sm ${bgClass}`;
-      statusMsg.textContent = message;
+    function showStatus(msg, type = 'info') {
+      const colors = {
+        info:    'background:rgba(59,130,246,.1); border:1px solid rgba(59,130,246,.2); color:#93c5fd;',
+        success: 'background:rgba(0, 242, 254,.1);  border:1px solid rgba(0, 242, 254,.2);  color:#00f2fe;',
+        error:   'background:rgba(255, 8, 68,.1);  border:1px solid rgba(255, 8, 68,.2);  color:#ff0844;',
+      };
+      statusMsg.style.cssText = colors[type] || colors.info;
+      statusMsg.textContent    = msg;
       statusMsg.classList.remove('hidden');
-      
       setTimeout(() => statusMsg.classList.add('hidden'), 5000);
     }
 
-    function setLoading(button, loading, originalText, loadingText) {
+    function setLoading(btn, loading, idleHTML) {
       if (loading) {
-        button.classList.add('loading');
-        button.innerHTML = `<span class="spinner mr-2"></span>${loadingText}`;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner"></span>';
       } else {
-        button.classList.remove('loading');
-        button.innerHTML = originalText;
+        btn.disabled = false;
+        btn.innerHTML = idleHTML;
       }
     }
 
-    function toggleInfo() {
-      const content = document.getElementById('infoContent');
-      const icon = document.getElementById('infoIcon');
-      
-      if (content.classList.contains('hidden')) {
-        content.classList.remove('hidden');
-        icon.classList.replace('fa-info-circle', 'fa-times');
-      } else {
-        content.classList.add('hidden');
-        icon.classList.replace('fa-times', 'fa-info-circle');
+    document.getElementById('windowGroup').addEventListener('click', e => {
+      const btn = e.target.closest('[data-window]');
+      if (!btn) return;
+
+      currentWindow = btn.dataset.window;
+
+      document.querySelectorAll('#windowGroup .pill').forEach(p => {
+        p.classList.remove('active', 'active-neutral');
+      });
+      btn.classList.add(currentWindow === 'ALL' ? 'active-neutral' : 'active');
+
+      filterExpirationSelect();
+    });
+
+    function filterExpirationSelect() {
+      const prev = expirationSelect.value;
+      expirationSelect.innerHTML = '<option value="">Vencimento mais próximo</option>';
+
+      allExpirations.forEach(exp => {
+        if (!exp.available) return;
+        if (currentWindow !== 'ALL' && exp.window !== currentWindow) return;
+
+        const opt = document.createElement('option');
+        opt.value       = exp.code;
+        opt.textContent = `${exp.desc} (${exp.data_count} contratos)`;
+        expirationSelect.appendChild(opt);
+      });
+
+      if (prev) {
+        const found = [...expirationSelect.options].some(o => o.value === prev);
+        if (found) expirationSelect.value = prev;
       }
     }
-    window.toggleInfo = toggleInfo;
-    
-    // Carregar vencimentos
+
+    loadExpirationsBtn.addEventListener('click', loadExpirations);
+    tickerInput.addEventListener('keypress', e => { if (e.key === 'Enter') loadExpirations(); });
+
     async function loadExpirations() {
       const ticker = tickerInput.value.trim().toUpperCase();
-      if (!ticker) {
-        showStatus('Digite um ticker primeiro', 'error');
-        return;
-      }
+      if (!ticker) { showStatus('Digite um ticker primeiro', 'error'); return; }
 
-      const originalHTML = '<i class="fas fa-calendar mr-2"></i>Carregar Vencimentos';
-      
-      loadExpirationsBtn.classList.add('loading');
-      loadExpirationsBtn.innerHTML = '<span class="spinner mr-2"></span>Carregando...';
+      setLoading(loadExpirationsBtn, true);
 
       try {
-        const response = await fetch('/pro/gamma/expirations', {
+        const res  = await fetch('/pro/gamma/expirations', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${userToken}`
-          },
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${userToken}` },
           body: JSON.stringify({ ticker })
         });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
 
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.error);
+        allExpirations = data.expirations;
+        filterExpirationSelect();
 
-        expirationSelect.innerHTML = '<option value="">Vencimento Atual</option>';
-        
-        data.expirations.forEach(exp => {
-          const option = document.createElement('option');
-          option.value = exp.code;
-          option.textContent = `${exp.desc} (${exp.data_count} contratos)`;
-          option.disabled = !exp.available;
-          expirationSelect.appendChild(option);
-        });
-
-        loadExpirationsBtn.classList.remove('loading');
-        loadExpirationsBtn.classList.remove('from-blue-500', 'to-blue-600');
-        loadExpirationsBtn.classList.add('from-green-500', 'to-green-600');
-        loadExpirationsBtn.innerHTML = '<i class="fas fa-check mr-2"></i>Vencimentos Carregados';
-
+        loadExpirationsBtn.innerHTML = '<i class="fas fa-check mr-1"></i> Carregados';
         showStatus(`${data.total_available} vencimentos disponíveis`, 'success');
 
-      } catch (error) {
-        loadExpirationsBtn.classList.remove('loading');
-        loadExpirationsBtn.classList.remove('from-green-500', 'to-green-600');
-        loadExpirationsBtn.classList.add('from-blue-500', 'to-blue-600');
-        loadExpirationsBtn.innerHTML = originalHTML;
-
-        showStatus('Erro: ' + error.message, 'error');
+      } catch (err) {
+        showStatus('Erro: ' + err.message, 'error');
+        loadExpirationsBtn.innerHTML = '<i class="fas fa-calendar-alt mr-1"></i> Vencimentos';
+      } finally {
+        loadExpirationsBtn.disabled = false;
       }
     }
 
-    // Executar análise GEX
+    analyzeBtn.addEventListener('click', runGEXAnalysis);
+
     async function runGEXAnalysis() {
       const ticker = tickerInput.value.trim().toUpperCase();
-      if (!ticker) {
-        showStatus('Digite um ticker', 'error');
+      if (!ticker) { showStatus('Digite um ticker', 'error'); return; }
+
+      setLoading(analyzeBtn, true);
+      showStatus('Executando análise GEX...', 'info');
+
+      try {
+        const body = { ticker, days_back: 60 };
+        if (expirationSelect.value) body.expiration_code = expirationSelect.value;
+
+        const res  = await fetch('/pro/gamma/analyze', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${userToken}` },
+          body: JSON.stringify(body)
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
+
+        currentData = data;
+        displayResults(data);
+        showStatus(`GEX de ${ticker} concluído`, 'success');
+
+      } catch (err) {
+        showStatus('Erro: ' + err.message, 'error');
+      } finally {
+        setLoading(analyzeBtn, false, '<i class="fas fa-bolt mr-1"></i> Executar GEX');
+      }
+    }
+
+    document.getElementById('modeGroup').addEventListener('click', e => {
+      const btn = e.target.closest('[data-mode]');
+      if (!btn || !currentData) return;
+
+      currentMode = btn.dataset.mode;
+
+      document.querySelectorAll('#modeGroup .pill').forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+
+      renderChart(currentMode);
+    });
+
+    function displayResults(data) {
+      const gex = data.gex_levels || {};
+
+      const regEl = document.getElementById('regimeIndicator');
+      if (data.regime === 'Long Gamma') {
+        regEl.className = 'regime-badge regime-long';
+        regEl.innerHTML = '<i class="fas fa-shield-halved"></i> Long Gamma';
+      } else {
+        regEl.className = 'regime-badge regime-short';
+        regEl.innerHTML = '<i class="fas fa-bolt-lightning"></i> Short Gamma';
+      }
+
+      const dq = data.data_quality || {};
+      document.getElementById('expirationLabel').textContent = dq.expiration || '--';
+      document.getElementById('liquidityLabel').textContent  = dq.liquidity_category || '--';
+      document.getElementById('strikesLabel').textContent    = data.options_count || '--';
+
+      const spot = data.spot_price;
+      const flip = data.flip_strike;
+
+      document.getElementById('spotPrice').textContent    = spot ? `R$ ${spot.toFixed(2)}` : '--';
+      document.getElementById('flipStrike').textContent   = flip ? `R$ ${flip.toFixed(2)}` : 'N/A';
+
+      if (spot && flip && flip !== spot) {
+        const dist = ((spot - flip) / flip * 100);
+        document.getElementById('flipDist').textContent = `${dist > 0 ? '+' : ''}${dist.toFixed(1)}% do spot`;
+      } else {
+        document.getElementById('flipDist').textContent = '--';
+      }
+
+      document.getElementById('gexTotal').textContent      = formatNum(gex.total_gex || 0);
+      document.getElementById('gexDescoberto').textContent = formatNum(gex.total_gex_descoberto || 0);
+
+      renderChart(currentMode);
+      resultsSection.classList.remove('hidden');
+
+      setTimeout(() => {
+        renderCumChart(data);
+        Plotly.Plots.resize('gexChart');
+        Plotly.Plots.resize('cumChart');
+      }, 50);
+    }
+
+    function renderChart(mode) {
+      if (!currentData) return;
+
+      const plotJson = (currentData.single_charts || {})[mode];
+      if (!plotJson) {
+        document.getElementById('gexChart').innerHTML =
+          '<div style="color:#4b5563;padding:40px;text-align:center;font-size:13px;font-weight:500;">Dados estruturais indisponíveis para este modo.</div>';
         return;
       }
 
-      const originalHTML = '<i class="fas fa-rocket mr-2"></i>Executar GEX';
-
-      analyzeBtn.classList.add('loading');
-      analyzeBtn.innerHTML = '<span class="spinner mr-2"></span>Processando GEX...';
-      showStatus('Executando análise GEX completa...', 'info');
-
       try {
-        const requestBody = { ticker, days_back: 60 };
-        const expiration = expirationSelect.value;
-        if (expiration) requestBody.expiration_code = expiration;
+        const fig = JSON.parse(plotJson);
+        fig.layout.height           = 520;
+        fig.layout.paper_bgcolor    = 'transparent';
+        fig.layout.plot_bgcolor     = 'transparent';
+        fig.layout.margin           = { l: 70, r: 20, t: 55, b: 55 };
 
-        const response = await fetch('/pro/gamma/analyze', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${userToken}`
+        if (!fig.layout.annotations) fig.layout.annotations = [];
+        fig.layout.annotations.push({
+          text: 'GEMINII RESEARCH',
+          textangle: 0,
+          xref: 'paper',
+          yref: 'paper',
+          x: 0.5,
+          y: 0.5,
+          xanchor: 'center',
+          yanchor: 'middle',
+          font: {
+            fontfamily: 'Inter, sans-serif',
+            size: 32,
+            color: 'rgba(255, 255, 255, 0.035)'
           },
-          body: JSON.stringify(requestBody)
+          showarrow: false,
+          layer: 'below'
         });
 
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.error);
-
-        displayResults(data);
-        showStatus(`Análise GEX de ${ticker} concluída`, 'success');
-
-      } catch (error) {
-        showStatus('Erro: ' + error.message, 'error');
-
-      } finally {
-        analyzeBtn.classList.remove('loading');
-        analyzeBtn.innerHTML = originalHTML;
-      }
-    }
-
-    // Exibir resultados - **AQUI ESTÁ O FIX DOS BOTÕES UNDEFINED**
-    function displayResults(data) {
-      const gex_levels = data.gex_levels || {};
-      
-      // Regime principal - Long/Short Gamma
-      const regimeClass = data.regime === 'Long Gamma' ? 
-        'bg-gradient-to-r from-green-400 to-green-600' : 
-        'bg-gradient-to-r from-red-400 to-red-600';
-      
-      const regimeElement = document.getElementById('regimeIndicator');
-      if (regimeElement) {
-        regimeElement.className = `inline-block px-8 py-4 rounded-2xl text-2xl font-black ${regimeClass}`;
-        regimeElement.textContent = data.regime || 'N/A';
-      }
-
-      // Comportamento do mercado (Supressivo/Explosivo)
-      const bias = gex_levels.market_bias || 'NEUTRAL';
-      let behaviorText = 'Neutro';
-      let behaviorClass = 'bg-gray-500';
-      
-      if (bias === 'SUPPRESSIVE') {
-        behaviorText = 'Comprimir Vol';
-        behaviorClass = 'bg-red-500';
-      } else if (bias === 'EXPLOSIVE') {
-        behaviorText = 'Expandir Vol';
-        behaviorClass = 'bg-green-500';
-      }
-      
-      const behaviorElement = document.getElementById('behaviorBadge');
-      if (behaviorElement) {
-        behaviorElement.textContent = behaviorText;
-        behaviorElement.className = `inline-block px-3 py-1 rounded-full text-xs font-bold text-white mt-2 ${behaviorClass}`;
-      }
-
-      // Resto das métricas
-      const spotElement = document.getElementById('spotPrice');
-      if (spotElement) {
-        spotElement.textContent = data.spot_price ? `R$ ${data.spot_price.toFixed(2)}` : '--';
-      }
-      
-      const flipElement = document.getElementById('flipStrike');
-      if (flipElement) {
-        flipElement.textContent = data.flip_strike ? `R$ ${data.flip_strike.toFixed(2)}` : 'N/A';
-      }
-      
-      const gexTotal = gex_levels.total_gex || 0;
-      const optionsElement = document.getElementById('optionsCount');
-      if (optionsElement) {
-        optionsElement.textContent = formatLargeNumber(gexTotal);
-      }
-      
-      const gexDescoberto = gex_levels.total_gex_descoberto || 0;
-      const expirationElement = document.getElementById('expirationInfo');
-      if (expirationElement) {
-        expirationElement.textContent = formatLargeNumber(gexDescoberto);
-      }
-
-      if (data.plot_json) {
-        renderChart(data.plot_json);
-      }
-
-      resultsSection.classList.remove('hidden');
-    }
-
-    window.addEventListener('DOMContentLoaded', function() {
-      // Verificar se Plotly carregou
-      if (typeof Plotly === 'undefined') {
-        console.error('Plotly não carregou - usando versão local ou CDN alternativo');
-        // Tentar carregar de outro CDN
-        const script = document.createElement('script');
-        script.src = 'https://unpkg.com/plotly.js-dist@2.26.0/plotly.min.js';
-        document.head.appendChild(script);
-      }
-    });
-    
-    // E modifique a função renderChart para ter fallback:
-    function renderChart(plotJson) {
-      if (typeof Plotly === 'undefined') {
-        document.getElementById('gexChart').innerHTML = 
-          '<div class="text-center text-white p-8">Carregando biblioteca de gráficos...</div>';
-        
-        // Tentar novamente em 2 segundos
-        setTimeout(() => renderChart(plotJson), 2000);
-        return;
-      }
-    
-      try {
-        const plotData = JSON.parse(plotJson);
-        
-        const config = {
-          responsive: true,
+        Plotly.react('gexChart', fig.data, fig.layout, {
+          responsive:     true,
           displayModeBar: false,
-          displaylogo: false
-        };
-    
-        plotData.layout.height = 1200;
-        plotData.layout.margin = { l: 80, r: 80, t: 120, b: 80 };
-        plotData.layout.paper_bgcolor = 'transparent';
-        plotData.layout.plot_bgcolor = 'transparent';
-    
-        Plotly.newPlot('gexChart', plotData.data, plotData.layout, config);
-        setTimeout(() => Plotly.Plots.resize('gexChart'), 100);
-    
-      } catch (error) {
-        console.error('Erro no gráfico:', error);
-        document.getElementById('gexChart').innerHTML = 
-          '<div class="text-center text-red-400 p-8">Erro ao carregar gráfico</div>';
+          displaylogo:    false
+        });
+      } catch (err) {
+        console.error('Erro no gráfico:', err);
       }
     }
 
-    // Event listeners
-    loadExpirationsBtn.addEventListener('click', loadExpirations);
-    analyzeBtn.addEventListener('click', runGEXAnalysis);
-    
-    tickerInput.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') loadExpirations();
-    });
+    function renderCumChart(data) {
+      const plotJson = (data.single_charts || {})['cumulativo'];
+      if (!plotJson) return;
+      try {
+        const fig = JSON.parse(plotJson);
+        fig.layout.height        = 220;
+        fig.layout.paper_bgcolor = 'transparent';
+        fig.layout.plot_bgcolor  = 'transparent';
+        fig.layout.margin        = { l:60, r:20, t:40, b:45 };
 
-    // Resize handler
-    window.addEventListener('resize', function() {
-      const chartElement = document.getElementById('gexChart');
-      if (chartElement && chartElement.children.length > 0) {
-        setTimeout(() => Plotly.Plots.resize('gexChart'), 100);
+        if (!fig.layout.annotations) fig.layout.annotations = [];
+        fig.layout.annotations.push({
+          text: 'GEMINII RESEARCH',
+          textangle: 0,
+          xref: 'paper',
+          yref: 'paper',
+          x: 0.5,
+          y: 0.5,
+          xanchor: 'center',
+          yanchor: 'middle',
+          font: {
+            fontfamily: 'Inter, sans-serif',
+            size: 32,
+            color: 'rgba(255, 255, 255, 0.025)'
+          },
+          showarrow: false,
+          layer: 'below'
+        });
+
+        Plotly.react('cumChart', fig.data, fig.layout, {
+          responsive: true, displayModeBar: false, displaylogo: false
+        });
+      } catch(err) { console.error('Erro cumChart:', err); }
+    }
+
+    window.addEventListener('resize', () => {
+      if (currentData) {
+        Plotly.Plots.resize('gexChart');
+        Plotly.Plots.resize('cumChart');
       }
     });
 
-    // Inicializar
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', () => {
+      document.querySelector('#windowGroup [data-window="ALL"]').classList.add('active-neutral');
       showStatus('Sistema GEX carregado. Digite um ticker para começar.', 'info');
     });
-
   </script>
-
-  <div class="mt-6 max-w-4xl mx-auto bg-red-900/20 border-2 border-red-500/40 rounded-xl p-6">
-        <div class="flex items-start gap-4">
-          <i class="fas fa-exclamation-triangle text-red-400 text-2xl mt-1 flex-shrink-0"></i>
-          <div class="text-left">
-            <h3 class="text-red-400 font-bold text-base mb-3">AVISO LEGAL IMPORTANTE</h3>
-            <p class="text-gray-300 text-xs leading-relaxed mb-3">
-              As informações e sinais fornecidos por esta ferramenta são de caráter educativo e informativo. <strong>Não constituem recomendação de investimento nem garantia de rentabilidade.</strong> Investimentos em valores mobiliários envolvem riscos de perda patrimonial. Rentabilidade passada não garante resultados futuros. Os modelos quantitativos utilizados são baseados em dados históricos e podem não capturar adequadamente mudanças nas condições de mercado. Recomendamos a consulta a profissionais qualificados antes de tomar decisões de investimento. <strong>Operações de swing trade e day trade envolvem alto risco e podem resultar em perdas significativas.</strong> Este tipo de operação requer conhecimento técnico e não é adequado para todos os perfis de investidor.
-            </p>
-            <div class="pt-3 border-t border-gray-700 text-gray-400 text-xs">
-              <p><strong>Geminii Research Ltda</strong> - CNPJ 60.897.331/0001-06 | Analista Responsável: Diego Doneda - CNPI 9668</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
 
 </body>
 </html>

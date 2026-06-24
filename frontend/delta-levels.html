@@ -5,16 +5,20 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>DEX Analysis - Geminii Tech</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
   <script>
     tailwind.config = {
       theme: {
         extend: {
           colors: {
-            dark: '#000000',
+            dark: '#030303',
+            surface: 'rgba(10, 10, 16, 0.7)',
+            borderMuted: 'rgba(255, 255, 255, 0.05)',
+            borderActive: 'rgba(251, 30, 187, 0.4)',
             light: '#ffffff',
-            subtle: 'rgba(255,255,255,0.1)',
-            geminii: '#fb1ebb'
+            geminii: '#fb1ebb',
+            dLong: '#00f2fe',
+            dShort: '#ff0844'
           },
           fontFamily: {
             sans: ['Inter', 'sans-serif']
@@ -23,759 +27,728 @@
       }
     }
   </script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  
+
   <style>
-    body { 
-      font-family: 'Inter', sans-serif; 
-      background: linear-gradient(135deg, #0c0c0c 0%, #1a1a1a 100%);
+    body {
+      font-family: 'Inter', sans-serif;
+      background: radial-gradient(circle at 50% 0%, #0d0614 0%, #030305 70%);
       min-height: 100vh;
+      color: #f4f4f5;
+      overflow-x: hidden;
     }
-    
-    .dex-card {
-      background: rgba(255, 255, 255, 0.08);
-      backdrop-filter: blur(20px);
-      border: 1px solid rgba(255, 255, 255, 0.2);
+
+    .gex-card {
+      background: rgba(10, 10, 16, 0.6);
+      backdrop-filter: blur(16px) saturate(180%);
+      -webkit-backdrop-filter: blur(16px) saturate(180%);
+      border: 1px solid rgba(255, 255, 255, 0.05);
       border-radius: 16px;
-      transition: all 0.3s ease;
-    }
-    
-    .dex-card:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 20px 40px rgba(186, 57, 175, 0.15);
-      border-color: rgba(186, 57, 175, 0.3);
-    }
-    
-    .spinner {
-      border: 2px solid rgba(255, 255, 255, 0.1);
-      border-radius: 50%;
-      border-top: 2px solid #fb1ebb;
-      width: 20px;
-      height: 20px;
-      animation: spin 1s linear infinite;
-      display: inline-block;
-    }
-    
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
     }
 
-    .chart-container {
-      height: 1200px;
+    .pill-group {
+      display: flex;
+      gap: 4px;
+      background: rgba(255, 255, 255, 0.03);
+      padding: 4px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .pill {
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .05em;
+      cursor: pointer;
+      border: none;
       background: transparent;
+      color: #71717a;
+      transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+      text-transform: uppercase;
+    }
+    .pill:hover { color: #f4f4f5; background: rgba(255, 255, 255, 0.02); }
+
+    .pill.active {
+      background: linear-gradient(135deg, #fb1ebb 0%, #a855f7 100%);
+      color: #ffffff;
+      box-shadow: 0 4px 20px rgba(251, 30, 187, 0.4);
+    }
+    .pill.active-neutral {
+      background: rgba(255, 255, 255, 0.1);
+      color: #ffffff;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.1);
+    }
+
+    #tickerInput {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: #fff;
       border-radius: 12px;
-      padding: 20px;
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 12px 18px;
+      font-size: 15px;
+      font-weight: 800;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      outline: none;
+      width: 150px;
+      transition: all 0.25s ease;
     }
-
-    .metric-card {
-      background: rgba(255, 255, 255, 0.05);
-      border-radius: 12px;
-      padding: 20px;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      transition: all 0.3s ease;
+    #tickerInput:focus {
+      border-color: #fb1ebb;
+      background: rgba(251, 30, 187, 0.03);
+      box-shadow: 0 0 25px rgba(251, 30, 187, 0.2);
     }
-
-    .metric-card:hover {
-      background: rgba(255, 255, 255, 0.08);
-      border-color: rgba(186, 57, 175, 0.3);
-    }
-
-    .explanation-card {
-      background: linear-gradient(135deg, rgba(186, 57, 175, 0.1) 0%, rgba(147, 51, 234, 0.1) 100%);
-      border: 1px solid rgba(186, 57, 175, 0.3);
-    }
-
-    .loading {
-      opacity: 0.6;
-      pointer-events: none;
-    }
+    #tickerInput::placeholder { color: #4b5563; font-weight: 500; }
 
     #expirationSelect {
-      background-color: rgba(30, 30, 30, 0.9);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      color: white;
-      backdrop-filter: blur(10px);
-    }
-
-    #expirationSelect option {
-      background-color: #1a1a1a;
-      color: white;
-      padding: 8px;
-    }
-
-    #expirationSelect option:disabled {
-      color: #666;
-      background-color: #2a2a2a;
-    }
-
-    #expirationSelect:focus {
+      background: rgba(10, 10, 16, 0.9);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: #e4e4e7;
+      border-radius: 12px;
+      padding: 12px 18px;
+      font-size: 13px;
+      font-weight: 600;
       outline: none;
-      border-color: #fb1ebb;
-      box-shadow: 0 0 0 2px rgba(186, 57, 175, 0.2);
+      cursor: pointer;
+      transition: all 0.25s ease;
+    }
+    #expirationSelect:focus { border-color: #fb1ebb; box-shadow: 0 0 25px rgba(251, 30, 187, 0.1); }
+    #expirationSelect option { background: #0a0a10; color: #e4e4e7; }
+
+    .btn-run {
+      background: linear-gradient(135deg, #fb1ebb 0%, #ff007a 100%);
+      border: none;
+      border-radius: 12px;
+      padding: 12px 28px;
+      font-size: 13px;
+      font-weight: 800;
+      color: #fff;
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 24px rgba(251, 30, 187, 0.4);
+    }
+    .btn-run:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 30px rgba(251, 30, 187, 0.6);
+    }
+    .btn-run::after {
+      content: '';
+      position: absolute;
+      top: -50%; left: -60%; width: 30%; height: 200%;
+      background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.3) 50%, rgba(255,255,255,0) 100%);
+      transform: rotate(25deg);
+      animation: sheen 4s infinite linear;
+    }
+    @keyframes sheen {
+      0% { left: -60%; }
+      15% { left: 140%; }
+      100% { left: 140%; }
+    }
+    .btn-run:active { transform: translateY(1px); }
+    .btn-run:disabled { opacity: .4; cursor: not-allowed; transform: none; }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      padding: 12px 20px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #d4d4d8;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-secondary:hover { background: rgba(255,255,255,0.08); color: #fff; border-color: rgba(255,255,255,0.2); }
+
+    /* Badges de viés direcional — azul para bullish, vermelho para bearish */
+    .regime-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 11px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+    .regime-bullish { background: rgba(0, 242, 254, 0.08); border: 1px solid rgba(0, 242, 254, 0.3); color: #00f2fe; box-shadow: 0 0 15px rgba(0, 242, 254, 0.1); }
+    .regime-bearish  { background: rgba(255, 8, 68, 0.08);  border: 1px solid rgba(255, 8, 68, 0.3);  color: #ff0844; box-shadow: 0 0 15px rgba(255, 8, 68, 0.1); }
+    .regime-neutral  { background: rgba(161, 161, 170, 0.08); border: 1px solid rgba(161,161,170,0.3); color: #a1a1aa; }
+
+    .stat-card {
+      background: rgba(20, 20, 30, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.03);
+      border-radius: 12px;
+      padding: 16px;
+      position: relative;
+    }
+    .stat-card::before {
+      content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      border-radius: 12px; pointer-events: none;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
+    }
+    .stat-label { font-size: 10px; font-weight: 700; letter-spacing: .1em; color: #52525b; text-transform: uppercase; margin-bottom: 8px; }
+    .stat-value { font-size: 24px; font-weight: 800; color: #ffffff; letter-spacing: -0.03em; }
+    .stat-sub   { font-size: 11px; color: #a1a1aa; margin-top: 4px; font-weight: 500; font-family: monospace; }
+
+    .glow-orb {
+      position: absolute; width: 400px; height: 400px;
+      background: radial-gradient(circle, rgba(251,30,187,0.06) 0%, transparent 70%);
+      top: -150px; left: 50%; transform: translateX(-50%); z-index: 0; pointer-events: none;
     }
 
-    #netDexTotal, #pressure {
-      color: #f97316;
-      font-size: 1.875rem;
-      font-weight: 900;
+    .spinner {
+      border: 2px solid rgba(255,255,255,0.1);
+      border-top: 2px solid #fff;
+      border-radius: 50%;
+      width: 16px;
+      height: 16px;
+      animation: spin 0.8s linear infinite;
+      display: inline-block;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @media (min-width: 1024px) {
+      #layout { display: grid; grid-template-columns: 1fr 320px; gap: 24px; }
     }
 
-    #concentration {
-      color: #06b6d4;
-      font-size: 1.875rem;
-      font-weight: 900;
+    .dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; margin-right: 8px; }
+
+    .expander-header {
+      cursor: pointer;
+      transition: background-color 0.2s, border-color 0.2s;
     }
+    .expander-header:hover {
+      background-color: rgba(255, 255, 255, 0.02);
+      border-color: rgba(251, 30, 187, 0.2);
+    }
+    .expander-content {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1), padding 0.3s ease;
+    }
+    .expander-content.open { max-height: 600px; }
+    .expander-icon { transition: transform 0.3s ease; }
+    .expander-icon.rotate { transform: rotate(180deg); color: #fb1ebb; }
   </style>
 </head>
 
-<body class="text-white">
-  
-  <!-- Navbar -->
-  <nav class="fixed top-6 left-1/2 transform -translate-x-1/2 z-50 bg-opacity-5 border-opacity-10 bg-white border-white border rounded-full px-4 py-3 shadow-xl backdrop-blur-md">
-    <div class="flex items-center justify-between">
-      <div class="flex items-center">
-        <a href="/dashboard.html">
-          <img src="logo.png" alt="Geminii Logo" class="w-6 h-6 cursor-pointer">
-        </a>       
+<body class="antialiased">
 
-      </div>
-      <div class="hidden md:flex items-center space-x-6 text-xs text-gray-300 ml-8">
-        <span class="text-white font-medium">Delta Exposure</span>
-        <a href="gamma-levels.html" class="hover:text-white transition-colors">Gamma Exposure</a>
-        <a href="vega-levels.html" class="hover:text-white transition-colors">Vega Exposure</a>
-        <a href="theta-levels.html" class="hover:text-white transition-colors">Theta Exposure</a>
-        <a href="historical-levels.html" class="hover:text-white transition-colors">Análise Histórica</a>
-      </div>
-      <div class="flex items-center space-x-3 ml-8">
-        <div class="w-8 h-8 bg-green-500 bg-opacity-10 border border-green-500 border-opacity-30 rounded-full flex items-center justify-center relative">
-          <i class="fas fa-chart-line text-green-500 text-xs"></i>
-          <div class="absolute -top-1 -right-1 w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+  <div class="glow-orb"></div>
+
+  <!-- Navbar — idêntica ao GEX, só muda active -->
+  <nav class="fixed top-0 left-0 w-full z-50 bg-[#030305]/60 backdrop-blur-xl border-b border-white/[0.04] px-8 py-4">
+    <div class="max-w-screen-2xl mx-auto flex items-center justify-between">
+      <div class="flex items-center space-x-12">
+        <a href="/dashboard.html" class="flex items-center gap-3 group">
+          <img src="logo.png" alt="Geminii" class="w-6 h-6">
+          <span class="text-sm font-black tracking-widest text-white group-hover:text-geminii transition-colors">GEMINII<span class="text-geminii"> TECH</span></span>
+        </a>
+        <div class="hidden lg:flex items-center space-x-8 text-xs font-bold uppercase tracking-wider text-gray-400">
+          <a href="gamma-levels.html"    class="hover:text-white transition-colors pb-5 pt-1">Gamma Exposure</a>
+          <span class="text-white border-b-2 border-geminii pb-5 pt-1">Delta Exposure</span>
+          <a href="vega-levels.html"     class="hover:text-white transition-colors pb-5 pt-1">Vega Exposure</a>
+          <a href="theta-levels.html"    class="hover:text-white transition-colors pb-5 pt-1">Theta Exposure</a>
+          <a href="historical-levels.html" class="hover:text-white transition-colors pb-5 pt-1">Análise Histórica</a>
         </div>
       </div>
     </div>
   </nav>
 
-  <!-- Content -->
-  <div class="pt-32 pb-16">
-    <div class="max-w-7xl mx-auto px-6">
-      
-      <!-- Header -->
-      <div class="text-center mb-12">
-        <h1 class="text-4xl md:text-5xl font-bold mb-4">
-          <span style="color: #fb1ebb; font-weight: 900;">Delta</span>
-          <span class="text-white font-light">Exposure</span>
-        </h1>
-        <p class="text-neutral-300 text-lg max-w-3xl mx-auto">
-          Análise completa de Delta Exposure usando dados reais de posições descobertas. Identifica pressão direcional e concentração de apostas baseados em delta das opções.
-        </p>
-        
-        <!-- Info Expander -->
-        <div class="mt-8">
-          <button onclick="toggleInfo()" class="bg-gradient-to-r from-geminii to-purple-600 hover:from-purple-600 hover:to-geminii text-white px-4 py-2 rounded-full font-semibold text-sm transition-all duration-300 flex items-center mx-auto shadow-lg hover:shadow-xl transform hover:scale-105">
-            <i id="infoIcon" class="fas fa-info-circle mr-2 transition-transform duration-300"></i>
-            Como Funciona a Análise DEX - Delta Exposure
-          </button>
+  <div class="pt-28 pb-16 max-w-screen-2xl mx-auto px-6 relative z-10">
+
+    <!-- Expander DEX -->
+    <div class="gex-card mb-6 overflow-hidden border-geminii/10">
+      <div id="dexExpanderHeader" class="expander-header p-4 flex items-center justify-between text-xs font-bold uppercase tracking-wider text-gray-300">
+        <div class="flex items-center gap-2.5">
+          <i class="fas fa-circle-info text-geminii text-sm"></i>
+          <span>O que é DEX (Delta Exposure) e como interpretar a ferramenta?</span>
+        </div>
+        <i id="expanderIcon" class="fas fa-chevron-down expander-icon text-gray-500 text-xs mr-1"></i>
+      </div>
+
+      <div id="dexExpanderContent" class="expander-content border-t border-white/[0.02]">
+        <div class="p-5 text-xs text-gray-400 leading-relaxed space-y-4">
+
+          <p>
+            O <strong>DEX (Delta Exposure)</strong> mede quanto os participantes do mercado — principalmente Market Makers, fundos de volatilidade e hedgers institucionais — precisam comprar ou vender em ações para manter suas posições protegidas (delta neutral) conforme o preço se move em direção a cada strike.
+          </p>
+
+          <p>
+            Diferente do GEX, que mede a <em>aceleração</em> do hedge (gamma), o DEX mede o <em>volume direcional</em> de hedge: quantas ações precisam ser negociadas e em qual sentido. Esse fluxo cria pressão compradora ou vendedora real e previsível.
+          </p>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+
+            <div class="p-4 bg-cyan-500/[0.03] border border-cyan-500/10 rounded-xl">
+              <span class="font-bold text-[#00f2fe] uppercase block mb-2 tracking-wide">
+                Delta Positivo (+DEX)
+              </span>
+              <div class="space-y-2 text-[11px] leading-relaxed">
+                <p><strong class="text-gray-200">Características:</strong> Pressão compradora embutida no mercado de opções.</p>
+                <p><strong class="text-gray-200">Dinâmica:</strong> Market Makers precisam comprar ações para hedge conforme o preço sobe em direção ao strike.</p>
+                <p><strong class="text-gray-200">Efeito:</strong> Cria combustível para movimentos de alta e suporte implícito em determinados níveis.</p>
+              </div>
+            </div>
+
+            <div class="p-4 bg-red-500/[0.03] border border-red-500/10 rounded-xl">
+              <span class="font-bold text-[#ff0844] uppercase block mb-2 tracking-wide">
+                Delta Negativo (−DEX)
+              </span>
+              <div class="space-y-2 text-[11px] leading-relaxed">
+                <p><strong class="text-gray-200">Características:</strong> Pressão vendedora embutida no mercado de opções.</p>
+                <p><strong class="text-gray-200">Dinâmica:</strong> Market Makers precisam vender ações para hedge conforme o preço cai em direção ao strike.</p>
+                <p><strong class="text-gray-200">Efeito:</strong> Cria resistência implícita e pode amplificar movimentos de queda.</p>
+              </div>
+            </div>
+
+          </div>
+
+          <div class="pt-2 border-t border-white/[0.03]">
+            <div class="mb-3">
+              <span class="font-bold text-white uppercase tracking-wide text-[11px]">Fórmula e interpretação prática</span>
+              <p class="mt-1 text-[11px] text-gray-500 leading-relaxed">
+                DEX = OI × Delta × 100. Exemplo: 10.000 calls vendidas com delta 0.5 → MM precisa comprar 500.000 ações se preço atingir aquele strike. O <strong class="text-gray-300">DEX Descoberto</strong> filtra apenas posições que realmente forçam hedge — eliminando posições cobertas que se cancelam mutuamente — e representa o fluxo com maior impacto real no preço.
+              </p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-[11px]">
+              <div class="p-3 rounded-lg bg-white/[0.015] border border-white/[0.04]">
+                <span class="text-gray-200 font-semibold block mb-1">DEX vs GEX</span>
+                O GEX mede a aceleração do hedge (como o fluxo muda com o preço). O DEX mede o volume absoluto de hedge necessário. Ambos são complementares: GEX define o regime; DEX define a pressão direcional.
+              </div>
+              <div class="p-3 rounded-lg bg-white/[0.015] border border-white/[0.04]">
+                <span class="text-gray-200 font-semibold block mb-1">Horizonte temporal</span>
+                O impacto do DEX é mais significativo próximo aos vencimentos mensais e em eventos de alta concentração de OI — períodos nos quais o fluxo de hedge institucional pode mover o mercado de forma previsível.
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- Barra de controles — estrutura idêntica ao GEX -->
+    <div class="gex-card p-4 mb-6 flex flex-col lg:flex-row gap-4 items-stretch lg:items-center justify-between">
+      <div class="flex flex-wrap items-center gap-3">
+        <div class="relative flex-1 sm:flex-initial">
           
-          <div id="infoContent" class="hidden mt-8 max-w-6xl mx-auto">
-            <div class="dex-card p-8 text-left">
-              
-              <!-- Explicação Geral -->
-              <div class="mb-8 text-center">
-                <h3 class="text-2xl font-bold text-white mb-4">O que é Delta Exposure (DEX)</h3>
-                <p class="text-gray-300 text-sm leading-relaxed max-w-4xl mx-auto">
-                  O DEX mede <strong>quanto os market makers vão ter que comprar ou vender em ações</strong> para hedge quando o preço atingir cada strike. É o "combustível" que alimenta os movimentos direcionais e revela a pressão de hedge embutida no mercado.
-                </p>
-              </div>
-        
-              <!-- Conceitos Fundamentais -->
-              <div class="mb-8 p-6 bg-gray-800/50 rounded-lg">
-                <h4 class="text-xl font-bold text-white mb-4 text-center">Mecânica do Delta Hedging</h4>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
-                  <div>
-                    <h5 class="font-bold text-green-400 mb-2">DEX Positivo (+)</h5>
-                    <p class="text-gray-300 leading-relaxed">
-                      Market makers vão ter que <strong>COMPRAR ações</strong> se preço chegar naquele strike:
-                      <br>• Geralmente calls vendidas ou puts compradas
-                      <br>• Cria <strong>pressão compradora</strong> conforme preço se aproxima
-                      <br>• Mais alto = mais combustível para movimento
-                    </p>
-                  </div>
-                  <div>
-                    <h5 class="font-bold text-red-400 mb-2">DEX Negativo (-)</h5>
-                    <p class="text-gray-300 leading-relaxed">
-                      Market makers vão ter que <strong>VENDER ações</strong> se preço chegar naquele strike:
-                      <br>• Geralmente puts vendidas ou calls compradas  
-                      <br>• Cria <strong>pressão vendedora</strong> conforme preço se aproxima
-                      <br>• Mais baixo = mais resistência ao movimento
-                    </p>
-                  </div>
-                </div>
-              </div>
-        
-              <!-- Fórmula -->
-              <div class="mb-8 p-6 bg-blue-900/30 rounded-lg border border-blue-500/20">
-                <h4 class="text-xl font-bold text-blue-400 mb-4 text-center">Cálculo do DEX</h4>
-                <p class="text-gray-300 text-sm leading-relaxed text-center max-w-4xl mx-auto">
-                  <strong>DEX = Open Interest × Delta × 100 × (±1 dependendo do tipo)</strong>
-                  <br><br>
-                  Exemplo: Strike 140 com 10.000 calls vendidas (Delta 0.5)<br>
-                  DEX = 10.000 × 0.5 × 100 = <strong class="text-green-400">500.000 ações</strong><br>
-                  <em>Se preço chegar em 140, MM precisa comprar 500k ações para hedge</em>
-                </p>
-              </div>
-        
-              <!-- Grid dos  -->
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                
-                <!-- Gráfico 1 -->
-                <div class="explanation-card rounded-lg p-6">
-                  <h4 class="text-lg font-bold text-white mb-3 flex items-center">
-                    <span class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white text-sm font-bold mr-3">1</span>
-                    Total DEX por Strike
-                  </h4>
-                  <p class="text-gray-300 text-sm leading-relaxed">
-                    Volume total de hedge necessário por strike. <strong class="text-green-400">Barras verdes</strong> = MMs vão comprar ações, <strong class="text-red-400">barras vermelhas</strong> = MMs vão vender ações.
-                    <br><br>
-                    <strong>Altura da barra</strong> = quantidade de ações para hedge naquele nível
-                  </p>
-                </div>
-        
-                <!-- Gráfico 2 -->
-                <div class="explanation-card rounded-lg p-6 border-2 border-red-500/50">
-                  <h4 class="text-lg font-bold text-white mb-3 flex items-center">
-                    <span class="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center text-white text-sm font-bold mr-3">2</span>
-                    DEX Descoberto (Pressão Real)
-                  </h4>
-                  <p class="text-gray-300 text-sm leading-relaxed">
-                    <strong class="text-red-400">O mais importante!</strong> Filtra apenas posições descobertas que realmente forçam hedge dos MMs.
-                    <br><br>
-                    Remove hedge natural entre posições que se cancelam e mostra onde está a <strong>verdadeira pressão</strong> de compra/venda embutida
-                  </p>
-                </div>
-        
-                <!-- Gráfico 3 -->
-                <div class="explanation-card rounded-lg p-6">
-                  <h4 class="text-lg font-bold text-white mb-3 flex items-center">
-                    <span class="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center text-white text-sm font-bold mr-3">3</span>
-                    Regime por Strike
-                  </h4>
-                  <p class="text-gray-300 text-sm leading-relaxed">
-                    Classifica o comportamento esperado por nível:
-                    <br>
-                    <strong class="text-green-400">Verde = Pressão Compradora:</strong> MM vai comprar ações
-                    <br>
-                    <strong class="text-red-400">Vermelho = Pressão Vendedora:</strong> MM vai vender ações
-                    <br><br>
-                    Permite identificar onde o hedge vai <strong>acelerar</strong> ou <strong>frear</strong> movimentos
-                  </p>
-                </div>
-        
-                <!-- Gráfico 4 -->
-                <div class="explanation-card rounded-lg p-6">
-                  <h4 class="text-lg font-bold text-white mb-3 flex items-center">
-                    <span class="w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center text-white text-sm font-bold mr-3">4</span>
-                    Calls vs Puts DEX
-                  </h4>
-                  <p class="text-gray-300 text-sm leading-relaxed">
-                    Separação do DEX por tipo de opção para análise de distribuição:
-                    <br>
-                    <strong class="text-green-400">Calls (verde):</strong> Delta exposure de opções de compra
-                    <br>
-                    <strong class="text-red-400">Puts (vermelho):</strong> Delta exposure de opções de venda
-                    <br><br>
-                    <em>Mostra a origem do DEX por strike, sem interpretação direcional específica</em>
-                  </p>
-                </div>
-        
-                <!-- Gráfico 5 - DESTAQUE ESPECIAL -->
-                <div class="explanation-card rounded-lg p-6 border-2 border-purple-500/50">
-                  <h4 class="text-lg font-bold text-white mb-3 flex items-center">
-                    <span class="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center text-white text-sm font-bold mr-3">5</span>
-                    DEX Cumulativo - A Montanha do Hedge
-                  </h4>
-                  <p class="text-gray-300 text-sm leading-relaxed">
-                    <strong class="text-purple-400">Mostra o fluxo acumulado de hedge!</strong> Revela quanto "combustível" foi consumido vs quanto resta:
-                    <br><br>
-                    <strong>Posição na curva:</strong> % do hedge total já executado
-                    <br>
-                    <strong>Inclinação:</strong> Intensidade da pressão restante
-                    <br>
-                    <strong>Topo da montanha:</strong> Todo hedge consumido = pressão se esgota
-                    <br><br>
-                    <em class="text-purple-300">Exemplo: 1B de 2B = 50% do combustível já usado, resta 1B de pressão</em>
-                  </p>
-                </div>
-        
-                <!-- Gráfico 6 -->
-                <div class="explanation-card rounded-lg p-6">
-                  <h4 class="text-lg font-bold text-white mb-3 flex items-center">
-                    <span class="w-8 h-8 bg-cyan-500 rounded-full flex items-center justify-center text-white text-sm font-bold mr-3">6</span>
-                    Open Interest por Strike
-                  </h4>
-                  <p class="text-gray-300 text-sm leading-relaxed">
-                    Volume de contratos em aberto que serve de base para o cálculo do DEX:
-                    <br><br>
-                    <strong>Fórmula:</strong> DEX = OI × Delta × 100
-                    <br>
-                    <strong>OI Alto:</strong> Maior potencial de impacto no hedge
-                    <br>
-                    <strong>OI Baixo:</strong> Menor relevância para movimento de preços
-                  </p>
-                </div>
-                
-              </div>
-        
-              <!-- Seção Prática -->
-              <div class="mt-8 p-6 bg-gradient-to-r from-green-900/30 to-red-900/30 rounded-lg">
-                <h4 class="text-xl font-bold text-white mb-4 text-center">Interpretação Prática do DEX</h4>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
-                  <div>
-                    <h5 class="font-bold text-green-400 mb-3">Alta Pressão Compradora</h5>
-                    <div class="space-y-2 text-gray-300">
-                      <p>• <strong>DEX Cumulativo:</strong> Curva íngreme subindo</p>
-                      <p>• <strong>Descobertos:</strong> Concentração em calls vendidas/puts compradas</p>
-                      <p>• <strong>Comportamento:</strong> MM vai comprar ações = combustível para alta</p>
-                      
-                    </div>
-                  </div>
-                  <div>
-                    <h5 class="font-bold text-red-400 mb-3">Alta Pressão Vendedora</h5>
-                    <div class="space-y-2 text-gray-300">
-                      <p>• <strong>DEX Cumulativo:</strong> Curva descendente ou estável</p>
-                      <p>• <strong>Descobertos:</strong> Concentração em puts vendidas/calls compradas</p>
-                      <p>• <strong>Comportamento:</strong> MM vai vender ações = resistência natural</p>
-                      
-                    </div>
-                  </div>
-                </div>
-              </div>
-        
-              <!-- Pontos-Chave -->
-              <div class="mt-8 pt-6 border-t border-white/10">
-                <h4 class="text-geminii font-bold text-lg mb-4 text-center">Pontos-Chave da Análise DEX</h4>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-sm">
-                  <div class="text-center">
-                    <div class="w-12 h-12 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-3">
-                      <i class="fas fa-shopping-cart text-green-400"></i>
-                    </div>
-                    <h5 class="font-bold text-white mb-2">Volume de Hedge</h5>
-                    <p class="text-gray-400">DEX mostra quantas ações MMs precisam comprar/vender por strike para hedge.</p>
-                  </div>
-                  <div class="text-center">
-                    <div class="w-12 h-12 bg-purple-500/20 rounded-full flex items-center justify-center mx-auto mb-3">
-                      <i class="fas fa-mountain text-purple-400"></i>
-                    </div>
-                    <h5 class="font-bold text-white mb-2">Montanha Cumulativa</h5>
-                    <p class="text-gray-400">Mostra quanto "combustível" foi usado vs quanto resta para alimentar movimento.</p>
-                  </div>
-                  <div class="text-center">
-                    <div class="w-12 h-12 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-3">
-                      <i class="fas fa-crosshairs text-red-400"></i>
-                    </div>
-                    <h5 class="font-bold text-white mb-2">Pressão Descoberta</h5>
-                    <p class="text-gray-400">Foco nas posições que realmente forçam hedge e criam pressão direcional.</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+          <input id="tickerInput" type="text" placeholder="BOVA11" maxlength="8" class="pl-10 w-full sm:w-auto">
+        </div>
+
+        <button class="btn-secondary" id="loadExpirationsBtn">
+          <i class="fas fa-search-dollar mr-2 text-geminii"></i> Buscar Vencimentos
+        </button>
+
+        <select id="expirationSelect" class="flex-1 sm:flex-initial min-w-[240px]">
+          <option value="">Vencimento mais próximo</option>
+        </select>
+      </div>
+
+      <div class="flex flex-wrap items-center justify-end gap-4">
+        <div class="pill-group" id="windowGroup">
+          <button class="pill active-neutral" data-window="ALL">TODOS OS CONTRATOS</button>
+          <button class="pill" data-window="SEMANAL">Semanal</button>
+          <button class="pill" data-window="MENSAL">Mensal</button>
+        </div>
+
+        <button class="btn-run" id="analyzeBtn">
+          <i class="fas fa-bolt mr-2"></i> Executar DEX
+        </button>
+      </div>
+    </div>
+
+    <div id="statusMsg" class="hidden mb-6 text-xs font-mono p-4 rounded-xl border"></div>
+
+    <!-- Resultados -->
+    <div id="resultsSection" class="hidden">
+
+      <!-- Barra de contexto — idêntica ao GEX -->
+      <div class="flex flex-wrap gap-4 items-center mb-6 bg-white/[0.01] p-4 rounded-xl border border-white/[0.03]">
+        <div id="regimeIndicator" class="regime-badge">--</div>
+        <div class="text-[11px] text-gray-500 uppercase font-semibold tracking-wider">
+          Vencimento: <span id="expirationLabel" class="text-white font-mono font-bold ml-1">--</span>
+        </div>
+        <div class="text-[11px] text-gray-500 uppercase font-semibold tracking-wider sm:border-l sm:border-white/[0.05] sm:pl-4">
+          Categoria Liquidez: <span id="liquidityLabel" class="text-white font-bold ml-1">--</span>
+        </div>
+        <div class="text-[11px] text-gray-500 uppercase font-semibold tracking-wider sm:border-l sm:border-white/[0.05] sm:pl-4">
+          Contratos Derivativos: <span id="strikesLabel" class="text-white font-mono font-bold ml-1">--</span>
         </div>
       </div>
 
-      
+      <div id="layout">
 
-      <!-- Controles -->
-      <div class="dex-card p-6 mb-8">
-        <div class="flex flex-col md:flex-row gap-4 items-center justify-center">
-          <input 
-            id="tickerInput" 
-            type="text" 
-            placeholder="Digite o código da ação (ex: PETR4)" 
-            class="px-4 py-2 bg-white bg-opacity-10 border border-white border-opacity-20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-geminii backdrop-blur-sm"
-          >
-          <select 
-            id="expirationSelect" 
-            class="px-4 py-2 rounded-lg focus:outline-none focus:border-geminii backdrop-blur-sm"
-          >
-            <option value="">Vencimento Automático</option>
-          </select>
-          <button 
-            id="loadExpirationsBtn" 
-            class="px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:shadow-lg rounded-lg transition-all font-medium"
-          >
-            <i class="fas fa-calendar mr-2"></i>Carregar Vencimentos
-          </button>
-          <button 
-            id="analyzeBtn" 
-            class="px-6 py-2 bg-gradient-to-r from-geminii to-purple-600 hover:shadow-lg rounded-lg transition-all font-medium"
-          >
-            <i class="fas fa-rocket mr-2"></i>Executar DEX
-          </button>
+        <div class="flex flex-col gap-6">
+
+          <!-- Gráfico principal com pill modes -->
+          <div class="bg-white/[0.01] border border-white/[0.04] p-5 rounded-2xl">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-white/[0.04]">
+              <span class="text-xs font-bold text-gray-300 uppercase tracking-widest flex items-center gap-2">
+                <i class="fas fa-chart-bar text-geminii"></i> Distribuição Delta por Strike
+              </span>
+              <div class="pill-group" id="modeGroup">
+                <button class="pill active" data-mode="net">Exposure Total</button>
+                <button class="pill" data-mode="descoberto">DEX Descoberto</button>
+                <button class="pill" data-mode="call_put">Call / Put</button>
+                <button class="pill" data-mode="oi">Open Interest</button>
+              </div>
+            </div>
+
+            <div id="chartWrap" class="p2">
+              <div id="dexChart" style="width:100%; height:520px;"></div>
+            </div>
+          </div>
+
+          <!-- Gráfico cumulativo -->
+          <div id="cumChartWrap" class="bg-white/[0.01] border border-white/[0.04] rounded-2xl p-5">
+            <div class="text-xs font-bold text-gray-300 uppercase tracking-widest mb-4 flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.5)]"></span> Vetor de Pressão Acumulada
+            </div>
+            <div id="cumChart" style="width:100%; height:520px;"></div>
+          </div>
+
+        </div>
+
+        <!-- Sidebar — mesma estrutura do GEX, métricas do DEX -->
+        <div id="sidebar" class="flex flex-col gap-5 mt-6 lg:mt-0 justify-between">
+
+          <div class="gex-card p-5 flex-1">
+            <div class="text-xs font-black text-gray-400 uppercase tracking-widest mb-4 pb-2 border-b border-white/[0.04]">Níveis Estruturais</div>
+
+            <div class="grid grid-cols-1 gap-3.5">
+              <div class="stat-card">
+                <div class="stat-label">Último Spot</div>
+                <div class="stat-value font-mono text-white" id="spotPrice">--</div>
+              </div>
+
+              <!-- Volume total de hedge -->
+              <div class="stat-card border-cyan-500/20 bg-cyan-500/[0.02]">
+                <div class="stat-label" style="color:#00f2fe;">Volume Hedge Total</div>
+                <div class="stat-value font-mono" id="dexTotal" style="color:#00f2fe; text-shadow: 0 0 10px rgba(0,242,254,0.2);">--</div>
+                <div class="stat-sub">ações a comprar/vender</div>
+              </div>
+
+              <!-- DEX Descoberto -->
+              <div class="stat-card border-orange-500/20 bg-orange-500/[0.02]">
+                <div class="stat-label" style="color:#f97316;">Pressão Descoberta</div>
+                <div class="stat-value font-mono" id="dexDescoberto" style="color:#f97316; text-shadow: 0 0 10px rgba(249,115,22,0.2);">--</div>
+                <div class="stat-sub" id="pressureDir">direção do fluxo</div>
+              </div>
+
+              <!-- Concentração -->
+              <div class="stat-card">
+                <div class="stat-label">Concentração OI</div>
+                <div class="stat-value font-mono text-purple-400" id="concentration">--</div>
+                <div class="stat-sub">% do OI nos top strikes</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Legenda — mesma estrutura, conteúdo DEX -->
+          <div class="gex-card p-5 bg-[#08080d]/90">
+            <div class="text-xs font-black text-gray-400 uppercase tracking-widest mb-4">Mapeamento Técnico</div>
+            <div class="space-y-3 text-xs text-gray-400">
+              <div class="flex items-center gap-1"><span class="dot" style="background:#fff; box-shadow: 0 0 6px #fff;"></span> Spot Price</div>
+              <div class="flex items-center gap-1"><span class="dot" style="background:#00f2fe; box-shadow: 0 0 6px #00f2fe;"></span> Pressão Compradora (+DEX)</div>
+              <div class="flex items-center gap-1"><span class="dot" style="background:#ff0844; box-shadow: 0 0 6px #ff0844;"></span> Pressão Vendedora (−DEX)</div>
+              <div class="flex items-center gap-1"><span class="dot" style="background:#f97316; box-shadow: 0 0 6px #f97316;"></span> Concentração Descoberta</div>
+            </div>
+          </div>
+
         </div>
       </div>
+    </div>
+  </div>
 
-      <!-- Status -->
-      <div id="statusMsg" class="mb-6 p-4 rounded-lg hidden backdrop-blur-sm"></div>
-
-      <!-- Resultados -->
-      <div id="resultsSection" class="hidden">
-        
-        <!-- Métricas Principais -->
-        <div class="dex-card p-6 mb-8">
-          <div class="text-center mb-8">
-            <div id="biasIndicator" class="inline-block px-8 py-4 rounded-2xl text-2xl font-black">
-              <!-- Preenchido via JS -->
-            </div>
-          </div>
-          
-          <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
-            <div class="metric-card text-center">
-              <div class="text-3xl font-black text-white mb-2" id="spotPrice">--</div>
-              <div class="text-white font-bold">SPOT PRICE</div>
-            </div>
-            
-            <div class="metric-card text-center">
-              <div class="mb-2" id="netDexTotal">--</div>
-              <div class="text-white font-bold">VOLUME HEDGE</div>
-            </div>
-            
-            <div class="metric-card text-center">
-              <div class="mb-2" id="concentration">--</div>
-              <div class="text-white font-bold">CONCENTRAÇÃO</div>
-            </div>
-            
-            <div class="metric-card text-center">
-              <div class="mb-2" id="pressure">--</div>
-              <div class="text-white font-bold" id="pressureLabel">EXPOSIÇÃO REAL</div>
-            </div>
+  <!-- Footer compliance — idêntico ao GEX -->
+  <div class="max-w-screen-2xl mx-auto px-6 pb-12 relative z-10">
+    <div class="bg-white/[0.01] border border-white/[0.04] rounded-2xl p-6">
+      <div class="flex items-start gap-4">
+        <i class="fas fa-shield-halved text-gray-600 mt-1 flex-shrink-0 text-base"></i>
+        <div class="w-full">
+          <p class="text-gray-400 font-bold text-xs uppercase tracking-widest mb-2">Termos de Uso e Restrições de Compliance</p>
+          <p class="text-gray-500 text-xs leading-relaxed">
+            As análises quantitativas estruturais geradas por este terminal refletem cenários matemáticos pautados no histórico de posições em aberto de derivativos. <strong>Este módulo não constitui assessoria, recomendação, oferta ou direcionamento de alocação de ativos.</strong> Negociações no mercado de opções envolvem alavancagem intrínseca e riscos de perda total de capital.
+          </p>
+          <div class="flex flex-wrap items-center justify-between gap-4 mt-6 pt-4 border-t border-white/[0.04] text-gray-600 text-[11px] font-mono">
+            <div><strong>Geminii Research Ltda</strong> · CNPJ 60.897.331/0001-06</div>
+            <div>Analista Responsável: Diego Doneda · CNPI 9668</div>
           </div>
         </div>
-
-        <!-- Gráficos DEX -->
-        <div class="dex-card p-6">
-          <h3 class="text-2xl font-bold mb-6 text-center">
-            <i class="fas fa-chart-area mr-3" style="color: #fb1ebb;"></i>
-            Análise DEX Completa
-          </h3>
-          <div class="chart-container">
-            <div id="dexChart" style="width: 100%; height: 100%;"></div>
-          </div>
-        </div>
-
       </div>
-
     </div>
   </div>
 
   <script>
-    let userToken = localStorage.getItem('geminii_token');
-    
-    if (!userToken) {
-      window.location.href = '/login.html';
-    }
+    const userToken = localStorage.getItem('geminii_token');
+    if (!userToken) window.location.href = '/login.html';
 
-    // Elementos DOM
-    const tickerInput = document.getElementById('tickerInput');
-    const expirationSelect = document.getElementById('expirationSelect');
+    let currentData    = null;
+    let currentMode    = 'net';
+    let currentWindow  = 'ALL';
+    let allExpirations = [];
+
+    const tickerInput        = document.getElementById('tickerInput');
+    const expirationSelect   = document.getElementById('expirationSelect');
     const loadExpirationsBtn = document.getElementById('loadExpirationsBtn');
-    const analyzeBtn = document.getElementById('analyzeBtn');
-    const statusMsg = document.getElementById('statusMsg');
-    const resultsSection = document.getElementById('resultsSection');
+    const analyzeBtn         = document.getElementById('analyzeBtn');
+    const statusMsg          = document.getElementById('statusMsg');
+    const resultsSection     = document.getElementById('resultsSection');
 
-    // Funções utilitárias
-    function formatLargeNumber(value) {
-      const absValue = Math.abs(value);
-      if (absValue >= 1000000000) {
-        return (value / 1000000000).toFixed(1) + 'B';
-      } else if (absValue >= 1000000) {
-        return (value / 1000000).toFixed(1) + 'M';
-      } else if (absValue >= 1000) {
-        return (value / 1000).toFixed(1) + 'K';
-      }
-      return value.toFixed(0);
+    // Expander
+    document.getElementById('dexExpanderHeader').addEventListener('click', () => {
+      document.getElementById('dexExpanderContent').classList.toggle('open');
+      document.getElementById('expanderIcon').classList.toggle('rotate');
+    });
+
+    function formatNum(v) {
+      const a = Math.abs(v);
+      if (a >= 1e9) return (v/1e9).toFixed(1) + 'B';
+      if (a >= 1e6) return (v/1e6).toFixed(1) + 'M';
+      if (a >= 1e3) return (v/1e3).toFixed(1) + 'K';
+      return v.toFixed(0);
     }
 
-    function showStatus(message, type = 'info') {
-      const bgClass = type === 'success' ? 'bg-green-600 bg-opacity-20 border-green-500 border-opacity-30' : 
-                     type === 'error' ? 'bg-red-600 bg-opacity-20 border-red-500 border-opacity-30' : 
-                     'bg-blue-600 bg-opacity-20 border-blue-500 border-opacity-30';
-      
-      statusMsg.className = `mb-6 p-4 rounded-lg border backdrop-blur-sm ${bgClass}`;
-      statusMsg.textContent = message;
+    function showStatus(msg, type = 'info') {
+      const colors = {
+        info:    'background:rgba(59,130,246,.1); border:1px solid rgba(59,130,246,.2); color:#93c5fd;',
+        success: 'background:rgba(0,242,254,.1);  border:1px solid rgba(0,242,254,.2);  color:#00f2fe;',
+        error:   'background:rgba(255,8,68,.1);   border:1px solid rgba(255,8,68,.2);   color:#ff0844;',
+      };
+      statusMsg.style.cssText = colors[type] || colors.info;
+      statusMsg.textContent   = msg;
       statusMsg.classList.remove('hidden');
-      
       setTimeout(() => statusMsg.classList.add('hidden'), 5000);
     }
 
-    function setLoading(button, loading, originalText, loadingText) {
-      if (loading) {
-        button.classList.add('loading');
-        button.innerHTML = `<span class="spinner mr-2"></span>${loadingText}`;
-      } else {
-        button.classList.remove('loading');
-        button.innerHTML = originalText;
+    function setLoading(btn, loading, idleHTML) {
+      btn.disabled = loading;
+      btn.innerHTML = loading ? '<span class="spinner"></span>' : idleHTML;
+    }
+
+    // Window filter
+    document.getElementById('windowGroup').addEventListener('click', e => {
+      const btn = e.target.closest('[data-window]');
+      if (!btn) return;
+      currentWindow = btn.dataset.window;
+      document.querySelectorAll('#windowGroup .pill').forEach(p => p.classList.remove('active', 'active-neutral'));
+      btn.classList.add(currentWindow === 'ALL' ? 'active-neutral' : 'active');
+      filterExpirationSelect();
+    });
+
+    function filterExpirationSelect() {
+      const prev = expirationSelect.value;
+      expirationSelect.innerHTML = '<option value="">Vencimento mais próximo</option>';
+      allExpirations.forEach(exp => {
+        if (!exp.available) return;
+        if (currentWindow !== 'ALL' && exp.window !== currentWindow) return;
+        const opt = document.createElement('option');
+        opt.value       = exp.code;
+        opt.textContent = `${exp.desc} (${exp.data_count} contratos)`;
+        expirationSelect.appendChild(opt);
+      });
+      if (prev && [...expirationSelect.options].some(o => o.value === prev)) {
+        expirationSelect.value = prev;
       }
     }
 
-    function toggleInfo() {
-      const content = document.getElementById('infoContent');
-      const icon = document.getElementById('infoIcon');
-      
-      if (content.classList.contains('hidden')) {
-        content.classList.remove('hidden');
-        icon.classList.replace('fa-info-circle', 'fa-times');
-      } else {
-        content.classList.add('hidden');
-        icon.classList.replace('fa-times', 'fa-info-circle');
-      }
-    }
-    window.toggleInfo = toggleInfo;
+    loadExpirationsBtn.addEventListener('click', loadExpirations);
+    tickerInput.addEventListener('keypress', e => { if (e.key === 'Enter') loadExpirations(); });
 
     async function loadExpirations() {
       const ticker = tickerInput.value.trim().toUpperCase();
-      if (!ticker) {
-          showStatus('Digite um ticker primeiro', 'error');
-          return;
-      }
+      if (!ticker) { showStatus('Digite um ticker primeiro', 'error'); return; }
 
-      const originalHTML = '<i class="fas fa-calendar mr-2"></i>Carregar Vencimentos';
-      loadExpirationsBtn.classList.add('loading');
-      loadExpirationsBtn.innerHTML = '<span class="spinner mr-2"></span>Carregando...';
-
+      setLoading(loadExpirationsBtn, true);
       try {
-          const response = await fetch('/pro/vega/expirations', {
-              method: 'POST',
-              headers: {
-                  'Content-Type': 'application/json',
-                  'Authorization': `Bearer ${userToken}`
-              },
-              body: JSON.stringify({ ticker })
-          });
-
-          const data = await response.json();
-          if (!response.ok) throw new Error(data.error);
-
-          expirationSelect.innerHTML = '<option value="">Vencimento Automático</option>';
-          data.expirations.forEach(exp => {
-              const option = document.createElement('option');
-              option.value = exp.code;
-              option.textContent = `${exp.desc} (${exp.data_count} contratos)`;
-              option.disabled = !exp.available;
-              expirationSelect.appendChild(option);
-          });
-
-          loadExpirationsBtn.classList.remove('loading');
-          loadExpirationsBtn.classList.remove('from-blue-500', 'to-blue-600');
-          loadExpirationsBtn.classList.add('from-green-500', 'to-green-600');
-          loadExpirationsBtn.innerHTML = '<i class="fas fa-check mr-2"></i>Vencimentos Carregados';
-          showStatus(`${data.total_available} vencimentos carregados`, 'success');
-
-      } catch (error) {
-          loadExpirationsBtn.classList.remove('loading');
-          loadExpirationsBtn.classList.remove('from-green-500', 'to-green-600');
-          loadExpirationsBtn.classList.add('from-blue-500', 'to-blue-600');
-          loadExpirationsBtn.innerHTML = originalHTML;
-          showStatus('Erro: ' + error.message, 'error');
-      }
-  }
-
-    // Executar análise DEX
-    async function runDEXAnalysis() {
-       const ticker = tickerInput.value.trim().toUpperCase();
-      if (!ticker) {
-          showStatus('Digite um ticker', 'error');
-          return;
-      }
-
-      const originalHTML = '<i class="fas fa-rocket mr-2"></i>Executar DEX';
-      analyzeBtn.classList.add('loading');
-      analyzeBtn.innerHTML = '<span class="spinner mr-2"></span>Processando DEX...';
-      showStatus('Executando análise DEX completa...', 'info');
-
-      try {
-          const requestBody = { ticker, days_back: 60 };
-          const expiration = expirationSelect.value;
-          if (expiration) requestBody.expiration_code = expiration;
-
-          const response = await fetch('/pro/delta/analyze', {
-              method: 'POST',
-              headers: {
-                  'Content-Type': 'application/json',
-                  'Authorization': `Bearer ${userToken}`
-              },
-              body: JSON.stringify(requestBody)
-          });
-
-          const data = await response.json();
-          if (!response.ok) throw new Error(data.error);
-
-          displayResults(data);
-          showStatus(`Análise DEX de ${ticker} concluída`, 'success');
-
-      } catch (error) {
-          showStatus('Erro: ' + error.message, 'error');
-      } finally {
-          analyzeBtn.classList.remove('loading');
-          analyzeBtn.innerHTML = originalHTML;
-      }
-    }
-
-    // Exibir resultados
-    function displayResults(data) {
-      console.log('=== DEBUG DADOS RECEBIDOS ===');
-      console.log('data completa:', data);
-      console.log('dex_levels:', data.dex_levels);
-      
-      const dex_levels = data.dex_levels || {};
-      
-      // Bias - usando market_bias do dex_levels
-      const bias = dex_levels.market_bias || 'NEUTRAL';
-      let biasClass = 'bg-gradient-to-r ';
-      let biasText = 'Neutro';
-      
-      if (bias === 'BULLISH') {
-        biasClass += 'from-green-400 to-green-600';
-        biasText = 'Delta Positivo';
-      } else if (bias === 'BEARISH') {
-        biasClass += 'from-red-400 to-red-600';
-        biasText = 'Delta Negativo';
-      } else {
-        biasClass += 'from-gray-400 to-gray-600';
-        biasText = 'Neutro';
-      }
-      
-      document.getElementById('biasIndicator').className = 
-       `inline-block px-8 py-4 rounded-2xl text-2xl font-black ${biasClass}`;
-      document.getElementById('biasIndicator').textContent = biasText;
-    
-      // Métricas - USANDO dex_levels (igual ao GEX)
-      document.getElementById('spotPrice').textContent = `R$ ${data.spot_price?.toFixed(2)}`;
-      
-      // DEX Líquido - do objeto dex_levels
-      
-      const netDexTotal = dex_levels.total_dex || 0;
-      document.getElementById('netDexTotal').textContent = formatLargeNumber(netDexTotal);
-
-      // Concentração
-      const concentrationRaw = dex_levels.concentration_ratio || 0;
-      const concentration = (concentrationRaw * 100).toFixed(1);
-      document.getElementById('concentration').textContent = `${concentration}%`;
-
-      const remainingPressure = Math.abs(dex_levels.remaining_pressure || 0);
-      const netDexDescoberto = dex_levels.total_dex_descoberto || 0;
-
-      let pressureType;
-      if (netDexDescoberto > 1000000) {
-          pressureType = "COMPRADORA";
-      } else if (netDexDescoberto < -1000000) {
-          pressureType = "VENDEDORA"; 
-      } else {
-          pressureType = "NEUTRA";
-      }
-
-      document.getElementById('pressure').textContent = formatLargeNumber(remainingPressure);
-      document.getElementById('pressureLabel').textContent = `PRESSÃO ${pressureType}`;
-          
-      // Gráfico
-      if (data.plot_json) {
-        renderChart(data.plot_json);
-      }
-    
-      resultsSection.classList.remove('hidden');
-    }
-
-    // Renderizar gráfico
-    function renderChart(plotJson) {
-      try {
-        const plotData = JSON.parse(plotJson);
-        
-        // LIMPAR DADOS INVÁLIDOS ANTES DE RENDERIZAR
-        plotData.data.forEach(trace => {
-          // Limpar valores NaN, null ou undefined
-          if (trace.x) {
-            trace.x = trace.x.map(val => {
-              const num = parseFloat(val);
-              return isNaN(num) ? 0 : num;
-            });
-          }
-          
-          if (trace.y) {
-            trace.y = trace.y.map(val => {
-              const num = parseFloat(val);
-              return isNaN(num) ? 0 : num;
-            });
-          }
-          
-          // Garantir que não há valores infinitos
-          if (trace.x) trace.x = trace.x.filter(val => isFinite(val));
-          if (trace.y) trace.y = trace.y.filter(val => isFinite(val));
+        const res  = await fetch('/pro/delta/expirations', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${userToken}` },
+          body: JSON.stringify({ ticker })
         });
-        
-        const config = {
-          responsive: true,
-          displayModeBar: false,
-          displaylogo: false
-        };
-    
-        plotData.layout.height = 1600;
-        plotData.layout.margin = { l: 50, r: 50, t: 100, b: 50 };
-        
-        plotData.layout.paper_bgcolor = 'rgba(0,0,0,0)';
-        plotData.layout.plot_bgcolor = 'rgba(0,0,0,0)';
-    
-        Plotly.newPlot('dexChart', plotData.data, plotData.layout, config);
-        
-        setTimeout(() => Plotly.Plots.resize('dexChart'), 100);
-    
-      } catch (error) {
-        console.error('Erro no gráfico:', error);
-        console.error('plotJson recebido:', plotJson);
-        document.getElementById('dexChart').innerHTML = 
-          '<div class="text-center text-red-400 p-8">Erro ao carregar gráfico: ' + error.message + '</div>';
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
+
+        allExpirations = data.expirations;
+        filterExpirationSelect();
+        loadExpirationsBtn.innerHTML = '<i class="fas fa-check mr-1"></i> Carregados';
+        showStatus(`${data.total_available} vencimentos disponíveis`, 'success');
+      } catch (err) {
+        showStatus('Erro: ' + err.message, 'error');
+        loadExpirationsBtn.innerHTML = '<i class="fas fa-search-dollar mr-2"></i> Buscar Vencimentos';
+      } finally {
+        loadExpirationsBtn.disabled = false;
       }
     }
 
-    // Event listeners
-    loadExpirationsBtn.addEventListener('click', loadExpirations);
     analyzeBtn.addEventListener('click', runDEXAnalysis);
-    
-    tickerInput.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') loadExpirations();
+
+    async function runDEXAnalysis() {
+      const ticker = tickerInput.value.trim().toUpperCase();
+      if (!ticker) { showStatus('Digite um ticker', 'error'); return; }
+
+      setLoading(analyzeBtn, true);
+      showStatus('Executando análise DEX...', 'info');
+
+      try {
+        const body = { ticker, days_back: 60 };
+        if (expirationSelect.value) body.expiration_code = expirationSelect.value;
+
+        const res  = await fetch('/pro/delta/analyze', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${userToken}` },
+          body: JSON.stringify(body)
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
+
+        currentData = data;
+        displayResults(data);
+        showStatus(`DEX de ${ticker} concluído`, 'success');
+      } catch (err) {
+        showStatus('Erro: ' + err.message, 'error');
+      } finally {
+        setLoading(analyzeBtn, false, '<i class="fas fa-bolt mr-1"></i> Executar DEX');
+      }
+    }
+
+    // Mode pills
+    document.getElementById('modeGroup').addEventListener('click', e => {
+      const btn = e.target.closest('[data-mode]');
+      if (!btn || !currentData) return;
+      currentMode = btn.dataset.mode;
+      document.querySelectorAll('#modeGroup .pill').forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      renderChart(currentMode);
     });
 
-    // Resize handler
-    window.addEventListener('resize', function() {
-      const chartElement = document.getElementById('dexChart');
-      if (chartElement && chartElement.children.length > 0) {
-        setTimeout(() => Plotly.Plots.resize('dexChart'), 100);
+    function displayResults(data) {
+      const dex = data.dex_levels || {};
+
+      // Regime badge
+      const regEl   = document.getElementById('regimeIndicator');
+      const bias    = dex.market_bias || 'NEUTRAL';
+      if (bias === 'BULLISH') {
+        regEl.className = 'regime-badge regime-bullish';
+        regEl.innerHTML = '<i class="fas fa-arrow-trend-up"></i> Delta Positivo';
+      } else if (bias === 'BEARISH') {
+        regEl.className = 'regime-badge regime-bearish';
+        regEl.innerHTML = '<i class="fas fa-arrow-trend-down"></i> Delta Negativo';
+      } else {
+        regEl.className = 'regime-badge regime-neutral';
+        regEl.innerHTML = '<i class="fas fa-minus"></i> Neutro';
+      }
+
+      const dq = data.data_quality || {};
+      document.getElementById('expirationLabel').textContent = dq.expiration      || '--';
+      document.getElementById('liquidityLabel').textContent  = dq.liquidity_category || '--';
+      document.getElementById('strikesLabel').textContent    = data.options_count  || '--';
+
+      document.getElementById('spotPrice').textContent = data.spot_price
+        ? `R$ ${data.spot_price.toFixed(2)}` : '--';
+
+      const totalDex = dex.total_dex || 0;
+      document.getElementById('dexTotal').textContent = formatNum(totalDex);
+
+      const descoberto = dex.total_dex_descoberto || 0;
+      document.getElementById('dexDescoberto').textContent = formatNum(descoberto);
+      document.getElementById('pressureDir').textContent =
+        descoberto > 1e6 ? 'pressão compradora' :
+        descoberto < -1e6 ? 'pressão vendedora' : 'fluxo neutro';
+
+      const ratio = (dex.concentration_ratio || 0) * 100;
+      document.getElementById('concentration').textContent = ratio.toFixed(1) + '%';
+
+      renderChart(currentMode);
+      resultsSection.classList.remove('hidden');
+
+      setTimeout(() => {
+        renderCumChart(data);
+        Plotly.Plots.resize('dexChart');
+        Plotly.Plots.resize('cumChart');
+      }, 50);
+    }
+
+    function renderChart(mode) {
+      if (!currentData) return;
+      const plotJson = (currentData.single_charts || {})[mode];
+      if (!plotJson) {
+        document.getElementById('dexChart').innerHTML =
+          '<div style="color:#4b5563;padding:40px;text-align:center;font-size:13px;font-weight:500;">Dados estruturais indisponíveis para este modo.</div>';
+        return;
+      }
+      try {
+        const fig = JSON.parse(plotJson);
+        fig.layout.height        = 520;
+        fig.layout.paper_bgcolor = 'transparent';
+        fig.layout.plot_bgcolor  = 'transparent';
+        fig.layout.margin        = { l: 70, r: 20, t: 55, b: 55 };
+
+        if (!fig.layout.annotations) fig.layout.annotations = [];
+        fig.layout.annotations.push({
+          text: 'GEMINII RESEARCH', textangle: 0,
+          xref: 'paper', yref: 'paper', x: 0.5, y: 0.5,
+          xanchor: 'center', yanchor: 'middle',
+          font: { family: 'Inter, sans-serif', size: 32, color: 'rgba(255,255,255,0.035)' },
+          showarrow: false, layer: 'below'
+        });
+
+        Plotly.react('dexChart', fig.data, fig.layout, {
+          responsive: true, displayModeBar: false, displaylogo: false
+        });
+      } catch (err) {
+        console.error('Erro no gráfico:', err);
+      }
+    }
+
+    function renderCumChart(data) {
+      const plotJson = (data.single_charts || {})['cumulativo'];
+      if (!plotJson) return;
+      try {
+        const fig = JSON.parse(plotJson);
+        fig.layout.height        = 220;
+        fig.layout.paper_bgcolor = 'transparent';
+        fig.layout.plot_bgcolor  = 'transparent';
+        fig.layout.margin        = { l: 60, r: 20, t: 40, b: 45 };
+
+        if (!fig.layout.annotations) fig.layout.annotations = [];
+        fig.layout.annotations.push({
+          text: 'GEMINII RESEARCH', textangle: 0,
+          xref: 'paper', yref: 'paper', x: 0.5, y: 0.5,
+          xanchor: 'center', yanchor: 'middle',
+          font: { family: 'Inter, sans-serif', size: 32, color: 'rgba(255,255,255,0.025)' },
+          showarrow: false, layer: 'below'
+        });
+
+        Plotly.react('cumChart', fig.data, fig.layout, {
+          responsive: true, displayModeBar: false, displaylogo: false
+        });
+      } catch (err) { console.error('Erro cumChart:', err); }
+    }
+
+    window.addEventListener('resize', () => {
+      if (currentData) {
+        Plotly.Plots.resize('dexChart');
+        Plotly.Plots.resize('cumChart');
       }
     });
 
-    // Inicializar
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', () => {
+      document.querySelector('#windowGroup [data-window="ALL"]').classList.add('active-neutral');
       showStatus('Sistema DEX carregado. Digite um ticker para começar.', 'info');
     });
-
   </script>
-
-  <div class="mt-6 max-w-4xl mx-auto bg-red-900/20 border-2 border-red-500/40 rounded-xl p-6">
-        <div class="flex items-start gap-4">
-          <i class="fas fa-exclamation-triangle text-red-400 text-2xl mt-1 flex-shrink-0"></i>
-          <div class="text-left">
-            <h3 class="text-red-400 font-bold text-base mb-3">AVISO LEGAL IMPORTANTE</h3>
-            <p class="text-gray-300 text-xs leading-relaxed mb-3">
-              As informações e sinais fornecidos por esta ferramenta são de caráter educativo e informativo. <strong>Não constituem recomendação de investimento nem garantia de rentabilidade.</strong> Investimentos em valores mobiliários envolvem riscos de perda patrimonial. Rentabilidade passada não garante resultados futuros. Os modelos quantitativos utilizados são baseados em dados históricos e podem não capturar adequadamente mudanças nas condições de mercado. Recomendamos a consulta a profissionais qualificados antes de tomar decisões de investimento. <strong>Operações de swing trade e day trade envolvem alto risco e podem resultar em perdas significativas.</strong> Este tipo de operação requer conhecimento técnico e não é adequado para todos os perfis de investidor.
-            </p>
-            <div class="pt-3 border-t border-gray-700 text-gray-400 text-xs">
-              <p><strong>Geminii Research Ltda</strong> - CNPJ 60.897.331/0001-06 | Analista Responsável: Diego Doneda - CNPI 9668</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
 
 </body>
 </html>

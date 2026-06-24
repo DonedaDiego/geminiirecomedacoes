@@ -20,28 +20,26 @@ logging.basicConfig(level=logging.INFO)
 load_dotenv()
 
 def convert_to_json_serializable(obj):
-    """Converte tipos numpy/pandas para Python nativo"""
     try:
-        if obj is None or pd.isna(obj):
+        if obj is None:
             return None
-        elif isinstance(obj, (bool, np.bool_)):
+        if isinstance(obj, (list, tuple)):
+            return [convert_to_json_serializable(i) for i in obj]
+        if isinstance(obj, dict):
+            return {k: convert_to_json_serializable(v) for k, v in obj.items()}
+        if isinstance(obj, (bool, np.bool_)):
             return bool(obj)
-        elif isinstance(obj, (int, np.integer)):
+        if isinstance(obj, (int, np.integer)):
             return int(obj)
-        elif isinstance(obj, (float, np.floating)):
-            return float(obj)
-        elif isinstance(obj, (datetime, pd.Timestamp)):
+        if isinstance(obj, (float, np.floating)):
+            return None if np.isnan(obj) else float(obj)
+        if isinstance(obj, (datetime, pd.Timestamp)):
             return obj.isoformat()
-        elif isinstance(obj, dict):
-            return {key: convert_to_json_serializable(value) for key, value in obj.items()}
-        elif isinstance(obj, (list, tuple)):
-            return [convert_to_json_serializable(item) for item in obj]
-        elif hasattr(obj, 'item'):
+        if hasattr(obj, 'item'):
             return obj.item()
-        elif hasattr(obj, 'tolist'):
+        if hasattr(obj, 'tolist'):
             return obj.tolist()
-        else:
-            return str(obj)
+        return str(obj)
     except:
         return None
 
@@ -120,20 +118,22 @@ class LiquidityManager:
 class ExpirationManager:
     def __init__(self, db_engine):
         self.db_engine = db_engine
-        self.available_expirations = {                                                                    
-            
-            
-            "20260424": {"date": datetime(2026, 4, 24), "desc": "24 Abr 26 - W4"},
-            "20260430": {"date": datetime(2026, 4, 30), "desc": "30 Abr 26 - W5"},
-            "20260508": {"date": datetime(2026, 5, 8),  "desc": "08 Mai 26 - W2"},
-            "20260515": {"date": datetime(2026, 5, 15), "desc": "15 Mai 26 - M"},
-            "20260522": {"date": datetime(2026, 5, 22), "desc": "22 Mai 26 - W4"},
-            "20260529": {"date": datetime(2026, 5, 29), "desc": "29 Mai 26 - W5"},
+        self.available_expirations = {
             "20260605": {"date": datetime(2026, 6, 5),  "desc": "05 Jun 26 - W1"},
             "20260612": {"date": datetime(2026, 6, 12), "desc": "12 Jun 26 - W2"},
             "20260619": {"date": datetime(2026, 6, 19), "desc": "19 Jun 26 - M"},
+            "20260626": {"date": datetime(2026, 6, 26), "desc": "26 Jun 26 - W4"},
+
+            "20260703": {"date": datetime(2026, 7, 3),  "desc": "03 Jul 26 - W1"},
+            "20260710": {"date": datetime(2026, 7, 10), "desc": "10 Jul 26 - W2"},
             "20260717": {"date": datetime(2026, 7, 17), "desc": "17 Jul 26 - M"},
+            "20260724": {"date": datetime(2026, 7, 24), "desc": "24 Jul 26 - W4"},
+            "20260731": {"date": datetime(2026, 7, 31), "desc": "31 Jul 26 - W5"},
+
+            "20260807": {"date": datetime(2026, 8, 7),  "desc": "07 Ago 26 - W1"},
+            "20260814": {"date": datetime(2026, 8, 14), "desc": "14 Ago 26 - W2"},
             "20260821": {"date": datetime(2026, 8, 21), "desc": "21 Ago 26 - M"},
+
             "20260918": {"date": datetime(2026, 9, 18), "desc": "18 Set 26 - M"},
             "20261016": {"date": datetime(2026, 10, 16), "desc": "16 Out 26 - M"},
             "20261119": {"date": datetime(2026, 11, 19), "desc": "19 Nov 26 - M"},
@@ -149,11 +149,6 @@ class ExpirationManager:
             "20270917": {"date": datetime(2027, 9, 17), "desc": "17 Set 27 - M"},
             "20271015": {"date": datetime(2027, 10, 15), "desc": "15 Out 27 - M"},
             "20271119": {"date": datetime(2027, 11, 19), "desc": "19 Nov 27 - M"},
-            "20271119": {"date": datetime(2027, 11, 19), "desc": "19 Nov 27 - W1"},
-            "20271119": {"date": datetime(2027, 11, 19), "desc": "19 Nov 27 - W2"},
-            "20271119": {"date": datetime(2027, 11, 19), "desc": "19 Nov 27 - W3"},
-            "20271119": {"date": datetime(2027, 11, 19), "desc": "19 Nov 27 - W4"},
-            "20271119": {"date": datetime(2027, 11, 19), "desc": "19 Nov 27 - W5"},
             "20271217": {"date": datetime(2027, 12, 17), "desc": "17 Dez 27 - M"},
             "20280121": {"date": datetime(2028, 1, 21), "desc": "21 Jan 28 - M"},
             "20280218": {"date": datetime(2028, 2, 18), "desc": "18 Fev 28 - M"},
@@ -199,7 +194,9 @@ class ExpirationManager:
                     "desc": data["desc"],
                     "days": days,
                     "data_count": data_count,
-                    "available": data_count > 0
+                    "available": data_count > 0,
+                    # tag de tipo: W = semanal, M = mensal
+                    "window": "SEMANAL" if "- W" in data["desc"] else "MENSAL"
                 })
         
         return sorted(available, key=lambda x: x["days"])
@@ -212,7 +209,8 @@ class ExpirationManager:
                 if data_count > 0:
                     return {
                         "code": code,
-                        "desc": data["desc"]
+                        "desc": data["desc"],
+                        "window": "SEMANAL" if "- W" in data["desc"] else "MENSAL"
                     }
         return None
 
@@ -315,7 +313,8 @@ class DataProvider:
             if expiration_code:
                 expiration = {
                     "code": expiration_code,
-                    "desc": self.expiration_manager.available_expirations.get(expiration_code, {}).get("desc", expiration_code)
+                    "desc": self.expiration_manager.available_expirations.get(expiration_code, {}).get("desc", expiration_code),
+                    "window": "SEMANAL" if "- W" in self.expiration_manager.available_expirations.get(expiration_code, {}).get("desc", "") else "MENSAL"
                 }
             else:
                 expiration = self.expiration_manager.get_best_available_expiration(symbol)
@@ -457,6 +456,8 @@ class GEXAnalyzer:
                 'put_gex': float(put_gex),
                 'total_gex': float(total_gex),
                 'total_gex_descoberto': float(total_gex_descoberto),
+                'call_gex_descoberto': float(call_gex_descoberto),
+                'put_gex_descoberto': float(put_gex_descoberto),
                 'call_oi_total': int(call_data['total'] if call_data else 0),
                 'put_oi_total': int(put_data['total'] if put_data else 0),
                 'call_oi_descoberto': int(call_data['descoberto'] if call_data else 0),
@@ -593,6 +594,7 @@ class GEXAnalyzer:
         return best_flip['strike']
     
     def create_6_charts(self, gex_df, spot_price, symbol, flip_strike=None, expiration_info=None):
+        """Mantido para compatibilidade com outros fluxos"""
         if gex_df.empty:
             return None
         
@@ -685,53 +687,274 @@ class GEXAnalyzer:
         )
         
         return fig.to_json()
-    
+
+    # ─────────────────────────────────────────────────────────────────────────
+    # NOVO: gráfico único por modo — usado pelo novo layout gamma-levels.html
+    # ─────────────────────────────────────────────────────────────────────────
+    def create_single_chart(self, gex_df, spot_price, symbol, flip_strike=None,
+                            expiration_info=None, mode='net'):
+        """
+        Renderiza um único gráfico Plotly de acordo com o modo selecionado.
+
+        Modos disponíveis:
+          'net'        → Net Exposure (total_gex, verde/vermelho)
+          'descoberto' → GEX Descoberto (total_gex_descoberto, verde/vermelho)
+          'call_put'   → Call/Put Exposure (call_gex verde, put_gex vermelho, stacked)
+          'oi'         → Open Interest total (call_oi_total + put_oi_total, roxo)
+
+        Retorna fig.to_json()
+        """
+        if gex_df.empty:
+            return None
+
+        gex_df = gex_df.sort_values('strike').reset_index(drop=True)
+
+        strikes          = [float(x) for x in gex_df['strike'].tolist()]
+        total_gex        = [float(x) for x in gex_df['total_gex'].tolist()]
+        descoberto       = [float(x) for x in gex_df['total_gex_descoberto'].tolist()]
+        call_gex         = [float(x) for x in gex_df['call_gex'].tolist()]
+        put_gex          = [float(x) for x in gex_df['put_gex'].tolist()]
+        call_oi          = [int(x)   for x in gex_df['call_oi_total'].tolist()]
+        put_oi           = [int(x)   for x in gex_df['put_oi_total'].tolist()]
+        oi_total         = [c + p for c, p in zip(call_oi, put_oi)]
+
+        mode_labels = {
+            'net':        'Net Exposure',
+            'descoberto': 'GEX Descoberto',
+            'call_put':   'Call / Put Exposure',
+            'oi':         'Open Interest',
+        }
+        title_mode = mode_labels.get(mode, 'Net Exposure')
+        exp_desc   = expiration_info["desc"] if expiration_info else ""
+
+        fig = go.Figure()
+
+        if mode == 'net':
+            colors = ['#ef4444' if v < 0 else '#22c55e' for v in total_gex]
+            fig.add_trace(go.Bar(
+                x=strikes, y=total_gex,
+                marker_color=colors,
+                marker_line_width=0,
+                showlegend=False,
+                hovertemplate='Strike: R$ %{x:.2f}<br>GEX: %{y:,.0f}<extra></extra>'
+            ))
+
+        elif mode == 'descoberto':
+            colors = ['#ef4444' if v < 0 else '#22c55e' for v in descoberto]
+            fig.add_trace(go.Bar(
+                x=strikes, y=descoberto,
+                marker_color=colors,
+                marker_line_width=0,
+                showlegend=False,
+                hovertemplate='Strike: R$ %{x:.2f}<br>GEX Desc: %{y:,.0f}<extra></extra>'
+            ))
+
+        elif mode == 'call_put':
+            fig.add_trace(go.Bar(
+                x=strikes, y=call_gex,
+                name='Calls',
+                marker_color='#22c55e',
+                marker_line_width=0,
+                hovertemplate='Strike: R$ %{x:.2f}<br>Call GEX: %{y:,.0f}<extra></extra>'
+            ))
+            fig.add_trace(go.Bar(
+                x=strikes, y=put_gex,
+                name='Puts',
+                marker_color='#ef4444',
+                marker_line_width=0,
+                hovertemplate='Strike: R$ %{x:.2f}<br>Put GEX: %{y:,.0f}<extra></extra>'
+            ))
+            fig.update_layout(barmode='relative')
+
+        elif mode == 'oi':
+            fig.add_trace(go.Bar(
+                x=strikes, y=call_oi,
+                name='Call OI',
+                marker_color='#22c55e',
+                marker_line_width=0,
+                hovertemplate='Strike: R$ %{x:.2f}<br>Call OI: %{y:,}<extra></extra>'
+            ))
+            fig.add_trace(go.Bar(
+                x=strikes, y=put_oi,
+                name='Put OI',
+                marker_color='#ef4444',
+                marker_line_width=0,
+                hovertemplate='Strike: R$ %{x:.2f}<br>Put OI: %{y:,}<extra></extra>'
+            ))
+            fig.update_layout(barmode='stack')
+
+        # Linhas de referência — anotações posicionadas fora da área do gráfico para não truncar
+        fig.add_vline(
+            x=spot_price,
+            line=dict(color='#ffffff', width=2, dash='dash'),
+            annotation=dict(
+                text='SPOT',
+                font=dict(color='#ffffff', size=11),
+                yref='paper', y=1.0, yanchor='bottom',
+                bgcolor='rgba(0,0,0,0.6)',
+                borderpad=3
+            )
+        )
+
+        if flip_strike and flip_strike != spot_price:
+            flip_distance_pct = ((spot_price - flip_strike) / flip_strike) * 100
+            flip_label = f'FLIP {flip_distance_pct:+.1f}%'
+            fig.add_vline(
+                x=flip_strike,
+                line=dict(color='#f97316', width=2, dash='dot'),
+                annotation=dict(
+                    text=flip_label,
+                    font=dict(color='#f97316', size=11),
+                    yref='paper', y=0.97, yanchor='bottom',
+                    bgcolor='rgba(0,0,0,0.6)',
+                    borderpad=3
+                )
+            )
+
+        fig.add_hline(y=0, line=dict(color='rgba(255,255,255,0.2)', width=1))
+
+        fig.update_layout(
+            title={
+                'text': f'{title_mode}  ·  {exp_desc}',
+                'x': 0.02,
+                'xanchor': 'left',
+                'font': {'size': 15, 'color': '#aaaaaa', 'family': 'Inter, sans-serif'}
+            },
+            paper_bgcolor='rgba(0,0,0,0)',
+            plot_bgcolor='rgba(0,0,0,0)',
+            font=dict(color='#ffffff', family='Inter, sans-serif', size=12),
+            height=520,
+            margin=dict(l=60, r=30, t=60, b=60),
+            showlegend=(mode in ['call_put', 'oi']),
+            legend=dict(
+                orientation='h',
+                x=0, y=1.08,
+                font=dict(color='#ffffff', size=11)
+            ),
+            bargap=0.15,
+        )
+
+        fig.update_xaxes(
+            gridcolor='rgba(255,255,255,0.06)',
+            color='#aaaaaa',
+            showgrid=True,
+            zeroline=False,
+            tickformat='.2f',
+            tickprefix='R$ '
+        )
+        fig.update_yaxes(
+            gridcolor='rgba(255,255,255,0.06)',
+            color='#aaaaaa',
+            showgrid=True,
+            zeroline=False
+        )
+
+        return fig.to_json()
+
+    def create_cumulative_chart(self, gex_df, spot_price, symbol, flip_strike=None, expiration_info=None):
+        """Gráfico GEX Cumulativo — linha + área, fixo no novo layout."""
+        if gex_df.empty:
+            return None
+
+        gex_df = gex_df.sort_values('strike').reset_index(drop=True)
+        strikes     = [float(x) for x in gex_df['strike'].tolist()]
+        total_gex   = [float(x) for x in gex_df['total_gex'].tolist()]
+        cumulative  = list(np.cumsum(total_gex))
+        exp_desc    = expiration_info['desc'] if expiration_info else ''
+
+        fig = go.Figure()
+
+        fig.add_trace(go.Scatter(
+            x=strikes, y=cumulative,
+            mode='lines',
+            line=dict(color='#06b6d4', width=2),
+            fill='tozeroy',
+            fillcolor='rgba(6,182,212,0.08)',
+            showlegend=False,
+            hovertemplate='Strike: R$ %{x:.2f}<br>Cum GEX: %{y:,.0f}<extra></extra>'
+        ))
+
+        fig.add_vline(
+            x=spot_price,
+            line=dict(color='#ffffff', width=2, dash='dash'),
+            annotation=dict(
+                text='SPOT', font=dict(color='#ffffff', size=11),
+                yref='paper', y=1.0, yanchor='bottom',
+                bgcolor='rgba(0,0,0,0.6)', borderpad=3
+            )
+        )
+
+        if flip_strike and flip_strike != spot_price:
+            dist = ((spot_price - flip_strike) / flip_strike) * 100
+            fig.add_vline(
+                x=flip_strike,
+                line=dict(color='#f97316', width=2, dash='dot'),
+                annotation=dict(
+                    text=f'FLIP {dist:+.1f}%', font=dict(color='#f97316', size=11),
+                    yref='paper', y=0.88, yanchor='bottom',
+                    bgcolor='rgba(0,0,0,0.6)', borderpad=3
+                )
+            )
+
+        fig.add_hline(y=0, line=dict(color='rgba(255,255,255,0.15)', width=1))
+
+        fig.update_layout(
+            title=dict(
+                text=f'GEX Cumulativo  ·  {exp_desc}',
+                x=0.02, xanchor='left',
+                font=dict(size=13, color='#555', family='Inter, sans-serif')
+            ),
+            paper_bgcolor='rgba(0,0,0,0)',
+            plot_bgcolor='rgba(0,0,0,0)',
+            font=dict(color='#aaa', family='Inter, sans-serif', size=11),
+            height=520,
+            margin=dict(l=60, r=20, t=40, b=45),
+            showlegend=False,
+        )
+        fig.update_xaxes(
+            gridcolor='rgba(255,255,255,0.05)', color='#555',
+            zeroline=False, tickformat='.2f', tickprefix='R$ '
+        )
+        fig.update_yaxes(
+            gridcolor='rgba(255,255,255,0.05)', color='#555',
+            zeroline=True, zerolinecolor='rgba(255,255,255,0.15)'
+        )
+
+        return fig.to_json()
+
     def identify_walls(self, gex_df, spot_price):
         if gex_df.empty:
             return []
-        
+
+        df = gex_df.copy()
         walls = []
-        
-        valid_strikes = gex_df[
-            (gex_df['call_oi_descoberto'] > 0) | (gex_df['put_oi_descoberto'] > 0)
-        ].copy()
-        
-        if valid_strikes.empty:
-            logging.warning("Nenhum strike com OI descoberto válido")
-            return []
-        
-        calls_with_oi = valid_strikes[valid_strikes['call_oi_descoberto'] > 0]
-        if not calls_with_oi.empty:
-            max_call_row = calls_with_oi.loc[calls_with_oi['call_oi_descoberto'].idxmax()]
-            
+
+        # Top 2 calls: maior call_gex_descoberto absoluto (positivo)
+        calls = df[df['call_gex_descoberto'] > 0].copy()
+        calls['_abs'] = calls['call_gex_descoberto'].abs()
+        for _, row in calls.nlargest(2, '_abs').iterrows():
             walls.append({
-                'strike': float(max_call_row['strike']),
-                'gamma_descoberto': float(max_call_row['total_gex_descoberto']),
-                'oi_descoberto': int(max_call_row['call_oi_descoberto']),
-                'intensity': 1.0,
-                'type': 'Support',
-                'distance_pct': float(abs(max_call_row['strike'] - spot_price) / spot_price * 100),
-                'strength': 'Strong'
+                'strike':         float(row['strike']),
+                'gex_descoberto': float(row['call_gex_descoberto']),
+                'type':           'Call',
+                'distance_pct':   float(abs(row['strike'] - spot_price) / spot_price * 100),
             })
-        
-        puts_with_oi = valid_strikes[valid_strikes['put_oi_descoberto'] > 0]
-        if not puts_with_oi.empty:
-            max_put_row = puts_with_oi.loc[puts_with_oi['put_oi_descoberto'].idxmax()]
-            
+
+        # Top 2 puts: maior put_gex_descoberto absoluto (negativo)
+        puts = df[df['put_gex_descoberto'] < 0].copy()
+        puts['_abs'] = puts['put_gex_descoberto'].abs()
+        for _, row in puts.nlargest(2, '_abs').iterrows():
             walls.append({
-                'strike': float(max_put_row['strike']),
-                'gamma_descoberto': float(max_put_row['total_gex_descoberto']),
-                'oi_descoberto': int(max_put_row['put_oi_descoberto']),
-                'intensity': 1.0,
-                'type': 'Resistance',
-                'distance_pct': float(abs(max_put_row['strike'] - spot_price) / spot_price * 100),
-                'strength': 'Strong'
+                'strike':         float(row['strike']),
+                'gex_descoberto': float(row['put_gex_descoberto']),
+                'type':           'Put',
+                'distance_pct':   float(abs(row['strike'] - spot_price) / spot_price * 100),
             })
-        
+
         logging.info(f"WALLS: {len(walls)}")
-        for wall in walls:
-            logging.info(f"  {wall['type']}: R${wall['strike']:.2f} - OI: {wall['oi_descoberto']:,}")
-        
+        for w in walls:
+            logging.info(f"  {w['type']}: R${w['strike']:.2f} - GEX Desc: {w['gex_descoberto']:,.0f}")
+
         return walls
     
     def analyze(self, symbol, expiration_code=None):
@@ -759,7 +982,19 @@ class GEXAnalyzer:
         gex_df = gex_df.sort_values('strike').reset_index(drop=True)
         
         flip_strike = self.find_gamma_flip(gex_df, spot_price, symbol)
+
+        # Gráfico 6 painéis — mantido
         plot_json = self.create_6_charts(gex_df, spot_price, symbol, flip_strike, expiration_info)
+
+        # Gráfico único por modo — novo layout
+        single_charts = {
+            'net':        self.create_single_chart(gex_df, spot_price, symbol, flip_strike, expiration_info, mode='net'),
+            'descoberto': self.create_single_chart(gex_df, spot_price, symbol, flip_strike, expiration_info, mode='descoberto'),
+            'call_put':   self.create_single_chart(gex_df, spot_price, symbol, flip_strike, expiration_info, mode='call_put'),
+            'oi':         self.create_single_chart(gex_df, spot_price, symbol, flip_strike, expiration_info, mode='oi'),
+            'cumulativo': self.create_cumulative_chart(gex_df, spot_price, symbol, flip_strike, expiration_info),
+        }
+
         walls = self.identify_walls(gex_df, spot_price)
         
         cumulative_total = np.cumsum(gex_df['total_gex'].values)
@@ -769,6 +1004,9 @@ class GEXAnalyzer:
         net_gex_descoberto = float(cumulative_descoberto[-1])
         
         real_data_count = int(gex_df['has_real_data'].sum())
+
+        # Serializa gex_df para o frontend poder trocar de modo sem nova requisição
+        chart_data = gex_df.to_dict(orient='list')
         
         gex_levels = {
             'total_gex': net_gex,
@@ -800,6 +1038,8 @@ class GEXAnalyzer:
             'strikes_analyzed': len(gex_df),
             'expiration': expiration_info,
             'plot_json': plot_json,
+            'single_charts': single_charts,   # NOVO
+            'chart_data': chart_data,          # NOVO — dados brutos para troca client-side
             'walls': walls,
             'real_data_count': real_data_count,
             'liquidity_info': liquidity_info,
@@ -833,10 +1073,13 @@ class GammaService:
                 'flip_strike': flip_strike,
                 'regime': regime,
                 'plot_json': result['plot_json'],
+                'single_charts': result['single_charts'],   # NOVO
+                'chart_data': result['chart_data'],          # NOVO
                 'walls': result['walls'],
                 'options_count': result['strikes_analyzed'],
                 'data_quality': {
                     'expiration': result['expiration']['desc'] if result['expiration'] else None,
+                    'expiration_window': result['expiration'].get('window', 'MENSAL') if result['expiration'] else None,
                     'real_data_count': result['real_data_count'],
                     'liquidity_category': result['liquidity_info']['category'],
                     'atm_range_pct': result['liquidity_info']['range']
@@ -849,3 +1092,5 @@ class GammaService:
         except Exception as e:
             logging.error(f"Erro na análise GEX: {e}")
             raise
+
+    
