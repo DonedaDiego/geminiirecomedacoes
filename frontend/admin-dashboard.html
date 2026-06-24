@@ -159,6 +159,10 @@
           <i class="fas fa-database mr-3"></i>
           Sync Railway
         </a>
+        <a href="javascript:void(0)" data-section="emailManual" class="nav-item flex items-center p-3 text-gray-300 border border-transparent">
+          <i class="fas fa-paper-plane mr-3"></i>
+          E-mail Manual
+        </a>
       </nav>
       
       <div class="mt-auto pt-8">
@@ -700,6 +704,111 @@
       </div>
     </div>
 
+    <!-- Email Manual Section -->
+    <div id="emailManualSection" class="section hidden">
+      <div class="grid grid-cols-1 lg:grid-cols-5 gap-6" style="min-height:600px">
+
+        <!-- Left: user list -->
+        <div class="lg:col-span-2 flex flex-col gap-4">
+
+          <!-- Filter tabs -->
+          <div class="admin-card p-4">
+            <h3 class="text-base font-semibold text-white mb-3"><i class="fas fa-users mr-2 text-geminii"></i>Destinatários</h3>
+            <div class="flex flex-wrap gap-2 mb-3">
+              <button onclick="emailSetFiltro('todos')" id="emailFiltroTodos" class="email-filtro-btn px-3 py-1 rounded-full text-xs font-medium border border-geminii bg-geminii bg-opacity-20 text-white">Todos</button>
+              <button onclick="emailSetFiltro('nao_community')" id="emailFiltroNaoCommunity" class="email-filtro-btn px-3 py-1 rounded-full text-xs font-medium border border-gray-600 text-gray-400 hover:border-geminii hover:text-white">Não Comunidade</button>
+              <button onclick="emailSetFiltro('inativos')" id="emailFiltroInativos" class="email-filtro-btn px-3 py-1 rounded-full text-xs font-medium border border-gray-600 text-gray-400 hover:border-geminii hover:text-white">Inativos 30d</button>
+              <button onclick="emailSetFiltro('trial')" id="emailFiltroTrial" class="email-filtro-btn px-3 py-1 rounded-full text-xs font-medium border border-gray-600 text-gray-400 hover:border-geminii hover:text-white">Trial</button>
+            </div>
+            <div class="flex gap-2">
+              <input type="text" id="emailBusca" placeholder="Buscar nome ou e-mail..." oninput="emailSearch()" class="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-geminii">
+              <button onclick="emailSelectAll()" title="Selecionar todos" class="px-3 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-xs text-white border border-gray-600">
+                <i class="fas fa-check-double"></i>
+              </button>
+              <button onclick="emailDeselectAll()" title="Limpar seleção" class="px-3 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-xs text-white border border-gray-600">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+            <div class="mt-2 text-xs text-gray-400" id="emailSelCount">0 selecionados de 0</div>
+          </div>
+
+          <!-- User list -->
+          <div class="admin-card p-0 flex-1 overflow-hidden" style="max-height:460px;overflow-y:auto;" id="emailUserListWrap">
+            <div id="emailUserList" class="divide-y divide-gray-800">
+              <div class="p-4 text-center text-gray-500 text-sm">Carregando...</div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Right: email composer -->
+        <div class="lg:col-span-3 flex flex-col gap-4">
+
+          <div class="admin-card p-5 flex flex-col gap-4">
+            <h3 class="text-base font-semibold text-white"><i class="fas fa-paper-plane mr-2 text-geminii"></i>Compor E-mail</h3>
+
+            <!-- Template selector -->
+            <div>
+              <label class="block text-xs text-gray-400 mb-1">Template</label>
+              <select id="emailTemplate" onchange="emailApplyTemplate()" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-geminii">
+                <option value="">— Selecionar template —</option>
+                <option value="comunidade">Convite para Comunidade</option>
+                <option value="lembrete">Lembrete de Fatura</option>
+                <option value="boasvindas">Boas-vindas</option>
+                <option value="livre">Livre (editor em branco)</option>
+              </select>
+            </div>
+
+            <!-- Subject -->
+            <div>
+              <label class="block text-xs text-gray-400 mb-1">Assunto</label>
+              <input type="text" id="emailAssunto" placeholder="Assunto do e-mail..." class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-geminii">
+            </div>
+
+            <!-- HTML body editor -->
+            <div>
+              <div class="flex items-center justify-between mb-1">
+                <label class="text-xs text-gray-400">Corpo do e-mail (HTML)</label>
+                <div class="flex gap-2">
+                  <button onclick="emailToggleEditor()" id="emailToggleBtn" class="text-xs px-2 py-1 rounded bg-gray-700 hover:bg-gray-600 text-gray-300 border border-gray-600">
+                    <i class="fas fa-eye mr-1"></i>Preview
+                  </button>
+                  <button onclick="emailOpenPreviewModal()" class="text-xs px-2 py-1 rounded bg-gray-700 hover:bg-gray-600 text-gray-300 border border-gray-600">
+                    <i class="fas fa-expand mr-1"></i>Abrir
+                  </button>
+                </div>
+              </div>
+              <textarea id="emailBody" rows="14" placeholder="Cole ou escreva o HTML do e-mail aqui...&#10;&#10;Use {{nome}} para personalizar o nome do destinatário.&#10;Use <img src='URL'> para inserir imagens." class="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-xs text-green-300 font-mono placeholder-gray-600 focus:outline-none focus:border-geminii resize-y" style="min-height:260px;"></textarea>
+              <p class="text-xs text-gray-500 mt-1"><i class="fas fa-info-circle mr-1"></i>Use <code class="text-green-400">{{nome}}</code> para nome do destinatário. Imagens: <code class="text-green-400">&lt;img src="URL"&gt;</code></p>
+            </div>
+
+            <!-- Send button -->
+            <div class="flex items-center gap-3 mt-2">
+              <button onclick="emailEnviar()" id="emailEnviarBtn" class="flex-1 py-3 rounded-xl font-semibold text-white text-sm" style="background:linear-gradient(135deg,#fb1ebb,#9333ea)">
+                <i class="fas fa-paper-plane mr-2"></i>Enviar E-mail
+              </button>
+              <div id="emailEnviarStatus" class="text-sm text-gray-400"></div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Preview modal -->
+      <div id="emailPreviewModal" class="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 hidden">
+        <div class="bg-gray-900 border border-gray-700 rounded-2xl shadow-2xl w-full max-w-2xl mx-4" style="max-height:90vh;display:flex;flex-direction:column;">
+          <div class="flex items-center justify-between p-4 border-b border-gray-700">
+            <h3 class="text-white font-semibold"><i class="fas fa-eye mr-2 text-geminii"></i>Preview do E-mail</h3>
+            <button onclick="emailClosePreviewModal()" class="text-gray-400 hover:text-white text-xl"><i class="fas fa-times"></i></button>
+          </div>
+          <div class="flex-1 overflow-hidden p-4">
+            <iframe id="emailPreviewIframe" class="w-full rounded-lg border border-gray-700 bg-white" style="height:500px;"></iframe>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
     </div>
   </div>
 
@@ -952,7 +1061,8 @@
         dashboard: { title: 'Dashboard', subtitle: 'Visão geral do sistema' },
         users: { title: 'Usuários', subtitle: 'Gerenciar usuários e assinaturas' },
         recommendationsFree: { title: 'Recomendações Free', subtitle: 'Recomendações gratuitas mensais' },
-        railway: { title: 'Sincronização Railway', subtitle: 'Sincronizar dados B3 com banco Railway' }
+        railway: { title: 'Sincronização Railway', subtitle: 'Sincronizar dados B3 com banco Railway' },
+        emailManual: { title: 'E-mail Manual', subtitle: 'Selecione usuários e envie e-mails personalizados' }
       };
 
       if (titles[sectionName]) {
@@ -963,6 +1073,7 @@
       if (sectionName === 'users') loadUsersEnhanced();
       if (sectionName === 'recommendationsFree') loadRecommendationsFree();
       if (sectionName === 'railway') loadRailwaySync();
+      if (sectionName === 'emailManual') emailLoadUsers();
     }
 
     function setupNavigation() {
@@ -2020,6 +2131,264 @@
     }
 
     document.addEventListener('DOMContentLoaded', initAdminDashboard);
+
+    // ===== EMAIL MANUAL =====
+    let emailAllUsers = [];
+    let emailFilteredUsers = [];
+    let emailSelectedIds = new Set();
+    let emailCurrentFiltro = 'todos';
+    let emailEditorMode = 'code'; // 'code' | 'preview'
+
+    async function emailLoadUsers() {
+      const filtro = emailCurrentFiltro;
+      const busca = (document.getElementById('emailBusca') || {value:''}).value;
+      document.getElementById('emailUserList').innerHTML = '<div class="p-4 text-center text-gray-500 text-sm"><i class="fas fa-spinner fa-spin mr-2"></i>Carregando...</div>';
+      try {
+        const url = `/api/admin/email/usuarios-lista?filtro=${filtro}&busca=${encodeURIComponent(busca)}`;
+        const res = await fetch(url, { headers: { 'Authorization': `Bearer ${adminToken}` } });
+        const data = await res.json();
+        if (!data.success) throw new Error(data.error);
+        emailFilteredUsers = data.users;
+        // Keep selected only if still in list
+        const ids = new Set(emailFilteredUsers.map(u => u.id));
+        emailSelectedIds.forEach(id => { if (!ids.has(id)) emailSelectedIds.delete(id); });
+        emailRenderList();
+      } catch(e) {
+        document.getElementById('emailUserList').innerHTML = `<div class="p-4 text-center text-red-400 text-sm">${e.message}</div>`;
+      }
+    }
+
+    function emailRenderList() {
+      const list = document.getElementById('emailUserList');
+      if (!emailFilteredUsers.length) {
+        list.innerHTML = '<div class="p-4 text-center text-gray-500 text-sm">Nenhum usuário encontrado</div>';
+        emailUpdateSelCount();
+        return;
+      }
+      list.innerHTML = emailFilteredUsers.map(u => {
+        const checked = emailSelectedIds.has(u.id);
+        const planColor = u.plan_id === 4 ? 'text-purple-400' : 'text-gray-400';
+        const loginStr = u.formatted_last_login || 'Nunca';
+        return `
+          <label class="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-gray-800 transition-colors">
+            <input type="checkbox" class="email-user-cb w-4 h-4 accent-pink-500 shrink-0" data-id="${u.id}" ${checked ? 'checked' : ''} onchange="emailToggleUser(${u.id})">
+            <div class="flex-1 min-w-0">
+              <div class="text-sm text-white font-medium truncate">${u.name || '(sem nome)'}</div>
+              <div class="text-xs text-gray-400 truncate">${u.email}</div>
+              <div class="flex gap-2 mt-0.5">
+                <span class="text-xs ${planColor}">${u.plan}</span>
+                <span class="text-xs text-gray-600">·</span>
+                <span class="text-xs text-gray-500">Login: ${loginStr}</span>
+              </div>
+            </div>
+          </label>`;
+      }).join('');
+      emailUpdateSelCount();
+    }
+
+    function emailToggleUser(id) {
+      if (emailSelectedIds.has(id)) emailSelectedIds.delete(id);
+      else emailSelectedIds.add(id);
+      emailUpdateSelCount();
+    }
+
+    function emailSelectAll() {
+      emailFilteredUsers.forEach(u => emailSelectedIds.add(u.id));
+      emailRenderList();
+    }
+
+    function emailDeselectAll() {
+      emailFilteredUsers.forEach(u => emailSelectedIds.delete(u.id));
+      emailRenderList();
+    }
+
+    function emailUpdateSelCount() {
+      const el = document.getElementById('emailSelCount');
+      if (el) el.textContent = `${emailSelectedIds.size} selecionados de ${emailFilteredUsers.length}`;
+    }
+
+    function emailSetFiltro(filtro) {
+      emailCurrentFiltro = filtro;
+      document.querySelectorAll('.email-filtro-btn').forEach(btn => {
+        btn.classList.remove('border-geminii', 'bg-geminii', 'bg-opacity-20', 'text-white');
+        btn.classList.add('border-gray-600', 'text-gray-400');
+      });
+      const map = { todos: 'emailFiltroTodos', nao_community: 'emailFiltroNaoCommunity', inativos: 'emailFiltroInativos', trial: 'emailFiltroTrial' };
+      const active = document.getElementById(map[filtro]);
+      if (active) {
+        active.classList.add('border-geminii', 'bg-geminii', 'bg-opacity-20', 'text-white');
+        active.classList.remove('border-gray-600', 'text-gray-400');
+      }
+      emailLoadUsers();
+    }
+
+    function emailSearch() {
+      clearTimeout(window._emailSearchTimer);
+      window._emailSearchTimer = setTimeout(emailLoadUsers, 300);
+    }
+
+    const EMAIL_TEMPLATES = {
+      comunidade: {
+        assunto: 'Você foi convidado para a Comunidade Geminii! 🚀',
+        body: `<!DOCTYPE html>
+<html lang="pt-BR">
+<body style="margin:0;padding:0;background:#0f0f0f;font-family:Inter,Arial,sans-serif;">
+  <div style="max-width:600px;margin:0 auto;padding:32px 16px;">
+    <div style="background:linear-gradient(135deg,#1a1a2e,#16213e);border:1px solid rgba(251,30,187,0.3);border-radius:16px;padding:40px 32px;text-align:center;">
+      <div style="font-size:48px;margin-bottom:16px;">🚀</div>
+      <h1 style="color:#fb1ebb;font-size:28px;margin:0 0 8px;">Convite Especial</h1>
+      <h2 style="color:#fff;font-size:20px;font-weight:400;margin:0 0 24px;">Olá, {{nome}}!</h2>
+      <p style="color:#9ca3af;font-size:16px;line-height:1.6;margin:0 0 24px;">
+        Você foi selecionado para fazer parte da <strong style="color:#fb1ebb;">Comunidade Geminii</strong> — onde traders sérios tomam decisões melhores com análises profissionais de ações e opções da B3.
+      </p>
+      <div style="background:rgba(251,30,187,0.08);border:1px solid rgba(251,30,187,0.2);border-radius:12px;padding:20px;margin:0 0 28px;text-align:left;">
+        <p style="color:#fff;font-weight:600;margin:0 0 12px;font-size:15px;">O que você vai ter acesso:</p>
+        <ul style="color:#9ca3af;margin:0;padding-left:20px;font-size:14px;line-height:2;">
+          <li>Recomendações de <strong style="color:#fff;">Swing Trade</strong> com alvo e stop</li>
+          <li>Análise de <strong style="color:#fff;">Opções da B3</strong> em tempo real</li>
+          <li>Machine Learning para <strong style="color:#fff;">previsão de tendências</strong></li>
+          <li>Suporte prioritário da equipe</li>
+        </ul>
+      </div>
+      <a href="https://geminii.com.br" style="display:inline-block;background:linear-gradient(135deg,#fb1ebb,#9333ea);color:#fff;font-weight:700;font-size:16px;padding:16px 40px;border-radius:50px;text-decoration:none;margin-bottom:24px;">
+        Acessar a Comunidade →
+      </a>
+      <p style="color:#6b7280;font-size:13px;margin:0;">Qualquer dúvida, responda este e-mail.</p>
+    </div>
+    <p style="color:#4b5563;font-size:11px;text-align:center;margin-top:16px;">Geminii Tech · contato@geminii.com.br</p>
+  </div>
+</body>
+</html>`
+      },
+      lembrete: {
+        assunto: 'Sua fatura Geminii vence em breve ⚠️',
+        body: `<!DOCTYPE html>
+<html lang="pt-BR">
+<body style="margin:0;padding:0;background:#0f0f0f;font-family:Inter,Arial,sans-serif;">
+  <div style="max-width:600px;margin:0 auto;padding:32px 16px;">
+    <div style="background:linear-gradient(135deg,#1a1a2e,#16213e);border:1px solid rgba(234,179,8,0.3);border-radius:16px;padding:40px 32px;text-align:center;">
+      <div style="font-size:48px;margin-bottom:16px;">⚠️</div>
+      <h1 style="color:#facc15;font-size:26px;margin:0 0 8px;">Fatura vencendo</h1>
+      <h2 style="color:#fff;font-size:18px;font-weight:400;margin:0 0 24px;">Olá, {{nome}}!</h2>
+      <p style="color:#9ca3af;font-size:15px;line-height:1.6;margin:0 0 24px;">
+        Sua assinatura da <strong style="color:#fb1ebb;">Comunidade Geminii</strong> está próxima do vencimento. Para continuar tendo acesso às análises e recomendações, renove agora.
+      </p>
+      <a href="https://geminii.com.br" style="display:inline-block;background:linear-gradient(135deg,#facc15,#f97316);color:#000;font-weight:700;font-size:16px;padding:16px 40px;border-radius:50px;text-decoration:none;margin-bottom:24px;">
+        Renovar Assinatura →
+      </a>
+      <p style="color:#6b7280;font-size:13px;margin:0;">Qualquer dúvida, responda este e-mail.</p>
+    </div>
+    <p style="color:#4b5563;font-size:11px;text-align:center;margin-top:16px;">Geminii Tech · contato@geminii.com.br</p>
+  </div>
+</body>
+</html>`
+      },
+      boasvindas: {
+        assunto: 'Bem-vindo à Geminii! 🎉',
+        body: `<!DOCTYPE html>
+<html lang="pt-BR">
+<body style="margin:0;padding:0;background:#0f0f0f;font-family:Inter,Arial,sans-serif;">
+  <div style="max-width:600px;margin:0 auto;padding:32px 16px;">
+    <div style="background:linear-gradient(135deg,#1a1a2e,#16213e);border:1px solid rgba(34,197,94,0.3);border-radius:16px;padding:40px 32px;text-align:center;">
+      <div style="font-size:48px;margin-bottom:16px;">🎉</div>
+      <h1 style="color:#4ade80;font-size:26px;margin:0 0 8px;">Bem-vindo!</h1>
+      <h2 style="color:#fff;font-size:18px;font-weight:400;margin:0 0 24px;">Olá, {{nome}}!</h2>
+      <p style="color:#9ca3af;font-size:15px;line-height:1.6;margin:0 0 24px;">
+        Sua conta na <strong style="color:#fb1ebb;">Geminii Tech</strong> foi criada com sucesso. Explore nossas análises e comece a operar com mais confiança.
+      </p>
+      <a href="https://geminii.com.br" style="display:inline-block;background:linear-gradient(135deg,#4ade80,#22c55e);color:#000;font-weight:700;font-size:16px;padding:16px 40px;border-radius:50px;text-decoration:none;margin-bottom:24px;">
+        Acessar Plataforma →
+      </a>
+      <p style="color:#6b7280;font-size:13px;margin:0;">Qualquer dúvida, responda este e-mail.</p>
+    </div>
+    <p style="color:#4b5563;font-size:11px;text-align:center;margin-top:16px;">Geminii Tech · contato@geminii.com.br</p>
+  </div>
+</body>
+</html>`
+      },
+      livre: { assunto: '', body: '' }
+    };
+
+    function emailApplyTemplate() {
+      const sel = document.getElementById('emailTemplate').value;
+      if (!sel || !EMAIL_TEMPLATES[sel]) return;
+      const tpl = EMAIL_TEMPLATES[sel];
+      document.getElementById('emailAssunto').value = tpl.assunto;
+      document.getElementById('emailBody').value = tpl.body;
+    }
+
+    function emailToggleEditor() {
+      const btn = document.getElementById('emailToggleBtn');
+      const ta = document.getElementById('emailBody');
+      if (emailEditorMode === 'code') {
+        emailEditorMode = 'preview';
+        btn.innerHTML = '<i class="fas fa-code mr-1"></i>Código';
+        emailOpenPreviewModal();
+      } else {
+        emailEditorMode = 'code';
+        btn.innerHTML = '<i class="fas fa-eye mr-1"></i>Preview';
+      }
+    }
+
+    function emailOpenPreviewModal() {
+      const html = document.getElementById('emailBody').value;
+      const iframe = document.getElementById('emailPreviewIframe');
+      iframe.srcdoc = html || '<p style="font-family:sans-serif;color:#666;padding:20px;">Nenhum conteúdo</p>';
+      document.getElementById('emailPreviewModal').classList.remove('hidden');
+    }
+
+    function emailClosePreviewModal() {
+      document.getElementById('emailPreviewModal').classList.add('hidden');
+    }
+
+    async function emailEnviar() {
+      const assunto = document.getElementById('emailAssunto').value.trim();
+      const html_body = document.getElementById('emailBody').value.trim();
+      const btn = document.getElementById('emailEnviarBtn');
+      const statusEl = document.getElementById('emailEnviarStatus');
+
+      if (!emailSelectedIds.size) {
+        alert('Selecione ao menos um destinatário.');
+        return;
+      }
+      if (!assunto) { alert('Informe o assunto do e-mail.'); return; }
+      if (!html_body) { alert('Escreva o corpo do e-mail.'); return; }
+
+      const destinatarios = emailFilteredUsers
+        .filter(u => emailSelectedIds.has(u.id))
+        .map(u => ({ email: u.email, name: u.name || '' }));
+
+      const confirm = window.confirm(`Enviar e-mail para ${destinatarios.length} destinatário(s)?\n\nAssunto: "${assunto}"`);
+      if (!confirm) return;
+
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Enviando...';
+      statusEl.textContent = '';
+
+      try {
+        const res = await fetch('/api/admin/email/enviar', {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ destinatarios, assunto, html_body })
+        });
+        const data = await res.json();
+        if (data.success) {
+          statusEl.innerHTML = `<span class="text-green-400"><i class="fas fa-check mr-1"></i>${data.enviados} enviados${data.falhas > 0 ? ', ' + data.falhas + ' falhas' : ''}</span>`;
+          emailDeselectAll();
+        } else {
+          statusEl.innerHTML = `<span class="text-red-400">${data.error}</span>`;
+        }
+      } catch(e) {
+        statusEl.innerHTML = `<span class="text-red-400">Erro: ${e.message}</span>`;
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-paper-plane mr-2"></i>Enviar E-mail';
+      }
+    }
+
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') emailClosePreviewModal();
+    });
   </script>
 </body>
 </html>

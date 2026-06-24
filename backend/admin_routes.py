@@ -1339,6 +1339,122 @@ def list_users_enhanced(admin_id):
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
+# ===== EMAIL MANUAL =====
+
+@admin_bp.route('/email/usuarios-lista')
+@require_admin()
+def email_usuarios_lista(admin_id):
+    """Retorna lista de usuários com filtros para envio de e-mail"""
+    try:
+        filtro = request.args.get('filtro', 'todos')
+        busca = request.args.get('busca', '').strip().lower()
+
+        conn = get_db_connection()
+        if not conn:
+            return jsonify({'success': False, 'error': 'Erro de conexão'}), 500
+
+        cursor = conn.cursor()
+
+        base_query = """
+            SELECT id, name, email, plan_id, plan_name, user_type,
+                   subscription_status, last_login, created_at
+            FROM users
+            WHERE user_type NOT IN ('deleted', 'admin', 'master')
+        """
+        params = []
+
+        if filtro == 'nao_community':
+            base_query += " AND (plan_id != 4 OR plan_id IS NULL)"
+        elif filtro == 'inativos':
+            base_query += " AND (last_login IS NULL OR last_login < NOW() - INTERVAL '30 days')"
+        elif filtro == 'trial':
+            base_query += " AND user_type = 'trial'"
+
+        if busca:
+            base_query += " AND (LOWER(name) LIKE %s OR LOWER(email) LIKE %s)"
+            params += [f'%{busca}%', f'%{busca}%']
+
+        base_query += " ORDER BY last_login DESC NULLS LAST LIMIT 500"
+
+        cursor.execute(base_query, params)
+
+        users = []
+        for row in cursor.fetchall():
+            uid, name, email, plan_id, plan_name, user_type, sub_status, last_login, created_at = row
+            users.append({
+                'id': uid,
+                'name': name or '',
+                'email': email,
+                'plan_id': plan_id,
+                'plan': plan_name or 'básico',
+                'type': user_type or 'regular',
+                'subscription_status': sub_status or 'inactive',
+                'last_login': last_login.isoformat() if last_login else None,
+                'formatted_last_login': last_login.strftime('%d/%m/%Y') if last_login else 'Nunca',
+                'created_at': created_at.strftime('%d/%m/%Y') if created_at else 'N/A',
+            })
+
+        cursor.close()
+        conn.close()
+
+        return jsonify({'success': True, 'users': users, 'total': len(users)})
+
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@admin_bp.route('/email/enviar', methods=['POST'])
+@require_admin()
+def email_enviar(admin_id):
+    """Envia e-mail para lista de destinatários"""
+    try:
+        from emails.email_service import email_service
+
+        data = request.get_json()
+        destinatarios = data.get('destinatarios', [])
+        assunto = data.get('assunto', '').strip()
+        html_body = data.get('html_body', '').strip()
+
+        if not destinatarios:
+            return jsonify({'success': False, 'error': 'Selecione ao menos um destinatário'}), 400
+        if not assunto:
+            return jsonify({'success': False, 'error': 'Assunto é obrigatório'}), 400
+        if not html_body:
+            return jsonify({'success': False, 'error': 'Corpo do e-mail é obrigatório'}), 400
+        if len(destinatarios) > 200:
+            return jsonify({'success': False, 'error': 'Máximo de 200 destinatários por envio'}), 400
+
+        enviados = []
+        falhas = []
+
+        for dest in destinatarios:
+            email_to = dest.get('email', '').strip()
+            nome = dest.get('name', 'Cliente')
+            if not email_to:
+                continue
+
+            html_personalizado = html_body.replace('{{nome}}', nome).replace('{{email}}', email_to)
+
+            try:
+                ok = email_service.send_email(email_to, assunto, html_personalizado)
+                if ok:
+                    enviados.append(email_to)
+                else:
+                    falhas.append(email_to)
+            except Exception as e:
+                falhas.append(email_to)
+
+        return jsonify({
+            'success': True,
+            'enviados': len(enviados),
+            'falhas': len(falhas),
+            'lista_falhas': falhas[:20],
+        })
+
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
 # ===== FUNÇÃO EXPORT =====
 def get_admin_blueprint():
     """Retornar blueprint para registrar no Flask"""
