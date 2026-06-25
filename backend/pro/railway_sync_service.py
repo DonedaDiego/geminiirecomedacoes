@@ -261,30 +261,39 @@ class RailwaySyncService:
         }
     
     def obter_datas_disponiveis(self) -> List[str]:
-        """Retorna lista de datas para sincronização"""
-        return [
-            # Abril 2026
-            "20260414",
-            "20260415",
-            "20260416",
-            "20260417",
-            "20260420",
-            "20260422",
-            "20260423",
-            "20260424",
-            "20260427",
-            "20260428",
-            "20260429",
-            "20260430",
-            # Maio 2026
-            "20260504",
-            "20260505",
-            "20260506",
-            "20260507",
-            "20260508",
-            "20260511",
-            "20260512",
-        ]
+        """Gera datas a sincronizar: do último dia no banco até ontem (seg-sex)"""
+        from datetime import timedelta, timezone, date as date_type
+
+        TZ_SP = timezone(timedelta(hours=-3))
+        from datetime import datetime as dt
+        ontem = (dt.now(TZ_SP) - timedelta(days=1)).date()
+
+        # Início do histórico disponível na B3
+        DATA_INICIO_HISTORICO = date_type(2026, 4, 14)
+
+        try:
+            datas_no_banco = self.listar_datas_no_banco()
+            if datas_no_banco:
+                ultima_data = datetime.strptime(datas_no_banco[0]['data_raw'], '%Y%m%d').date()
+                data_inicio = ultima_data + timedelta(days=1)
+            else:
+                data_inicio = DATA_INICIO_HISTORICO
+        except Exception:
+            data_inicio = DATA_INICIO_HISTORICO
+
+        if data_inicio > ontem:
+            self.logger.info("Banco já atualizado até ontem.")
+            return []
+
+        datas = []
+        data_atual = data_inicio
+        while data_atual <= ontem:
+            if data_atual.weekday() < 5:  # segunda a sexta apenas
+                datas.append(data_atual.strftime('%Y%m%d'))
+            data_atual += timedelta(days=1)
+
+        self.logger.info(f"Datas a sincronizar: {len(datas)} ({data_inicio} → {ontem})")
+        return datas
 
     def listar_datas_no_banco(self) -> List[Dict]:
         """Lista datas que existem no banco com contagem"""
