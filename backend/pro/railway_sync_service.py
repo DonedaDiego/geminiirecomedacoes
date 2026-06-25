@@ -17,7 +17,12 @@ class RailwaySyncService:
         self.RAILWAY_DATABASE = "railway"
         
         self.DATABASE_URL = f"postgresql://{self.RAILWAY_USER}:{self.RAILWAY_PASSWORD}@{self.RAILWAY_HOST}:{self.RAILWAY_PORT}/{self.RAILWAY_DATABASE}"
-        self.engine = create_engine(self.DATABASE_URL)
+        self.engine = create_engine(
+            self.DATABASE_URL,
+            pool_pre_ping=True,      # testa conexão antes de usar (corrige SSL EOF)
+            pool_recycle=300,        # recicla conexões a cada 5 min
+            connect_args={"connect_timeout": 10}
+        )
         
         self.setup_logging()
         self.garantir_estrutura()
@@ -56,38 +61,59 @@ class RailwaySyncService:
             return False
     
     def baixar_json_b3(self, data_obj: datetime) -> Optional[Dict]:
-        """Baixa JSON da B3"""
+        """Baixa JSON da B3 com headers completos de browser e retry"""
+        import time
+
         folder_date = data_obj.strftime('%Y%m%d')
         url = f"https://www.b3.com.br/json/{folder_date}/Posicoes/Empresa/SI_C_OPCPOSABEMP.json"
-        
+
         headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+            'Accept': 'application/json, text/plain, */*',
+            'Accept-Language': 'pt-BR,pt;q=0.9,en-US;q=0.8',
+            'Accept-Encoding': 'gzip, deflate, br',
+            'Referer': 'https://www.b3.com.br/',
+            'Origin': 'https://www.b3.com.br',
+            'Connection': 'keep-alive',
         }
-        
-        try:
-            response = requests.get(url, headers=headers, timeout=10)
-            
-            if response.status_code != 200:
-                self.logger.warning(f"⚠️ HTTP {response.status_code}: {folder_date} — pulando")
-                return None
-            
-            # Body vazio = dado não publicado ainda
-            if not response.content or len(response.content) < 10:
-                self.logger.info(f"⏭️ {folder_date} — sem dados na B3 ainda")
-                return None
-            
+
+        for tentativa in range(3):
             try:
-                return response.json()
-            except Exception:
-                self.logger.info(f"⏭️ {folder_date} — JSON inválido, dado não disponível")
-                return None
-                    
-        except requests.Timeout:
-            self.logger.info(f"⏭️ {folder_date} — timeout, pulando")
-            return None
-        except Exception as e:
-            self.logger.error(f"❌ Erro download {folder_date}: {e}")
-            return None
+                response = requests.get(url, headers=headers, timeout=30)
+
+                if response.status_code == 404:
+                    self.logger.info(f"⏭️ {folder_date} — 404 (feriado ou dia sem dados)")
+                    return None
+
+                if response.status_code != 200:
+                    self.logger.warning(f"⚠️ HTTP {response.status_code}: {folder_date} (tentativa {tentativa+1}/3)")
+                    if tentativa < 2:
+                        time.sleep(2 ** tentativa)
+                        continue
+                    return None
+
+                if not response.content or len(response.content) < 10:
+                    self.logger.info(f"⏭️ {folder_date} — resposta vazia, dado não publicado ainda")
+                    return None
+
+                try:
+                    return response.json()
+                except Exception:
+                    self.logger.info(f"⏭️ {folder_date} — JSON inválido (content-type: {response.headers.get('content-type', '?')})")
+                    return None
+
+            except requests.Timeout:
+                self.logger.warning(f"⚠️ {folder_date} — timeout (tentativa {tentativa+1}/3)")
+                if tentativa < 2:
+                    time.sleep(2)
+            except Exception as e:
+                self.logger.error(f"❌ Erro download {folder_date} (tentativa {tentativa+1}/3): {e}")
+                if tentativa < 2:
+                    time.sleep(2)
+                else:
+                    return None
+
+        return None
     
     def processar_json(self, data_json: Dict, data_obj: datetime) -> pd.DataFrame:
         """Processa JSON em DataFrame"""
