@@ -1,6 +1,3 @@
-#!/usr/bin/env python3
-# vencimentos_opcoes_b3.py
-
 import psycopg2
 
 conn = psycopg2.connect(

@@ -1,7 +1,3 @@
-"""
-Teste simples para verificar o cálculo do trial
-Rode: python test_trial.py
-"""
 import psycopg2
 from datetime import datetime
 import os

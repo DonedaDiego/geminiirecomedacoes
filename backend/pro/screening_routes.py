@@ -277,8 +277,17 @@ begin
   begin
     gamma_flip := {flip_strike:.2f};
     HorizontalLineCustom(gamma_flip, clWhite, 3, 2, "Flip {ticker}", 10, tpTopRight);
+    
+    // Alerta: fechamento dentro de 0.05% do flip
+    if (Abs(Close - gamma_flip) / gamma_flip * 100) <= 0.05 then
+    begin
+      if Close >= gamma_flip then
+        Alert(clGreen)   // acima do flip, possível mudança para Long Gamma
+      else
+        Alert(clRed);    // abaixo do flip, possível mudança para Short Gamma
+    end;
   end;
-  
+
 """
         
         ntsl_code += "end;\n\n"

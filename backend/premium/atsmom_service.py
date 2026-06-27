@@ -11,10 +11,8 @@ class ATSMOMService:
     def __init__(self):
         pass
     
-    def get_data(self, symbol, period="5y"):
-        """Obtém dados do Yahoo Finance - IGUAL AO CÓDIGO ORIGINAL"""
-        try:
-            # Para símbolos brasileiros, adiciona .SA se não estiver presente
+    def get_data(self, symbol, period="5y"):        
+        try:            
             if symbol == 'IBOV':
                 ticker_symbol = '^BVSP'  # Índice Bovespa
             elif not symbol.endswith('.SA') and len(symbol) <= 6:
