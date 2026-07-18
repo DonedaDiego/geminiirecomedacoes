@@ -297,9 +297,15 @@
         </div>
 
         <!-- Interpretação -->
-        <div class="bg-black/30 rounded-xl p-4 mb-5">
+        <div class="bg-black/30 rounded-xl p-4 mb-4">
           <div class="stat-label mb-2">Interpretação</div>
           <div class="text-sm text-gray-300 leading-relaxed" id="scenarioInterpretation">--</div>
+        </div>
+
+        <!-- Como ler -->
+        <div class="text-[10px] text-gray-600 leading-relaxed mb-5 flex items-start gap-2 px-1">
+          <i class="fas fa-compass text-gray-500 mt-0.5"></i>
+          <span><strong class="text-gray-400">Como ler:</strong> o <strong class="text-[#a855f7]">DEX</strong> aponta a direção provável, o <strong class="text-[#06b6d4]">GEX</strong> diz se o movimento tende a ser amplificado (SHORT) ou contido (LONG), o <strong class="text-[#f59e0b]">VEX</strong> indica prêmios caros ou baratos e o <strong class="text-[#dc2626]">TEX</strong> a urgência temporal. O cenário é uma leitura probabilística do posicionamento em aberto — não uma previsão. A decisão é sua: combine com sua análise e gestão de risco.</span>
         </div>
 
         <!-- Força / Direção / Intensidade -->
@@ -433,21 +439,21 @@
    TABELA DE CENÁRIOS — preservada integralmente do original
    ══════════════════════════════════════════════════════════ */
 const SCENARIOS_TABLE = {
-  1:  { gex:'SHORT',dex:'POS',vex:'ALTO',tex:'ALTO',   name:'Gamma Squeeze Iminente',    structures:['Compra de Call','Broken Wing Butterfly','Compra de Straddle'],          avoid:['Venda descoberta','Posições vendidas'],        interpretation:'MOVIMENTO EXPLOSIVO PARA CIMA IMINENTE! Os market makers estão "short gamma" e serão forçados a comprar o ativo agressivamente conforme o preço sobe, criando um ciclo de alta autoalimentado (quanto mais sobe, mais eles compram → mais sobe ainda). A volatilidade alta amplifica os ganhos e o theta elevado pressiona quem está vendido em opções. É o setup clássico de gamma squeeze – prepare o foguete!',direction:'ALTA', intensity:'EXPLOSIVA',  urgency:'ALTA' },
+  1:  { gex:'SHORT',dex:'POS',vex:'ALTO',tex:'ALTO',   name:'Gamma Squeeze Iminente',    structures:['Compra de Call','Broken Wing Butterfly','Compra de Straddle'],          avoid:['Venda descoberta','Posições vendidas'],        interpretation:'Condições clássicas de gamma squeeze de alta. Os market makers estão "short gamma" e tendem a comprar o ativo agressivamente conforme o preço sobe, criando um ciclo autoalimentado (quanto mais sobe, mais eles compram → mais sobe ainda). A volatilidade alta amplifica o movimento e o theta elevado pressiona quem está vendido em opções. Leitura de máxima assimetria altista — confirme com o fluxo antes de agir.',direction:'ALTA', intensity:'EXPLOSIVA',  urgency:'ALTA' },
   2:  { gex:'SHORT',dex:'POS',vex:'ALTO',tex:'BAIXO',  name:'Rally Explosivo',            structures:['Compra de Call','Compra de Straddle'],                                   avoid:['Venda de volatilidade'],                        interpretation:'Movimento de alta explosivo em formação, mas sem urgência imediata. Dealers short gamma precisarão comprar gradualmente conforme o preço sobe. Volatilidade alta oferece alavancagem significativa. Há tempo para confirmação antes de entrar.',direction:'ALTA', intensity:'EXPLOSIVA',  urgency:'BAIXA' },
-  3:  { gex:'SHORT',dex:'POS',vex:'BAIXO',tex:'ALTO',  name:'Squeeze Técnico',            structures:['Compra de Call'],                                                        avoid:['Compra de volatilidade'],                       interpretation:'Movimento técnico rápido de alta. Volatilidade baixa torna as calls relativamente baratas, aumentando a alavancagem em um squeeze de gamma com theta acelerado. Janela curta de oportunidade.',direction:'ALTA', intensity:'MODERADA',   urgency:'ALTA' },
-  4:  { gex:'SHORT',dex:'POS',vex:'BAIXO',tex:'BAIXO', name:'Alta Técnica',               structures:['Compra de Call'],                                                        avoid:['Posições de volatilidade'],                     interpretation:'Viés de alta presente, mas controlado e sem pressão temporal forte. Dealers short gamma, porém com baixa vega e theta, o movimento tende a ser mais previsível e menos volátil. Alta probabilidade mas sem explosão.',direction:'ALTA', intensity:'MODERADA',   urgency:'BAIXA' },
-  5:  { gex:'SHORT',dex:'NEG',vex:'ALTO',tex:'ALTO',   name:'Crash Iminente',             structures:['Compra de Put','Broken Wing Butterfly','Compra de Straddle'],            avoid:['Posições compradas','Venda de Put'],             interpretation:'Risco máximo de queda explosiva iminente. Dealers short gamma e delta negativo forçarão vendas agressivas à medida que o preço cai, criando ciclo autodestrutivo amplificado pela alta volatilidade. Vencimento próximo intensifica pressão. PERIGO EXTREMO.',direction:'QUEDA',intensity:'EXPLOSIVA',  urgency:'CRITICA' },
+  3:  { gex:'SHORT',dex:'POS',vex:'BAIXO',tex:'ALTO',  name:'Squeeze Técnico',            structures:['Compra de Call'],                                                        avoid:['Venda de volatilidade'],                        interpretation:'Movimento técnico rápido de alta. Volatilidade baixa torna as calls relativamente baratas, aumentando a alavancagem em um squeeze de gamma com theta acelerado. Em regime short gamma, vender volatilidade é arriscado — o movimento pode ser amplificado. Janela curta de oportunidade.',direction:'ALTA', intensity:'MODERADA',   urgency:'ALTA' },
+  4:  { gex:'SHORT',dex:'POS',vex:'BAIXO',tex:'BAIXO', name:'Alta Técnica',               structures:['Compra de Call'],                                                        avoid:['Venda de volatilidade'],                        interpretation:'Viés de alta presente, mas controlado e sem pressão temporal forte. Dealers short gamma, porém com baixa vega e theta, o movimento tende a ser mais previsível e menos volátil. Alta probabilidade mas sem explosão — ainda assim, o regime short gamma desaconselha estar vendido em volatilidade.',direction:'ALTA', intensity:'MODERADA',   urgency:'BAIXA' },
+  5:  { gex:'SHORT',dex:'NEG',vex:'ALTO',tex:'ALTO',   name:'Crash Iminente',             structures:['Compra de Put','Broken Wing Butterfly','Compra de Straddle'],            avoid:['Posições compradas','Venda de Put'],             interpretation:'Risco máximo de queda explosiva. Dealers short gamma e delta negativo tendem a vender agressivamente à medida que o preço cai, criando ciclo autoalimentado amplificado pela alta volatilidade. Vencimento próximo intensifica a pressão. Cenário de risco extremo — priorize proteção e evite exposição comprada sem hedge.',direction:'QUEDA',intensity:'EXPLOSIVA',  urgency:'CRITICA' },
   6:  { gex:'SHORT',dex:'NEG',vex:'ALTO',tex:'BAIXO',  name:'Queda Explosiva',            structures:['Compra de Put','Compra de Straddle'],                                   avoid:['Calls','Posições de alta'],                     interpretation:'Forte pressão vendedora em desenvolvimento. Short gamma com delta negativo indica potencial para queda violenta, embora o theta baixo dê mais tempo para o movimento se materializar. Volatilidade alta amplifica movimentos.',direction:'QUEDA',intensity:'EXPLOSIVA',  urgency:'MODERADA' },
   7:  { gex:'SHORT',dex:'NEG',vex:'BAIXO',tex:'ALTO',  name:'Correção Rápida',            structures:['Compra de Put'],                                                         avoid:['Posições de alta'],                             interpretation:'Correção técnica rápida e limitada. Baixa volatilidade e theta alto favorecem movimento descendente curto, sem potencial para crash amplificado. Oportunidade de curto prazo para proteção.',direction:'QUEDA',intensity:'MODERADA',   urgency:'ALTA' },
   8:  { gex:'SHORT',dex:'NEG',vex:'BAIXO',tex:'BAIXO', name:'Correção Lenta',             structures:['Compra de Put'],                                                         avoid:['Posições agressivas'],                          interpretation:'Correção lenta e controlada. Ausência de pressão de vega e theta permite ajuste gradual de posições sem risco de aceleração brusca. Movimento previsível e de baixa intensidade.',direction:'QUEDA',intensity:'LEVE',        urgency:'BAIXA' },
-  9:  { gex:'LONG', dex:'POS',vex:'ALTO',tex:'ALTO',   name:'Alta com IV Elevada',        structures:['Box de 3 Pontas','Broken Wing Butterfly','Venda de Put'],               avoid:['Compra de volatilidade','Long Straddles'],      interpretation:'Cenário IDEAL para Box de 3 Pontas e Broken Wing Butterfly! Alta volatilidade oferece prêmios extremamente elevados, enquanto gamma positivo dos dealers limita movimentos bruscos. Vencimento próximo (TEX ALTO) permite montar broken wings com alta probabilidade de ganho. Box de 3 Pontas garante ganho conhecido com risco zero.',direction:'ALTA', intensity:'CONTROLADA', urgency:'MODERADA' },
-  10: { gex:'LONG', dex:'POS',vex:'ALTO',tex:'BAIXO',  name:'Alta Sustentada',            structures:['Box de 3 Pontas','Venda de Put','Venda Coberta'],                       avoid:['Compra de volatilidade'],                       interpretation:'Cenário favorável para vendedores de opções. Alta sustentada com gamma positivo dos dealers e volatilidade elevada, oferecendo prêmios atrativos com risco controlado. Box de 3 Pontas aproveita prêmios inflados com ganho garantido.',direction:'ALTA', intensity:'CONTROLADA', urgency:'BAIXA' },
-  11: { gex:'LONG', dex:'POS',vex:'BAIXO',tex:'ALTO',  name:'Alta Acelerada',             structures:['Venda de Put','Collar de Alta'],                                         avoid:['Compra de opções caras'],                       interpretation:'Alta com decaimento temporal acelerado. Baixa volatilidade e theta alto favorecem estratégias de venda de puts, com gamma positivo contendo variações bruscas. Movimento direcional claro mas sem explosão.',direction:'ALTA', intensity:'LEVE',        urgency:'MODERADA' },
+  9:  { gex:'LONG', dex:'POS',vex:'ALTO',tex:'ALTO',   name:'Alta com IV Elevada',        structures:['Box de 3 Pontas','Broken Wing Butterfly','Venda de Put'],               avoid:['Compra de volatilidade','Long Straddles'],      interpretation:'Cenário IDEAL para Box de 3 Pontas e Broken Wing Butterfly! Alta volatilidade oferece prêmios extremamente elevados, enquanto gamma positivo dos dealers limita movimentos bruscos. Vencimento próximo (TEX ALTO) permite montar broken wings com alta probabilidade de ganho. Box de 3 Pontas trava resultado conhecido com risco definido na montagem.',direction:'ALTA', intensity:'CONTROLADA', urgency:'MODERADA' },
+  10: { gex:'LONG', dex:'POS',vex:'ALTO',tex:'BAIXO',  name:'Alta Sustentada',            structures:['Box de 3 Pontas','Venda de Put','Venda Coberta'],                       avoid:['Compra de volatilidade'],                       interpretation:'Cenário favorável para vendedores de opções. Alta sustentada com gamma positivo dos dealers e volatilidade elevada, oferecendo prêmios atrativos com risco controlado. Box de 3 Pontas aproveita prêmios inflados com resultado definido na montagem.',direction:'ALTA', intensity:'CONTROLADA', urgency:'BAIXA' },
+  11: { gex:'LONG', dex:'POS',vex:'BAIXO',tex:'ALTO',  name:'Alta com Theta Acelerado',   structures:['Venda de Put','Collar de Alta'],                                         avoid:['Compra seca de opções (theta alto)'],           interpretation:'Alta suave com decaimento temporal acelerado. Baixa volatilidade e theta alto favorecem estratégias de venda de puts, com gamma positivo contendo variações bruscas. Movimento direcional claro mas sem explosão — comprar opção seca aqui sangra theta rapidamente.',direction:'ALTA', intensity:'LEVE',        urgency:'MODERADA' },
   12: { gex:'LONG', dex:'POS',vex:'BAIXO',tex:'BAIXO', name:'Tendência de Alta',          structures:['Venda de Put','Venda Coberta'],                                         avoid:['Posições de volatilidade'],                     interpretation:'Cenário ideal de estabilidade altista. Gamma positivo, baixa vega e theta controlado indicam tendência de alta suave e sustentável, perfeito para buy and hold ou venda coberta. Mercado em equilíbrio.',direction:'ALTA', intensity:'LEVE',        urgency:'BAIXA' },
   13: { gex:'LONG', dex:'NEG',vex:'ALTO',tex:'ALTO',   name:'Correção com IV Elevada',    structures:['Broken Wing Butterfly','Collar de Baixa','Compra de Put'],              avoid:['Posições de alta','Calls descobertas'],         interpretation:'Correção controlada com alta volatilidade. Dealers long gamma limitam a queda, enquanto prêmios elevados favorecem broken wing butterfly bearish e proteção com puts. Vencimento próximo aumenta eficiência das estruturas.',direction:'QUEDA',intensity:'CONTROLADA', urgency:'MODERADA' },
   14: { gex:'LONG', dex:'NEG',vex:'ALTO',tex:'BAIXO',  name:'Recuo Controlado',           structures:['Collar de Baixa'],                                                       avoid:['Calls'],                                        interpretation:'Pullback saudável e controlado. Gamma positivo dos dealers contém a queda, oferecendo oportunidade de proteção ou ajuste de posições longas sem pânico. Volatilidade alta permite hedges eficientes.',direction:'QUEDA',intensity:'CONTROLADA', urgency:'BAIXA' },
-  15: { gex:'LONG', dex:'NEG',vex:'BAIXO',tex:'ALTO',  name:'Queda Acelerada',            structures:['Collar de Baixa'],                                                       avoid:['Posições de alta'],                             interpretation:'Queda com decaimento temporal forte. Baixa volatilidade e theta alto corroem valor de posições longas em opções, favorecendo estratégias defensivas. Gamma positivo evita crash mas não impede tendência baixista.',direction:'QUEDA',intensity:'LEVE',        urgency:'MODERADA' },
+  15: { gex:'LONG', dex:'NEG',vex:'BAIXO',tex:'ALTO',  name:'Baixa com Theta Acelerado',  structures:['Collar de Baixa'],                                                       avoid:['Posições de alta'],                             interpretation:'Queda suave com decaimento temporal forte. Baixa volatilidade e theta alto corroem valor de posições longas em opções, favorecendo estratégias defensivas. Gamma positivo evita crash mas não impede tendência baixista.',direction:'QUEDA',intensity:'LEVE',        urgency:'MODERADA' },
   16: { gex:'LONG', dex:'NEG',vex:'BAIXO',tex:'BAIXO', name:'Tendência de Baixa',         structures:['Collar de Baixa'],                                                       avoid:['Posições agressivas'],                          interpretation:'Queda muito lenta em mercado de baixa energia. Ausência de pressão de vega e theta indica movimento prolongado e sem aceleração, típico de consolidação bearish. Ideal para ajustes graduais de portfólio.',direction:'QUEDA',intensity:'LEVE',        urgency:'BAIXA' }
 };
 
@@ -499,7 +505,10 @@ document.getElementById('expHeader').addEventListener('click', ()=>{
 function classifyScenario(gamma, delta, vega, theta) {
   const gexSign  = (gamma?.regime||'Long Gamma').includes('Short') ? 'SHORT' : 'LONG';
   const bias     = delta?.dex_levels?.market_bias || 'NEUTRAL';
-  const dexSign  = bias === 'BULLISH' ? 'POS' : 'NEG';
+  let dexSign;
+  if (bias === 'BULLISH')      dexSign = 'POS';
+  else if (bias === 'BEARISH') dexSign = 'NEG';
+  else dexSign = ((delta?.dex_levels?.total_dex_descoberto||0) >= 0) ? 'POS' : 'NEG'; // NEUTRAL: usa o sinal do DEX descoberto
   const vexRisk  = vega?.vol_regime?.volatility_risk || 'LOW';
   const vexLevel = vexRisk === 'HIGH' ? 'ALTO' : 'BAIXO';
   const texPres  = theta?.decay_regime?.time_pressure || 'LOW';
@@ -518,23 +527,27 @@ function classifyScenario(gamma, delta, vega, theta) {
 }
 
 function calculateSignalStrength(scenario, gamma, delta, vega, theta) {
+  // Confluência: quantos fatores independentes sustentam a leitura do cenário (0 a 5)
   let score = 0;
-  const gv = gamma?.gex_levels?.total_gex_descoberto||0;
-  const dv = delta?.dex_levels?.total_dex_descoberto||0;
+  const gv  = gamma?.gex_levels?.total_gex_descoberto||0;
+  const dv  = delta?.dex_levels?.total_dex_descoberto||0;
   const dir = scenario.direction;
-  if (dir==='ALTA'  && gv < 0) score++;
-  if (dir==='QUEDA' && gv < 0) score++;
-  if (dir==='ALTA'  && gv > 0) score++;
-  if (dir==='QUEDA' && gv > 0) score++;
-  if (dir==='ALTA'  && dv > 0) score++;
-  if (dir==='QUEDA' && dv < 0) score++;
+
+  // 1. DEX alinhado com a direção do cenário
+  if ((dir==='ALTA' && dv > 0) || (dir==='QUEDA' && dv < 0)) score++;
+  // 2. Pressão direcional com magnitude relevante
+  if (Math.abs(dv) > 2e7) score++;
+  // 3. Regime de gamma bem definido (magnitude relevante)
+  if (Math.abs(gv) > 2e7) score++;
+  // 4. Volatilidade confirmando tensão no posicionamento
   if (['HIGH','MODERATE'].includes(vega?.vol_regime?.volatility_risk)) score++;
+  // 5. Pressão temporal presente (vencimento < 20 dias)
   if ((theta?.decay_regime?.weighted_days||30) < 20) score++;
-  if (Math.abs(gv) > 5e9) score++;
-  if (Math.abs(dv) > 2e8) score++;
-  if (score >= 5) return { level:'FORTE',   cls:'text-green-400', description:'Todos indicadores alinhados' };
-  if (score >= 3) return { level:'MODERADO', cls:'text-yellow-400', description:'Maioria dos indicadores alinhados' };
-  return { level:'FRACO', cls:'text-red-400', description:'Sinais mistos ou baixa intensidade' };
+
+  const conf = `Confluência ${score}/5`;
+  if (score >= 4) return { level:'FORTE',    cls:'text-green-400',  description:`${conf} — fatores alinhados` };
+  if (score >= 2) return { level:'MODERADO', cls:'text-yellow-400', description:`${conf} — alinhamento parcial` };
+  return { level:'FRACO', cls:'text-red-400', description:`${conf} — sinais mistos, leitura exige cautela` };
 }
 
 /* ── Alertas — preservado do original ──────────────────────── */

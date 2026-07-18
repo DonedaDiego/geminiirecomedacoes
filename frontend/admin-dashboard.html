@@ -159,6 +159,10 @@
           <i class="fas fa-database mr-3"></i>
           Sync Railway
         </a>
+        <a href="javascript:void(0)" data-section="emails" class="nav-item flex items-center p-3 text-gray-300 border border-transparent">
+          <i class="fas fa-envelope mr-3"></i>
+          Emails
+        </a>
       </nav>
       
       <div class="mt-auto pt-8">
@@ -592,6 +596,95 @@
       </div>
     </div>
 
+    <!-- Emails Section -->
+    <div id="emailsSection" class="section hidden">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        <!-- Composição do Email -->
+        <div class="lg:col-span-2">
+          <div class="admin-card p-6 mb-6">
+            <h3 class="text-xl font-bold text-white mb-4">
+              <i class="fas fa-envelope mr-2"></i>
+              Compor Email
+            </h3>
+
+            <div class="mb-4">
+              <label class="block text-sm text-gray-400 mb-2">Template</label>
+              <select id="emailTemplateSelect" class="w-full bg-gray-800 border border-gray-700 rounded-lg p-3 text-white" onchange="applyEmailTemplate()">
+                <option value="">✍️ Email em branco</option>
+              </select>
+            </div>
+
+            <div class="mb-4">
+              <label class="block text-sm text-gray-400 mb-2">Assunto</label>
+              <input type="text" id="emailSubject" class="w-full bg-gray-800 border border-gray-700 rounded-lg p-3 text-white" placeholder="Assunto do email (use {nome} para personalizar)">
+            </div>
+
+            <div class="mb-4">
+              <label class="block text-sm text-gray-400 mb-2">Conteúdo (HTML) — use {nome} para o primeiro nome do usuário</label>
+              <textarea id="emailHtml" rows="12" class="w-full bg-gray-800 border border-gray-700 rounded-lg p-3 text-white font-mono text-sm" placeholder="<p>Olá{nome},</p>..."></textarea>
+            </div>
+
+            <div class="flex gap-3 mb-4">
+              <button onclick="previewAdminEmail()" class="bg-gray-700 hover:bg-gray-600 py-2 px-4 rounded-lg text-sm font-medium">
+                <i class="fas fa-eye mr-2"></i>Pré-visualizar
+              </button>
+              <button id="sendEmailBtn" onclick="sendAdminEmail()" class="bg-pink-600 hover:bg-pink-700 py-2 px-4 rounded-lg text-sm font-medium">
+                <i class="fas fa-paper-plane mr-2"></i>Enviar
+              </button>
+            </div>
+
+            <div id="emailSendResult" class="hidden p-4 rounded-lg text-sm"></div>
+          </div>
+
+          <div class="admin-card p-6">
+            <h3 class="text-lg font-bold text-white mb-3">
+              <i class="fas fa-eye mr-2"></i>
+              Pré-visualização
+            </h3>
+            <iframe id="emailPreviewFrame" class="w-full bg-white rounded-lg" style="height: 500px; border: none;"></iframe>
+          </div>
+        </div>
+
+        <!-- Destinatários -->
+        <div>
+          <div class="admin-card p-6">
+            <h3 class="text-lg font-bold text-white mb-4">
+              <i class="fas fa-users mr-2"></i>
+              Destinatários
+            </h3>
+
+            <div class="mb-4">
+              <label class="flex items-center text-sm text-gray-300 mb-2 cursor-pointer">
+                <input type="radio" name="emailRecipientMode" value="selected" checked class="mr-2" onchange="toggleRecipientMode()">
+                Selecionar usuários
+              </label>
+              <label class="flex items-center text-sm text-gray-300 cursor-pointer">
+                <input type="radio" name="emailRecipientMode" value="all" class="mr-2" onchange="toggleRecipientMode()">
+                Toda a base
+              </label>
+            </div>
+
+            <div id="recipientPicker">
+              <input type="text" id="recipientSearch" class="w-full bg-gray-800 border border-gray-700 rounded-lg p-2 text-white text-sm mb-2" placeholder="Buscar por nome ou email..." oninput="filterRecipientList()">
+              <div id="recipientList" class="space-y-1 overflow-y-auto" style="max-height: 400px;">
+                <p class="text-gray-400 text-sm">Carregando usuários...</p>
+              </div>
+            </div>
+
+            <div id="allUsersWarning" class="hidden bg-yellow-500 bg-opacity-10 border border-yellow-500 border-opacity-30 rounded-lg p-3 text-yellow-400 text-sm">
+              <i class="fas fa-exclamation-triangle mr-1"></i>
+              O email será enviado para <strong>todos os usuários</strong> da base.
+            </div>
+
+            <div class="mt-4 text-sm text-gray-400">
+              Selecionados: <span id="selectedCount" class="text-white font-bold">0</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Railway Sync Section -->
     <div id="railwaySection" class="section hidden">
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -952,7 +1045,8 @@
         dashboard: { title: 'Dashboard', subtitle: 'Visão geral do sistema' },
         users: { title: 'Usuários', subtitle: 'Gerenciar usuários e assinaturas' },
         recommendationsFree: { title: 'Recomendações Free', subtitle: 'Recomendações gratuitas mensais' },
-        railway: { title: 'Sincronização Railway', subtitle: 'Sincronizar dados B3 com banco Railway' }
+        railway: { title: 'Sincronização Railway', subtitle: 'Sincronizar dados B3 com banco Railway' },
+        emails: { title: 'Envio de Emails', subtitle: 'Enviar emails para usuários da base' }
       };
 
       if (titles[sectionName]) {
@@ -963,6 +1057,7 @@
       if (sectionName === 'users') loadUsersEnhanced();
       if (sectionName === 'recommendationsFree') loadRecommendationsFree();
       if (sectionName === 'railway') loadRailwaySync();
+      if (sectionName === 'emails') loadEmailsSection();
     }
 
     function setupNavigation() {
@@ -973,6 +1068,163 @@
           if (sectionName) showSection(sectionName);
         });
       });
+    }
+
+    // ===== EMAILS (ADMIN) =====
+    let emailTemplates = [];
+    let emailUsers = [];
+    let emailsSectionLoaded = false;
+
+    async function loadEmailsSection() {
+      if (emailsSectionLoaded) return;
+      try {
+        const [tplResp, usersResp] = await Promise.all([
+          fetch('/api/admin/email-templates', { headers: { 'Authorization': `Bearer ${adminToken}` } }),
+          fetch('/api/admin/list-users', { headers: { 'Authorization': `Bearer ${adminToken}` } })
+        ]);
+
+        if (tplResp.ok) {
+          const tplResult = await tplResp.json();
+          if (tplResult.success) {
+            emailTemplates = tplResult.templates || [];
+            const select = document.getElementById('emailTemplateSelect');
+            select.innerHTML = '<option value="">✍️ Email em branco</option>' +
+              emailTemplates.map(t => `<option value="${t.id}">📩 ${t.name}</option>`).join('');
+          }
+        }
+
+        if (usersResp.ok) {
+          const usersResult = await usersResp.json();
+          if (usersResult.success) {
+            emailUsers = usersResult.users || [];
+            renderRecipientList(emailUsers);
+          }
+        }
+
+        emailsSectionLoaded = true;
+      } catch (error) {
+        console.error('Erro ao carregar seção de emails:', error);
+      }
+    }
+
+    function renderRecipientList(users) {
+      const list = document.getElementById('recipientList');
+      if (!users || users.length === 0) {
+        list.innerHTML = '<p class="text-gray-400 text-sm">Nenhum usuário encontrado</p>';
+        return;
+      }
+      list.innerHTML = users.map(u => `
+        <label class="flex items-center p-2 rounded hover:bg-gray-800 cursor-pointer text-sm">
+          <input type="checkbox" class="recipient-checkbox mr-2" value="${u.email}" onchange="updateSelectedCount()">
+          <span class="flex-1">
+            <span class="text-white">${u.name || 'Sem nome'}</span>
+            <span class="block text-xs text-gray-400">${u.email}</span>
+          </span>
+        </label>
+      `).join('');
+      updateSelectedCount();
+    }
+
+    function filterRecipientList() {
+      const term = document.getElementById('recipientSearch').value.toLowerCase();
+      const filtered = emailUsers.filter(u =>
+        (u.name || '').toLowerCase().includes(term) || (u.email || '').toLowerCase().includes(term)
+      );
+      renderRecipientList(filtered);
+    }
+
+    function updateSelectedCount() {
+      const mode = document.querySelector('input[name="emailRecipientMode"]:checked').value;
+      const count = mode === 'all'
+        ? emailUsers.length
+        : document.querySelectorAll('.recipient-checkbox:checked').length;
+      document.getElementById('selectedCount').textContent = count;
+    }
+
+    function toggleRecipientMode() {
+      const mode = document.querySelector('input[name="emailRecipientMode"]:checked').value;
+      document.getElementById('recipientPicker').classList.toggle('hidden', mode === 'all');
+      document.getElementById('allUsersWarning').classList.toggle('hidden', mode !== 'all');
+      updateSelectedCount();
+    }
+
+    function applyEmailTemplate() {
+      const id = document.getElementById('emailTemplateSelect').value;
+      const tpl = emailTemplates.find(t => t.id === id);
+      if (tpl) {
+        document.getElementById('emailSubject').value = tpl.subject;
+        document.getElementById('emailHtml').value = tpl.html;
+        previewAdminEmail();
+      } else {
+        document.getElementById('emailSubject').value = '';
+        document.getElementById('emailHtml').value = '';
+      }
+    }
+
+    function previewAdminEmail() {
+      const html = document.getElementById('emailHtml').value.replace(/\{ ?nome ?\}/g, ' Diego');
+      const frame = document.getElementById('emailPreviewFrame');
+      frame.srcdoc = html || '<p style="font-family:sans-serif;color:#888;padding:20px;">Nada para pré-visualizar</p>';
+    }
+
+    async function sendAdminEmail() {
+      const subject = document.getElementById('emailSubject').value.trim();
+      const html = document.getElementById('emailHtml').value.trim();
+      const mode = document.querySelector('input[name="emailRecipientMode"]:checked').value;
+      const resultDiv = document.getElementById('emailSendResult');
+      const btn = document.getElementById('sendEmailBtn');
+
+      if (!subject || !html) {
+        alert('Preencha o assunto e o conteúdo do email.');
+        return;
+      }
+
+      const payload = { subject, html };
+
+      if (mode === 'all') {
+        if (!confirm(`⚠️ Enviar este email para TODOS os ${emailUsers.length} usuários da base?`)) return;
+        payload.send_to_all = true;
+        payload.confirm_send_all = true;
+      } else {
+        const selected = Array.from(document.querySelectorAll('.recipient-checkbox:checked')).map(cb => cb.value);
+        if (selected.length === 0) {
+          alert('Selecione pelo menos um destinatário.');
+          return;
+        }
+        if (!confirm(`Enviar este email para ${selected.length} usuário(s)?`)) return;
+        payload.recipients = selected;
+      }
+
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Enviando...';
+      resultDiv.classList.add('hidden');
+
+      try {
+        const response = await fetch('/api/admin/send-custom-email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${adminToken}` },
+          body: JSON.stringify(payload)
+        });
+
+        const result = await response.json();
+
+        resultDiv.classList.remove('hidden');
+        if (result.success) {
+          resultDiv.className = 'p-4 rounded-lg text-sm bg-green-500 bg-opacity-10 border border-green-500 border-opacity-30 text-green-400';
+          resultDiv.innerHTML = `<i class="fas fa-check-circle mr-1"></i> ${result.message}` +
+            (result.failed_count > 0 ? `<br><span class="text-yellow-400">Falharam: ${result.failed_emails.join(', ')}</span>` : '');
+        } else {
+          resultDiv.className = 'p-4 rounded-lg text-sm bg-red-500 bg-opacity-10 border border-red-500 border-opacity-30 text-red-400';
+          resultDiv.innerHTML = `<i class="fas fa-times-circle mr-1"></i> ${result.error || 'Erro ao enviar'}`;
+        }
+      } catch (error) {
+        resultDiv.classList.remove('hidden');
+        resultDiv.className = 'p-4 rounded-lg text-sm bg-red-500 bg-opacity-10 border border-red-500 border-opacity-30 text-red-400';
+        resultDiv.innerHTML = `<i class="fas fa-times-circle mr-1"></i> Erro: ${error.message}`;
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-paper-plane mr-2"></i>Enviar';
+      }
     }
 
     // ===== USER MANAGEMENT =====

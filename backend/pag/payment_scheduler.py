@@ -92,7 +92,7 @@ class PaymentScheduler:
             print(f" JOB INICIADO: Processar Trials Expirados - {datetime.now()}")
             print("="*50)
             
-            from backend.pag.trial_service import process_expired_trials
+            from pag.trial_service import process_expired_trials
             
             result = process_expired_trials()
             

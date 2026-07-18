@@ -660,7 +660,17 @@ def create_app():
 if __name__ == "__main__":
     # Inicializar banco
     initialize_database()
-    
+
+    # Iniciar Payment Scheduler (dev). Em produção é iniciado pelo
+    # post_fork do gunicorn.conf.py. Guarda evita duplicar no reloader.
+    if os.environ.get('WERKZEUG_RUN_MAIN') != 'true':
+        try:
+            from pag.payment_scheduler import start_payment_scheduler
+            start_payment_scheduler()
+            print(" Payment Scheduler iniciado (dev)!")
+        except Exception as e:
+            print(f" Erro ao iniciar Payment Scheduler: {e}")
+
     # Configurar para desenvolvimento
     app.config['ENV'] = 'development'
     app.config['DEBUG'] = True

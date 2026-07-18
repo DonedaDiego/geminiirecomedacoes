@@ -192,27 +192,34 @@
 
       <!-- GEX do dia + métricas inline -->
       <div class="bg-white/[0.01] border border-white/[0.04] p-5 rounded-2xl">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 pb-4 border-b border-white/[0.04]">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4 pb-4 border-b border-white/[0.04]">
           <span class="text-xs font-bold text-gray-300 uppercase tracking-widest flex items-center gap-2">
-            <i class="fas fa-chart-bar text-geminii"></i> GEX da Sessão
+            <i class="fas fa-chart-bar text-geminii"></i> Distribuição Gamma por Strike
             <span id="selectedDateLabel" class="text-geminii font-mono normal-case">--</span>
           </span>
-          <div class="flex flex-wrap gap-4 text-[11px]">
-            <div class="flex items-center gap-2">
-              <span class="text-gray-500 uppercase font-bold">Spot</span>
-              <span id="daySpot" class="text-white font-mono font-bold">--</span>
-            </div>
-            <div class="flex items-center gap-2 sm:border-l sm:border-white/[0.05] sm:pl-4">
-              <span class="text-gray-500 uppercase font-bold">Flip</span>
-              <span id="dayFlip" class="font-mono font-bold" style="color:#f97316">--</span>
-            </div>
-            <div class="flex items-center gap-2 sm:border-l sm:border-white/[0.05] sm:pl-4">
-              <span class="text-gray-500 uppercase font-bold">GEX Desc</span>
-              <span id="dayGexDesc" class="text-cyan-400 font-mono font-bold">--</span>
-            </div>
-            <div class="sm:border-l sm:border-white/[0.05] sm:pl-4">
-              <span id="dayRegimeBadge" class="regime-badge" style="padding:4px 10px;font-size:10px">--</span>
-            </div>
+          <div class="pill-group" id="modeGroup">
+            <button class="pill active" data-mode="net">Exposure Total</button>
+            <button class="pill" data-mode="descoberto">GEX Descoberto</button>
+            <button class="pill" data-mode="call_put">Call / Put</button>
+            <button class="pill" data-mode="oi">Open Interest</button>
+            <button class="pill" data-mode="cumulativo">Cumulativo</button>
+          </div>
+        </div>
+        <div class="flex flex-wrap gap-4 text-[11px] mb-4">
+          <div class="flex items-center gap-2">
+            <span class="text-gray-500 uppercase font-bold">Spot</span>
+            <span id="daySpot" class="text-white font-mono font-bold">--</span>
+          </div>
+          <div class="flex items-center gap-2 sm:border-l sm:border-white/[0.05] sm:pl-4">
+            <span class="text-gray-500 uppercase font-bold">Flip</span>
+            <span id="dayFlip" class="font-mono font-bold" style="color:#f97316">--</span>
+          </div>
+          <div class="flex items-center gap-2 sm:border-l sm:border-white/[0.05] sm:pl-4">
+            <span class="text-gray-500 uppercase font-bold">GEX Desc</span>
+            <span id="dayGexDesc" class="text-cyan-400 font-mono font-bold">--</span>
+          </div>
+          <div class="sm:border-l sm:border-white/[0.05] sm:pl-4">
+            <span id="dayRegimeBadge" class="regime-badge" style="padding:4px 10px;font-size:10px">--</span>
           </div>
         </div>
         <div id="gexDayChart" style="width:100%;height:520px;"></div>
@@ -466,30 +473,134 @@ function selectDate(dateStr, byDate) {
   } else {
     badge.className = 'regime-badge regime-short'; badge.innerHTML = '<i class="fas fa-bolt-lightning"></i> Short γ';
   }
-  renderDayChart(day.plot_json);
+  renderDayChart(day);
 }
 
-function renderDayChart(plotJson) {
-  if (!plotJson) {
-    document.getElementById('gexDayChart').innerHTML = '<div style="color:#4b5563;padding:40px;text-align:center;font-size:13px;">Dados indisponíveis para esta sessão.</div>';
+// ── Modo do gráfico da sessão (mesmo padrão visual do gamma-levels) ──
+let currentMode = 'net';
+
+document.getElementById('modeGroup').addEventListener('click', e => {
+  const btn = e.target.closest('[data-mode]');
+  if (!btn) return;
+  currentMode = btn.dataset.mode;
+  document.querySelectorAll('#modeGroup .pill').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  if (currentData && selectedDate) renderDayChart(currentData.data_by_date[selectedDate] || {});
+});
+
+function renderDayChart(day) {
+  const el   = document.getElementById('gexDayChart');
+  const recs = (day && day.gex_df_records) || [];
+
+  if (!recs.length) {
+    el.innerHTML = '<div style="color:#4b5563;padding:40px;text-align:center;font-size:13px;">Dados indisponíveis para esta sessão.</div>';
     return;
   }
-  try {
-    const fig = JSON.parse(plotJson);
-    fig.layout.height        = 520;
-    fig.layout.paper_bgcolor = 'transparent';
-    fig.layout.plot_bgcolor  = 'transparent';
-    fig.layout.margin        = {l:70,r:20,t:55,b:55};
-    if (!fig.layout.annotations) fig.layout.annotations = [];
-    fig.layout.annotations.push({
-      text:'GEMINII RESEARCH', textangle:0,
-      xref:'paper', yref:'paper', x:0.5, y:0.5,
+
+  const sorted     = [...recs].sort((a,b) => a.strike - b.strike);
+  const strikes    = sorted.map(r => r.strike);
+  const totalGex   = sorted.map(r => r.total_gex);
+  const descoberto = sorted.map(r => r.total_gex_descoberto);
+  const callGex    = sorted.map(r => r.call_gex);
+  const putGex     = sorted.map(r => r.put_gex);
+  const callOi     = sorted.map(r => r.call_oi_total);
+  const putOi      = sorted.map(r => r.put_oi_total);
+
+  const spot = day.spot_price;
+  const flip = day.flip_strike;
+
+  const modeLabels = {
+    net:        'Net Exposure',
+    descoberto: 'GEX Descoberto',
+    call_put:   'Call / Put Exposure',
+    oi:         'Open Interest',
+    cumulativo: 'GEX Cumulativo'
+  };
+  const expDesc = (currentData && currentData.expiration_desc) || '';
+
+  let traces = [];
+  let barmode = null;
+
+  if (currentMode === 'net') {
+    traces = [{ x:strikes, y:totalGex, type:'bar',
+      marker:{color: totalGex.map(v => v < 0 ? '#ef4444' : '#22c55e'), line:{width:0}},
+      showlegend:false,
+      hovertemplate:'Strike: R$ %{x:.2f}<br>GEX: %{y:,.0f}<extra></extra>' }];
+  } else if (currentMode === 'descoberto') {
+    traces = [{ x:strikes, y:descoberto, type:'bar',
+      marker:{color: descoberto.map(v => v < 0 ? '#ef4444' : '#22c55e'), line:{width:0}},
+      showlegend:false,
+      hovertemplate:'Strike: R$ %{x:.2f}<br>GEX Desc: %{y:,.0f}<extra></extra>' }];
+  } else if (currentMode === 'call_put') {
+    barmode = 'relative';
+    traces = [
+      { x:strikes, y:callGex, type:'bar', name:'Calls', marker:{color:'#22c55e', line:{width:0}},
+        hovertemplate:'Strike: R$ %{x:.2f}<br>Call GEX: %{y:,.0f}<extra></extra>' },
+      { x:strikes, y:putGex, type:'bar', name:'Puts', marker:{color:'#ef4444', line:{width:0}},
+        hovertemplate:'Strike: R$ %{x:.2f}<br>Put GEX: %{y:,.0f}<extra></extra>' }
+    ];
+  } else if (currentMode === 'oi') {
+    barmode = 'stack';
+    traces = [
+      { x:strikes, y:callOi, type:'bar', name:'Call OI', marker:{color:'#22c55e', line:{width:0}},
+        hovertemplate:'Strike: R$ %{x:.2f}<br>Call OI: %{y:,}<extra></extra>' },
+      { x:strikes, y:putOi, type:'bar', name:'Put OI', marker:{color:'#ef4444', line:{width:0}},
+        hovertemplate:'Strike: R$ %{x:.2f}<br>Put OI: %{y:,}<extra></extra>' }
+    ];
+  } else if (currentMode === 'cumulativo') {
+    const cumulative = [];
+    totalGex.reduce((acc, v) => { const s = acc + v; cumulative.push(s); return s; }, 0);
+    traces = [{ x:strikes, y:cumulative, type:'scatter', mode:'lines',
+      line:{color:'#06b6d4', width:2}, fill:'tozeroy', fillcolor:'rgba(6,182,212,0.08)',
+      showlegend:false,
+      hovertemplate:'Strike: R$ %{x:.2f}<br>Cum GEX: %{y:,.0f}<extra></extra>' }];
+  }
+
+  // Linhas de referência (SPOT / FLIP / zero) — idênticas ao gamma-levels
+  const shapes = [
+    { type:'line', x0:spot, x1:spot, yref:'paper', y0:0, y1:1,
+      line:{color:'#ffffff', width:2, dash:'dash'} },
+    { type:'line', xref:'paper', x0:0, x1:1, y0:0, y1:0,
+      line:{color:'rgba(255,255,255,0.2)', width:1} }
+  ];
+  const annotations = [
+    { x:spot, yref:'paper', y:1.0, yanchor:'bottom', text:'SPOT', showarrow:false,
+      font:{color:'#ffffff', size:11}, bgcolor:'rgba(0,0,0,0.6)', borderpad:3 },
+    { text:'GEMINII RESEARCH', textangle:0, xref:'paper', yref:'paper', x:0.5, y:0.5,
       xanchor:'center', yanchor:'middle',
-      font:{family:'Inter,sans-serif',size:32,color:'rgba(255,255,255,.035)'},
-      showarrow:false, layer:'below'
-    });
-    Plotly.react('gexDayChart', fig.data, fig.layout, {responsive:true,displayModeBar:false,displaylogo:false});
-  } catch(err) { console.error('Erro gexDayChart:', err); }
+      font:{family:'Inter,sans-serif', size:32, color:'rgba(255,255,255,.035)'},
+      showarrow:false, layer:'below' }
+  ];
+
+  if (flip && flip !== spot) {
+    const flipDist = ((spot - flip) / flip) * 100;
+    shapes.push({ type:'line', x0:flip, x1:flip, yref:'paper', y0:0, y1:1,
+      line:{color:'#f97316', width:2, dash:'dot'} });
+    annotations.push({ x:flip, yref:'paper', y:0.97, yanchor:'bottom',
+      text:`FLIP ${flipDist >= 0 ? '+' : ''}${flipDist.toFixed(1)}%`, showarrow:false,
+      font:{color:'#f97316', size:11}, bgcolor:'rgba(0,0,0,0.6)', borderpad:3 });
+  }
+
+  const layout = {
+    title: { text:`${modeLabels[currentMode]}  ·  ${expDesc}${selectedDate ? ' - ' + fmtDate(selectedDate) + '/' + selectedDate.slice(0,4) : ''}`,
+      x:0.02, xanchor:'left',
+      font:{size:15, color:'#aaaaaa', family:'Inter, sans-serif'} },
+    paper_bgcolor:'transparent',
+    plot_bgcolor:'transparent',
+    font:{color:'#ffffff', family:'Inter, sans-serif', size:12},
+    height:520,
+    margin:{l:60, r:30, t:60, b:60},
+    showlegend:(currentMode === 'call_put' || currentMode === 'oi'),
+    legend:{orientation:'h', x:0, y:1.08, font:{color:'#ffffff', size:11}},
+    bargap:0.15,
+    shapes, annotations,
+    xaxis:{ gridcolor:'rgba(255,255,255,0.06)', color:'#aaaaaa', showgrid:true,
+      zeroline:false, tickformat:'.2f', tickprefix:'R$ ' },
+    yaxis:{ gridcolor:'rgba(255,255,255,0.06)', color:'#aaaaaa', showgrid:true, zeroline:false }
+  };
+  if (barmode) layout.barmode = barmode;
+
+  Plotly.react('gexDayChart', traces, layout, {responsive:true, displayModeBar:false, displaylogo:false});
 }
 
 function renderFlipEvolutionChart(insights, spotByDate) {

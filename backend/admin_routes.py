@@ -1339,6 +1339,162 @@ def list_users_enhanced(admin_id):
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
+# ===== ENVIO DE EMAILS (ADMIN) =====
+
+COMMUNITY_EMAIL_TEMPLATE = {
+    'id': 'comunidade-opcoes',
+    'name': 'Convite Comunidade Opções (APP10)',
+    'subject': 'Venha fazer parte da Comunidade de Opções 🚀',
+    'html': """<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin:0;padding:0;background-color:#f8fafc;font-family:'Segoe UI',Tahoma,Geneva,Verdana,Arial,sans-serif;line-height:1.6;">
+  <div style="max-width:600px;margin:0 auto;background-color:#ffffff;border-radius:8px;overflow:hidden;">
+    <div style="background:linear-gradient(135deg,#fb1ebb,#ba39af);padding:30px;text-align:center;">
+      <h1 style="margin:0;font-size:24px;font-weight:600;color:#ffffff;">Comunidade Opções</h1>
+      <p style="margin:8px 0 0 0;color:#ffffff;opacity:0.9;font-size:14px;">Greeks, estruturas, market maker e microestrutura</p>
+    </div>
+    <div style="padding:40px 30px;background-color:#ffffff;">
+      <p style="font-size:16px;color:#111827;">Olá{nome},</p>
+      <p style="font-size:16px;color:#374151;">Venha fazer parte da <strong>Comunidade de Opções</strong> da Geminii Tech e opere com quem entende de verdade a microestrutura do mercado.</p>
+      <div style="text-align:center;margin:25px 0;">
+        <div style="font-size:14px;color:#6b7280;">por mês</div>
+        <div style="font-size:36px;font-weight:700;color:#111827;">R$ 247</div>
+      </div>
+      <div style="background-color:#f8f9fa;border-left:4px solid #fb1ebb;border-radius:8px;padding:20px 25px;margin:20px 0;">
+        <p style="margin:0 0 10px 0;font-weight:600;color:#111827;">O que você recebe:</p>
+        <ul style="margin:0;padding-left:20px;color:#374151;font-size:15px;">
+          <li style="margin-bottom:8px;">Aulas ao vivo 2x na semana + gravadas</li>
+          <li style="margin-bottom:8px;">Opções 4D (GEX, DEX, VEX, TEX)</li>
+          <li style="margin-bottom:8px;">Estruturas 0 risco</li>
+          <li style="margin-bottom:8px;">Indicadores Profit</li>
+          <li style="margin-bottom:8px;">Comunidade exclusiva no grupo WhatsApp</li>
+          <li style="margin-bottom:0;">App exclusivo Geminii Tech</li>
+        </ul>
+      </div>
+      <div style="background:linear-gradient(135deg,#fdf2f8,#fce7f3);border:1px dashed #fb1ebb;border-radius:8px;padding:18px;text-align:center;margin:25px 0;">
+        <p style="margin:0;font-size:15px;color:#111827;">🎁 <strong>10% de desconto</strong> no plano mensal com o cupom</p>
+        <p style="margin:8px 0 0 0;font-size:22px;font-weight:700;letter-spacing:2px;color:#fb1ebb;">APP10</p>
+      </div>
+      <div style="text-align:center;">
+        <a href="https://www.geminiiacademy.com.br/checkout?plano=opcoes_mensal" target="_blank" style="display:inline-block;background:linear-gradient(135deg,#fb1ebb,#ba39af);color:#ffffff;padding:16px 32px;text-decoration:none;border-radius:8px;font-weight:600;margin:20px 0;font-size:18px;">Quero fazer parte</a>
+      </div>
+      <p style="text-align:center;font-size:14px;color:#6b7280;margin-top:10px;">Sem pegadinhas. Cancele quando quiser.</p>
+    </div>
+    <div style="background-color:#111827;padding:20px 30px;text-align:center;">
+      <p style="margin:0;color:#9ca3af;font-size:12px;">Geminii Tech &bull; Trading Automatizado<br>geminii.com.br</p>
+    </div>
+  </div>
+</body>
+</html>"""
+}
+
+@admin_bp.route('/email-templates', methods=['GET'])
+@require_admin()
+def get_email_templates(admin_id):
+    """Listar templates de email pré-cadastrados"""
+    try:
+        return jsonify({
+            'success': True,
+            'templates': [COMMUNITY_EMAIL_TEMPLATE]
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@admin_bp.route('/send-custom-email', methods=['POST'])
+@require_admin()
+def send_custom_email(admin_id):
+    """Enviar email para usuários da base (admin).
+
+    Body: { subject, html, recipients: [emails] } ou { subject, html, send_to_all: true, confirm_send_all: true }
+    Placeholder {nome} no assunto/corpo é substituído pelo nome do usuário.
+    """
+    try:
+        data = request.get_json() or {}
+
+        subject = (data.get('subject') or '').strip()
+        html = (data.get('html') or '').strip()
+        recipients = data.get('recipients') or []
+        send_to_all = bool(data.get('send_to_all'))
+
+        if not subject or not html:
+            return jsonify({'success': False, 'error': 'Assunto e conteúdo são obrigatórios'}), 400
+
+        if not send_to_all and not recipients:
+            return jsonify({'success': False, 'error': 'Informe os destinatários ou marque enviar para todos'}), 400
+
+        if send_to_all and not data.get('confirm_send_all'):
+            return jsonify({'success': False, 'error': 'Confirme o envio para toda a base (confirm_send_all)'}), 400
+
+        conn = get_db_connection()
+        if not conn:
+            return jsonify({'success': False, 'error': 'Erro de conexão com banco'}), 500
+
+        cursor = conn.cursor()
+
+        if send_to_all:
+            cursor.execute("SELECT name, email FROM users WHERE email IS NOT NULL ORDER BY id")
+        else:
+            # Somente emails que existem na base
+            cursor.execute(
+                "SELECT name, email FROM users WHERE email = ANY(%s)",
+                (list(recipients),)
+            )
+
+        users = cursor.fetchall()
+        cursor.close()
+        conn.close()
+
+        if not users:
+            return jsonify({'success': False, 'error': 'Nenhum usuário encontrado com esses emails'}), 404
+
+        # Limite de segurança por requisição (timeout do servidor)
+        MAX_PER_REQUEST = 300
+        users = users[:MAX_PER_REQUEST]
+
+        from emails.email_service import email_service
+        import time as _time
+
+        sent, failed = [], []
+        for name, email in users:
+            first_name = (name or '').strip().split(' ')[0]
+            nome_str = f' {first_name}' if first_name else ''
+            personalized_subject = subject.replace('{nome}', nome_str).replace('{ nome }', nome_str)
+            personalized_html = html.replace('{nome}', nome_str).replace('{ nome }', nome_str)
+
+            try:
+                ok = email_service.send_email(email, personalized_subject, personalized_html)
+            except Exception as e:
+                print(f" Erro ao enviar para {email}: {e}")
+                ok = False
+
+            if ok:
+                sent.append(email)
+            else:
+                failed.append(email)
+
+            _time.sleep(0.2)  # não sobrecarregar o provedor
+
+        print(f"📧 ADMIN EMAIL: {len(sent)} enviados, {len(failed)} falharam (admin_id={admin_id})")
+
+        return jsonify({
+            'success': True,
+            'message': f'{len(sent)} emails enviados, {len(failed)} falharam',
+            'sent_count': len(sent),
+            'failed_count': len(failed),
+            'failed_emails': failed
+        })
+
+    except Exception as e:
+        print(f" Erro em send_custom_email: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
 # ===== FUNÇÃO EXPORT =====
 def get_admin_blueprint():
     """Retornar blueprint para registrar no Flask"""
