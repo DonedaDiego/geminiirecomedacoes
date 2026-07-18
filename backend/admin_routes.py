@@ -1360,29 +1360,43 @@ COMMUNITY_EMAIL_TEMPLATE = {
     <div style="padding:40px 30px;background-color:#ffffff;">
       <p style="font-size:16px;color:#111827;">Olá{nome},</p>
       <p style="font-size:16px;color:#374151;">Venha fazer parte da <strong>Comunidade de Opções</strong> da Geminii Tech e opere com quem entende de verdade a microestrutura do mercado.</p>
-      <div style="text-align:center;margin:25px 0;">
+
+      <div style="text-align:center;margin:8px 0 4px 0;">
+        <span style="display:inline-block;background-color:#fdf2f8;color:#ba39af;font-size:12px;font-weight:700;letter-spacing:0.5px;padding:6px 14px;border-radius:999px;text-transform:uppercase;">ACESSO IMEDIATO</span>
+      </div>
+
+      <div style="text-align:center;margin:20px 0;">
         <div style="font-size:14px;color:#6b7280;">por mês</div>
-        <div style="font-size:36px;font-weight:700;color:#111827;">R$ 247</div>
+        <div style="font-size:40px;font-weight:800;color:#111827;line-height:1.1;">R$ 247</div>
+        <div style="font-size:13px;color:#9ca3af;margin-top:4px;">Com o cupom <strong style="color:#fb1ebb;">APP10</strong> sai por <strong style="color:#111827;">R$ 222,30/mês</strong></div>
       </div>
+
       <div style="background-color:#f8f9fa;border-left:4px solid #fb1ebb;border-radius:8px;padding:20px 25px;margin:20px 0;">
-        <p style="margin:0 0 10px 0;font-weight:600;color:#111827;">O que você recebe:</p>
-        <ul style="margin:0;padding-left:20px;color:#374151;font-size:15px;">
-          <li style="margin-bottom:8px;">Aulas ao vivo 2x na semana + gravadas</li>
-          <li style="margin-bottom:8px;">Opções 4D (GEX, DEX, VEX, TEX)</li>
-          <li style="margin-bottom:8px;">Estruturas 0 risco</li>
-          <li style="margin-bottom:8px;">Indicadores Profit</li>
-          <li style="margin-bottom:8px;">Comunidade exclusiva no grupo WhatsApp</li>
-          <li style="margin-bottom:0;">App exclusivo Geminii Tech</li>
-        </ul>
+        <p style="margin:0 0 14px 0;font-weight:600;color:#111827;">O que você recebe:</p>
+        <table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;border-collapse:collapse;">
+          <tr><td style="padding:0 0 10px 0;font-size:15px;color:#374151;vertical-align:top;width:24px;"></td><td style="padding:0 0 10px 0;font-size:15px;color:#374151;">Aulas ao vivo 2x na semana + gravadas</td></tr>
+          <tr><td style="padding:0 0 10px 0;font-size:15px;color:#374151;vertical-align:top;"></td><td style="padding:0 0 10px 0;font-size:15px;color:#374151;">Opções 4D (GEX, DEX, VEX, TEX)</td></tr>
+          <tr><td style="padding:0 0 10px 0;font-size:15px;color:#374151;vertical-align:top;"></td><td style="padding:0 0 10px 0;font-size:15px;color:#374151;">Estruturas 0 risco</td></tr>
+          <tr><td style="padding:0 0 10px 0;font-size:15px;color:#374151;vertical-align:top;"></td><td style="padding:0 0 10px 0;font-size:15px;color:#374151;">Indicadores Profit</td></tr>
+          <tr><td style="padding:0 0 10px 0;font-size:15px;color:#374151;vertical-align:top;"></td><td style="padding:0 0 10px 0;font-size:15px;color:#374151;">Comunidade exclusiva no grupo WhatsApp</td></tr>
+          <tr><td style="padding:0;font-size:15px;color:#374151;vertical-align:top;">📱</td><td style="padding:0;font-size:15px;color:#374151;">App exclusivo Geminii Tech</td></tr>
+        </table>
       </div>
+
       <div style="background:linear-gradient(135deg,#fdf2f8,#fce7f3);border:1px dashed #fb1ebb;border-radius:8px;padding:18px;text-align:center;margin:25px 0;">
         <p style="margin:0;font-size:15px;color:#111827;">🎁 <strong>10% de desconto</strong> no plano mensal com o cupom</p>
         <p style="margin:8px 0 0 0;font-size:22px;font-weight:700;letter-spacing:2px;color:#fb1ebb;">APP10</p>
       </div>
+
       <div style="text-align:center;">
-        <a href="https://www.geminiiacademy.com.br/checkout?plano=opcoes_mensal" target="_blank" style="display:inline-block;background:linear-gradient(135deg,#fb1ebb,#ba39af);color:#ffffff;padding:16px 32px;text-decoration:none;border-radius:8px;font-weight:600;margin:20px 0;font-size:18px;">Quero fazer parte</a>
+        <a href="https://www.geminiiacademy.com.br/checkout?plano=opcoes_mensal" target="_blank" style="display:inline-block;background:linear-gradient(135deg,#fb1ebb,#ba39af);color:#ffffff;padding:16px 32px;text-decoration:none;border-radius:8px;font-weight:600;margin:20px 0;font-size:18px;box-shadow:0 4px 14px rgba(251,30,187,0.35);">Quero fazer parte</a>
       </div>
       <p style="text-align:center;font-size:14px;color:#6b7280;margin-top:10px;">Sem pegadinhas. Cancele quando quiser.</p>
+
+      <div style="border-top:1px solid #e5e7eb;margin:32px 0 0 0;padding-top:20px;text-align:center;">
+        <p style="margin:0 0 12px 0;font-size:14px;color:#6b7280;">Ficou com alguma dúvida? Fale direto com a gente:</p>
+        <a href="https://wa.me/5541995432873?text=Ol%C3%A1%21%20Recebi%20o%20email%20da%20Comunidade%20de%20Op%C3%A7%C3%B5es%2C%20fiz%20o%20teste%20do%20app%20e%20quero%20saber%20mais%20sobre%20a%20comunidade." target="_blank" style="display:inline-block;background-color:#25D366;color:#ffffff;padding:12px 24px;text-decoration:none;border-radius:8px;font-weight:600;font-size:14px;">💬 Falar no WhatsApp</a>
+      </div>
     </div>
     <div style="background-color:#111827;padding:20px 30px;text-align:center;">
       <p style="margin:0;color:#9ca3af;font-size:12px;">Geminii Tech &bull; Trading Automatizado<br>geminii.com.br</p>
