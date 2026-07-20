@@ -1339,6 +1339,80 @@ def list_users_enhanced(admin_id):
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
+# ===== LOG DE EMAILS ENVIADOS (ADMIN) =====
+
+def _ensure_email_log_table(cursor):
+    """Criar tabela de log de emails do admin (idempotente)"""
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS admin_email_log (
+            id SERIAL PRIMARY KEY,
+            user_email VARCHAR(255) NOT NULL,
+            subject TEXT,
+            success BOOLEAN DEFAULT TRUE,
+            sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+
+@admin_bp.route('/email-log/summary', methods=['GET'])
+@require_admin()
+def get_email_log_summary(admin_id):
+    """Resumo por usuário: quantos emails enviados e quando foi o último"""
+    try:
+        conn = get_db_connection()
+        if not conn:
+            return jsonify({'success': False, 'error': 'Erro de conexão com banco'}), 500
+        cursor = conn.cursor()
+        _ensure_email_log_table(cursor)
+        conn.commit()
+        cursor.execute("""
+            SELECT user_email, COUNT(*), MAX(sent_at)
+            FROM admin_email_log
+            WHERE success = TRUE
+            GROUP BY user_email
+        """)
+        summary = {
+            row[0]: {'count': int(row[1]), 'last_sent': row[2].isoformat() if row[2] else None}
+            for row in cursor.fetchall()
+        }
+        cursor.close()
+        conn.close()
+        return jsonify({'success': True, 'summary': summary})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@admin_bp.route('/email-log', methods=['GET'])
+@require_admin()
+def get_email_log(admin_id):
+    """Histórico de emails enviados para um usuário específico (?email=...)"""
+    try:
+        email = (request.args.get('email') or '').strip()
+        if not email:
+            return jsonify({'success': False, 'error': 'Informe o email'}), 400
+        conn = get_db_connection()
+        if not conn:
+            return jsonify({'success': False, 'error': 'Erro de conexão com banco'}), 500
+        cursor = conn.cursor()
+        _ensure_email_log_table(cursor)
+        conn.commit()
+        cursor.execute("""
+            SELECT subject, success, sent_at
+            FROM admin_email_log
+            WHERE user_email = %s
+            ORDER BY sent_at DESC
+            LIMIT 50
+        """, (email,))
+        logs = [{
+            'subject': row[0],
+            'success': bool(row[1]),
+            'sent_at': row[2].isoformat() if row[2] else None
+        } for row in cursor.fetchall()]
+        cursor.close()
+        conn.close()
+        return jsonify({'success': True, 'email': email, 'logs': logs})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
 # ===== ENVIO DE EMAILS (ADMIN) =====
 
 COMMUNITY_EMAIL_TEMPLATE = {
@@ -1493,6 +1567,24 @@ def send_custom_email(admin_id):
             _time.sleep(0.2)  # não sobrecarregar o provedor
 
         print(f"📧 ADMIN EMAIL: {len(sent)} enviados, {len(failed)} falharam (admin_id={admin_id})")
+
+        # Registrar no log (falha aqui não bloqueia o envio)
+        try:
+            log_conn = get_db_connection()
+            if log_conn:
+                log_cur = log_conn.cursor()
+                _ensure_email_log_table(log_cur)
+                rows = [(e, subject, True) for e in sent] + [(e, subject, False) for e in failed]
+                if rows:
+                    log_cur.executemany(
+                        "INSERT INTO admin_email_log (user_email, subject, success) VALUES (%s, %s, %s)",
+                        rows
+                    )
+                log_conn.commit()
+                log_cur.close()
+                log_conn.close()
+        except Exception as log_err:
+            print(f" Erro ao registrar log de emails: {log_err}")
 
         return jsonify({
             'success': True,
