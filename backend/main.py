@@ -362,22 +362,22 @@ def dashboard():
 @app.route('/login')
 @app.route('/login.html')
 def login_page():
-    return send_from_directory('../frontend', 'login.html')
+    return send_from_directory('../frontend/auth', 'login.html')
 
 @app.route('/register')
 @app.route('/register.html')
 def register_page():
-    return send_from_directory('../frontend', 'register.html')
+    return send_from_directory('../frontend/auth', 'register.html')
 
 @app.route('/forgot-password')
 @app.route('/forgot-password.html')
 def forgot_password_page():
-    return send_from_directory('../frontend', 'forgot-password.html')
+    return send_from_directory('../frontend/auth', 'forgot-password.html')
 
 @app.route('/reset-password')
 @app.route('/reset-password.html')
 def reset_password_page():
-    return send_from_directory('../frontend', 'reset-password.html')
+    return send_from_directory('../frontend/auth', 'reset-password.html')
 
 @app.route('/planos')
 @app.route('/planos.html')
@@ -421,38 +421,38 @@ def serve_logo_assets():
 
 @app.route('/recomendacoes-free.html')
 def Recomendation_free():
-    return send_from_directory('../frontend', 'recomendacoes-free.html')
+    return send_from_directory('../frontend/gratis', 'recomendacoes-free.html')
 
 ##========== Fre ===============##
 
 @app.route('/monitor-basico')
 @app.route('/monitor-basico.html')
 def monitor_basico():
-        return send_from_directory('../frontend/', 'monitor-basico.html')
+        return send_from_directory('../frontend/gratis', 'monitor-basico.html')
     
 @app.route('/sup_res_vol.html')
 def Sup_Res_volatility():
-    return send_from_directory('../frontend', 'sup_res_vol.html')
+    return send_from_directory('../frontend/gratis', 'sup_res_vol.html')
 
 @app.route('/amplitude.html')
 def amplitude_page():
-    return send_from_directory('../frontend', 'amplitude.html')    
+    return send_from_directory('../frontend/gratis', 'amplitude.html')    
 
 @app.route('/rsl')
 @app.route('/rsl.html')
 def rsl_page():
-    return send_from_directory('../frontend', 'rsl.html')
+    return send_from_directory('../frontend/gratis', 'rsl.html')
 
 @app.route('/rrg')
 @app.route('/rrg.html')
 def rrg_page():
-    return send_from_directory('../frontend', 'rrg.html')
+    return send_from_directory('../frontend/gratis', 'rrg.html')
 
 
 @app.route('/copom')
 @app.route('/copom.html')
 def copom_page():
-    return send_from_directory('../frontend', 'copom.html')
+    return send_from_directory('../frontend/gratis', 'copom.html')
 
 ##=========== Fundamentos =========
 
@@ -475,59 +475,59 @@ def fundamentos_dre():
 @app.route('/vi-pro')
 @app.route('/vi-pro.html')
 def vi_pro_page():
-    return send_from_directory('../frontend', 'vi-pro.html')
+    return send_from_directory('../frontend/pro', 'vi-pro.html')
     
 @app.route('/rank-volatilidade')
 @app.route('/rank-volatilidade.html')
 def rank_volatilidade():
-    return send_from_directory('../frontend', 'rank-volatilidade.html')
+    return send_from_directory('../frontend/pro', 'rank-volatilidade.html')
 
 @app.route('/opcoes')
 @app.route('/opcoes.html')
 def opcoes_page():
-    return send_from_directory('../frontend', 'opcoes.html')
+    return send_from_directory('../frontend/pro', 'opcoes.html')
 
 @app.route('/regimes-pro.html')
 @app.route('/regimes-pro.html')
 def regimes():
-    return send_from_directory('../frontend', 'regimes-pro.html')
+    return send_from_directory('../frontend/pro', 'regimes-pro.html')
 
 @app.route('/gamma-levels')
 @app.route('/gamma-levels.html')
 def gamma_levels():
-    return send_from_directory('../frontend', 'gamma-levels.html')
+    return send_from_directory('../frontend/pro', 'gamma-levels.html')
 
 @app.route('/delta-levels')
 @app.route('/delta-levels.html')
 def delta_levels():
-    return send_from_directory('../frontend', 'delta-levels.html')
+    return send_from_directory('../frontend/pro', 'delta-levels.html')
 
 @app.route('/vega-levels')
 @app.route('/vega-levels.html')
 def vega_levels():
-    return send_from_directory('../frontend', 'vega-levels.html')
+    return send_from_directory('../frontend/pro', 'vega-levels.html')
 
 @app.route('/theta-level')
 @app.route('/theta-levels.html')
 def theta_levels():
-    return send_from_directory('../frontend', 'theta-levels.html')
+    return send_from_directory('../frontend/pro', 'theta-levels.html')
 
 
 @app.route('/marketmaker')
 @app.route('/marketmaker.html')
 def mm_levels():
-    return send_from_directory('../frontend', 'marketmaker.html')
+    return send_from_directory('../frontend/pro', 'marketmaker.html')
 
 @app.route('/historical-levels')
 @app.route('/historical-levels.html')
 def hisles_levels():
-    return send_from_directory('../frontend', 'historical-levels.html')
+    return send_from_directory('../frontend/pro', 'historical-levels.html')
 
 
 @app.route('/greeks-micro')
 @app.route('/greeks-micro.html')
 def greeks_micro():
-    return send_from_directory('../frontend', 'greeks-micro.html')
+    return send_from_directory('../frontend/pro', 'greeks-micro.html')
 
 @app.route('/visaomacro')
 @app.route('/visaomacro.html')
@@ -538,7 +538,7 @@ def visaomacro():
 @app.route('/screening')
 @app.route('/screening.html')
 def screening_page():
-    return send_from_directory('../frontend', 'screening.html')
+    return send_from_directory('../frontend/pro', 'screening.html')
 
 #historical-levels
 
@@ -547,21 +547,21 @@ def screening_page():
 @app.route('/swing-trade-machine-learning')
 @app.route('/swing-trade-machine-learning.html')
 def swing_trade_ml_page():
-    return send_from_directory('../frontend', 'swing-trade-machine-learning.html')
+    return send_from_directory('../frontend/premium', 'swing-trade-machine-learning.html')
 
 @app.route('/beta-regression')
 @app.route('/beta-regression.html')
 def beta_regression_page():
-    return send_from_directory('../frontend', 'beta-regression.html')
+    return send_from_directory('../frontend/premium', 'beta-regression.html')
 
 @app.route('/atsmom.html')
 def atsmom_page():
-    return send_from_directory('../frontend', 'atsmom.html')
+    return send_from_directory('../frontend/premium', 'atsmom.html')
 
 @app.route('/longshort')
 @app.route('/longshort.html')
 def longshort_page():
-    return send_from_directory('../frontend', 'longshort.html')
+    return send_from_directory('../frontend/premium', 'longshort.html')
 
 # ===== ROTAS API =====
 
