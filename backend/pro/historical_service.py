@@ -1,7 +1,3 @@
-"""
-historical_service.py - Análise Histórica GEX COM DADOS DO BANCO POSTGRESQL
-VERSÃO CORRIGIDA: Usa spot_price histórico de cada dia específico
-"""
 
 import numpy as np
 import pandas as pd

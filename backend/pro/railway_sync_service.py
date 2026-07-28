@@ -173,6 +173,29 @@ class RailwaySyncService:
             self.logger.error(f"❌ Erro ao salvar: {e}")
             return False
     
+    def limpar_historico_antigo(self, dias_manter: int = 10) -> int:
+        """Mantém apenas as N datas mais recentes em opcoes_b3, apaga o resto"""
+        try:
+            with self.engine.connect() as conn:
+                result = conn.execute(text("""
+                    DELETE FROM opcoes_b3
+                    WHERE data_referencia NOT IN (
+                        SELECT DISTINCT data_referencia
+                        FROM opcoes_b3
+                        ORDER BY data_referencia DESC
+                        LIMIT :dias
+                    )
+                """), {"dias": dias_manter})
+                conn.commit()
+
+                deletados = result.rowcount
+                if deletados > 0:
+                    self.logger.info(f"🧹 Limpeza: {deletados} registros antigos removidos (mantidas últimas {dias_manter} datas)")
+                return deletados
+        except Exception as e:
+            self.logger.error(f"❌ Erro na limpeza de histórico: {e}")
+            return 0
+
     def sincronizar_datas(self, datas: List[str]) -> Dict:
         """Sincroniza lista de datas"""
         total_sucesso = 0
@@ -229,6 +252,9 @@ class RailwaySyncService:
                     "motivo": "JSON não disponível na B3"
                 })
         
+        # Limpeza automática: mantém sempre só as últimas 10 datas
+        registros_limpos = self.limpar_historico_antigo(dias_manter=10)
+
         # Estatísticas finais
         with self.engine.connect() as conn:
             result = conn.execute(text("SELECT COUNT(*) FROM opcoes_b3"))
@@ -256,7 +282,8 @@ class RailwaySyncService:
             "detalhes": detalhes,
             "banco": {
                 "total_registros": total_registros,
-                "top_tickers": top_tickers
+                "top_tickers": top_tickers,
+                "registros_limpos": registros_limpos
             }
         }
     
