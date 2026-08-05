@@ -13,6 +13,7 @@ import os
 from dotenv import load_dotenv
 from plotly.subplots import make_subplots
 import plotly.graph_objects as go
+from .strike_matching import fetch_strike_translation
 from sqlalchemy import create_engine, text
 
 warnings.filterwarnings('ignore')
@@ -271,7 +272,7 @@ class DataProvider:
 
 class TEXCalculator:
 
-    def calculate_tex(self, oplab_df, oi_breakdown, spot_price):
+    def calculate_tex(self, oplab_df, oi_breakdown, spot_price, strike_map=None):
         if oplab_df.empty:
             return pd.DataFrame()
 
@@ -292,13 +293,16 @@ class TEXCalculator:
 
             call_data = put_data = None
 
+            # sk = strike do banco (corrige defasagem de ajuste em datas ex)
+            sk = strike_map.get(float(strike), float(strike)) if strike_map else float(strike)
+
             if len(calls) > 0:
-                call_key = f"{float(strike)}_CALL"
+                call_key = f"{sk}_CALL"
                 if call_key in oi_breakdown:
                     call_data = oi_breakdown[call_key]
 
             if len(puts) > 0:
-                put_key = f"{float(strike)}_PUT"
+                put_key = f"{sk}_PUT"
                 if put_key in oi_breakdown:
                     put_data = oi_breakdown[put_key]
 
@@ -335,7 +339,7 @@ class TEXCalculator:
             time_decay_acceleration = max(0, (30 - weighted_days) / 30) if weighted_days > 0 else 0
 
             tex_data.append({
-                'strike':                  float(strike),
+                'strike':                  float(sk),
                 'call_tex':                float(call_tex),
                 'put_tex':                 float(put_tex),
                 'total_tex':               float(call_tex + put_tex),
@@ -640,7 +644,16 @@ class TEXAnalyzer:
 
         oi_breakdown, expiration_info = self.data_provider.get_floqui_oi_breakdown(symbol, expiration_code)
 
-        tex_df = self.tex_calculator.calculate_tex(oplab_df, oi_breakdown, spot_price)
+        strike_map = {}
+        if expiration_info:
+            strike_map = fetch_strike_translation(
+                self.data_provider.db_engine,
+                symbol,
+                datetime.strptime(expiration_info['code'], '%Y%m%d'),
+                oplab_df,
+            )
+
+        tex_df = self.tex_calculator.calculate_tex(oplab_df, oi_breakdown, spot_price, strike_map)
         if tex_df.empty:
             raise ValueError("Erro: falha no cálculo TEX")
 

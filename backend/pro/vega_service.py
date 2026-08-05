@@ -14,6 +14,7 @@ import os
 from dotenv import load_dotenv
 from plotly.subplots import make_subplots
 import plotly.graph_objects as go
+from .strike_matching import fetch_strike_translation
 from sqlalchemy import create_engine, text
 
 warnings.filterwarnings('ignore')
@@ -292,7 +293,7 @@ class DataProvider:
 
 class VEXCalculator:
 
-    def calculate_vex_with_context(self, oplab_df, oi_breakdown, spot_price, historical_df=None):
+    def calculate_vex_with_context(self, oplab_df, oi_breakdown, spot_price, historical_df=None, strike_map=None):
         if oplab_df.empty:
             return pd.DataFrame()
 
@@ -347,13 +348,16 @@ class VEXCalculator:
             call_data = put_data = None
             has_real_call = has_real_put = False
 
+            # sk = strike do banco (corrige defasagem de ajuste em datas ex)
+            sk = strike_map.get(float(strike), float(strike)) if strike_map else float(strike)
+
             if len(calls) > 0:
-                call_key = f"{float(strike)}_CALL"
+                call_key = f"{sk}_CALL"
                 if call_key in oi_breakdown:
                     call_data = oi_breakdown[call_key]; has_real_call = True
 
             if len(puts) > 0:
-                put_key = f"{float(strike)}_PUT"
+                put_key = f"{sk}_PUT"
                 if put_key in oi_breakdown:
                     put_data = oi_breakdown[put_key]; has_real_put = True
 
@@ -387,7 +391,7 @@ class VEXCalculator:
             refined_avg_iv   = avg_iv_strike if avg_iv_strike > 0 else (global_avg_iv if in_atm else 0.0)
 
             vex_data.append({
-                'strike':                float(strike),
+                'strike':                float(sk),
                 'call_vex':              float(call_vex),
                 'put_vex':               float(put_vex),
                 'total_vex':             float(call_vex + put_vex),
@@ -833,7 +837,16 @@ class VEXAnalyzer:
         historical_df = self.data_provider.get_historical_iv_context(symbol, days=10)
         oi_breakdown, expiration_info = self.data_provider.get_floqui_oi_breakdown(symbol, expiration_code)
 
-        vex_df = self.vex_calculator.calculate_vex_with_context(oplab_df, oi_breakdown, spot_price, historical_df)
+        strike_map = {}
+        if expiration_info:
+            strike_map = fetch_strike_translation(
+                self.data_provider.db_engine,
+                symbol,
+                datetime.strptime(expiration_info['code'], '%Y%m%d'),
+                oplab_df,
+            )
+
+        vex_df = self.vex_calculator.calculate_vex_with_context(oplab_df, oi_breakdown, spot_price, historical_df, strike_map)
         if vex_df.empty:
             raise ValueError("Erro: falha no cálculo VEX")
 

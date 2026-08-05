@@ -13,6 +13,7 @@ import os
 from dotenv import load_dotenv
 from plotly.subplots import make_subplots
 import plotly.graph_objects as go
+from .strike_matching import fetch_strike_translation
 from sqlalchemy import create_engine, text
 
 warnings.filterwarnings('ignore')
@@ -385,7 +386,7 @@ class GEXAnalyzer:
         self.data_provider = DataProvider()
         self.liquidity_manager = LiquidityManager()
     
-    def calculate_gex(self, oplab_df, oi_breakdown, spot_price):
+    def calculate_gex(self, oplab_df, oi_breakdown, spot_price, strike_map=None):
         if oplab_df.empty:
             logging.error("DataFrame vazio")
             return pd.DataFrame()
@@ -418,14 +419,19 @@ class GEXAnalyzer:
             has_real_put = False
             
             #  BUSCA COM CHAVE STRING
+            #  sk = strike do banco. Em datas ex-proventos a B3 ajusta os
+            #  strikes e a Oplab so acompanha no dia seguinte; o strike_map
+            #  (montado pelo codigo da opcao) corrige essa defasagem.
+            sk = strike_map.get(float(strike), float(strike)) if strike_map else float(strike)
+
             if len(calls) > 0:
-                call_key = f"{float(strike)}_CALL"
+                call_key = f"{sk}_CALL"
                 if call_key in oi_breakdown:
                     call_data = oi_breakdown[call_key]
                     has_real_call = True
-            
+
             if len(puts) > 0:
-                put_key = f"{float(strike)}_PUT"
+                put_key = f"{sk}_PUT"
                 if put_key in oi_breakdown:
                     put_data = oi_breakdown[put_key]
                     has_real_put = True
@@ -451,7 +457,7 @@ class GEXAnalyzer:
             total_gex_descoberto = call_gex_descoberto + put_gex_descoberto
             
             gex_data.append({
-                'strike': float(strike),
+                'strike': float(sk),
                 'call_gex': float(call_gex),
                 'put_gex': float(put_gex),
                 'total_gex': float(total_gex),
@@ -974,8 +980,17 @@ class GEXAnalyzer:
             raise ValueError("Erro: sem dados da Oplab")
         
         oi_breakdown, expiration_info = self.data_provider.get_floqui_oi_breakdown(symbol, expiration_code)
-        
-        gex_df = self.calculate_gex(oplab_df, oi_breakdown, spot_price)
+
+        strike_map = {}
+        if expiration_info:
+            strike_map = fetch_strike_translation(
+                self.data_provider.db_engine,
+                symbol,
+                datetime.strptime(expiration_info['code'], '%Y%m%d'),
+                oplab_df,
+            )
+
+        gex_df = self.calculate_gex(oplab_df, oi_breakdown, spot_price, strike_map)
         if gex_df.empty:
             raise ValueError("Erro: falha no cálculo GEX")
         

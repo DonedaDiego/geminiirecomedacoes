@@ -13,6 +13,7 @@ import os
 from dotenv import load_dotenv
 from plotly.subplots import make_subplots
 import plotly.graph_objects as go
+from .strike_matching import fetch_strike_translation
 from sqlalchemy import create_engine, text
 
 warnings.filterwarnings('ignore')
@@ -287,7 +288,7 @@ class DataProvider:
 
 class DEXCalculator:
 
-    def calculate_dex(self, oplab_df, oi_breakdown, spot_price):
+    def calculate_dex(self, oplab_df, oi_breakdown, spot_price, strike_map=None):
         """Calcula DEX = Delta × Open Interest × 100"""
         if oplab_df.empty:
             return pd.DataFrame()
@@ -312,14 +313,17 @@ class DEXCalculator:
             has_real_call  = False
             has_real_put   = False
 
+            # sk = strike do banco (corrige defasagem de ajuste em datas ex)
+            sk = strike_map.get(float(strike), float(strike)) if strike_map else float(strike)
+
             if len(calls) > 0:
-                call_key = f"{float(strike)}_CALL"
+                call_key = f"{sk}_CALL"
                 if call_key in oi_breakdown:
                     call_data     = oi_breakdown[call_key]
                     has_real_call = True
 
             if len(puts) > 0:
-                put_key = f"{float(strike)}_PUT"
+                put_key = f"{sk}_PUT"
                 if put_key in oi_breakdown:
                     put_data     = oi_breakdown[put_key]
                     has_real_put = True
@@ -340,7 +344,7 @@ class DEXCalculator:
                 put_dex_descoberto = avg_delta * put_data['descoberto'] * 100
 
             dex_data.append({
-                'strike':               float(strike),
+                'strike':               float(sk),
                 'call_dex':             float(call_dex),
                 'put_dex':              float(put_dex),
                 'total_dex':            float(call_dex + put_dex),
@@ -681,7 +685,16 @@ class DEXAnalyzer:
 
         oi_breakdown, expiration_info = self.data_provider.get_floqui_oi_breakdown(symbol, expiration_code)
 
-        dex_df = self.dex_calculator.calculate_dex(oplab_df, oi_breakdown, spot_price)
+        strike_map = {}
+        if expiration_info:
+            strike_map = fetch_strike_translation(
+                self.data_provider.db_engine,
+                symbol,
+                datetime.strptime(expiration_info['code'], '%Y%m%d'),
+                oplab_df,
+            )
+
+        dex_df = self.dex_calculator.calculate_dex(oplab_df, oi_breakdown, spot_price, strike_map)
         if dex_df.empty:
             raise ValueError("Erro: falha no cálculo DEX")
 

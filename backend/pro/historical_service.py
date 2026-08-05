@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 import yfinance as yf
 import requests
+from collections import Counter
 from datetime import datetime, timedelta
 import warnings
 import logging
@@ -268,6 +269,51 @@ class HistoricalDataProvider:
             logging.error(f"Erro banco VENC={vencimento}: {e}")
             return {}
 
+    def get_floqui_historical_by_code(self, ticker, vencimento, dt_referencia):
+        """
+        Mesmo dado do get_floqui_historical, porem indexado pelo CODIGO da
+        opcao (coluna 'serie', que casa com o campo 'symbol' da Oplab).
+
+        O codigo nao muda em datas ex-proventos; o strike muda. Cruzar por
+        codigo deixa o calculo imune ao ajuste de strikes da B3.
+        """
+        try:
+            ticker_clean = ticker.replace('.SA', '')
+            exp_date     = datetime.strptime(vencimento, '%Y%m%d')
+            query = text("""
+                SELECT serie, preco_exercicio, tipo_opcao,
+                       SUM(qtd_total) AS qtd_total, SUM(qtd_descoberto) AS qtd_descoberto,
+                       SUM(qtd_trava) AS qtd_trava, SUM(qtd_coberto) AS qtd_coberto
+                FROM opcoes_b3
+                WHERE ticker = :symbol AND vencimento = :vencimento
+                  AND data_referencia = :data_ref AND serie IS NOT NULL
+                GROUP BY serie, preco_exercicio, tipo_opcao
+            """)
+            with self.db_engine.connect() as conn:
+                rows = conn.execute(query, {
+                    'symbol': ticker_clean, 'vencimento': exp_date, 'data_ref': dt_referencia
+                }).fetchall()
+
+            by_code = {}
+            for row in rows:
+                code   = str(row[0]).strip().upper()
+                strike = float(row[1])
+                total  = int(row[3])
+                if not code or strike <= 0 or total <= 0:
+                    continue
+                by_code[code] = {
+                    'strike':     strike,
+                    'type':       str(row[2]).upper(),
+                    'total':      total,
+                    'descoberto': int(row[4]),
+                    'travado':    int(row[5]),
+                    'coberto':    int(row[6]),
+                }
+            return by_code
+        except Exception as e:
+            logging.error(f"Erro banco (por codigo) VENC={vencimento}: {e}")
+            return {}
+
     def get_available_expirations(self, ticker):
         ticker_clean = ticker.replace('.SA', '')
         expirations  = []
@@ -330,9 +376,161 @@ class HistoricalAnalyzer:
         self.data_provider    = HistoricalDataProvider()
         self.liquidity_manager = LiquidityManager()
 
-    def calculate_gex(self, oplab_df, oi_breakdown, spot_price):
+    @staticmethod
+    def _align_strike_grids(oplab_strikes, oi_breakdown, spot_price):
+        """
+        Casa a grade de strikes da Oplab com a do banco (B3).
+
+        Em datas 'ex' (especie_papel vira EJ / EJS / ED), a B3 ajusta TODOS os
+        strikes pelo mesmo valor no mesmo pregao. A Oplab aplica esse ajuste
+        com ~1 pregao de defasagem — nesse intervalo as duas grades ficam
+        deslocadas em poucos centavos e a comparacao por igualdade exata zera
+        100% dos casamentos, derrubando o dia inteiro sem lancar erro.
+
+        Como o deslocamento e constante para todos os strikes, detectamos o
+        offset dominante e realinhamos as grades.
+
+        Retorna {strike_oplab: strike_banco}.
+        """
+        db_strikes = sorted({v['strike'] for v in oi_breakdown.values()})
+        oplab_strikes = sorted({float(s) for s in oplab_strikes})
+        if not db_strikes or not oplab_strikes:
+            return {}
+
+        # 1) caminho normal — as grades ja batem
+        db_set = set(db_strikes)
+        exato  = {s: s for s in oplab_strikes if s in db_set}
+        minimo = max(3, int(0.30 * min(len(oplab_strikes), len(db_strikes))))
+        if len(exato) >= minimo:
+            return exato
+
+        # 2) grades deslocadas — descobre o offset dominante
+        db_arr = np.array(db_strikes, dtype=float)
+
+        # Trava: so e seguro deslocar se o offset for menor que METADE do
+        # espacamento da grade. Acima disso a grade deslocada encaixa na
+        # posicao do strike vizinho e o GEX iria para o strike errado —
+        # preferimos descartar o dia (com log) a exibir numero errado.
+        perto = db_arr[(db_arr >= spot_price * 0.8) & (db_arr <= spot_price * 1.2)]
+        espac = np.diff(perto)
+        espac = espac[espac > 0]
+        if espac.size == 0:
+            return exato
+        limite = min(0.49 * float(espac.min()), max(0.02 * spot_price, 0.05))
+
+        difs = []
+        for s in oplab_strikes:
+            d = db_arr[int(np.abs(db_arr - s).argmin())] - s
+            if abs(d) <= limite:
+                difs.append(round(float(d), 2))
+        if not difs:
+            logging.warning(
+                f"Grades desalinhadas alem do seguro (espacamento minimo "
+                f"{float(espac.min()):.2f}); dia descartado em vez de casar errado"
+            )
+            return exato
+
+        offset, freq = Counter(difs).most_common(1)[0]
+        if freq < 3 or offset == 0:
+            return exato
+
+        # 3) reaplica o offset com tolerancia so de arredondamento
+        mapa = {}
+        for s in oplab_strikes:
+            alvo = s + offset
+            i    = int(np.abs(db_arr - alvo).argmin())
+            if abs(db_arr[i] - alvo) <= 0.011:
+                mapa[s] = float(db_arr[i])
+
+        if len(mapa) > len(exato):
+            logging.warning(
+                f"Grades de strike desalinhadas (provavel data ex-proventos): "
+                f"offset {offset:+.2f} aplicado, {len(mapa)} strikes casados"
+            )
+            return mapa
+        return exato
+
+    @staticmethod
+    def _gex_por_codigo(oplab_df, oi_by_code, spot_price):
+        """
+        Cruza Oplab x banco pelo codigo da opcao (Oplab 'symbol' = banco 'serie').
+
+        Vantagens sobre o cruzamento por strike:
+          - imune ao ajuste de strikes em datas ex-proventos (EJ/EJS/ED);
+          - usa o gamma do contrato exato, em vez da media dos contratos
+            que compartilham o strike em vencimentos diferentes.
+        """
+        if 'symbol' not in oplab_df.columns or not oi_by_code:
+            return pd.DataFrame()
+
+        price_range = spot_price * 0.20
+        agregado    = {}
+
+        for row in oplab_df.itertuples(index=False):
+            info = oi_by_code.get(str(getattr(row, 'symbol', '')).strip().upper())
+            if not info:
+                continue
+            strike = info['strike']
+            if strike < spot_price - price_range or strike > spot_price + price_range:
+                continue
+            try:
+                gamma = float(row.gamma)
+            except (TypeError, ValueError):
+                continue
+            if gamma <= 0:
+                continue
+
+            a = agregado.setdefault(strike, {
+                'strike': strike,
+                'call_gex': 0.0, 'put_gex': 0.0,
+                'call_gex_desc': 0.0, 'put_gex_desc': 0.0,
+                'call_oi_total': 0, 'put_oi_total': 0,
+                'call_oi_descoberto': 0, 'put_oi_descoberto': 0,
+            })
+            base      = gamma * spot_price * 100
+            gex_tot   = base * info['total']
+            gex_desc  = base * info['descoberto']
+            if info['type'] == 'CALL':
+                a['call_gex']           += gex_tot
+                a['call_gex_desc']      += gex_desc
+                a['call_oi_total']      += info['total']
+                a['call_oi_descoberto'] += info['descoberto']
+            else:
+                a['put_gex']           -= gex_tot
+                a['put_gex_desc']      -= gex_desc
+                a['put_oi_total']      += info['total']
+                a['put_oi_descoberto'] += info['descoberto']
+
+        if not agregado:
+            return pd.DataFrame()
+
+        gex_data = [{
+            'strike':               v['strike'],
+            'call_gex':             v['call_gex'],
+            'put_gex':              v['put_gex'],
+            'total_gex':            v['call_gex'] + v['put_gex'],
+            'total_gex_descoberto': v['call_gex_desc'] + v['put_gex_desc'],
+            'call_oi_total':        v['call_oi_total'],
+            'put_oi_total':         v['put_oi_total'],
+            'call_oi_descoberto':   v['call_oi_descoberto'],
+            'put_oi_descoberto':    v['put_oi_descoberto'],
+            'has_real_data':        True,
+        } for v in agregado.values()]
+
+        return pd.DataFrame(gex_data).sort_values('strike')
+
+    def calculate_gex(self, oplab_df, oi_breakdown, spot_price, oi_by_code=None):
         if oplab_df.empty:
             return pd.DataFrame()
+
+        # 1) preferencial: casamento pelo codigo da opcao
+        gex_cod = self._gex_por_codigo(oplab_df, oi_by_code, spot_price)
+        if not gex_cod.empty:
+            return gex_cod
+        if oi_by_code:
+            logging.warning("Casamento por codigo nao achou contratos; usando strike")
+
+        # 2) fallback: casamento por strike, com realinhamento de grade
         price_range   = spot_price * 0.20
         valid_options = oplab_df[
             (oplab_df['strike'] >= spot_price - price_range) &
@@ -340,19 +538,30 @@ class HistoricalAnalyzer:
         ].copy()
         if valid_options.empty:
             return pd.DataFrame()
+
+        strike_map = self._align_strike_grids(
+            valid_options['strike'].unique(), oi_breakdown, spot_price
+        )
+        if not strike_map:
+            logging.warning("Nenhum strike casou entre Oplab e banco")
+            return pd.DataFrame()
+
         gex_data = []
         for strike in valid_options['strike'].unique():
+            db_strike = strike_map.get(float(strike))
+            if db_strike is None:
+                continue
             strike_opts = valid_options[valid_options['strike'] == strike]
             calls = strike_opts[strike_opts['type'] == 'CALL']
             puts  = strike_opts[strike_opts['type'] == 'PUT']
             call_data = put_data = None
             has_real_call = has_real_put = False
             if len(calls) > 0:
-                ck = f"{float(strike)}_CALL"
+                ck = f"{db_strike}_CALL"
                 if ck in oi_breakdown:
                     call_data = oi_breakdown[ck]; has_real_call = True
             if len(puts) > 0:
-                pk = f"{float(strike)}_PUT"
+                pk = f"{db_strike}_PUT"
                 if pk in oi_breakdown:
                     put_data = oi_breakdown[pk]; has_real_put = True
             if not (has_real_call or has_real_put):
@@ -368,7 +577,7 @@ class HistoricalAnalyzer:
                 put_gex      = -(ag * put_data['total']      * spot_price * 100)
                 put_gex_desc = -(ag * put_data['descoberto'] * spot_price * 100)
             gex_data.append({
-                'strike':                float(strike),
+                'strike':                float(db_strike),
                 'call_gex':              float(call_gex),
                 'put_gex':               float(put_gex),
                 'total_gex':             float(call_gex + put_gex),
@@ -607,11 +816,13 @@ class HistoricalAnalyzer:
 
             spot_price = self.data_provider.get_historical_spot_price(ticker, date_obj)
             if not spot_price:
+                logging.warning(f"{date_str} DESCARTADA: sem spot historico")
                 continue
             spot_prices_by_date[date_str] = spot_price
 
             oplab_df = self.data_provider.get_oplab_historical_data(ticker, target_date=date_obj)
             if oplab_df.empty:
+                logging.warning(f"{date_str} DESCARTADA: Oplab sem gregas nesta data")
                 continue
 
             oi_breakdown = self.data_provider.get_floqui_historical(ticker, vencimento, date_obj)
@@ -624,10 +835,15 @@ class HistoricalAnalyzer:
                             expiration_desc = exp['desc']
                             break
             if not oi_breakdown:
+                logging.warning(f"{date_str} DESCARTADA: banco sem OI nesta data")
                 continue
 
-            gex_df = self.calculate_gex(oplab_df, oi_breakdown, spot_price)
+            oi_by_code = self.data_provider.get_floqui_historical_by_code(
+                ticker, vencimento, date_obj
+            )
+            gex_df = self.calculate_gex(oplab_df, oi_breakdown, spot_price, oi_by_code)
             if gex_df.empty:
+                logging.warning(f"{date_str} DESCARTADA: nenhum strike casou Oplab x banco")
                 continue
 
             flip_strike = self.find_gamma_flip(gex_df, spot_price, ticker)
