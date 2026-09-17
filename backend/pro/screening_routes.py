@@ -271,12 +271,13 @@ begin
             else:
                 comparison = f'(ativo_atual = "{ticker}")'
             
-            # Bloco condicional para cada ticker
             ntsl_code += f"""  // {emoji} {ticker} - {regime} | Flip: R$ {flip_strike:.2f} | Spot: R$ {spot_price:.2f} | Dist: {distance_pct:+.2f}%
   if {comparison} then
   begin
     gamma_flip := {flip_strike:.2f};
-    HorizontalLineCustom(gamma_flip, clWhite, 3, 2, "Flip {ticker}", 10, tpTopRight);
+
+    if (LastBarOnChart) then
+      HorizontalLineCustom(gamma_flip, clWhite, 3, 2, "Flip {ticker}", 10, tpTopRight);
     
     // Alerta: fechamento dentro de 0.05% do flip
     if (Abs(Close - gamma_flip) / gamma_flip * 100) <= 0.05 then
